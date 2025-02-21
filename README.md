@@ -1,59 +1,163 @@
-# PhotonBypass
+# Photon Bypass
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.1.8.
+selling VPN
 
-## Development server
+## Home
 
-To start a local development server, run:
+[crossfit-athletes-website-template](https://nicepage.com/st/46692/crossfit-athletes-website-template)
 
-```bash
-ng serve
-```
+[plan-and-book-your-flights-website-template](https://nicepage.com/st/57476/plan-and-book-your-flights-website-template)
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Slogan:
+    - types of plans with price
+        - traffic without time
+    - return value in middle of the plan
+    - first 3 days is free
 
-## Code scaffolding
+## Profile
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+[CoreUI](https://coreui.io/product/free-angular-admin-template/#live-preview)
 
-```bash
-ng generate component component-name
-```
+### Dashbord
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+- Home Page
+    - Slogan
+    - Login => page
+    - Register => page
 
-```bash
-ng generate --help
-```
+- Register Page
+    - Human Test
+    - User Name *
+    - Email (* or mobile) => validate email
+    - Mobile (* or email) => validate whatsapp
+    - First Name
+    - Last Name
+    - Password *
+    - Submit => send admin notif
 
-## Building
+- Login
+    - Human Test
+    - User Name
+    - Password
 
-To build the project run:
+- User Page
+    - Email Validation
+        - Validation Code
+        - Resent
+    - Support Panel
+        - Last Admin's Message
+        - Chat Button => page
+    - Name/Email Panel (cache 10 min)
+        - Edit Info Button (name/phone/email) => page
+        - Change Password Button => page
+        - Send Config Button => send
+    - Account State Panel
+        - User's connection (last connection/live time)
+        - Close User Connection Button => close connection in mikrotik
+        - Acount Balance
+        - Renewal/Change Button => page
+    - Wallet Balance Panel
+        - Current Value
+        - Increament Button => Increment Popup => to bank page
+    - Usege Chart
+        - Reload Button => reload data
+    - Logout => logout => home page
 
-```bash
-ng build
-```
+- Edit Info Button
+    - Email * => validate email
+    - Mobile * (to send information via whatsapp) => validate mobile
+    - Primary Contact (email|whatsapp)
+    - First Name
+    - Last Name
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+- Change Password
+    - Old Password
+    - New Password
 
-## Running unit tests
+- Rnewal
+    - Wallet Balance Panel
+        - Current Value
+        - Increament Button => Increment Popup => to bank page
+    - Users Count <= user count
+    - Monthly <= month (enabled: account is disabled | account is monthly)
+    - Traffic <= x25 (enabled: account is disabled | account is trafficaly)
+    - Submit =>
+        ```c#
+        if (context.month is not null && context.traffic is not null)
+            throw new Excetion("Bad request.");
+        if ((context.month is not null || context.traffic is not null) && account.Enabled == true)
+            throw new UserException("You can not change account type while is enabled!");
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+        if (context.traffic is not null) {
+            context.type = AccountType.Traffic;
+        } else if (context.month is not null) {
+            context.type = AccountType.Monthly;
+        } else if (context.UserCount != account.UserCount) {
+            context.type = account.Type;
+        } else {
+            return;
+        }
 
-```bash
-ng test
-```
+        if (context.traffic is null || context.month is null || 
+            context.UserCount == account.UserCount) {
+            return;
+        }
+        
+        var close_connections = true;
+        if (context.traffic is not null && account.Type != AccountType.Traffic) {
+            if (account.ExpireDate > DateTime.Now) {
+                throw new UserException("The account plan has not finished!");
+            }
 
-## Running end-to-end tests
+            var current_total_data_usage = GetUserDataUsage(account.UserID);
+            SetAccountDataUsege(current_total_data_usage);
+        
+        } else if (context.month is not null && account.Type != AccountType.Monthly) {
+            if (account.RemainTraffic > 512 * 1024 * 1024) {
+                throw new UserException("The account plan has not finished! you need use lan until 512MB.");
+            }
 
-For end-to-end (e2e) testing, run:
+            SetAccountDate(DateTime.Now, DateTime.Now);
 
-```bash
-ng e2e
-```
+        } else {
+            close_connections = context.UserCount != account.UserCount;
+        }
+        
+        SetAccountProfile(account, context, out expense);
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+        if (!CheckUserWalet(expense)) {
+            throw new UserException("The walet balance is low!");
+        }
 
-## Additional Resources
+        if (account.LastConnection < DateTime.Now.AddWeek(-1)) {
+            var realm = GetFreePlaceInServer();
+            if (account.Realm != realm) {
+                account.Realm = realm;
+                SendChangeServerNotif(account)
+            }
+        }
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+        SaveAccount(account);
+
+        if (close_connections) {
+            CloseConnection();
+        }
+
+        CheckUserServerBalance();
+        ```
+
+### Accoutnt Management System
+
+- Restrict accounts to connect to just one server
+- Alarm Admin if users count is more than 80% of server capacity
+- Notif on new Users
+- Notif on invalid password
+
+## Pheases
+
+1. Web Site Core
+2. Fake Website
+    1. Enamad
+    2. samandehi.ir
+    3. Bank Payment Gateway
+2. Send WhatsApp Notif
