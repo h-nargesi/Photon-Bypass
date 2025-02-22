@@ -58,10 +58,15 @@ Slogan:
         - Renewal/Change Button => page
     - Wallet Balance Panel
         - Current Value
-        - Increament Button => Increment Popup => to bank page
+        - Increament Button => Payment Popup
     - Usege Chart
         - Reload Button => reload data
     - Logout => logout => home page
+
+- Payment
+    - Increment Value
+    - Payment Way
+    - Submit => to bank page
 
 - Edit Info Button
     - Email * => validate email
@@ -77,7 +82,7 @@ Slogan:
 - Rnewal
     - Wallet Balance Panel
         - Current Value
-        - Increament Button => Increment Popup => to bank page
+        - Increament Button => Payment Popup
     - Users Count <= user count
     - Monthly <= month (enabled: account is disabled | account is monthly)
     - Traffic <= x25 (enabled: account is disabled | account is trafficaly)
@@ -149,15 +154,20 @@ Slogan:
 ### Accoutnt Management System
 
 - Restrict accounts to connect to just one server
-- Alarm Admin if users count is more than 80% of server capacity
+- Server Capacity Alarm
+    - Alarm Admin if users count is more than 50 users of server capacity
+    - Alarm Admin if users count is less than 100 users of server capacity
 - Notif on new Users
 - Notif on invalid password
 
 ## Pheases
 
 1. Web Site Core
-2. Fake Website
+2. MySql Performance
+    - Ask ChatGPT
+    - Search in Youtube
+3. Fake Website
     1. Enamad
     2. samandehi.ir
     3. Bank Payment Gateway
-2. Send WhatsApp Notif
+4. Send WhatsApp Notif
