@@ -1,6 +1,6 @@
 # Photon Bypass
 
-selling VPN
+Selling VPN
 
 ## Home
 
@@ -9,9 +9,9 @@ selling VPN
 [plan-and-book-your-flights-website-template](https://nicepage.com/st/57476/plan-and-book-your-flights-website-template)
 
 Slogan:
-    - types of plans with price
-        - traffic without time
-    - return value in middle of the plan
+    - Types of plans with price
+        - Traffic without time
+    - Return value in the middle of the plan
     - first 3 days is free
 
 ## Profile
@@ -163,6 +163,7 @@ Slogan:
 ## Pheases
 
 1. Web Site Core
+    - Consider Unit Test
 2. MySql Performance
     - Ask ChatGPT
     - Search in Youtube
