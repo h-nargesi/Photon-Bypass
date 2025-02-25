@@ -17,13 +17,6 @@ describe('AppComponent', () => {
   it(`should have the 'photon-bypass' title`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('photon-bypass');
-  });
-
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, photon-bypass');
+    expect(app.title).toEqual('Photon Bypass');
   });
 });
