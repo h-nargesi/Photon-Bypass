@@ -1,4 +1,4 @@
-# Photon Bypass
+# Photon Bypass Plan
 
 Selling VPN
 
@@ -8,22 +8,20 @@ Selling VPN
 
 [plan-and-book-your-flights-website-template](https://nicepage.com/st/57476/plan-and-book-your-flights-website-template)
 
-Slogan:
-    - Types of plans with price
-        - Traffic without time
-    - Return value in the middle of the plan
-    - first 3 days is free
+- Home Page
+    - Slogan:
+        - Types of plans with price
+            - Traffic without time
+        - Return value in the middle of the plan
+        - first 3 days is free
+    - Login => page
+    - Register => page
 
 ## Profile
 
 [CoreUI](https://coreui.io/product/free-angular-admin-template/#live-preview)
 
 ### Dashbord
-
-- Home Page
-    - Slogan
-    - Login => page
-    - Register => page
 
 - Register Page
     - Human Test
@@ -50,7 +48,8 @@ Slogan:
     - Name/Email Panel (cache 10 min)
         - Edit Info Button (name/phone/email) => page
         - Change Password Button => page
-        - Send Config Button => send
+        - Change OVPN Password Button => page
+        - Send Config Button => renew private key pass, send
     - Account State Panel
         - User's connection (last connection/live time)
         - Close User Connection Button => close connection in mikrotik
@@ -68,7 +67,7 @@ Slogan:
     - Payment Way
     - Submit => to bank page
 
-- Edit Info Button
+- Edit Info Page
     - Email * => validate email
     - Mobile * (to send information via whatsapp) => validate mobile
     - Primary Contact (email|whatsapp)
@@ -87,69 +86,12 @@ Slogan:
     - Monthly <= month (enabled: account is disabled | account is monthly)
     - Traffic <= x25 (enabled: account is disabled | account is trafficaly)
     - Submit =>
-        ```c#
-        if (context.month is not null && context.traffic is not null)
-            throw new Excetion("Bad request.");
-        if ((context.month is not null || context.traffic is not null) && account.Enabled == true)
-            throw new UserException("You can not change account type while is enabled!");
-
-        if (context.traffic is not null) {
-            context.type = AccountType.Traffic;
-        } else if (context.month is not null) {
-            context.type = AccountType.Monthly;
-        } else if (context.UserCount != account.UserCount) {
-            context.type = account.Type;
-        } else {
-            return;
-        }
-
-        if (context.traffic is null || context.month is null || 
-            context.UserCount == account.UserCount) {
-            return;
-        }
-        
-        var close_connections = true;
-        if (context.traffic is not null && account.Type != AccountType.Traffic) {
-            if (account.ExpireDate > DateTime.Now) {
-                throw new UserException("The account plan has not finished!");
-            }
-
-            var current_total_data_usage = GetUserDataUsage(account.UserID);
-            SetAccountDataUsege(current_total_data_usage);
-        
-        } else if (context.month is not null && account.Type != AccountType.Monthly) {
-            if (account.RemainTraffic > 512 * 1024 * 1024) {
-                throw new UserException("The account plan has not finished! you need use lan until 512MB.");
-            }
-
-            SetAccountDate(DateTime.Now, DateTime.Now);
-
-        } else {
-            close_connections = context.UserCount != account.UserCount;
-        }
-        
-        SetAccountProfile(account, context, out expense);
-
-        if (!CheckUserWalet(expense)) {
-            throw new UserException("The walet balance is low!");
-        }
-
-        if (account.LastConnection < DateTime.Now.AddWeek(-1)) {
-            var realm = GetFreePlaceInServer();
-            if (account.Realm != realm) {
-                account.Realm = realm;
-                SendChangeServerNotif(account)
-            }
-        }
-
-        SaveAccount(account);
-
-        if (close_connections) {
-            CloseConnection();
-        }
-
-        CheckUserServerBalance();
-        ```
+        - On Change to Traffic: Make sure account time is finished
+        - On Change to Monthly: Make sure account traffiic is finished
+        - Change Profile and Data if necessary
+        - Close extra connections
+        - On old account: get empty place
+        - Check Server/User Balance
 
 ### Accoutnt Management System
 
