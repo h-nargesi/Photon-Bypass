@@ -37,8 +37,7 @@
     - (rad api)
     - update (local db)
 - Register
-    - (rad api)
-    - update (local db)
+    - (local db)
 - User Page
     - Validation
         - (local db)

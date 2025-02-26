@@ -1,0 +1,16 @@
+{
+    "url": "https://rad.photon-bypass.com/cake4/rd_cake/permanent-users/index.json",
+    "type": "GET",
+    "request": {
+        "_dc": 1740572073087,
+        "page": 1,
+        "start": 0,
+        "limit": 100,
+        "sort": "username",
+        "dir": "ASC",
+        "filter": "[{\"operator\":\"like\",\"value\":\"49\",\"property\":\"username\"}]",
+        "token": "01831f18-6691-4c39-af82-5803aa885c0c",
+        "sel_language": "4_4",
+        "cloud_id": 23
+    }
+}

@@ -1,0 +1,57 @@
+{
+    "url": "https://rad.photon-bypass.com/cake4/rd_cake/dashboard/check_token.json",
+    "type": "GET",
+    "request": {
+        "_dc": 1740571551428,
+        "token": "01831f18-6691-4c39-af82-5803aa885c0c",
+        "auto_compact": false
+    },
+    "response": {
+        "data": {
+            "token": "01831f18-6691-4c39-af82-5803aa885c0c",
+            "isRootUser": false,
+            "data_usage": [],
+            "user": {
+                "id": 53,
+                "username": "Ryan",
+                "group": "Access Providers",
+                "cls": "user",
+                "timezone_id": 262,
+                "cloud_count": 4,
+                "cloud_name": "Photon",
+                "cloud_id": 23
+            },
+            "white_label": {
+                "active": true,
+                "hName": "RADIUSdesk",
+                "hBg": "#ffffff",
+                "hFg": "#005691",
+                "fName": "RADIUSdesk 2022",
+                "imgActive": true,
+                "imgFile": "/cake4/rd_cake/img/access_providers/logo.png"
+            },
+            "show_wizard": true,
+            "show_unknown_nodes": true,
+            "compact": true,
+            "tree_nav": [
+                {
+                    "text": "OVERVIEW",
+                    "leaf": true,
+                    "iconCls": "x-fa fa-th-large",
+                    "glyph": "xf009",
+                    "controller": "cMainOverview",
+                    "id": "tabMainOverview"
+                },
+                {
+                    "text": "OTHER",
+                    "leaf": true,
+                    "id": "tabMainOther",
+                    "controller": "cMainOther",
+                    "iconCls": "x-fa fa-gears",
+                    "glyph": "xf090"
+                }
+            ]
+        },
+        "success": true
+    }
+}

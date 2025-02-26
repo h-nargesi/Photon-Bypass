@@ -1,0 +1,21 @@
+{
+    "url": "https://rad.photon-bypass.com/cake4/rd_cake/dashboard/branding.json",
+    "type": "GET",
+    "description": "Logout",
+    "request": {
+        "_dc": 1740571621935
+    },
+    "response": {
+        "success": true,
+        "data": {
+            "active": true,
+            "hName": "RADIUSdesk",
+            "hBg": "#ffffff",
+            "hFg": "#005691",
+            "fName": "RADIUSdesk 2022",
+            "imgActive": true,
+            "imgFile": "/cake4/rd_cake/img/access_providers/logo.png",
+            "wallpaper": "/cake4/rd_cake/img/wallpapers/1.jpg"
+        }
+    }
+}
