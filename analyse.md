@@ -1,11 +1,16 @@
 # Photon Bypass Analyse
 
+## Login
+
+- Gmail auth
+- email/username password
+- register new
+
 ## Radius Calls
 
 ### Rad API
 
 - Login
-- Register
 - User's Connection
 - Acount Balance
 - Usege Chart Reload
@@ -31,6 +36,11 @@
 
 - Close User Connection
 
+### WhatsApp Businuss API (Send)
+
+- Register / Validation
+- Account Balance Warning Service
+
 ### Base On Pages
 
 - Login
@@ -38,9 +48,11 @@
     - update (local db)
 - Register
     - (local db)
+    - (whatsapp api) verification
 - User Page
     - Validation
         - (local db)
+        - (whatsapp api) verification
     - Name/Email Panel
         - (local db)
     - Account State > User's connection
@@ -48,11 +60,11 @@
     - Account State > Close User Connection
         - (mikrotik ssh)
     - Account State Panel > Acount Balance
-        - (rad api)
+        - (rad api | rad db)
     - Wallet Balance Panel
         - (local db)
     - Usege Chart > Reload
-        - check new from latest (rad api | rad db)
+        - (rad api | rad db) check new from latest
         - (local db)
 
 - Payment
@@ -72,6 +84,10 @@
 - Rnewal
     - (rad api)
     - update (local db)
+
+- Account Balance Warning Service
+    - (rad api | rad db)
+    - (whatsapp api)
 
 ## Rnewal Submit Code
 

@@ -49,7 +49,10 @@ Selling VPN
         - Edit Info Button (name/phone/email) => page
         - Change Password Button => page
         - Change OVPN Password Button => page
-        - Send Config Button => renew private key pass, send
+        - Send Config Button =>
+            - check send limit
+            - renew private key pass
+            - send
     - Account State Panel
         - User's connection (last connection/live time)
         - Close User Connection Button => close connection in mikrotik
