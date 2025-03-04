@@ -48,3 +48,21 @@
     letter-spacing: 1px;
   }
 }
+
+.slogan-panel {
+  .slogan-icon {
+    position: relative;
+
+    .slogan-svg {
+      margin: 2rem;
+    }
+
+    .slogan-svg-link {
+      position: absolute;
+    }
+
+    .slogan-svg-content {
+      position: relative;
+    }
+  }
+}
