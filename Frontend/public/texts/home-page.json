@@ -1,23 +1,36 @@
 {
     "slogan": {
         "plans": {
-            "title": "",
-            "texts": [
-                "Sample text. Click to select the text box. Click again or double click to start editing the text 1.",
-                "Sample text. Click to select the text box. Click again or double click to start editing the text 2."
+            "title": "پلن‌ها",
+            "items": [
+                {
+                    "title": "ماهانه",
+                    "texts": [
+                        "ترافیک تقریبا نا محدود",
+                        "پهنای باند محدود به 8mb"
+                    ]
+                },
+                {
+                    "title": "ترافیکی",
+                    "texts": [
+                        "زمان تقریبا نامحدود",
+                        "پهنای باند محدود به 8mb"
+                    ]
+                }
             ]
         },
         "quality": {
-            "title": "",
+            "title": "تضمین",
             "texts": [
-                ""
+                "بازگشت وجه باقی‌مانده اعتبار اکانت در صورت تمایل."
             ]
         },
         "gifts": {
-            "title": "",
+            "title": "هدیه",
             "texts": [
-                ""
+                "استفاده از این vpn برای سه روز اول رایگان است."
             ]
-        }
+        },
+        "more": "بیشتر"
     }
 }

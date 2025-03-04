@@ -20,6 +20,16 @@ export class TranslationService {
     return TranslationService.parse(path, params);
   }
 
+  public data(path: string): any {
+    return TranslationService.data(path);
+  }
+
+  public lines(path: string): string[] {
+    const result = TranslationService.data(path);
+    if (Array.isArray(result)) return result;
+    else return [result];
+  }
+
   public static translate(path: string, params?: string[]): string {
     if (TranslationService.texts.size < 1) {
       console.log(`Translation Servcie first request is static: ${path}.`);
@@ -31,12 +41,12 @@ export class TranslationService {
   private static parse(path: string, params?: string[]): string {
     if (!path || !path.length) return path;
 
-    let result = TranslationService.get(path);
+    let result = TranslationService.line(path);
 
     if (params) {
       let i = 0;
       while (i < params.length) {
-        result = result.replace(`{${i}}`, TranslationService.get(params[i]));
+        result = result.replace(`{${i}}`, TranslationService.line(params[i]));
         i++;
       }
     }
@@ -44,7 +54,7 @@ export class TranslationService {
     return result;
   }
 
-  private static get(path: string): string {
+  private static data(path: string): any {
     if (!path || !path.length) return path;
 
     const sections = path.split('.');
@@ -60,11 +70,17 @@ export class TranslationService {
       } else return path;
     }
 
-    if (Array.isArray(value)) {
-      value = value.join("\n");
+    return value;
+  }
+
+  private static line(path: string): string {
+    let result = TranslationService.data(path);
+    
+    if (Array.isArray(result)) {
+      result = result.join('\n');
     }
 
-    return value;
+    return result;
   }
 
   private static initialize(): void {
