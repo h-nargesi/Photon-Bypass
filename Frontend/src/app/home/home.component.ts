@@ -1,3 +1,4 @@
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import {
   ColComponent,
@@ -8,12 +9,28 @@ import { TranslationPipe, TranslationService } from '../@services';
 
 @Component({
   selector: 'app-home',
-  imports: [ContainerComponent, RowComponent, ColComponent, TranslationPipe],
+  imports: [
+    CommonModule,
+    ContainerComponent,
+    RowComponent,
+    ColComponent,
+    TranslationPipe,
+  ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
 })
 export class HomeComponent {
-  public translate(key: string) {
-    return TranslationService.translate(key);
+  constructor(private readonly translation: TranslationService) {}
+
+  public lines(key: string): string[] {
+    return this.translation.lines(key);
+  }
+
+  public data(key: string): any {
+    return this.translation.data(key);
+  }
+
+  public getTitle(item: any): any {
+    return item.title;
   }
 }
