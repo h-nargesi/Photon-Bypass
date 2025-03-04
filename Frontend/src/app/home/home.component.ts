@@ -1,8 +1,17 @@
 import { Component } from '@angular/core';
+import {
+  ColComponent,
+  ContainerComponent,
+  RowComponent
+} from '@coreui/angular';
 
 @Component({
   selector: 'app-home',
-  imports: [],
+  imports: [
+    ContainerComponent,
+    RowComponent,
+    ColComponent,
+  ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss'
 })
