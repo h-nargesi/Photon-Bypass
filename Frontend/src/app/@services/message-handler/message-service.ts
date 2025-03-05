@@ -24,7 +24,7 @@ export class MessageService {
     // }
   }
 
-  public resultHandler(title: string, result: ApiResult<any>) {
+  public resultHandler(title: string, result: ApiResult) {
     if (!title && !result?.message?.length) return;
     this.messageHandler(result.code, title, result.message, result.method);
   }

@@ -1,6 +1,6 @@
 import { Injectable, TemplateRef } from '@angular/core';
 import { ApiResult } from '../../@models';
-import { ApiResultContext } from '../api-services/api-result-context';
+import { ApiResultContext } from '../api-services/models/api-result-context';
 import { MessageService } from '../message-handler/message-service';
 
 @Injectable({ providedIn: 'root' })
@@ -15,9 +15,7 @@ export class ApiMessageHandlerService {
     if (this.message_handler) this.message_handler.dialogBox = dialog;
   }
 
-  public resultHandler<M>(
-    context: ApiResultContext<M>
-  ): ApiResult<M> {
+  public resultHandler(context: ApiResultContext): ApiResult {
     if (!context || !context.result) return context.result;
 
     const result = context.result;

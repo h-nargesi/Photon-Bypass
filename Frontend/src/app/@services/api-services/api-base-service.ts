@@ -2,14 +2,17 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApiResult, MessageMethod } from '../../@models';
+import { ApiResult, ApiResultData, MessageMethod } from '../../@models';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { ApiMessageHandlerService } from '../message-handler/message-handler-service';
 import { MessageService } from '../message-handler/message-service';
 import { TranslationService } from '../translation/translation-service';
-import { ApiParam } from './api-param-type';
-import { ApiResultContext } from './api-result-context';
 import { HttpClientHandler } from './http-client';
+import { ApiParam } from './models/api-param-type';
+import {
+  ApiResultContext,
+  ApiResultDataContext,
+} from './models/api-result-context';
 
 @Injectable({ providedIn: 'root' })
 export abstract class ApiBaseService extends ApiMessageHandlerService {
@@ -23,29 +26,38 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
     super(message_handler);
   }
 
+  protected call(
+    url: string,
+    title?: string,
+    params?: ApiParam,
+    show_message?: boolean,
+    message_method?: MessageMethod
+  ): Observable<ApiResult> {
+    const service = this;
+    return this.api
+      .call(url, params)
+      .pipe(
+        map((result) => {
+          return {
+            result,
+            title: title ?? TranslationService.translate('api.loading'),
+            show_message: show_message,
+            message_method: message_method,
+            service,
+          } as ApiResultContext;
+        })
+      )
+      .pipe(map(this.checkLoginUser))
+      .pipe(map(this.resultHandler));
+  }
+
   protected get<M>(
     url: string,
     title?: string,
     params?: ApiParam,
     show_message?: boolean,
     message_method?: MessageMethod
-  ): Observable<M | undefined> {
-    return this.getResult<M>(
-      url,
-      title,
-      params,
-      show_message,
-      message_method
-    ).pipe(map((result) => result.data));
-  }
-
-  protected getResult<M>(
-    url: string,
-    title?: string,
-    params?: ApiParam,
-    show_message?: boolean,
-    message_method?: MessageMethod
-  ): Observable<ApiResult<M>> {
+  ): Observable<ApiResultData<M>> {
     const service = this;
     return this.api
       .get<M>(url, params)
@@ -57,11 +69,48 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
             show_message: show_message,
             message_method: message_method,
             service,
-          } as ApiResultContext<M>;
+          } as ApiResultDataContext<M>;
         })
       )
-      .pipe(map(this.checkLoginUser<M>))
-      .pipe(map(this.resultHandler<M>));
+      .pipe(map(this.checkLoginUser))
+      .pipe(map(this.resultHandler));
+  }
+
+  protected getData<M>(
+    url: string,
+    title?: string,
+    params?: ApiParam,
+    show_message?: boolean,
+    message_method?: MessageMethod
+  ): Observable<M | undefined> {
+    return this.get<M>(url, title, params, show_message, message_method).pipe(
+      map((result) => result.data)
+    );
+  }
+
+  protected job(
+    url: string,
+    title: string,
+    model: any | null,
+    show_message?: boolean,
+    message_method?: MessageMethod
+  ): Observable<ApiResult> {
+    const service = this;
+    return this.api
+      .job(url, model)
+      .pipe(
+        map((result) => {
+          return {
+            result,
+            title: title,
+            show_message: show_message ?? true,
+            message_method: message_method,
+            service,
+          } as ApiResultContext;
+        })
+      )
+      .pipe(map(this.checkLoginUser))
+      .pipe(map(this.resultHandler));
   }
 
   protected post<M>(
@@ -70,23 +119,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
     model: any | null,
     show_message?: boolean,
     message_method?: MessageMethod
-  ): Observable<M | undefined> {
-    return this.postResult<M>(
-      url,
-      title,
-      model,
-      show_message,
-      message_method
-    ).pipe(map((result) => result.data));
-  }
-
-  protected postResult<M>(
-    url: string,
-    title: string,
-    model: any | null,
-    show_message?: boolean,
-    message_method?: MessageMethod
-  ): Observable<ApiResult<M>> {
+  ): Observable<ApiResultData<M>> {
     const service = this;
     return this.api
       .post<M>(url, model)
@@ -98,14 +131,30 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
             show_message: show_message ?? true,
             message_method: message_method,
             service,
-          } as ApiResultContext<M>;
+          } as ApiResultDataContext<M>;
         })
       )
-      .pipe(map(this.checkLoginUser<M>))
-      .pipe(map(this.resultHandler<M>));
+      .pipe(map(this.checkLoginUser))
+      .pipe(map(this.resultHandler));
   }
 
-  private checkLoginUser<M>(context: ApiResultContext<M>): ApiResultContext<M> {
+  protected postData<M>(
+    url: string,
+    title: string,
+    model: any | null,
+    show_message?: boolean,
+    message_method?: MessageMethod
+  ): Observable<M | undefined> {
+    return this.post<M>(
+      url,
+      title,
+      model,
+      show_message,
+      message_method
+    ).pipe(map((result) => result.data));
+  }
+
+  private checkLoginUser(context: ApiResultContext): ApiResultContext {
     const result = context.result;
     if (result.code == 401) {
       LocalStorageService.set(['user', 'bearer'], undefined);

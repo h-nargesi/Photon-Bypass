@@ -13,13 +13,13 @@ export class AuthService {
   public login(
     username: string,
     password: string
-  ): Observable<ApiResult<boolean>> {
+  ): Observable<ApiResult> {
     const params = { username, password };
-    return this.api.authorization<boolean>(`${this.app_path}/token`, params);
+    return this.api.authorization(`${this.app_path}/token`, params);
   }
 
-  public logout(): Observable<ApiResult<boolean>> {
+  public logout(): Observable<ApiResult> {
     LocalStorageService.set(["user", "bearer"], undefined);
-    return this.api.get<boolean>(`${this.app_path}/logout`);
+    return this.api.call(`${this.app_path}/logout`);
   }
 }

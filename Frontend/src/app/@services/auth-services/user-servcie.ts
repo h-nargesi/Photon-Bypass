@@ -20,6 +20,6 @@ export class UserService extends ApiBaseService {
 
   public user(show_error?: boolean, title?: string): Observable<UserModel | undefined> {
     const url = `${this.app_path}/get`;
-    return this.get<UserModel>(url, title, undefined, show_error);
+    return this.getData<UserModel>(url, title, undefined, show_error);
   }
 }

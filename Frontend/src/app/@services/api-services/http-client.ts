@@ -2,11 +2,11 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { ApiResult, MessageMethod } from '../../@models';
+import { ApiResult, ApiResultData, MessageMethod } from '../../@models';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { TranslationService } from '../translation/translation-service';
-import { ApiParam } from './api-param-type';
-import { API_BASE_URL } from './app-base-path';
+import { ApiParam } from './models/api-param-type';
+import { API_BASE_URL } from './models/app-base-path';
 
 @Injectable({ providedIn: 'root' })
 export class HttpClientHandler {
@@ -16,35 +16,50 @@ export class HttpClientHandler {
     private readonly api: HttpClient
   ) {}
 
-  public get<M>(url: string, params?: ApiParam): Observable<ApiResult<M>> {
+  public call(url: string, params?: ApiParam): Observable<ApiResult> {
     url = this.base_path + url;
     const headers = this.getHeader();
     return this.api
-      .get<ApiResult<M>>(url, { params, observe: 'response', headers })
-      .pipe(map(this.processResponse<M>))
-      .pipe(catchError(this.errorHandler<M>));
+      .get<ApiResult>(url, { params, observe: 'response', headers })
+      .pipe(map(this.processResponse))
+      .pipe(catchError(this.errorHandler));
   }
 
-  public post<M>(url: string, body: any | null): Observable<ApiResult<M>> {
+  public get<M>(url: string, params?: ApiParam): Observable<ApiResultData<M>> {
     url = this.base_path + url;
     const headers = this.getHeader();
     return this.api
-      .post<ApiResult<M>>(url, body, { observe: 'response', headers })
-      .pipe(map(this.processResponse<M>))
-      .pipe(catchError(this.errorHandler<M>));
+      .get<ApiResultData<M>>(url, { params, observe: 'response', headers })
+      .pipe(map(this.processResponse))
+      .pipe(catchError(this.errorHandler));
   }
 
-  public authorization<M>(
-    url: string,
-    body: any | null
-  ): Observable<ApiResult<M>> {
+  public job(url: string, body: any | null): Observable<ApiResult> {
+    url = this.base_path + url;
+    const headers = this.getHeader();
+    return this.api
+      .post<ApiResult>(url, body, { observe: 'response', headers })
+      .pipe(map(this.processResponse))
+      .pipe(catchError(this.errorHandler));
+  }
+
+  public post<M>(url: string, body: any | null): Observable<ApiResultData<M>> {
+    url = this.base_path + url;
+    const headers = this.getHeader();
+    return this.api
+      .post<ApiResultData<M>>(url, body, { observe: 'response', headers })
+      .pipe(map(this.processResponse))
+      .pipe(catchError(this.errorHandler));
+  }
+
+  public authorization(url: string, body: any | null): Observable<ApiResult> {
     url = this.base_path + url;
     return this.api
-      .post<ApiResult<M>>(url, body, { observe: 'response' })
+      .post<ApiResultData<string>>(url, body, { observe: 'response' })
       .pipe(
         map((response) => {
           if (response.body && response.body.data && response.body.code < 300) {
-            const token = (response.body.data as any).access_token;
+            const token = response.body.data as string;
             if (token) {
               LocalStorageService.set(['user', 'bearer'], token);
             }
@@ -53,8 +68,9 @@ export class HttpClientHandler {
           return response;
         })
       )
-      .pipe(map(this.processResponse<M>))
-      .pipe(catchError(this.errorHandler<M>));
+      .pipe(map(this.processResponse))
+      .pipe(map((result) => result as ApiResult))
+      .pipe(catchError(this.errorHandler));
   }
 
   private getHeader(): Record<string, string | string[]> | undefined {
@@ -67,23 +83,20 @@ export class HttpClientHandler {
     return undefined;
   }
 
-  protected errorHandler<M>(error: any): Observable<ApiResult<M>> {
-    const error_object: ApiResult<M> = {
+  protected errorHandler(error: any): Observable<ApiResult> {
+    const error_object: ApiResult = {
       code: error?.error?.code ?? error.status ?? 600,
       message:
         error?.error?.message ?? TranslationService.translate('api.error'),
       developer: error,
       method: MessageMethod.toaster,
-      data: undefined,
     };
     if (error_object.code < 400) error_object.code = 600;
     return of(error_object);
   }
 
-  private processResponse<M>(
-    response: HttpResponse<ApiResult<M>>
-  ): ApiResult<M> {
-    const result = response.body ?? ({} as ApiResult<M>);
+  private processResponse(response: HttpResponse<ApiResult>): ApiResult {
+    const result = response.body ?? ({} as ApiResult);
 
     if (!result.code) {
       result.code = response.status;
