@@ -1,0 +1,87 @@
+<!--<c-header class="mb-4 d-print-none" position="sticky">-->
+<ng-container>
+  <c-container [fluid]="true" class="border-bottom px-4">
+    <div class="d-none d-md-flex">
+      <h4>{{ titleService.getTitle() }}</h4>
+    </div>
+
+    <c-header-nav class="d-none d-md-flex ms-auto ">
+      <a cNavLink routerLink="/dashboard">
+        <svg [cIcon]="icons.cilSpeedometer" class="my-1" size="lg"></svg>
+      </a>
+      <a cNavLink routerLink="/rnewal">
+        <svg [cIcon]="icons.cilLoopCircular" class="my-1" size="lg"></svg>
+      </a>
+      <a cNavLink routerLink="/payment">
+        <svg [cIcon]="icons.cilCreditCard" class="my-1" size="lg"></svg>
+      </a>
+      <a cNavLink routerLink="/history">
+        <svg [cIcon]="icons.cilHistory" class="my-1" size="lg"></svg>
+      </a>
+    </c-header-nav>
+
+    <c-header-nav class="ms-auto ms-md-0">
+      <div class="nav-item py-1">
+        <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
+      </div>
+      <ng-container *ngTemplateOutlet="themeDropdown" />
+      <div class="nav-item py-1">
+        <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
+      </div>
+    </c-header-nav>
+
+    <c-header-nav class="mx-0">
+      <ng-container *ngTemplateOutlet="userDropdown" />
+    </c-header-nav>
+
+  </c-container>
+  <c-container [fluid]="true" class="px-4">
+    <c-breadcrumb-router />
+  </c-container>
+</ng-container>
+<!--</c-header>-->
+
+<ng-template #userDropdown>
+  <c-dropdown [popperOptions]="{ placement: 'bottom-start' }" variant="nav-item">
+    <button [caret]="false" cDropdownToggle class="py-0 pe-0" aria-label="Open user menu">
+      <svg [cIcon]="icons.cilUser" class="me-2" size="lg"></svg>
+    </button>
+    <ul cDropdownMenu class="pt-0 w-auto">
+      <li>
+        <a cDropdownItem routerLink="/edit-user-info">
+          <svg [cIcon]="icons.cilPencil" class="me-2"></svg>
+          Edit User Info
+        </a>
+      </li>
+      <li>
+        <a cDropdownItem routerLink="/change-password">
+          <svg [cIcon]="icons.cilLockLocked" class="me-2"></svg>
+          Change Password
+        </a>
+      </li>
+      <li>
+        <a cDropdownItem routerLink="/logout">
+          <svg [cIcon]="icons.cilAccountLogout" class="me-2"></svg>
+          Logout
+        </a>
+      </li>
+    </ul>
+  </c-dropdown>
+</ng-template>
+
+<ng-template #themeDropdown>
+  <c-dropdown alignment="end" variant="nav-item">
+    <button [caret]="false" cDropdownToggle aria-label="Open theme picker">
+      <svg [cIcon]="icon_cilSun()" size="lg"></svg>
+    </button>
+    <div cDropdownMenu>
+      @for (mode of colorModes; track mode.name) {
+      <button (click)="colorMode.set(mode.name)" [active]="colorMode()===mode.name" cDropdownItem
+        class="d-flex align-items-center">
+        <svg [cIcon]="mode.icon" class="me-2" size="lg"></svg>
+        {{ mode.text }}
+      </button>
+      }
+    </div>
+  </c-dropdown>
+</ng-template>
