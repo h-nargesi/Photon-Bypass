@@ -1,7 +1,8 @@
 
 // Import styles with default layout.
 @use "@coreui/coreui/scss/coreui" as * with (
-  $enable-deprecation-messages: false
+  $enable-deprecation-messages: false,
+  $enable-rtl: true
 );
 
 // Import Chart.js custom tooltips styles
