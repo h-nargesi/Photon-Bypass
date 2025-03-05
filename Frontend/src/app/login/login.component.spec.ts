@@ -1,10 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ButtonModule, CardModule, FormModule, GridModule } from '@coreui/angular';
+import {
+  ButtonModule,
+  CardModule,
+  FormModule,
+  GridModule,
+} from '@coreui/angular';
+import { IconModule, IconSetService } from '@coreui/icons-angular';
+import { iconSubset } from '../@icons/icon-subset';
 import { LoginComponent } from './login.component';
-import { IconModule } from '@coreui/icons-angular';
-import { IconSetService } from '@coreui/icons-angular';
-import { iconSubset } from '../@services';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
@@ -13,10 +17,16 @@ describe('LoginComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-    imports: [FormModule, CardModule, GridModule, ButtonModule, IconModule, LoginComponent],
-    providers: [IconSetService]
-})
-    .compileComponents();
+      imports: [
+        FormModule,
+        CardModule,
+        GridModule,
+        ButtonModule,
+        IconModule,
+        LoginComponent,
+      ],
+      providers: [IconSetService],
+    }).compileComponents();
   });
 
   beforeEach(() => {

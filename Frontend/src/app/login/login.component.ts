@@ -17,11 +17,10 @@ import {
   RowComponent,
   TextColorDirective,
 } from '@coreui/angular';
-import { cilLockLocked, cilUser } from '@coreui/icons';
 import { IconDirective } from '@coreui/icons-angular';
-import { AuthService, TranslationPipe } from '../@services';
-import { result } from 'lodash-es';
+import { iconSubset } from '../@icons/icon-subset';
 import { ApiResult } from '../@models';
+import { AuthService, TranslationPipe } from '../@services';
 
 @Component({
   selector: 'app-login',
@@ -49,7 +48,7 @@ import { ApiResult } from '../@models';
   ],
 })
 export class LoginComponent {
-  icons = { cilUser, cilLockLocked };
+  icons = iconSubset;
   isValidated = false;
   username?: string;
   password?: string;
