@@ -1,9 +1,27 @@
 @import "https://fonts.googleapis.com/css?family=Roboto:100,100i,300,300i,400,400i,500,500i,700,700i,900,900i|Open+Sans:300,300i,400,400i,500,500i,600,600i,700,700i,800,800i";
-@import '../../public/font/parastoo/font-face.css';
+@import "../../public/font/parastoo/font-face.css";
+
+:root {
+  --cui-body-font-size: 0.9rem;
+}
 
 .persian {
-    h1, h2, h3, h4, h5, h6 {
-        font-family: Parastoo;
-        font-weight: bold;
-    }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .parastoo {
+    font-family: Parastoo;
+    font-weight: bold;
+  }
+}
+
+.form-control {
+  font-size: var(--cui-body-font-size);
+}
+
+.btn {
+  --cui-btn-font-size: var(--cui-body-font-size);
 }

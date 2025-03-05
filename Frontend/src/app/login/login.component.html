@@ -1,0 +1,58 @@
+<div class="bg-light dark:bg-transparent min-vh-100 d-flex flex-row align-items-center">
+  <c-container breakpoint="md">
+    <c-row class="justify-content-center">
+      <c-col lg="10" xl="8" class="persian">
+        <c-card-group>
+          <c-card class="p-4">
+            <c-card-body>
+              <form cForm>
+                <h1>{{ "login.title" | translate }}</h1>
+                <p class="text-body-secondary">{{ "login.login-caption" | translate }}</p>
+                <c-input-group class="mb-3">
+                  <span cInputGroupText>
+                    <svg [cIcon]="icons.cilUser" title="User"></svg>
+                  </span>
+                  <input autoComplete="username" cFormControl placeholder='{{ "login.labels.username" | translate }}' />
+                </c-input-group>
+                <c-input-group class="mb-4">
+                  <span cInputGroupText>
+                    <svg [cIcon]="icons.cilLockLocked" title="password"></svg>
+                  </span>
+                  <input
+                    autoComplete="current-password"
+                    cFormControl
+                    placeholder='{{ "login.labels.password" | translate }}'
+                    type="password"
+                  />
+                </c-input-group>
+                <c-row>
+                  <c-col class="text-right" xs="6">
+                    <button cButton class="px-0" color="link" routerLink="/forgot-password">
+                      {{ "login.labels.forgot-password" | translate }}
+                    </button>
+                  </c-col>
+                  <c-col xs="6">
+                    <button cButton class="px-4" color="primary">
+                      {{ "login.labels.login" | translate }}
+                    </button>
+                  </c-col>
+                </c-row>
+              </form>
+            </c-card-body>
+          </c-card>
+          <c-card [ngStyle]="{'minWidth.%': 44}" class="text-white bg-primary py-5">
+            <c-card-body class="text-center">
+              <div>
+                <h2>{{ "login.labels.register" | translate }}</h2>
+                <p>{{ "login.register-caption" | translate }}</p>
+                <button [active]="true" cButton class="mt-3" color="primary" routerLink="/register">
+                  {{ "login.labels.register-now" | translate }}
+                </button>
+              </div>
+            </c-card-body>
+          </c-card>
+        </c-card-group>
+      </c-col>
+    </c-row>
+  </c-container>
+</div>

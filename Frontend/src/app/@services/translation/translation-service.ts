@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
-import * as _home_page from '../../../../public/texts/home-page.json';
 import * as _global from '../../../../public/texts/global.json';
+import * as _home_page from '../../../../public/texts/home-page.json';
+import * as _login from '../../../../public/texts/login.json';
 
 @Injectable({ providedIn: 'root' })
 export class TranslationService {
@@ -75,7 +76,7 @@ export class TranslationService {
 
   private static line(path: string): string {
     let result = TranslationService.data(path);
-    
+
     if (Array.isArray(result)) {
       result = result.join('\n');
     }
@@ -84,6 +85,7 @@ export class TranslationService {
   }
 
   private static initialize(): void {
+    TranslationService.texts.set('login', _login);
     TranslationService.texts.set('home-page', _home_page);
     TranslationService.texts.set('global', _global);
     console.log('Translation Servcie is initialized.');
