@@ -35,8 +35,17 @@ Selling VPN
 
 - Login
     - Human Test
+    - Google Auth
     - User Name
     - Password
+
+- Forgot password
+    - Email/Mobile
+    - Submit => send code
+
+- Reset password
+    - Password *
+    - Submit => change password
 
 - User Page
     - Email Validation
@@ -117,3 +126,4 @@ Selling VPN
     2. samandehi.ir
     3. Bank Payment Gateway
 4. Send WhatsApp Notif
+5. Google Auth
