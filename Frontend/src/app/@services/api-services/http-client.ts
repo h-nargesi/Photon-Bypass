@@ -6,12 +6,12 @@ import { ApiResult, MessageMethod } from '../../@models';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { TranslationService } from '../translation/translation-service';
 import { ApiParam } from './api-param-type';
-import { APP_BASE_PATH } from './app-base-path';
+import { API_BASE_URL } from './app-base-path';
 
 @Injectable({ providedIn: 'root' })
 export class HttpClientHandler {
   constructor(
-    @Inject(APP_BASE_PATH)
+    @Inject(API_BASE_URL)
     private readonly base_path: string,
     private readonly api: HttpClient
   ) {}
