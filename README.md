@@ -47,7 +47,7 @@ Selling VPN
     - Password *
     - Submit => change password
 
-- User Page
+- Dashboard Page
     - Email Validation
         - Validation Code
         - Resent
