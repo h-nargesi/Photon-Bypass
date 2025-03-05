@@ -23,7 +23,7 @@ Selling VPN
 
 ### Dashbord
 
-- Register Page
+- Register Page (not in menu)
     - Human Test
     - User Name *
     - Email (* or mobile) => validate email
@@ -33,17 +33,17 @@ Selling VPN
     - Password *
     - Submit => send admin notif
 
-- Login
+- Login (not in menu)
     - Human Test
     - Google Auth
     - User Name
     - Password
 
-- Forgot password
+- Forgot password (not in menu)
     - Email/Mobile
     - Submit => send code
 
-- Reset password
+- Reset password (hidden)
     - Password *
     - Submit => change password
 
@@ -78,6 +78,8 @@ Selling VPN
     - Increment Value
     - Payment Way
     - Submit => to bank page
+
+- History
 
 - Edit Info Page
     - Email * => validate email
