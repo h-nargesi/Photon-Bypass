@@ -103,7 +103,7 @@
             </ng-template>
             <ng-template cTemplateId="widgetProgressTemplate">
                 <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsPercent ?? 0" />
-                <button cButton color="dark" class="mt-3" *ngIf="plan_info">
+                <button cButton routerLink="/rnewal" color="dark" class="mt-3" *ngIf="plan_info">
                     {{ "dashboard.balance.rnewal" | translate }}
                 </button>
             </ng-template>
