@@ -1,24 +1,40 @@
 <c-row class="g-4">
     <c-col sm="6">
-        <c-card class="mb-3" [ngStyle]="{'max-width.px': 540}">
+        <c-card class="mb-3 top-panels" [ngStyle]="{'max-width.px': 540}">
             <c-row class="g-0">
-                <c-col [md]="4" class="overflow-hidden position-relative">
-                    <img cCardImg="start" src="./assets/img/angular400.jpg" alt="CoreUI Angular Logo"
-                        class="d-none d-md-inline object-fit-cover" style="min-height: 100%; object-position: left">
-                    <img cCardImg="top" src="./assets/img/angular.jpg" alt="CoreUI Angular Logo"
-                        class="d-md-none d-sm-inline">
+                <c-col [md]="4" class="overflow-hidden position-relative bg-whatsapp top-panels">
+                    <div><svg [cIcon]="icons.cibWhatsapp" class="m-5 text-white" height="100%"></svg></div>
                 </c-col>
                 <c-card-body cCol [md]="8">
-                    <h5 cCardTitle>Card title</h5>
-                    <p cCardText>
-                        This is a wider card with supporting text below as a natural lead-in to
-                        additional content. This content is a little bit longer.
-                    </p>
-                    <p cCardText>
-                        <small class="text-medium-emphasis">Last updated 3 mins ago</small>
-                    </p>
+                    <h5 cCardTitle>{{ "dashboard.support.title" | translate }}</h5>
+                    <p cCardText class="ltr">{{ "dashboard.support.phone-number" | translate }}</p>
+                    <p cCardText>{{ "dashboard.support.description" | translate }}</p>
                 </c-card-body>
             </c-row>
+        </c-card>
+    </c-col>
+
+    <c-col sm="6">
+        <c-card class="mb-3 top-panels">
+            <c-card-body>
+                <div cCardText *ngIf="current_user.username" class="float-left ltr">
+                    <small>{{ current_user.username }}</small>
+                </div>
+                <h5 cCardTitle *ngIf="current_user.fullname">{{ current_user.fullname }}</h5>
+            </c-card-body>
+            <ul cListGroup [flush]="true" class="ltr">
+                <li cListGroupItem>{{ current_user.email }}</li>
+                <li cListGroupItem>
+                    <a class="icon-btn" (click)="sendCertificateViaEmail()"
+                        [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
+                        <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
+                    </a>
+                    <a class="icon-btn" (click)="changeOvenVPNPassword()"
+                        [cTooltip]="'dashboard.account.change-open-vpn-password' | translate">
+                        <svg [cIcon]="icons.cilLockLocked" class="text-primary"></svg>
+                    </a>
+                </li>
+            </ul>
         </c-card>
     </c-col>
 </c-row>
