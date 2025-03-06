@@ -2,18 +2,20 @@
 @import "../../public/fonts/parastoo/font-face.css";
 @import "../../public/fonts/iran-sans/font-face.css";
 
-.persian {
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  .parastoo {
-    font-family: Parastoo;
-    font-weight: bold;
-  }
-  
-  font-family: irsans;
-  font-weight: 300;
+.parastoo {
+  font-family: Parastoo;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: Parastoo;
+  font-weight: bold;
+}
+
+:root {
+  --cui-body-font-family: irsans;
 }
