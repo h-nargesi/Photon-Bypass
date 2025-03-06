@@ -28,8 +28,8 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
 
   protected call(
     url: string,
-    title?: string,
     params?: ApiParam,
+    title?: string,
     show_message?: boolean,
     message_method?: MessageMethod
   ): Observable<ApiResult> {
@@ -53,8 +53,8 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
 
   protected get<M>(
     url: string,
-    title?: string,
     params?: ApiParam,
+    title?: string,
     show_message?: boolean,
     message_method?: MessageMethod
   ): Observable<ApiResultData<M>> {
@@ -78,20 +78,20 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
 
   protected getData<M>(
     url: string,
-    title?: string,
     params?: ApiParam,
+    title?: string,
     show_message?: boolean,
     message_method?: MessageMethod
   ): Observable<M> {
-    return this.get<M>(url, title, params, show_message, message_method).pipe(
+    return this.get<M>(url, params, title, show_message, message_method).pipe(
       map((result) => result.data ?? (null as M))
     );
   }
 
   protected job(
     url: string,
-    title: string,
     model: any | null,
+    title?: string,
     show_message?: boolean,
     message_method?: MessageMethod
   ): Observable<ApiResult> {
@@ -115,8 +115,8 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
 
   protected post<M>(
     url: string,
-    title: string,
     model: any | null,
+    title?: string,
     show_message?: boolean,
     message_method?: MessageMethod
   ): Observable<ApiResultData<M>> {
@@ -140,12 +140,12 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
 
   protected postData<M>(
     url: string,
-    title: string,
     model: any | null,
+    title?: string,
     show_message?: boolean,
     message_method?: MessageMethod
   ): Observable<M> {
-    return this.post<M>(url, title, model, show_message, message_method).pipe(
+    return this.post<M>(url, model, title, show_message, message_method).pipe(
       map((result) => result.data ?? (null as M))
     );
   }
