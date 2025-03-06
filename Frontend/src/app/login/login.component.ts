@@ -18,7 +18,7 @@ import {
   TextColorDirective,
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
-import { iconSubset } from '../@icons/icon-subset';
+import { ICON_SUBSET } from '../@icons/icon-subset';
 import { ApiResult } from '../@models';
 import { AuthService, TranslationPipe } from '../@services';
 
@@ -48,7 +48,7 @@ import { AuthService, TranslationPipe } from '../@services';
   ],
 })
 export class LoginComponent {
-  icons = iconSubset;
+  icons = ICON_SUBSET;
   isValidated = false;
   username?: string;
   password?: string;

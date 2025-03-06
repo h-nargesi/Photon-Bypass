@@ -7,7 +7,7 @@ import {
   GridModule,
 } from '@coreui/angular';
 import { IconModule, IconSetService } from '@coreui/icons-angular';
-import { iconSubset } from '../@icons/icon-subset';
+import { ICON_SUBSET } from '../@icons/icon-subset';
 import { LoginComponent } from './login.component';
 
 describe('LoginComponent', () => {
@@ -31,7 +31,7 @@ describe('LoginComponent', () => {
 
   beforeEach(() => {
     iconSetService = TestBed.inject(IconSetService);
-    iconSetService.icons = { ...iconSubset };
+    iconSetService.icons = { ...ICON_SUBSET };
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;

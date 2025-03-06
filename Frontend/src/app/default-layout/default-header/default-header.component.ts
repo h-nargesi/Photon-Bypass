@@ -17,7 +17,7 @@ import {
 } from '@coreui/angular';
 
 import { IconDirective } from '@coreui/icons-angular';
-import { iconSubset } from '../../@icons/icon-subset';
+import { ICON_SUBSET } from '../../@icons/icon-subset';
 
 @Component({
   selector: 'app-default-header',
@@ -44,7 +44,7 @@ export class DefaultHeaderComponent extends HeaderComponent {
   readonly #colorModeService = inject(ColorModeService);
   readonly colorMode = this.#colorModeService.colorMode;
 
-  readonly icons = iconSubset;
+  readonly icons = ICON_SUBSET;
 
   readonly colorModes = [
     { name: 'light', text: 'Light', icon: this.icons.cilSun },

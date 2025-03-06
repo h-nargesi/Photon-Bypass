@@ -101,7 +101,7 @@ import {
 import { signet } from './signet';
 import { logo } from './logo';
 
-export const iconSubset = {
+export const ICON_SUBSET = {
   cilLoopCircular,
   cilHistory,
   cibCcAmex,

@@ -6,7 +6,6 @@ import { LocalStorageService } from "../local-storage/local-storage-service";
 
 @Injectable({ providedIn: "root" })
 export class AuthService {
-  private app_path: string = "/connect";
 
   constructor(private readonly api: HttpClientHandler) {}
 
@@ -15,11 +14,13 @@ export class AuthService {
     password: string
   ): Observable<ApiResult> {
     const params = { username, password };
-    return this.api.authorization(`${this.app_path}/token`, params);
+    return this.api.authorization(`${AUTH_API_URL}/token`, params);
   }
 
   public logout(): Observable<ApiResult> {
     LocalStorageService.set(["user", "bearer"], undefined);
-    return this.api.call(`${this.app_path}/logout`);
+    return this.api.call(`${AUTH_API_URL}/logout`);
   }
 }
+
+const AUTH_API_URL: string = "/auth";
