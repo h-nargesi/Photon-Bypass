@@ -7,5 +7,17 @@
     "account": {
         "send-cert-via-email": "ارسال کانفیگ بوسیله ایمیل",
         "change-open-vpn-password": "تغییر کلمه عبور open-vpn"
+    },
+    "connections": {
+        "title": "کاربران فعال",
+        "count": "تعداد کاربران متصل: {0}",
+        "closing": "بستن اتصال",
+        "duration": "از {0} {1} پیش",
+        "hour": "ساعت",
+        "minute": "دقیقه"
+    },
+    "balance": {
+        "title": "مقدار مانده پلن جاری",
+        "rnewal": "تمدید"
     }
 }

@@ -97,12 +97,16 @@ import {
   cilLoopCircular,
   cilHistory,
   cibWhatsapp,
+  cilXCircle,
+  cilAvTimer,
 } from '@coreui/icons';
 
 import { signet } from './signet';
 import { logo } from './logo';
 
 export const ICON_SUBSET = {
+  cilAvTimer,
+  cilXCircle,
   cibWhatsapp,
   cilLoopCircular,
   cilHistory,
