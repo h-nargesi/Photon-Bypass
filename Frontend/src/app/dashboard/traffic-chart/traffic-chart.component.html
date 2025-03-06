@@ -1,0 +1,22 @@
+<c-card class="my-4">
+    <c-card-body>
+        <c-row>
+            <c-col sm="5">
+                <h4 class="card-title mb-0" id="traffic">
+                    {{ "dashboard.traffic.title" | translate }}
+                </h4>
+                <div class="small text-body-secondary">
+                    {{ title }}
+                </div>
+            </c-col>
+            <c-col class="d-none d-md-block" sm="7">
+                <button cButton class="float-end" color="primary" aria-label="Reload" (click)="loadTrafficData()">
+                    <svg [cIcon]="icons.cilReload"></svg>
+                </button>
+            </c-col>
+        </c-row>
+        <c-chart [data]="data" [height]="300" [ngStyle]="{ 'marginTop.px': 40 }" [options]="options"
+            type="line" *ngIf="title">
+        </c-chart>
+    </c-card-body>
+</c-card>
