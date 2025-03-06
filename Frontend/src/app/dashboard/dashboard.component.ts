@@ -27,6 +27,7 @@ import {
 } from '@coreui/angular';
 import { ChartjsComponent } from '@coreui/angular-chartjs';
 import { IconDirective } from '@coreui/icons-angular';
+import { UserService } from '../@services';
 
 @Component({
   selector: 'app-user',
@@ -61,4 +62,7 @@ import { IconDirective } from '@coreui/icons-angular';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class DashboardComponent {}
+export class DashboardComponent {
+
+  constructor(private readonly user_service: UserService){}
+}
