@@ -1,12 +1,12 @@
 <c-row class="g-4">
-    <c-col sm="6">
+    <c-col lg="6">
         <c-card class="mb-3 top-panels">
             <c-row class="g-0">
-                <c-col [md]="4" class="overflow-hidden position-relative bg-whatsapp top-panels"
+                <c-col [xs]="4" class="overflow-hidden position-relative bg-whatsapp top-panels"
                     [ngStyle]="{'max-width.rem': 12}">
                     <div><svg [cIcon]="icons.cibWhatsapp" class="m-5 text-white" height="100%"></svg></div>
                 </c-col>
-                <c-card-body cCol [md]="8">
+                <c-card-body cCol [xs]="8">
                     <h5 cCardTitle>{{ "dashboard.support.title" | translate }}</h5>
                     <p cCardText class="ltr">{{ "dashboard.support.phone-number" | translate }}</p>
                     <p cCardText>{{ "dashboard.support.description" | translate }}</p>
@@ -15,8 +15,8 @@
         </c-card>
     </c-col>
 
-    <c-col sm="6">
-        <c-card class="mb-3 top-panels">
+    <c-col lg="6">
+        <c-card *ngIf="current_user" class="mb-3 top-panels">
             <c-card-body>
                 <div cCardText *ngIf="current_user.username" class="float-left ltr">
                     <small>{{ current_user.username }}</small>
@@ -25,12 +25,36 @@
             </c-card-body>
             <ul cListGroup [flush]="true" class="ltr">
                 <li cListGroupItem>{{ current_user.email }}</li>
-                <li cListGroupItem>
-                    <a class="icon-btn" (click)="sendCertificateViaEmail()"
+                <li cListGroupItem class="icon-btn-group">
+                    <a (click)="sendCertificateViaEmail()" *ngIf="!sending_cert_email"
                         [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
                         <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
                     </a>
-                    <a class="icon-btn" (click)="changeOvenVPNPassword()"
+                    <c-spinner color="primary" size="sm" *ngIf="sending_cert_email" />
+                    <a routerLink="/change-open-vpn-password"
+                        [cTooltip]="'dashboard.account.change-open-vpn-password' | translate">
+                        <svg [cIcon]="icons.cilLockLocked" class="text-primary"></svg>
+                    </a>
+                </li>
+            </ul>
+        </c-card>
+        <c-card *ngIf="!current_user" class="mb-3 top-panels bg-white">
+            <c-card-body cPlaceholderAnimation="glow">
+                <p cCardText>
+                    <span cCol="8" cPlaceholder class="me-1"></span>
+                    <span cCol="3" cPlaceholder class="me-1"></span>
+                </p>
+            </c-card-body>
+            <ul cListGroup [flush]="true" class="ltr"  cPlaceholderAnimation="glow">
+                <li cListGroupItem>
+                    <span cCol="8" cPlaceholder class="me-1"></span>
+                </li>
+                <li cListGroupItem>
+                    <a class="icon-btn"
+                        [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
+                        <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
+                    </a>
+                    <a class="icon-btn"
                         [cTooltip]="'dashboard.account.change-open-vpn-password' | translate">
                         <svg [cIcon]="icons.cilLockLocked" class="text-primary"></svg>
                     </a>

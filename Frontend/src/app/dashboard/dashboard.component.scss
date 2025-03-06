@@ -1,5 +1,9 @@
-.top-panels {
-  height: 12rem;
+@use "@coreui/coreui/scss/mixins/breakpoints" as *;
+
+@include media-breakpoint-up(sm) {
+  .top-panels {
+    height: 12rem;
+  }
 }
 
 .bg-whatsapp {
@@ -14,7 +18,11 @@
   float: left;
 }
 
-.icon-btn {
+.icon-btn-group > * {
   cursor: pointer;
   margin-right: 1rem;
+}
+
+.bg-white {
+  background-color: var(--cui-body-bg);
 }

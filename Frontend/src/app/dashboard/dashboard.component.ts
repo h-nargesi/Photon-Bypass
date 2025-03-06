@@ -1,6 +1,7 @@
 import { CommonModule, NgStyle } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import {
+  BgColorDirective,
   BorderDirective,
   ButtonDirective,
   CardBodyComponent,
@@ -18,7 +19,10 @@ import {
   GutterDirective,
   ListGroupDirective,
   ListGroupItemDirective,
+  PlaceholderAnimationDirective,
+  PlaceholderDirective,
   RowComponent,
+  SpinnerComponent,
   TabDirective,
   TabPanelComponent,
   TabsComponent,
@@ -33,6 +37,8 @@ import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
 import { UserModel } from '../@models';
 import { TranslationPipe, UserService } from '../@services';
+import { DashboardService } from './dashboard.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-user',
@@ -68,21 +74,44 @@ import { TranslationPipe, UserService } from '../@services';
     WidgetStatCComponent,
     WidgetStatDComponent,
     TranslationPipe,
+    PlaceholderDirective,
+    RowComponent,
+    ColComponent,
+    CardComponent,
+    CardBodyComponent,
+    CardImgDirective,
+    CardTitleDirective,
+    CardTextDirective,
+    ButtonDirective,
+    ColDirective,
+    RouterLink,
+    PlaceholderAnimationDirective,
+    PlaceholderDirective,
+    BgColorDirective,
+    SpinnerComponent,
   ],
+  providers: [DashboardService],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent implements OnInit {
   current_user: UserModel = {} as UserModel;
+  sending_cert_email = false;
   readonly icons = ICON_SUBSET;
 
-  constructor(private readonly user_service: UserService) {}
+  constructor(
+    private readonly user_service: UserService,
+    private readonly service: DashboardService
+  ) {}
 
   ngOnInit(): void {
     this.user_service.user().subscribe((user) => (this.current_user = user));
   }
 
-  sendCertificateViaEmail(): void {}
-
-  changeOvenVPNPassword(): void {}
+  sendCertificateViaEmail(): void {
+    this.sending_cert_email = true;
+    this.service
+      .sendCertificateViaEmail()
+      .subscribe(() => (this.sending_cert_email = false));
+  }
 }
