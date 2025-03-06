@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { Observable, of, tap } from 'rxjs';
 import { UserModel } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
 import { HttpClientHandler } from '../api-services/http-client';
@@ -9,8 +9,8 @@ import { TranslationService } from '../translation/translation-service';
 
 @Injectable({ providedIn: 'root' })
 export class UserService extends ApiBaseService {
-  private currentUser?: UserModel;
-  private observableUser?: Observable<UserModel>;
+  private current_user?: UserModel;
+  private observable_user?: Observable<UserModel>;
 
   constructor(
     api: HttpClientHandler,
@@ -21,17 +21,19 @@ export class UserService extends ApiBaseService {
   }
 
   public user(): Observable<UserModel> {
-    if (this.currentUser || this.currentUser === null) {
-      return of(this.currentUser);
-    } else if (!this.observableUser) {
-      this.observableUser = this.fetchUser();
-      this.observableUser.subscribe((user) => {
-        this.currentUser = user;
-        this.observableUser = undefined;
-      });
+    if (this.current_user || this.current_user === null) {
+      return of(this.current_user);
+    } else if (!this.observable_user) {
+      this.observable_user = this.fetchUser();
+      this.observable_user.pipe(
+        tap((user) => {
+          this.current_user = user;
+          this.observable_user = undefined;
+        })
+      );
     }
 
-    return this.observableUser;
+    return this.observable_user;
   }
 
   private fetchUser(): Observable<UserModel> {
@@ -41,4 +43,4 @@ export class UserService extends ApiBaseService {
   }
 }
 
-const AUTH_API_URL: string = "/auth";
+const AUTH_API_URL: string = '/auth';

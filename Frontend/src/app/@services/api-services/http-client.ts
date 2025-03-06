@@ -69,7 +69,6 @@ export class HttpClientHandler {
         })
       )
       .pipe(map(this.processResponse))
-      .pipe(map((result) => result as ApiResult))
       .pipe(catchError(this.errorHandler));
   }
 

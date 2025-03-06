@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { ApiResult, ApiResultData, MessageMethod } from '../../@models';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { ApiMessageHandlerService } from '../message-handler/message-handler-service';
@@ -47,7 +47,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
           } as ApiResultContext;
         })
       )
-      .pipe(map(this.checkLoginUser))
+      .pipe(tap(this.checkLoginUser))
       .pipe(map(this.resultHandler));
   }
 
@@ -72,7 +72,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
           } as ApiResultDataContext<M>;
         })
       )
-      .pipe(map(this.checkLoginUser))
+      .pipe(tap(this.checkLoginUser))
       .pipe(map(this.resultHandler));
   }
 
@@ -84,7 +84,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
     message_method?: MessageMethod
   ): Observable<M> {
     return this.get<M>(url, title, params, show_message, message_method).pipe(
-      map((result) => result.data ?? null as M)
+      map((result) => result.data ?? (null as M))
     );
   }
 
@@ -109,7 +109,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
           } as ApiResultContext;
         })
       )
-      .pipe(map(this.checkLoginUser))
+      .pipe(tap(this.checkLoginUser))
       .pipe(map(this.resultHandler));
   }
 
@@ -134,7 +134,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
           } as ApiResultDataContext<M>;
         })
       )
-      .pipe(map(this.checkLoginUser))
+      .pipe(tap(this.checkLoginUser))
       .pipe(map(this.resultHandler));
   }
 
@@ -145,16 +145,12 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
     show_message?: boolean,
     message_method?: MessageMethod
   ): Observable<M> {
-    return this.post<M>(
-      url,
-      title,
-      model,
-      show_message,
-      message_method
-    ).pipe(map((result) => result.data as null as M));
+    return this.post<M>(url, title, model, show_message, message_method).pipe(
+      map((result) => result.data ?? (null as M))
+    );
   }
 
-  private checkLoginUser(context: ApiResultContext): ApiResultContext {
+  private checkLoginUser(context: ApiResultContext): void {
     const result = context.result;
     if (result.code == 401) {
       LocalStorageService.set(['user', 'bearer'], undefined);
@@ -164,7 +160,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
         throw 'Invalid service in `ApiResultContext`. (ApiBaseService)';
       }
 
-      if (service.is_logout) return context;
+      if (service.is_logout) return;
       service.is_logout = true;
 
       if (!service.router) {
@@ -174,7 +170,5 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
     } else {
       LocalStorageService.set(['user', 'last_request'], new Date().getTime());
     }
-
-    return context;
   }
 }
