@@ -38,24 +38,22 @@
                 </li>
             </ul>
         </c-card>
-        <c-card *ngIf="!current_user" class="mb-3 top-panels bg-white">
+        <c-card *ngIf="!current_user" class="mb-3 top-panels">
             <c-card-body cPlaceholderAnimation="glow">
                 <p cCardText>
                     <span cCol="8" cPlaceholder class="me-1"></span>
                     <span cCol="3" cPlaceholder class="me-1"></span>
                 </p>
             </c-card-body>
-            <ul cListGroup [flush]="true" class="ltr"  cPlaceholderAnimation="glow">
+            <ul cListGroup [flush]="true" class="ltr" cPlaceholderAnimation="glow">
                 <li cListGroupItem>
                     <span cCol="8" cPlaceholder class="me-1"></span>
                 </li>
-                <li cListGroupItem>
-                    <a class="icon-btn"
-                        [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
+                <li cListGroupItem class="icon-btn-group">
+                    <a [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
                         <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
                     </a>
-                    <a class="icon-btn"
-                        [cTooltip]="'dashboard.account.change-open-vpn-password' | translate">
+                    <a [cTooltip]="'dashboard.account.change-open-vpn-password' | translate">
                         <svg [cIcon]="icons.cilLockLocked" class="text-primary"></svg>
                     </a>
                 </li>
