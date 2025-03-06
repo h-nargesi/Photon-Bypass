@@ -7,7 +7,7 @@ import {
   GridModule,
 } from '@coreui/angular';
 import { IconModule, IconSetService } from '@coreui/icons-angular';
-import { ICON_SUBSET } from '../@icons/icon-subset';
+import { ICON_SUBSET } from '../@icons';
 import { LoginComponent } from './login.component';
 
 describe('LoginComponent', () => {

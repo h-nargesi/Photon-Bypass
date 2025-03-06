@@ -30,7 +30,7 @@ import {
 } from '@coreui/angular';
 import { ChartjsComponent } from '@coreui/angular-chartjs';
 import { IconDirective } from '@coreui/icons-angular';
-import { ICON_SUBSET } from '../@icons/icon-subset';
+import { ICON_SUBSET } from '../@icons';
 import { UserModel } from '../@models';
 import { TranslationPipe, UserService } from '../@services';
 

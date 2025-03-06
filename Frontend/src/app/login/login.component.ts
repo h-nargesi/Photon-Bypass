@@ -18,7 +18,7 @@ import {
   TextColorDirective,
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
-import { ICON_SUBSET } from '../@icons/icon-subset';
+import { ICON_SUBSET } from '../@icons';
 import { ApiResult } from '../@models';
 import { AuthService, TranslationPipe } from '../@services';
 
