@@ -18,7 +18,7 @@
     <c-col lg="6">
         <c-card *ngIf="current_user" class="mb-3 top-panels">
             <c-card-body>
-                <div cCardText *ngIf="current_user.username" class="float-left ltr">
+                <div cCardText *ngIf="current_user.username" class="float-end ltr">
                     <small>{{ current_user.username }}</small>
                 </div>
                 <h5 cCardTitle *ngIf="current_user.fullname">{{ current_user.fullname }}</h5>
@@ -64,7 +64,7 @@
     <c-col lg="6">
         <c-card *ngIf="connections" class="mb-3">
             <c-card-body>
-                <div cCardText class="float-left ltr">
+                <div cCardText class="float-end ltr">
                     <small>{{ "dashboard.connections.count" | translate : [connection_count] }}</small>
                 </div>
                 <h5 cCardTitle>{{ "dashboard.connections.title" | translate }}</h5>
@@ -73,7 +73,7 @@
                 <li cListGroupItem *ngFor="let duration of connections; let index = index">
                     <span class="bullet bg-success me-4">&nbsp;</span>
                     <span>{{ printDuration(duration) }}</span>
-                    <a (click)="closeConnection(index)" class="float-left"
+                    <a (click)="closeConnection(index)" class="float-end"
                         [cTooltip]="'dashboard.connections.closing' | translate">
                         <svg [cIcon]="icons.cilXCircle" class="text-danger"></svg>
                     </a>
@@ -108,5 +108,9 @@
                 </button>
             </ng-template>
         </c-widget-stat-c>
+    </c-col>
+
+    <c-col>
+        <app-traffic-chart></app-traffic-chart>
     </c-col>
 </c-row>

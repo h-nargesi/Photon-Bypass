@@ -21,10 +21,11 @@ export class DashboardService extends ApiBaseService {
   }
 
   fetchPlanInfo(): Observable<UserPlanInfo> {
-    const url = `${ACOUNT_API_URL}/plan-info`;
+    const url = `${PLAN_API_URL}/plan-info`;
     return this.getData<UserPlanInfo>(url);
   }
 }
 
 const ACOUNT_API_URL: string = '/account';
 const CONNECTION_API_URL: string = '/connection';
+const PLAN_API_URL: string = '/plan';

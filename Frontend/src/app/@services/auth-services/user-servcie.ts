@@ -37,10 +37,10 @@ export class UserService extends ApiBaseService {
   }
 
   private fetchUser(): Observable<UserModel> {
-    const url = `${AUTH_API_URL}/get-user`;
+    const url = `${ACCOUNT_API_URL}/get-user`;
     const title = TranslationService.translate('api.recieve');
     return this.getData<UserModel>(url, undefined, title);
   }
 }
 
-const AUTH_API_URL: string = '/auth';
+const ACCOUNT_API_URL: string = '/account';
