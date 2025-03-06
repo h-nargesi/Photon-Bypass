@@ -1,8 +1,9 @@
 <c-row class="g-4">
     <c-col sm="6">
-        <c-card class="mb-3 top-panels" [ngStyle]="{'max-width.px': 540}">
+        <c-card class="mb-3 top-panels">
             <c-row class="g-0">
-                <c-col [md]="4" class="overflow-hidden position-relative bg-whatsapp top-panels">
+                <c-col [md]="4" class="overflow-hidden position-relative bg-whatsapp top-panels"
+                    [ngStyle]="{'max-width.rem': 12}">
                     <div><svg [cIcon]="icons.cibWhatsapp" class="m-5 text-white" height="100%"></svg></div>
                 </c-col>
                 <c-card-body cCol [md]="8">
