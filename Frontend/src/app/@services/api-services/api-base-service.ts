@@ -82,9 +82,9 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
     params?: ApiParam,
     show_message?: boolean,
     message_method?: MessageMethod
-  ): Observable<M | undefined> {
+  ): Observable<M> {
     return this.get<M>(url, title, params, show_message, message_method).pipe(
-      map((result) => result.data)
+      map((result) => result.data ?? null as M)
     );
   }
 
@@ -144,14 +144,14 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
     model: any | null,
     show_message?: boolean,
     message_method?: MessageMethod
-  ): Observable<M | undefined> {
+  ): Observable<M> {
     return this.post<M>(
       url,
       title,
       model,
       show_message,
       message_method
-    ).pipe(map((result) => result.data));
+    ).pipe(map((result) => result.data as null as M));
   }
 
   private checkLoginUser(context: ApiResultContext): ApiResultContext {

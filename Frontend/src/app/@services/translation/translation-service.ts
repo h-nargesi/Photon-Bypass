@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import * as _api from '../../../../public/texts/api.json';
 import * as _global from '../../../../public/texts/global.json';
 import * as _home_page from '../../../../public/texts/home-page.json';
 import * as _login from '../../../../public/texts/login.json';
@@ -85,9 +86,10 @@ export class TranslationService {
   }
 
   private static initialize(): void {
-    TranslationService.texts.set('login', _login);
-    TranslationService.texts.set('home-page', _home_page);
+    TranslationService.texts.set('api', _api);
     TranslationService.texts.set('global', _global);
+    TranslationService.texts.set('home-page', _home_page);
+    TranslationService.texts.set('login', _login);
     console.log('Translation Servcie is initialized.');
   }
 }
