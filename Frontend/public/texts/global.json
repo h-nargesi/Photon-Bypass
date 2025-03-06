@@ -1,4 +1,9 @@
 {
+    "header": {
+        "edit-user-info": "ویرایش",
+        "change-password": "تغییر کلمه عبور",
+        "logout": "خروج"
+    },
     "validations": {
         "required": "{0} الزامی است!",
         "pattern": "{0} را صحیح وارد کنید!"

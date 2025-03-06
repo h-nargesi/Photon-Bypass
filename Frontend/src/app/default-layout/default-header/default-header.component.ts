@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 
@@ -15,9 +15,11 @@ import {
   HeaderNavComponent,
   NavLinkDirective,
 } from '@coreui/angular';
-
 import { IconDirective } from '@coreui/icons-angular';
-import { ICON_SUBSET } from '../../@icons/icon-subset';
+
+import { ICON_SUBSET } from '../../@icons';
+import { UserModel } from '../../@models';
+import { TranslationPipe, UserService } from '../../@services';
 
 @Component({
   selector: 'app-default-header',
@@ -34,23 +36,29 @@ import { ICON_SUBSET } from '../../@icons/icon-subset';
     DropdownToggleDirective,
     DropdownMenuDirective,
     DropdownItemDirective,
+    TranslationPipe,
   ],
 })
-export class DefaultHeaderComponent extends HeaderComponent {
-  constructor(public readonly titleService: Title) {
-    super();
-  }
+export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
+  readonly icons = ICON_SUBSET;
 
   readonly #colorModeService = inject(ColorModeService);
   readonly colorMode = this.#colorModeService.colorMode;
-
-  readonly icons = ICON_SUBSET;
 
   readonly colorModes = [
     { name: 'light', text: 'Light', icon: this.icons.cilSun },
     { name: 'dark', text: 'Dark', icon: this.icons.cilMoon },
     { name: 'auto', text: 'Auto', icon: this.icons.cilContrast },
   ];
+
+  current_user?: UserModel;
+
+  constructor(
+    public readonly title_service: Title,
+    private readonly user_service: UserService
+  ) {
+    super();
+  }
 
   readonly icon_cilSun = computed(() => {
     const currentMode = this.colorMode();
@@ -59,4 +67,8 @@ export class DefaultHeaderComponent extends HeaderComponent {
       this.icons.cilSun
     );
   });
+
+  ngOnInit(): void {
+    this.user_service.user().subscribe((user) => (this.current_user = user));
+  }
 }

@@ -96,12 +96,14 @@ import {
   cilUserUnfollow,
   cilLoopCircular,
   cilHistory,
+  cibWhatsapp,
 } from '@coreui/icons';
 
 import { signet } from './signet';
 import { logo } from './logo';
 
 export const ICON_SUBSET = {
+  cibWhatsapp,
   cilLoopCircular,
   cilHistory,
   cibCcAmex,

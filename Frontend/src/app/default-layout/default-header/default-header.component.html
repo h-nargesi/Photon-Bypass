@@ -2,7 +2,7 @@
 <ng-container>
   <c-container [fluid]="true" class="border-bottom px-4">
     <div class="d-none d-md-flex">
-      <h4>{{ titleService.getTitle() }}</h4>
+      <h4>{{ title_service.getTitle() }}</h4>
     </div>
 
     <c-header-nav class="d-none d-md-flex ms-auto ">
@@ -48,21 +48,27 @@
     </button>
     <ul cDropdownMenu class="pt-0 w-auto">
       <li>
+        <span cDropdownItem>
+          <svg [cIcon]="icons.cilUser" class="me-2"></svg>
+          {{ current_user?.username }}
+        </span>
+      </li>
+      <li>
         <a cDropdownItem routerLink="/edit-user-info">
           <svg [cIcon]="icons.cilPencil" class="me-2"></svg>
-          Edit User Info
+          {{ "global.header.edit-user-info" | translate }}
         </a>
       </li>
       <li>
         <a cDropdownItem routerLink="/change-password">
           <svg [cIcon]="icons.cilLockLocked" class="me-2"></svg>
-          Change Password
+          {{ "global.header.change-password" | translate }}
         </a>
       </li>
       <li>
         <a cDropdownItem routerLink="/logout">
           <svg [cIcon]="icons.cilAccountLogout" class="me-2"></svg>
-          Logout
+          {{ "global.header.logout" | translate }}
         </a>
       </li>
     </ul>
