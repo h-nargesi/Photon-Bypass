@@ -1,7 +1,7 @@
 import { CommonModule, NgStyle } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   AlertComponent,
   ButtonDirective,
@@ -22,7 +22,12 @@ import {
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
 import { ApiResult } from '../@models';
-import { AuthService, MessageService, TranslationPipe } from '../@services';
+import {
+  AuthService,
+  MessageService,
+  TranslationPipe,
+  UserService,
+} from '../@services';
 
 @Component({
   selector: 'app-login',
@@ -32,6 +37,7 @@ import { AuthService, MessageService, TranslationPipe } from '../@services';
     CommonModule,
     FormsModule,
     NgStyle,
+    RouterLink,
     ContainerComponent,
     RowComponent,
     ColComponent,
@@ -60,8 +66,19 @@ export class LoginComponent {
 
   constructor(
     private readonly service: AuthService,
-    private readonly router: Router
-  ) {}
+    private readonly router: Router,
+    active_route: ActivatedRoute,
+    user_service: UserService
+  ) {
+    if (active_route.snapshot.routeConfig?.path === 'logout') {
+      this.service.logout();
+    } else {
+      user_service.user().subscribe((user) => {
+        console.log('login-check', user);
+        if (user?.username) this.router.navigate(['dashboard']);
+      });
+    }
+  }
 
   login() {
     this.isValidated = true;
