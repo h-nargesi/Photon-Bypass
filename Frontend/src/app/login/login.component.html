@@ -9,6 +9,7 @@
                 class="needs-validation">
                 <h1 class="mb-4">{{ "login.title" | translate }}</h1>
                 <p class="text-body-secondary">{{ "login.login-caption" | translate }}</p>
+                <c-alert *ngIf="result" [color]="getColor(result.code)">{{ result.message }}</c-alert>
                 <c-input-group class="mb-3">
                   <span cInputGroupText>
                     <svg [cIcon]="icons.cilUser" title="User"></svg>
