@@ -1,8 +1,11 @@
 @use "@coreui/coreui/scss/mixins/breakpoints" as *;
 
 @include media-breakpoint-up(sm) {
-  .top-panels {
-    height: 12rem;
+  .whatsapp-panel {
+    height: 14.625rem;
+  }
+  .whatsapp-icon {
+    height: 14.5rem;
   }
 }
 
@@ -14,7 +17,7 @@
   direction: ltr;
 }
 
-.li > a {
+.icon-btn {
   cursor: pointer;
 }
 
