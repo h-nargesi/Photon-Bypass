@@ -11,7 +11,8 @@
             </c-col>
             <c-col class="d-none d-md-block" sm="7">
                 <button cButton class="float-end" color="primary" aria-label="Reload" (click)="loadTrafficData()">
-                    <svg [cIcon]="icons.cilReload"></svg>
+                    <svg [cIcon]="icons.cilReload" *ngIf="!loading"></svg>
+                    <c-spinner color="light" size="sm" *ngIf="loading" />
                 </button>
             </c-col>
         </c-row>

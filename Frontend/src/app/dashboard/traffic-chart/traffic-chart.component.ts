@@ -7,6 +7,7 @@ import {
   CardComponent,
   ColComponent,
   RowComponent,
+  SpinnerComponent,
   TextColorDirective,
 } from '@coreui/angular';
 import { ChartjsComponent } from '@coreui/angular-chartjs';
@@ -28,6 +29,7 @@ import { TrafficDataService } from './traffic-chart.service';
 @Component({
   selector: 'app-traffic-chart',
   imports: [
+    CommonModule,
     TextColorDirective,
     CardComponent,
     CardBodyComponent,
@@ -40,6 +42,7 @@ import { TrafficDataService } from './traffic-chart.service';
     CommonModule,
     NgStyle,
     TranslationPipe,
+    SpinnerComponent,
   ],
   providers: [TrafficDataService],
   templateUrl: './traffic-chart.component.html',
@@ -50,13 +53,16 @@ export class TrafficChartComponent {
   title?: string;
   options?: ChartOptions;
   data?: ChartData;
+  loading: boolean = false;
 
   constructor(private readonly service: TrafficDataService) {
     this.initOptions();
   }
 
   loadTrafficData() {
+    this.loading = true;
     this.service.fetchTrafficData().subscribe((data) => {
+      this.loading = false;
       this.initMainChart(data);
     });
   }
