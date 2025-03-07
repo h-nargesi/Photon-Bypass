@@ -18,6 +18,7 @@ import {
   RowComponent,
   SpinnerComponent,
   TemplateIdDirective,
+  TextColorDirective,
   TooltipDirective,
   WidgetStatCComponent,
 } from '@coreui/angular';
@@ -67,6 +68,7 @@ import { TrafficChartComponent } from './traffic-chart/traffic-chart.component';
     IconDirective,
     ProgressComponent,
     TrafficChartComponent,
+    TextColorDirective,
   ],
   providers: [DashboardService],
   templateUrl: './dashboard.component.html',
