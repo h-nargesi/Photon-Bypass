@@ -1,8 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
-import { ContainerComponent, ShadowOnScrollDirective } from '@coreui/angular';
+import {
+  ContainerComponent,
+  ShadowOnScrollDirective,
+  ToasterComponent,
+  ToasterPlacement,
+  ToastModule,
+} from '@coreui/angular';
 
+import { NgClass } from '@angular/common';
+import { MessageService } from '../@services';
 import { DefaultFooterComponent, DefaultHeaderComponent } from './';
 
 @Component({
@@ -10,11 +18,24 @@ import { DefaultFooterComponent, DefaultHeaderComponent } from './';
   templateUrl: './default-layout.component.html',
   styleUrls: ['./default-layout.component.scss'],
   imports: [
+    NgClass,
     ContainerComponent,
     DefaultFooterComponent,
     DefaultHeaderComponent,
     RouterOutlet,
     ShadowOnScrollDirective,
+    ToastModule,
+    ToasterComponent,
   ],
 })
-export class DefaultLayoutComponent {}
+export class DefaultLayoutComponent {
+  @ViewChild(ToasterComponent) toaster!: ToasterComponent;
+
+  constructor(private readonly message_service: MessageService) {}
+
+  ngAfterViewInit() {
+    this.message_service.registerToaster(this.toaster);
+  }
+
+  readonly placement: ToasterPlacement = ToasterPlacement.TopEnd;
+}

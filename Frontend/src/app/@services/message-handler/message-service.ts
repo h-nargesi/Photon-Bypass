@@ -1,17 +1,32 @@
 import { Injectable, TemplateRef } from '@angular/core';
+import { ToasterComponent } from '@coreui/angular';
 import { ApiResult, MessageMethod } from '../../@models';
+import { AppToastComponent } from '../../default-layout/toast/toast.component';
 
 @Injectable({ providedIn: 'root' })
 export class MessageService {
-  private dialog: TemplateRef<any> | undefined;
-  private buffer: any[] = [];
+  private toaster?: ToasterComponent;
+  private dialog?: TemplateRef<any>;
+  private buffer: {
+    toaster: any[];
+    dialog: any[];
+  } = {
+    toaster: [],
+    dialog: [],
+  };
 
-  constructor() // private readonly toaster?: NbToastrService,
-  // private readonly dialoger?: NbDialogService,
-  {}
+  constructor() {} // private readonly dialoger?: NbDialogService,
 
   public get dialogBox(): TemplateRef<any> | undefined {
     return this.dialog;
+  }
+
+  public registerToaster(toaster: ToasterComponent) {
+    this.toaster = toaster;
+    if (!toaster) return;
+    while (this.buffer.toaster.length > 0) {
+      this.toaster.addToast(AppToastComponent, this.buffer.toaster.pop());
+    }
   }
 
   public set dialogBox(dialog: TemplateRef<any>) {
@@ -42,18 +57,18 @@ export class MessageService {
     const status = MessageService.getStatusCode(code);
 
     if (method === MessageMethod.toaster) {
-      // if (this.toaster) {
-      //   this.toaster.show(body, title, {
-      //     status: status,
-      //     destroyByClick: true,
-      //     duration: duration,
-      //     hasIcon: true,
-      //     position: NbGlobalPhysicalPosition.TOP_LEFT,
-      //     preventDuplicates: false,
-      //   });
-      //   return;
-      // } else
-      console.error('The toaster-service is not set.');
+      const props: any = {
+        title,
+        body,
+        color: status,
+        autohide: true,
+        delay: duration,
+        fade: true,
+      };
+      if (this.toaster) {
+        this.toaster.addToast(AppToastComponent, props);
+        return;
+      } else this.buffer.toaster.push(props);
     } else if (method === MessageMethod.dialog) {
       // if (this.dialoger) {
       //   if (this.dialog) {

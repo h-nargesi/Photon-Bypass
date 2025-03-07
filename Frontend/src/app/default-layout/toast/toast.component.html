@@ -1,0 +1,4 @@
+<ng-container>
+    <c-toast-header *ngIf="body" [closeButton]="false">{{ title }}</c-toast-header>
+    <c-toast-body [cTextColor]="getTextColor()">{{ body ?? title }}</c-toast-body>
+</ng-container>
