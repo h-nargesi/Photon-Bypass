@@ -1,6 +1,6 @@
 export interface ApiResult {
   code: number;
-  message: string;
+  message?: string;
   developer?: any;
   method?: MessageMethod;
 }

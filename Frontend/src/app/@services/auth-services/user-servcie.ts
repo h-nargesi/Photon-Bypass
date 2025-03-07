@@ -4,6 +4,10 @@ import { Observable, of, tap } from 'rxjs';
 import { UserModel } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
 import { HttpClientHandler } from '../api-services/http-client';
+import {
+  LocalStorageService,
+  wait,
+} from '../local-storage/local-storage-service';
 import { MessageService } from '../message-handler/message-service';
 import { TranslationService } from '../translation/translation-service';
 
@@ -37,9 +41,17 @@ export class UserService extends ApiBaseService {
   }
 
   private fetchUser(): Observable<UserModel> {
-    const url = `${ACCOUNT_API_URL}/get-user`;
-    const title = TranslationService.translate('api.recieve');
-    return this.getData<UserModel>(url, undefined, title);
+    if (LocalStorageService.UseAPI) {
+      const url = `${ACCOUNT_API_URL}/get-user`;
+      const title = TranslationService.translate('api.recieve');
+      return this.getData<UserModel>(url, undefined, title);
+    } else {
+      return wait({
+        username: 'hamed@na',
+        fullname: 'حامد نرگسی',
+        email: 'hamed.nargesi.jar@gmail.com',
+      });
+    }
   }
 }
 

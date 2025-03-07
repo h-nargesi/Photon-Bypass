@@ -47,7 +47,7 @@ export class MessageService {
   public messageHandler(
     code: number,
     title: string,
-    body: string,
+    body?: string,
     method: MessageMethod = MessageMethod.toaster,
     duration?: number
   ): any {
