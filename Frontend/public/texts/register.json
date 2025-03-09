@@ -11,5 +11,8 @@
         "last-name": "نام خانوادگی",
         "repeat-password": "تکرار کلمه عبور",
         "create-account": "ساختن حساب"
+    },
+    "messages": {
+        "passwords-not-match": "تکرار کلمه عبور مشابه نیست."
     }
 }

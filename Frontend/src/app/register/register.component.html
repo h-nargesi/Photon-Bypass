@@ -9,21 +9,31 @@
                 <svg [cIcon]="icons.cilHome" title="Home"></svg>
               </a>
             </div>
-            <form cForm>
+            <form cForm (ngSubmit)="submit()" [formGroup]="form" novalidate>
               <h1>{{ "register.title" | translate }}</h1>
               <p class="text-body-secondary">{{ "register.caption" | translate }}</p>
-              <c-input-group class="mb-3 ltr-content">
-                <input autoComplete="name" cFormControl [placeholder]='"register.labels.username" | translate' />
+              <c-input-group class="mb-3 ltr-content" *ngIf="form.controls['firstname'] as ctrl">
+                <input formControlName="username" cFormControl [placeholder]='"register.labels.username" | translate'
+                  [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
+                  autoComplete="name" />
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilUser"></svg>
                 </span>
+                <c-form-feedback *ngIf="submitted || ctrl.invalid" [valid]="true">
+                  {{ "global.validations.required" | translate : ["register.labels.username"] }}
+                </c-form-feedback>
               </c-input-group>
               <c-input-group class="mb-3 ltr-content">
-                <input autoComplete="email" cFormControl [placeholder]='"register.labels.email" | translate' />
+                <input formControlName="email" cFormControl [placeholder]='"register.labels.email" | translate'
+                  autoComplete="email" />
                 <span cInputGroupText>&#64;</span>
+                <c-form-feedback [valid]="false">
+                  {{ "global.validations.required" | translate : ["register.labels.email"] }}
+                </c-form-feedback>
               </c-input-group>
               <c-input-group class="mb-3 ltr-content">
-                <input autoComplete="mobile-phone" cFormControl [placeholder]='"register.labels.mobile" | translate' />
+                <input formControlName="mobile" cFormControl [placeholder]='"register.labels.mobile" | translate'
+                  autoComplete="mobile-phone" />
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilPhone"></svg>
                 </span>
@@ -32,28 +42,35 @@
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilUser"></svg>
                 </span>
-                <input autoComplete="first-name" cFormControl [placeholder]='"register.labels.first-name" | translate' />
+                <input formControlName="firstname" cFormControl [placeholder]='"register.labels.first-name" | translate'
+                  autoComplete="first-name" />
               </c-input-group>
               <c-input-group class="mb-3">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilUser"></svg>
                 </span>
-                <input autoComplete="last-name" cFormControl [placeholder]='"register.labels.last-name" | translate' />
+                <input formControlName="lastname" cFormControl [placeholder]='"register.labels.last-name" | translate'
+                  autoComplete="last-name" />
               </c-input-group>
               <c-input-group class="mb-3 ltr-content">
-                <input autoComplete="new-password" cFormControl [placeholder]='"register.labels.password" | translate' type="password" />
+                <input formControlName="password" cFormControl [placeholder]='"register.labels.password" | translate'
+                  type="password" autoComplete="new-password" />
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilLockLocked"></svg>
                 </span>
+                <c-form-feedback [valid]="false">
+                  {{ "global.validations.required" | translate : ["register.labels.password"] }}
+                </c-form-feedback>
               </c-input-group>
               <c-input-group class="mb-4 ltr-content">
-                <input autoComplete="new-password" cFormControl [placeholder]='"register.labels.repeat-password" | translate' type="password" />
+                <input formControlName="confirmPassword" cFormControl type="password"
+                  [placeholder]='"register.labels.repeat-password" | translate' autoComplete="new-password" />
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilLockLocked"></svg>
                 </span>
               </c-input-group>
               <div class="d-grid">
-                <button cButton color="primary">
+                <button cButton color="primary" type="submit">
                   {{ "register.labels.create-account" | translate }}
                 </button>
               </div>
