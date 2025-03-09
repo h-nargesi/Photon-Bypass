@@ -19,3 +19,15 @@ h6 {
 :root {
   --cui-body-font-family: irsans;
 }
+
+.ltr-content {
+  direction: ltr;
+
+  input {
+    text-align: end;
+  }
+}
+
+.ltr {
+  direction: ltr;
+}

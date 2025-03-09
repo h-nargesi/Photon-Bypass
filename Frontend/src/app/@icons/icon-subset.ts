@@ -100,12 +100,14 @@ import {
   cilXCircle,
   cilAvTimer,
   cilReload,
+  cilPhone,
 } from '@coreui/icons';
 
 import { signet } from './signet';
 import { logo } from './logo';
 
 export const ICON_SUBSET = {
+  cilPhone,
   cilReload,
   cilAvTimer,
   cilXCircle,
