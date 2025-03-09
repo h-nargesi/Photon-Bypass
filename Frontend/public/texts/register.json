@@ -1,0 +1,15 @@
+{
+    "title": "ثبت نام",
+    "caption": "با استفاده از ایمیل ثبت نام کنید.",
+    "labels": {
+        "login": "ورود",
+        "username": "نام کاربری لاتین",
+        "password": "کلمه عبور",
+        "email": "ایمیل",
+        "mobile": "واتساپ",
+        "first-name": "نام",
+        "last-name": "نام خانوادگی",
+        "repeat-password": "تکرار کلمه عبور",
+        "create-account": "ساختن حساب"
+    }
+}

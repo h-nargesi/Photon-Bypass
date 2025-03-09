@@ -1,0 +1,66 @@
+<div class="bg-light dark:bg-transparent min-vh-100 d-flex flex-row align-items-center">
+  <c-container>
+    <c-row class="justify-content-center">
+      <c-col lg="7" md="9" xl="6">
+        <c-card class="mx-4">
+          <c-card-body class="p-4">
+            <div class="mb-2">
+              <a routerLink="/">
+                <svg [cIcon]="icons.cilHome" title="Home"></svg>
+              </a>
+            </div>
+            <form cForm>
+              <h1>{{ "register.title" | translate }}</h1>
+              <p class="text-body-secondary">{{ "register.caption" | translate }}</p>
+              <c-input-group class="mb-3 ltr-content">
+                <input autoComplete="name" cFormControl [placeholder]='"register.labels.username" | translate' />
+                <span cInputGroupText>
+                  <svg [cIcon]="icons.cilUser"></svg>
+                </span>
+              </c-input-group>
+              <c-input-group class="mb-3 ltr-content">
+                <input autoComplete="email" cFormControl [placeholder]='"register.labels.email" | translate' />
+                <span cInputGroupText>&#64;</span>
+              </c-input-group>
+              <c-input-group class="mb-3 ltr-content">
+                <input autoComplete="mobile-phone" cFormControl [placeholder]='"register.labels.mobile" | translate' />
+                <span cInputGroupText>
+                  <svg [cIcon]="icons.cilPhone"></svg>
+                </span>
+              </c-input-group>
+              <c-input-group class="mb-3">
+                <span cInputGroupText>
+                  <svg [cIcon]="icons.cilUser"></svg>
+                </span>
+                <input autoComplete="first-name" cFormControl [placeholder]='"register.labels.first-name" | translate' />
+              </c-input-group>
+              <c-input-group class="mb-3">
+                <span cInputGroupText>
+                  <svg [cIcon]="icons.cilUser"></svg>
+                </span>
+                <input autoComplete="last-name" cFormControl [placeholder]='"register.labels.last-name" | translate' />
+              </c-input-group>
+              <c-input-group class="mb-3 ltr-content">
+                <input autoComplete="new-password" cFormControl [placeholder]='"register.labels.password" | translate' type="password" />
+                <span cInputGroupText>
+                  <svg [cIcon]="icons.cilLockLocked"></svg>
+                </span>
+              </c-input-group>
+              <c-input-group class="mb-4 ltr-content">
+                <input autoComplete="new-password" cFormControl [placeholder]='"register.labels.repeat-password" | translate' type="password" />
+                <span cInputGroupText>
+                  <svg [cIcon]="icons.cilLockLocked"></svg>
+                </span>
+              </c-input-group>
+              <div class="d-grid">
+                <button cButton color="primary">
+                  {{ "register.labels.create-account" | translate }}
+                </button>
+              </div>
+            </form>
+          </c-card-body>
+        </c-card>
+      </c-col>
+    </c-row>
+  </c-container>
+</div>
