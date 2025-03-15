@@ -1,11 +1,10 @@
-import { CommonModule, NgClass, NgStyle } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
   FormGroup,
   FormsModule,
-  NgControl,
   ReactiveFormsModule,
   ValidationErrors,
   Validators,
@@ -67,12 +66,13 @@ export class RegisterComponent {
     password: null as any as string,
   };
   form!: FormGroup;
+  formControls!: string[];
 
   constructor(
     private formBuilder: FormBuilder // public validationFormsService: ValidationFormsService
   ) {
     this.form = this.createForm();
-    // this.formControls = Object.keys(this.simpleForm.controls);
+    this.formControls = Object.keys(this.form.controls);
   }
 
   onValidate() {
