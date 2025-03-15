@@ -65,8 +65,22 @@ export class RegisterComponent {
     lastname: null as any as string,
     password: null as any as string,
   };
-  form!: FormGroup;
-  formControls!: string[];
+  readonly form!: FormGroup;
+  readonly formControls!: string[];
+  readonly validatorValues = {
+    username: {
+      minLength: 5,
+      maxLengh: 32,
+    },
+    mobile: {
+      minLength: 5,
+      maxLengh: 16,
+    },
+    password: {
+      minLength: 8,
+      maxLengh: 48,
+    },
+  };
 
   constructor(
     private formBuilder: FormBuilder // public validationFormsService: ValidationFormsService
@@ -95,17 +109,18 @@ export class RegisterComponent {
           '',
           [
             Validators.required,
-            Validators.minLength(5),
-            Validators.pattern(/^[a-zA-Z0-9][_-a-zA-Z0-9]+$/g),
+            Validators.minLength(this.validatorValues.username.minLength),
+            Validators.maxLength(this.validatorValues.username.maxLengh),
+            Validators.pattern("^[a-zA-Z][_\\-\\.a-zA-Z0-9]+$"),
           ],
         ],
         email: ['', [Validators.required, Validators.email]],
         mobile: [
           '',
           [
-            Validators.minLength(5),
-            Validators.maxLength(16),
-            Validators.pattern(/^\+?d{8,15}$/g),
+            Validators.minLength(this.validatorValues.mobile.minLength),
+            Validators.maxLength(this.validatorValues.mobile.maxLengh),
+            Validators.pattern("^\\+?\\d+$"),
           ],
         ],
         firstname: ['', []],
@@ -114,11 +129,19 @@ export class RegisterComponent {
           '',
           [
             Validators.required,
-            Validators.minLength(8),
-            Validators.pattern(/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/g),
+            Validators.minLength(this.validatorValues.password.minLength),
+            Validators.maxLength(this.validatorValues.password.maxLengh),
+            Validators.pattern("((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])|(?=.*[^\\x00-\\x7F])).+"),
           ],
         ],
-        confirmPassword: ['', [Validators.required, Validators.minLength(8)]],
+        confirmPassword: [
+          '',
+          [
+            Validators.required,
+            Validators.minLength(this.validatorValues.password.minLength),
+            Validators.maxLength(this.validatorValues.password.maxLengh),
+          ],
+        ],
       },
       { validators: [PasswordValidators.confirmPassword] }
     );

@@ -4,7 +4,6 @@ import { DefaultLayoutComponent } from './default-layout';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
-import { Validation06Component } from './test/validation06.component';
 
 export const routes: Routes = [
   {
@@ -23,10 +22,6 @@ export const routes: Routes = [
   {
     path: 'logout',
     component: LoginComponent,
-  },
-  {
-    path: 'validation',
-    component: Validation06Component,
   },
   {
     path: '',

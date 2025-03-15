@@ -12,80 +12,156 @@
             <form cForm (ngSubmit)="submit()" [formGroup]="form" novalidate>
               <h1>{{ "register.title" | translate }}</h1>
               <p class="text-body-secondary">{{ "register.caption" | translate }}</p>
-              <c-input-group class="mb-3 ltr-content" *ngIf="form.controls['username'] as ctrl">
-                <input formControlName="username" cFormControl [placeholder]='"register.labels.username" | translate'
-                  [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
-                  autoComplete="name" />
+
+              <!-- USERNAME -->
+              <c-input-group class="mb-3 ltr" *ngIf="form.controls['username'] as ctrl">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilUser"></svg>
                 </span>
-                <c-form-feedback *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
-                  {{ "global.validations.required" | translate : ["register.labels.username"] }}
+                <input formControlName="username" cFormControl
+                  [placeholder]='"register.labels.username-holder" | translate'
+                  [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
+                  autoComplete="name" [maxlength]="validatorValues.username.maxLengh" />
+
+                <c-form-feedback class="rtl" *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
+                  <ng-container *ngIf="ctrl.errors as errors">
+                    <div *ngIf="errors['required']">
+                      {{ "global.validations.required" | translate : ["register.labels.username"] }}
+                    </div>
+                    <div *ngIf="errors['maxlengh'] || errors['minlength']">
+                      {{ "global.validations.length" | translate : [
+                      "register.labels.username",
+                      validatorValues.username.minLength.toString(),
+                      validatorValues.username.maxLengh.toString()] }}
+                    </div>
+                    <div *ngIf="!errors['required'] && !errors['maxlengh'] && !errors['minlength']">
+                      {{ "global.validations.invalid" | translate : ["register.labels.username"] }}
+                    </div>
+                  </ng-container>
                 </c-form-feedback>
-                <div class="ltr" style="position: relative; color: red;">
-                  submitted: {{ submitted }}<br/>
-                  ctrl.touched: {{ ctrl.touched }}<br/>
-                  ctrl.valid: {{ ctrl.valid }}<br/>
-                  ctrl.invalid: {{ ctrl.invalid }}<br/>
-                  valid: {{ ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined }}<br/>
-                  errors['required']: {{ ctrl.errors?.['required'] }}<br/>
-                </div>
               </c-input-group>
-              <c-input-group class="mb-3 ltr-content" *ngIf="form.controls['email'] as ctrl">
-                <input formControlName="email" cFormControl [placeholder]='"register.labels.email" | translate'
-                [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
-                  autoComplete="email" />
+
+              <!-- EMAIL -->
+              <c-input-group class="mb-3 ltr" *ngIf="form.controls['email'] as ctrl">
                 <span cInputGroupText>&#64;</span>
-                <c-form-feedback *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
-                  {{ "global.validations.required" | translate : ["register.labels.email"] }}
+                <input formControlName="email" cFormControl [placeholder]='"register.labels.email-holder" | translate'
+                  [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
+                  autoComplete="email" />
+
+                <c-form-feedback class="rtl" *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
+                  <ng-container *ngIf="ctrl.errors as errors">
+                    <div *ngIf="errors['required']">
+                      {{ "global.validations.required" | translate : ["register.labels.email"] }}
+                    </div>
+                    <div *ngIf="errors['maxlengh'] || errors['minlength']">
+                      {{ "global.validations.length" | translate : [
+                      "register.labels.username",
+                      validatorValues.username.minLength.toString(),
+                      validatorValues.username.maxLengh.toString()] }}
+                    </div>
+                    <div *ngIf="!errors['required'] && !errors['maxlengh'] && !errors['minlength']">
+                      {{ "global.validations.invalid" | translate : ["register.labels.email"] }}
+                    </div>
+                  </ng-container>
                 </c-form-feedback>
-                <div class="ltr" style="position: relative; color: red;">
-                  submitted: {{ submitted }}<br/>
-                  ctrl.touched: {{ ctrl.touched }}<br/>
-                  ctrl.valid: {{ ctrl.valid }}<br/>
-                  ctrl.invalid: {{ ctrl.invalid }}<br/>
-                  valid: {{ ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined }}<br/>
-                  errors['required']: {{ ctrl.errors?.['required'] }}<br/>
-                </div>
               </c-input-group>
-              <c-input-group class="mb-3 ltr-content">
-                <input formControlName="mobile" cFormControl [placeholder]='"register.labels.mobile" | translate'
-                  autoComplete="mobile-phone" />
+
+              <!-- MOBILE -->
+              <c-input-group class="mb-3 ltr" *ngIf="form.controls['mobile'] as ctrl">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilPhone"></svg>
                 </span>
+                <input formControlName="mobile" cFormControl [placeholder]='"register.labels.mobile-holder" | translate'
+                  [valid]="ctrl.touched && ctrl.valid && ctrl.value ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
+                  autoComplete="mobile-phone" [maxlength]="validatorValues.mobile.maxLengh" />
+
+                <c-form-feedback class="rtl" *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
+                  <ng-container *ngIf="ctrl.errors as errors">
+                    <div *ngIf="errors['required']">
+                      {{ "global.validations.required" | translate : ["register.labels.mobile"] }}
+                    </div>
+                    <div *ngIf="errors['maxlengh'] || errors['minlength']">
+                      {{ "global.validations.length" | translate : [
+                      "register.labels.username",
+                      validatorValues.username.minLength.toString(),
+                      validatorValues.username.maxLengh.toString()] }}
+                    </div>
+                    <div *ngIf="!errors['required'] && !errors['maxlengh'] && !errors['minlength']">
+                      {{ "global.validations.invalid" | translate : ["register.labels.mobile"] }}
+                    </div>
+                  </ng-container>
+                </c-form-feedback>
               </c-input-group>
-              <c-input-group class="mb-3">
+
+              <!-- PASSWORD -->
+              <c-input-group class="mb-3 ltr" *ngIf="form.controls['password'] as ctrl">
+                <span cInputGroupText>
+                  <svg [cIcon]="icons.cilLockLocked"></svg>
+                </span>
+                <input formControlName="password" cFormControl
+                  [placeholder]='"register.labels.password-holder" | translate'
+                  [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
+                  type="password" autoComplete="new-password" [maxlength]="validatorValues.password.maxLengh" />
+
+                <c-form-feedback class="rtl" *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
+                  <ng-container *ngIf="ctrl.errors as errors">
+                    <div *ngIf="errors['required']">
+                      {{ "global.validations.required" | translate : ["register.labels.password"] }}
+                    </div>
+                    errors['minlength']: {{errors['minlength'] | json}}
+                    <div *ngIf="errors['maxlengh'] || errors['minlength']">
+                      {{ "global.validations.length" | translate : [
+                      "register.labels.username",
+                      validatorValues.username.minLength.toString(),
+                      validatorValues.username.maxLengh.toString()] }}
+                    </div>
+                    <div *ngIf="errors['pattern']">
+                      {{ "register.messages.password-requirement" | translate }}
+                    </div>
+                    <div *ngIf="!errors['required'] && !errors['maxlengh'] && !errors['minlength']">
+                      {{ "global.validations.invalid" | translate : ["register.labels.password"] }}
+                    </div>
+                  </ng-container>
+                </c-form-feedback>
+              </c-input-group>
+
+              <!-- CONFIRM PASSWORD -->
+              <c-input-group class="mb-4 ltr" *ngIf="form.controls['confirmPassword'] as ctrl">
+                <span cInputGroupText>
+                  <svg [cIcon]="icons.cilLockLocked"></svg>
+                </span>
+                <input formControlName="confirmPassword" cFormControl type="password"
+                  [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
+                  [placeholder]='"register.labels.confirm-password-holder" | translate' autoComplete="new-password" />
+
+                <c-form-feedback class="rtl" *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
+                  <ng-container *ngIf="ctrl.errors as errors">
+                    <div *ngIf="errors['passwordMismatch']">
+                      {{ "register.messages.password-mismatch" | translate }}
+                    </div>
+                  </ng-container>
+                </c-form-feedback>
+              </c-input-group>
+
+              <!-- FIRSTNAME -->
+              <c-input-group class="mb-3" *ngIf="form.controls['firstname'] as ctrl">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilUser"></svg>
                 </span>
                 <input formControlName="firstname" cFormControl [placeholder]='"register.labels.first-name" | translate'
                   autoComplete="first-name" />
               </c-input-group>
-              <c-input-group class="mb-3">
+
+              <!-- LASTNAME -->
+              <c-input-group class="mb-3" *ngIf="form.controls['lastname'] as ctrl">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilUser"></svg>
                 </span>
                 <input formControlName="lastname" cFormControl [placeholder]='"register.labels.last-name" | translate'
                   autoComplete="last-name" />
               </c-input-group>
-              <c-input-group class="mb-3 ltr-content">
-                <input formControlName="password" cFormControl [placeholder]='"register.labels.password" | translate'
-                  type="password" autoComplete="new-password" />
-                <span cInputGroupText>
-                  <svg [cIcon]="icons.cilLockLocked"></svg>
-                </span>
-                <c-form-feedback [valid]="false">
-                  {{ "global.validations.required" | translate : ["register.labels.password"] }}
-                </c-form-feedback>
-              </c-input-group>
-              <c-input-group class="mb-4 ltr-content">
-                <input formControlName="confirmPassword" cFormControl type="password"
-                  [placeholder]='"register.labels.repeat-password" | translate' autoComplete="new-password" />
-                <span cInputGroupText>
-                  <svg [cIcon]="icons.cilLockLocked"></svg>
-                </span>
-              </c-input-group>
+
+              <!-- BUTTONS -->
               <div class="d-grid">
                 <button cButton color="primary" type="submit">
                   {{ "register.labels.create-account" | translate }}
@@ -95,28 +171,29 @@
           </c-card-body>
         </c-card>
       </c-col>
-      <c-col [md]="6" class="ltr">
+      <c-col [md]="6" class="ltr" *ngIf="false">
         <c-card [ngClass]="{ 'bg-info': form.valid, 'bg-dark': form.invalid}">
           <c-card-body class="text-white">
             <pre>Value: <code>{{ form.value | json }}</code></pre>
             <ul>
               <li>Status: {{ form.status }}</li>
+              <li>Submitted: {{ submitted }}</li>
               <li>Valid: {{ form.valid }}</li>
               <li>Pristine: {{ form.pristine }}</li>
               <li>Errors: {{ form.errors | json }}</li>
             </ul>
             <ul>
               @for (ctrl of formControls; track ctrl) {
-                <li>
-                  {{ ctrl }}
-                  <ul>
-                    <li>Invalid: {{ form.controls[ctrl].invalid | json }}</li>
-                    <li>Pristine: {{ form.controls[ctrl].pristine | json }}</li>
-                    <li>Status: {{ form.controls[ctrl].status | json }}</li>
-                    <li>Touched: {{ form.controls[ctrl].touched | json }}</li>
-                    <li>Errors: {{ form.controls[ctrl].errors | json }}</li>
-                  </ul>
-                </li>
+              <li>
+                {{ ctrl }}
+                <ul>
+                  <li>Invalid: {{ form.controls[ctrl].invalid | json }}</li>
+                  <li>Pristine: {{ form.controls[ctrl].pristine | json }}</li>
+                  <li>Status: {{ form.controls[ctrl].status | json }}</li>
+                  <li>Touched: {{ form.controls[ctrl].touched | json }}</li>
+                  <li>Errors: {{ form.controls[ctrl].errors | json }}</li>
+                </ul>
+              </li>
               }
             </ul>
           </c-card-body>

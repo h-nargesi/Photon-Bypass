@@ -30,4 +30,12 @@ h6 {
 
 .ltr {
   direction: ltr;
+
+  input {
+    background-position: right calc(0.375em + 0.1875rem) center !important;
+  }
+}
+
+.rtl {
+  direction: rtl;
 }

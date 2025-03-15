@@ -3,16 +3,22 @@
     "caption": "با استفاده از ایمیل ثبت نام کنید.",
     "labels": {
         "login": "ورود",
-        "username": "نام کاربری لاتین",
+        "username-holder": "username",
+        "username": "نام کاربری",
+        "password-holder": "password",
         "password": "کلمه عبور",
+        "confirm-password-holder": "confirm password",
+        "confirm-password": "تکرار کلمه عبور",
+        "email-holder": "email",
         "email": "ایمیل",
+        "mobile-holder": "whats app",
         "mobile": "واتساپ",
         "first-name": "نام",
         "last-name": "نام خانوادگی",
-        "repeat-password": "تکرار کلمه عبور",
         "create-account": "ساختن حساب"
     },
     "messages": {
-        "passwords-not-match": "تکرار کلمه عبور مشابه نیست."
+        "password-mismatch": "تکرار کلمه عبور مشابه نیست.",
+        "password-requirement": "کلمه عبور باید شامل عدد، حروف کوچک و بزرگ انگلیسی یا فارسی باشد."
     }
 }
