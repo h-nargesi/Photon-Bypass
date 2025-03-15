@@ -12,7 +12,7 @@
             <form cForm (ngSubmit)="submit()" [formGroup]="form" novalidate>
               <h1>{{ "register.title" | translate }}</h1>
               <p class="text-body-secondary">{{ "register.caption" | translate }}</p>
-              <c-input-group class="mb-3 ltr-content" *ngIf="form.controls['firstname'] as ctrl">
+              <c-input-group class="mb-3 ltr-content" *ngIf="form.controls['username'] as ctrl">
                 <input formControlName="username" cFormControl [placeholder]='"register.labels.username" | translate'
                   [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
                   autoComplete="name" />
