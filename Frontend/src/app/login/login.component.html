@@ -12,27 +12,37 @@
                 class="needs-validation">
                 <h1 class="mb-4">{{ "login.title" | translate }}</h1>
                 <p class="text-body-secondary">{{ "login.login-caption" | translate }}</p>
+
+                <!-- RESULT -->
                 <c-alert *ngIf="result" [color]="getColor(result.code)">{{ result.message }}</c-alert>
-                <c-input-group class="mb-3 ltr-content">
-                  <input cFormControl type="text" [(ngModel)]="username" [ngModelOptions]="{standalone: true}" required
-                    placeholder='{{ "login.labels.username" | translate }}' autoComplete="username" />
+
+                <!-- USERNAME -->
+                <c-input-group class="mb-3 ltr has-validation">
                   <span cInputGroupText>
                     <svg [cIcon]="icons.cilUser" title="User"></svg>
                   </span>
-                  <c-form-feedback [valid]="false">
+                  <input cFormControl type="text" [(ngModel)]="username" [ngModelOptions]="{standalone: true}" required
+                    placeholder='{{ "login.labels.username-holder" | translate }}' autoComplete="username" />
+
+                  <c-form-feedback [valid]="false" class="rtl">
                     {{ "global.validations.required" | translate : ["login.labels.username"] }}
                   </c-form-feedback>
                 </c-input-group>
-                <c-input-group class="mb-4 ltr-content">
-                  <input cFormControl type="password" [(ngModel)]="password" [ngModelOptions]="{standalone: true}"
-                    required placeholder='{{ "login.labels.password" | translate }}' autoComplete="current-password" />
+
+                <!-- PASSWORD -->
+                <c-input-group class="mb-4 ltr has-validation">
                   <span cInputGroupText>
                     <svg [cIcon]="icons.cilLockLocked" title="password"></svg>
                   </span>
-                  <c-form-feedback [valid]="false">
+                  <input cFormControl type="password" [(ngModel)]="password" [ngModelOptions]="{standalone: true}"
+                    required placeholder='{{ "login.labels.password-holder" | translate }}' autoComplete="current-password" />
+
+                  <c-form-feedback [valid]="false" class="rtl">
                     {{ "global.validations.required" | translate : ["login.labels.password"] }}
                   </c-form-feedback>
                 </c-input-group>
+
+                <!-- ACTIONS -->
                 <c-row>
                   <c-col class="text-right" xs="6">
                     <button cButton class="px-0" color="link" routerLink="/forgot-password">

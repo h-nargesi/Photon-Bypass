@@ -14,7 +14,7 @@
               <p class="text-body-secondary">{{ "register.caption" | translate }}</p>
 
               <!-- USERNAME -->
-              <c-input-group class="mb-3 ltr" *ngIf="form.controls['username'] as ctrl">
+              <c-input-group class="mb-3 ltr has-validation" *ngIf="form.controls['username'] as ctrl">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilUser"></svg>
                 </span>
@@ -42,7 +42,7 @@
               </c-input-group>
 
               <!-- EMAIL -->
-              <c-input-group class="mb-3 ltr" *ngIf="form.controls['email'] as ctrl">
+              <c-input-group class="mb-3 ltr has-validation" *ngIf="form.controls['email'] as ctrl">
                 <span cInputGroupText>&#64;</span>
                 <input formControlName="email" cFormControl [placeholder]='"register.labels.email-holder" | translate'
                   [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
@@ -53,12 +53,6 @@
                     <div *ngIf="errors['required']">
                       {{ "global.validations.required" | translate : ["register.labels.email"] }}
                     </div>
-                    <div *ngIf="errors['maxlengh'] || errors['minlength']">
-                      {{ "global.validations.length" | translate : [
-                      "register.labels.username",
-                      validatorValues.username.minLength.toString(),
-                      validatorValues.username.maxLengh.toString()] }}
-                    </div>
                     <div *ngIf="!errors['required'] && !errors['maxlengh'] && !errors['minlength']">
                       {{ "global.validations.invalid" | translate : ["register.labels.email"] }}
                     </div>
@@ -67,7 +61,7 @@
               </c-input-group>
 
               <!-- MOBILE -->
-              <c-input-group class="mb-3 ltr" *ngIf="form.controls['mobile'] as ctrl">
+              <c-input-group class="mb-3 ltr has-validation" *ngIf="form.controls['mobile'] as ctrl">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilPhone"></svg>
                 </span>
@@ -82,9 +76,9 @@
                     </div>
                     <div *ngIf="errors['maxlengh'] || errors['minlength']">
                       {{ "global.validations.length" | translate : [
-                      "register.labels.username",
-                      validatorValues.username.minLength.toString(),
-                      validatorValues.username.maxLengh.toString()] }}
+                      "register.labels.mobile",
+                      validatorValues.mobile.minLength.toString(),
+                      validatorValues.mobile.maxLengh.toString()] }}
                     </div>
                     <div *ngIf="!errors['required'] && !errors['maxlengh'] && !errors['minlength']">
                       {{ "global.validations.invalid" | translate : ["register.labels.mobile"] }}
@@ -94,7 +88,7 @@
               </c-input-group>
 
               <!-- PASSWORD -->
-              <c-input-group class="mb-3 ltr" *ngIf="form.controls['password'] as ctrl">
+              <c-input-group class="mb-3 ltr has-validation" *ngIf="form.controls['password'] as ctrl">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilLockLocked"></svg>
                 </span>
@@ -108,12 +102,11 @@
                     <div *ngIf="errors['required']">
                       {{ "global.validations.required" | translate : ["register.labels.password"] }}
                     </div>
-                    errors['minlength']: {{errors['minlength'] | json}}
                     <div *ngIf="errors['maxlengh'] || errors['minlength']">
                       {{ "global.validations.length" | translate : [
-                      "register.labels.username",
-                      validatorValues.username.minLength.toString(),
-                      validatorValues.username.maxLengh.toString()] }}
+                      "register.labels.password",
+                      validatorValues.password.minLength.toString(),
+                      validatorValues.password.maxLengh.toString()] }}
                     </div>
                     <div *ngIf="errors['pattern']">
                       {{ "register.messages.password-requirement" | translate }}
@@ -126,7 +119,7 @@
               </c-input-group>
 
               <!-- CONFIRM PASSWORD -->
-              <c-input-group class="mb-4 ltr" *ngIf="form.controls['confirmPassword'] as ctrl">
+              <c-input-group class="mb-4 ltr has-validation" *ngIf="form.controls['confirmPassword'] as ctrl">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilLockLocked"></svg>
                 </span>
@@ -168,34 +161,6 @@
                 </button>
               </div>
             </form>
-          </c-card-body>
-        </c-card>
-      </c-col>
-      <c-col [md]="6" class="ltr" *ngIf="false">
-        <c-card [ngClass]="{ 'bg-info': form.valid, 'bg-dark': form.invalid}">
-          <c-card-body class="text-white">
-            <pre>Value: <code>{{ form.value | json }}</code></pre>
-            <ul>
-              <li>Status: {{ form.status }}</li>
-              <li>Submitted: {{ submitted }}</li>
-              <li>Valid: {{ form.valid }}</li>
-              <li>Pristine: {{ form.pristine }}</li>
-              <li>Errors: {{ form.errors | json }}</li>
-            </ul>
-            <ul>
-              @for (ctrl of formControls; track ctrl) {
-              <li>
-                {{ ctrl }}
-                <ul>
-                  <li>Invalid: {{ form.controls[ctrl].invalid | json }}</li>
-                  <li>Pristine: {{ form.controls[ctrl].pristine | json }}</li>
-                  <li>Status: {{ form.controls[ctrl].status | json }}</li>
-                  <li>Touched: {{ form.controls[ctrl].touched | json }}</li>
-                  <li>Errors: {{ form.controls[ctrl].errors | json }}</li>
-                </ul>
-              </li>
-              }
-            </ul>
           </c-card-body>
         </c-card>
       </c-col>

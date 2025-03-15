@@ -43,6 +43,10 @@ Selling VPN
     - Email/Mobile
     - Submit => send code
 
+- Change Password
+    - Old Password
+    - New Password
+
 - Reset password (hidden)
     - Password *
     - Submit => change password
@@ -87,10 +91,6 @@ Selling VPN
     - Primary Contact (email|whatsapp)
     - First Name
     - Last Name
-
-- Change Password
-    - Old Password
-    - New Password
 
 - Rnewal
     - Wallet Balance Panel

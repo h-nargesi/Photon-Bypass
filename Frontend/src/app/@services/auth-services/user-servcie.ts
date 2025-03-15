@@ -51,7 +51,7 @@ export class UserService extends ApiBaseService {
       } else {
         current_user = null;
       }
-      return wait(current_user as UserModel);
+      return of(current_user as UserModel);
     }
   }
 }

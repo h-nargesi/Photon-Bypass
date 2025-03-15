@@ -58,7 +58,7 @@ import {
   ],
 })
 export class LoginComponent {
-  icons = ICON_SUBSET;
+  readonly icons = ICON_SUBSET;
   isValidated = false;
   username?: string;
   password?: string;

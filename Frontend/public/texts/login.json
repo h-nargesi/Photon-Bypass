@@ -4,7 +4,9 @@
     "register-caption": "با استفاده از ایمیل ثبت نام کنید.",
     "labels": {
         "login": "ورود",
+        "username-holder": "username",
         "username": "نام کاربری",
+        "password-holder": "password",
         "password": "کلمه عبور",
         "forgot-password": "فراموش کرده‌اید؟",
         "register": "کاربر جدید",

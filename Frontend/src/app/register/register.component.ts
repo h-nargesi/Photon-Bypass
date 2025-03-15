@@ -26,8 +26,9 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
-import { NewUserModel } from '../@models';
+import { ApiResult, NewUserModel } from '../@models';
 import { TranslationPipe } from '../@services';
+import { RegisterService } from './register.service';
 
 @Component({
   selector: 'app-register',
@@ -53,20 +54,11 @@ import { TranslationPipe } from '../@services';
     RouterLink,
     FormFeedbackComponent,
   ],
+  providers: [RegisterService],
 })
 export class RegisterComponent {
-  icons = ICON_SUBSET;
-  submitted = false;
-  readonly model: NewUserModel = {
-    username: null as any as string,
-    email: null as any as string,
-    mobile: null as any as string,
-    firstname: null as any as string,
-    lastname: null as any as string,
-    password: null as any as string,
-  };
+  readonly icons = ICON_SUBSET;
   readonly form!: FormGroup;
-  readonly formControls!: string[];
   readonly validatorValues = {
     username: {
       minLength: 5,
@@ -82,11 +74,15 @@ export class RegisterComponent {
     },
   };
 
+  model: NewUserModel = {} as NewUserModel;
+  submitted = false;
+  result?: ApiResult;
+
   constructor(
-    private formBuilder: FormBuilder // public validationFormsService: ValidationFormsService
+    private readonly form_builder: FormBuilder,
+    private readonly service: RegisterService
   ) {
     this.form = this.createForm();
-    this.formControls = Object.keys(this.form.controls);
   }
 
   onValidate() {
@@ -98,12 +94,17 @@ export class RegisterComponent {
   submit() {
     if (!this.onValidate()) return;
 
-    console.warn(this.form.value);
-    alert('SUCCESS!');
+    this.service.register(this.model).subscribe((result) => {
+      if (result.code === 200) {
+        this.model = {} as NewUserModel;
+      }
+
+      this.result = result;
+    });
   }
 
   private createForm() {
-    const formControl = this.formBuilder.group(
+    const formControl = this.form_builder.group(
       {
         username: [
           '',
@@ -111,7 +112,7 @@ export class RegisterComponent {
             Validators.required,
             Validators.minLength(this.validatorValues.username.minLength),
             Validators.maxLength(this.validatorValues.username.maxLengh),
-            Validators.pattern("^[a-zA-Z][_\\-\\.a-zA-Z0-9]+$"),
+            Validators.pattern('^[a-zA-Z][_\\-\\.a-zA-Z0-9]+$'),
           ],
         ],
         email: ['', [Validators.required, Validators.email]],
@@ -120,7 +121,7 @@ export class RegisterComponent {
           [
             Validators.minLength(this.validatorValues.mobile.minLength),
             Validators.maxLength(this.validatorValues.mobile.maxLengh),
-            Validators.pattern("^\\+?\\d+$"),
+            Validators.pattern('^\\+?\\d+$'),
           ],
         ],
         firstname: ['', []],
@@ -131,7 +132,9 @@ export class RegisterComponent {
             Validators.required,
             Validators.minLength(this.validatorValues.password.minLength),
             Validators.maxLength(this.validatorValues.password.maxLengh),
-            Validators.pattern("((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])|(?=.*[^\\x00-\\x7F])).+"),
+            Validators.pattern(
+              '((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])|(?=.*[^\\x00-\\x7F])).+'
+            ),
           ],
         ],
         confirmPassword: [

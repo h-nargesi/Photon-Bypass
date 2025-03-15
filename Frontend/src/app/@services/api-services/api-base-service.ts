@@ -40,7 +40,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
         map((result) => {
           return {
             result,
-            title: title ?? TranslationService.translate('api.loading'),
+            title: title ?? TranslationService.translate('api.call'),
             show_message: show_message,
             message_method: message_method,
             service,
@@ -102,7 +102,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
         map((result) => {
           return {
             result,
-            title: title,
+            title: title ?? TranslationService.translate('api.job'),
             show_message: show_message ?? true,
             message_method: message_method,
             service,
@@ -127,7 +127,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
         map((result) => {
           return {
             result,
-            title: title,
+            title: title ?? TranslationService.translate('api.saving'),
             show_message: show_message ?? true,
             message_method: message_method,
             service,
