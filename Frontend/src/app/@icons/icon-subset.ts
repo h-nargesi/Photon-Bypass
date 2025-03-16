@@ -103,12 +103,14 @@ import {
   cilPhone,
   cilBan,
   cilCheckCircle,
+  cilSend,
 } from '@coreui/icons';
 
 import { signet } from './signet';
 import { logo } from './logo';
 
 export const ICON_SUBSET = {
+  cilSend,
   cilCheckCircle,
   cilBan,
   cilPhone,

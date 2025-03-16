@@ -16,6 +16,10 @@ export const routes: Routes = [
     component: RegisterComponent,
   },
   {
+    path: 'edit-info',
+    component: RegisterComponent,
+  },
+  {
     path: 'login',
     component: LoginComponent,
   },

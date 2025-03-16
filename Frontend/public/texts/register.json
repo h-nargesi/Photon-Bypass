@@ -1,6 +1,8 @@
 {
-    "title": "ثبت نام",
-    "caption": "با استفاده از ایمیل ثبت نام کنید.",
+    "new-title": "ثبت نام",
+    "edit-title": "ویرایش",
+    "new-caption": "با استفاده از ایمیل ثبت نام کنید.",
+    "edit-caption": "می‌توانید اطلاعات شحصی خود را ویرایش کنید.",
     "labels": {
         "login": "ورود",
         "username-holder": "username",

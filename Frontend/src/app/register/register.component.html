@@ -10,8 +10,8 @@
               </a>
             </div>
             <form cForm (ngSubmit)="submit()" [formGroup]="form" novalidate>
-              <h1>{{ "register.title" | translate }}</h1>
-              <p class="text-body-secondary">{{ "register.caption" | translate }}</p>
+              <h1>{{ `register.${edit ? 'edit' : 'new'}-title` | translate }}</h1>
+              <p class="text-body-secondary">{{ `register.${edit ? 'edit' : 'new'}-caption` | translate }}</p>
 
               <!-- USERNAME -->
               <c-input-group class="mb-3 ltr has-validation" *ngIf="form.controls['username'] as ctrl">
@@ -21,7 +21,8 @@
                 <input formControlName="username" cFormControl
                   [placeholder]='"register.labels.username-holder" | translate'
                   [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
-                  autoComplete="name" [maxlength]="validatorValues.username.maxLengh" />
+                  autoComplete="name" [maxlength]="ValidatorValues.username.maxLengh" [readOnly]="edit" />
+                <span cInputGroupText>&#64;{{ usernameSuffic }}</span>
 
                 <c-form-feedback class="rtl" *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
                   <ng-container *ngIf="ctrl.errors as errors">
@@ -31,8 +32,8 @@
                     <div *ngIf="errors['maxlengh'] || errors['minlength']">
                       {{ "global.validations.length" | translate : [
                       "register.labels.username",
-                      validatorValues.username.minLength.toString(),
-                      validatorValues.username.maxLengh.toString()] }}
+                      ValidatorValues.username.minLength.toString(),
+                      ValidatorValues.username.maxLengh.toString()] }}
                     </div>
                     <div *ngIf="!errors['required'] && !errors['maxlengh'] && !errors['minlength']">
                       {{ "global.validations.invalid" | translate : ["register.labels.username"] }}
@@ -47,6 +48,10 @@
                 <input formControlName="email" cFormControl [placeholder]='"register.labels.email-holder" | translate'
                   [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
                   autoComplete="email" />
+                <span cInputGroupText [ngClass]="(model.emailValid ? 'bg-success' : '')" *ngIf="edit">
+                  <svg [cIcon]="icons.cilCheckCircle" *ngIf="model.emailValid"></svg>
+                  <svg [cIcon]="icons.cilSend" *ngIf="!model.emailValid"></svg>
+                </span>
 
                 <c-form-feedback class="rtl" *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
                   <ng-container *ngIf="ctrl.errors as errors">
@@ -67,7 +72,11 @@
                 </span>
                 <input formControlName="mobile" cFormControl [placeholder]='"register.labels.mobile-holder" | translate'
                   [valid]="ctrl.touched && ctrl.valid && ctrl.value ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
-                  autoComplete="mobile-phone" [maxlength]="validatorValues.mobile.maxLengh" />
+                  autoComplete="mobile-phone" [maxlength]="ValidatorValues.mobile.maxLengh" />
+                <span cInputGroupText [ngClass]="(model.mobileValid ? 'bg-success' : '')" *ngIf="edit">
+                  <svg [cIcon]="icons.cilCheckCircle" *ngIf="model.mobileValid"></svg>
+                  <svg [cIcon]="icons.cilSend" *ngIf="!model.mobileValid"></svg>
+                </span>
 
                 <c-form-feedback class="rtl" *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
                   <ng-container *ngIf="ctrl.errors as errors">
@@ -77,8 +86,8 @@
                     <div *ngIf="errors['maxlengh'] || errors['minlength']">
                       {{ "global.validations.length" | translate : [
                       "register.labels.mobile",
-                      validatorValues.mobile.minLength.toString(),
-                      validatorValues.mobile.maxLengh.toString()] }}
+                      ValidatorValues.mobile.minLength.toString(),
+                      ValidatorValues.mobile.maxLengh.toString()] }}
                     </div>
                     <div *ngIf="!errors['required'] && !errors['maxlengh'] && !errors['minlength']">
                       {{ "global.validations.invalid" | translate : ["register.labels.mobile"] }}
@@ -95,7 +104,7 @@
                 <input formControlName="password" cFormControl
                   [placeholder]='"register.labels.password-holder" | translate'
                   [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
-                  type="password" autoComplete="new-password" [maxlength]="validatorValues.password.maxLengh" />
+                  type="password" autoComplete="new-password" [maxlength]="ValidatorValues.password.maxLengh" />
 
                 <c-form-feedback class="rtl" *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
                   <ng-container *ngIf="ctrl.errors as errors">
@@ -105,8 +114,8 @@
                     <div *ngIf="errors['maxlengh'] || errors['minlength']">
                       {{ "global.validations.length" | translate : [
                       "register.labels.password",
-                      validatorValues.password.minLength.toString(),
-                      validatorValues.password.maxLengh.toString()] }}
+                      ValidatorValues.password.minLength.toString(),
+                      ValidatorValues.password.maxLengh.toString()] }}
                     </div>
                     <div *ngIf="errors['pattern']">
                       {{ "register.messages.password-requirement" | translate }}

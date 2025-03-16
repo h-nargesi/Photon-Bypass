@@ -9,7 +9,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   ButtonDirective,
   CardBodyComponent,
@@ -53,13 +53,14 @@ import { RegisterService } from './register.service';
     TranslationPipe,
     RouterLink,
     FormFeedbackComponent,
+    TextColorDirective,
   ],
   providers: [RegisterService],
 })
 export class RegisterComponent {
   readonly icons = ICON_SUBSET;
   readonly form!: FormGroup;
-  readonly validatorValues = {
+  readonly ValidatorValues = {
     username: {
       minLength: 5,
       maxLengh: 32,
@@ -73,16 +74,40 @@ export class RegisterComponent {
       maxLengh: 48,
     },
   };
+  readonly edit!: boolean;
 
   model: NewUserModel = {} as NewUserModel;
   submitted = false;
   result?: ApiResult;
+  usernameSuffic: string = '--';
 
   constructor(
     private readonly form_builder: FormBuilder,
-    private readonly service: RegisterService
+    private readonly service: RegisterService,
+    route: ActivatedRoute
   ) {
+    this.edit = route.routeConfig?.path === 'edit-info';
     this.form = this.createForm();
+  }
+
+  ngOnInit(): void {
+    if (this.edit) {
+      this.service.fullInfo().subscribe((user) => {
+        Object.assign(this.model, user);
+        const username_parts = this.model?.username?.split('@');
+        if (username_parts) {
+          if (username_parts.length > 0) {
+            this.usernameSuffic = this.model.username.substring(username_parts[0].length + 1);
+          }
+          this.model.username = username_parts[0];
+        }
+
+        const model = this.model as any;
+        for (const key in this.model) {
+          this.form.controls[key]?.setValue(model[key]);
+        }
+      });
+    }
   }
 
   onValidate() {
@@ -110,8 +135,8 @@ export class RegisterComponent {
           '',
           [
             Validators.required,
-            Validators.minLength(this.validatorValues.username.minLength),
-            Validators.maxLength(this.validatorValues.username.maxLengh),
+            Validators.minLength(this.ValidatorValues.username.minLength),
+            Validators.maxLength(this.ValidatorValues.username.maxLengh),
             Validators.pattern('^[a-zA-Z][_\\-\\.a-zA-Z0-9]+$'),
           ],
         ],
@@ -119,8 +144,8 @@ export class RegisterComponent {
         mobile: [
           '',
           [
-            Validators.minLength(this.validatorValues.mobile.minLength),
-            Validators.maxLength(this.validatorValues.mobile.maxLengh),
+            Validators.minLength(this.ValidatorValues.mobile.minLength),
+            Validators.maxLength(this.ValidatorValues.mobile.maxLengh),
             Validators.pattern('^\\+?\\d+$'),
           ],
         ],
@@ -130,8 +155,8 @@ export class RegisterComponent {
           '',
           [
             Validators.required,
-            Validators.minLength(this.validatorValues.password.minLength),
-            Validators.maxLength(this.validatorValues.password.maxLengh),
+            Validators.minLength(this.ValidatorValues.password.minLength),
+            Validators.maxLength(this.ValidatorValues.password.maxLengh),
             Validators.pattern(
               '((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])|(?=.*[^\\x00-\\x7F])).+'
             ),
@@ -141,8 +166,8 @@ export class RegisterComponent {
           '',
           [
             Validators.required,
-            Validators.minLength(this.validatorValues.password.minLength),
-            Validators.maxLength(this.validatorValues.password.maxLengh),
+            Validators.minLength(this.ValidatorValues.password.minLength),
+            Validators.maxLength(this.ValidatorValues.password.maxLengh),
           ],
         ],
       },
@@ -153,7 +178,7 @@ export class RegisterComponent {
   }
 }
 
-export class PasswordValidators {
+class PasswordValidators {
   static confirmPassword(control: AbstractControl): ValidationErrors | null {
     const password = control.get('password');
     const confirm = control.get('confirmPassword');
