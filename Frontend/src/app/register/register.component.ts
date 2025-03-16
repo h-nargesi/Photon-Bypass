@@ -86,7 +86,7 @@ export class RegisterComponent {
     private readonly service: RegisterService,
     route: ActivatedRoute
   ) {
-    this.edit = route.routeConfig?.path === 'edit-info';
+    this.edit = route.routeConfig?.path === 'edit-user-info';
     this.form = this.createForm();
   }
 

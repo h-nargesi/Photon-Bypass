@@ -16,7 +16,7 @@ export const routes: Routes = [
     component: RegisterComponent,
   },
   {
-    path: 'edit-info',
+    path: 'edit-user-info',
     component: RegisterComponent,
   },
   {
