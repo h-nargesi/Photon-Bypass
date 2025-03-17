@@ -4,8 +4,8 @@
       <c-col lg="7" md="9" xl="6">
         <c-card class="mx-4">
           <c-card-body class="p-4">
-            <div class="mb-2">
-              <a [routerLink]="edit ? '/dashboard' : '/'">
+            <div class="mb-2" *ngIf="!edit">
+              <a routerLink="/dashboard">
                 <svg [cIcon]="icons.cilHome" title="Home"></svg>
               </a>
             </div>
@@ -166,7 +166,7 @@
               <!-- BUTTONS -->
               <div class="d-grid">
                 <button cButton color="primary" type="submit">
-                  {{ "register.labels.create-account" | translate }}
+                  {{ (edit ? "register.labels.edit-account" : "register.labels.create-account") | translate }}
                 </button>
               </div>
             </form>

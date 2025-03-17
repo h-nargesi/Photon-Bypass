@@ -16,10 +16,6 @@ export const routes: Routes = [
     component: RegisterComponent,
   },
   {
-    path: 'edit-user-info',
-    component: RegisterComponent,
-  },
-  {
     path: 'login',
     component: LoginComponent,
   },
@@ -34,6 +30,10 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         component: DashboardComponent,
+      },
+      {
+        path: 'edit-user-info',
+        component: RegisterComponent,
       },
     ],
   },
