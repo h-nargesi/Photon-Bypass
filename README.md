@@ -44,6 +44,7 @@ Selling VPN
     - Submit => send code
 
 - Change Password
+    - (OpenVpn | Account)
     - Old Password
     - New Password
 
@@ -84,6 +85,8 @@ Selling VPN
     - Submit => to bank page
 
 - History
+    - increase/decrease wallet
+    - increase plan
 
 - Edit Info Page
     - Email * => validate email

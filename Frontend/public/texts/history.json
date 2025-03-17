@@ -1,0 +1,15 @@
+{
+    "labels": {
+        "filter": "جستجو",
+        "filter-placeholder": "مثلا: ترافیک"
+    },
+    "columns" : {
+        "event-time": "زمان",
+        "title": "عنوان",
+        "value": "مقدار"
+    },
+    "messages": {
+        "not-found": "هیچ دیتایی برای '{0}' یافت نشد!",
+        "page-title": "انتخاب صفحه تاریخچه"
+    }
+}
