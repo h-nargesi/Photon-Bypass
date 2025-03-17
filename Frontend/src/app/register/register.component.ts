@@ -79,7 +79,7 @@ export class RegisterComponent {
   model: NewUserModel = {} as NewUserModel;
   submitted = false;
   result?: ApiResult;
-  usernameSuffic: string = '--';
+  usernameSuffic: string = ' - -';
 
   constructor(
     private readonly form_builder: FormBuilder,
@@ -97,7 +97,9 @@ export class RegisterComponent {
         const username_parts = this.model?.username?.split('@');
         if (username_parts) {
           if (username_parts.length > 0) {
-            this.usernameSuffic = this.model.username.substring(username_parts[0].length + 1);
+            this.usernameSuffic = this.model.username.substring(
+              username_parts[0].length + 1
+            );
           }
           this.model.username = username_parts[0];
         }
@@ -154,7 +156,7 @@ export class RegisterComponent {
         password: [
           '',
           [
-            Validators.required,
+            ...(this.edit ? [] : [Validators.required]),
             Validators.minLength(this.ValidatorValues.password.minLength),
             Validators.maxLength(this.ValidatorValues.password.maxLengh),
             Validators.pattern(
@@ -165,7 +167,7 @@ export class RegisterComponent {
         confirmPassword: [
           '',
           [
-            Validators.required,
+            ...(this.edit ? [] : [Validators.required]),
             Validators.minLength(this.ValidatorValues.password.minLength),
             Validators.maxLength(this.ValidatorValues.password.maxLengh),
           ],
@@ -182,9 +184,13 @@ class PasswordValidators {
   static confirmPassword(control: AbstractControl): ValidationErrors | null {
     const password = control.get('password');
     const confirm = control.get('confirmPassword');
-    if (password?.valid && password?.value === confirm?.value) {
-      confirm?.setErrors(null);
-      return null;
+    if (password?.valid) {
+      const passValue = password?.value ?? "";
+      const confirmValue = confirm?.value ?? "";
+      if (password?.valid && passValue === confirmValue) {
+        confirm?.setErrors(null);
+        return null;
+      }
     }
     confirm?.setErrors({ passwordMismatch: true });
     return { passwordMismatch: true };

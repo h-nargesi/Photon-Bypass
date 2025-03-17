@@ -5,7 +5,7 @@
         <c-card class="mx-4">
           <c-card-body class="p-4">
             <div class="mb-2">
-              <a routerLink="/">
+              <a [routerLink]="edit ? '/dashboard' : '/'">
                 <svg [cIcon]="icons.cilHome" title="Home"></svg>
               </a>
             </div>
