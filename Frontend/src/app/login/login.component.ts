@@ -22,12 +22,7 @@ import {
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
 import { ApiResult } from '../@models';
-import {
-  AuthService,
-  MessageService,
-  TranslationPipe,
-  UserService,
-} from '../@services';
+import { AuthService, MessageService, TranslationPipe } from '../@services';
 
 @Component({
   selector: 'app-login',
@@ -68,13 +63,13 @@ export class LoginComponent {
     private readonly service: AuthService,
     private readonly router: Router,
     active_route: ActivatedRoute,
-    user_service: UserService
+    auth_service: AuthService
   ) {
     if (active_route.snapshot.routeConfig?.path === 'logout') {
       this.service.logout();
     } else {
-      user_service.user().subscribe((user) => {
-        if (user?.username) this.router.navigate(['dashboard']);
+      auth_service.check().subscribe((result) => {
+        if (result?.code === 200) this.router.navigate(['dashboard']);
       });
     }
   }

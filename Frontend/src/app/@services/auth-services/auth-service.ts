@@ -17,6 +17,10 @@ export class AuthService {
     return this.api.authorization(`${AUTH_API_URL}/token`, params);
   }
 
+  public check(): Observable<ApiResult> {
+    return this.api.call(`${AUTH_API_URL}/check`);
+  }
+
   public logout(): Observable<ApiResult> {
     this.user_service.clear();
     LocalStorageService.set(['user', 'bearer'], undefined);

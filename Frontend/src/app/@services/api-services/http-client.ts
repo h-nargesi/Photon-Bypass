@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { ApiResult, ApiResultData, MessageMethod } from '../../@models';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { TranslationService } from '../translation/translation-service';
@@ -59,7 +59,7 @@ export class HttpClientHandler {
     return this.fake
       .post<string>(url, body, { observe: 'response' })
       .pipe(
-        map((response) => {
+        tap((response) => {
           if (response.body && response.body.data && response.body.code < 300) {
             const token = response.body.data as string;
             if (token) {

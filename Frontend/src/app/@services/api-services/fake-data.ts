@@ -62,6 +62,8 @@ export class FakeDataMaker {
         return this.api_auth_logout() as Observable<HttpResponse<M>>;
       case 'api/auth/register':
         return this.api_auth_register() as Observable<HttpResponse<M>>;
+      case 'api/auth/check':
+        return this.api_auth_check() as Observable<HttpResponse<M>>;
       case 'api/account/get-user':
         return this.api_account_get_user() as Observable<HttpResponse<M>>;
       case 'api/account/send-cert-email':
@@ -103,6 +105,15 @@ export class FakeDataMaker {
 
   private api_auth_register(): Observable<HttpResponse<ApiResult>> {
     return wait({ code: 200, message: 'کاربر با موفقیت ساخته شد.' });
+  }
+
+  private api_auth_check(): Observable<HttpResponse<ApiResult>> {
+    const bearer = LocalStorageService.get(['user', 'bearer']);
+    if (bearer) {
+      return wait({ code: 200 }, 1, 1);
+    }
+
+    return wait({ code: 401 }, 1, 1);
   }
 
   private api_account_get_user(): Observable<
