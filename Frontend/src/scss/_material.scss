@@ -1,8 +1,41 @@
-@use '@angular/material' as mat;
+@use "@angular/material" as mat;
 
 :root {
-  @include mat.table-overrides((
-    header-headline-color: black,
-    row-item-label-text-font: irsans,
+  @include mat.table-overrides(
+    (
+      header-headline-color: var(--cui-body-color),
+      row-item-label-text-font: irsans,
+      row-item-label-text-color: var(--cui-body-color),
+      row-item-outline-color: var(--cui-border-color),
+    )
+  );
+
+  @include mat.paginator-overrides(
+    (
+      container-text-font: TanhaFD,
+    )
+  );
+
+  @include mat.select-overrides(
+    (
+      trigger-text-font: TanhaFD,
+      panel-background-color: var(--cui-body-bg),
+    )
+  );
+
+  .mat-mdc-option {
+    font-family: TanhaFD !important;
+  }
+
+  @include mat.tooltip-overrides(
+    (
+      container-color: var(--cui-tertiary-bg),
+    )
+  );
+
+  @include mat.datepicker-overrides((
+    calendar-container-background-color: var(--cui-body-bg),
+    calendar-date-selected-state-text-color: var(--cui-white),
+    calendar-date-selected-state-background-color: var(--cui-success),
   ));
 }

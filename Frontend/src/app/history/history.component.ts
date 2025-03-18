@@ -1,21 +1,33 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import {
+  MatPaginator,
+  MatPaginatorIntl,
+  MatPaginatorModule,
+} from '@angular/material/paginator';
 import { MatSort, MatSortModule } from '@angular/material/sort';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import {
   CardBodyComponent,
   CardComponent,
-  CardHeaderComponent,
   ColComponent,
+  FormControlDirective,
+  InputGroupComponent,
+  InputGroupTextDirective,
   RowComponent,
 } from '@coreui/angular';
 import { HistoryRecord } from '../@models';
 import { TranslationPipe } from '../@services';
 import { HistoryService } from './history.service';
+
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { IconDirective } from '@coreui/icons-angular';
+import { ICON_SUBSET } from '../@icons';
+import { PaginatorInt } from './paginator-int';
 
 @Component({
   selector: 'app-history',
@@ -25,20 +37,32 @@ import { HistoryService } from './history.service';
     RowComponent,
     ColComponent,
     CardComponent,
-    CardHeaderComponent,
     CardBodyComponent,
+    InputGroupComponent,
+    InputGroupTextDirective,
+    IconDirective,
+    FormControlDirective,
     TranslationPipe,
     MatFormFieldModule,
     MatInputModule,
     MatTableModule,
     MatSortModule,
     MatPaginatorModule,
+    MatDatepickerModule,
   ],
   templateUrl: './history.component.html',
   styleUrl: './history.component.scss',
-  providers: [HistoryService],
+  providers: [
+    HistoryService,
+    provideNativeDateAdapter(),
+    {
+      provide: MatPaginatorIntl,
+      useClass: PaginatorInt,
+    },
+  ],
 })
 export class HistoryComponent implements AfterViewInit {
+  readonly icons = ICON_SUBSET;
   readonly displayedColumns: string[] = ['eventTimeTitle', 'title', 'value'];
   dataSource!: MatTableDataSource<HistoryRecord>;
 

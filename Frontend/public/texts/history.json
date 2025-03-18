@@ -1,6 +1,9 @@
 {
+    "title": "تاریخچه تغییرات",
     "labels": {
-        "filter": "جستجو",
+        "from-date": "شروع",
+        "to-date": "پایان",
+        "filter": "فیلتر",
         "filter-placeholder": "مثلا: ترافیک"
     },
     "columns" : {

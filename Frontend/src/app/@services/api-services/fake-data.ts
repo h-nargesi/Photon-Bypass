@@ -292,7 +292,7 @@ function createNewRecord(id: number): HistoryRecord {
   const title = TITLE[index];
 
   const unit =
-    UNITS[index === 2 || index === 3 ? 0 : index == 4 ? 1 : index == 4 ? 2 : 3];
+    UNITS[index === 2 || index === 3 ? 0 : index == 4 ? 1 : index == 5 ? 2 : 3];
   let value = undefined;
   if (unit) value = Math.floor(Math.random() * 5000);
 

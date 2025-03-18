@@ -1,20 +1,26 @@
 <c-row class="g-4">
     <c-col>
         <c-card class="mb-3">
-            <c-card-header>
-                <h3>{{ "history.title" | translate }}</h3>
-                <div class="filter">
-                    <input cFormControl [(ngModel)]="fromDate" [placeholder]='"history.labels.from-date" | translate' />
-                    <input cFormControl [(ngModel)]="toDate" [placeholder]='"history.labels.to-date" | translate' />
-                </div>
-            </c-card-header>
+            <c-card-body class="d-flex">
+                <h3 class="w-100">{{ "history.title" | translate }}</h3>
+                <c-input-group class="ms-3">
+                    <input cFormControl [(ngModel)]="fromDate" [matDatepicker]="fromDatePicker"
+                        [placeholder]='"history.labels.from-date" | translate' (dateChange)="loadWithFilter()" />
+                    <span cInputGroupText (click)="fromDatePicker.open()" class="pointer">
+                        <svg [cIcon]="icons.cilCalendar"></svg>
+                    </span>
+                    <mat-datepicker #fromDatePicker></mat-datepicker>
+                </c-input-group>
+                <c-input-group class="ms-3">
+                    <input cFormControl [(ngModel)]="toDate" [matDatepicker]="toDatePicker"
+                        [placeholder]='"history.labels.to-date" | translate' (dateChange)="loadWithFilter()" />
+                    <span cInputGroupText (click)="toDatePicker.open()" class="pointer">
+                        <svg [cIcon]="icons.cilCalendar"></svg>
+                    </span>
+                    <mat-datepicker #toDatePicker></mat-datepicker>
+                </c-input-group>
+            </c-card-body>
             <c-card-body>
-                <mat-form-field>
-                    <mat-label>{{ "history.labels.filter" | translate }}</mat-label>
-                    <input matInput (keyup)="applyFilter($event)" #input
-                        [placeholder]="'history.labels.filter-placeholder' | translate">
-                </mat-form-field>
-
                 <div class="mat-elevation-z8">
                     <table mat-table [dataSource]="dataSource" matSort>
 
@@ -55,7 +61,15 @@
                         </tr>
                     </table>
 
-                    <mat-paginator [pageSizeOptions]="[5, 10, 25, 100]" aria-label=""></mat-paginator>
+                    <div class="d-flex align-items-left">
+                        <mat-form-field class="w-25">
+                            <mat-label>{{ "history.labels.filter" | translate }}</mat-label>
+                            <input matInput (keyup)="applyFilter($event)" #input
+                                [placeholder]="'history.labels.filter-placeholder' | translate">
+                        </mat-form-field>
+
+                        <mat-paginator class="w-100" [pageSizeOptions]="[5, 10, 25, 100]"></mat-paginator>
+                    </div>
                 </div>
             </c-card-body>
         </c-card>
