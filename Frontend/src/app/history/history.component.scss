@@ -1,3 +1,8 @@
+.filter {
+  text-align: left;
+  width: 100%;
+}
+
 table {
   width: 100%;
 }
@@ -10,4 +15,8 @@ table {
 td,
 th {
   width: 25%;
+}
+
+td.col-value {
+  font-family: Parastoo;
 }

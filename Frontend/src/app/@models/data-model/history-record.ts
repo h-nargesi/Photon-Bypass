@@ -3,7 +3,8 @@ export interface HistoryRecord {
     eventTime: number;
     eventTimeTitle: string;
     title: string;
-    value: any;
-    unit: string;
     color: string;
+    value?: any;
+    unit?: string;
+    description?: string;
 }

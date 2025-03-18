@@ -1,6 +1,13 @@
 <c-row class="g-4">
     <c-col>
         <c-card class="mb-3">
+            <c-card-header>
+                <h3>{{ "history.title" | translate }}</h3>
+                <div class="filter">
+                    <input cFormControl [(ngModel)]="fromDate" [placeholder]='"history.labels.from-date" | translate' />
+                    <input cFormControl [(ngModel)]="toDate" [placeholder]='"history.labels.to-date" | translate' />
+                </div>
+            </c-card-header>
             <c-card-body>
                 <mat-form-field>
                     <mat-label>{{ "history.labels.filter" | translate }}</mat-label>
@@ -32,7 +39,7 @@
                             <th mat-header-cell *matHeaderCellDef mat-sort-header>
                                 {{ "history.columns.value" | translate }}
                             </th>
-                            <td mat-cell *matCellDef="let row" class="{{ 'bg-light-' + row.color }}">
+                            <td mat-cell *matCellDef="let row" class="digits {{ 'bg-light-' + row.color }}">
                                 {{ row.value }} {{ row.unit }}
                             </td>
                         </ng-container>

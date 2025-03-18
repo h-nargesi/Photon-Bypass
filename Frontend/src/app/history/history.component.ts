@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
@@ -8,20 +9,23 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import {
   CardBodyComponent,
   CardComponent,
+  CardHeaderComponent,
   ColComponent,
   RowComponent,
 } from '@coreui/angular';
 import { HistoryRecord } from '../@models';
-import { HistoryService } from './history.service';
 import { TranslationPipe } from '../@services';
+import { HistoryService } from './history.service';
 
 @Component({
   selector: 'app-history',
   imports: [
     CommonModule,
+    FormsModule,
     RowComponent,
     ColComponent,
     CardComponent,
+    CardHeaderComponent,
     CardBodyComponent,
     TranslationPipe,
     MatFormFieldModule,
@@ -38,22 +42,29 @@ export class HistoryComponent implements AfterViewInit {
   readonly displayedColumns: string[] = ['eventTimeTitle', 'title', 'value'];
   dataSource!: MatTableDataSource<HistoryRecord>;
 
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatSort) sort!: MatSort;
+  @ViewChild(MatPaginator) paginator?: MatPaginator;
+  @ViewChild(MatSort) sort?: MatSort;
 
-  constructor(service: HistoryService) {
-    service.load().subscribe((result) => {
-      this.dataSource = new MatTableDataSource(result);
-      if (this.paginator) this.dataSource.paginator = this.paginator;
-      if (this.sort) this.dataSource.sort = this.sort;
-    });
+  fromDate?: number;
+  toDate?: number;
+
+  constructor(private readonly service: HistoryService) {
+    this.loadWithFilter();
   }
 
   ngAfterViewInit() {
     if (this.dataSource) {
-      this.dataSource.paginator = this.paginator;
-      this.dataSource.sort = this.sort;
+      if (this.paginator) this.dataSource.paginator = this.paginator;
+      if (this.sort) this.dataSource.sort = this.sort;
     }
+  }
+
+  loadWithFilter() {
+    this.service.load(this.fromDate, this.toDate).subscribe((result) => {
+      this.dataSource = new MatTableDataSource(result);
+      if (this.paginator) this.dataSource.paginator = this.paginator;
+      if (this.sort) this.dataSource.sort = this.sort;
+    });
   }
 
   applyFilter(event: Event) {
