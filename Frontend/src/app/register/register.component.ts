@@ -114,7 +114,6 @@ export class RegisterComponent {
 
   onValidate() {
     this.submitted = true;
-    if (this.form.status !== 'VALID') console.warn(this.form);
     return this.form.status === 'VALID';
   }
 

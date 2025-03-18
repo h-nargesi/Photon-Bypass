@@ -74,7 +74,6 @@ export class LoginComponent {
       this.service.logout();
     } else {
       user_service.user().subscribe((user) => {
-        console.log('login-check', user);
         if (user?.username) this.router.navigate(['dashboard']);
       });
     }

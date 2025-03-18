@@ -34,7 +34,7 @@ export class ApiMessageHandlerService {
         if (result.code >= 400) {
           console.error(result.message);
         } else {
-          console.log(result.message);
+          console.info(result.message);
         }
       }
     }

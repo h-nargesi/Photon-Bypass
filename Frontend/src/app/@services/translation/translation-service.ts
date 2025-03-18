@@ -15,7 +15,7 @@ export class TranslationService {
     if (TranslationService.texts.size < 1) {
       TranslationService.initialize();
     } else {
-      console.warn(
+      console.info(
         `Translation Servcie was initialized (size:${TranslationService.texts.size}).`
       );
     }
@@ -37,7 +37,7 @@ export class TranslationService {
 
   public static translate(path: string, params?: string[]): string {
     if (TranslationService.texts.size < 1) {
-      console.log(`Translation Servcie first request is static: ${path}.`);
+      console.warn(`Translation Servcie first request is static: ${path}.`);
       TranslationService.initialize();
     }
     return TranslationService.parse(path, params);
@@ -96,6 +96,6 @@ export class TranslationService {
     TranslationService.texts.set('home-page', _home_page);
     TranslationService.texts.set('login', _login);
     TranslationService.texts.set('register', _register);
-    console.log('Translation Servcie is initialized.');
+    console.info('Translation Servcie is initialized.');
   }
 }

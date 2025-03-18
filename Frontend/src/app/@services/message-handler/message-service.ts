@@ -86,7 +86,7 @@ export class MessageService {
       return;
     }
 
-    console.log(title, body);
+    console.info(title, body);
   }
 
   public static getStatusCode(code: number): string {
