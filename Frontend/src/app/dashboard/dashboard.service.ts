@@ -7,7 +7,12 @@ import { DashboardComponent } from './dashboard.component';
 @Injectable({ providedIn: DashboardComponent })
 export class DashboardService extends ApiBaseService {
   sendCertificateViaEmail(): Observable<ApiResult> {
-    return this.call(`${ACOUNT_API_URL}/send-cert-email`);
+    return this.call(
+      `${ACOUNT_API_URL}/send-cert-email`,
+      undefined,
+      undefined,
+      true
+    );
   }
 
   fetchCurrentConnections(): Observable<number[]> {
@@ -17,7 +22,7 @@ export class DashboardService extends ApiBaseService {
 
   closeConnection(index: number): Observable<ApiResult> {
     const url = `${CONNECTION_API_URL}/close-con`;
-    return this.job(url, { index });
+    return this.job(url, { index }, undefined, true);
   }
 
   fetchPlanInfo(): Observable<UserPlanInfo> {
