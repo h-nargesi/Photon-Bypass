@@ -150,6 +150,13 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
     );
   }
 
+  protected getApiParam(model: any): ApiParam | undefined {
+    if (!model) return undefined;
+    const data = {} as ApiParam;
+    for (const key in model) data[key] = model[key];
+    return data;
+  }
+
   private checkLoginUser(context: ApiResultContext): void {
     const result = context.result;
     if (result.code == 401) {

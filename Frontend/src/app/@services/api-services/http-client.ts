@@ -7,19 +7,21 @@ import { LocalStorageService } from '../local-storage/local-storage-service';
 import { TranslationService } from '../translation/translation-service';
 import { ApiParam } from './models/api-param-type';
 import { API_BASE_URL } from './models/app-base-path';
+import { FakeDataMaker } from './fake-data';
 
 @Injectable({ providedIn: 'root' })
 export class HttpClientHandler {
   constructor(
     @Inject(API_BASE_URL)
     private readonly base_path: string,
-    private readonly api: HttpClient
+    private readonly api: HttpClient,
+    private readonly fake: FakeDataMaker
   ) {}
 
   public call(url: string, params?: ApiParam): Observable<ApiResult> {
     url = this.base_path + url;
     const headers = this.getHeader();
-    return this.api
+    return this.fake
       .get<ApiResult>(url, { params, observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
@@ -28,7 +30,7 @@ export class HttpClientHandler {
   public get<M>(url: string, params?: ApiParam): Observable<ApiResultData<M>> {
     url = this.base_path + url;
     const headers = this.getHeader();
-    return this.api
+    return this.fake
       .get<ApiResultData<M>>(url, { params, observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
@@ -37,7 +39,7 @@ export class HttpClientHandler {
   public job(url: string, body: any | null): Observable<ApiResult> {
     url = this.base_path + url;
     const headers = this.getHeader();
-    return this.api
+    return this.fake
       .post<ApiResult>(url, body, { observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
@@ -46,7 +48,7 @@ export class HttpClientHandler {
   public post<M>(url: string, body: any | null): Observable<ApiResultData<M>> {
     url = this.base_path + url;
     const headers = this.getHeader();
-    return this.api
+    return this.fake
       .post<ApiResultData<M>>(url, body, { observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
@@ -54,8 +56,8 @@ export class HttpClientHandler {
 
   public authorization(url: string, body: any | null): Observable<ApiResult> {
     url = this.base_path + url;
-    return this.api
-      .post<ApiResultData<string>>(url, body, { observe: 'response' })
+    return this.fake
+      .post<string>(url, body, { observe: 'response' })
       .pipe(
         map((response) => {
           if (response.body && response.body.data && response.body.code < 300) {

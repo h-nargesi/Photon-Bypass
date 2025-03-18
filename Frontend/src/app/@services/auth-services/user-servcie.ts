@@ -2,10 +2,6 @@ import { Injectable } from '@angular/core';
 import { Observable, of, tap } from 'rxjs';
 import { UserModel } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
-import {
-  LocalStorageService,
-  wait,
-} from '../local-storage/local-storage-service';
 import { TranslationService } from '../translation/translation-service';
 
 @Injectable({ providedIn: 'root' })
@@ -34,25 +30,9 @@ export class UserService extends ApiBaseService {
   }
 
   private fetchUser(): Observable<UserModel> {
-    if (LocalStorageService.UseAPI) {
-      const url = `${ACCOUNT_API_URL}/get-user`;
-      const title = TranslationService.translate('api.recieve');
-      return this.getData<UserModel>(url, undefined, title);
-    } else {
-      const bearer = LocalStorageService.get(['user', 'bearer']);
-      console.log('user-check-bearer', bearer);
-      let current_user: UserModel | null;
-      if (bearer) {
-        current_user = {
-          username: 'hamed@na',
-          fullname: 'حامد نرگسی',
-          email: 'hamed.nargesi.jar@gmail.com',
-        };
-      } else {
-        current_user = null;
-      }
-      return of(current_user as UserModel);
-    }
+    const url = `${ACCOUNT_API_URL}/get-user`;
+    const title = TranslationService.translate('api.recieve');
+    return this.getData<UserModel>(url, undefined, title);
   }
 }
 
