@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -27,7 +27,7 @@ import {
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
 import { ApiResult, RegisterModel } from '../@models';
-import { TranslationPipe } from '../@services';
+import { PasswordValidators, TranslationPipe } from '../@services';
 import { RegisterService } from './register.service';
 
 @Component({
@@ -57,7 +57,7 @@ import { RegisterService } from './register.service';
   ],
   providers: [RegisterService],
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   readonly icons = ICON_SUBSET;
   readonly form!: FormGroup;
   readonly ValidatorValues = {
@@ -113,11 +113,6 @@ export class RegisterComponent {
     });
   }
 
-  onValidate() {
-    this.submitted = true;
-    return this.form.status === 'VALID';
-  }
-
   submit() {
     if (!this.onValidate()) return;
 
@@ -132,6 +127,11 @@ export class RegisterComponent {
 
       this.result = result;
     });
+  }
+
+  private onValidate() {
+    this.submitted = true;
+    return this.form.status === 'VALID';
   }
 
   private createForm() {
@@ -167,9 +167,7 @@ export class RegisterComponent {
           Validators.required,
           Validators.minLength(this.ValidatorValues.password.minLength),
           Validators.maxLength(this.ValidatorValues.password.maxLengh),
-          Validators.pattern(
-            '((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])|(?=.*[^\\x00-\\x7F])).+'
-          ),
+          Validators.pattern(PasswordValidators.ValidationPattern),
         ],
       ];
       controllers['confirmPassword'] = [
@@ -188,22 +186,5 @@ export class RegisterComponent {
     });
 
     return formControl;
-  }
-}
-
-class PasswordValidators {
-  static confirmPassword(control: AbstractControl): ValidationErrors | null {
-    const password = control.get('password');
-    const confirm = control.get('confirmPassword');
-    if (password?.valid) {
-      const passValue = password?.value ?? '';
-      const confirmValue = confirm?.value ?? '';
-      if (password?.valid && passValue === confirmValue) {
-        confirm?.setErrors(null);
-        return null;
-      }
-    }
-    confirm?.setErrors({ passwordMismatch: true });
-    return { passwordMismatch: true };
   }
 }

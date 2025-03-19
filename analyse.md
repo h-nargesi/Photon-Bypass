@@ -1,5 +1,7 @@
 # Photon Bypass Analyse
 
+api call rate limit
+
 ## Login
 
 - Gmail auth

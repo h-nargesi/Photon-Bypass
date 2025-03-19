@@ -8,3 +8,4 @@ export * from "./translation/translation-pipe";
 export * from "./translation/translation-service";
 export * from "./local-storage/local-storage-service";
 export * from "./message-handler/message-service";
+export * from "./validators/password-validators";

@@ -4,8 +4,8 @@ import { from, Observable, of } from 'rxjs';
 import {
   ApiResult,
   ApiResultData,
-  HistoryRecord,
   FullUserModel,
+  HistoryRecord,
   PlanType,
   TrafficData,
   TrafficDataModel,
@@ -65,6 +65,10 @@ export class FakeDataMaker {
         return this.api_auth_register() as Observable<HttpResponse<M>>;
       case 'api/auth/check':
         return this.api_auth_check() as Observable<HttpResponse<M>>;
+      case 'api/auth/change':
+        return this.api_auth_change() as Observable<HttpResponse<M>>;
+      case 'api/auth/change-ovpn':
+        return this.api_auth_change_ovpn() as Observable<HttpResponse<M>>;
       // ACCOUNT
       case 'api/account/get-user':
         return this.api_account_get_user() as Observable<HttpResponse<M>>;
@@ -118,6 +122,14 @@ export class FakeDataMaker {
     }
 
     return wait({ code: 401 }, 1, 1);
+  }
+
+  private api_auth_change(): Observable<HttpResponse<ApiResult>> {
+    return wait({ code: 200, message: 'پسورد شما تغییر کرد.' });
+  }
+
+  private api_auth_change_ovpn(): Observable<HttpResponse<ApiResult>> {
+    return wait({ code: 200, message: 'پسورد وی‌پی‌ان شما تغییر کرد.' });
   }
 
   private api_account_get_user(): Observable<

@@ -17,5 +17,10 @@ export interface FullUserModel {
 
 export interface RegisterModel extends FullUserModel {
     password: string;
-    catpcha: string;
 }
+
+export interface PasswordToken {
+    token: string;
+    password: string;
+  }
+  

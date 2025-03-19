@@ -5,6 +5,7 @@ import { HistoryComponent } from './history/history.component';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
+import { ChangePasswordComponent } from './change-password/change-password.component';
 
 export const routes: Routes = [
   {
@@ -40,7 +41,19 @@ export const routes: Routes = [
         path: 'edit-user-info',
         component: RegisterComponent,
       },
+      {
+        path: 'change-password',
+        component: ChangePasswordComponent,
+      },
+      {
+        path: 'change-ovpn-password',
+        component: ChangePasswordComponent,
+      },
     ],
+  },
+  {
+    path: 'reset-password',
+    component: ChangePasswordComponent,
   },
   { path: '**', redirectTo: '' },
 ];
