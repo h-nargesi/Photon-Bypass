@@ -5,7 +5,7 @@ export interface UserModel {
     pictureUrl?: string;
 }
 
-export interface NewUserModel {
+export interface FullUserModel {
     username: string;
     email: string;
     emailValid: boolean;
@@ -13,5 +13,9 @@ export interface NewUserModel {
     mobileValid: boolean;
     firstname: string;
     lastname: string;
+}
+
+export interface RegisterModel extends FullUserModel {
     password: string;
+    catpcha: string;
 }

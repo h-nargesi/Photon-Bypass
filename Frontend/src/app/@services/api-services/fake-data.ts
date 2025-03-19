@@ -5,7 +5,7 @@ import {
   ApiResult,
   ApiResultData,
   HistoryRecord,
-  NewUserModel,
+  FullUserModel,
   PlanType,
   TrafficData,
   TrafficDataModel,
@@ -56,6 +56,7 @@ export class FakeDataMaker {
     data: any | null
   ): Observable<HttpResponse<M>> {
     switch (url) {
+      // AUTH
       case 'api/auth/token':
         return this.api_auth_token(data) as Observable<HttpResponse<M>>;
       case 'api/auth/logout':
@@ -64,6 +65,7 @@ export class FakeDataMaker {
         return this.api_auth_register() as Observable<HttpResponse<M>>;
       case 'api/auth/check':
         return this.api_auth_check() as Observable<HttpResponse<M>>;
+      // ACCOUNT
       case 'api/account/get-user':
         return this.api_account_get_user() as Observable<HttpResponse<M>>;
       case 'api/account/send-cert-email':
@@ -74,12 +76,14 @@ export class FakeDataMaker {
         return this.api_account_full_info() as Observable<HttpResponse<M>>;
       case 'api/account/history':
         return this.api_account_history(data) as Observable<HttpResponse<M>>;
+      case 'api/account/edit-user':
+        return this.api_account_edit() as Observable<HttpResponse<M>>;
+      // CONNECTION
       case 'api/connection/current-con-state':
-        return this.api_connection_current_con_state() as Observable<
-          HttpResponse<M>
-        >;
+        return this.api_con_current_state() as Observable<HttpResponse<M>>;
       case 'api/connection/close-con':
-        return this.api_connection_close_con() as Observable<HttpResponse<M>>;
+        return this.api_con_close_con() as Observable<HttpResponse<M>>;
+      // PLAN
       case 'api/plan/plan-info':
         return this.api_plan_plan_info() as Observable<HttpResponse<M>>;
     }
@@ -204,21 +208,28 @@ export class FakeDataMaker {
   }
 
   private api_account_full_info(): Observable<
-    HttpResponse<ApiResultData<NewUserModel>>
+    HttpResponse<ApiResultData<FullUserModel>>
   > {
-    return wait({
-      code: 200,
-      data: {
-        username: 'hamed@aw',
-        email: 'hamed.nargesi@gmail.com',
-        emailValid: false,
-        mobile: '+989125157305',
-        mobileValid: true,
-        firstname: 'حامد',
-        lastname: 'نرگسی',
-        password: null as any,
+    return wait(
+      {
+        code: 200,
+        data: {
+          username: 'hamed@aw',
+          email: 'hamed.nargesi@gmail.com',
+          emailValid: false,
+          mobile: '+989125157305',
+          mobileValid: true,
+          firstname: 'حامد',
+          lastname: 'نرگسی',
+        },
       },
-    });
+      200,
+      300
+    );
+  }
+
+  private api_account_edit(): Observable<HttpResponse<ApiResult>> {
+    return wait({ code: 200, message: 'کاربر ویرایش شد.' });
   }
 
   private api_account_history(
@@ -238,13 +249,13 @@ export class FakeDataMaker {
     return wait({ code: 200, data: result });
   }
 
-  private api_connection_current_con_state(): Observable<
+  private api_con_current_state(): Observable<
     HttpResponse<ApiResultData<number[]>>
   > {
     return wait({ code: 200, data: [534, 325, 244, 16] });
   }
 
-  private api_connection_close_con(): Observable<HttpResponse<ApiResult>> {
+  private api_con_close_con(): Observable<HttpResponse<ApiResult>> {
     return wait({ code: 200, message: 'کانکشن بسته شد.' });
   }
 

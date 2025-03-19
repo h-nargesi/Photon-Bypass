@@ -9,7 +9,7 @@ import {
   ValidationErrors,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   ButtonDirective,
   CardBodyComponent,
@@ -26,7 +26,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
-import { ApiResult, NewUserModel } from '../@models';
+import { ApiResult, RegisterModel } from '../@models';
 import { TranslationPipe } from '../@services';
 import { RegisterService } from './register.service';
 
@@ -76,7 +76,7 @@ export class RegisterComponent {
   };
   readonly edit!: boolean;
 
-  model: NewUserModel = {} as NewUserModel;
+  model: RegisterModel = {} as RegisterModel;
   submitted = false;
   result?: ApiResult;
   usernameSuffic: string = ' - -';
@@ -84,6 +84,7 @@ export class RegisterComponent {
   constructor(
     private readonly form_builder: FormBuilder,
     private readonly service: RegisterService,
+    private readonly router: Router,
     route: ActivatedRoute
   ) {
     this.edit = route.routeConfig?.path === 'edit-user-info';
@@ -91,25 +92,25 @@ export class RegisterComponent {
   }
 
   ngOnInit(): void {
-    if (this.edit) {
-      this.service.fullInfo().subscribe((user) => {
-        Object.assign(this.model, user);
-        const username_parts = this.model?.username?.split('@');
-        if (username_parts) {
-          if (username_parts.length > 0) {
-            this.usernameSuffic = this.model.username.substring(
-              username_parts[0].length + 1
-            );
-          }
-          this.model.username = username_parts[0];
-        }
+    if (!this.edit) return;
 
-        const model = this.model as any;
-        for (const key in this.model) {
-          this.form.controls[key]?.setValue(model[key]);
+    this.service.fullInfo().subscribe((user) => {
+      Object.assign(this.model, user);
+      const username_parts = this.model?.username?.split('@');
+      if (username_parts) {
+        if (username_parts.length > 0) {
+          this.usernameSuffic = this.model.username.substring(
+            username_parts[0].length + 1
+          );
         }
-      });
-    }
+        this.model.username = username_parts[0];
+      }
+
+      const model = this.model as any;
+      for (const key in this.model) {
+        this.form.controls[key]?.setValue(model[key]);
+      }
+    });
   }
 
   onValidate() {
@@ -120,9 +121,13 @@ export class RegisterComponent {
   submit() {
     if (!this.onValidate()) return;
 
-    this.service.register(this.model).subscribe((result) => {
-      if (result.code === 200) {
-        this.model = {} as NewUserModel;
+    const job = this.edit
+      ? this.service.edit(this.model)
+      : this.service.register(this.model);
+
+    job.subscribe((result) => {
+      if (result.code === 200 && !this.edit) {
+        setTimeout(() => this.router.navigate(['login']), 1000);
       }
 
       this.result = result;
@@ -130,50 +135,57 @@ export class RegisterComponent {
   }
 
   private createForm() {
-    const formControl = this.form_builder.group(
-      {
-        username: [
-          '',
-          [
-            Validators.required,
-            Validators.minLength(this.ValidatorValues.username.minLength),
-            Validators.maxLength(this.ValidatorValues.username.maxLengh),
-            Validators.pattern('^[a-zA-Z][_\\-\\.a-zA-Z0-9]+$'),
-          ],
+    const controllers: any = {
+      username: [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(this.ValidatorValues.username.minLength),
+          Validators.maxLength(this.ValidatorValues.username.maxLengh),
+          Validators.pattern('^[a-zA-Z][_\\-\\.a-zA-Z0-9]+$'),
         ],
-        email: ['', [Validators.required, Validators.email]],
-        mobile: [
-          '',
-          [
-            Validators.minLength(this.ValidatorValues.mobile.minLength),
-            Validators.maxLength(this.ValidatorValues.mobile.maxLengh),
-            Validators.pattern('^\\+?\\d+$'),
-          ],
+      ],
+      email: ['', [Validators.required, Validators.email]],
+      mobile: [
+        '',
+        [
+          Validators.minLength(this.ValidatorValues.mobile.minLength),
+          Validators.maxLength(this.ValidatorValues.mobile.maxLengh),
+          Validators.pattern('^\\+?\\d+$'),
         ],
-        firstname: ['', []],
-        lastname: ['', []],
-        password: [
-          '',
-          [
-            ...(this.edit ? [] : [Validators.required]),
-            Validators.minLength(this.ValidatorValues.password.minLength),
-            Validators.maxLength(this.ValidatorValues.password.maxLengh),
-            Validators.pattern(
-              '((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])|(?=.*[^\\x00-\\x7F])).+'
-            ),
-          ],
+      ],
+      firstname: ['', []],
+      lastname: ['', []],
+    };
+
+    let validators: any = undefined;
+
+    if (!this.edit) {
+      controllers['password'] = [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(this.ValidatorValues.password.minLength),
+          Validators.maxLength(this.ValidatorValues.password.maxLengh),
+          Validators.pattern(
+            '((?=.*\\d)(?=.*[a-z])(?=.*[A-Z])|(?=.*[^\\x00-\\x7F])).+'
+          ),
         ],
-        confirmPassword: [
-          '',
-          [
-            ...(this.edit ? [] : [Validators.required]),
-            Validators.minLength(this.ValidatorValues.password.minLength),
-            Validators.maxLength(this.ValidatorValues.password.maxLengh),
-          ],
+      ];
+      controllers['confirmPassword'] = [
+        '',
+        [
+          Validators.required,
+          Validators.minLength(this.ValidatorValues.password.minLength),
+          Validators.maxLength(this.ValidatorValues.password.maxLengh),
         ],
-      },
-      { validators: [PasswordValidators.confirmPassword] }
-    );
+      ];
+      validators = [PasswordValidators.confirmPassword];
+    }
+
+    const formControl = this.form_builder.group(controllers, {
+      validators,
+    });
 
     return formControl;
   }
@@ -184,8 +196,8 @@ class PasswordValidators {
     const password = control.get('password');
     const confirm = control.get('confirmPassword');
     if (password?.valid) {
-      const passValue = password?.value ?? "";
-      const confirmValue = confirm?.value ?? "";
+      const passValue = password?.value ?? '';
+      const confirmValue = confirm?.value ?? '';
       if (password?.valid && passValue === confirmValue) {
         confirm?.setErrors(null);
         return null;
