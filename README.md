@@ -123,6 +123,7 @@ Selling VPN
 
 1. Web Site Core
     - Consider Unit Test
+    - Cloudflare Human Test
 2. MySql Performance
     - Ask ChatGPT
     - Search in Youtube
