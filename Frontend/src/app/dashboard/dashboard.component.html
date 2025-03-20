@@ -19,7 +19,13 @@
         <c-widget-stat-c [title]="plan_info ? ('dashboard.balance.title' | translate) : ''"
             [value]="plan_info?.remainsTitle" class="mb-3" [color]="getPlanInfoColor(plan_info?.type)" inverse>
             <ng-template cTemplateId="widgetIconTemplate">
-                <svg [cIcon]="getPlanInfoIcon(plan_info?.type)" height="36"></svg>
+                <span *ngIf="plan_info" class="me-1"
+                    cTooltip="{{ 'dashboard.balance.simultaneous' | translate : [plan_info.simultaneousUserCount.toString()] }}">
+                    x{{ plan_info.simultaneousUserCount }}
+                </span>
+                <span [cTooltip]="getPlanInfoTooltip(plan_info?.type)" class="d-inline-block">
+                    <svg [cIcon]="getPlanInfoIcon(plan_info?.type)" height="36"></svg>
+                </span>
                 <c-spinner color="secondary" *ngIf="!plan_info" />
             </ng-template>
             <ng-template cTemplateId="widgetProgressTemplate">
@@ -47,7 +53,7 @@
                 <li cListGroupItem *ngFor="let duration of connections; let index = index">
                     <span class="bullet bg-success me-4">&nbsp;</span>
                     <span>{{ printDuration(duration) }}</span>
-                    <a (click)="closeConnection(index)" class="float-end icon-btn"
+                    <a (click)="closeConnection(index)" class="float-end pointer"
                         [cTooltip]="'dashboard.connections.closing' | translate">
                         <svg [cIcon]="icons.cilXCircle" class="text-danger"></svg>
                     </a>

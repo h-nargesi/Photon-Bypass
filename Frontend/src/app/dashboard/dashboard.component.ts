@@ -49,23 +49,10 @@ import { TrafficChartComponent } from './traffic-chart/traffic-chart.component';
     WidgetStatCComponent,
     TranslationPipe,
     PlaceholderDirective,
-    RowComponent,
-    ColComponent,
-    CardComponent,
-    CardBodyComponent,
-    CardTitleDirective,
-    CardTextDirective,
-    ButtonDirective,
-    ColDirective,
     RouterLink,
     PlaceholderAnimationDirective,
-    PlaceholderDirective,
     SpinnerComponent,
-    RowComponent,
-    ColComponent,
-    WidgetStatCComponent,
     TemplateIdDirective,
-    IconDirective,
     ProgressComponent,
     TrafficChartComponent,
     TextColorDirective,
@@ -150,6 +137,17 @@ export class DashboardComponent implements OnInit {
         return this.icons.cilAvTimer;
       case PlanType.Traffic:
         return this.icons.cilChartPie;
+      default:
+        return undefined;
+    }
+  }
+
+  getPlanInfoTooltip(plan_type?: PlanType): string | undefined {
+    switch (plan_type) {
+      case PlanType.Monthly:
+        return this.translation.translate('dashboard.balance.monthly');
+      case PlanType.Traffic:
+        return this.translation.translate('dashboard.balance.traffic');
       default:
         return undefined;
     }

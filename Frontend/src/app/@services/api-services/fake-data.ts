@@ -304,6 +304,7 @@ export class FakeDataMaker {
         type: PlanType.Monthly,
         remainsTitle: '23 روز باقی مانده',
         remainsPercent: 23,
+        simultaneousUserCount: 5,
       },
     } as ApiResultData<UserPlanInfo>);
   }

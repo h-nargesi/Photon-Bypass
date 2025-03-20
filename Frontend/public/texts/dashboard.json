@@ -17,8 +17,11 @@
         "minute": "دقیقه"
     },
     "balance": {
+        "simultaneous": "{0} کاربره",
+        "monthly": "ماهانه",
+        "traffic": "ترافیکی",
         "title": "مقدار مانده پلن جاری",
-        "rnewal": "تمدید"
+        "rnewal": "تمدید / افزایش"
     },
     "traffic": {
         "title": "ترافیک"
