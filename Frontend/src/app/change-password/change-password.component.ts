@@ -24,7 +24,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
-import { ApiResult, PasswordToken } from '../@models';
+import { ApiResult, PasswordToken, ResultStatus } from '../@models';
 import { PasswordValidators, TranslationPipe } from '../@services';
 import { ChangePasswordService } from './change-password.service';
 
@@ -33,6 +33,7 @@ import { ChangePasswordService } from './change-password.service';
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     ReactiveFormsModule,
     ContainerComponent,
     RowComponent,
@@ -46,10 +47,8 @@ import { ChangePasswordService } from './change-password.service';
     IconDirective,
     FormControlDirective,
     ButtonDirective,
-    TranslationPipe,
-    RouterLink,
     FormFeedbackComponent,
-    TextColorDirective,
+    TranslationPipe,
   ],
   templateUrl: './change-password.component.html',
   styleUrl: './change-password.component.scss',
@@ -116,7 +115,7 @@ export class ChangePasswordComponent {
         : this.service.changePassword(this.model);
 
     job.subscribe((result) => {
-      if (result.code === 200) {
+      if (result.status() === ResultStatus.success) {
         if (this.mode === PageMode.forgotten)
           setTimeout(() => this.router.navigate(['login']), 1000);
         else setTimeout(() => this.router.navigate(['dashboard']), 1000);

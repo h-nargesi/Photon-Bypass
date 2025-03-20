@@ -14,7 +14,7 @@
                 <p class="text-body-secondary">{{ "login.login-caption" | translate }}</p>
 
                 <!-- RESULT -->
-                <c-alert *ngIf="result" [color]="getColor(result.code)">{{ result.message }}</c-alert>
+                <c-alert *ngIf="result" [color]="getColor(result.status())">{{ result.message }}</c-alert>
 
                 <!-- USERNAME -->
                 <c-input-group class="mb-3 ltr has-validation">

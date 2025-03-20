@@ -159,7 +159,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
 
   private checkLoginUser(context: ApiResultContext): void {
     const result = context.result;
-    if (result.code == 401) {
+    if (result.code === 401) {
       LocalStorageService.set(['user', 'bearer'], undefined);
 
       const service = context.service as ApiBaseService;

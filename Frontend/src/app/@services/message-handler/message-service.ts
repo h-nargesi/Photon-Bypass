@@ -1,6 +1,6 @@
 import { Injectable, TemplateRef } from '@angular/core';
 import { ToasterComponent } from '@coreui/angular';
-import { ApiResult, MessageMethod } from '../../@models';
+import { ApiResult, MessageMethod, ResultStatus } from '../../@models';
 import { AppToastComponent } from '../../default-layout/toast/toast.component';
 
 @Injectable({ providedIn: 'root' })
@@ -41,11 +41,11 @@ export class MessageService {
 
   public resultHandler(title: string, result: ApiResult) {
     if (!title && !result?.message?.length) return;
-    this.messageHandler(result.code, title, result.message, result.method);
+    this.messageHandler(result.status(), title, result.message, result.method);
   }
 
   public messageHandler(
-    code: number,
+    code: ResultStatus,
     title: string,
     body?: string,
     method: MessageMethod = MessageMethod.toaster,
@@ -89,10 +89,10 @@ export class MessageService {
     console.info(title, body);
   }
 
-  public static getStatusCode(code: number): string {
-    if (code >= 400) return 'danger';
-    else if (code >= 300) return 'warning';
-    else if (code >= 200) return 'success';
+  public static getStatusCode(status: ResultStatus): string {
+    if (status >= ResultStatus.error) return 'danger';
+    else if (status >= ResultStatus.warning) return 'warning';
+    else if (status >= ResultStatus.success) return 'success';
     else return 'info';
   }
 }

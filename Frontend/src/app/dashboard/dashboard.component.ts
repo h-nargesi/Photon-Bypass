@@ -24,7 +24,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
-import { PlanType, UserModel, UserPlanInfo } from '../@models';
+import { PlanType, ResultStatus, UserModel, UserPlanInfo } from '../@models';
 import { TranslationPipe, TranslationService, UserService } from '../@services';
 import { DashboardService } from './dashboard.service';
 import { TrafficChartComponent } from './traffic-chart/traffic-chart.component';
@@ -107,7 +107,7 @@ export class DashboardComponent implements OnInit {
   closeConnection(index: number) {
     this.closing_connection[index] = true;
     this.service.closeConnection(index).subscribe((result) => {
-      if (result.code >= 300) return;
+      if (result.status() >= ResultStatus.warning) return;
 
       if (this.connections && this.connections.length > index) {
         this.closing_connection.splice(index, 1);

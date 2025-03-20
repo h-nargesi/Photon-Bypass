@@ -1,12 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import {
-  AbstractControl,
   FormBuilder,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
-  ValidationErrors,
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -26,7 +24,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
-import { ApiResult, RegisterModel } from '../@models';
+import { ApiResult, RegisterModel, ResultStatus } from '../@models';
 import { PasswordValidators, TranslationPipe } from '../@services';
 import { RegisterService } from './register.service';
 
@@ -38,22 +36,21 @@ import { RegisterService } from './register.service';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    RouterLink,
     ContainerComponent,
     RowComponent,
     ColComponent,
-    TextColorDirective,
     CardComponent,
     CardBodyComponent,
+    TextColorDirective,
     FormDirective,
     InputGroupComponent,
     InputGroupTextDirective,
     IconDirective,
     FormControlDirective,
     ButtonDirective,
-    TranslationPipe,
-    RouterLink,
     FormFeedbackComponent,
-    TextColorDirective,
+    TranslationPipe,
   ],
   providers: [RegisterService],
 })
@@ -121,7 +118,7 @@ export class RegisterComponent implements OnInit {
       : this.service.register(this.model);
 
     job.subscribe((result) => {
-      if (result.code === 200 && !this.edit) {
+      if (result.status() === ResultStatus.success && !this.edit) {
         setTimeout(() => this.router.navigate(['login']), 1000);
       }
 

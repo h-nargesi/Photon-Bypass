@@ -22,7 +22,7 @@ export enum MessageMethod {
 }
 
 export enum ResultStatus {
-  info,
+  info = 1,
   success,
   warning,
   error,

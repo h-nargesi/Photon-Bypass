@@ -21,7 +21,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
-import { ApiResult } from '../@models';
+import { ApiResult, ResultStatus } from '../@models';
 import { AuthService, MessageService, TranslationPipe } from '../@services';
 
 @Component({
@@ -69,7 +69,9 @@ export class LoginComponent {
       this.service.logout();
     } else {
       auth_service.check().subscribe((result) => {
-        if (result?.code === 200) this.router.navigate(['dashboard']);
+        if (result?.status() === ResultStatus.success) {
+          this.router.navigate(['dashboard']);
+        }
       });
     }
   }
@@ -81,12 +83,13 @@ export class LoginComponent {
 
     this.service.login(this.username, this.password).subscribe((result) => {
       this.result = result;
-
-      setTimeout(() => this.router.navigate(['dashboard']), 1000);
+      if (result.status() === ResultStatus.success) {
+        setTimeout(() => this.router.navigate(['dashboard']), 1000);
+      }
     });
   }
 
-  getColor(code: number) {
+  getColor(code: ResultStatus) {
     return MessageService.getStatusCode(code);
   }
 }
