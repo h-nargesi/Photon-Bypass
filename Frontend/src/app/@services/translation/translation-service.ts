@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import * as _api from '../../../../public/texts/api.json';
 import * as _change_password from '../../../../public/texts/change-password.json';
 import * as _dashboard from '../../../../public/texts/dashboard.json';
+import * as _forgot_password from '../../../../public/texts/forgot-password.json';
 import * as _global from '../../../../public/texts/global.json';
 import * as _history from '../../../../public/texts/history.json';
 import * as _home_page from '../../../../public/texts/home-page.json';
@@ -93,6 +94,7 @@ export class TranslationService {
     TranslationService.texts.set('api', _api);
     TranslationService.texts.set('change-password', _change_password);
     TranslationService.texts.set('dashboard', _dashboard);
+    TranslationService.texts.set('forgot-password', _forgot_password);
     TranslationService.texts.set('global', _global);
     TranslationService.texts.set('history', _history);
     TranslationService.texts.set('home-page', _home_page);

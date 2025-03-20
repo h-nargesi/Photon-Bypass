@@ -1,11 +1,12 @@
 import { Routes } from '@angular/router';
+import { ChangePasswordComponent } from './change-password/change-password.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DefaultLayoutComponent } from './default-layout';
+import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { HistoryComponent } from './history/history.component';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
-import { ChangePasswordComponent } from './change-password/change-password.component';
 
 export const routes: Routes = [
   {
@@ -54,6 +55,10 @@ export const routes: Routes = [
   {
     path: 'reset-password',
     component: ChangePasswordComponent,
+  },
+  {
+    path: 'forgot-password',
+    component: ForgotPasswordComponent,
   },
   { path: '**', redirectTo: '' },
 ];

@@ -1,6 +1,6 @@
 import { HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { from, Observable, of } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import {
   ApiResult,
   ApiResultData,
@@ -67,6 +67,8 @@ export class FakeDataMaker {
         return this.api_auth_check() as Observable<HttpResponse<M>>;
       case 'api/auth/change':
         return this.api_auth_change() as Observable<HttpResponse<M>>;
+      case 'api/auth/reset':
+        return this.api_auth_reset() as Observable<HttpResponse<M>>;
       // ACCOUNT
       case 'api/account/get-user':
         return this.api_account_get_user() as Observable<HttpResponse<M>>;
@@ -132,6 +134,13 @@ export class FakeDataMaker {
 
   private api_auth_change(): Observable<HttpResponse<ApiResult>> {
     return wait({ code: 200, message: 'پسورد شما تغییر کرد.' } as ApiResult);
+  }
+
+  private api_auth_reset(): Observable<HttpResponse<ApiResult>> {
+    return wait({
+      code: 200,
+      message: 'ایمیل بازیابس کلمه عبور برای شما ارسال شد.',
+    } as ApiResult);
   }
 
   private api_account_change_ovpn(): Observable<HttpResponse<ApiResult>> {
