@@ -161,6 +161,7 @@ export class FakeDataMaker {
           username: 'hamed@na',
           fullname: 'حامد نرگسی',
           email: 'hamed.nargesi.jar@gmail.com',
+          balance: 320,
         },
       } as ApiResultData<UserModel>);
     }

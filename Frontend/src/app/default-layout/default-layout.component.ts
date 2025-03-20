@@ -6,7 +6,7 @@ import {
   ShadowOnScrollDirective,
   ToasterComponent,
   ToasterPlacement,
-  ToastModule,
+  ToastModule
 } from '@coreui/angular';
 
 import { NgClass } from '@angular/common';

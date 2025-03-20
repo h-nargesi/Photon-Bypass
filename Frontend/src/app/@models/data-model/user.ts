@@ -1,26 +1,26 @@
 export interface UserModel {
-    username: string;
-    fullname: string;
-    email: string;
-    pictureUrl?: string;
+  username: string;
+  fullname: string;
+  email: string;
+  picture?: string;
+  balance: number;
 }
 
 export interface FullUserModel {
-    username: string;
-    email: string;
-    emailValid: boolean;
-    mobile: string;
-    mobileValid: boolean;
-    firstname: string;
-    lastname: string;
+  username: string;
+  email: string;
+  emailValid: boolean;
+  mobile: string;
+  mobileValid: boolean;
+  firstname: string;
+  lastname: string;
 }
 
 export interface RegisterModel extends FullUserModel {
-    password: string;
+  password: string;
 }
 
 export interface PasswordToken {
-    token: string;
-    password: string;
-  }
-  
+  token: string;
+  password: string;
+}

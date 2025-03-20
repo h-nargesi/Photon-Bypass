@@ -4,6 +4,7 @@ import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 
 import {
+  AlertComponent,
   ColorModeService,
   ContainerComponent,
   DropdownComponent,
@@ -34,6 +35,7 @@ import { TranslationPipe, UserService } from '../../@services';
     DropdownToggleDirective,
     DropdownMenuDirective,
     DropdownItemDirective,
+    AlertComponent,
     TranslationPipe,
   ],
 })
@@ -68,5 +70,21 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
 
   ngOnInit(): void {
     this.user_service.user().subscribe((user) => (this.current_user = user));
+  }
+
+  showBalance(): string {
+    const value = this.current_user?.balance?.toString();
+    if (!value) return '0';
+
+    let index = value.length % 3;
+    if (index === 0) index = 3;
+
+    let result: string = value.substring(0, index);
+    while (index < value.length) {
+      result += ',' + value.substring(index, index + 3);
+      index += 3;
+    }
+
+    return result + ',000';
   }
 }

@@ -2,10 +2,21 @@
 <ng-container>
   <c-container [fluid]="true" class="border-bottom px-4">
     <div class="d-none d-md-flex">
-      <h4>{{ title_service.getTitle() }}</h4>
+      <h4>
+        <a routerLink="/dashboard">{{ title_service.getTitle() }}</a>
+      </h4>
     </div>
 
     <c-header-nav class="d-flex ms-auto">
+      <c-alert class="m-0 p-2 me-2 digits pointer" routerLink="/payment" color="light">
+        کیف پول:<strong> {{ showBalance() }}</strong> تومان
+      </c-alert>
+      <div class="nav-item py-1">
+        <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
+      </div>
+    </c-header-nav>
+
+    <c-header-nav class="d-flex">
       <a cNavLink routerLink="/dashboard">
         <svg [cIcon]="icons.cilSpeedometer" class="my-1" size="lg"></svg>
       </a>
@@ -18,12 +29,12 @@
       <a cNavLink routerLink="/history">
         <svg [cIcon]="icons.cilHistory" class="my-1" size="lg"></svg>
       </a>
-    </c-header-nav>
-
-    <c-header-nav class="ms-auto ms-md-0">
       <div class="nav-item py-1">
         <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
       </div>
+    </c-header-nav>
+
+    <c-header-nav class="ms-auto ms-md-0">
       <ng-container *ngTemplateOutlet="themeDropdown" />
       <div class="nav-item py-1">
         <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
