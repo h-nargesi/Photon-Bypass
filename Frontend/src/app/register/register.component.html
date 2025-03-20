@@ -58,7 +58,7 @@
                     <div *ngIf="errors['required']">
                       {{ "global.validations.required" | translate : ["register.labels.email"] }}
                     </div>
-                    <div *ngIf="!errors['required'] && !errors['maxlengh'] && !errors['minlength']">
+                    <div *ngIf="!errors['required']">
                       {{ "global.validations.invalid" | translate : ["register.labels.email"] }}
                     </div>
                   </ng-container>
