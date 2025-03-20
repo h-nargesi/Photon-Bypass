@@ -8,6 +8,7 @@ import * as _history from '../../../../public/texts/history.json';
 import * as _home_page from '../../../../public/texts/home-page.json';
 import * as _login from '../../../../public/texts/login.json';
 import * as _register from '../../../../public/texts/register.json';
+import * as ـrnewal from '../../../../public/texts/rnewal.json';
 
 @Injectable({ providedIn: 'root' })
 export class TranslationService {
@@ -100,6 +101,7 @@ export class TranslationService {
     TranslationService.texts.set('home-page', _home_page);
     TranslationService.texts.set('login', _login);
     TranslationService.texts.set('register', _register);
+    TranslationService.texts.set('rnewal', ـrnewal);
     console.info('Translation Servcie is initialized.');
   }
 }

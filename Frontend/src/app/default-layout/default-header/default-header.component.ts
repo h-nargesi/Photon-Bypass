@@ -19,7 +19,7 @@ import { IconDirective } from '@coreui/icons-angular';
 
 import { ICON_SUBSET } from '../../@icons';
 import { UserModel } from '../../@models';
-import { TranslationPipe, UserService } from '../../@services';
+import { printMoney, TranslationPipe, UserService } from '../../@services';
 
 @Component({
   selector: 'app-default-header',
@@ -73,18 +73,6 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
   }
 
   showBalance(): string {
-    const value = this.current_user?.balance?.toString();
-    if (!value) return '0';
-
-    let index = value.length % 3;
-    if (index === 0) index = 3;
-
-    let result: string = value.substring(0, index);
-    while (index < value.length) {
-      result += ',' + value.substring(index, index + 3);
-      index += 3;
-    }
-
-    return result + ',000';
+    return printMoney(this.current_user?.balance);
   }
 }

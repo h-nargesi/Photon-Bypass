@@ -7,6 +7,7 @@ import { HistoryComponent } from './history/history.component';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
+import { RnewalComponent } from './rnewal/rnewal.component';
 
 export const routes: Routes = [
   {
@@ -49,6 +50,10 @@ export const routes: Routes = [
       {
         path: 'change-ovpn-password',
         component: ChangePasswordComponent,
+      },
+      {
+        path: 'rnewal',
+        component: RnewalComponent,
       },
     ],
   },

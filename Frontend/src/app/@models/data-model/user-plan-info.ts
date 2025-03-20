@@ -5,6 +5,12 @@ export interface UserPlanInfo {
   simultaneousUserCount: number;
 }
 
+export interface PlanInto {
+  type: PlanType;
+  value: number;
+  simultaneousUserCount: number;
+}
+
 export enum PlanType {
   Monthly,
   Traffic,
