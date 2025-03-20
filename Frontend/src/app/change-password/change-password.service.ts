@@ -11,8 +11,9 @@ export class ChangePasswordService extends ApiBaseService {
   }
 
   changeOpenVpnPassword(model: PasswordToken): Observable<ApiResult> {
-    return this.job(`${AUTH_API_URL}/change-ovpn`, model);
+    return this.job(`${ACCOUNT_API_URL}/change-ovpn`, model);
   }
 }
 
 const AUTH_API_URL: string = '/auth';
+const ACCOUNT_API_URL: string = '/account';

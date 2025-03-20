@@ -67,11 +67,11 @@ export class FakeDataMaker {
         return this.api_auth_check() as Observable<HttpResponse<M>>;
       case 'api/auth/change':
         return this.api_auth_change() as Observable<HttpResponse<M>>;
-      case 'api/auth/change-ovpn':
-        return this.api_auth_change_ovpn() as Observable<HttpResponse<M>>;
       // ACCOUNT
       case 'api/account/get-user':
         return this.api_account_get_user() as Observable<HttpResponse<M>>;
+      case 'api/account/change-ovpn':
+        return this.api_account_change_ovpn() as Observable<HttpResponse<M>>;
       case 'api/account/send-cert-email':
         return this.api_account_get_cert_email() as Observable<HttpResponse<M>>;
       case 'api/account/traffic-data':
@@ -131,7 +131,7 @@ export class FakeDataMaker {
     return wait({ code: 200, message: 'پسورد شما تغییر کرد.' } as ApiResult);
   }
 
-  private api_auth_change_ovpn(): Observable<HttpResponse<ApiResult>> {
+  private api_account_change_ovpn(): Observable<HttpResponse<ApiResult>> {
     return wait({
       code: 200,
       message: 'پسورد وی‌پی‌ان شما تغییر کرد.',
