@@ -91,7 +91,10 @@ export class FakeDataMaker {
       case 'api/plan/plan-info':
         return this.api_plan_plan_info() as Observable<HttpResponse<M>>;
     }
-    return of();
+
+    return wait({ code: 500, message: `'${url}' not found!` }) as Observable<
+      HttpResponse<M>
+    >;
   }
 
   private api_auth_token(data: any): Observable<HttpResponse<ApiResult>> {
