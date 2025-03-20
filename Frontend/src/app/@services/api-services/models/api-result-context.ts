@@ -3,8 +3,8 @@ import { ApiMessageHandlerService } from '../../message-handler/message-handler-
 
 interface ApiResultContextBase {
   title: string;
-  show_message: boolean;
-  message_method: MessageMethod;
+  show_message?: boolean;
+  message_method?: MessageMethod;
   service: ApiMessageHandlerService;
 }
 

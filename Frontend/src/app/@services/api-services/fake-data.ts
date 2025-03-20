@@ -100,36 +100,42 @@ export class FakeDataMaker {
       return wait({
         code: 401,
         message: 'نام کاربری یا کلمه عبور اشتباه است.',
-      });
+      } as ApiResult);
     } else {
-      return wait({ code: 200, message: 'شما وارد شدید.' });
+      return wait({ code: 200, message: 'شما وارد شدید.' } as ApiResult);
     }
   }
 
   private api_auth_logout(): Observable<HttpResponse<ApiResult>> {
     LocalStorageService.set(['user', 'bearer'], undefined);
-    return wait({ code: 200 });
+    return wait({ code: 200 } as ApiResult);
   }
 
   private api_auth_register(): Observable<HttpResponse<ApiResult>> {
-    return wait({ code: 200, message: 'کاربر با موفقیت ساخته شد.' });
+    return wait({
+      code: 200,
+      message: 'کاربر با موفقیت ساخته شد.',
+    } as ApiResult);
   }
 
   private api_auth_check(): Observable<HttpResponse<ApiResult>> {
     const bearer = LocalStorageService.get(['user', 'bearer']);
     if (bearer) {
-      return wait({ code: 200 }, 1, 1);
+      return wait({ code: 200 } as ApiResult, 1, 1);
     }
 
-    return wait({ code: 401 }, 1, 1);
+    return wait({ code: 401 } as ApiResult, 1, 1);
   }
 
   private api_auth_change(): Observable<HttpResponse<ApiResult>> {
-    return wait({ code: 200, message: 'پسورد شما تغییر کرد.' });
+    return wait({ code: 200, message: 'پسورد شما تغییر کرد.' } as ApiResult);
   }
 
   private api_auth_change_ovpn(): Observable<HttpResponse<ApiResult>> {
-    return wait({ code: 200, message: 'پسورد وی‌پی‌ان شما تغییر کرد.' });
+    return wait({
+      code: 200,
+      message: 'پسورد وی‌پی‌ان شما تغییر کرد.',
+    } as ApiResult);
   }
 
   private api_account_get_user(): Observable<
@@ -144,14 +150,17 @@ export class FakeDataMaker {
           fullname: 'حامد نرگسی',
           email: 'hamed.nargesi.jar@gmail.com',
         },
-      });
+      } as ApiResultData<UserModel>);
     }
 
-    return wait({ code: 401 });
+    return wait({ code: 401 } as ApiResultData<UserModel>);
   }
 
   private api_account_get_cert_email(): Observable<HttpResponse<ApiResult>> {
-    return wait({ code: 200, message: 'ایمیل با موفقیت ارسال شد.' }, 4000);
+    return wait(
+      { code: 200, message: 'ایمیل با موفقیت ارسال شد.' } as ApiResult,
+      4000
+    );
   }
 
   private api_account_traffic_data(): Observable<
@@ -216,7 +225,7 @@ export class FakeDataMaker {
     data.collections.push(total);
     data.collections.push(average);
 
-    return wait({ code: 200, data }, 2000);
+    return wait({ code: 200, data } as ApiResultData<TrafficDataModel>, 2000);
   }
 
   private api_account_full_info(): Observable<
@@ -234,14 +243,14 @@ export class FakeDataMaker {
           firstname: 'حامد',
           lastname: 'نرگسی',
         },
-      },
+      } as ApiResultData<FullUserModel>,
       200,
       300
     );
   }
 
   private api_account_edit(): Observable<HttpResponse<ApiResult>> {
-    return wait({ code: 200, message: 'کاربر ویرایش شد.' });
+    return wait({ code: 200, message: 'کاربر ویرایش شد.' } as ApiResult);
   }
 
   private api_account_history(
@@ -258,17 +267,19 @@ export class FakeDataMaker {
         (!data.to || data.to > x.eventTime)
     );
 
-    return wait({ code: 200, data: result });
+    return wait({ code: 200, data: result } as ApiResultData<HistoryRecord[]>);
   }
 
   private api_con_current_state(): Observable<
     HttpResponse<ApiResultData<number[]>>
   > {
-    return wait({ code: 200, data: [534, 325, 244, 16] });
+    return wait({ code: 200, data: [534, 325, 244, 16] } as ApiResultData<
+      number[]
+    >);
   }
 
   private api_con_close_con(): Observable<HttpResponse<ApiResult>> {
-    return wait({ code: 200, message: 'کانکشن بسته شد.' });
+    return wait({ code: 200, message: 'کانکشن بسته شد.' } as ApiResult);
   }
 
   private api_plan_plan_info(): Observable<
@@ -281,7 +292,7 @@ export class FakeDataMaker {
         remainsTitle: '23 روز باقی مانده',
         remainsPercent: 23,
       },
-    });
+    } as ApiResultData<UserPlanInfo>);
   }
 }
 

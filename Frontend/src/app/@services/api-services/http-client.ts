@@ -2,12 +2,18 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { ApiResult, ApiResultData, MessageMethod } from '../../@models';
+import {
+  ApiResult,
+  ApiResultData,
+  ApiResultStatus,
+  MessageMethod,
+  ResultStatus,
+} from '../../@models';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { TranslationService } from '../translation/translation-service';
+import { FakeDataMaker } from './fake-data';
 import { ApiParam } from './models/api-param-type';
 import { API_BASE_URL } from './models/app-base-path';
-import { FakeDataMaker } from './fake-data';
 
 @Injectable({ providedIn: 'root' })
 export class HttpClientHandler {
@@ -91,7 +97,9 @@ export class HttpClientHandler {
         error?.error?.message ?? TranslationService.translate('api.error'),
       developer: error,
       method: MessageMethod.toaster,
-    };
+    } as ApiResult;
+    HttpClientHandler.setStatusFunction(error_object);
+
     if (error_object.code < 400) error_object.code = 600;
     return of(error_object);
   }
@@ -117,6 +125,21 @@ export class HttpClientHandler {
       result.developer = response.statusText;
     }
 
+    HttpClientHandler.setStatusFunction(result);
+
     return result;
+  }
+
+  private static setStatusFunction(result: ApiResult) {
+    Object.assign({}, result, {
+      status: function (): ResultStatus {
+        if (this.code >= 600) return ResultStatus.uiFatal;
+        else if (this.code >= 500) return ResultStatus.serverFatal;
+        else if (this.code >= 400) return ResultStatus.error;
+        else if (this.code >= 300) return ResultStatus.warning;
+        else if (this.code >= 200) return ResultStatus.success;
+        else return ResultStatus.info;
+      },
+    } as ApiResultStatus);
   }
 }
