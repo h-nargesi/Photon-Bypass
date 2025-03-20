@@ -91,21 +91,22 @@ export class HttpClientHandler {
   }
 
   protected errorHandler(error: any): Observable<ApiResult> {
-    const error_object: ApiResult = {
+    const error_object: ApiResult = HttpClientHandler.setStatusFunction({
       code: error?.error?.code ?? error.status ?? 600,
       message:
         error?.error?.message ?? TranslationService.translate('api.error'),
       developer: error,
       method: MessageMethod.toaster,
-    } as ApiResult;
-    HttpClientHandler.setStatusFunction(error_object);
+    } as ApiResult);
 
     if (error_object.code < 400) error_object.code = 600;
     return of(error_object);
   }
 
   private processResponse(response: HttpResponse<ApiResult>): ApiResult {
-    const result = response.body ?? ({} as ApiResult);
+    const result = HttpClientHandler.setStatusFunction(
+      response.body ?? ({} as ApiResult)
+    );
 
     if (!result.code) {
       result.code = response.status;
@@ -125,13 +126,11 @@ export class HttpClientHandler {
       result.developer = response.statusText;
     }
 
-    HttpClientHandler.setStatusFunction(result);
-
     return result;
   }
 
-  private static setStatusFunction(result: ApiResult) {
-    Object.assign({}, result, {
+  private static setStatusFunction(result: ApiResult): ApiResult {
+    return Object.assign({}, result, {
       status: function (): ResultStatus {
         if (this.code >= 600) return ResultStatus.uiFatal;
         else if (this.code >= 500) return ResultStatus.serverFatal;
