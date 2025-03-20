@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of, tap } from 'rxjs';
 import { UserModel } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
+import { ACCOUNT_API_URL } from '../api-services/models/app-api-url';
 import { TranslationService } from '../translation/translation-service';
 
 @Injectable({ providedIn: 'root' })
@@ -35,5 +36,3 @@ export class UserService extends ApiBaseService {
     return this.getData<UserModel>(url, undefined, title);
   }
 }
-
-const ACCOUNT_API_URL: string = '/account';

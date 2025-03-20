@@ -1,14 +1,19 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiResult, UserPlanInfo } from '../@models';
-import { ApiBaseService } from '../@services';
+import {
+  ACCOUNT_API_URL,
+  ApiBaseService,
+  CONNECTION_API_URL,
+  PLAN_API_URL,
+} from '../@services';
 import { DashboardComponent } from './dashboard.component';
 
 @Injectable({ providedIn: DashboardComponent })
 export class DashboardService extends ApiBaseService {
   sendCertificateViaEmail(): Observable<ApiResult> {
     return this.call(
-      `${ACOUNT_API_URL}/send-cert-email`,
+      `${ACCOUNT_API_URL}/send-cert-email`,
       undefined,
       undefined,
       true
@@ -30,7 +35,3 @@ export class DashboardService extends ApiBaseService {
     return this.getData<UserPlanInfo>(url);
   }
 }
-
-const ACOUNT_API_URL: string = '/account';
-const CONNECTION_API_URL: string = '/connection';
-const PLAN_API_URL: string = '/plan';

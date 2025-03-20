@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiResult, PasswordToken } from '../@models';
-import { ApiBaseService } from '../@services';
+import { ACCOUNT_API_URL, ApiBaseService, AUTH_API_URL } from '../@services';
 import { ChangePasswordComponent } from './change-password.component';
 
 @Injectable({ providedIn: ChangePasswordComponent })
@@ -14,6 +14,3 @@ export class ChangePasswordService extends ApiBaseService {
     return this.job(`${ACCOUNT_API_URL}/change-ovpn`, model);
   }
 }
-
-const AUTH_API_URL: string = '/auth';
-const ACCOUNT_API_URL: string = '/account';

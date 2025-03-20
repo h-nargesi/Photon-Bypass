@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiResult } from '../../@models';
 import { HttpClientHandler } from '../api-services/http-client';
+import { AUTH_API_URL } from '../api-services/models/app-api-url';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { UserService } from './user-servcie';
 
@@ -27,5 +28,3 @@ export class AuthService {
     return this.api.call(`${AUTH_API_URL}/logout`);
   }
 }
-
-const AUTH_API_URL: string = '/auth';
