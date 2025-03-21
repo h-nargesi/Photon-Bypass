@@ -63,6 +63,8 @@ export class FakeDataService {
         return this.api_auth_logout() as Observable<HttpResponse<M>>;
       case 'api/auth/register':
         return this.api_auth_register() as Observable<HttpResponse<M>>;
+      case 'api/auth/get-user':
+        return this.api_auth_get_user() as Observable<HttpResponse<M>>;
       case 'api/auth/check':
         return this.api_auth_check() as Observable<HttpResponse<M>>;
       case 'api/auth/change':
@@ -70,8 +72,6 @@ export class FakeDataService {
       case 'api/auth/reset':
         return this.api_auth_reset() as Observable<HttpResponse<M>>;
       // ACCOUNT
-      case 'api/account/get-user':
-        return this.api_account_get_user() as Observable<HttpResponse<M>>;
       case 'api/account/change-ovpn':
         return this.api_account_change_ovpn() as Observable<HttpResponse<M>>;
       case 'api/account/send-cert-email':
@@ -154,7 +154,7 @@ export class FakeDataService {
     } as ApiResult);
   }
 
-  private api_account_get_user(): Observable<
+  private api_auth_get_user(): Observable<
     HttpResponse<ApiResultData<UserModel>>
   > {
     const bearer = LocalStorageService.get(['user', 'bearer']);
@@ -166,6 +166,7 @@ export class FakeDataService {
           fullname: 'حامد نرگسی',
           email: 'hamed.nargesi.jar@gmail.com',
           balance: 320,
+          targetArea: ['hamed@na', 'vali@gmail', 'narges@web'],
         },
       } as ApiResultData<UserModel>);
     }

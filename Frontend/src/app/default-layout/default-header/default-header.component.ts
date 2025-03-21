@@ -1,4 +1,4 @@
-import { NgTemplateOutlet } from '@angular/common';
+import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
@@ -25,6 +25,7 @@ import { printMoney, TranslationPipe, UserService } from '../../@services';
   selector: 'app-default-header',
   templateUrl: './default-header.component.html',
   imports: [
+    CommonModule,
     ContainerComponent,
     IconDirective,
     HeaderNavComponent,
@@ -68,8 +69,16 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
     );
   });
 
-  ngOnInit(): void {
-    this.user_service.user().subscribe((user) => (this.current_user = user));
+  async ngOnInit() {
+    this.current_user = await this.user_service.user();
+  }
+
+  getTarget(): string | undefined {
+    return this.user_service.Target;
+  }
+
+  setTarget(index: number) {
+    this.user_service.setTraget(index);
   }
 
   showBalance(): string {

@@ -1,9 +1,14 @@
+export interface TagetAction {
+  target: string;
+}
+
 export interface UserModel {
   username: string;
   fullname: string;
   email: string;
   picture?: string;
   balance: number;
+  targetArea?: string[];
 }
 
 export interface FullUserModel {

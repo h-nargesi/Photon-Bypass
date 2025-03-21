@@ -153,8 +153,8 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  private loadUsers() {
-    this.user_service.user().subscribe((user) => (this.current_user = user));
+  private async loadUsers() {
+    this.current_user = await this.user_service.user();
   }
 
   private loadConnections() {

@@ -2,7 +2,11 @@
     "header": {
         "edit-user-info": "ویرایش",
         "change-password": "تغییر کلمه عبور",
-        "logout": "خروج"
+        "logout": "خروج",
+        "walet": {
+            "title": "کیف پول:",
+            "currency": "تومان"
+        }
     },
     "validations": {
         "required": "{0} الزامی است!",

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   BorderDirective,
@@ -12,7 +12,12 @@ import {
   RowComponent,
 } from '@coreui/angular';
 import { PlanInto, PlanType, UserModel } from '../@models';
-import { printMoney, TranslationPipe, TranslationService, UserService } from '../@services';
+import {
+  printMoney,
+  TranslationPipe,
+  TranslationService,
+  UserService,
+} from '../@services';
 import { RnewalService } from './rnewal.service';
 
 @Component({
@@ -34,7 +39,7 @@ import { RnewalService } from './rnewal.service';
   styleUrl: './rnewal.component.scss',
   providers: [RnewalService],
 })
-export class RnewalComponent {
+export class RnewalComponent implements OnInit {
   readonly maxUserCounts = [1, 2, 3, 4, 5, 6];
   readonly monthlyChoises = [1, 2, 3, 4, 5, 6];
   readonly trafficChoises = [25, 50, 75, 100, 150];
@@ -54,19 +59,18 @@ export class RnewalComponent {
 
   constructor(
     private readonly service: RnewalService,
-    translation: TranslationService,
-    user_service: UserService
+    private readonly user_service: UserService,
+    translation: TranslationService
   ) {
     this.monthlyUnit = translation.translate('rnewal.labels.monthly.unit');
     this.trafficUnit = translation.translate('rnewal.labels.traffic.unit');
-    user_service
-      .user()
-      .subscribe((user_info) => (this.current_user = user_info));
   }
 
-  submit() {
-
+  async ngOnInit() {
+    this.current_user = await this.user_service.user();
   }
+
+  submit() {}
 
   setMonthly() {
     if (this.selectedMonthly === 0) return;
