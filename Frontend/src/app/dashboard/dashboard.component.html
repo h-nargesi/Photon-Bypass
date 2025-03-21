@@ -83,7 +83,7 @@
             <ul cListGroup [flush]="true" class="ltr">
                 <li cListGroupItem>{{ current_user.email }}</li>
                 <li cListGroupItem class="icon-btn-group">
-                    <a (click)="sendCertificateViaEmail()" *ngIf="!sending_cert_email" class="icon-btn"
+                    <a (click)="sendCertificateViaEmail()" *ngIf="!sending_cert_email" class="icon-btn pointer"
                         [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
                         <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
                     </a>

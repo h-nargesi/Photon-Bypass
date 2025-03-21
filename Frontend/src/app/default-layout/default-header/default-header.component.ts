@@ -14,6 +14,7 @@ import {
   HeaderComponent,
   HeaderNavComponent,
   NavLinkDirective,
+  TooltipDirective,
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 
@@ -37,6 +38,7 @@ import { printMoney, TranslationPipe, UserService } from '../../@services';
     DropdownMenuDirective,
     DropdownItemDirective,
     AlertComponent,
+    TooltipDirective,
     TranslationPipe,
   ],
 })

@@ -3,6 +3,12 @@
         "edit-user-info": "ویرایش",
         "change-password": "تغییر کلمه عبور",
         "logout": "خروج",
+        "navbar": {
+            "dashboard": "داشبورد",
+            "rnewal": "تمدید",
+            "payment": "پرداخت",
+            "history": "تاریخچه"
+        },
         "walet": {
             "title": "کیف پول:",
             "currency": "تومان"
