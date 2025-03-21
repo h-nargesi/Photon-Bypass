@@ -2,6 +2,7 @@ export class LocalStorageService {
   /*
     user|last_request: number
     user|bearer: string
+    user|taget: number
   */
 
   public static set(path: string[], value: any) {

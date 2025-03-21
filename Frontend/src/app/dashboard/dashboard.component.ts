@@ -87,13 +87,14 @@ export class DashboardComponent implements OnInit {
   sendCertificateViaEmail(): void {
     this.sending_cert_email = true;
     this.service
-      .sendCertificateViaEmail()
+      .sendCertificateViaEmail(this.user_service.Target)
       .subscribe(() => (this.sending_cert_email = false));
   }
 
   closeConnection(index: number) {
     this.closing_connection[index] = true;
-    this.service.closeConnection(index).subscribe((result) => {
+    const targte = this.user_service.Target;
+    this.service.closeConnection(index, targte).subscribe((result) => {
       if (result.status() >= ResultStatus.warning) return;
 
       if (this.connections && this.connections.length > index) {
@@ -158,20 +159,24 @@ export class DashboardComponent implements OnInit {
   }
 
   private loadConnections() {
-    this.service.fetchCurrentConnections().subscribe((connections) => {
-      this.connections = connections;
+    this.service
+      .fetchCurrentConnections(this.user_service.Target)
+      .subscribe((connections) => {
+        this.connections = connections;
 
-      this.connection_count = (connections?.length ?? 0).toString();
+        this.connection_count = (connections?.length ?? 0).toString();
 
-      this.closing_connection = [];
-      if (connections) {
-        for (let i = 0; i < connections.length; i++)
-          this.closing_connection.push(false);
-      }
-    });
+        this.closing_connection = [];
+        if (connections) {
+          for (let i = 0; i < connections.length; i++)
+            this.closing_connection.push(false);
+        }
+      });
   }
 
   private loadPlanInfo() {
-    this.service.fetchPlanInfo().subscribe((info) => (this.plan_info = info));
+    this.service
+      .fetchPlanInfo(this.user_service.Target)
+      .subscribe((info) => (this.plan_info = info));
   }
 }

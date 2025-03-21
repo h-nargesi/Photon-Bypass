@@ -1,0 +1,1 @@
+- cloase notification on click

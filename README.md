@@ -133,3 +133,7 @@ Selling VPN
     3. Bank Payment Gateway
 4. Send WhatsApp Notif
 5. Google Auth
+6. Other features
+    - Multi Account Panel
+        - user-service onTargetChanged event
+        - optional target in history

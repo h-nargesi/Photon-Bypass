@@ -70,7 +70,9 @@ export class RnewalComponent implements OnInit {
     this.current_user = await this.user_service.user();
   }
 
-  submit() {}
+  submit() {
+    this.plan.target = this.user_service.Target ?? this.current_user.username;
+  }
 
   setMonthly() {
     if (this.selectedMonthly === 0) return;
@@ -101,6 +103,8 @@ export class RnewalComponent implements OnInit {
       this.valid = false;
       return;
     }
+
+    this.plan.target = this.user_service.Target ?? this.current_user.username;
 
     this.service.estimate(this.plan).subscribe((cost) => {
       this.valid = cost ? true : false;

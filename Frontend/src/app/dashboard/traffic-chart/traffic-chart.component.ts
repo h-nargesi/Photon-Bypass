@@ -23,7 +23,7 @@ import {
 } from 'chart.js';
 import { ICON_SUBSET } from '../../@icons';
 import { TrafficDataModel } from '../../@models';
-import { TranslationPipe } from '../../@services';
+import { TranslationPipe, UserService } from '../../@services';
 import { TrafficDataService } from './traffic-chart.service';
 
 @Component({
@@ -55,16 +55,21 @@ export class TrafficChartComponent {
   data?: ChartData;
   loading: boolean = false;
 
-  constructor(private readonly service: TrafficDataService) {
+  constructor(
+    private readonly service: TrafficDataService,
+    private readonly user_service: UserService
+  ) {
     this.initOptions();
   }
 
   loadTrafficData() {
     this.loading = true;
-    this.service.fetchTrafficData().subscribe((data) => {
-      this.loading = false;
-      this.initMainChart(data);
-    });
+    this.service
+      .fetchTrafficData(this.user_service.Target)
+      .subscribe((data) => {
+        this.loading = false;
+        this.initMainChart(data);
+      });
   }
 
   private initMainChart(model: TrafficDataModel) {

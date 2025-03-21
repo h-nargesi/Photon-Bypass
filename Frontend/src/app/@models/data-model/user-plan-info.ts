@@ -6,6 +6,7 @@ export interface UserPlanInfo {
 }
 
 export interface PlanInto {
+  target: string;
   type: PlanType;
   value: number;
   simultaneousUserCount: number;

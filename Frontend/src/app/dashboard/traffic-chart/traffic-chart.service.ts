@@ -6,8 +6,8 @@ import { TrafficChartComponent } from './traffic-chart.component';
 
 @Injectable({ providedIn: TrafficChartComponent })
 export class TrafficDataService extends ApiBaseService {
-  fetchTrafficData(): Observable<TrafficDataModel> {
+  fetchTrafficData(target?: string): Observable<TrafficDataModel> {
     const url = `${ACCOUNT_API_URL}/traffic-data`;
-    return this.getData<TrafficDataModel>(url);
+    return this.getData<TrafficDataModel>(url, target ? { target } : undefined);
   }
 }

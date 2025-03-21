@@ -25,7 +25,7 @@ import {
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
 import { ApiResult, RegisterModel, ResultStatus } from '../@models';
-import { PasswordValidators, TranslationPipe } from '../@services';
+import { PasswordValidators, TranslationPipe, UserService } from '../@services';
 import { RegisterService } from './register.service';
 
 @Component({
@@ -81,6 +81,7 @@ export class RegisterComponent implements OnInit {
   constructor(
     private readonly form_builder: FormBuilder,
     private readonly service: RegisterService,
+    private readonly user_service: UserService,
     private readonly router: Router,
     route: ActivatedRoute
   ) {
@@ -91,7 +92,7 @@ export class RegisterComponent implements OnInit {
   ngOnInit(): void {
     if (!this.edit) return;
 
-    this.service.fullInfo().subscribe((user) => {
+    this.service.fullInfo(this.user_service.Target).subscribe((user) => {
       Object.assign(this.model, user);
       const username_parts = this.model?.username?.split('@');
       if (username_parts) {

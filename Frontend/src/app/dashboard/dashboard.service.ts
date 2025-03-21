@@ -11,27 +11,27 @@ import { DashboardComponent } from './dashboard.component';
 
 @Injectable({ providedIn: DashboardComponent })
 export class DashboardService extends ApiBaseService {
-  sendCertificateViaEmail(): Observable<ApiResult> {
+  sendCertificateViaEmail(target?: string): Observable<ApiResult> {
     return this.call(
       `${ACCOUNT_API_URL}/send-cert-email`,
-      undefined,
+      target ? { target } : undefined,
       undefined,
       true
     );
   }
 
-  fetchCurrentConnections(): Observable<number[]> {
+  fetchCurrentConnections(target?: string): Observable<number[]> {
     const url = `${CONNECTION_API_URL}/current-con-state`;
-    return this.getData<number[]>(url);
+    return this.getData<number[]>(url, target ? { target } : undefined);
   }
 
-  closeConnection(index: number): Observable<ApiResult> {
+  closeConnection(index: number, target?: string): Observable<ApiResult> {
     const url = `${CONNECTION_API_URL}/close-con`;
-    return this.job(url, { index }, undefined, true);
+    return this.job(url, { target, index }, undefined, true);
   }
 
-  fetchPlanInfo(): Observable<UserPlanInfo> {
+  fetchPlanInfo(target?: string): Observable<UserPlanInfo> {
     const url = `${PLAN_API_URL}/plan-info`;
-    return this.getData<UserPlanInfo>(url);
+    return this.getData<UserPlanInfo>(url, target ? { target } : undefined);
   }
 }
