@@ -4,6 +4,7 @@ import { ApiResult, UserPlanInfo } from '../@models';
 import {
   ACCOUNT_API_URL,
   ApiBaseService,
+  ApiParam,
   CONNECTION_API_URL,
   PLAN_API_URL,
 } from '../@services';
@@ -14,24 +15,23 @@ export class DashboardService extends ApiBaseService {
   sendCertificateViaEmail(target?: string): Observable<ApiResult> {
     return this.call(
       `${ACCOUNT_API_URL}/send-cert-email`,
-      target ? { target } : undefined,
-      undefined,
+      { target } as ApiParam,
       true
     );
   }
 
   fetchCurrentConnections(target?: string): Observable<number[]> {
     const url = `${CONNECTION_API_URL}/current-con-state`;
-    return this.getData<number[]>(url, target ? { target } : undefined);
+    return this.getData<number[]>(url, { target } as ApiParam);
   }
 
   closeConnection(index: number, target?: string): Observable<ApiResult> {
     const url = `${CONNECTION_API_URL}/close-con`;
-    return this.job(url, { target, index }, undefined, true);
+    return this.job(url, { target, index }, true);
   }
 
   fetchPlanInfo(target?: string): Observable<UserPlanInfo> {
     const url = `${PLAN_API_URL}/plan-info`;
-    return this.getData<UserPlanInfo>(url, target ? { target } : undefined);
+    return this.getData<UserPlanInfo>(url, { target } as ApiParam);
   }
 }

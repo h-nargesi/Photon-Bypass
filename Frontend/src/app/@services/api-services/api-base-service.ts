@@ -29,8 +29,8 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
   protected call(
     url: string,
     params?: ApiParam,
-    title?: string,
     show_message?: boolean,
+    title?: string,
     message_method?: MessageMethod
   ): Observable<ApiResult> {
     const service = this;
@@ -54,8 +54,8 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
   protected get<M>(
     url: string,
     params?: ApiParam,
-    title?: string,
     show_message?: boolean,
+    title?: string,
     message_method?: MessageMethod
   ): Observable<ApiResultData<M>> {
     const service = this;
@@ -79,11 +79,11 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
   protected getData<M>(
     url: string,
     params?: ApiParam,
-    title?: string,
     show_message?: boolean,
+    title?: string,
     message_method?: MessageMethod
   ): Observable<M> {
-    return this.get<M>(url, params, title, show_message, message_method).pipe(
+    return this.get<M>(url, params, show_message, title, message_method).pipe(
       map((result) => result.data ?? (null as M))
     );
   }
@@ -91,8 +91,8 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
   protected job(
     url: string,
     model: any | null,
-    title?: string,
     show_message?: boolean,
+    title?: string,
     message_method?: MessageMethod
   ): Observable<ApiResult> {
     const service = this;
@@ -116,8 +116,8 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
   protected post<M>(
     url: string,
     model: any | null,
-    title?: string,
     show_message?: boolean,
+    title?: string,
     message_method?: MessageMethod
   ): Observable<ApiResultData<M>> {
     const service = this;
@@ -141,20 +141,13 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
   protected postData<M>(
     url: string,
     model: any | null,
-    title?: string,
     show_message?: boolean,
+    title?: string,
     message_method?: MessageMethod
   ): Observable<M> {
-    return this.post<M>(url, model, title, show_message, message_method).pipe(
+    return this.post<M>(url, model, show_message, title, message_method).pipe(
       map((result) => result.data ?? (null as M))
     );
-  }
-
-  protected getApiParam(model: any): ApiParam | undefined {
-    if (!model) return undefined;
-    const data = {} as ApiParam;
-    for (const key in model) data[key] = model[key];
-    return data;
   }
 
   private checkLoginUser(context: ApiResultContext): void {

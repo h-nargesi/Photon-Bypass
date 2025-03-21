@@ -53,6 +53,6 @@ export class UserService extends ApiBaseService {
   private fetchUser(): Observable<UserModel> {
     const url = `${AUTH_API_URL}/get-user`;
     const title = TranslationService.translate('api.recieve');
-    return this.getData<UserModel>(url, undefined, title);
+    return this.getData<UserModel>(url, undefined, undefined, title);
   }
 }
