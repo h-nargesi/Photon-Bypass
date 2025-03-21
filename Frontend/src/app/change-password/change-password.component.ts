@@ -152,14 +152,7 @@ export class ChangePasswordComponent {
     };
 
     if (this.mode !== PageMode.forgotten) {
-      controls['token'] = [
-        '',
-        [
-          Validators.required,
-          Validators.minLength(this.ValidatorValues.password.minLength),
-          Validators.maxLength(this.ValidatorValues.password.maxLengh),
-        ],
-      ];
+      controls['token'] = ['', [Validators.required]];
     }
 
     const formControl = this.form_builder.group(controls, {
