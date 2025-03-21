@@ -176,7 +176,7 @@ export class DashboardComponent implements OnInit {
 
   private loadPlanInfo() {
     this.service
-      .fetchPlanInfo(this.user_service.Target)
+      .fetchPlanState(this.user_service.Target)
       .subscribe((info) => (this.plan_info = info));
   }
 }

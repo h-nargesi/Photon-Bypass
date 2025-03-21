@@ -1,11 +1,17 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiResult, PlanInto, ShowMessageCase } from '../@models';
-import { ApiBaseService, PLAN_API_URL } from '../@services';
+import { ApiBaseService, ApiParam, PLAN_API_URL } from '../@services';
 import { RnewalComponent } from './rnewal.component';
 
 @Injectable({ providedIn: RnewalComponent })
 export class RnewalService extends ApiBaseService {
+  info(target?: string): Observable<PlanInto> {
+    return this.getData<PlanInto>(`${PLAN_API_URL}/plan-info`, {
+      target,
+    } as ApiParam);
+  }
+
   estimate(plan: PlanInto): Observable<number> {
     return this.postData<number>(`${PLAN_API_URL}/estimate`, plan, {
       show_message: ShowMessageCase.errors,

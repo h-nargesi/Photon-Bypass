@@ -30,8 +30,8 @@ export class DashboardService extends ApiBaseService {
     return this.job(url, { target, index });
   }
 
-  fetchPlanInfo(target?: string): Observable<UserPlanInfo> {
-    const url = `${PLAN_API_URL}/plan-info`;
+  fetchPlanState(target?: string): Observable<UserPlanInfo> {
+    const url = `${PLAN_API_URL}/plan-state`;
     return this.getData<UserPlanInfo>(url, { target } as ApiParam);
   }
 }

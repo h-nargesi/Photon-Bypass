@@ -6,6 +6,7 @@ import {
   ApiResultData,
   FullUserModel,
   HistoryRecord,
+  PlanInto,
   PlanType,
   TrafficData,
   TrafficDataModel,
@@ -90,6 +91,8 @@ export class FakeDataService {
       case 'api/connection/close-con':
         return this.api_con_close_con() as Observable<HttpResponse<M>>;
       // PLAN
+      case 'api/plan/plan-state':
+        return this.api_plan_state() as Observable<HttpResponse<M>>;
       case 'api/plan/plan-info':
         return this.api_plan_info() as Observable<HttpResponse<M>>;
       case 'api/plan/estimate':
@@ -300,18 +303,38 @@ export class FakeDataService {
     return wait({ code: 200, message: 'کانکشن بسته شد.' } as ApiResult);
   }
 
-  private api_plan_info(): Observable<
+  private api_plan_state(): Observable<
     HttpResponse<ApiResultData<UserPlanInfo>>
   > {
+    const type = Math.random() > 0.5 ? PlanType.Monthly : PlanType.Traffic;
+    const value = 1 + Math.floor(Math.random() * 100);
     return wait({
       code: 200,
       data: {
-        type: PlanType.Monthly,
-        remainsTitle: '23 روز باقی مانده',
-        remainsPercent: 23,
-        simultaneousUserCount: 5,
+        type,
+        remainsTitle: `${value} ${
+          type === PlanType.Monthly ? 'روز' : 'گیگ'
+        } باقی مانده`,
+        remainsPercent: value,
+        simultaneousUserCount: 1 + Math.floor(Math.random() * 5),
       },
     } as ApiResultData<UserPlanInfo>);
+  }
+
+  private api_plan_info(): Observable<HttpResponse<ApiResultData<PlanInto>>> {
+    const type = Math.random() > 0.5 ? PlanType.Monthly : PlanType.Traffic;
+    const value =
+      (1 + Math.floor(Math.random() * 5)) *
+      (type === PlanType.Monthly ? 1 : 25);
+    return wait({
+      code: 200,
+      data: {
+        target: '',
+        type,
+        value,
+        simultaneousUserCount: 1 + Math.floor(Math.random() * 5),
+      },
+    } as ApiResultData<PlanInto>);
   }
 
   private api_plan_estimate(): Observable<HttpResponse<ApiResultData<number>>> {

@@ -70,6 +70,30 @@ export class RnewalComponent implements OnInit {
 
   async ngOnInit() {
     this.current_user = await this.user_service.user();
+    this.service.info(this.user_service.Target).subscribe((plan) => {
+      if (!plan) return;
+      this.plan = plan;
+
+      if (this.maxUserCounts.includes(plan.simultaneousUserCount)) {
+        this.selectedUserCount = plan.simultaneousUserCount;
+      }
+
+      if (
+        plan.type === PlanType.Monthly &&
+        this.monthlyChoises.includes(plan.value)
+      ) {
+        this.color = 'info';
+        this.selectedMonthly = plan.value;
+      } else if (
+        plan.type === PlanType.Traffic &&
+        this.trafficChoises.includes(plan.value)
+      ) {
+        this.color = 'warning';
+        this.selectedTraffic = plan.value;
+      }
+
+      this.fetchEstimate();
+    });
   }
 
   submit() {
