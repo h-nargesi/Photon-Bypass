@@ -1,1 +1,2 @@
 - cloase notification on click
+- use message handler for login/register/reset-password/forgot-password pages (message-type: alert)
