@@ -21,6 +21,12 @@ export enum MessageMethod {
   console,
 }
 
+export enum ShowMessageCase {
+  silence,
+  errors,
+  success,
+}
+
 export enum ResultStatus {
   info = 1,
   success,

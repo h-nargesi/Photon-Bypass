@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiResult, UserPlanInfo } from '../@models';
+import { ApiResult, ShowMessageCase, UserPlanInfo } from '../@models';
 import {
   ACCOUNT_API_URL,
   ApiBaseService,
@@ -16,7 +16,7 @@ export class DashboardService extends ApiBaseService {
     return this.call(
       `${ACCOUNT_API_URL}/send-cert-email`,
       { target } as ApiParam,
-      true
+      { show_message: ShowMessageCase.success }
     );
   }
 
@@ -27,7 +27,7 @@ export class DashboardService extends ApiBaseService {
 
   closeConnection(index: number, target?: string): Observable<ApiResult> {
     const url = `${CONNECTION_API_URL}/close-con`;
-    return this.job(url, { target, index }, true);
+    return this.job(url, { target, index });
   }
 
   fetchPlanInfo(target?: string): Observable<UserPlanInfo> {

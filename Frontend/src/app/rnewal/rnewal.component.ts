@@ -76,7 +76,6 @@ export class RnewalComponent implements OnInit {
     if (!this.plan.value || !this.plan.simultaneousUserCount) return;
 
     this.plan.target = this.user_service.Target ?? this.current_user.username;
-    console.log('submit', this.plan);
 
     this.service.rnewal(this.plan).subscribe((result) => {
       if (result.code === 307) {
