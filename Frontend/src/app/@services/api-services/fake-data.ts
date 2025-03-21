@@ -15,7 +15,7 @@ import {
 import { LocalStorageService } from '../local-storage/local-storage-service';
 
 @Injectable({ providedIn: 'root' })
-export class FakeDataMaker {
+export class FakeDataService {
   public static readonly UseAPI: boolean = false;
 
   public get<M>(
@@ -91,7 +91,11 @@ export class FakeDataMaker {
         return this.api_con_close_con() as Observable<HttpResponse<M>>;
       // PLAN
       case 'api/plan/plan-info':
-        return this.api_plan_plan_info() as Observable<HttpResponse<M>>;
+        return this.api_plan_info() as Observable<HttpResponse<M>>;
+      case 'api/plan/estimate':
+        return this.api_plan_estimate() as Observable<HttpResponse<M>>;
+      case 'api/plan/rnewal':
+        return this.api_plan_rnewal() as Observable<HttpResponse<M>>;
     }
 
     return wait({ code: 500, message: `'${url}' not found!` }) as Observable<
@@ -295,7 +299,7 @@ export class FakeDataMaker {
     return wait({ code: 200, message: 'کانکشن بسته شد.' } as ApiResult);
   }
 
-  private api_plan_plan_info(): Observable<
+  private api_plan_info(): Observable<
     HttpResponse<ApiResultData<UserPlanInfo>>
   > {
     return wait({
@@ -307,6 +311,19 @@ export class FakeDataMaker {
         simultaneousUserCount: 5,
       },
     } as ApiResultData<UserPlanInfo>);
+  }
+
+  private api_plan_estimate(): Observable<HttpResponse<ApiResultData<number>>> {
+    return wait({
+      code: 200,
+      data: 100,
+    } as ApiResultData<number>);
+  }
+
+  private api_plan_rnewal(): Observable<HttpResponse<ApiResult>> {
+    return wait({
+      code: 200,
+    } as ApiResult);
   }
 }
 

@@ -11,7 +11,7 @@ import {
 } from '../../@models';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { TranslationService } from '../translation/translation-service';
-import { FakeDataMaker } from './fake-data';
+import { FakeDataService } from './fake-data';
 import { ApiParam } from './models/api-param-type';
 import { API_BASE_URL } from './models/app-base-path';
 
@@ -21,7 +21,7 @@ export class HttpClientHandler {
     @Inject(API_BASE_URL)
     private readonly base_path: string,
     private readonly api: HttpClient,
-    private readonly fake: FakeDataMaker
+    private readonly fake: FakeDataService
   ) {}
 
   public call(url: string, params?: ApiParam): Observable<ApiResult> {

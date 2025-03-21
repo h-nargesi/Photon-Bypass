@@ -1,4 +1,9 @@
 export class LocalStorageService {
+  /*
+    user|last_request: number
+    user|bearer: string
+  */
+
   public static set(path: string[], value: any) {
     if (!(path?.length ?? false)) return;
     if (value === undefined) value = null;
