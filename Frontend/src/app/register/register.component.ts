@@ -119,11 +119,14 @@ export class RegisterComponent implements OnInit {
       : this.service.register(this.model);
 
     job.subscribe((result) => {
-      if (result.status() === ResultStatus.success && !this.edit) {
+      this.result = result;
+      if (result.status() !== ResultStatus.success) return;
+
+      this.user_service.clear();
+
+      if (!this.edit) {
         setTimeout(() => this.router.navigate(['login']), 1000);
       }
-
-      this.result = result;
     });
   }
 

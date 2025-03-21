@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import {
   BorderDirective,
   ButtonDirective,
@@ -11,7 +12,7 @@ import {
   FormSelectDirective,
   RowComponent,
 } from '@coreui/angular';
-import { PlanInto, PlanType, UserModel } from '../@models';
+import { PlanInto, PlanType, ResultStatus, UserModel } from '../@models';
 import {
   printMoney,
   TranslationPipe,
@@ -60,6 +61,7 @@ export class RnewalComponent implements OnInit {
   constructor(
     private readonly service: RnewalService,
     private readonly user_service: UserService,
+    private readonly router: Router,
     translation: TranslationService
   ) {
     this.monthlyUnit = translation.translate('rnewal.labels.monthly.unit');
@@ -71,7 +73,18 @@ export class RnewalComponent implements OnInit {
   }
 
   submit() {
+    if (!this.plan.value || !this.plan.simultaneousUserCount) return;
+
     this.plan.target = this.user_service.Target ?? this.current_user.username;
+    console.log('submit', this.plan);
+
+    this.service.rnewal(this.plan).subscribe((result) => {
+      if (result.code === 307) {
+        setTimeout(() => this.router.navigate(['/payment']), 1000);
+      } else if (result.status() === ResultStatus.success) {
+        setTimeout(() => this.router.navigate(['/dashboard']), 2000);
+      }
+    });
   }
 
   setMonthly() {
@@ -98,7 +111,7 @@ export class RnewalComponent implements OnInit {
   }
 
   private fetchEstimate() {
-    if (!this.plan.type) {
+    if (!this.plan.value || !this.plan.simultaneousUserCount) {
       this.cost = '--';
       this.valid = false;
       return;

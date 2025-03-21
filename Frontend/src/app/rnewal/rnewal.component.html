@@ -55,7 +55,7 @@
                 <div class="me-auto">
                     {{ 'rnewal.labels.cost-caption' | translate : [cost] }}
                 </div>
-                <button cButton class="px-4" [color]="color" [disabled]="color === 'secondary'" type="submit">
+                <button cButton class="px-4" [color]="color" [disabled]="color === 'secondary'" type="button" (click)="submit()">
                     {{ "rnewal.labels.submit" | translate }}
                 </button>
             </c-card-body>

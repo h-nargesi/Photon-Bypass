@@ -317,13 +317,14 @@ export class FakeDataService {
   private api_plan_estimate(): Observable<HttpResponse<ApiResultData<number>>> {
     return wait({
       code: 200,
-      data: 100,
+      data: Math.floor(Math.random() * 100),
     } as ApiResultData<number>);
   }
 
   private api_plan_rnewal(): Observable<HttpResponse<ApiResult>> {
     return wait({
       code: 200,
+      message: 'پلن شما با موفقیت تمدید شد.',
     } as ApiResult);
   }
 }
