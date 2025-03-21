@@ -24,8 +24,13 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
-import { ApiResult, PasswordToken, ResultStatus } from '../@models';
-import { PasswordValidators, TranslationPipe } from '../@services';
+import {
+  ApiResult,
+  OvpnPasswordToken,
+  PasswordToken,
+  ResultStatus,
+} from '../@models';
+import { PasswordValidators, TranslationPipe, UserService } from '../@services';
 import { ChangePasswordService } from './change-password.service';
 
 @Component({
@@ -72,18 +77,25 @@ export class ChangePasswordComponent {
   get change(): PageMode {
     return PageMode.change;
   }
+  
   get ovpn(): PageMode {
     return PageMode.ovpn;
   }
+
   get forgotten(): PageMode {
     return PageMode.forgotten;
+  }
+
+  get target(): string | undefined {
+    return this.user_service.Target;
   }
 
   constructor(
     private readonly form_builder: FormBuilder,
     private readonly service: ChangePasswordService,
     private readonly router: Router,
-    private readonly route: ActivatedRoute
+    private readonly route: ActivatedRoute,
+    private readonly user_service: UserService
   ) {
     switch (route.routeConfig?.path) {
       case 'change-ovpn-password':
@@ -111,7 +123,7 @@ export class ChangePasswordComponent {
 
     const job =
       this.mode === PageMode.ovpn
-        ? this.service.changeOpenVpnPassword(this.model)
+        ? this.service.changeOpenVpnPassword(this.model as OvpnPasswordToken)
         : this.service.changePassword(this.model);
 
     job.subscribe((result) => {

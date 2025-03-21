@@ -29,3 +29,5 @@ export interface PasswordToken {
   token: string;
   password: string;
 }
+
+export interface OvpnPasswordToken extends PasswordToken, TagetAction {}
