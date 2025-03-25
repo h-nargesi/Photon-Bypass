@@ -2,7 +2,7 @@
     <c-col xl="8">
         <c-card class="mb-auto whatsapp-panel" [cBorder]="{top: {color: color, width: 3}}">
             <c-card-header>
-                <h3>{{ 'rnewal.title' | translate }}</h3>
+                <h5>{{ 'rnewal.title' | translate }}</h5>
             </c-card-header>
             <c-card-body class="d-flex">
                 <div class="w-50">
@@ -55,9 +55,56 @@
                 <div class="me-auto">
                     {{ 'rnewal.labels.cost-caption' | translate : [cost] }}
                 </div>
-                <button cButton class="px-4" [color]="color" [disabled]="color === 'secondary'" type="button" (click)="submit()">
+                <button cButton class="px-4" [color]="color" [disabled]="color === 'secondary'" type="button"
+                    (click)="submit()">
                     {{ "rnewal.labels.submit" | translate }}
                 </button>
+            </c-card-body>
+        </c-card>
+    </c-col>
+</c-row>
+<c-row class="mt-5 g-4 justify-content-lg-center">
+    <c-col xl="8">
+        <c-card class="mb-auto whatsapp-panel">
+            <c-card-header>
+                <h5>{{ 'rnewal.price.title' | translate }}</h5>
+            </c-card-header>
+            <c-card-body class="d-flex" *ngIf="prices">
+                @for (price of prices; track price; let index = $index) {
+                <div class="w-50" [ngClass]="index !== 0 ? [ 'price' ] : []">
+                    <div class="m-auto p-3 px-5">
+                        <h3>{{ price.title }}</h3>
+                        <p>{{ price.caption }}</p>
+                        <ul>
+                            @for (line of price.description; track line) {
+                            <li>{{ line }}</li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+                }
+            </c-card-body>
+            <c-card-body class="d-flex" *ngIf="!prices">
+                <div class="w-50">
+                    <div class="m-auto p-3 px-5" cPlaceholderAnimation="glow">
+                        <p><span cPlaceholder class="w-100"></span></p>
+                        <p><span cPlaceholder class="w-100"></span></p>
+                        <ul>
+                            <li><span cPlaceholder class="w-100"></span></li>
+                            <li><span cPlaceholder class="w-100"></span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="w-50 price">
+                    <div class="m-auto p-3 px-5" cPlaceholderAnimation="glow">
+                        <p><span cPlaceholder class="w-100"></span></p>
+                        <p><span cPlaceholder class="w-100"></span></p>
+                        <ul>
+                            <li><span cPlaceholder class="w-100"></span></li>
+                            <li><span cPlaceholder class="w-100"></span></li>
+                        </ul>
+                    </div>
+                </div>
             </c-card-body>
         </c-card>
     </c-col>

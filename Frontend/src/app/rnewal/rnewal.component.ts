@@ -10,9 +10,17 @@ import {
   CardHeaderComponent,
   ColComponent,
   FormSelectDirective,
+  PlaceholderAnimationDirective,
+  PlaceholderDirective,
   RowComponent,
 } from '@coreui/angular';
-import { PlanInto, PlanType, ResultStatus, UserModel } from '../@models';
+import {
+  PlanInto,
+  PlanType,
+  PriceModel,
+  ResultStatus,
+  UserModel,
+} from '../@models';
 import {
   printMoney,
   TranslationPipe,
@@ -34,6 +42,8 @@ import { RnewalService } from './rnewal.service';
     ButtonDirective,
     BorderDirective,
     FormSelectDirective,
+    PlaceholderDirective,
+    PlaceholderAnimationDirective,
     TranslationPipe,
   ],
   templateUrl: './rnewal.component.html',
@@ -57,6 +67,7 @@ export class RnewalComponent implements OnInit {
 
   plan = {} as PlanInto;
   current_user!: UserModel;
+  prices?: PriceModel[];
 
   constructor(
     private readonly service: RnewalService,
@@ -68,32 +79,9 @@ export class RnewalComponent implements OnInit {
     this.trafficUnit = translation.translate('rnewal.labels.traffic.unit');
   }
 
-  async ngOnInit() {
-    this.current_user = await this.user_service.user();
-    this.service.info(this.user_service.Target).subscribe((plan) => {
-      if (!plan) return;
-      this.plan = plan;
-
-      if (this.maxUserCounts.includes(plan.simultaneousUserCount)) {
-        this.selectedUserCount = plan.simultaneousUserCount;
-      }
-
-      if (
-        plan.type === PlanType.Monthly &&
-        this.monthlyChoises.includes(plan.value)
-      ) {
-        this.color = 'info';
-        this.selectedMonthly = plan.value;
-      } else if (
-        plan.type === PlanType.Traffic &&
-        this.trafficChoises.includes(plan.value)
-      ) {
-        this.color = 'warning';
-        this.selectedTraffic = plan.value;
-      }
-
-      this.fetchEstimate();
-    });
+  ngOnInit() {
+    this.loadLastPlan();
+    this.loadPrcies();
   }
 
   submit() {
@@ -146,5 +134,37 @@ export class RnewalComponent implements OnInit {
       this.valid = cost ? true : false;
       this.cost = printMoney(cost);
     });
+  }
+
+  private async loadLastPlan() {
+    this.current_user = await this.user_service.user();
+    this.service.info(this.user_service.Target).subscribe((plan) => {
+      if (!plan) return;
+      this.plan = plan;
+
+      if (this.maxUserCounts.includes(plan.simultaneousUserCount)) {
+        this.selectedUserCount = plan.simultaneousUserCount;
+      }
+
+      if (
+        plan.type === PlanType.Monthly &&
+        this.monthlyChoises.includes(plan.value)
+      ) {
+        this.color = 'info';
+        this.selectedMonthly = plan.value;
+      } else if (
+        plan.type === PlanType.Traffic &&
+        this.trafficChoises.includes(plan.value)
+      ) {
+        this.color = 'warning';
+        this.selectedTraffic = plan.value;
+      }
+
+      this.fetchEstimate();
+    });
+  }
+
+  private loadPrcies() {
+    this.service.prices().subscribe((prices) => (this.prices = prices));
   }
 }

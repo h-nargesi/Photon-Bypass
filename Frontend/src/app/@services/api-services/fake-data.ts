@@ -8,6 +8,7 @@ import {
   HistoryRecord,
   PlanInto,
   PlanType,
+  PriceModel,
   TrafficData,
   TrafficDataModel,
   UserModel,
@@ -57,6 +58,9 @@ export class FakeDataService {
     data: any | null
   ): Observable<HttpResponse<M>> {
     switch (url) {
+      // BASIC
+      case 'api/basics/prices':
+        return this.api_basics_prices() as Observable<HttpResponse<M>>;
       // AUTH
       case 'api/auth/token':
         return this.api_auth_token(data) as Observable<HttpResponse<M>>;
@@ -104,6 +108,37 @@ export class FakeDataService {
     return wait({ code: 500, message: `'${url}' not found!` }) as Observable<
       HttpResponse<M>
     >;
+  }
+
+  private api_basics_prices(): Observable<
+    HttpResponse<ApiResultData<PriceModel[]>>
+  > {
+    return wait({
+      code: 200,
+      data: [
+        {
+          title: 'ماهانه',
+          caption:
+            'در بازه محدود (ماهانه) و تقریبا بدون محدودیت ترافیکی، از vpn استفاده کنید.',
+          description: [
+            'تک کاربره هر ماه ۱۹۰ تومن',
+            'دو کاربره هر ماه ۳۴۰ تومن',
+            'سه کاربره هر ماه ۴۶۰ تومن',
+            'کاربرهای بیشتر به ازای هر کاربر ۱۰۰ تومن اضافه می‌شود',
+          ],
+        },
+        {
+          title: 'ترافیکی',
+          caption:
+            'به مقدار مشخصی ترافیک (۲۵ گیگ) و تقریبا بدون محدودیت زمانی از vpn استفاده کنید',
+          description: [
+            '25G ترافیک تک کاربره ۱۵۰ تومن',
+            'هر 25G ترافیک بیشتر ۸۰ تومن',
+            'هر کاربر بیشتر ۲۰ تومن',
+          ],
+        },
+      ],
+    } as ApiResultData<PriceModel[]>);
   }
 
   private api_auth_token(data: any): Observable<HttpResponse<ApiResult>> {

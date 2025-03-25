@@ -1,4 +1,8 @@
 .plan-type-selector {
-    border: 1px solid var(--cui-secondary);
-    border-radius: 5%;;
+  border: 1px solid var(--cui-secondary);
+  border-radius: 5%;
+}
+
+.price {
+  border-right: 1px solid var(--cui-border-color);
 }

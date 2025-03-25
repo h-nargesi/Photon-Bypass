@@ -5,7 +5,11 @@ import {
   ContainerComponent,
   RowComponent,
 } from '@coreui/angular';
+import { IconDirective } from '@coreui/icons-angular';
+import { ICON_SUBSET } from '../@icons';
+import { PriceModel } from '../@models';
 import { TranslationPipe, TranslationService } from '../@services';
+import { HomeService } from './home.service';
 
 @Component({
   selector: 'app-home',
@@ -14,13 +18,23 @@ import { TranslationPipe, TranslationService } from '../@services';
     ContainerComponent,
     RowComponent,
     ColComponent,
+    IconDirective,
     TranslationPipe,
   ],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
+  providers: [HomeService],
 })
 export class HomeComponent {
-  constructor(private readonly translation: TranslationService) {}
+  readonly icons = ICON_SUBSET;
+  prices?: PriceModel[];
+
+  constructor(
+    private readonly translation: TranslationService,
+    service: HomeService
+  ) {
+    service.prices().subscribe((prices) => (this.prices = prices));
+  }
 
   public lines(key: string): string[] {
     return this.translation.lines(key);

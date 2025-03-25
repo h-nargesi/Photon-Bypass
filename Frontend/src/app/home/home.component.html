@@ -130,5 +130,28 @@
 </section>
 
 <footer>
-
+    <c-container breakpoint="md">
+        <c-row class="justify-content-center">
+            <c-col xl="10" class="p-5">
+                <c-row class="justify-content-center">
+                    @for (price of prices; track price) {
+                    <c-col sm="6">
+                        <div class="h-100 w-=100 bg-sucess">
+                            <h5>
+                                <svg [cIcon]="icons.cilStar" height="24"></svg>
+                                {{ price.title }}
+                            </h5>
+                            <p>{{ price.caption }}</p>
+                            <ul>
+                                @for (line of price.description; track line;) {
+                                <li>{{ line }}</li>
+                                }
+                            </ul>
+                        </div>
+                    </c-col>
+                    }
+                </c-row>
+            </c-col>
+        </c-row>
+    </c-container>
 </footer>
