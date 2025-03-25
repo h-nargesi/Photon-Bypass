@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import {
   Colors,
   TextColorDirective,
   ToastBodyComponent,
+  ToastCloseDirective,
   ToastComponent,
   ToastHeaderComponent,
 } from '@coreui/angular';
@@ -14,6 +15,7 @@ import {
     CommonModule,
     ToastBodyComponent,
     ToastHeaderComponent,
+    ToastCloseDirective,
     TextColorDirective,
   ],
   templateUrl: './toast.component.html',
@@ -22,6 +24,10 @@ import {
 export class AppToastComponent extends ToastComponent {
   @Input() title?: string;
   @Input() body?: string;
+
+  headerClick() {
+    super.onClose();
+  }
 
   getTextColor(): Colors {
     if (this.color() === 'warning') return 'secondary';
