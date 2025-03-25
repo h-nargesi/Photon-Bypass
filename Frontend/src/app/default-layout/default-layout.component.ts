@@ -6,12 +6,13 @@ import {
   ShadowOnScrollDirective,
   ToasterComponent,
   ToasterPlacement,
-  ToastModule
+  ToastModule,
 } from '@coreui/angular';
 
 import { NgClass } from '@angular/common';
 import { MessageService } from '../@services';
 import { DefaultFooterComponent, DefaultHeaderComponent } from './';
+import { UserSelectorModalComponent } from './user-selector-modal/user-selector-modal.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -22,6 +23,7 @@ import { DefaultFooterComponent, DefaultHeaderComponent } from './';
     ContainerComponent,
     DefaultFooterComponent,
     DefaultHeaderComponent,
+    UserSelectorModalComponent,
     RouterOutlet,
     ShadowOnScrollDirective,
     ToastModule,

@@ -12,6 +12,10 @@
         "walet": {
             "title": "کیف پول:",
             "currency": "تومان"
+        },
+        "user-selector": {
+            "title": "انتخاب کاربر",
+            "search": "جستجو"
         }
     },
     "validations": {

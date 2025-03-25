@@ -1,10 +1,10 @@
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, Input, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import { RouterLink } from '@angular/router';
 
 import {
   AlertComponent,
+  ButtonDirective,
   ColorModeService,
   ContainerComponent,
   DropdownComponent,
@@ -13,11 +13,14 @@ import {
   DropdownToggleDirective,
   HeaderComponent,
   HeaderNavComponent,
+  ModalToggleDirective,
   NavLinkDirective,
+  TextColorDirective,
   TooltipDirective,
 } from '@coreui/angular';
-import { IconDirective } from '@coreui/icons-angular';
 
+import { RouterLink } from '@angular/router';
+import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../../@icons';
 import { UserModel } from '../../@models';
 import { printMoney, TranslationPipe, UserService } from '../../@services';
@@ -27,17 +30,20 @@ import { printMoney, TranslationPipe, UserService } from '../../@services';
   templateUrl: './default-header.component.html',
   imports: [
     CommonModule,
+    NgTemplateOutlet,
+    NavLinkDirective,
+    RouterLink,
     ContainerComponent,
     IconDirective,
     HeaderNavComponent,
-    NavLinkDirective,
-    RouterLink,
-    NgTemplateOutlet,
     DropdownComponent,
     DropdownToggleDirective,
     DropdownMenuDirective,
     DropdownItemDirective,
+    ButtonDirective,
+    TextColorDirective,
     AlertComponent,
+    ModalToggleDirective,
     TooltipDirective,
     TranslationPipe,
   ],
@@ -55,6 +61,8 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
   ];
 
   current_user?: UserModel;
+
+  @Input() userSelector?: string;
 
   constructor(
     public readonly title_service: Title,
@@ -75,12 +83,8 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
     this.current_user = await this.user_service.user();
   }
 
-  getTarget(): string | undefined {
+  get Target(): string | undefined {
     return this.user_service.Target;
-  }
-
-  setTarget(index: number) {
-    this.user_service.setTraget(index);
   }
 
   showBalance(): string {

@@ -13,6 +13,9 @@
         <strong> {{ showBalance() }}</strong> &nbsp;
         <span>{{ "global.header.walet.currency" | translate }}</span>
       </c-alert>
+    </c-header-nav>
+
+    <c-header-nav>
       <div class="nav-item py-1">
         <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
       </div>
@@ -31,6 +34,9 @@
       <a cNavLink routerLink="/history" [cTooltip]="'global.header.navbar.history' | translate">
         <svg [cIcon]="icons.cilHistory" class="my-1" size="lg"></svg>
       </a>
+    </c-header-nav>
+
+    <c-header-nav>
       <div class="nav-item py-1">
         <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
       </div>
@@ -38,13 +44,18 @@
 
     <c-header-nav class="ms-auto ms-md-0">
       <ng-container *ngTemplateOutlet="themeDropdown" />
+    </c-header-nav>
+
+    <c-header-nav>
       <div class="nav-item py-1">
         <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
       </div>
     </c-header-nav>
 
-    <c-header-nav class="d-flex" *ngIf="getTarget()">
-      <ng-container *ngTemplateOutlet="userSelector" />
+    <c-header-nav class="d-flex" *ngIf="Target">
+      <button [cModalToggle]="userSelector" cButton size="sm" color="info" cTextColor="light">
+        {{ Target }}
+      </button>
     </c-header-nav>
 
     <c-header-nav class="mx-0">
@@ -54,25 +65,6 @@
   </c-container>
 </ng-container>
 <!--</c-header>-->
-
-<ng-template #userSelector>
-  <c-dropdown alignment="end" variant="nav-item">
-    <button [caret]="false" cDropdownToggle aria-label="Target Selector">
-      <c-alert class="m-0 p-2 me-2" color="warning">
-        {{ getTarget() }}
-      </c-alert>
-    </button>
-    <div cDropdownMenu>
-      @for (target of current_user?.targetArea; track target; let index = $index) {
-      <button (click)="setTarget(index)" cDropdownItem
-        class="d-flex align-items-center">
-        <svg [cIcon]="icons.cilUser" class="me-2"></svg>
-        {{ target }}
-      </button>
-      }
-    </div>
-  </c-dropdown>
-</ng-template>
 
 <ng-template #userDropdown>
   <c-dropdown [popperOptions]="{ placement: 'bottom-start' }" variant="nav-item">

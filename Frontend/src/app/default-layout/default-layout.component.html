@@ -1,8 +1,8 @@
 <!--main-->
 <div class="wrapper d-flex flex-column min-vh-100">
   <!--app-header-->
-  <app-default-header [cShadowOnScroll]="'sm'" class="mb-4 d-print-none header header-sticky p-0 shadow-sm"
-    position="sticky" />
+  <app-default-header cShadowOnScroll="sm" position="sticky" [userSelector]="userSelectorModal.id"
+    class="mb-4 d-print-none header header-sticky p-0 shadow-sm" />
 
   <!-- toaster -->
   <c-toaster ngClass="p-3" [placement]="placement" position="fixed"></c-toaster>
@@ -13,6 +13,10 @@
       <router-outlet />
     </c-container>
   </div>
+
   <!--app footer-->
   <app-default-footer />
+
+  <!-- modals -->
+  <app-user-selector-modal #userSelectorModal></app-user-selector-modal>
 </div>
