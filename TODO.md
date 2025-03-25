@@ -1,2 +1,4 @@
-- cloase notification on click
-- use message handler for login/register/reset-password/forgot-password pages (message-type: alert)
+[ ] payment modal
+[ ] use message handler for login/register/reset-password/forgot-password pages (message-type: alert)
+[ ] show prices on home-page/rnewal-page
+[ ] cloase notification on click

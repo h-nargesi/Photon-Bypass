@@ -124,6 +124,9 @@ Selling VPN
 1. Web Site Core
     - Consider Unit Test
     - Cloudflare Human Test
+    - Multi Account Panel
+        - user-service onTargetChanged event
+        - optional target in history
 2. MySql Performance
     - Ask ChatGPT
     - Search in Youtube
@@ -134,6 +137,3 @@ Selling VPN
 4. Send WhatsApp Notif
 5. Google Auth
 6. Other features
-    - Multi Account Panel
-        - user-service onTargetChanged event
-        - optional target in history
