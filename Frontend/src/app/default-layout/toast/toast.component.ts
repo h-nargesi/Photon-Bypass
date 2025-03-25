@@ -1,10 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import {
   Colors,
   TextColorDirective,
   ToastBodyComponent,
-  ToastCloseDirective,
   ToastComponent,
   ToastHeaderComponent,
 } from '@coreui/angular';
@@ -15,7 +14,6 @@ import {
     CommonModule,
     ToastBodyComponent,
     ToastHeaderComponent,
-    ToastCloseDirective,
     TextColorDirective,
   ],
   templateUrl: './toast.component.html',
