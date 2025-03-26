@@ -78,16 +78,29 @@ export class DashboardComponent implements OnInit {
     private readonly translation: TranslationService
   ) {}
 
-  ngOnInit(): void {
-    this.loadUsers();
-    this.loadConnections();
-    this.loadPlanInfo();
+  get Target(): string | undefined {
+    return this.user_service.Target;
   }
 
-  sendCertificateViaEmail(): void {
+  async ngOnInit() {
+    await this.loadCurrentUser();
+    this.loadData();
+    this.detectTargetChanges();
+  }
+
+  showTagetInUserPanel(): boolean {
+    return (
+      (this.user_service.Target ? true : false) &&
+      this.Target !== this.current_user?.username
+    );
+  }
+
+  sendCertificateViaEmail(toMe: boolean): void {
     this.sending_cert_email = true;
     this.service
-      .sendCertificateViaEmail(this.user_service.Target)
+      .sendCertificateViaEmail(
+        toMe ? this.current_user?.username : this.user_service.Target
+      )
       .subscribe(() => (this.sending_cert_email = false));
   }
 
@@ -154,11 +167,17 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  private async loadUsers() {
+  private loadData() {
+    this.loadConnections();
+    this.loadPlanInfo();
+  }
+
+  private async loadCurrentUser() {
     this.current_user = await this.user_service.user();
   }
 
   private loadConnections() {
+    console.log('loadConnections', this.user_service.Target);
     this.service
       .fetchCurrentConnections(this.user_service.Target)
       .subscribe((connections) => {
@@ -178,5 +197,20 @@ export class DashboardComponent implements OnInit {
     this.service
       .fetchPlanState(this.user_service.Target)
       .subscribe((info) => (this.plan_info = info));
+  }
+
+  private detectTargetChanges() {
+    this.user_service.onTargetChanged.subscribe((newTarget) => {
+      console.log({ newTarget });
+      this.clearData();
+      this.loadData();
+    });
+  }
+
+  private clearData() {
+    this.connections = undefined;
+    this.connection_count = '0';
+    this.closing_connection = [];
+    this.plan_info = undefined;
   }
 }

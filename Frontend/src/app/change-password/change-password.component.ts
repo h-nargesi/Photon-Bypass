@@ -77,7 +77,7 @@ export class ChangePasswordComponent {
   get change(): PageMode {
     return PageMode.change;
   }
-  
+
   get ovpn(): PageMode {
     return PageMode.ovpn;
   }
@@ -86,7 +86,7 @@ export class ChangePasswordComponent {
     return PageMode.forgotten;
   }
 
-  get target(): string | undefined {
+  get target(): string {
     return this.user_service.Target;
   }
 
@@ -120,6 +120,10 @@ export class ChangePasswordComponent {
 
   submit() {
     if (!this.onValidate()) return;
+
+    if (this.mode === PageMode.ovpn) {
+      (this.model as OvpnPasswordToken).target = this.user_service.Target;
+    }
 
     const job =
       this.mode === PageMode.ovpn

@@ -1,7 +1,7 @@
 <c-card class="my-4">
     <c-card-body>
         <c-row>
-            <c-col sm="5">
+            <c-col xs="7">
                 <h4 class="card-title mb-0" id="traffic">
                     {{ "dashboard.traffic.title" | translate }}
                 </h4>
@@ -9,7 +9,7 @@
                     {{ title }}
                 </div>
             </c-col>
-            <c-col class="d-none d-md-block" sm="7">
+            <c-col xs="5">
                 <button cButton class="float-end" color="primary" aria-label="Reload" (click)="loadTrafficData()">
                     <svg [cIcon]="icons.cilReload" *ngIf="!loading"></svg>
                     <c-spinner color="light" size="sm" *ngIf="loading" />

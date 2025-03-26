@@ -83,7 +83,14 @@
             <ul cListGroup [flush]="true" class="ltr">
                 <li cListGroupItem>{{ current_user.email }}</li>
                 <li cListGroupItem class="icon-btn-group">
-                    <a (click)="sendCertificateViaEmail()" *ngIf="!sending_cert_email" class="icon-btn pointer"
+                    <span *ngIf="showTagetInUserPanel()">
+                        {{ Target }}:
+                    </span>
+                    <a (click)="sendCertificateViaEmail(true)" *ngIf="!sending_cert_email && showTagetInUserPanel()"
+                        class="icon-btn pointer" [cTooltip]="'dashboard.account.send-cert-via-email-to' | translate">
+                        <svg [cIcon]="icons.cilCursor" class="text-primary" cTextColor="warning"></svg>
+                    </a>
+                    <a (click)="sendCertificateViaEmail(false)" *ngIf="!sending_cert_email" class="icon-btn pointer"
                         [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
                         <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
                     </a>
@@ -107,6 +114,9 @@
                     <span cCol="8" cPlaceholder class="me-1"></span>
                 </li>
                 <li cListGroupItem class="icon-btn-group">
+                    <a [cTooltip]="'dashboard.account.send-cert-via-email-to' | translate">
+                        <svg [cIcon]="icons.cilCursor" class="text-primary"></svg>
+                    </a>
                     <a [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
                         <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
                     </a>

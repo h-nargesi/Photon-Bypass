@@ -1,5 +1,5 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import {
   ButtonDirective,
@@ -48,7 +48,7 @@ import { TrafficDataService } from './traffic-chart.service';
   templateUrl: './traffic-chart.component.html',
   styleUrl: './traffic-chart.component.scss',
 })
-export class TrafficChartComponent {
+export class TrafficChartComponent implements OnInit {
   icons = ICON_SUBSET;
   title?: string;
   options?: ChartOptions;
@@ -60,6 +60,12 @@ export class TrafficChartComponent {
     private readonly user_service: UserService
   ) {
     this.initOptions();
+  }
+
+  ngOnInit() {
+    this.user_service.onTargetChanged.subscribe(() => {
+      if (this.data) this.loadTrafficData();
+    });
   }
 
   loadTrafficData() {

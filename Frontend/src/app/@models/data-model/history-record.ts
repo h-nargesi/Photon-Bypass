@@ -1,6 +1,6 @@
 export interface HistoryRecord {
   id: number;
-  target?: string;
+  target: string;
   eventTime: number;
   eventTimeTitle: string;
   title: string;

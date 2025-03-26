@@ -1,18 +1,20 @@
 import { Injectable } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, Observable, Subject } from 'rxjs';
 import { UserModel } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
 import { AUTH_API_URL } from '../api-services/models/app-api-url';
-import { TranslationService } from '../translation/translation-service';
 import { LocalStorageService } from '../local-storage/local-storage-service';
+import { TranslationService } from '../translation/translation-service';
 
 @Injectable({ providedIn: 'root' })
 export class UserService extends ApiBaseService {
   private current_user?: UserModel;
   private observable_user?: Promise<UserModel>;
-  private targetUser?: string;
+  private targetUser: string = '';
+  private targetUserEventSubject = new Subject<string>();
+  public onTargetChanged = this.targetUserEventSubject.asObservable();
 
-  public get Target(): string | undefined {
+  public get Target(): string {
     return this.targetUser;
   }
 
@@ -24,10 +26,11 @@ export class UserService extends ApiBaseService {
       this.current_user = await this.observable_user;
       this.observable_user = undefined;
 
-      const targetIndex: number =
-        LocalStorageService.get(['user', 'target']) ?? -1;
-      // reset target index in error cases
-      LocalStorageService.set(['user', 'target'], -1);
+      const target: string = LocalStorageService.get(['user', 'target']);
+      let targetIndex = -1;
+      if (target && this.current_user?.targetArea) {
+        targetIndex = this.current_user.targetArea.indexOf(target);
+      }
       this.setTraget(targetIndex);
     }
 
@@ -35,19 +38,25 @@ export class UserService extends ApiBaseService {
   }
 
   public setTraget(index: number) {
-    if (!this.current_user?.targetArea) this.targetUser = undefined;
+    const current_state = this.targetUser;
+
+    if (!this.current_user?.targetArea) this.targetUser = '';
     else {
       if (index === -1) this.targetUser = this.current_user.username;
       else if (index < 0 || this.current_user.targetArea.length <= index)
         throw 'target index is out of range';
       else this.targetUser = this.current_user.targetArea[index];
-      LocalStorageService.set(['user', 'target'], index);
     }
+
+    if (this.targetUser && this.targetUser !== current_state)
+      this.targetUserEventSubject.next(this.targetUser);
+
+    LocalStorageService.set(['user', 'target'], this.targetUser);
   }
 
   public clear() {
     this.current_user = undefined;
-    this.targetUser = undefined;
+    this.setTraget(-1);
   }
 
   private fetchUser(): Observable<UserModel> {

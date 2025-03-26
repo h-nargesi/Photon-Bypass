@@ -21,7 +21,7 @@ import {
   RowComponent,
 } from '@coreui/angular';
 import { HistoryRecord } from '../@models';
-import { TranslationPipe } from '../@services';
+import { TranslationPipe, UserService } from '../@services';
 import { HistoryService } from './history.service';
 
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -63,7 +63,12 @@ import { PaginatorInt } from './paginator-int';
 })
 export class HistoryComponent implements AfterViewInit {
   readonly icons = ICON_SUBSET;
-  readonly displayedColumns: string[] = ['eventTimeTitle', 'title', 'value'];
+  readonly displayedColumns: string[] = [
+    'eventTimeTitle',
+    'target',
+    'title',
+    'value',
+  ];
   dataSource!: MatTableDataSource<HistoryRecord>;
 
   @ViewChild(MatPaginator) paginator?: MatPaginator;
@@ -72,8 +77,16 @@ export class HistoryComponent implements AfterViewInit {
   fromDate?: number;
   toDate?: number;
 
-  constructor(private readonly service: HistoryService) {
+  constructor(
+    private readonly service: HistoryService,
+    private readonly user_service: UserService
+  ) {}
+
+  ngOnInit() {
     this.loadWithFilter();
+    this.user_service.onTargetChanged.subscribe(() => {
+      this.loadWithFilter();
+    });
   }
 
   ngAfterViewInit() {
@@ -84,11 +97,13 @@ export class HistoryComponent implements AfterViewInit {
   }
 
   loadWithFilter() {
-    this.service.load(this.fromDate, this.toDate).subscribe((result) => {
-      this.dataSource = new MatTableDataSource(result);
-      if (this.paginator) this.dataSource.paginator = this.paginator;
-      if (this.sort) this.dataSource.sort = this.sort;
-    });
+    this.service
+      .load(this.user_service.Target, this.fromDate, this.toDate)
+      .subscribe((result) => {
+        this.dataSource = new MatTableDataSource(result);
+        if (this.paginator) this.dataSource.paginator = this.paginator;
+        if (this.sort) this.dataSource.sort = this.sort;
+      });
   }
 
   applyFilter(event: Event) {

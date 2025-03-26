@@ -4,6 +4,12 @@
             <c-card-header>
                 <h5>{{ 'rnewal.title' | translate }}</h5>
             </c-card-header>
+            <c-card-body class="d-flex" *ngIf="target">
+                <div class="w-100 mx-5">
+                    <label>{{ 'rnewal.labels.current-user' | translate }}:</label>
+                    <h5 class="ltr">{{ target }}</h5>
+                </div>
+            </c-card-body>
             <c-card-body class="d-flex">
                 <div class="w-50">
                     <div class="m-auto p-3 px-5">

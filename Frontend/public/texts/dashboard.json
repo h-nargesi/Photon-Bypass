@@ -6,6 +6,7 @@
     },
     "account": {
         "send-cert-via-email": "ارسال کانفیگ بوسیله ایمیل",
+        "send-cert-via-email-to": "ارسال کانفیگ بوسیله ایمیل به خودم",
         "change-open-vpn-password": "تغییر کلمه عبور open-vpn"
     },
     "connections": {

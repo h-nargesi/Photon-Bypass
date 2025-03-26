@@ -6,8 +6,12 @@ import { HistoryComponent } from './history.component';
 
 @Injectable({ providedIn: HistoryComponent })
 export class HistoryService extends ApiBaseService {
-  load(from?: number, to?: number): Observable<HistoryRecord[]> {
-    const params = { from, to } as ApiParam;
+  load(
+    target: string,
+    from?: number,
+    to?: number
+  ): Observable<HistoryRecord[]> {
+    const params = { target, from, to } as ApiParam;
     return this.getData<HistoryRecord[]>(`${ACCOUNT_API_URL}/history`, params);
   }
 }

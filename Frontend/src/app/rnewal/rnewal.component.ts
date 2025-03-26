@@ -79,6 +79,10 @@ export class RnewalComponent implements OnInit {
     this.trafficUnit = translation.translate('rnewal.labels.traffic.unit');
   }
 
+  get target(): string {
+    return this.user_service.Target;
+  }
+
   ngOnInit() {
     this.loadLastPlan();
     this.loadPrcies();

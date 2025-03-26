@@ -130,7 +130,7 @@ export class FakeDataService {
         {
           title: 'ترافیکی',
           caption:
-            'به مقدار مشخصی ترافیک (۲۵ گیگ) و تقریبا بدون محدودیت زمانی از vpn استفاده کنید',
+            'به مقدار مشخصی ترافیک (۲۵ گیگ) و تقریبا بدون محدودیت زمانی از vpn استفاده کنید.',
           description: [
             '25G ترافیک تک کاربره ۱۵۰ تومن',
             'هر 25G ترافیک بیشتر ۸۰ تومن',
@@ -204,7 +204,7 @@ export class FakeDataService {
           fullname: 'حامد نرگسی',
           email: 'hamed.nargesi.jar@gmail.com',
           balance: 320,
-          targetArea: ['hamed@na', 'vali@gmail', 'narges@web'],
+          targetArea: SUB_USERS,
         },
       } as ApiResultData<UserModel>);
     }
@@ -421,8 +421,11 @@ function createNewRecord(id: number): HistoryRecord {
   let value = undefined;
   if (unit) value = Math.floor(Math.random() * 5000);
 
+  const target = SUB_USERS[Math.floor(Math.random() * SUB_USERS.length)];
+
   return {
     id: id,
+    target,
     eventTime: timeEvent,
     eventTimeTitle: new Date(timeEvent).toDateString(),
     title: title,
@@ -451,4 +454,12 @@ const TITLE: string[] = [
   'اعتبار سنجی ایمیل',
   'اعتبار سنجی واتساپ',
   'پیام',
+];
+
+const SUB_USERS: string[] = [
+  'hamed@na',
+  'vali@gmail',
+  'mamad@web',
+  'xdrasm@web',
+  'narges@web',
 ];

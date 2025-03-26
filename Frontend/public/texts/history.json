@@ -6,7 +6,8 @@
         "filter": "فیلتر",
         "filter-placeholder": "مثلا: ترافیک"
     },
-    "columns" : {
+    "columns": {
+        "target": "صادر کننده",
         "event-time": "زمان",
         "title": "عنوان",
         "value": "مقدار"
