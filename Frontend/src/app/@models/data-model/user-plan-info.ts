@@ -16,3 +16,8 @@ export enum PlanType {
   Monthly,
   Traffic,
 }
+
+export interface RnewalResult {
+  currentPrice: number;
+  moneyNeeds: number;
+}

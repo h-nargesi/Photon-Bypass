@@ -18,7 +18,7 @@ import {
   PlanInto,
   PlanType,
   PriceModel,
-  ResultStatus,
+  RnewalResult,
   UserModel,
 } from '../@models';
 import {
@@ -68,6 +68,7 @@ export class RnewalComponent implements OnInit {
   plan = {} as PlanInto;
   current_user!: UserModel;
   prices?: PriceModel[];
+  result?: RnewalResult;
 
   constructor(
     private readonly service: RnewalService,
@@ -95,14 +96,20 @@ export class RnewalComponent implements OnInit {
   submit() {
     if (!this.plan.value || !this.plan.simultaneousUserCount) return;
 
-    this.plan.target = this.user_service.targetName ?? this.current_user.username;
+    this.plan.target =
+      this.user_service.targetName ?? this.current_user.username;
 
-    this.service.rnewal(this.plan).subscribe((result) => {
-      if (result.code === 307) {
-        setTimeout(() => this.router.navigate(['/payment']), 1000);
-      } else if (result.status() === ResultStatus.success) {
-        setTimeout(() => this.router.navigate(['/dashboard']), 2000);
+    this.service.rnewal(this.plan).subscribe(async (result) => {
+      this.result = result;
+
+      if (result.moneyNeeds > 0) {
+        setTimeout(() => this.router.navigate(['payment']), 1000);
+      } else {
+        setTimeout(() => this.router.navigate(['dashboard']), 2000);
       }
+
+      const current_user = await this.user_service.user();
+      current_user.balance = result.currentPrice;
     });
   }
 

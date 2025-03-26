@@ -9,6 +9,7 @@ import {
   PlanInto,
   PlanType,
   PriceModel,
+  RnewalResult,
   Target,
   TrafficData,
   TrafficDataModel,
@@ -386,11 +387,27 @@ export class FakeDataService {
     } as ApiResultData<number>);
   }
 
-  private api_plan_rnewal(): Observable<HttpResponse<ApiResult>> {
-    return wait({
-      code: 200,
-      message: 'پلن شما با موفقیت تمدید شد.',
-    } as ApiResult);
+  private api_plan_rnewal(): Observable<
+    HttpResponse<ApiResultData<RnewalResult>>
+  > {
+    if (Math.random() > 0.5) {
+      return wait({
+        code: 200,
+        message: 'پلن شما با موفقیت تمدید شد.',
+        data: {
+          currentPrice: Math.floor(150 + Math.random() * 300),
+          moneyNeeds: 0,
+        },
+      } as ApiResultData<RnewalResult>);
+    } else {
+      return wait({
+        code: 307,
+        data: {
+          currentPrice: Math.floor(150 + Math.random() * 300),
+          moneyNeeds: Math.floor(400 + Math.random() * 300),
+        },
+      } as ApiResultData<RnewalResult>);
+    }
   }
 }
 

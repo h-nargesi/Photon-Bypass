@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiResult, PlanInto, PriceModel, ShowMessageCase } from '../@models';
+import {
+  PlanInto,
+  PriceModel,
+  RnewalResult,
+  ShowMessageCase,
+} from '../@models';
 import {
   ApiBaseService,
   ApiParam,
@@ -27,7 +32,7 @@ export class RnewalService extends ApiBaseService {
     });
   }
 
-  rnewal(plan: PlanInto): Observable<ApiResult> {
-    return this.job(`${PLAN_API_URL}/rnewal`, plan);
+  rnewal(plan: PlanInto): Observable<RnewalResult> {
+    return this.postData<RnewalResult>(`${PLAN_API_URL}/rnewal`, plan);
   }
 }
