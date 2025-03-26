@@ -16,6 +16,9 @@
               <h1>{{ `register.${isEdit ? 'edit' : 'new'}-title` | translate }}</h1>
               <p class="text-body-secondary">{{ `register.${isEdit ? 'edit' : 'new'}-caption` | translate }}</p>
 
+                <!-- RESULT -->
+                <c-alert *ngIf="result" [color]="getColor(result.status())">{{ result.message }}</c-alert>
+
               <!-- USERNAME -->
               <c-input-group class="mb-3 ltr" [ngClass]="isEdit ? [] : [ 'has-validation' ]"
                 *ngIf="form.controls['username'] as ctrl">
@@ -171,6 +174,7 @@
               <div class="d-grid">
                 <button cButton color="primary" type="submit">
                   {{ (isEdit ? "register.labels.edit-account" : "register.labels.create-account") | translate }}
+                  <c-spinner size="sm" *ngIf="submitted" />
                 </button>
               </div>
             </form>

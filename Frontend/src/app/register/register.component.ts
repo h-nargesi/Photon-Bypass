@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
+  AlertComponent,
   ButtonDirective,
   CardBodyComponent,
   CardComponent,
@@ -20,12 +21,18 @@ import {
   InputGroupComponent,
   InputGroupTextDirective,
   RowComponent,
+  SpinnerComponent,
   TextColorDirective,
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
 import { ApiResult, RegisterModel, ResultStatus } from '../@models';
-import { PasswordValidators, TranslationPipe, UserService } from '../@services';
+import {
+  MessageService,
+  PasswordValidators,
+  TranslationPipe,
+  UserService,
+} from '../@services';
 import { RegisterService } from './register.service';
 
 @Component({
@@ -50,6 +57,8 @@ import { RegisterService } from './register.service';
     FormControlDirective,
     ButtonDirective,
     FormFeedbackComponent,
+    SpinnerComponent,
+    AlertComponent,
     TranslationPipe,
   ],
   providers: [RegisterService],
@@ -115,12 +124,13 @@ export class RegisterComponent implements OnInit {
     if (!this.onValidate()) return;
 
     const job =
-      this.mode === PageMode.Register
+      this.mode !== PageMode.Register
         ? this.service.edit(this.model)
         : this.service.register(this.model);
 
     job.subscribe((result) => {
       this.result = result;
+      this.submitted = false;
       if (result.status() !== ResultStatus.success) return;
 
       this.user_service.reload();
@@ -131,7 +141,12 @@ export class RegisterComponent implements OnInit {
     });
   }
 
+  getColor(code: ResultStatus) {
+    return MessageService.getStatusCode(code);
+  }
+
   private async loadUserFullData() {
+    this.submitted = true;
     let targetName: string | undefined;
     if (this.mode === PageMode.EditSub)
       targetName =
@@ -154,6 +169,8 @@ export class RegisterComponent implements OnInit {
       for (const key in this.model) {
         this.form.controls[key]?.setValue(model[key]);
       }
+
+      this.submitted = false;
     });
   }
 

@@ -15,8 +15,6 @@ export class MessageService {
     dialog: [],
   };
 
-  constructor() {} // private readonly dialoger?: NbDialogService,
-
   public get dialogBox(): TemplateRef<any> | undefined {
     return this.dialog;
   }
@@ -29,13 +27,11 @@ export class MessageService {
     }
   }
 
-  public set dialogBox(dialog: TemplateRef<any>) {
+  public registerDialogBox(dialog: TemplateRef<any>) {
     this.dialog = dialog;
-    // while (this.buffer.length > 0) {
-    //   this.dialoger.open(this.dialog, {
-    //     context: this.buffer.pop(),
-    //     closeOnBackdropClick: false,
-    //   });
+    // if (!dialog) return;
+    // while (this.buffer.dialog.length > 0) {
+    //   this.dialog.show(AppToastComponent, this.buffer.dialog.pop());
     // }
   }
 
