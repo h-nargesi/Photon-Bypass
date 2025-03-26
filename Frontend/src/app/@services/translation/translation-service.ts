@@ -7,6 +7,7 @@ import * as _global from '../../../../public/texts/global.json';
 import * as _history from '../../../../public/texts/history.json';
 import * as _home_page from '../../../../public/texts/home-page.json';
 import * as _login from '../../../../public/texts/login.json';
+import * as _payment from '../../../../public/texts/payment.json';
 import * as _register from '../../../../public/texts/register.json';
 import * as ـrnewal from '../../../../public/texts/rnewal.json';
 
@@ -100,6 +101,7 @@ export class TranslationService {
     TranslationService.texts.set('history', _history);
     TranslationService.texts.set('home-page', _home_page);
     TranslationService.texts.set('login', _login);
+    TranslationService.texts.set('payment', _payment);
     TranslationService.texts.set('register', _register);
     TranslationService.texts.set('rnewal', ـrnewal);
     console.info('Translation Servcie is initialized.');

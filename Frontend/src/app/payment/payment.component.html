@@ -1,0 +1,57 @@
+<c-row class="g-4 justify-content-lg-center">
+    <c-col xl="8">
+        <c-card class="mb-auto whatsapp-panel" [cBorder]="{top: {color: 'danger', width: 3}}">
+            <c-card-header>
+                <h5>{{ 'payment.title' | translate }}</h5>
+            </c-card-header>
+            <c-card-body>
+                <div class="d-flex p-4 item-record col-header">
+                    <div class="me-auto">
+                        {{ 'payment.columns.title' | translate }}
+                    </div>
+                    <div class="digits">
+                        {{ 'payment.columns.price' | translate }}
+                    </div>
+                </div>
+                @for(item of items; track item) {
+                <div class="d-flex p-4 item-record">
+                    <div class="me-auto">
+                        {{ item.title }}
+                    </div>
+                    <div class="digits">
+                        {{ showBalance(item.value) }}
+                    </div>
+                </div>
+                }
+                <div class="d-flex p-4 item-record" *ngIf="tax">
+                    <div class="me-auto">
+                        {{ 'payment.tax' | translate }}
+                    </div>
+                    <div class="digits">
+                        {{ showBalance(sum * tax) }}
+                    </div>
+                </div>
+                <div class="d-flex p-4">
+                    <div class="me-auto">
+                        {{ 'payment.sum' | translate }}
+                    </div>
+                    <div class="digits">
+                        {{ showBalance(sum * (1 + tax)) }}
+                    </div>
+                </div>
+            </c-card-body>
+            <c-card-body class="d-flex">
+                <div class="w-50">
+                    <div class="m-auto p-5 pt-2">
+                        <label>{{ 'payment.payment-method.zarin-pal' | translate }}</label>
+                    </div>
+                </div>
+            </c-card-body>
+            <c-card-footer>
+                <button cButton class="px-4" type="button" (click)="submit()">
+                    {{ "payment.submit" | translate }}
+                </button>
+            </c-card-footer>
+        </c-card>
+    </c-col>
+</c-row>

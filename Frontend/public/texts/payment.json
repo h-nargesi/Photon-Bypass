@@ -1,0 +1,14 @@
+{
+    "title": "فاکتور فروش",
+    "input-label": "مقدار پرداخت",
+    "tax": "مالیات",
+    "sum": "جمع کل",
+    "columns": {
+        "title": "عنوان",
+        "price": "قیمت"
+    },
+    "payment-method": {
+        "zarin-pal": "زرین پال"
+    },
+    "submit": "پرداخت"
+}

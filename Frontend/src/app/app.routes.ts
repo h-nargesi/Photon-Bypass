@@ -6,6 +6,7 @@ import { ForgotPasswordComponent } from './forgot-password/forgot-password.compo
 import { HistoryComponent } from './history/history.component';
 import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
+import { PaymentComponent } from './payment/payment.component';
 import { RegisterComponent } from './register/register.component';
 import { RnewalComponent } from './rnewal/rnewal.component';
 
@@ -58,6 +59,10 @@ export const routes: Routes = [
       {
         path: 'rnewal',
         component: RnewalComponent,
+      },
+      {
+        path: 'payment',
+        component: PaymentComponent,
       },
     ],
   },
