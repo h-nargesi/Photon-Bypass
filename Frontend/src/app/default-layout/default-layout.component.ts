@@ -15,7 +15,7 @@ import { DefaultFooterComponent, DefaultHeaderComponent } from './';
 import { UserSelectorModalComponent } from './user-selector-modal/user-selector-modal.component';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-layout',
   templateUrl: './default-layout.component.html',
   styleUrls: ['./default-layout.component.scss'],
   imports: [

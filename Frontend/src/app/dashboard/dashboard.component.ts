@@ -30,7 +30,7 @@ import { DashboardService } from './dashboard.service';
 import { TrafficChartComponent } from './traffic-chart/traffic-chart.component';
 
 @Component({
-  selector: 'app-user',
+  selector: 'app-dashboard',
   imports: [
     NgStyle,
     CommonModule,

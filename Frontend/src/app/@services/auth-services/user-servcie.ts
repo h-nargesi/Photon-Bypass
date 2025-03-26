@@ -13,21 +13,22 @@ export class UserService extends ApiBaseService {
   private observable_user?: Promise<UserModel>;
   private currentTargetUser?: Target;
   private targetUserEventSubject = new Subject<Target | undefined>();
-  public onTargetChanged = this.targetUserEventSubject.asObservable();
 
-  public get targetUser(): Target | undefined {
+  onTargetChanged = this.targetUserEventSubject.asObservable();
+
+  get targetUser(): Target | undefined {
     return this.currentTargetUser;
   }
 
-  public get targetName(): string | undefined {
+  get targetName(): string | undefined {
     return this.currentTargetUser?.username;
   }
 
-  public get hasSubUsers(): boolean {
+  get hasSubUsers(): boolean {
     return this.current_user?.targetArea ? true : false;
   }
 
-  public async user(): Promise<UserModel> {
+  async user(): Promise<UserModel> {
     if (this.reload_next_call || this.current_user === undefined) {
       if (!this.reload_next_call && this.observable_user)
         return this.observable_user;
@@ -43,7 +44,7 @@ export class UserService extends ApiBaseService {
     return this.current_user;
   }
 
-  public setTraget(username: string | undefined) {
+  setTraget(username: string | undefined) {
     const prv_username = this.currentTargetUser?.username;
 
     if (!this.current_user?.targetArea) {
@@ -68,11 +69,11 @@ export class UserService extends ApiBaseService {
     }
   }
 
-  public reload() {
+  reload() {
     this.reload_next_call = true;
   }
 
-  public clear() {
+  clear() {
     this.reload_next_call = false;
     this.observable_user = undefined;
     this.current_user = undefined;
