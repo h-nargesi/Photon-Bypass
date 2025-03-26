@@ -71,7 +71,7 @@ export class TrafficChartComponent implements OnInit {
   loadTrafficData() {
     this.loading = true;
     this.service
-      .fetchTrafficData(this.user_service.Target)
+      .fetchTrafficData(this.user_service.targetName)
       .subscribe((data) => {
         this.loading = false;
         this.initMainChart(data);

@@ -71,7 +71,7 @@ export class RegisterComponent implements OnInit {
       maxLengh: 48,
     },
   };
-  readonly edit!: boolean;
+  readonly mode!: PageMode;
 
   model: RegisterModel = {} as RegisterModel;
   submitted = false;
@@ -85,14 +85,60 @@ export class RegisterComponent implements OnInit {
     private readonly router: Router,
     route: ActivatedRoute
   ) {
-    this.edit = route.routeConfig?.path === 'edit-user-info';
+    switch (route.routeConfig?.path) {
+      case 'edit-account-info':
+        this.mode = PageMode.EditAccount;
+        break;
+      case 'edit-user-info':
+        this.mode = PageMode.EditSub;
+        break;
+      default:
+        this.mode = PageMode.Register;
+        break;
+    }
     this.form = this.createForm();
   }
 
-  ngOnInit(): void {
-    if (!this.edit) return;
+  get isEdit(): boolean {
+    return this.mode !== PageMode.Register;
+  }
 
-    this.service.fullInfo(this.user_service.Target).subscribe((user) => {
+  ngOnInit(): void {
+    if (this.mode === PageMode.Register) return;
+    this.loadUserFullData();
+
+    if (this.mode !== PageMode.EditSub) return;
+    this.user_service.onTargetChanged.subscribe(() => this.loadUserFullData());
+  }
+
+  submit() {
+    if (!this.onValidate()) return;
+
+    const job =
+      this.mode === PageMode.Register
+        ? this.service.edit(this.model)
+        : this.service.register(this.model);
+
+    job.subscribe((result) => {
+      this.result = result;
+      if (result.status() !== ResultStatus.success) return;
+
+      this.user_service.reload();
+
+      if (this.mode === PageMode.Register) {
+        setTimeout(() => this.router.navigate(['login']), 1000);
+      }
+    });
+  }
+
+  private async loadUserFullData() {
+    let targetName: string | undefined;
+    if (this.mode === PageMode.EditSub)
+      targetName =
+        this.user_service.targetName ??
+        (await this.user_service.user()).username;
+
+    this.service.fullInfo(targetName).subscribe((user) => {
       Object.assign(this.model, user);
       const username_parts = this.model?.username?.split('@');
       if (username_parts) {
@@ -107,25 +153,6 @@ export class RegisterComponent implements OnInit {
       const model = this.model as any;
       for (const key in this.model) {
         this.form.controls[key]?.setValue(model[key]);
-      }
-    });
-  }
-
-  submit() {
-    if (!this.onValidate()) return;
-
-    const job = this.edit
-      ? this.service.edit(this.model)
-      : this.service.register(this.model);
-
-    job.subscribe((result) => {
-      this.result = result;
-      if (result.status() !== ResultStatus.success) return;
-
-      this.user_service.clear();
-
-      if (!this.edit) {
-        setTimeout(() => this.router.navigate(['login']), 1000);
       }
     });
   }
@@ -161,7 +188,7 @@ export class RegisterComponent implements OnInit {
 
     let validators: any = undefined;
 
-    if (!this.edit) {
+    if (this.mode === PageMode.Register) {
       controllers['password'] = [
         '',
         [
@@ -188,4 +215,10 @@ export class RegisterComponent implements OnInit {
 
     return formControl;
   }
+}
+
+enum PageMode {
+  EditAccount,
+  EditSub,
+  Register,
 }

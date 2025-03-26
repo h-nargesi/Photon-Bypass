@@ -79,8 +79,12 @@ export class RnewalComponent implements OnInit {
     this.trafficUnit = translation.translate('rnewal.labels.traffic.unit');
   }
 
-  get target(): string {
-    return this.user_service.Target;
+  get hasSubUsers(): boolean {
+    return this.user_service.hasSubUsers;
+  }
+
+  get targetName(): string | undefined {
+    return this.user_service.targetName;
   }
 
   ngOnInit() {
@@ -91,7 +95,7 @@ export class RnewalComponent implements OnInit {
   submit() {
     if (!this.plan.value || !this.plan.simultaneousUserCount) return;
 
-    this.plan.target = this.user_service.Target ?? this.current_user.username;
+    this.plan.target = this.user_service.targetName ?? this.current_user.username;
 
     this.service.rnewal(this.plan).subscribe((result) => {
       if (result.code === 307) {
@@ -132,7 +136,8 @@ export class RnewalComponent implements OnInit {
       return;
     }
 
-    this.plan.target = this.user_service.Target ?? this.current_user.username;
+    this.plan.target =
+      this.user_service.targetName ?? this.current_user.username;
 
     this.service.estimate(this.plan).subscribe((cost) => {
       this.valid = cost ? true : false;
@@ -142,7 +147,7 @@ export class RnewalComponent implements OnInit {
 
   private async loadLastPlan() {
     this.current_user = await this.user_service.user();
-    this.service.info(this.user_service.Target).subscribe((plan) => {
+    this.service.info(this.user_service.targetName).subscribe((plan) => {
       if (!plan) return;
       this.plan = plan;
 

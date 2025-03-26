@@ -98,7 +98,7 @@ export class HistoryComponent implements AfterViewInit {
 
   loadWithFilter() {
     this.service
-      .load(this.user_service.Target, this.fromDate, this.toDate)
+      .load(this.user_service.targetName, this.fromDate, this.toDate)
       .subscribe((result) => {
         this.dataSource = new MatTableDataSource(result);
         if (this.paginator) this.dataSource.paginator = this.paginator;

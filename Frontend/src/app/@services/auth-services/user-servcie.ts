@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { firstValueFrom, Observable, Subject } from 'rxjs';
-import { UserModel } from '../../@models';
+import { Target, UserModel } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
 import { AUTH_API_URL } from '../api-services/models/app-api-url';
 import { LocalStorageService } from '../local-storage/local-storage-service';
@@ -8,55 +8,75 @@ import { TranslationService } from '../translation/translation-service';
 
 @Injectable({ providedIn: 'root' })
 export class UserService extends ApiBaseService {
+  private reload_next_call = false;
   private current_user?: UserModel;
   private observable_user?: Promise<UserModel>;
-  private targetUser: string = '';
-  private targetUserEventSubject = new Subject<string>();
+  private currentTargetUser?: Target;
+  private targetUserEventSubject = new Subject<Target | undefined>();
   public onTargetChanged = this.targetUserEventSubject.asObservable();
 
-  public get Target(): string {
-    return this.targetUser;
+  public get targetUser(): Target | undefined {
+    return this.currentTargetUser;
+  }
+
+  public get targetName(): string | undefined {
+    return this.currentTargetUser?.username;
+  }
+
+  public get hasSubUsers(): boolean {
+    return this.current_user?.targetArea ? true : false;
   }
 
   public async user(): Promise<UserModel> {
-    if (this.current_user === undefined) {
-      if (this.observable_user) return this.observable_user;
+    if (this.reload_next_call || this.current_user === undefined) {
+      if (!this.reload_next_call && this.observable_user)
+        return this.observable_user;
 
       this.observable_user = firstValueFrom(this.fetchUser());
       this.current_user = await this.observable_user;
       this.observable_user = undefined;
 
-      const target: string = LocalStorageService.get(['user', 'target']);
-      let targetIndex = -1;
-      if (target && this.current_user?.targetArea) {
-        targetIndex = this.current_user.targetArea.indexOf(target);
-      }
-      this.setTraget(targetIndex);
+      this.setTraget(LocalStorageService.get(['user', 'target']));
+      this.reload_next_call = false;
     }
 
     return this.current_user;
   }
 
-  public setTraget(index: number) {
-    const current_state = this.targetUser;
+  public setTraget(username: string | undefined) {
+    const prv_username = this.currentTargetUser?.username;
 
-    if (!this.current_user?.targetArea) this.targetUser = '';
-    else {
-      if (index === -1) this.targetUser = this.current_user.username;
-      else if (index < 0 || this.current_user.targetArea.length <= index)
-        throw 'target index is out of range';
-      else this.targetUser = this.current_user.targetArea[index];
+    if (!this.current_user?.targetArea) {
+      this.currentTargetUser = undefined;
+      username = undefined;
+    } else {
+      if (!username) username = this.current_user.username;
+
+      if (username in this.current_user.targetArea)
+        this.currentTargetUser = this.current_user.targetArea[username];
+      else throw 'target index is out of range';
     }
 
-    if (this.targetUser && this.targetUser !== current_state)
-      this.targetUserEventSubject.next(this.targetUser);
+    LocalStorageService.set(['user', 'target'], username);
 
-    LocalStorageService.set(['user', 'target'], this.targetUser);
+    if (
+      this.reload_next_call ||
+      (this.current_user?.targetArea &&
+        this.currentTargetUser?.username !== prv_username)
+    ) {
+      this.targetUserEventSubject.next(this.currentTargetUser);
+    }
+  }
+
+  public reload() {
+    this.reload_next_call = true;
   }
 
   public clear() {
+    this.reload_next_call = false;
+    this.observable_user = undefined;
     this.current_user = undefined;
-    this.setTraget(-1);
+    this.setTraget(undefined);
   }
 
   private fetchUser(): Observable<UserModel> {

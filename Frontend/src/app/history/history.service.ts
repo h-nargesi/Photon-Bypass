@@ -7,7 +7,7 @@ import { HistoryComponent } from './history.component';
 @Injectable({ providedIn: HistoryComponent })
 export class HistoryService extends ApiBaseService {
   load(
-    target: string,
+    target?: string,
     from?: number,
     to?: number
   ): Observable<HistoryRecord[]> {

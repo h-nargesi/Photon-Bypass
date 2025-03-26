@@ -11,7 +11,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../../@icons';
-import { UserModel } from '../../@models';
+import { SubUsers, UserModel } from '../../@models';
 import { TranslationPipe, UserService } from '../../@services';
 
 @Component({
@@ -36,7 +36,7 @@ export class UserSelectorModalComponent {
   readonly id: string = 'userSelectorModal';
 
   current_user?: UserModel;
-  targetList?: string[];
+  usernameList?: string[];
 
   @Input() visible: boolean = false;
   @ViewChild(ModalComponent) modal!: ModalComponent;
@@ -46,24 +46,38 @@ export class UserSelectorModalComponent {
 
   async ngOnInit() {
     this.current_user = await this.user_service.user();
-    this.targetList = this.current_user.targetArea?.slice();
+    if (!this.current_user?.targetArea) return;
+
+    this.usernameList = this.getUserTitle(this.current_user.targetArea);
   }
 
-  get Target(): string | undefined {
-    return this.user_service.Target;
+  get targetName(): string | undefined {
+    return this.user_service.targetName;
   }
 
   search() {
     if (!this.current_user?.targetArea) return;
 
     const key = this.searchInput.nativeElement.value;
-    this.targetList = this.current_user.targetArea
-      ?.filter((x) => x.includes(key))
-      .slice();
+    this.usernameList = this.getUserTitle(this.current_user.targetArea, key);
   }
 
-  setTargetIndex(index: number) {
-    this.user_service.setTraget(index);
+  setTargetIndex(username: string) {
+    this.user_service.setTraget(username);
     this.visible = false;
+  }
+
+  private getUserTitle(sub_users: SubUsers, key?: string): string[] {
+    const targetList: string[] = [];
+    for (const username in sub_users) {
+      if (
+        !key ||
+        username.includes(key) ||
+        sub_users[username].fullname.includes(key)
+      ) {
+        targetList.push(username);
+      }
+    }
+    return targetList;
   }
 }

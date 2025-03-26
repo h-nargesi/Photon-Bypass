@@ -83,8 +83,12 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
     this.current_user = await this.user_service.user();
   }
 
-  get Target(): string | undefined {
-    return this.user_service.Target;
+  get hasSubUsers(): boolean {
+    return this.user_service.hasSubUsers;
+  }
+
+  get targetName(): string | undefined {
+    return this.user_service.targetName;
   }
 
   showBalance(): string {

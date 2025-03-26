@@ -5,16 +5,16 @@
         <c-card class="mx-4">
           <c-card-body class="p-4">
             <div class="mb-2">
-              <a routerLink="/dashboard" *ngIf="edit">
+              <a routerLink="/dashboard" *ngIf="isEdit">
                 <svg [cIcon]="icons.cilHome" title="Home"></svg>
               </a>
-              <a routerLink="/" *ngIf="!edit">
+              <a routerLink="/" *ngIf="!isEdit">
                 <svg [cIcon]="icons.cilHome" title="Home"></svg>
               </a>
             </div>
             <form cForm (ngSubmit)="submit()" [formGroup]="form" novalidate>
-              <h1>{{ `register.${edit ? 'edit' : 'new'}-title` | translate }}</h1>
-              <p class="text-body-secondary">{{ `register.${edit ? 'edit' : 'new'}-caption` | translate }}</p>
+              <h1>{{ `register.${isEdit ? 'edit' : 'new'}-title` | translate }}</h1>
+              <p class="text-body-secondary">{{ `register.${isEdit ? 'edit' : 'new'}-caption` | translate }}</p>
 
               <!-- USERNAME -->
               <c-input-group class="mb-3 ltr has-validation" *ngIf="form.controls['username'] as ctrl">
@@ -24,7 +24,7 @@
                 <input formControlName="username" cFormControl
                   [placeholder]='"register.labels.username-holder" | translate'
                   [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
-                  autoComplete="name" [maxlength]="ValidatorValues.username.maxLengh" [readOnly]="edit" />
+                  autoComplete="name" [maxlength]="ValidatorValues.username.maxLengh" [readOnly]="isEdit" />
                 <span cInputGroupText>&#64;{{ usernameSuffic }}</span>
 
                 <c-form-feedback class="rtl" *ngIf="submitted || ctrl.invalid" [valid]="!(submitted || ctrl.invalid)">
@@ -51,7 +51,7 @@
                 <input formControlName="email" cFormControl [placeholder]='"register.labels.email-holder" | translate'
                   [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
                   autoComplete="email" />
-                <span cInputGroupText [ngClass]="(model.emailValid ? 'bg-success' : '')" *ngIf="edit">
+                <span cInputGroupText [ngClass]="(model.emailValid ? 'bg-success' : '')" *ngIf="isEdit">
                   <svg [cIcon]="icons.cilCheckCircle" *ngIf="model.emailValid"></svg>
                   <svg [cIcon]="icons.cilSend" *ngIf="!model.emailValid"></svg>
                 </span>
@@ -76,7 +76,7 @@
                 <input formControlName="mobile" cFormControl [placeholder]='"register.labels.mobile-holder" | translate'
                   [valid]="ctrl.touched && ctrl.valid && ctrl.value ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
                   autoComplete="mobile-phone" [maxlength]="ValidatorValues.mobile.maxLengh" />
-                <span cInputGroupText [ngClass]="(model.mobileValid ? 'bg-success' : '')" *ngIf="edit">
+                <span cInputGroupText [ngClass]="(model.mobileValid ? 'bg-success' : '')" *ngIf="isEdit">
                   <svg [cIcon]="icons.cilCheckCircle" *ngIf="model.mobileValid"></svg>
                   <svg [cIcon]="icons.cilSend" *ngIf="!model.mobileValid"></svg>
                 </span>
@@ -169,7 +169,7 @@
               <!-- BUTTONS -->
               <div class="d-grid">
                 <button cButton color="primary" type="submit">
-                  {{ (edit ? "register.labels.edit-account" : "register.labels.create-account") | translate }}
+                  {{ (isEdit ? "register.labels.edit-account" : "register.labels.create-account") | translate }}
                 </button>
               </div>
             </form>

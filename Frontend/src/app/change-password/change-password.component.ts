@@ -86,8 +86,12 @@ export class ChangePasswordComponent {
     return PageMode.forgotten;
   }
 
-  get target(): string {
-    return this.user_service.Target;
+  get hasSubUsers(): boolean {
+    return this.user_service.hasSubUsers;
+  }
+
+  get targetName(): string | undefined {
+    return this.user_service.targetName;
   }
 
   constructor(
@@ -122,7 +126,7 @@ export class ChangePasswordComponent {
     if (!this.onValidate()) return;
 
     if (this.mode === PageMode.ovpn) {
-      (this.model as OvpnPasswordToken).target = this.user_service.Target;
+      (this.model as OvpnPasswordToken).target = this.user_service.targetName;
     }
 
     const job =

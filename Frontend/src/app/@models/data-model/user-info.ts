@@ -1,14 +1,17 @@
 export interface TagetAction {
-  target: string;
+  target?: string;
 }
 
-export interface UserModel {
+export interface Target {
   username: string;
   fullname: string;
   email: string;
+}
+
+export interface UserModel extends Target {
   picture?: string;
   balance: number;
-  targetArea?: string[];
+  targetArea?: SubUsers;
 }
 
 export interface FullUserModel {
@@ -31,3 +34,5 @@ export interface PasswordToken {
 }
 
 export interface OvpnPasswordToken extends PasswordToken, TagetAction {}
+
+export type SubUsers = { [username: string]: Target };

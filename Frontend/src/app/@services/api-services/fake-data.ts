@@ -9,6 +9,7 @@ import {
   PlanInto,
   PlanType,
   PriceModel,
+  Target,
   TrafficData,
   TrafficDataModel,
   UserModel,
@@ -197,6 +198,12 @@ export class FakeDataService {
   > {
     const bearer = LocalStorageService.get(['user', 'bearer']);
     if (bearer) {
+      const subuser: { [username: string]: Target } = {};
+
+      for (const user of SUB_USERS) {
+        subuser[user.username] = user;
+      }
+
       return wait({
         code: 200,
         data: {
@@ -204,7 +211,7 @@ export class FakeDataService {
           fullname: 'حامد نرگسی',
           email: 'hamed.nargesi.jar@gmail.com',
           balance: 320,
-          targetArea: SUB_USERS,
+          targetArea: subuser,
         },
       } as ApiResultData<UserModel>);
     }
@@ -421,7 +428,8 @@ function createNewRecord(id: number): HistoryRecord {
   let value = undefined;
   if (unit) value = Math.floor(Math.random() * 5000);
 
-  const target = SUB_USERS[Math.floor(Math.random() * SUB_USERS.length)];
+  const target =
+    SUB_USERS[Math.floor(Math.random() * SUB_USERS.length)].username;
 
   return {
     id: id,
@@ -456,10 +464,12 @@ const TITLE: string[] = [
   'پیام',
 ];
 
-const SUB_USERS: string[] = [
-  'hamed@na',
-  'vali@gmail',
-  'mamad@web',
-  'xdrasm@web',
-  'narges@web',
+const SUB_USERS: Target[] = [
+  { username: 'hamed@na', fullname: 'حامد نرگسی', email: 'hamed@gmail.com' },
+  { username: 'nargesi@na', fullname: 'نرگسی', email: 'nargesi@gmail.com' },
+  { username: 'valipoor@na', fullname: 'ولیپور', email: 'valipoor@gmail.com' },
+  { username: 'star@na', fullname: 'ستاره', email: 'star@gmail.com' },
+  { username: 'elloni@na', fullname: 'الان', email: 'elloni@gmail.com' },
+  { username: 'miloon@na', fullname: 'میلون', email: 'miloon@gmail.com' },
+  { username: 'mounth@na', fullname: 'ماه', email: 'mounth@gmail.com' },
 ];

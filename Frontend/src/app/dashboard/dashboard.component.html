@@ -73,36 +73,38 @@
     </c-col>
 
     <c-col lg="6">
-        <c-card *ngIf="current_user" class="mb-3">
+        <c-card *ngIf="targetUser" class="mb-3">
             <c-card-body>
-                <div cCardText *ngIf="current_user.username" class="float-end ltr">
-                    <small>{{ current_user.username }}</small>
+                <div cCardText *ngIf="targetUser.username" class="float-end ltr">
+                    <small>{{ targetUser.username }}</small>
                 </div>
-                <h5 cCardTitle *ngIf="current_user.fullname">{{ current_user.fullname }}</h5>
+                <h5 cCardTitle *ngIf="targetUser.fullname">{{ targetUser.fullname }}</h5>
             </c-card-body>
             <ul cListGroup [flush]="true" class="ltr">
-                <li cListGroupItem>{{ current_user.email }}</li>
+                <li cListGroupItem>{{ targetUser.email }}</li>
                 <li cListGroupItem class="icon-btn-group">
-                    <span *ngIf="showTagetInUserPanel()">
-                        {{ Target }}:
-                    </span>
-                    <a (click)="sendCertificateViaEmail(true)" *ngIf="!sending_cert_email && showTagetInUserPanel()"
-                        class="icon-btn pointer" [cTooltip]="'dashboard.account.send-cert-via-email-to' | translate">
-                        <svg [cIcon]="icons.cilCursor" class="text-primary" cTextColor="warning"></svg>
-                    </a>
                     <a (click)="sendCertificateViaEmail(false)" *ngIf="!sending_cert_email" class="icon-btn pointer"
                         [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
                         <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
                     </a>
+                    <a (click)="sendCertificateViaEmail(true)" *ngIf="!sending_cert_email && showTagetInUserPanel()"
+                        class="icon-btn pointer" [cTooltip]="'dashboard.account.send-cert-via-email-to' | translate">
+                        <svg [cIcon]="icons.cilCursor" class="text-primary" cTextColor="warning"></svg>
+                    </a>
                     <c-spinner color="primary" size="sm" *ngIf="sending_cert_email" />
+                    <c-spinner color="warning" size="sm" *ngIf="sending_cert_email && showTagetInUserPanel()" />
                     <a routerLink="/change-ovpn-password" class="icon-btn"
                         [cTooltip]="'dashboard.account.change-open-vpn-password' | translate">
                         <svg [cIcon]="icons.cilLockLocked" class="text-primary"></svg>
                     </a>
+                    <a routerLink="/edit-user-info" class="icon-btn"
+                        [cTooltip]="'dashboard.account.edit-user-info' | translate">
+                        <svg [cIcon]="icons.cilPencil" class="text-primary"></svg>
+                    </a>
                 </li>
             </ul>
         </c-card>
-        <c-card *ngIf="!current_user" class="mb-3 top-panels">
+        <c-card *ngIf="!targetUser" class="mb-3 top-panels">
             <c-card-body cPlaceholderAnimation="glow">
                 <p cCardText>
                     <span cCol="8" cPlaceholder class="me-1"></span>
@@ -114,14 +116,14 @@
                     <span cCol="8" cPlaceholder class="me-1"></span>
                 </li>
                 <li cListGroupItem class="icon-btn-group">
-                    <a [cTooltip]="'dashboard.account.send-cert-via-email-to' | translate">
-                        <svg [cIcon]="icons.cilCursor" class="text-primary"></svg>
-                    </a>
                     <a [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
                         <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
                     </a>
                     <a [cTooltip]="'dashboard.account.change-open-vpn-password' | translate">
                         <svg [cIcon]="icons.cilLockLocked" class="text-primary"></svg>
+                    </a>
+                    <a [cTooltip]="'dashboard.account.edit-user-info' | translate">
+                        <svg [cIcon]="icons.cilPencil" class="text-primary"></svg>
                     </a>
                 </li>
             </ul>

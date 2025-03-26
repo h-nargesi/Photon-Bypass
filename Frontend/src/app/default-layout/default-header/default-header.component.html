@@ -52,9 +52,9 @@
       </div>
     </c-header-nav>
 
-    <c-header-nav class="d-flex" *ngIf="Target">
+    <c-header-nav class="d-flex" *ngIf="hasSubUsers">
       <button [cModalToggle]="userSelector" cButton size="sm" color="info" cTextColor="light">
-        {{ Target }}
+        {{ targetName }}
       </button>
     </c-header-nav>
 
@@ -79,7 +79,7 @@
         </span>
       </li>
       <li>
-        <a cDropdownItem routerLink="/edit-user-info">
+        <a cDropdownItem routerLink="/edit-account-info">
           <svg [cIcon]="icons.cilPencil" class="me-2"></svg>
           {{ "global.header.edit-user-info" | translate }}
         </a>

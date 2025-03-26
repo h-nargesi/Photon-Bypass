@@ -6,10 +6,10 @@
     <c-modal-body>
         <input cFormControl #searchInput [placeholder]='"global.header.user-selector.search" | translate' (keyup)="search()" />
         <div cListGroup class="mt-3">
-            @for (target of targetList; track target; let index = $index) {
-            <button cListGroupItem (click)="setTargetIndex(index)" [active]="Target === target">
+            @for (username of usernameList; track username;) {
+            <button cListGroupItem (click)="setTargetIndex(username)" [active]="targetName === username">
                 <svg [cIcon]="icons.cilUser" class="me-2"></svg>
-                {{ target }}
+                {{ username }} ({{ current_user?.targetArea?.[username]?.fullname }})
             </button>
             }
         </div>

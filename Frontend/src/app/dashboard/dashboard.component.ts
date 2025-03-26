@@ -24,7 +24,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
-import { PlanType, ResultStatus, UserModel, UserPlanInfo } from '../@models';
+import { PlanType, ResultStatus, Target, UserModel, UserPlanInfo } from '../@models';
 import { TranslationPipe, TranslationService, UserService } from '../@services';
 import { DashboardService } from './dashboard.service';
 import { TrafficChartComponent } from './traffic-chart/traffic-chart.component';
@@ -78,8 +78,12 @@ export class DashboardComponent implements OnInit {
     private readonly translation: TranslationService
   ) {}
 
-  get Target(): string | undefined {
-    return this.user_service.Target;
+  get targetName(): string | undefined {
+    return this.user_service.targetName;
+  }
+
+  get targetUser(): Target | undefined {
+    return this.user_service.targetUser;
   }
 
   async ngOnInit() {
@@ -90,8 +94,8 @@ export class DashboardComponent implements OnInit {
 
   showTagetInUserPanel(): boolean {
     return (
-      (this.user_service.Target ? true : false) &&
-      this.Target !== this.current_user?.username
+      this.user_service.hasSubUsers &&
+      this.targetName !== this.current_user?.username
     );
   }
 
@@ -99,14 +103,14 @@ export class DashboardComponent implements OnInit {
     this.sending_cert_email = true;
     this.service
       .sendCertificateViaEmail(
-        toMe ? this.current_user?.username : this.user_service.Target
+        toMe ? this.current_user?.username : this.user_service.targetName
       )
       .subscribe(() => (this.sending_cert_email = false));
   }
 
   closeConnection(index: number) {
     this.closing_connection[index] = true;
-    const targte = this.user_service.Target;
+    const targte = this.user_service.targetName;
     this.service.closeConnection(index, targte).subscribe((result) => {
       if (result.status() >= ResultStatus.warning) return;
 
@@ -177,9 +181,8 @@ export class DashboardComponent implements OnInit {
   }
 
   private loadConnections() {
-    console.log('loadConnections', this.user_service.Target);
     this.service
-      .fetchCurrentConnections(this.user_service.Target)
+      .fetchCurrentConnections(this.user_service.targetName)
       .subscribe((connections) => {
         this.connections = connections;
 
@@ -195,13 +198,12 @@ export class DashboardComponent implements OnInit {
 
   private loadPlanInfo() {
     this.service
-      .fetchPlanState(this.user_service.Target)
+      .fetchPlanState(this.user_service.targetName)
       .subscribe((info) => (this.plan_info = info));
   }
 
   private detectTargetChanges() {
     this.user_service.onTargetChanged.subscribe((newTarget) => {
-      console.log({ newTarget });
       this.clearData();
       this.loadData();
     });

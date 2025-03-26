@@ -4,10 +4,10 @@
             <c-card-header>
                 <h5>{{ 'rnewal.title' | translate }}</h5>
             </c-card-header>
-            <c-card-body class="d-flex" *ngIf="target">
+            <c-card-body class="d-flex" *ngIf="hasSubUsers">
                 <div class="w-100 mx-5">
                     <label>{{ 'rnewal.labels.current-user' | translate }}:</label>
-                    <h5 class="ltr">{{ target }}</h5>
+                    <h5 class="ltr">{{ targetName }}</h5>
                 </div>
             </c-card-body>
             <c-card-body class="d-flex">

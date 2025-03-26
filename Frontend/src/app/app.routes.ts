@@ -44,6 +44,10 @@ export const routes: Routes = [
         component: RegisterComponent,
       },
       {
+        path: 'edit-account-info',
+        component: RegisterComponent,
+      },
+      {
         path: 'change-password',
         component: ChangePasswordComponent,
       },
