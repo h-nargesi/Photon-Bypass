@@ -17,7 +17,8 @@
               <p class="text-body-secondary">{{ `register.${isEdit ? 'edit' : 'new'}-caption` | translate }}</p>
 
               <!-- USERNAME -->
-              <c-input-group class="mb-3 ltr has-validation" *ngIf="form.controls['username'] as ctrl">
+              <c-input-group class="mb-3 ltr" [ngClass]="isEdit ? [] : [ 'has-validation' ]"
+                *ngIf="form.controls['username'] as ctrl">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilUser"></svg>
                 </span>
@@ -46,7 +47,7 @@
               </c-input-group>
 
               <!-- EMAIL -->
-              <c-input-group class="mb-3 ltr has-validation" *ngIf="form.controls['email'] as ctrl">
+              <c-input-group class="mb-3 ltr" [ngClass]="isEdit ? [] : [ 'has-validation' ]" *ngIf="form.controls['email'] as ctrl">
                 <span cInputGroupText>&#64;</span>
                 <input formControlName="email" cFormControl [placeholder]='"register.labels.email-holder" | translate'
                   [valid]="ctrl.touched && ctrl.valid ? true : (submitted || ctrl.touched) && ctrl.invalid ? false : undefined"
@@ -69,7 +70,7 @@
               </c-input-group>
 
               <!-- MOBILE -->
-              <c-input-group class="mb-3 ltr has-validation" *ngIf="form.controls['mobile'] as ctrl">
+              <c-input-group class="mb-3 ltr" [ngClass]="isEdit ? [] : [ 'has-validation' ]" *ngIf="form.controls['mobile'] as ctrl">
                 <span cInputGroupText>
                   <svg [cIcon]="icons.cilPhone"></svg>
                 </span>
