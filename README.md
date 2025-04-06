@@ -95,6 +95,8 @@ Selling VPN
     - First Name
     - Last Name
 
+- FAQ
+
 - Rnewal
     - Wallet Balance Panel
         - Current Value

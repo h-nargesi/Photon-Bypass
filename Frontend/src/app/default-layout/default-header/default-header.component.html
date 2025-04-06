@@ -3,7 +3,9 @@
   <c-container [fluid]="true" class="border-bottom px-4">
     <div class="d-none d-md-flex">
       <h4>
-        <a routerLink="/dashboard">{{ title_service.getTitle() }}</a>
+        <a routerLink="/">
+          <svg [cIcon]="icons.cilHome" class="my-1" size="lg"></svg>
+        </a>
       </h4>
     </div>
 
