@@ -2,11 +2,112 @@
 
 api call rate limit
 
+## API list
+
+- prices:
+    GET  api/basics/prices
+- token:
+    POST api/auth/token `{
+        username: string; 
+        password: string;
+    }`
+- logout:
+    GET  api/auth/logout
+- register:
+    POST api/auth/register `{
+        username: string;
+        email: string;
+        emailValid: boolean;
+        mobile: string;
+        mobileValid: boolean;
+        firstname: string;
+        lastname: string;
+        password: string;
+    }`
+- get-user:
+    GET  api/auth/get-user
+- check-user:
+    GET  api/auth/check-user
+- change:
+    POST api/auth/changePasswordToken `{
+        token: string;
+        password: string;
+    }`
+- reset-pass
+    POST api/auth/reset-pass `{
+        emailMobile: string;
+    }`
+- change-ovpn:
+    POST api/account/change-ovpn `{
+        token: string;
+        password: string;
+        target?: string;
+    }`
+- send-cert-email:
+    GET  api/account/send-cert-email `{
+        target?: string;
+    }`
+- traffic-data:
+    GET  api/account/traffic-data `{
+        target?: string;
+    }`
+- full-info:
+    GET  api/account/full-info `{
+        target?: string;
+    }`
+- history:
+    GET  api/account/history `{
+        target?: string;
+        from?: number;
+        to?: number;
+    }`
+- edit-user:
+    POST api/account/edit-user `{
+        username: string;
+        email: string;
+        emailValid: boolean;
+        mobile: string;
+        mobileValid: boolean;
+        firstname: string;
+        lastname: string;
+    }`
+- current-con-state:
+    GET  api/connection/current-con-state `{
+        target?: string;
+    }`
+- close-con:
+    POST api/connection/close-con `{
+        index: number;
+        target?: string;
+    }`
+- plan-state:
+    GET  api/plan/plan-state `{
+        target?: string;
+    }`
+- plan-info:
+    GET  api/plan/plan-info `{
+        target?: string;
+    }`
+- estimate:
+    POST api/plan/estimate `{
+        target: string;
+        type: PlanType;
+        value: number;
+        simultaneousUserCount: number;
+    }`
+- rnewal:
+    POST api/plan/rnewal `{
+        target: string;
+        type: PlanType;
+        value: number;
+        simultaneousUserCount: number;
+    }`
+
 ## Login
 
 - Gmail auth
-- email/username password
-- register new
+- Email/username password
+- Register new
 
 ## Radius Calls
 
