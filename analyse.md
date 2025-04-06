@@ -28,8 +28,8 @@ api call rate limit
     GET  api/auth/get-user
 - check-user:
     GET  api/auth/check-user
-- change:
-    POST api/auth/changePasswordToken `{
+- change-pass:
+    POST api/auth/change-pass `{
         token: string;
         password: string;
     }`
@@ -109,7 +109,7 @@ api call rate limit
 - Email/username password
 - Register new
 
-## Radius Calls
+## Out Source Calls
 
 ### Rad API
 
@@ -167,7 +167,7 @@ api call rate limit
     - Wallet Balance Panel
         - (local db)
     - Usege Chart > Reload
-        - (rad api | rad db) check new from latest
+        - (rad api) check new from latest
         - (local db)
 
 - Payment
@@ -189,32 +189,24 @@ api call rate limit
     - update (local db)
 
 - Account Balance Warning Service
-    - (rad api | rad db)
+    - (rad api)
     - (whatsapp api)
 
 ## Rnewal Submit Code
 
+this code is not finished
+
 ```c#
 if (context.month is not null && context.traffic is not null)
     throw new Excetion("Bad request.");
-if ((context.month is not null || context.traffic is not null) && account.Enabled == true)
-    throw new UserException("You can not change account type while is enabled!");
 
-if (context.traffic is not null) {
-    context.type = AccountType.Traffic;
-} else if (context.month is not null) {
-    context.type = AccountType.Monthly;
-} else if (context.UserCount != account.UserCount) {
-    context.type = account.Type;
-} else {
-    return;
+EstimateExpense(account, context, out expense);
+
+if (!AffordFromUserWalet(expense)) {
+    throw new UserException("The walet balance is low!");
 }
 
-if (context.traffic is null || context.month is null || 
-    context.UserCount == account.UserCount) {
-    return;
-}
-
+var change_profile = true;
 var close_connections = true;
 if (context.traffic is not null && account.Type != AccountType.Traffic) {
     if (account.ExpireDate > DateTime.Now) {
@@ -232,24 +224,28 @@ if (context.traffic is not null && account.Type != AccountType.Traffic) {
     SetAccountDate(DateTime.Now, DateTime.Now);
 
 } else {
-    close_connections = context.UserCount != account.UserCount;
+    close_connections = context.UserCount < account.UserCount;
+    change_profile = context.UserCount != account.UserCount;
 }
 
-SetAccountProfile(account, context, out expense);
-
-if (!CheckUserWalet(expense)) {
-    throw new UserException("The walet balance is low!");
+if (change_profile) {
+    account.profile = GetProfile(context);
 }
 
 if (account.LastConnection < DateTime.Now.AddWeek(-1)) {
     var realm = GetFreePlaceInServer();
     if (account.Realm != realm) {
         account.Realm = realm;
-        SendChangeServerNotif(account)
+        SendChangeServerNotif(account);
     }
 }
 
-SaveAccount(account);
+if (account.IsChanged) {
+    SaveAccount(account);
+    SaveAccountRealmDistriction(account);
+}
+
+RegisterNewTopUp(account, context);
 
 if (close_connections) {
     CloseConnection();
