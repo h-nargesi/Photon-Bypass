@@ -1,4 +1,7 @@
 ﻿using System.Net.Http.Json;
+using System.Web;
+using OutSource.ApiResponseModel;
+using PhotonBypass.OutSource.Model;
 
 namespace PhotonBypass.OutSource;
 
@@ -6,6 +9,8 @@ public class RadiusDesk : IDisposable
 {
     private readonly HttpClient httpClient;
     private string? token;
+
+    private const string SEL_LANGUAGE = "4_4";
 
     public RadiusDesk()
     {
@@ -15,17 +20,48 @@ public class RadiusDesk : IDisposable
         };
     }
 
-    public void GetPermenentUser()
+    public User? GetPermenentUser(string username)
     {
-        if (token == null)
-        {
-            Login();
-        }
+        CheckLogin();
+
+        var url = $"permanent-users/index.json?_dc={GetTime()}&page=1&start=0&limit=2&sort=username&dir=ASC";
+
+        url += $"&token={token}&sel_language={SEL_LANGUAGE}&filter=";
+        url += HttpUtility.UrlEncode($"[{{\"operator\":\"==\",\"value\":true,\"property\":\"active\"}},{{\"operator\":\"==\",\"value\":\"{username}\",\"property\": \"username\"}}]");
+
+        var httpMessage = httpClient.GetAsync(url).Result
+            .EnsureSuccessStatusCode();
+
+        if (httpMessage == null) return null;
+
+        var result = httpMessage.Content.ReadFromJsonAsync<PermanentUsersResponse>().Result;
+
+        if (result?.TotalCount != 1) return null;
+
+        return result.Items?[0];
     }
 
     public void Dispose() => Logout();
 
-    private void Login()
+    private long GetTime()
+    {
+        return 0;
+    }
+
+    private void CheckLogin()
+    {
+        if (token == null || CheckToken())
+        {
+            var success = Login();
+
+            if (!success)
+            {
+                throw new Exception("Cannot login to radius");
+            }
+        }
+    }
+
+    private bool Login()
     {
         var loginData = new
         {
@@ -34,17 +70,19 @@ public class RadiusDesk : IDisposable
             password = "pass"
         };
 
-        var httpMessage = httpClient.PostAsJsonAsync<object>("dashboard/authenticate.json", loginData).Result
+        var response = httpClient.PostAsJsonAsync<object>("dashboard/authenticate.json", loginData).Result
             .EnsureSuccessStatusCode();
 
-        if (httpMessage == null) return;
+        if (response == null) return false;
 
-        var result = httpMessage.Content.ReadFromJsonAsync<dynamic>().Result;
+        var result = response.Content.ReadFromJsonAsync<dynamic>().Result;
 
         token = result?.data.token;
+
+        return token != null;
     }
 
-    private void CheckToken()
+    private bool CheckToken()
     {
         var tokenData = new
         {
@@ -53,12 +91,14 @@ public class RadiusDesk : IDisposable
             auto_compact = false
         };
 
-        var httpMessage = httpClient.PostAsJsonAsync<object>("dashboard/check_token.json", tokenData).Result
+        var response = httpClient.PostAsJsonAsync<object>("dashboard/check_token.json", tokenData).Result
             .EnsureSuccessStatusCode();
 
-        if (httpMessage == null) return;
+        if (response == null) return false;
 
-        var result = httpMessage.Content.ReadFromJsonAsync<dynamic>().Result;
+        var result = response.Content.ReadFromJsonAsync<dynamic>().Result;
+
+        return result?.success == true;
     }
 
     private void Logout()

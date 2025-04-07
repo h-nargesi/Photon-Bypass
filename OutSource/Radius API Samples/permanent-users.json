@@ -1,0 +1,94 @@
+{
+    "url": "https://rad.photon-bypass.com/cake4/rd_cake/permanent-users/index.json",
+    "type": "GET",
+    "request": {
+        "_dc": 1740572073087,
+        "page": 1,
+        "start": 0,
+        "limit": 2,
+        "sort": "username",
+        "dir": "ASC",
+        "filter": "[{\"operator\":\"==\",\"value\":true,\"property\":\"active\"},{\"operator\":\"==\",\"value\":\"U0171@ry\",\"property\": \"username\"}]",
+        "token": "01831f18-6691-4c39-af82-5803aa885c0c",
+        "sel_language": "4_4",
+        "cloud_id": 23
+    },
+    "request_filter_json": [
+        {
+            "operator": "==",
+            "value": true,
+            "property": "active"
+        },
+        {
+            "operator": "==",
+            "value": "U0171@ry",
+            "property": "username"
+        }
+    ],
+    "response": {
+        "items": [
+            {
+                "id": 297,
+                "username": "U0171@ry",
+                "name": "آناهیتا",
+                "surname": "کاتب زاده",
+                "address": "?\n1403-01-17 (2024-04-05) # 250\n1402-12-15 (2024-03-05) # 250\n1402-11-16 (2024-02-05) # 250",
+                "phone": "+989127761047",
+                "email": "",
+                "auth_type": "sql",
+                "active": true,
+                "last_accept_time": "2025-04-07T19:58:00+00:00",
+                "last_accept_time_in_words": "19 seconds ago",
+                "last_reject_time": "2025-04-07T11:54:12+00:00",
+                "last_reject_time_in_words": "8 hours ago",
+                "last_accept_nas": "Fanab-B5",
+                "last_reject_nas": "Fanab-B5",
+                "last_reject_message": "N/A",
+                "perc_time_used": null,
+                "perc_data_used": null,
+                "data_used": null,
+                "data_cap": null,
+                "time_used": null,
+                "time_cap": null,
+                "time_cap_type": "soft",
+                "data_cap_type": "soft",
+                "realm": "Nuremberg/lo-d",
+                "realm_id": 26,
+                "profile": "Premium-3",
+                "profile_id": 106,
+                "from_date": "2024-01-02T06:44:53+00:00",
+                "from_date_in_words": "1 year ago",
+                "to_date": "2025-05-08T00:00:00+00:00",
+                "to_date_in_words": "1 month",
+                "track_auth": false,
+                "track_acct": true,
+                "static_ip": "",
+                "extra_name": "",
+                "extra_value": "",
+                "country_id": 4,
+                "language_id": 4,
+                "cloud_id": 23,
+                "created": "2024-01-02T16:32:49+00:00",
+                "created_in_words": "1 year ago",
+                "modified": "2025-04-07T12:13:09+00:00",
+                "modified_in_words": "7 hours ago",
+                "site": "",
+                "ppsk": "",
+                "realm_vlan_id": 0,
+                "last_seen": {
+                    "status": "online",
+                    "span": "(19 seconds)"
+                },
+                "framedipaddress": "192.168.100.173",
+                "update": true,
+                "delete": true,
+                "vlan": "Default VLAN"
+            }
+        ],
+        "success": true,
+        "totalCount": 1,
+        "metaData": {
+            "total": 1
+        }
+    }
+}
