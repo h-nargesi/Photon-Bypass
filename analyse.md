@@ -6,6 +6,11 @@ api call rate limit
 
 - prices:
     GET  api/basics/prices
+    response `[{
+        title: string;
+        caption: string;
+        description: string[];
+    }]`
 - token:
     POST api/auth/token `{
         username: string; 
@@ -51,9 +56,23 @@ api call rate limit
     GET  api/account/traffic-data `{
         target?: string;
     }`
+    response `{
+        title: string;
+        collections: TrafficData[];
+        labels: string[];
+    }`
 - full-info:
     GET  api/account/full-info `{
         target?: string;
+    }`
+    response `{
+        username: string;
+        email: string;
+        emailValid: boolean;
+        mobile: string;
+        mobileValid: boolean;
+        firstname: string;
+        lastname: string;
     }`
 - history:
     GET  api/account/history `{
@@ -61,13 +80,21 @@ api call rate limit
         from?: number;
         to?: number;
     }`
+    response `[{
+        id: number;
+        target: string;
+        eventTime: number;
+        eventTimeTitle: string;
+        title: string;
+        color: string;
+        value?: any;
+        unit?: string;
+        description?: string;
+    }]`
 - edit-user:
     POST api/account/edit-user `{
-        username: string;
         email: string;
-        emailValid: boolean;
         mobile: string;
-        mobileValid: boolean;
         firstname: string;
         lastname: string;
     }`

@@ -1,6 +1,6 @@
-﻿namespace PhotonBypass.OutSource.Model;
+﻿namespace PhotonBypass.Domain.Model;
 
-public class User
+public class UserRadEntity
 {
     public int Id { get; set; }
 
