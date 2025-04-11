@@ -2,22 +2,20 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiResult, ShowMessageCase, UserPlanInfo } from '../@models';
 import {
-  ACCOUNT_API_URL,
   ApiBaseService,
   ApiParam,
   CONNECTION_API_URL,
   PLAN_API_URL,
+  VPN_API_URL,
 } from '../@services';
 import { DashboardComponent } from './dashboard.component';
 
 @Injectable({ providedIn: DashboardComponent })
 export class DashboardService extends ApiBaseService {
   sendCertificateViaEmail(target?: string): Observable<ApiResult> {
-    return this.call(
-      `${ACCOUNT_API_URL}/send-cert-email`,
-      { target } as ApiParam,
-      { show_message: ShowMessageCase.success }
-    );
+    return this.call(`${VPN_API_URL}/send-cert-email`, { target } as ApiParam, {
+      show_message: ShowMessageCase.success,
+    });
   }
 
   fetchCurrentConnections(target?: string): Observable<number[]> {

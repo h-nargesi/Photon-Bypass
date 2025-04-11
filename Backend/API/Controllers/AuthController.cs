@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using PhotonBypass.Domain;
+using PhotonBypass.Domain.Model.Auth;
 using PhotonBypass.Domain.Model.User;
 using PhotonBypass.Infra.Controller;
 
@@ -11,9 +12,9 @@ namespace PhotonBypass.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(IApplication application) : ResultHandlerController
+public class AuthController(IAuthApplication application) : ResultHandlerController
 {
-    private readonly IApplication application = application;
+    private readonly IAuthApplication application = application;
 
     [HttpPost("token")]
     public async Task<ApiResult> Login([FromBody] Domain.Model.Auth.TokenContext context)
@@ -48,6 +49,19 @@ public class AuthController(IApplication application) : ResultHandlerController
                 }
             };
         }
+
+        return SafeApiResult(result);
+    }
+
+    [HttpPost("reset-pass")]
+    public async Task<ApiResult> ResetPassword([FromBody] ResetPasswordContext context)
+    {
+        if (string.IsNullOrWhiteSpace(context.EmailMobile))
+        {
+            return BadRequestApiResult(message: "کلمه عبور خالی است!");
+        }
+
+        var result = await application.ResetPassword(context);
 
         return SafeApiResult(result);
     }

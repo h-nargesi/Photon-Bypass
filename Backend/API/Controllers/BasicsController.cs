@@ -6,9 +6,9 @@ namespace PhotonBypass.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BasicsController(IApplication application) : ResultHandlerController
+public class BasicsController(IBasicsApplication application) : ResultHandlerController
 {
-    private readonly IApplication application = application;
+    private readonly IBasicsApplication application = application;
 
     [HttpGet("prices")]
     public async Task<ApiResult> GetPrices()

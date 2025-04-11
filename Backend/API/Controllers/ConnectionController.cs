@@ -9,9 +9,9 @@ namespace PhotonBypass.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class ConnectionController(IApplication application) : ResultHandlerController
+public class ConnectionController(IConnectionApplication application) : ResultHandlerController
 {
-    private readonly IApplication application = application;
+    private readonly IConnectionApplication application = application;
 
     [HttpGet("current-con-state")]
     public async Task<ApiResult> GetCurrentConnectionState([FromQuery] CurrentConnectionStateContext context)

@@ -10,43 +10,9 @@ namespace PhotonBypass.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class AccountController(IApplication application) : ResultHandlerController
+public class AccountController(IAccountApplication application) : ResultHandlerController
 {
-    private readonly IApplication application = application;
-
-    [HttpPost("change-ovpn")]
-    public async Task<ApiResult> ChangeOvpnPassword([FromBody] ChangeOvpnContext context)
-    {
-        if (string.IsNullOrWhiteSpace(context.Token))
-        {
-            return BadRequestApiResult(message: "توکن خالی است!");
-        }
-
-        if (string.IsNullOrWhiteSpace(context.Password))
-        {
-            return BadRequestApiResult(message: "کلمه عبور خالی است!");
-        }
-
-        var result = await application.ChangeOvpnPassword(context);
-
-        return SafeApiResult(result);
-    }
-
-    [HttpGet("send-cert-email")]
-    public async Task<ApiResult> SendCertEmail([FromQuery] SendCertEmailContext context)
-    {
-        var result = await application.SendCertEmail(context);
-
-        return SafeApiResult(result);
-    }
-
-    [HttpGet("traffic-data")]
-    public async Task<ApiResult> TrafficData([FromQuery] TrafficDataContext context)
-    {
-        var result = await application.TrafficData(context);
-
-        return SafeApiResult(result);
-    }
+    private readonly IAccountApplication application = application;
 
     [HttpGet("full-info")]
     public async Task<ApiResult> GetFullInfo([FromQuery] FullInfoContext context)

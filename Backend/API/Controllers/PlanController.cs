@@ -9,9 +9,9 @@ namespace PhotonBypass.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class PlanController(IApplication application) : ResultHandlerController
+public class PlanController(IPlanApplication application) : ResultHandlerController
 {
-    private readonly IApplication application = application;
+    private readonly IPlanApplication application = application;
 
     [HttpGet("plan-state")]
     public async Task<ApiResult> GetPlanState([FromQuery] PlanStateContext context)

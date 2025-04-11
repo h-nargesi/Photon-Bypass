@@ -4,68 +4,53 @@ api call rate limit
 
 ## API list
 
-- prices:
-    GET  api/basics/prices
-    response `[{
+### Basics
+
+- **prices**:
+
+    GET `api/basics/prices`\
+    response:
+    ```json
+    [{
         title: string;
         caption: string;
         description: string[];
-    }]`
-- token:
-    POST api/auth/token `{
+    }]
+    ```
+
+### Authentication
+
+- **token**:
+
+    POST `api/auth/token`\
+    request:
+    ```json
+    {
         username: string; 
         password: string;
-    }`
-- logout:
-    GET  api/auth/logout
-- register:
-    POST api/auth/register `{
-        username: string;
-        email: string;
-        emailValid: boolean;
-        mobile: string;
-        mobileValid: boolean;
-        firstname: string;
-        lastname: string;
-        password: string;
-    }`
-- get-user:
-    GET  api/auth/get-user
-- check-user:
-    GET  api/auth/check-user
-- change-pass:
-    POST api/auth/change-pass `{
-        token: string;
-        password: string;
-    }`
-- reset-pass
-    POST api/auth/reset-pass `{
+    }
+    ```
+
+- **logout**:
+
+    GET `api/auth/logout`
+
+- **reset-pass**:
+
+    POST `api/auth/reset-pass`\
+    request:
+    ```json
+    {
         emailMobile: string;
-    }`
-- change-ovpn:
-    POST api/account/change-ovpn `{
-        token: string;
-        password: string;
-        target?: string;
-    }`
-- send-cert-email:
-    GET  api/account/send-cert-email `{
-        target?: string;
-    }`
-- traffic-data:
-    GET  api/account/traffic-data `{
-        target?: string;
-    }`
-    response `{
-        title: string;
-        collections: TrafficData[];
-        labels: string[];
-    }`
-- full-info:
-    GET  api/account/full-info `{
-        target?: string;
-    }`
-    response `{
+    }
+    ```
+
+- **register**:
+
+    POST `api/auth/register`\
+    request:
+    ```json
+    {
         username: string;
         email: string;
         emailValid: boolean;
@@ -73,14 +58,76 @@ api call rate limit
         mobileValid: boolean;
         firstname: string;
         lastname: string;
-    }`
-- history:
-    GET  api/account/history `{
+        password: string;
+    }
+    ```
+
+### Account
+
+- **get-user**:
+
+    GET `api/account/get-user`
+
+- **change-pass**:
+
+    POST `api/account/change-pass`\
+    request:
+    ```json
+    {
+        token: string;
+        password: string;
+    }
+    ```
+
+- **full-info**:
+
+    GET `api/account/full-info`\
+    request:
+    ```json
+    {
+        target?: string;
+    }
+    ```
+    response:
+    ```json
+    {
+        username: string;
+        email: string;
+        emailValid: boolean;
+        mobile: string;
+        mobileValid: boolean;
+        firstname: string;
+        lastname: string;
+    }
+    ```
+
+- **edit-user**:
+
+    POST `api/account/edit-user`\
+    request:
+    ```json
+    {
+        email: string;
+        mobile: string;
+        firstname: string;
+        lastname: string;
+    }
+    ```
+
+- **history**:
+
+    GET `api/account/history`\
+    request:
+    ```json
+    {
         target?: string;
         from?: number;
         to?: number;
-    }`
-    response `[{
+    }
+    ```
+    response:
+    ```json
+    [{
         id: number;
         target: string;
         eventTime: number;
@@ -90,63 +137,148 @@ api call rate limit
         value?: any;
         unit?: string;
         description?: string;
-    }]`
-- edit-user:
-    POST api/account/edit-user `{
-        email: string;
-        mobile: string;
-        firstname: string;
-        lastname: string;
-    }`
-- current-con-state:
-    GET  api/connection/current-con-state `{
+    }]
+    ```
+
+### VPN
+
+- **change-ovpn**:
+
+    POST `api/vpn/change-ovpn`\
+    request:
+    ```json
+    {
+        token: string;
+        password: string;
         target?: string;
-    }`
-    response `number[]`
-- close-con:
-    POST api/connection/close-con `{
+    }
+    ```
+
+- **send-cert-email**:
+
+    GET `api/vpn/send-cert-email`\
+    request:
+    ```json
+    {
+        target?: string;
+    }
+    ```
+
+- **traffic-data**:
+
+    GET `api/vpn/traffic-data`\
+    request:
+    ```json
+    {
+        target?: string;
+    }
+    ```
+    response:
+    ```json
+    {
+        title: string;
+        collections: TrafficData[];
+        labels: string[];
+    }
+    ```
+
+### Connection
+
+- **current-con-state**:
+
+    GET `api/connection/current-con-state`\
+    request:
+    ```json
+    {
+        target?: string;
+    }
+    ```
+    response: `number[]`
+
+- **close-con**:
+
+    POST `api/connection/close-con`\
+    request:
+    ```json
+    {
         index: number;
         target?: string;
-    }`
-- plan-state:
-    GET  api/plan/plan-state `{
+    }
+    ```
+
+### Plan
+
+- **plan-state**:
+
+    GET `api/plan/plan-state`\
+    request:
+    ```json
+    {
         target?: string;
-    }`
-    response `{
+    }
+    ```
+    response:
+    ```json
+    {
         type: PlanType;
         remainsTitle: string;
         remainsPercent: number;
         simultaneousUserCount: number;
-    }`
-- plan-info:
-    GET  api/plan/plan-info `{
+    }
+    ```
+
+- **plan-info**:
+
+    GET `api/plan/plan-info`\
+    request:
+    ```json
+    {
         target?: string;
-    }`
-    response `{
+    }
+    ```
+    response:
+    ```json
+    {
         target: string;
         type: PlanType;
         value: number;
         simultaneousUserCount: number;
-    }`
-- estimate:
-    POST api/plan/estimate `{
+    }
+    ```
+
+- **estimate**:
+
+    POST `api/plan/estimate`\
+    request:
+    ```json
+    {
         target: string;
         type: PlanType;
         value: number;
         simultaneousUserCount: number;
-    }`
-    response `number`
-- rnewal:
-    POST api/plan/rnewal `{
+    }
+    ```
+    response: `number`
+
+- **rnewal**:
+
+    POST `api/plan/rnewal`\
+    request:
+    ```json
+    {
         target: string;
         type: PlanType;
         value: number;
         simultaneousUserCount: number;
-    }`
-    response `{
+    }
+    ```
+    response:
+    ```json
+    {
         currentPrice: number;
         moneyNeeds: number;
-    }`
+    }
+    ```
 
 ## Login
 

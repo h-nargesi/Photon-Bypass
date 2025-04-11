@@ -3,7 +3,10 @@ import { Observable } from 'rxjs';
 import { ApiResult, ShowMessageCase } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
 import { HttpClientHandler } from '../api-services/http-client';
-import { AUTH_API_URL } from '../api-services/models/app-api-url';
+import {
+  ACCOUNT_API_URL,
+  AUTH_API_URL,
+} from '../api-services/models/app-api-url';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { MessageService } from '../message-handler/message-service';
 import { UserService } from './user-servcie';
@@ -24,7 +27,7 @@ export class AuthService extends ApiBaseService {
   }
 
   public check(): Observable<ApiResult> {
-    return this.call(`${AUTH_API_URL}/check`, undefined, {
+    return this.call(`${ACCOUNT_API_URL}/get-user`, undefined, {
       show_message: ShowMessageCase.silence,
     });
   }

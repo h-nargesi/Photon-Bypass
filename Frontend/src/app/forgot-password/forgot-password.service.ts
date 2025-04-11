@@ -7,6 +7,6 @@ import { ForgotPasswordComponent } from './forgot-password.component';
 @Injectable({ providedIn: ForgotPasswordComponent })
 export class ForgotPasswordService extends ApiBaseService {
   reset(emailMobile: string): Observable<ApiResult> {
-    return this.job(`${AUTH_API_URL}/reset`, { emailMobile });
+    return this.job(`${AUTH_API_URL}/reset-pass`, { emailMobile });
   }
 }

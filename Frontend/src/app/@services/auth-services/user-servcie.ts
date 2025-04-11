@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { firstValueFrom, Observable, Subject } from 'rxjs';
 import { Target, UserModel } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
-import { AUTH_API_URL } from '../api-services/models/app-api-url';
+import { ACCOUNT_API_URL } from '../api-services/models/app-api-url';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { TranslationService } from '../translation/translation-service';
 
@@ -81,7 +81,7 @@ export class UserService extends ApiBaseService {
   }
 
   private fetchUser(): Observable<UserModel> {
-    const url = `${AUTH_API_URL}/get-user`;
+    const url = `${ACCOUNT_API_URL}/get-user`;
     const title = TranslationService.translate('api.recieve');
     return this.getData<UserModel>(url, undefined, { title });
   }
