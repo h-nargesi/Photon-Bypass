@@ -53,9 +53,7 @@ api call rate limit
     {
         username: string;
         email: string;
-        emailValid: boolean;
         mobile: string;
-        mobileValid: boolean;
         firstname: string;
         lastname: string;
         password: string;

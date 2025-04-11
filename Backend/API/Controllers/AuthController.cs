@@ -58,10 +58,33 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
     {
         if (string.IsNullOrWhiteSpace(context.EmailMobile))
         {
-            return BadRequestApiResult(message: "کلمه عبور خالی است!");
+            return BadRequestApiResult(message: "ایمیل/موبایل خالی است!");
         }
 
         var result = await application.ResetPassword(context);
+
+        return SafeApiResult(result);
+    }
+
+    [HttpPost("register")]
+    public async Task<ApiResult> Register([FromBody] RegisterContext context)
+    {
+        if (string.IsNullOrWhiteSpace(context.Username))
+        {
+            return BadRequestApiResult(message: "نام کاربری خالی است!");
+        }
+
+        if (string.IsNullOrWhiteSpace(context.Email) && string.IsNullOrWhiteSpace(context.Mobile))
+        {
+            return BadRequestApiResult(message: "حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
+        }
+
+        if (string.IsNullOrWhiteSpace(context.Password))
+        {
+            return BadRequestApiResult(message: "کلمه عبور خالی است!");
+        }
+
+        var result = await application.Register(context);
 
         return SafeApiResult(result);
     }

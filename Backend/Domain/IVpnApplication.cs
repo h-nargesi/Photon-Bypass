@@ -7,7 +7,7 @@ public interface IVpnApplication
 {
     Task<ApiResult> ChangeOvpnPassword(ChangeOvpnContext context);
 
-    Task<ApiResult> SendCertEmail(SendCertEmailContext context);
+    Task<ApiResult> SendCertEmail(string target);
 
-    Task<ApiResult<TrafficDataModel>> TrafficData(TrafficDataContext context);
+    Task<ApiResult<TrafficDataModel>> TrafficData(string target);
 }

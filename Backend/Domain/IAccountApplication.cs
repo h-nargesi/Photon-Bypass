@@ -6,9 +6,13 @@ namespace PhotonBypass.Domain;
 
 public interface IAccountApplication
 {
-    Task<ApiResult<FullUserModel>> GetFullInfo(FullInfoContext context);
+    Task<ApiResult> GetUser(string username);
 
-    Task<ApiResult> EditUser(EditUserModel model);
+    Task<ApiResult<FullUserModel>> GetFullInfo(string target);
+
+    Task<ApiResult> EditUser(string target, EditUserContext model);
+
+    Task<ApiResult> ChangePassword(string target, ChangePasswordContext context);
 
     Task<ApiResult<HistoryModel[]>> GetHistory(HistoryContext context);
 }

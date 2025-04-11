@@ -5,6 +5,18 @@ namespace PhotonBypass.Infra.Controller;
 
 public class ResultHandlerController : ControllerBase
 {
+    public string UserName => User?.Identity?.Name ?? string.Empty;
+
+    [NonAction]
+    public static ApiResult UnauthorizedApiResult([ActionResultObjectValue] string? message = null)
+    {
+        return new ApiResult
+        {
+            Code = 401,
+            Message = message
+        };
+    }
+
     [NonAction]
     public static ApiResult BadRequestApiResult([ActionResultObjectValue] short code = 400, [ActionResultObjectValue] string? message = null)
     {

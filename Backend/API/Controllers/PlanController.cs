@@ -14,17 +14,27 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     private readonly IPlanApplication application = application;
 
     [HttpGet("plan-state")]
-    public async Task<ApiResult> GetPlanState([FromQuery] PlanStateContext context)
+    public async Task<ApiResult> GetPlanState([FromQuery] string? target)
     {
-        var result = await application.GetPlanState(context);
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            target = UserName;
+        }
+
+        var result = await application.GetPlanState(target);
 
         return SafeApiResult(result);
     }
 
     [HttpGet("plan-info")]
-    public async Task<ApiResult> GetPlanInfo([FromQuery] PlanInfoContext context)
+    public async Task<ApiResult> GetPlanInfo([FromQuery] string? target)
     {
-        var result = await application.GetPlanInfo(context);
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            target = UserName;
+        }
+
+        var result = await application.GetPlanInfo(target);
 
         return SafeApiResult(result);
     }
@@ -33,6 +43,11 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     public async Task<ApiResult> Estimate([FromBody] RnewalContext context)
     {
         var result = RnewalContextCheck(context);
+
+        if (string.IsNullOrWhiteSpace(context.Target))
+        {
+            context.Target = UserName;
+        }
 
         result ??= await application.Estimate(context);
 
@@ -44,6 +59,11 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     {
         var result = RnewalContextCheck(context);
 
+        if (string.IsNullOrWhiteSpace(context.Target))
+        {
+            context.Target = UserName;
+        }
+
         result ??= await application.Rnewal(context);
 
         return SafeApiResult(result);
@@ -51,11 +71,6 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
 
     private static ApiResult? RnewalContextCheck(RnewalContext context)
     {
-        if (string.IsNullOrWhiteSpace(context.Target))
-        {
-            return BadRequestApiResult(message: "کاربر مورد نظر مشخص نشده است!");
-        }
-
         if (!context.Type.HasValue)
         {
             return BadRequestApiResult(message: "نوع پلن مشخص نشده است!");

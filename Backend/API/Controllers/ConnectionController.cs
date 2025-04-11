@@ -14,9 +14,14 @@ public class ConnectionController(IConnectionApplication application) : ResultHa
     private readonly IConnectionApplication application = application;
 
     [HttpGet("current-con-state")]
-    public async Task<ApiResult> GetCurrentConnectionState([FromQuery] CurrentConnectionStateContext context)
+    public async Task<ApiResult> GetCurrentConnectionState([FromQuery] string? target)
     {
-        var result = await application.GetCurrentConnectionState(context);
+        if (string.IsNullOrWhiteSpace(target))
+        {
+            target = UserName;
+        }
+
+        var result = await application.GetCurrentConnectionState(target);
 
         return SafeApiResult(result);
     }
@@ -27,6 +32,11 @@ public class ConnectionController(IConnectionApplication application) : ResultHa
         if (!context.Index.HasValue)
         {
             return BadRequestApiResult(message: "ایندکس خالی است!");
+        }
+
+        if (string.IsNullOrWhiteSpace(context.Target))
+        {
+            context.Target = UserName;
         }
 
         var result = await application.CloseConnection(context);
