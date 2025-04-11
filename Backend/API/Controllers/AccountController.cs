@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Model;
+using PhotonBypass.Domain.Model.Account;
+using PhotonBypass.Domain.Model.User;
 using PhotonBypass.Infra.Controller;
 
 namespace PhotonBypass.API.Controllers;
@@ -25,7 +26,7 @@ public class AccountController(IApplication application) : ResultHandlerControll
         }
 
         var result = application.ChangeOvpnPassword(context);
-        
+
         return SafeApiResult(result);
     }
 
@@ -38,7 +39,7 @@ public class AccountController(IApplication application) : ResultHandlerControll
     }
 
     [HttpGet("traffic-data")]
-    public ApiResult<TrafficDataModel> TrafficData([FromQuery] TrafficDataContext context)
+    public ApiResult TrafficData([FromQuery] TrafficDataContext context)
     {
         var result = application.TrafficData(context);
 
@@ -46,7 +47,7 @@ public class AccountController(IApplication application) : ResultHandlerControll
     }
 
     [HttpGet("full-info")]
-    public ApiResult<FullUserModel> GetFullInfo([FromQuery] FullInfoContext context)
+    public ApiResult GetFullInfo([FromQuery] FullInfoContext context)
     {
         var result = application.GetFullInfo(context);
 
@@ -67,7 +68,7 @@ public class AccountController(IApplication application) : ResultHandlerControll
     }
 
     [HttpGet("history")]
-    public ApiResult<HistoryModel[]> GetHistory([FromQuery] HistoryContext context)
+    public ApiResult GetHistory([FromQuery] HistoryContext context)
     {
         var result = application.GetHistory(context);
 

@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Domain.Model;
+﻿namespace PhotonBypass.Domain.Model.Basic;
 
 public class PriceModel
 {

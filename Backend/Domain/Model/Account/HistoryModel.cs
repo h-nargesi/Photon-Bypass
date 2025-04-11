@@ -1,7 +1,7 @@
 ﻿using PhotonBypass.Infra.Controller;
 using System.Text.Json.Serialization;
 
-namespace PhotonBypass.Domain.Model;
+namespace PhotonBypass.Domain.Model.Account;
 
 public class HistoryModel
 {

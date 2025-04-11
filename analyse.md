@@ -102,6 +102,7 @@ api call rate limit
     GET  api/connection/current-con-state `{
         target?: string;
     }`
+    response `number[]`
 - close-con:
     POST api/connection/close-con `{
         index: number;
@@ -111,9 +112,21 @@ api call rate limit
     GET  api/plan/plan-state `{
         target?: string;
     }`
+    response `{
+        type: PlanType;
+        remainsTitle: string;
+        remainsPercent: number;
+        simultaneousUserCount: number;
+    }`
 - plan-info:
     GET  api/plan/plan-info `{
         target?: string;
+    }`
+    response `{
+        target: string;
+        type: PlanType;
+        value: number;
+        simultaneousUserCount: number;
     }`
 - estimate:
     POST api/plan/estimate `{
@@ -122,12 +135,17 @@ api call rate limit
         value: number;
         simultaneousUserCount: number;
     }`
+    response `number`
 - rnewal:
     POST api/plan/rnewal `{
         target: string;
         type: PlanType;
         value: number;
         simultaneousUserCount: number;
+    }`
+    response `{
+        currentPrice: number;
+        moneyNeeds: number;
     }`
 
 ## Login

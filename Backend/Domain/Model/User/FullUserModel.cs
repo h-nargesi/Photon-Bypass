@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Domain.Model;
+﻿namespace PhotonBypass.Domain.Model.User;
 
 public class EditUserModel
 {
