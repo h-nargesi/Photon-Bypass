@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PhotonBypass.Domain;
-using PhotonBypass.Domain.Model.Connection;
+using PhotonBypass.Application.Connection;
+using PhotonBypass.Application.Connection.Model;
 using PhotonBypass.Infra.Controller;
 
 namespace PhotonBypass.API.Controllers;

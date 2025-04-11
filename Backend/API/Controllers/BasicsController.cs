@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PhotonBypass.Domain;
+using PhotonBypass.Application.Basics;
 using PhotonBypass.Infra.Controller;
 
 namespace PhotonBypass.API.Controllers;

@@ -3,9 +3,9 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using PhotonBypass.Domain;
-using PhotonBypass.Domain.Model.Auth;
-using PhotonBypass.Domain.Model.User;
+using PhotonBypass.Application.Account.Model;
+using PhotonBypass.Application.Authentication;
+using PhotonBypass.Application.Authentication.Model;
 using PhotonBypass.Infra.Controller;
 
 namespace PhotonBypass.API.Controllers;
@@ -17,7 +17,7 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
     private readonly IAuthApplication application = application;
 
     [HttpPost("token")]
-    public async Task<ApiResult> Login([FromBody] Domain.Model.Auth.TokenContext context)
+    public async Task<ApiResult> Login([FromBody] Application.Authentication.Model.TokenContext context)
     {
         if (string.IsNullOrWhiteSpace(context.Username))
         {

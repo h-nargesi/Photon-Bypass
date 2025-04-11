@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PhotonBypass.Domain;
+using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain.Model.Account;
 using PhotonBypass.Infra.Controller;
 
