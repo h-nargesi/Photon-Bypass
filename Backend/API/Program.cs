@@ -1,3 +1,4 @@
+using PhotonBypass.Application;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +19,7 @@ builder.Services.AddAuthentication("Bearer")
         };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddApplicationServices();
 
 var app = builder.Build();
 
