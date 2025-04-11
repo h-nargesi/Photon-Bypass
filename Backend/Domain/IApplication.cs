@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using PhotonBypass.Domain.Model.Account;
+﻿using PhotonBypass.Domain.Model.Account;
+using PhotonBypass.Domain.Model.Auth;
 using PhotonBypass.Domain.Model.Basic;
 using PhotonBypass.Domain.Model.Connection;
 using PhotonBypass.Domain.Model.Plan;
@@ -10,32 +10,35 @@ namespace PhotonBypass.Domain;
 
 public interface IApplication
 {
-    ApiResult<IEnumerable<PriceModel>> GetPrices();
+    Task<ApiResult<IEnumerable<PriceModel>>> GetPrices();
 
 
-    ApiResult ChangeOvpnPassword(ChangeOvpnContext context);
-
-    ApiResult SendCertEmail(SendCertEmailContext context);
-
-    ApiResult<TrafficDataModel> TrafficData(TrafficDataContext context);
-
-    ApiResult<FullUserModel> GetFullInfo(FullInfoContext context);
-
-    ApiResult EditUser(EditUserModel model);
-
-    ApiResult<HistoryModel[]> GetHistory(HistoryContext context);
+    Task<ApiResult<FullUserModel>> CheckUserPassword(TokenContext context);
 
 
-    ApiResult<int[]> GetCurrentConnectionState(CurrentConnectionStateContext context);
+    Task<ApiResult> ChangeOvpnPassword(ChangeOvpnContext context);
 
-    ApiResult CloseConnection(CloseConnectionContext context);
+    Task<ApiResult> SendCertEmail(SendCertEmailContext context);
+
+    Task<ApiResult<TrafficDataModel>> TrafficData(TrafficDataContext context);
+
+    Task<ApiResult<FullUserModel>> GetFullInfo(FullInfoContext context);
+
+    Task<ApiResult> EditUser(EditUserModel model);
+
+    Task<ApiResult<HistoryModel[]>> GetHistory(HistoryContext context);
 
 
-    ApiResult<UserPlanInfo> GetPlanState(PlanStateContext context);
+    Task<ApiResult<int[]>> GetCurrentConnectionState(CurrentConnectionStateContext context);
 
-    ApiResult<PlanInfo> GetPlanInfo(PlanInfoContext context);
+    Task<ApiResult> CloseConnection(CloseConnectionContext context);
 
-    ApiResult<long> Estimate(RnewalContext context);
 
-    ApiResult<RnewalResult> Rnewal(RnewalContext context);
+    Task<ApiResult<UserPlanInfo>> GetPlanState(PlanStateContext context);
+
+    Task<ApiResult<PlanInfo>> GetPlanInfo(PlanInfoContext context);
+
+    Task<ApiResult<long>> Estimate(RnewalContext context);
+
+    Task<ApiResult<RnewalResult>> Rnewal(RnewalContext context);
 }

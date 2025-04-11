@@ -11,8 +11,8 @@ public class BasicsController(IApplication application) : ResultHandlerControlle
     private readonly IApplication application = application;
 
     [HttpGet("prices")]
-    public ApiResult GetPrices()
+    public async Task<ApiResult> GetPrices()
     {
-        return SafeApiResult(application.GetPrices());
+        return SafeApiResult(await application.GetPrices());
     }
 }

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Model.Plan;
 using PhotonBypass.Infra.Controller;
 
 namespace PhotonBypass.API.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class PlanController(IApplication application) : ResultHandlerController
@@ -12,37 +14,37 @@ public class PlanController(IApplication application) : ResultHandlerController
     private readonly IApplication application = application;
 
     [HttpGet("plan-state")]
-    public ApiResult GetPlanState([FromQuery] PlanStateContext context)
+    public async Task<ApiResult> GetPlanState([FromQuery] PlanStateContext context)
     {
-        var result = application.GetPlanState(context);
+        var result = await application.GetPlanState(context);
 
         return SafeApiResult(result);
     }
 
     [HttpGet("plan-info")]
-    public ApiResult GetPlanInfo([FromQuery] PlanInfoContext context)
+    public async Task<ApiResult> GetPlanInfo([FromQuery] PlanInfoContext context)
     {
-        var result = application.GetPlanInfo(context);
+        var result = await application.GetPlanInfo(context);
 
         return SafeApiResult(result);
     }
 
     [HttpPost("estimate")]
-    public ApiResult Estimate([FromBody] RnewalContext context)
+    public async Task<ApiResult> Estimate([FromBody] RnewalContext context)
     {
         var result = RnewalContextCheck(context);
 
-        result ??= application.Estimate(context);
+        result ??= await application.Estimate(context);
 
         return SafeApiResult(result);
     }
 
     [HttpPost("rnewal")]
-    public ApiResult Rnewal([FromBody] RnewalContext context)
+    public async Task<ApiResult> Rnewal([FromBody] RnewalContext context)
     {
         var result = RnewalContextCheck(context);
 
-        result ??= application.Rnewal(context);
+        result ??= await application.Rnewal(context);
 
         return SafeApiResult(result);
     }
