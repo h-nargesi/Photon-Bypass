@@ -5,24 +5,23 @@ using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 
 namespace PhotonBypass.Infra.Database.Dapper;
 
-public abstract class DapperRepository<TEntity, TDtoEntity>(DapperDbContext context) : IDisposable
-    where TEntity : class, IBaseEntity where TDtoEntity : class
+abstract class DapperRepository<TEntity>(DapperDbContext context) : IRepository<TEntity>, IDisposable where TEntity : class, IBaseEntity
 {
     private readonly IDbConnection connection = context.CreateConnection();
 
-    public Task<TDtoEntity?> FindAsync(TDtoEntity entity)
+    public Task<TEntity?> FindAsync(TEntity entity)
     {
         return connection.GetAsync(entity);
     }
 
-    public async Task<IReadOnlyList<TDtoEntity>> GetAllAsync()
+    public Task<IEnumerable<TEntity>> FindAsync(Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>>? statementOptions = null)
     {
-        return [.. await connection.FindAsync<TDtoEntity>()];
+        return connection.FindAsync(statementOptions);
     }
 
-    protected Task<IEnumerable<TDtoEntity>> QueryAsync(string sql, object? param = null)
+    public Task<IEnumerable<TEntity>> GetAllAsync()
     {
-        return connection.QueryAsync<TDtoEntity>(sql, param);
+        return connection.FindAsync<TEntity>();
     }
 
     public async Task<int> AddAsync(TEntity entity)
@@ -41,21 +40,22 @@ public abstract class DapperRepository<TEntity, TDtoEntity>(DapperDbContext cont
         return connection.DeleteAsync(entity);
     }
 
-    protected Task<int> BulkDeleteAsync(FormattableString whereClause, object? parameters)
+    public Task<int> BulkDeleteAsync(FormattableString whereClause, object? parameters)
     {
-        return connection.BulkDeleteAsync<TEntity>(statement =>
-            statement.Where(whereClause).WithParameters(parameters));
+        return connection.BulkDeleteAsync<TEntity>(statement => statement
+            .Where(whereClause)
+            .WithParameters(parameters));
     }
 
-    protected Task<int> ExecuteAsync(string sql, object? param = null)
+    public Task<int> ExecuteAsync(string sql, object? param = null)
     {
         return connection.ExecuteAsync(sql, param);
     }
 
-    protected Task<IEnumerable<TDtoEntity>> FindAsync(Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TDtoEntity>>? statementOptions = null)
+    public Task<IEnumerable<TEntity>> QueryAsync(string sql, object? param = null)
     {
-        return connection.FindAsync(statementOptions);
+        return connection.QueryAsync<TEntity>(sql, param);
     }
 
-    public void Dispose() => connection.Dispose();
+    public void Dispose() => GC.SuppressFinalize(this);
 }

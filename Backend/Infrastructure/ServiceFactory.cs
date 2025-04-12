@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using PhotonBypass.Infra.Database;
-using PhotonBypass.Infra.Database.Dapper;
+using PhotonBypass.Infra.Database.Local;
+using PhotonBypass.Infra.Database.Radius;
 
 namespace PhotonBypass.Infra;
 
@@ -12,5 +12,8 @@ public static class ServiceFactory
         services.AddSingleton<LocalDbContext>();
         services.AddSingleton<RadDapperOptions>();
         services.AddSingleton<RadDbContext>();
+
+        services.AddTransient(typeof(ILocalRepository<>), typeof(LocalRepository<>));
+        services.AddTransient(typeof(IRadRepository<>), typeof(RadRepository<>));
     }
 }

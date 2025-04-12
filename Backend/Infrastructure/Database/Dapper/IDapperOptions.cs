@@ -1,6 +1,6 @@
 ﻿namespace PhotonBypass.Infra.Database.Dapper;
 
-public interface IDapperOptions
+interface IDapperOptions
 {
     string ConnectionString { get; set; }
 }
