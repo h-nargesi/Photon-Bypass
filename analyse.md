@@ -65,6 +65,23 @@ api call rate limit
 - **get-user**:
 
     GET `api/account/get-user`
+    response:
+    ```json
+    {
+        username: string;
+        fullname: string;
+        email: string;
+        picture?: string;
+        balance: number;
+        targetArea?: {
+            [username: string]: {
+                username: string;
+                fullname: string;
+                email: string;
+            }
+        }
+    }
+    ```
 
 - **change-pass**:
 

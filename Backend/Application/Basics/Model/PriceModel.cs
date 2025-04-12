@@ -2,9 +2,9 @@
 
 public class PriceModel
 {
-    public string Title { get; set; } = string.Empty;
+    public string Title { get; set; } = null!;
 
-    public string Caption { get; set; } = string.Empty;
+    public string Caption { get; set; } = null!;
 
-    public IEnumerable<string> Description { get; set; } = [];
+    public IEnumerable<string> Description { get; set; } = null!;
 }

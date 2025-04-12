@@ -14,4 +14,13 @@ public class ApiResult
 public class ApiResult<Model> : ApiResult
 {
     public Model? Data { get; set; }
+
+    public static ApiResult<Model> Success(Model model)
+    {
+        return new ApiResult<Model>
+        {
+            Code = 200,
+            Data = model,
+        };
+    }
 }
