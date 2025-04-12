@@ -4,9 +4,9 @@ using Microsoft.Extensions.Options;
 
 namespace PhotonBypass.Infra.Database.Dapper;
 
-class DapperDbContext(IOptions<DapperOptions> options)
+public abstract class DapperDbContext(IOptions<IDapperOptions> options)
 {
-    private readonly IOptions<DapperOptions> options = options;
+    private readonly IOptions<IDapperOptions> options = options;
 
     public IDbConnection CreateConnection()
     {

@@ -1,3 +1,4 @@
+using PhotonBypass.Infra;
 using PhotonBypass.Application;
 using Microsoft.IdentityModel.Tokens;
 
@@ -19,6 +20,7 @@ builder.Services.AddAuthentication("Bearer")
         };
     });
 builder.Services.AddAuthorization();
+builder.Services.AddDapperDbContext();
 builder.Services.AddApplicationServices();
 
 var app = builder.Build();

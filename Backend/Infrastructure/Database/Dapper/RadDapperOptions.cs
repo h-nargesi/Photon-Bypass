@@ -1,7 +1,6 @@
 ﻿namespace PhotonBypass.Infra.Database.Dapper;
 
-public class DapperOptions
+class RadDapperOptions : IDapperOptions
 {
     public string ConnectionString { get; set; } = null!;
-    public string DatabaseName { get; set; } = null!;
 }

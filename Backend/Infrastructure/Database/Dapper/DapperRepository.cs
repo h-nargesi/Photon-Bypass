@@ -5,8 +5,8 @@ using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 
 namespace PhotonBypass.Infra.Database.Dapper;
 
-internal class DapperRepository<TEntity, TDtoEntity, TId>(DapperDbContext context) : IDisposable
-    where TEntity : class, IBaseEntity where TDtoEntity : class where TId : notnull
+public abstract class DapperRepository<TEntity, TDtoEntity>(DapperDbContext context) : IDisposable
+    where TEntity : class, IBaseEntity where TDtoEntity : class
 {
     private readonly IDbConnection connection = context.CreateConnection();
 
@@ -17,7 +17,7 @@ internal class DapperRepository<TEntity, TDtoEntity, TId>(DapperDbContext contex
 
     public async Task<IReadOnlyList<TDtoEntity>> GetAllAsync()
     {
-        return (await connection.FindAsync<TDtoEntity>()).ToList();
+        return [.. await connection.FindAsync<TDtoEntity>()];
     }
 
     protected Task<IEnumerable<TDtoEntity>> QueryAsync(string sql, object? param = null)
@@ -57,8 +57,5 @@ internal class DapperRepository<TEntity, TDtoEntity, TId>(DapperDbContext contex
         return connection.FindAsync(statementOptions);
     }
 
-    public void Dispose()
-    {
-        connection.Dispose();
-    }
+    public void Dispose() => connection.Dispose();
 }
