@@ -7,16 +7,16 @@ public class HistoryModel
 {
     public int Id { get; set; }
 
-    public string Target { get; set; } = string.Empty;
+    public string Target { get; set; } = null!;
 
     [JsonConverter(typeof(UnixTimestampConverter))]
     public DateTime EventTime { get; set; }
 
-    public string EventTimeTitle { get; set; } = string.Empty;
+    public string EventTimeTitle { get; set; } = null!;
 
-    public string Title { get; set; } = string.Empty;
+    public string Title { get; set; } = null!;
 
-    public string Color { get; set; } = string.Empty;
+    public string Color { get; set; } = null!;
 
     public object? Value { get; set; }
 

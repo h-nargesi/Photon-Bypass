@@ -1,10 +1,10 @@
 ﻿namespace PhotonBypass.Application.Plan.Model;
 
-public class UserPlanInfo
+public class UserPlanInfoModel
 {
     public PlanType Type { get; set; }
 
-    public string RemainsTitle { get; set; } = string.Empty;
+    public string RemainsTitle { get; set; } = null!;
 
     public int RemainsPercent { get; set; }
 

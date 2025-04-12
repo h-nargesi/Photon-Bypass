@@ -5,9 +5,9 @@ namespace PhotonBypass.Application.Plan;
 
 public interface IPlanApplication
 {
-    Task<ApiResult<UserPlanInfo>> GetPlanState(string target);
+    Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target);
 
-    Task<ApiResult<PlanInfo>> GetPlanInfo(string target);
+    Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target);
 
     Task<ApiResult<long>> Estimate(RnewalContext context);
 

@@ -1,8 +1,8 @@
 ﻿namespace PhotonBypass.Application.Plan.Model;
 
-public class PlanInfo
+public class PlanInfoModel
 {
-    public string Target { get; set; } = string.Empty;
+    public string Target { get; set; } = null!;
 
     public PlanType Type { get; set; }
 

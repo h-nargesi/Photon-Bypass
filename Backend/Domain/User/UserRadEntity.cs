@@ -4,7 +4,7 @@ public class UserRadEntity
 {
     public int Id { get; set; }
 
-    public string Username { get; set; } = string.Empty;
+    public string Username { get; set; } = null!;
 
     public string? Name { get; set; }
 
@@ -16,11 +16,11 @@ public class UserRadEntity
 
     public bool Active { get; set; }
 
-    public string Realm { get; set; } = string.Empty;
+    public string Realm { get; set; } = null!;
 
     public int Realm_id { get; set; }
 
-    public string Profile { get; set; } = string.Empty;
+    public string Profile { get; set; } = null!;
 
     public int Profile_id { get; set; }
 
