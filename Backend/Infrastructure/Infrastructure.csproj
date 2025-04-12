@@ -13,4 +13,10 @@
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Reference Include="photon.persian">
+	    <HintPath>..\ThirdParty\Photon.Persian.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
 </Project>
