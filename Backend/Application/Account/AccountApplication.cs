@@ -1,19 +1,24 @@
-﻿using PhotonBypass.Application.Account.Model;
+﻿using System.Security.Cryptography;
+using System.Text;
+using PhotonBypass.Application.Account.Model;
+using PhotonBypass.Application.Database;
+using PhotonBypass.Domain.User;
 using PhotonBypass.Infra;
 using PhotonBypass.Infra.Controller;
 
 namespace PhotonBypass.Application.Account;
 
-internal class AccountApplication(AccountLocalRepository local_repository) : IAccountApplication
+internal class AccountApplication(
+    AccountRepository account_repository,
+    PermenantUserRepository permenant_user_repository,
+    HistoryRepository history_repository) : IAccountApplication
 {
-    private readonly AccountLocalRepository local_repository = local_repository;
-
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
-        var user = await local_repository.GetUser(username) ??
+        var user = await account_repository.GetAccount(username) ??
             throw new UserException("کاربر پیدا نشد!");
 
-        var target_area = (await local_repository.GetTargetArea(user.Id))
+        var target_area = (await account_repository.GetTargetArea(user.Id))
             .Select(user => new TargetModel
             {
                 Username = user.Username,
@@ -35,7 +40,7 @@ internal class AccountApplication(AccountLocalRepository local_repository) : IAc
 
     public async Task<ApiResult<FullUserModel>> GetFullInfo(string target)
     {
-        var user = await local_repository.GetUser(target) ??
+        var user = await account_repository.GetAccount(target) ??
             throw new UserException("کاربر پیدا نشد!");
 
         return ApiResult<FullUserModel>.Success(new FullUserModel
@@ -50,18 +55,94 @@ internal class AccountApplication(AccountLocalRepository local_repository) : IAc
         });
     }
 
-    public Task<ApiResult> EditUser(string target, EditUserContext model)
+    public async Task<ApiResult> EditUser(string target, EditUserContext model)
     {
-        throw new NotImplementedException();
+        var accountLoadingTask = account_repository.GetAccount(target);
+        var userLoadingTask = permenant_user_repository.GetUser(target);
+
+        var account = await accountLoadingTask ?? throw new UserException("کاربر پیدا نشد!");
+        SetAccount(account, model);
+
+        var user = await userLoadingTask ?? throw new UserException("کاربر پیدا نشد!");
+        SetPermanentUser(user, model);
+
+        var savingAccountTask = account_repository.Save(account);
+        var savingUserTask = permenant_user_repository.Save(user);
+
+        await savingAccountTask;
+        await savingUserTask;
+
+        return new ApiResult
+        {
+            Code = 200,
+            Message = "ذخیره شد.",
+        };
     }
 
-    public Task<ApiResult> ChangePassword(string target, ChangePasswordContext context)
+    private static void SetAccount(AccountEntity account, EditUserContext model)
     {
-        throw new NotImplementedException();
+        account.Name = model.Firstname;
+        account.Surname = model.Lastname;
+
+        if (account.Email != model.Email)
+            account.EmailValid = false;
+
+        if (account.Mobile != model.Mobile)
+            account.MobileValid = false;
+
+        account.Email = model.Email;
+        account.Mobile = model.Mobile;
     }
 
-    public Task<ApiResult<IList<HistoryModel>>> GetHistory(HistoryContext context)
+    private static void SetPermanentUser(PermenantUserEntity user, EditUserContext model)
     {
-        throw new NotImplementedException();
+        user.Name = model.Firstname;
+        user.Surname = model.Lastname;
+        user.Email = model.Email;
+        user.Phone = model.Mobile;
+    }
+
+    public async Task<ApiResult> ChangePassword(string target, string token, string password)
+    {
+        token = Convert.ToBase64String(SHA512.HashData(Encoding.UTF8.GetBytes(token)));
+        password = Convert.ToBase64String(SHA512.HashData(Encoding.UTF8.GetBytes(password)));
+
+        var account = await account_repository.GetAccount(target) ??
+            throw new UserException("کاربر پیدا نشد!");
+
+        if (account.Password != token)
+        {
+            throw new UserException("کلمه عبور فعلی اشتباه است!");
+        }
+
+        account.Password = password;
+
+        await account_repository.Save(account);
+
+        return new ApiResult
+        {
+            Code = 200,
+            Message = "کلمه عبور تغییر کرد.",
+        };
+    }
+
+    public async Task<ApiResult<IList<HistoryModel>>> GetHistory(string target, DateTime? from, DateTime? to)
+    {
+        var records = await history_repository.GetHistory(target, from, to);
+
+        var result = records.Select(history => new HistoryModel
+        {
+            Color = history.Color,
+            Description = history.Description,
+            EventTime = history.EventTime,
+            EventTimeTitle = history.EventTime.ToPersianString(),
+            Id = history.Id,
+            Target = target,
+            Title = history.Title,
+            Unit = history.Unit,
+            Value = history.Value,
+        });
+
+        return ApiResult<IList<HistoryModel>>.Success(result.ToList());
     }
 }

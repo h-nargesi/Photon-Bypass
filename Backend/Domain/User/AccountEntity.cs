@@ -2,7 +2,7 @@
 
 namespace PhotonBypass.Domain.User;
 
-public class UserLocalEntity : IBaseEntity
+public class AccountEntity : IBaseEntity
 {
     public int Id { get; set; }
 
@@ -12,6 +12,8 @@ public class UserLocalEntity : IBaseEntity
 
     public string Username { get; set; } = null!;
 
+    public string Password { get; set; } = null!;
+
     public string? Name { get; set; }
 
     public string? Surname { get; set; }
@@ -20,7 +22,7 @@ public class UserLocalEntity : IBaseEntity
 
     public string? Mobile { get; set; }
 
-    public boold MobileValid { get; set; }
+    public bool MobileValid { get; set; }
 
     public string? Email { get; set; }
 

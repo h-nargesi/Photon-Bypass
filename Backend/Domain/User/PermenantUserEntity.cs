@@ -1,6 +1,8 @@
-﻿namespace PhotonBypass.Domain.User;
+﻿using PhotonBypass.Infra.Database;
 
-public class UserRadEntity
+namespace PhotonBypass.Domain.User;
+
+public class PermenantUserEntity : IBaseEntity
 {
     public int Id { get; set; }
 

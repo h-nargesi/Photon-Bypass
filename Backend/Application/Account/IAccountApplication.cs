@@ -11,7 +11,7 @@ public interface IAccountApplication
 
     Task<ApiResult> EditUser(string target, EditUserContext context);
 
-    Task<ApiResult> ChangePassword(string target, ChangePasswordContext context);
+    Task<ApiResult> ChangePassword(string target, string token, string password);
 
-    Task<ApiResult<IList<HistoryModel>>> GetHistory(HistoryContext context);
+    Task<ApiResult<IList<HistoryModel>>> GetHistory(string target, DateTime? from, DateTime? to);
 }

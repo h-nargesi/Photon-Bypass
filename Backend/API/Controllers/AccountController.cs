@@ -52,7 +52,7 @@ public class AccountController(IAccountApplication application) : ResultHandlerC
     {
         if (string.IsNullOrWhiteSpace(context.Token))
         {
-            return BadRequestApiResult(message: "کلمه عبور قبلی خالی است!");
+            return BadRequestApiResult(message: "کلمه عبور فعلی خالی است!");
         }
 
         if (string.IsNullOrWhiteSpace(context.Password))
@@ -60,7 +60,12 @@ public class AccountController(IAccountApplication application) : ResultHandlerC
             return BadRequestApiResult(message: "کلمه عبور خالی است!");
         }
 
-        var result = await application.ChangePassword(UserName, context);
+        if (context.Token == context.Password)
+        {
+            return BadRequestApiResult(message: "کلمه عبور تغییر نکرده است!");
+        }
+
+        var result = await application.ChangePassword(UserName, context.Token, context.Password);
 
         return SafeApiResult(result);
     }
@@ -73,7 +78,7 @@ public class AccountController(IAccountApplication application) : ResultHandlerC
             context.Target = UserName;
         }
 
-        var result = await application.GetHistory(context);
+        var result = await application.GetHistory(context.Target, context.From, context.To);
 
         return SafeApiResult(result);
     }
