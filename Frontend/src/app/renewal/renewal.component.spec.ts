@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { RnewalComponent } from './rnewal.component';
+import { RenewalComponent } from './renewal.component';
 
-describe('RnewalComponent', () => {
-  let component: RnewalComponent;
-  let fixture: ComponentFixture<RnewalComponent>;
+describe('RenewalComponent', () => {
+  let component: RenewalComponent;
+  let fixture: ComponentFixture<RenewalComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RnewalComponent]
+      imports: [RenewalComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(RnewalComponent);
+    fixture = TestBed.createComponent(RenewalComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

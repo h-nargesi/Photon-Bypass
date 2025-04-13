@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import {
   PlanInto,
   PriceModel,
-  RnewalResult,
+  RenewalResult,
   ShowMessageCase,
 } from '../@models';
 import {
@@ -12,10 +12,10 @@ import {
   BASICS_API_URL,
   PLAN_API_URL,
 } from '../@services';
-import { RnewalComponent } from './rnewal.component';
+import { RenewalComponent } from './renewal.component';
 
-@Injectable({ providedIn: RnewalComponent })
-export class RnewalService extends ApiBaseService {
+@Injectable({ providedIn: RenewalComponent })
+export class RenewalService extends ApiBaseService {
   info(target?: string): Observable<PlanInto> {
     return this.getData<PlanInto>(`${PLAN_API_URL}/plan-info`, {
       target,
@@ -32,7 +32,7 @@ export class RnewalService extends ApiBaseService {
     });
   }
 
-  rnewal(plan: PlanInto): Observable<RnewalResult> {
-    return this.postData<RnewalResult>(`${PLAN_API_URL}/rnewal`, plan);
+  renewal(plan: PlanInto): Observable<RenewalResult> {
+    return this.postData<RenewalResult>(`${PLAN_API_URL}/renewal`, plan);
   }
 }

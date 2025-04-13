@@ -17,7 +17,7 @@ export enum PlanType {
   Traffic,
 }
 
-export interface RnewalResult {
+export interface RenewalResult {
   currentPrice: number;
   moneyNeeds: number;
 }

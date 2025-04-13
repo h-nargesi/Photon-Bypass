@@ -8,7 +8,7 @@ import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './login/login.component';
 import { PaymentComponent } from './payment/payment.component';
 import { RegisterComponent } from './register/register.component';
-import { RnewalComponent } from './rnewal/rnewal.component';
+import { RenewalComponent } from './renewal/renewal.component';
 
 export const routes: Routes = [
   {
@@ -57,8 +57,8 @@ export const routes: Routes = [
         component: ChangePasswordComponent,
       },
       {
-        path: 'rnewal',
-        component: RnewalComponent,
+        path: 'renewal',
+        component: RenewalComponent,
       },
       {
         path: 'payment',

@@ -9,7 +9,7 @@ import {
   PlanInto,
   PlanType,
   PriceModel,
-  RnewalResult,
+  RenewalResult,
   Target,
   TrafficData,
   TrafficDataModel,
@@ -103,8 +103,8 @@ export class FakeDataService {
         return this.api_plan_info() as Observable<HttpResponse<M>>;
       case 'api/plan/estimate':
         return this.api_plan_estimate() as Observable<HttpResponse<M>>;
-      case 'api/plan/rnewal':
-        return this.api_plan_rnewal() as Observable<HttpResponse<M>>;
+      case 'api/plan/renewal':
+        return this.api_plan_renewal() as Observable<HttpResponse<M>>;
     }
 
     return wait({ code: 500, message: `'${url}' not found!` }) as Observable<
@@ -387,8 +387,8 @@ export class FakeDataService {
     } as ApiResultData<number>);
   }
 
-  private api_plan_rnewal(): Observable<
-    HttpResponse<ApiResultData<RnewalResult>>
+  private api_plan_renewal(): Observable<
+    HttpResponse<ApiResultData<RenewalResult>>
   > {
     if (Math.random() > 0.5) {
       return wait({
@@ -398,7 +398,7 @@ export class FakeDataService {
           currentPrice: Math.floor(150 + Math.random() * 300),
           moneyNeeds: 0,
         },
-      } as ApiResultData<RnewalResult>);
+      } as ApiResultData<RenewalResult>);
     } else {
       return wait({
         code: 307,
@@ -406,7 +406,7 @@ export class FakeDataService {
           currentPrice: Math.floor(150 + Math.random() * 300),
           moneyNeeds: Math.floor(400 + Math.random() * 300),
         },
-      } as ApiResultData<RnewalResult>);
+      } as ApiResultData<RenewalResult>);
     }
   }
 }

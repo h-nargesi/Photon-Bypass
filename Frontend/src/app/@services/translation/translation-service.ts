@@ -9,7 +9,7 @@ import * as _home_page from '../../../../public/texts/home-page.json';
 import * as _login from '../../../../public/texts/login.json';
 import * as _payment from '../../../../public/texts/payment.json';
 import * as _register from '../../../../public/texts/register.json';
-import * as ـrnewal from '../../../../public/texts/rnewal.json';
+import * as ـrenewal from '../../../../public/texts/renewal.json';
 
 @Injectable({ providedIn: 'root' })
 export class TranslationService {
@@ -103,7 +103,7 @@ export class TranslationService {
     TranslationService.texts.set('login', _login);
     TranslationService.texts.set('payment', _payment);
     TranslationService.texts.set('register', _register);
-    TranslationService.texts.set('rnewal', ـrnewal);
+    TranslationService.texts.set('renewal', ـrenewal);
     console.info('Translation Servcie is initialized.');
   }
 }

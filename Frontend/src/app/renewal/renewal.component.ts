@@ -19,7 +19,7 @@ import {
   PlanInto,
   PlanType,
   PriceModel,
-  RnewalResult,
+  RenewalResult,
   UserModel,
 } from '../@models';
 import {
@@ -28,10 +28,10 @@ import {
   TranslationService,
   UserService,
 } from '../@services';
-import { RnewalService } from './rnewal.service';
+import { RenewalService } from './renewal.service';
 
 @Component({
-  selector: 'app-rnewal',
+  selector: 'app-renewal',
   imports: [
     CommonModule,
     FormsModule,
@@ -48,11 +48,11 @@ import { RnewalService } from './rnewal.service';
     PlaceholderAnimationDirective,
     TranslationPipe,
   ],
-  templateUrl: './rnewal.component.html',
-  styleUrl: './rnewal.component.scss',
-  providers: [RnewalService],
+  templateUrl: './renewal.component.html',
+  styleUrl: './renewal.component.scss',
+  providers: [RenewalService],
 })
-export class RnewalComponent implements OnInit {
+export class RenewalComponent implements OnInit {
   readonly maxUserCounts = [1, 2, 3, 4, 5, 6];
   readonly monthlyChoises = [1, 2, 3, 4, 5, 6];
   readonly trafficChoises = [25, 50, 75, 100, 150];
@@ -70,16 +70,16 @@ export class RnewalComponent implements OnInit {
   plan = {} as PlanInto;
   current_user!: UserModel;
   prices?: PriceModel[];
-  result?: RnewalResult;
+  result?: RenewalResult;
 
   constructor(
-    private readonly service: RnewalService,
+    private readonly service: RenewalService,
     private readonly user_service: UserService,
     private readonly router: Router,
     translation: TranslationService
   ) {
-    this.monthlyUnit = translation.translate('rnewal.labels.monthly.unit');
-    this.trafficUnit = translation.translate('rnewal.labels.traffic.unit');
+    this.monthlyUnit = translation.translate('renewal.labels.monthly.unit');
+    this.trafficUnit = translation.translate('renewal.labels.traffic.unit');
   }
 
   get hasSubUsers(): boolean {
@@ -101,7 +101,7 @@ export class RnewalComponent implements OnInit {
     this.plan.target =
       this.user_service.targetName ?? this.current_user.username;
 
-    this.service.rnewal(this.plan).subscribe(async (result) => {
+    this.service.renewal(this.plan).subscribe(async (result) => {
       this.result = result;
 
       if (result.moneyNeeds > 0) {

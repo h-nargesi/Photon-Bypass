@@ -2,21 +2,21 @@
     <c-col xl="8">
         <c-card class="mb-auto whatsapp-panel" [cBorder]="{top: {color: color, width: 3}}">
             <c-card-header>
-                <h5>{{ 'rnewal.title' | translate }}</h5>
+                <h5>{{ 'renewal.title' | translate }}</h5>
             </c-card-header>
             <c-card-body class="d-flex" *ngIf="hasSubUsers">
                 <div class="w-100 mx-5">
-                    <label>{{ 'rnewal.labels.current-user' | translate }}:</label>
+                    <label>{{ 'renewal.labels.current-user' | translate }}:</label>
                     <h5 class="ltr">{{ targetName }}</h5>
                 </div>
             </c-card-body>
             <c-card-body class="d-flex">
                 <div class="w-50">
                     <div class="m-auto p-3 px-5">
-                        <label>{{ 'rnewal.labels.monthly.title' | translate }}</label>
+                        <label>{{ 'renewal.labels.monthly.title' | translate }}</label>
                         <select class="bg-info" cSelect [(ngModel)]="selectedMonthly" (change)="setMonthly()">
                             <option [value]="0">
-                                {{ 'rnewal.labels.monthly.choise' | translate }}
+                                {{ 'renewal.labels.monthly.choise' | translate }}
                             </option>
                             @for (month of monthlyChoises; track month; let i = $index) {
                             <option [value]="month">
@@ -28,10 +28,10 @@
                 </div>
                 <div class="w-50">
                     <div class="m-auto p-3 px-5">
-                        <label>{{ 'rnewal.labels.traffic.title' | translate }}</label>
+                        <label>{{ 'renewal.labels.traffic.title' | translate }}</label>
                         <select class="bg-warning" cSelect [(ngModel)]="selectedTraffic" (change)="setTraffic()">
                             <option [value]="0">
-                                {{ 'rnewal.labels.traffic.choise' | translate }}
+                                {{ 'renewal.labels.traffic.choise' | translate }}
                             </option>
                             @for (traffic of trafficChoises; track traffic; let i = $index) {
                             <option [value]="traffic" class="ltr-end">
@@ -44,10 +44,10 @@
             </c-card-body>
             <c-card-body class="d-flex">
                 <div class="w-100 mx-5">
-                    <label>{{ 'rnewal.labels.simultaneousUsers.title' | translate }}</label>
+                    <label>{{ 'renewal.labels.simultaneousUsers.title' | translate }}</label>
                     <select cSelect [(ngModel)]="selectedUserCount" (change)="setUserCount()">
                         <option [value]="0">
-                            {{ 'rnewal.labels.simultaneousUsers.choise' | translate }}
+                            {{ 'renewal.labels.simultaneousUsers.choise' | translate }}
                         </option>
                         @for (count of maxUserCounts; track count; let i = $index) {
                         <option [value]="count" class="ltr-end">
@@ -59,11 +59,11 @@
             </c-card-body>
             <c-card-footer class="d-flex">
                 <div class="me-auto">
-                    {{ 'rnewal.labels.cost-caption' | translate : [cost] }}
+                    {{ 'renewal.labels.cost-caption' | translate : [cost] }}
                 </div>
                 <button cButton class="px-4" [color]="color" [disabled]="color === 'secondary'" type="button"
                     (click)="submit()">
-                    {{ "rnewal.labels.submit" | translate }}
+                    {{ "renewal.labels.submit" | translate }}
                 </button>
             </c-card-footer>
         </c-card>
@@ -73,7 +73,7 @@
     <c-col xl="8">
         <c-card class="mb-auto whatsapp-panel">
             <c-card-header>
-                <h5>{{ 'rnewal.price.title' | translate }}</h5>
+                <h5>{{ 'renewal.price.title' | translate }}</h5>
             </c-card-header>
             <c-card-body class="d-flex" *ngIf="prices">
                 @for (price of prices; track price; let index = $index) {
