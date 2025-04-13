@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography;
-using System.Text;
-using PhotonBypass.Application.Account.Model;
+﻿using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Database;
 using PhotonBypass.Domain.User;
 using PhotonBypass.Infra;
@@ -8,7 +6,7 @@ using PhotonBypass.Infra.Controller;
 
 namespace PhotonBypass.Application.Account;
 
-internal class AccountApplication(
+class AccountApplication(
     AccountRepository account_repository,
     PermenantUserRepository permenant_user_repository,
     HistoryRepository history_repository) : IAccountApplication
@@ -72,11 +70,7 @@ internal class AccountApplication(
         await savingAccountTask;
         await savingUserTask;
 
-        return new ApiResult
-        {
-            Code = 200,
-            Message = "ذخیره شد.",
-        };
+        return ApiResult.Success("ذخیره شد.");
     }
 
     private static void SetAccount(AccountEntity account, EditUserContext model)
@@ -104,8 +98,8 @@ internal class AccountApplication(
 
     public async Task<ApiResult> ChangePassword(string target, string token, string password)
     {
-        token = Convert.ToBase64String(SHA512.HashData(Encoding.UTF8.GetBytes(token)));
-        password = Convert.ToBase64String(SHA512.HashData(Encoding.UTF8.GetBytes(password)));
+        token = HashHandler.HashPassword(token);
+        password = HashHandler.HashPassword(password);
 
         var account = await account_repository.GetAccount(target) ??
             throw new UserException("کاربر پیدا نشد!");
@@ -119,11 +113,7 @@ internal class AccountApplication(
 
         await account_repository.Save(account);
 
-        return new ApiResult
-        {
-            Code = 200,
-            Message = "کلمه عبور تغییر کرد.",
-        };
+        return ApiResult.Success("کلمه عبور تغییر کرد.");
     }
 
     public async Task<ApiResult<IList<HistoryModel>>> GetHistory(string target, DateTime? from, DateTime? to)

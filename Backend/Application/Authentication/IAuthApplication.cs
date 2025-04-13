@@ -6,9 +6,9 @@ namespace PhotonBypass.Application.Authentication;
 
 public interface IAuthApplication
 {
-    Task<ApiResult<FullUserModel>> CheckUserPassword(TokenContext context);
+    Task<ApiResult<TargetModel>> CheckUserPassword(string username, string password);
 
-    Task<ApiResult> ResetPassword(ResetPasswordContext context);
+    Task<ApiResult> ResetPassword(string email_mobile);
 
     Task<ApiResult> Register(RegisterContext context);
 }

@@ -15,6 +15,24 @@ class AccountRepository(ILocalRepository<AccountEntity> repo) : EditableReposito
         return result.FirstOrDefault();
     }
 
+    public async Task<AccountEntity?> GetAccountByMobile(string mobile)
+    {
+        var result = await repository.FindAsync(statement => statement
+            .Where($"{nameof(AccountEntity.Mobile)} = @mobile")
+            .WithParameters(new { mobile }));
+
+        return result.FirstOrDefault();
+    }
+
+    public async Task<AccountEntity?> GetAccountByEmail(string email)
+    {
+        var result = await repository.FindAsync(statement => statement
+            .Where($"{nameof(AccountEntity.Email)} = @email")
+            .WithParameters(new { email }));
+
+        return result.FirstOrDefault();
+    }
+
     public async Task<IList<AccountEntity>> GetTargetArea(int userid)
     {
         var result = await repository.FindAsync(statement => statement

@@ -17,7 +17,7 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
     private readonly IAuthApplication application = application;
 
     [HttpPost("token")]
-    public async Task<ApiResult> Login([FromBody] Application.Authentication.Model.TokenContext context)
+    public async Task<ApiResult> Login([FromBody] Context.TokenContext context)
     {
         if (string.IsNullOrWhiteSpace(context.Username))
         {
@@ -29,7 +29,7 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
             return BadRequestApiResult(message: "کلمه عبور خالی است!");
         }
 
-        var result = await application.CheckUserPassword(context);
+        var result = await application.CheckUserPassword(context.Username, context.Password);
 
         if (result?.Code < 300 && result.Data != null)
         {
@@ -61,7 +61,7 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
             return BadRequestApiResult(message: "ایمیل/موبایل خالی است!");
         }
 
-        var result = await application.ResetPassword(context);
+        var result = await application.ResetPassword(context.EmailMobile);
 
         return SafeApiResult(result);
     }
@@ -89,7 +89,7 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
         return SafeApiResult(result);
     }
 
-    private static string GenerateToken(FullUserModel user)
+    private static string GenerateToken(TargetModel user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(IdentityHelper.TokenKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
@@ -97,7 +97,8 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.UniqueName, user.Username),
-            new(JwtRegisteredClaimNames.Name, (user.Firstname + " " + user.Lastname).Trim())
+            new(JwtRegisteredClaimNames.Name, user.Fullname ?? string.Empty),
+            new(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
         };
 
         var token = new JwtSecurityToken(

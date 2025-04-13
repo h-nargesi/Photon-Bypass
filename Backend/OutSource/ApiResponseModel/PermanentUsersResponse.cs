@@ -1,10 +1,10 @@
-﻿using PhotonBypass.OutSource.Model;
+﻿using PhotonBypass.Domain.User;
 
 namespace OutSource.ApiResponseModel;
 
 internal class PermanentUsersResponse
 {
-    public User[]? Items { get; set; }
+    public PermenantUserEntity[]? Items { get; set; }
 
     public bool Success { get; set; }
 

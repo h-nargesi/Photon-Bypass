@@ -1,4 +1,6 @@
-﻿namespace PhotonBypass.Infra.Controller;
+﻿using System.Reflection;
+
+namespace PhotonBypass.Infra.Controller;
 
 public class ApiResult
 {
@@ -9,6 +11,15 @@ public class ApiResult
     public string? Developer { get; set; }
 
     public MessageMethod? MessageMethod { get; set; }
+
+    public static ApiResult Success(string message)
+    {
+        return new ApiResult
+        {
+            Code = 200,
+            Message = message,
+        };
+    }
 }
 
 public class ApiResult<Model> : ApiResult

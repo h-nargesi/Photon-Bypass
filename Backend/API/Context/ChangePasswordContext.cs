@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Application.Account.Model;
+﻿namespace PhotonBypass.API.Context;
 
 public class ChangePasswordContext
 {

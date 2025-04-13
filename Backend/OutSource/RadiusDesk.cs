@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Json;
 using System.Web;
 using OutSource.ApiResponseModel;
-using PhotonBypass.OutSource.Model;
+using PhotonBypass.Domain.User;
 
 namespace PhotonBypass.OutSource;
 
@@ -20,7 +20,7 @@ public class RadiusDesk : IDisposable
         };
     }
 
-    public User? GetPermenentUser(string username)
+    public PermenantUserEntity? GetPermenentUser(string username)
     {
         CheckLogin();
 
