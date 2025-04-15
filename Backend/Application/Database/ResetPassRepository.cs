@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.User;
+﻿using PhotonBypass.Domain.Local;
 using PhotonBypass.Infra.Database.Local;
 
 namespace PhotonBypass.Application.Database;

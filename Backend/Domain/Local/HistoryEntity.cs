@@ -1,6 +1,6 @@
 ﻿using PhotonBypass.Infra.Database;
 
-namespace PhotonBypass.Domain;
+namespace PhotonBypass.Domain.Local;
 
 public class HistoryEntity : IBaseEntity
 {

@@ -1,7 +1,7 @@
 ﻿using System.Net.Http.Json;
 using System.Web;
 using OutSource.ApiResponseModel;
-using PhotonBypass.Domain.User;
+using PhotonBypass.Domain.Radius;
 
 namespace PhotonBypass.OutSource;
 
@@ -41,7 +41,11 @@ public class RadiusDesk : IDisposable
         return result.Items?[0];
     }
 
-    public void Dispose() => Logout();
+    public void Dispose()
+    {
+        Logout();
+        GC.SuppressFinalize(this);
+    }
 
     private long GetTime()
     {

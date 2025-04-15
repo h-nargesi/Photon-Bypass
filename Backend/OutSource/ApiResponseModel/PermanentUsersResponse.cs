@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.User;
+﻿using PhotonBypass.Domain.Radius;
 
 namespace OutSource.ApiResponseModel;
 

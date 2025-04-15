@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain;
+﻿using PhotonBypass.Domain.Local;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Database.Local;
 

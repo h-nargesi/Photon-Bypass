@@ -1,6 +1,6 @@
 ﻿using PhotonBypass.Infra.Database;
 
-namespace PhotonBypass.Domain.User;
+namespace PhotonBypass.Domain.Radius;
 
 public class PermenantUserEntity : IBaseEntity
 {

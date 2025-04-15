@@ -1,22 +1,26 @@
 ﻿using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Database;
-using PhotonBypass.Domain.User;
+using PhotonBypass.Domain.Local;
+using PhotonBypass.Domain.Radius;
 using PhotonBypass.Infra;
 using PhotonBypass.Infra.Controller;
+using PhotonBypass.OutSource;
 
 namespace PhotonBypass.Application.Account;
 
 class AccountApplication(
-    AccountRepository account_repository,
-    PermenantUserRepository permenant_user_repository,
-    HistoryRepository history_repository) : IAccountApplication
+    Lazy<AccountRepository> AccountRepo,
+    Lazy<PermenantUsersRepository> UserRepo,
+    Lazy<HistoryRepository> HistoryRepo,
+    Lazy<IRadiusDeskService> RadiusDeskSrv)
+    : IAccountApplication
 {
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
-        var user = await account_repository.GetAccount(username) ??
+        var user = await AccountRepo.Value.GetAccount(username) ??
             throw new UserException("کاربر پیدا نشد!");
 
-        var target_area = (await account_repository.GetTargetArea(user.Id))
+        var target_area = (await AccountRepo.Value.GetTargetArea(user.Id))
             .Select(user => new TargetModel
             {
                 Username = user.Username,
@@ -38,7 +42,7 @@ class AccountApplication(
 
     public async Task<ApiResult<FullUserModel>> GetFullInfo(string target)
     {
-        var user = await account_repository.GetAccount(target) ??
+        var user = await AccountRepo.Value.GetAccount(target) ??
             throw new UserException("کاربر پیدا نشد!");
 
         return ApiResult<FullUserModel>.Success(new FullUserModel
@@ -55,8 +59,8 @@ class AccountApplication(
 
     public async Task<ApiResult> EditUser(string target, EditUserContext model)
     {
-        var accountLoadingTask = account_repository.GetAccount(target);
-        var userLoadingTask = permenant_user_repository.GetUser(target);
+        var userLoadingTask = UserRepo.Value.GetUser(target);
+        var accountLoadingTask = AccountRepo.Value.GetAccount(target);
 
         var account = await accountLoadingTask ?? throw new UserException("کاربر پیدا نشد!");
         SetAccount(account, model);
@@ -64,8 +68,8 @@ class AccountApplication(
         var user = await userLoadingTask ?? throw new UserException("کاربر پیدا نشد!");
         SetPermanentUser(user, model);
 
-        var savingAccountTask = account_repository.Save(account);
-        var savingUserTask = permenant_user_repository.Save(user);
+        var savingUserTask = RadiusDeskSrv.Value.SavePermenentUser(user);
+        var savingAccountTask = AccountRepo.Value.Save(account);
 
         await savingAccountTask;
         await savingUserTask;
@@ -101,7 +105,7 @@ class AccountApplication(
         token = HashHandler.HashPassword(token);
         password = HashHandler.HashPassword(password);
 
-        var account = await account_repository.GetAccount(target) ??
+        var account = await AccountRepo.Value.GetAccount(target) ??
             throw new UserException("کاربر پیدا نشد!");
 
         if (account.Password != token)
@@ -111,14 +115,14 @@ class AccountApplication(
 
         account.Password = password;
 
-        await account_repository.Save(account);
+        await AccountRepo.Value.Save(account);
 
         return ApiResult.Success("کلمه عبور تغییر کرد.");
     }
 
     public async Task<ApiResult<IList<HistoryModel>>> GetHistory(string target, DateTime? from, DateTime? to)
     {
-        var records = await history_repository.GetHistory(target, from, to);
+        var records = await HistoryRepo.Value.GetHistory(target, from, to);
 
         var result = records.Select(history => new HistoryModel
         {
