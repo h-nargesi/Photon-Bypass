@@ -9,7 +9,7 @@ public interface IPlanApplication
 
     Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target);
 
-    Task<ApiResult<long>> Estimate(RnewalContext context);
+    Task<ApiResult<long>> Estimate(RenewalContext context);
 
-    Task<ApiResult<RnewalResult>> Rnewal(RnewalContext context);
+    Task<ApiResult<RenewalResult>> Rnewal(RenewalContext context);
 }

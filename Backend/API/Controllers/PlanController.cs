@@ -40,9 +40,9 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     }
 
     [HttpPost("estimate")]
-    public async Task<ApiResult> Estimate([FromBody] RnewalContext context)
+    public async Task<ApiResult> Estimate([FromBody] RenewalContext context)
     {
-        var result = RnewalContextCheck(context);
+        var result = RenewalContextCheck(context);
 
         if (string.IsNullOrWhiteSpace(context.Target))
         {
@@ -54,10 +54,10 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
         return SafeApiResult(result);
     }
 
-    [HttpPost("rnewal")]
-    public async Task<ApiResult> Rnewal([FromBody] RnewalContext context)
+    [HttpPost("renewal")]
+    public async Task<ApiResult> Renewal([FromBody] RenewalContext context)
     {
-        var result = RnewalContextCheck(context);
+        var result = RenewalContextCheck(context);
 
         if (string.IsNullOrWhiteSpace(context.Target))
         {
@@ -69,7 +69,7 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
         return SafeApiResult(result);
     }
 
-    private static ApiResult? RnewalContextCheck(RnewalContext context)
+    private static ApiResult? RenewalContextCheck(RenewalContext context)
     {
         if (!context.Type.HasValue)
         {

@@ -2,6 +2,7 @@
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication.Model;
 using PhotonBypass.Application.Database;
+using PhotonBypass.Application.Management;
 using PhotonBypass.Domain.Local;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Infra;
@@ -15,7 +16,7 @@ partial class AuthApplication(
     Lazy<ResetPassRepository> ResetPassRepo,
     Lazy<PermenantUsersRepository> UserRepo,
     Lazy<StaticRepository> StaticRepo,
-    Lazy<IServerManagementService> ServerManageSrv,
+    Lazy<ServerManagementService> ServerManageSrv,
     Lazy<IRadiusDeskService> RadiusDeskService,
     //Lazy<IWhatsAppHandler> whatsapp_handler,
     Lazy<IEmailHandler> EmailSrv

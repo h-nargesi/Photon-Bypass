@@ -5,7 +5,7 @@ using PhotonBypass.Domain.Radius;
 
 namespace PhotonBypass.OutSource;
 
-public class RadiusDesk : IDisposable
+class RadiusDesk : IDisposable
 {
     private readonly HttpClient httpClient;
     private string? token;

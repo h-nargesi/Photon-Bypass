@@ -1,6 +1,6 @@
 ﻿namespace PhotonBypass.Application.Plan.Model;
 
-public class RnewalResult
+public class RenewalResult
 {
     public int CurrentPrice { get; set; }
 

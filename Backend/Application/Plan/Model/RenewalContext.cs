@@ -1,6 +1,6 @@
 ﻿namespace PhotonBypass.Application.Plan.Model;
 
-public class RnewalContext
+public class RenewalContext
 {
     public string? Target { get; set; }
 

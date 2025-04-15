@@ -9,12 +9,11 @@ public static class IdentityHelper
 
     private static string GenerateSecureKey(int keySizeInBits = 256)
     {
-        using (var rng = RandomNumberGenerator.Create())
-        {
-            byte[] keyBytes = new byte[keySizeInBits / 8];
-            rng.GetBytes(keyBytes);
+        using var rng = RandomNumberGenerator.Create();
 
-            return Convert.ToBase64String(keyBytes);
-        }
+        byte[] keyBytes = new byte[keySizeInBits / 8];
+        rng.GetBytes(keyBytes);
+
+        return Convert.ToBase64String(keyBytes);
     }
 }
