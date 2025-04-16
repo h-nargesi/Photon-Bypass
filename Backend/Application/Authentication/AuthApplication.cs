@@ -111,11 +111,7 @@ partial class AuthApplication(
             return ApiResult.Success("ایمیل ارسال شد.");
         }
 
-        return new ApiResult
-        {
-            Code = 400,
-            Message = "ایمیل/موبایل نا معتبر است!"
-        };
+        throw new UserException("ایمیل/موبایل نا معتبر است!");
     }
 
     public async Task<ApiResult> Register(RegisterContext context)
@@ -124,11 +120,7 @@ partial class AuthApplication(
 
         if (await UserRepo.Value.CheckUsername(context.Username + currentRealm.Suffix))
         {
-            return new ApiResult
-            {
-                Code = 400,
-                Message = "این نام کاربری قبلا استفاده شده است!",
-            };
+            throw new UserException("این نام کاربری قبلا استفاده شده است!");
         }
 
         var user_saving = RadiusDeskSrv.Value.SavePermenentUser(new PermenantUserEntity

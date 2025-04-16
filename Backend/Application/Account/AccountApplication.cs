@@ -137,6 +137,6 @@ class AccountApplication(
             Value = history.Value,
         });
 
-        return ApiResult<IList<HistoryModel>>.Success(result.ToList());
+        return ApiResult<IList<HistoryModel>>.Success([.. result]);
     }
 }
