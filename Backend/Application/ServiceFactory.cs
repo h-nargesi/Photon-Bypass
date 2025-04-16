@@ -16,7 +16,9 @@ public static class ServiceFactory
         services.AddTransient<HistoryRepository>();
         services.AddTransient<ResetPassRepository>();
 
-        services.AddSingleton<StaticRepository>();
         services.AddTransient<PermenantUsersRepository>();
+        services.AddTransient<RadAcctRepository>();
+        services.AddTransient<NasRepository>();
+        services.AddSingleton<StaticRepository>();
     }
 }
