@@ -25,10 +25,7 @@ public class AccountController(IAccountApplication application) : ResultHandlerC
     [HttpGet("full-info")]
     public async Task<ApiResult> GetFullInfo([FromQuery] string? target)
     {
-        if (string.IsNullOrWhiteSpace(target))
-        {
-            target = UserName;
-        }
+        target = GetSafeTargetArea(target);
 
         var result = await application.GetFullInfo(target);
 
@@ -74,10 +71,7 @@ public class AccountController(IAccountApplication application) : ResultHandlerC
     [HttpGet("history")]
     public async Task<ApiResult> GetHistory([FromQuery] HistoryContext context)
     {
-        if (string.IsNullOrWhiteSpace(context.Target))
-        {
-            context.Target = UserName;
-        }
+        context.Target = GetSafeTargetArea(context.Target);
 
         var result = await application.GetHistory(context.Target, context.From, context.To);
 

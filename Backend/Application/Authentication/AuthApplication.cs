@@ -17,12 +17,12 @@ partial class AuthApplication(
     Lazy<PermenantUsersRepository> UserRepo,
     Lazy<StaticRepository> StaticRepo,
     Lazy<ServerManagementService> ServerManageSrv,
-    Lazy<IRadiusDeskService> RadiusDeskService,
+    Lazy<IRadiusDeskService> RadiusDeskSrv,
     //Lazy<IWhatsAppHandler> whatsapp_handler,
-    Lazy<IEmailHandler> EmailSrv
+    Lazy<IEmailHandler> EmailHdl
     ) : IAuthApplication
 {
-    public async Task<ApiResult<TargetModel>> CheckUserPassword(string username, string password)
+    public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
         password = HashHandler.HashPassword(password);
 
@@ -31,21 +31,31 @@ partial class AuthApplication(
 
         if (account.Password != password)
         {
-            return new ApiResult<TargetModel>
+            return new ApiResult<UserModel>
             {
                 Code = 401,
                 Data = null,
             };
         }
 
-        return new ApiResult<TargetModel>
+        var target_area = (await AccountRepo.GetTargetArea(account.Id))
+            .Select(user => new TargetModel
+            {
+                Username = user.Username,
+                Fullname = user.Fullname,
+                Email = user.Email,
+            })
+            .ToDictionary(k => k.Username);
+
+        return new ApiResult<UserModel>
         {
             Code = 200,
-            Data = new TargetModel
+            Data = new UserModel
             {
                 Username = account.Username,
                 Fullname = account.Fullname,
                 Email = account.Email,
+                TargetArea = target_area,
             },
         };
     }
@@ -95,7 +105,7 @@ partial class AuthApplication(
                     HashCode = hash_code,
                 });
 
-                await EmailSrv.Value.SendResetPasswordLink(email_mobile, hash_code);
+                await EmailHdl.Value.SendResetPasswordLink(email_mobile, hash_code);
             }
 
             return ApiResult.Success("ایمیل ارسال شد.");
@@ -121,7 +131,7 @@ partial class AuthApplication(
             };
         }
 
-        var user_saving = RadiusDeskService.Value.SavePermenentUser(new PermenantUserEntity
+        var user_saving = RadiusDeskSrv.Value.SavePermenentUser(new PermenantUserEntity
         {
             Username = context.Username ?? string.Empty,
             CloudId = StaticRepo.Value.WebCloudID,

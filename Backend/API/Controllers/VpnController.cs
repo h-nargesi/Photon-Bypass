@@ -26,10 +26,7 @@ public class VpnController(IVpnApplication application) : ResultHandlerControlle
             return BadRequestApiResult(message: "کلمه عبور خالی است!");
         }
 
-        if (string.IsNullOrWhiteSpace(context.Target))
-        {
-            context.Target = UserName;
-        }
+        context.Target = GetSafeTargetArea(context.Target);
 
         var result = await application.ChangeOvpnPassword(context);
 
@@ -39,10 +36,7 @@ public class VpnController(IVpnApplication application) : ResultHandlerControlle
     [HttpGet("send-cert-email")]
     public async Task<ApiResult> SendCertEmail([FromQuery] string? target)
     {
-        if (string.IsNullOrWhiteSpace(target))
-        {
-            target = UserName;
-        }
+        target = GetSafeTargetArea(target);
 
         var result = await application.SendCertEmail(target);
 
@@ -52,10 +46,7 @@ public class VpnController(IVpnApplication application) : ResultHandlerControlle
     [HttpGet("traffic-data")]
     public async Task<ApiResult> TrafficData([FromQuery] string? target)
     {
-        if (string.IsNullOrWhiteSpace(target))
-        {
-            target = UserName;
-        }
+        target = GetSafeTargetArea(target);
 
         var result = await application.TrafficData(target);
 

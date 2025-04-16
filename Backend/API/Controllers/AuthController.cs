@@ -1,7 +1,9 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication;
@@ -15,6 +17,7 @@ namespace PhotonBypass.API.Controllers;
 public class AuthController(IAuthApplication application) : ResultHandlerController
 {
     private readonly IAuthApplication application = application;
+    private const int ACCOUNT_CREDIT_HOURS = 1;
 
     [HttpPost("token")]
     public async Task<ApiResult> Login([FromBody] Context.TokenContext context)
@@ -31,9 +34,17 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
 
         var result = await application.CheckUserPassword(context.Username, context.Password);
 
+        HttpContext.RequestServices.GetRequiredService<IMemoryCache>()
+            .Remove($"{nameof(UserModel.TargetArea)}|{context.Username}");
+
         if (result?.Code < 300 && result.Data != null)
         {
             var token = GenerateToken(result.Data);
+
+            HttpContext.RequestServices.GetRequiredService<IMemoryCache>()
+                .Set($"{nameof(UserModel.TargetArea)}|{result.Data.Username}",
+                    result.Data.TargetArea.Select(x => x.Key).ToHashSet(),
+                    TimeSpan.FromHours(ACCOUNT_CREDIT_HOURS));
 
             return new ApiResult<object>
             {
@@ -89,6 +100,16 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
         return SafeApiResult(result);
     }
 
+    [Authorize]
+    [HttpPost("logout")]
+    public ApiResult Logout()
+    {
+        HttpContext.RequestServices.GetRequiredService<IMemoryCache>()
+            .Remove($"{nameof(UserModel.TargetArea)}|{UserName}");
+
+        return ApiResult.Success("خارج شدید.");
+    }
+
     private static string GenerateToken(TargetModel user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(IdentityHelper.TokenKey));
@@ -102,7 +123,7 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
         };
 
         var token = new JwtSecurityToken(
-            expires: DateTime.Now.AddHours(1),
+            expires: DateTime.Now.AddHours(ACCOUNT_CREDIT_HOURS),
             claims: claims,
             signingCredentials: creds
         );

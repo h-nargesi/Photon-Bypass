@@ -3,7 +3,7 @@ using PhotonBypass.Infra.Controller;
 
 namespace PhotonBypass.API.Context;
 
-class HistoryContext
+public class HistoryContext
 {
     public string? Target { get; set; }
 

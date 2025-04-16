@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using PhotonBypass.API.Context;
 using PhotonBypass.Application.Connection;
-using PhotonBypass.Application.Connection.Model;
 using PhotonBypass.Infra.Controller;
 
 namespace PhotonBypass.API.Controllers;
@@ -16,10 +16,7 @@ public class ConnectionController(IConnectionApplication application) : ResultHa
     [HttpGet("current-con-state")]
     public async Task<ApiResult> GetCurrentConnectionState([FromQuery] string? target)
     {
-        if (string.IsNullOrWhiteSpace(target))
-        {
-            target = UserName;
-        }
+        target = GetSafeTargetArea(target);
 
         var result = await application.GetCurrentConnectionState(target);
 
@@ -29,17 +26,19 @@ public class ConnectionController(IConnectionApplication application) : ResultHa
     [HttpPost("close-con")]
     public async Task<ApiResult> CloseConnection([FromBody] CloseConnectionContext context)
     {
-        if (!context.Index.HasValue)
+        if (string.IsNullOrWhiteSpace(context.Server))
+        {
+            return BadRequestApiResult(message: "سرور خالی است!");
+        }
+
+        if (string.IsNullOrWhiteSpace(context.SessionId))
         {
             return BadRequestApiResult(message: "ایندکس خالی است!");
         }
 
-        if (string.IsNullOrWhiteSpace(context.Target))
-        {
-            context.Target = UserName;
-        }
+        context.Target = GetSafeTargetArea(context.Target);
 
-        var result = await application.CloseConnection(context);
+        var result = await application.CloseConnection(context.Server, context.Target, context.SessionId);
 
         return SafeApiResult(result);
     }

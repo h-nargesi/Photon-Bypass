@@ -6,7 +6,7 @@ namespace PhotonBypass.Application.Authentication;
 
 public interface IAuthApplication
 {
-    Task<ApiResult<TargetModel>> CheckUserPassword(string username, string password);
+    Task<ApiResult<UserModel>> CheckUserPassword(string username, string password);
 
     Task<ApiResult> ResetPassword(string email_mobile);
 

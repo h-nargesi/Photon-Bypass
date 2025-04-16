@@ -1,6 +1,6 @@
 ﻿namespace PhotonBypass.API.Context;
 
-class TokenContext
+public class TokenContext
 {
     public string? Username { get; set; }
 

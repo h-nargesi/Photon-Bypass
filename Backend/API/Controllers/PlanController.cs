@@ -16,10 +16,7 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     [HttpGet("plan-state")]
     public async Task<ApiResult> GetPlanState([FromQuery] string? target)
     {
-        if (string.IsNullOrWhiteSpace(target))
-        {
-            target = UserName;
-        }
+        target = GetSafeTargetArea(target);
 
         var result = await application.GetPlanState(target);
 
@@ -29,10 +26,7 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     [HttpGet("plan-info")]
     public async Task<ApiResult> GetPlanInfo([FromQuery] string? target)
     {
-        if (string.IsNullOrWhiteSpace(target))
-        {
-            target = UserName;
-        }
+        target = GetSafeTargetArea(target);
 
         var result = await application.GetPlanInfo(target);
 
@@ -44,10 +38,7 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     {
         var result = RenewalContextCheck(context);
 
-        if (string.IsNullOrWhiteSpace(context.Target))
-        {
-            context.Target = UserName;
-        }
+        context.Target = GetSafeTargetArea(context.Target);
 
         result ??= await application.Estimate(context);
 
@@ -59,10 +50,7 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     {
         var result = RenewalContextCheck(context);
 
-        if (string.IsNullOrWhiteSpace(context.Target))
-        {
-            context.Target = UserName;
-        }
+        context.Target = GetSafeTargetArea(context.Target);
 
         result ??= await application.Rnewal(context);
 

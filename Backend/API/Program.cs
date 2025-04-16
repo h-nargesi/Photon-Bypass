@@ -22,6 +22,7 @@ builder.Services.AddAuthentication("Bearer")
 builder.Services.AddAuthorization();
 builder.Services.AddDapperDbContext();
 builder.Services.AddApplicationServices();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 

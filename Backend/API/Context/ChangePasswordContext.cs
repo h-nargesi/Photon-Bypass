@@ -1,6 +1,6 @@
 ﻿namespace PhotonBypass.API.Context;
 
-class ChangePasswordContext
+public class ChangePasswordContext
 {
     public string? Token { get; set; }
 
