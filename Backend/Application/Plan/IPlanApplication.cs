@@ -11,5 +11,5 @@ public interface IPlanApplication
 
     Task<ApiResult<long>> Estimate(RenewalContext context);
 
-    Task<ApiResult<RenewalResult>> Rnewal(RenewalContext context);
+    Task<ApiResult<RenewalResult>> Renewal(RenewalContext context);
 }

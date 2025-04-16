@@ -97,7 +97,7 @@ Selling VPN
 
 - FAQ
 
-- Rnewal
+- Renewal
     - Wallet Balance Panel
         - Current Value
         - Increament Button => Payment Popup

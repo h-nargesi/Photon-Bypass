@@ -52,7 +52,7 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
 
         context.Target = GetSafeTargetArea(context.Target);
 
-        result ??= await application.Rnewal(context);
+        result ??= await application.Renewal(context);
 
         return SafeApiResult(result);
     }

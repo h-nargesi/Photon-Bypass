@@ -275,9 +275,9 @@ api call rate limit
     ```
     response: `number`
 
-- **rnewal**:
+- **renewal**:
 
-    POST `api/plan/rnewal`\
+    POST `api/plan/renewal`\
     request:
     ```json
     {
@@ -311,7 +311,7 @@ api call rate limit
 - Usege Chart Reload
 - Edit Info Page
 - Change OVPN Password
-- Rnewal
+- Renewal
 
 ### Local DB
 
@@ -325,7 +325,7 @@ api call rate limit
 - Edit Info Page
 - Change Login Password
 - Change OVPN Password
-- Rnewal
+- Renewal
 
 ### Mikrotik SSH
 
@@ -376,7 +376,7 @@ api call rate limit
     - (rad api)
     - update (local db)
 
-- Rnewal
+- Renewal
     - (rad api)
     - update (local db)
 
@@ -384,7 +384,7 @@ api call rate limit
     - (rad api)
     - (whatsapp api)
 
-## Rnewal Submit Code
+## Renewal Submit Code
 
 this code is not finished
 
