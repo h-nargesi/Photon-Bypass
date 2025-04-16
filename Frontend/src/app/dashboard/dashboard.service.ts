@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiResult, ShowMessageCase, UserPlanInfo } from '../@models';
+import {
+  ApiResult,
+  ConnectionStateModel,
+  ShowMessageCase,
+  UserPlanInfo,
+} from '../@models';
 import {
   ApiBaseService,
   ApiParam,
@@ -18,14 +23,18 @@ export class DashboardService extends ApiBaseService {
     });
   }
 
-  fetchCurrentConnections(target?: string): Observable<number[]> {
+  fetchCurrentConnections(target?: string): Observable<ConnectionStateModel[]> {
     const url = `${CONNECTION_API_URL}/current-con-state`;
-    return this.getData<number[]>(url, { target } as ApiParam);
+    return this.getData<ConnectionStateModel[]>(url, { target } as ApiParam);
   }
 
-  closeConnection(index: number, target?: string): Observable<ApiResult> {
+  closeConnection(
+    server: string,
+    sessionId: string,
+    target?: string
+  ): Observable<ApiResult> {
     const url = `${CONNECTION_API_URL}/close-con`;
-    return this.job(url, { target, index });
+    return this.job(url, { server, target, sessionId });
   }
 
   fetchPlanState(target?: string): Observable<UserPlanInfo> {

@@ -24,7 +24,14 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
-import { PlanType, ResultStatus, Target, UserModel, UserPlanInfo } from '../@models';
+import {
+  ConnectionStateModel,
+  PlanType,
+  ResultStatus,
+  Target,
+  UserModel,
+  UserPlanInfo,
+} from '../@models';
 import { TranslationPipe, TranslationService, UserService } from '../@services';
 import { DashboardService } from './dashboard.service';
 import { TrafficChartComponent } from './traffic-chart/traffic-chart.component';
@@ -65,9 +72,8 @@ export class DashboardComponent implements OnInit {
   current_user?: UserModel;
   sending_cert_email = false;
 
-  connections?: number[];
+  connections?: ConnectionStateModel[];
   connection_count = '0';
-  closing_connection: boolean[] = [];
 
   plan_info?: UserPlanInfo;
   readonly icons = ICON_SUBSET;
@@ -109,16 +115,24 @@ export class DashboardComponent implements OnInit {
   }
 
   closeConnection(index: number) {
-    this.closing_connection[index] = true;
-    const targte = this.user_service.targetName;
-    this.service.closeConnection(index, targte).subscribe((result) => {
-      if (result.status() >= ResultStatus.warning) return;
+    if (!this.connections || this.connections.length < 1) return;
+    if (index < 0 || index >= this.connections.length) return;
 
-      if (this.connections && this.connections.length > index) {
-        this.closing_connection.splice(index, 1);
-        this.connections.splice(index, 1);
-      }
-    });
+    const target = this.user_service.targetName;
+    const connection = this.connections[index];
+
+    connection.closing = true;
+
+    this.service
+      .closeConnection(connection.server, connection.sessionId, target)
+      .subscribe((result) => {
+        if (result.status() >= ResultStatus.warning) return;
+
+        if (this.connections) {
+          this.connections.splice(this.connections.indexOf(connection), 1);
+          this.connection_count = this.connections.length.toString();
+        }
+      });
   }
 
   printDuration(duration: number): string {
@@ -185,13 +199,10 @@ export class DashboardComponent implements OnInit {
       .fetchCurrentConnections(this.user_service.targetName)
       .subscribe((connections) => {
         this.connections = connections;
-
         this.connection_count = (connections?.length ?? 0).toString();
 
-        this.closing_connection = [];
         if (connections) {
-          for (let i = 0; i < connections.length; i++)
-            this.closing_connection.push(false);
+          for (const con of this.connections) con.closing = false;
         }
       });
   }
@@ -212,7 +223,6 @@ export class DashboardComponent implements OnInit {
   private clearData() {
     this.connections = undefined;
     this.connection_count = '0';
-    this.closing_connection = [];
     this.plan_info = undefined;
   }
 }

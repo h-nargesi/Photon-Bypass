@@ -13,4 +13,13 @@ class NasRepository(IRadRepository<NasEntity> repository)
 
         return result.ToDictionary(x => x.IpAddress);
     }
+
+    public async Task<bool> Exists(string ip)
+    {
+        var result = await repository.FindAsync(statement => statement
+            .Where($"{nameof(NasEntity.IpAddress)} = @ip")
+            .WithParameters(new { ip }));
+
+        return result.Any();
+    }
 }
