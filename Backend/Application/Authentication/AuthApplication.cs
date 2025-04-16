@@ -124,15 +124,15 @@ partial class AuthApplication(
         var user_saving = RadiusDeskService.Value.SavePermenentUser(new PermenantUserEntity
         {
             Username = context.Username ?? string.Empty,
-            Cloud_id = StaticRepo.Value.WebCloudID,
+            CloudId = StaticRepo.Value.WebCloudID,
             Email = context.Email,
             Phone = context.Mobile,
             Name = context.Firstname,
             Surname = context.Lastname,
             Realm = currentRealm.Name,
-            Realm_id = currentRealm.Id,
+            RealmId = currentRealm.Id,
             Profile = StaticRepo.Value.DefaultProfile.Name,
-            Profile_id = StaticRepo.Value.DefaultProfile.Id,
+            ProfileId = StaticRepo.Value.DefaultProfile.Id,
             Active = false,
         });
 

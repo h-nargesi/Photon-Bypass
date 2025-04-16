@@ -1,18 +1,26 @@
-﻿using PhotonBypass.Infra.Database;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using PhotonBypass.Infra.Database;
 
 namespace PhotonBypass.Domain.Radius;
 
+[Table("ph_v_all_profiles")]
 public class ProfileEntity : IBaseEntity
 {
+    [Key]
     public int Id { get; set; }
 
-    public int Cloud_id { get; set; }
+    [Column("cloud_id")]
+    public int CloudId { get; set; }
 
     public string Name { get; set; } = null!;
 
-    public int? Simultaneous_Use { get; set; }
+    [Column("cimultaneous_use")]
+    public int? SimultaneousUse { get; set; }
 
-    public string? Mikrotik_Rate_Limit { get; set; }
+    [Column("mikrotik_rate_limit")]
+    public float? MikrotikRateLimit { get; set; }
 
-    public string? Rd_Reset_Type_Data { get; set; }
+    [Column("rd_reset_type_data")]
+    public string? RdResetTypeData { get; set; }
 }

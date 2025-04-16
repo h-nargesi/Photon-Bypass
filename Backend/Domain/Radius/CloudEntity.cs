@@ -4,16 +4,11 @@ using PhotonBypass.Infra.Database;
 
 namespace PhotonBypass.Domain.Radius;
 
-[Table("realms")]
-public class RealmEntity : IBaseEntity
+[Table("clouds")]
+public class CloudEntity : IBaseEntity
 {
     [Key]
     public int Id { get; set; }
 
-    [Column("cloud_id")]
-    public int CloudId { get; set; }
-
     public string Name { get; set; } = null!;
-
-    public string Suffix { get; set; } = null!;
 }

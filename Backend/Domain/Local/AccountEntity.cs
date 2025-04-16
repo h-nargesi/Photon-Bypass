@@ -1,9 +1,13 @@
-﻿using PhotonBypass.Infra.Database;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using PhotonBypass.Infra.Database;
 
 namespace PhotonBypass.Domain.Local;
 
+[Table("Account")]
 public class AccountEntity : IBaseEntity
 {
+    [Key]
     public int Id { get; set; }
 
     public bool Active { get; set; }

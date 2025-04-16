@@ -5,7 +5,7 @@ namespace PhotonBypass.Application.Database;
 
 class StaticRepository
 {
-    public StaticRepository(IRadRepository<CloudsEntity> cloud_repo,
+    public StaticRepository(IRadRepository<CloudEntity> cloud_repo,
         IRadRepository<ProfileEntity> profile_repo)
     {
         var cloudTask = FindWebCloud(cloud_repo);
@@ -19,10 +19,10 @@ class StaticRepository
 
     public ProfileEntity DefaultProfile { get; }
 
-    private static async Task<int> FindWebCloud(IRadRepository<CloudsEntity> repository)
+    private static async Task<int> FindWebCloud(IRadRepository<CloudEntity> repository)
     {
         var result = await repository.FindAsync(statement => statement
-            .Where($"{nameof(CloudsEntity.Name)} = 'Web'"));
+            .Where($"{nameof(CloudEntity.Name)} = 'Web'"));
 
         var cloud = result.FirstOrDefault();
 

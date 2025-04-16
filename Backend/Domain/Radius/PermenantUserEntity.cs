@@ -1,9 +1,13 @@
-﻿using PhotonBypass.Infra.Database;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using PhotonBypass.Infra.Database;
 
 namespace PhotonBypass.Domain.Radius;
 
+[Table("permanent_users")]
 public class PermenantUserEntity : IBaseEntity
 {
+    [Key]
     public int Id { get; set; }
 
     public string Username { get; set; } = null!;
@@ -20,15 +24,20 @@ public class PermenantUserEntity : IBaseEntity
 
     public string Realm { get; set; } = null!;
 
-    public int Realm_id { get; set; }
+    [Column("realm_id")]
+    public int RealmId { get; set; }
 
     public string Profile { get; set; } = null!;
 
-    public int Profile_id { get; set; }
+    [Column("profile_id")]
+    public int ProfileId { get; set; }
 
-    public DateTime? From_date { get; set; }
+    [Column("from_date")]
+    public DateTime? FromDate { get; set; }
 
-    public DateTime? To_date { get; set; }
+    [Column("to_date")]
+    public DateTime? ToDate { get; set; }
 
-    public int Cloud_id { get; set; }
+    [Column("cloud_id")]
+    public int CloudId { get; set; }
 }
