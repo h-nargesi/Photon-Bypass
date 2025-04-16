@@ -14,7 +14,7 @@ namespace PhotonBypass.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(IAuthApplication application) : ResultHandlerController
+public class AuthController(IAuthApplication application, IMemoryCache cache) : ResultHandlerController(cache)
 {
     private readonly IAuthApplication application = application;
     private const int ACCOUNT_CREDIT_HOURS = 1;
@@ -34,17 +34,15 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
 
         var result = await application.CheckUserPassword(context.Username, context.Password);
 
-        HttpContext.RequestServices.GetRequiredService<IMemoryCache>()
-            .Remove($"{nameof(UserModel.TargetArea)}|{context.Username}");
+        cache.Remove($"{nameof(UserModel.TargetArea)}|{context.Username}");
 
         if (result?.Code < 300 && result.Data != null)
         {
             var token = GenerateToken(result.Data);
 
-            HttpContext.RequestServices.GetRequiredService<IMemoryCache>()
-                .Set($"{nameof(UserModel.TargetArea)}|{result.Data.Username}",
-                    result.Data.TargetArea.Select(x => x.Key).ToHashSet(),
-                    TimeSpan.FromHours(ACCOUNT_CREDIT_HOURS));
+            cache.Set($"{nameof(UserModel.TargetArea)}|{result.Data.Username}",
+                result.Data.TargetArea.Select(x => x.Key).ToHashSet(),
+                TimeSpan.FromHours(ACCOUNT_CREDIT_HOURS));
 
             return new ApiResult<object>
             {
@@ -104,8 +102,7 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
     [HttpPost("logout")]
     public ApiResult Logout()
     {
-        HttpContext.RequestServices.GetRequiredService<IMemoryCache>()
-            .Remove($"{nameof(UserModel.TargetArea)}|{UserName}");
+        cache.Remove($"{nameof(UserModel.TargetArea)}|{UserName}");
 
         return ApiResult.Success("خارج شدید.");
     }

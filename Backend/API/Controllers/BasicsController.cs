@@ -6,7 +6,7 @@ namespace PhotonBypass.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BasicsController(IBasicsApplication application) : ResultHandlerController
+public class BasicsController(IBasicsApplication application) : ResultHandlerController(null!)
 {
     private readonly IBasicsApplication application = application;
 

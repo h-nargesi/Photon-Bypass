@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.Application.Plan;
 using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Infra.Controller;
@@ -9,10 +10,8 @@ namespace PhotonBypass.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class PlanController(IPlanApplication application) : ResultHandlerController
+public class PlanController(IPlanApplication application, IMemoryCache cache) : ResultHandlerController(cache)
 {
-    private readonly IPlanApplication application = application;
-
     [HttpGet("plan-state")]
     public async Task<ApiResult> GetPlanState([FromQuery] string? target)
     {

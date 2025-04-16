@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.API.Context;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
@@ -10,7 +11,7 @@ namespace PhotonBypass.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class AccountController(IAccountApplication application) : ResultHandlerController
+public class AccountController(IAccountApplication application, IMemoryCache cache) : ResultHandlerController(cache)
 {
     private readonly IAccountApplication application = application;
 

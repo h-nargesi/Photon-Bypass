@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Application.Vpn.Model;
 using PhotonBypass.Infra.Controller;
@@ -9,7 +10,7 @@ namespace PhotonBypass.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class VpnController(IVpnApplication application) : ResultHandlerController
+public class VpnController(IVpnApplication application, IMemoryCache cache) : ResultHandlerController(cache)
 {
     private readonly IVpnApplication application = application;
 
