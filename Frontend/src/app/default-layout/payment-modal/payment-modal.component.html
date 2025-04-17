@@ -1,0 +1,15 @@
+<c-modal #paymentModal [scrollable]="true" [(visible)]="visible" alignment="center" [id]="id">
+    <c-modal-header>
+        <h5 cModalTitle>{{ 'payment.request.title' | translate }}</h5>
+        <button [cModalToggle]="paymentModal.id" cButtonClose></button>
+    </c-modal-header>
+    <c-modal-body>
+        <input cFormControl [placeholder]='"payment.request.amount" | translate' [(ngModel)]="value" />
+        <div class="mt-3">
+            <button cButton color="primary" class="float-left" type="submit" [cModalToggle]="paymentModal.id"
+                (click)="submit()">
+                {{ "payment.labels.submit" | translate }}
+            </button>
+        </div>
+    </c-modal-body>
+</c-modal>

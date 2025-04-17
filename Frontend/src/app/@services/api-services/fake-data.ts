@@ -8,6 +8,7 @@ import {
   ConnectionStateModel,
   FullUserModel,
   HistoryRecord,
+  PaymentInvoice,
   PlanInto,
   PlanType,
   PriceModel,
@@ -105,6 +106,12 @@ export class FakeDataService {
         return this.api_plan_estimate() as Observable<HttpResponse<M>>;
       case 'api/plan/renewal':
         return this.api_plan_renewal() as Observable<HttpResponse<M>>;
+      case 'api/plan/payment-request':
+        return this.api_plan_payment_request() as Observable<HttpResponse<M>>;
+      case 'api/plan/get-invoice':
+        return this.api_plan_get_invoice() as Observable<HttpResponse<M>>;
+      case 'api/plan/pay':
+        return this.api_plan_pay() as Observable<HttpResponse<M>>;
       // VPN
       case 'api/vpn/traffic-data':
         return this.api_vpn_traffic_data() as Observable<HttpResponse<M>>;
@@ -438,6 +445,43 @@ export class FakeDataService {
         },
       } as ApiResultData<RenewalResult>);
     }
+  }
+
+  private api_plan_payment_request(): Observable<
+    HttpResponse<ApiResultData<string>>
+  > {
+    return wait({
+      code: 200,
+      data: 'AD3FA234',
+    } as ApiResultData<string>);
+  }
+
+  private api_plan_get_invoice(): Observable<
+    HttpResponse<ApiResultData<PaymentInvoice>>
+  > {
+    return wait({
+      code: 200,
+      data: {
+        code: 'AD3FA234',
+        items: [
+          {
+            title: 'افزایش ترافیک اکانت به مقدار ۲۵ گیگ',
+            value: 2540,
+          },
+        ],
+        sum: 2540,
+        tax: 0.1,
+        totalSum: 2794,
+      },
+    } as ApiResultData<PaymentInvoice>);
+  }
+
+  private api_plan_pay(): Observable<HttpResponse<ApiResultData<string>>>
+  {
+    return wait({
+      code: 200,
+      data: 'http://google.com',
+    } as ApiResultData<string>);
   }
 }
 

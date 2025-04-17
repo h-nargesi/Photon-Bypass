@@ -8,6 +8,7 @@ import { TranslationService } from '../translation/translation-service';
 
 @Injectable({ providedIn: 'root' })
 export class UserService extends ApiBaseService {
+  private invoice_code?: string;
   private reload_next_call = false;
   private current_user?: UserModel;
   private observable_user?: Promise<UserModel>;
@@ -26,6 +27,14 @@ export class UserService extends ApiBaseService {
 
   get hasSubUsers(): boolean {
     return this.current_user?.targetArea ? true : false;
+  }
+
+  get invoice(): string | undefined {
+    return this.invoice_code;
+  }
+
+  set invoice(code: string) {
+    this.invoice_code = code;
   }
 
   async user(): Promise<UserModel> {

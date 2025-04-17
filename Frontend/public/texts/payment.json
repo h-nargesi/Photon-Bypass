@@ -1,14 +1,27 @@
 {
-    "title": "فاکتور فروش",
-    "input-label": "مقدار پرداخت",
-    "tax": "مالیات",
-    "sum": "جمع کل",
+    "labels": {
+        "title": "جزئیات پرداخت",
+        "input": "مقدار پرداخت",
+        "tax": "مالیات",
+        "sum": "جمع",
+        "total-sum": "جمع نهایی",
+        "submit": "پرداخت"
+    },
+    "methods": {
+        "title": "روش پرداخت",
+        "bank": "درگاه بانکی",
+        "transfer": "انتقال کارت به کارت"
+    },
     "columns": {
         "title": "عنوان",
         "price": "قیمت"
     },
-    "payment-method": {
+    "bank-methods": {
         "zarin-pal": "زرین پال"
     },
-    "submit": "پرداخت"
+    "request": {
+        "title": "افزایش موجودی",
+        "amount": "مبلغ",
+        "invalid-value": "مقدار افزایش کیف پول صحیح نیست"
+    }
 }

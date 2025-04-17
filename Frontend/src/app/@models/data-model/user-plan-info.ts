@@ -21,3 +21,16 @@ export interface RenewalResult {
   currentPrice: number;
   moneyNeeds: number;
 }
+
+export interface PaymentInvoice {
+  code: string;
+  items: [
+    {
+      title: string;
+      value: number;
+    }
+  ];
+  sum: number;
+  tax: number;
+  totalSum: number;
+}

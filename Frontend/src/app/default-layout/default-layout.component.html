@@ -2,7 +2,7 @@
 <div class="wrapper d-flex flex-column min-vh-100">
   <!--app-header-->
   <app-default-header cShadowOnScroll="sm" position="sticky" [userSelector]="userSelectorModal.id"
-    class="mb-4 d-print-none header header-sticky p-0 shadow-sm" />
+    [paymentModal]="paymentModal.id" class="mb-4 d-print-none header header-sticky p-0 shadow-sm" />
 
   <!-- toaster -->
   <c-toaster ngClass="p-3" [placement]="placement" position="fixed"></c-toaster>
@@ -19,4 +19,5 @@
 
   <!-- modals -->
   <app-user-selector-modal #userSelectorModal></app-user-selector-modal>
+  <app-payment-modal #paymentModal></app-payment-modal>
 </div>

@@ -13,13 +13,14 @@ import {
   DropdownToggleDirective,
   HeaderComponent,
   HeaderNavComponent,
+  ModalService,
   ModalToggleDirective,
   NavLinkDirective,
   TextColorDirective,
   TooltipDirective,
 } from '@coreui/angular';
 
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../../@icons';
 import { UserModel } from '../../@models';
@@ -63,10 +64,13 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
   current_user?: UserModel;
 
   @Input() userSelector?: string;
+  @Input() paymentModal?: string;
 
   constructor(
     public readonly title_service: Title,
-    private readonly user_service: UserService
+    private readonly user_service: UserService,
+    private readonly modal_service: ModalService,
+    private readonly router: Router
   ) {
     super();
   }
@@ -89,6 +93,19 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
 
   get targetName(): string | undefined {
     return this.user_service.targetName;
+  }
+
+  goPayment() {
+    if (this.user_service.invoice) {
+      this.router.navigate(['payment'], {
+        queryParams: { invoice: this.user_service.invoice },
+      });
+    } else {
+      this.modal_service.toggle({
+        show: true,
+        id: this.paymentModal,
+      });
+    }
   }
 
   showBalance(): string {

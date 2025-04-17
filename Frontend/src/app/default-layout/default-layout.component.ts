@@ -12,6 +12,7 @@ import {
 import { NgClass } from '@angular/common';
 import { MessageService } from '../@services';
 import { DefaultFooterComponent, DefaultHeaderComponent } from './';
+import { PaymentModalComponent } from './payment-modal/payment-modal.component';
 import { UserSelectorModalComponent } from './user-selector-modal/user-selector-modal.component';
 
 @Component({
@@ -28,6 +29,7 @@ import { UserSelectorModalComponent } from './user-selector-modal/user-selector-
     ShadowOnScrollDirective,
     ToastModule,
     ToasterComponent,
+    PaymentModalComponent,
   ],
 })
 export class DefaultLayoutComponent {

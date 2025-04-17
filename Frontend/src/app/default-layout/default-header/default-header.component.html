@@ -10,7 +10,7 @@
     </div>
 
     <c-header-nav class="d-flex ms-auto">
-      <c-alert class="m-0 p-2 me-2 digits pointer" routerLink="/payment" color="light">
+      <c-alert class="m-0 p-2 me-2 digits pointer" [cModalToggle]="paymentModal" color="light">
         <span>{{ "global.header.walet.title" | translate }}</span>
         <strong> {{ showBalance() }}</strong> &nbsp;
         <span>{{ "global.header.walet.currency" | translate }}</span>
@@ -30,7 +30,8 @@
       <a cNavLink routerLink="/renewal" [cTooltip]="'global.header.navbar.renewal' | translate">
         <svg [cIcon]="icons.cilLoopCircular" class="my-1" size="lg"></svg>
       </a>
-      <a cNavLink routerLink="/payment" [cTooltip]="'global.header.navbar.payment' | translate">
+      <a cNavLink (click)="goPayment()" [cTooltip]="'global.header.navbar.payment' |
+        translate">
         <svg [cIcon]="icons.cilCreditCard" class="my-1" size="lg"></svg>
       </a>
       <a cNavLink routerLink="/history" [cTooltip]="'global.header.navbar.history' | translate">
