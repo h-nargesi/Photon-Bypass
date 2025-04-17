@@ -2,124 +2,218 @@
 
 Selling VPN
 
-## Home
+- Advertisement Pages
+- Profile Pages
+- Background Services
+
+## Advertisement Pages
+
+We have just home page in this category.
+
+### Home
+
+Page Elements:
+
+- Slogan *(panel)*:
+    - Types of plans with price
+        - Traffic without time
+    - Return value in the middle of the plan
+    - first 3 days is free
+- Start *(Button)* => link to login page
+
+Design Info:
 
 [crossfit-athletes-website-template](https://nicepage.com/st/46692/crossfit-athletes-website-template)
 
 [plan-and-book-your-flights-website-template](https://nicepage.com/st/57476/plan-and-book-your-flights-website-template)
 
-- Home Page
-    - Slogan:
-        - Types of plans with price
-            - Traffic without time
-        - Return value in the middle of the plan
-        - first 3 days is free
-    - Login => page
-    - Register => page
+## Profile Pages
 
-## Profile
+Design Info:
 
 [CoreUI](https://coreui.io/product/free-angular-admin-template/#live-preview)
 
+### Login
+
+Properties:
+
+- Human Test *(auto action)* => to prevent robats
+
+Elements:
+
+- Human Test *(auto action)* => to prevent robats
+- Google Auth *(button)* => (phease 5)
+- Register *(link)* => go to register page
+- Forget Password *(link)* => go to forget-password page
+- User Name *(required input)*
+- Password *(required input)*
+- Submit *(button)*
+    - Notif admin on invalid password
+
+**TODO: Human Test**
+
+### Register
+
+Properties:
+
+- Human Test *(auto action)* => to prevent robats
+- This page is not in menu
+
+Elements:
+
+- User Name *(required input)*
+- Email *(required input)*
+- Mobile *(input)*
+- First Name *(input)*
+- Last Name *(input)*
+- Password *(required input)*
+- Submit *(button)*
+    - one of `email` or `mobile` are required (phease 4)
+    - send admin notif on submit
+
+**TODO: send admin notif on submit**\
+**TODO: Human Test**
+
+### Forgot Password
+
+Properties:
+
+- Human Test *(auto action)* => to prevent robats
+- This page is not in menu
+
+Elements:
+
+- Email/Mobile *(input)*
+- Submit *(button)* => send code
+
+**TODO: Human Test**
+
+### Reset Password
+
+Properties:
+
+- No link to this page
+
+Elements:
+
+- HashCode *(hiddent input)* => from query string
+- Password *(required input)*
+- Submit *(button)* => to change password
+
 ### Dashbord
 
-- Register Page (not in menu)
-    - Human Test
-    - User Name *
-    - Email (* or mobile) => validate email
-    - Mobile (* or email) => validate whatsapp
-    - First Name
-    - Last Name
-    - Password *
-    - Submit => send admin notif
+Elements:
 
-- Login (not in menu)
-    - Human Test
-    - Google Auth
-    - User Name
-    - Password
+- Email Validation *(panel)*
+    - Show if email/mobile are not valid
+    - Validation Code *(input)*
+    - Send/Resend *(button)*
+    - Submit *(button)*
+- Support Panel *(panel)*
+    - Chat Button *(link)* => outer link to WhatsApp page
+    - feedback button (phease 4)
+- Account Info *(panel)*
+    - Cache user data
+    - Edit Account Info *(link)* => Edit page
+    - Change Password *(link)* => Change-Password page
+    - Change OVPN Password *(link)* => Change-Password page
+    - Send Config *(button)*
+        - Check send limit
+        - Renew private key pass
+        - Send
+- Account State *(panel)*
+    - Show last connection list and live time
+    - Close User Connection Button => close connection in mikrotik
+    - Acount Balance
+    - Renewal/Change Button => Renewal Page
+- Wallet Balance *(panel)*
+    - Usege Chart will not load data on page initialize
+    - Current Value
+    - Increament Button => Payment Popup => Payment Page
+- Usege Chart *(panel)*
+    - Reload *(button)* => reload data
+- Logout *(link)* => logout => home page
 
-- Forgot password (not in menu)
-    - Email/Mobile
-    - Submit => send code
+**TODO: Check send limit**
 
-- Change Password
-    - (OpenVpn | Account)
-    - Old Password
-    - New Password
+### Change Password
 
-- Reset password (hidden)
-    - Password *
-    - Submit => change password
+in two mode (OpenVpn | Account)
 
-- Dashboard Page
-    - Email Validation
-        - Validation Code
-        - Resent
-    - Support Panel
-        - Last Admin's Message
-        - Chat Button => page
-    - Name/Email Panel (cache 10 min)
-        - Edit Info Button (name/phone/email) => page
-        - Change Password Button => page
-        - Change OVPN Password Button => page
-        - Send Config Button =>
-            - check send limit
-            - renew private key pass
-            - send
-    - Account State Panel
-        - User's connection (last connection/live time)
-        - Close User Connection Button => close connection in mikrotik
-        - Acount Balance
-        - Renewal/Change Button => page
-    - Wallet Balance Panel
-        - Current Value
-        - Increament Button => Payment Popup
-    - Usege Chart
-        - Reload Button => reload data
-    - Logout => logout => home page
+Elements:
 
-- Payment
-    - Increment Value
-    - Payment Way
-    - Submit => to bank page
+- Type *(hidden input)* => (OpenVpn | Account)
+- Old Password *(input)*
+- New Password *(input)*
 
-- History
-    - increase/decrease wallet
-    - increase plan
+### Payment Popup
 
-- Edit Info Page
-    - Email * => validate email
-    - Mobile * (to send information via whatsapp) => validate mobile
-    - Primary Contact (email|whatsapp)
-    - First Name
-    - Last Name
+Elements:
 
-- FAQ
+- Increment Value *(readonly)*
+- Payment Way *(select)*
+- Submit => to bank page
 
-- Renewal
-    - Wallet Balance Panel
-        - Current Value
-        - Increament Button => Payment Popup
-    - Users Count <= user count
-    - Monthly <= month (enabled: account is disabled | account is monthly)
-    - Traffic <= x25 (enabled: account is disabled | account is trafficaly)
-    - Submit =>
-        - On Change to Traffic: Make sure account time is finished
-        - On Change to Monthly: Make sure account traffiic is finished
-        - Change Profile and Data if necessary
-        - Close extra connections
-        - On old account: get empty place
-        - Check Server/User Balance
+### History
 
-### Accoutnt Management System
+Log Record Types:
 
-- Restrict accounts to connect to just one server
+- increase/decrease wallet
+- increase plan
+- auto sent messages
+- closing connection
+
+### Edit Info Page
+
+- Email Validation *(panel)*
+    - Show if email/mobile are not valid
+    - Validation Code *(input)*
+    - Send/Resend *(button)*
+    - Submit *(button)*
+- Email *(input)*
+- Mobile *(input)*
+    - to send information via whatsapp (phease 4)
+- Primary Contact *(select)*
+    - email|whatsapp
+    - (phease 4)
+- First Name *(input)*
+- Last Name *(input)*
+- Submit
+    - one of `email` or `mobile` are required (phease 4)
+
+### FAQ
+
+### Renewal
+
+- Wallet Balance Panel
+    - Current Value
+    - Increament Button => Payment Popup
+- Users Count *(select)*
+- Monthly *(select)* <= month (enabled: account is disabled | account is monthly)
+- Traffic *(select)* <= x25 (enabled: account is disabled | account is trafficaly)
+- Submit *(button)* =>
+    - On Change to Traffic: Make sure account time is finished
+    - On Change to Monthly: Make sure account traffiic is finished
+    - Change Profile and Data if necessary
+    - Close extra connections
+    - On old account: get empty place
+    - Check Server/User Balance
+
+**TODO: enable -> Monthly/Traffic**
+
+## Background Services
+
+### Servcer Capacity Management
+
 - Server Capacity Alarm
-    - Alarm Admin if users count is more than 50 users of server capacity
-    - Alarm Admin if users count is less than 100 users of server capacity
-- Notif on new Users
-- Notif on invalid password
+    - Alarm Admin if users count is more than 70 percent of server capacity
+    - Alarm Admin if users count is less than 100 percent of server capacity
+- Restrict accounts to connect to just one server
+- Get free place for new renewal
+
+### Account Management System
+
+- Notif user for end of service
 
 ## Pheases
 
@@ -137,5 +231,6 @@ Selling VPN
     2. samandehi.ir
     3. Bank Payment Gateway
 4. Send WhatsApp Notif
+    - feedback button
 5. Google Auth
 6. Other features
