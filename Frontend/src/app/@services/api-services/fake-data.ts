@@ -4,6 +4,8 @@ import { from, Observable } from 'rxjs';
 import {
   ApiResult,
   ApiResultData,
+  ConnectionState,
+  ConnectionStateModel,
   FullUserModel,
   HistoryRecord,
   PlanInto,
@@ -70,8 +72,6 @@ export class FakeDataService {
         return this.api_auth_logout() as Observable<HttpResponse<M>>;
       case 'api/auth/register':
         return this.api_auth_register() as Observable<HttpResponse<M>>;
-      case 'api/auth/get-user':
-        return this.api_auth_get_user() as Observable<HttpResponse<M>>;
       case 'api/auth/check':
         return this.api_auth_check() as Observable<HttpResponse<M>>;
       case 'api/auth/change':
@@ -79,12 +79,12 @@ export class FakeDataService {
       case 'api/auth/reset':
         return this.api_auth_reset() as Observable<HttpResponse<M>>;
       // ACCOUNT
+      case 'api/account/get-user':
+        return this.api_account_get_user() as Observable<HttpResponse<M>>;
       case 'api/account/change-ovpn':
         return this.api_account_change_ovpn() as Observable<HttpResponse<M>>;
       case 'api/account/send-cert-email':
         return this.api_account_get_cert_email() as Observable<HttpResponse<M>>;
-      case 'api/account/traffic-data':
-        return this.api_account_traffic_data() as Observable<HttpResponse<M>>;
       case 'api/account/full-info':
         return this.api_account_full_info() as Observable<HttpResponse<M>>;
       case 'api/account/history':
@@ -105,6 +105,9 @@ export class FakeDataService {
         return this.api_plan_estimate() as Observable<HttpResponse<M>>;
       case 'api/plan/renewal':
         return this.api_plan_renewal() as Observable<HttpResponse<M>>;
+      // VPN
+      case 'api/vpn/traffic-data':
+        return this.api_vpn_traffic_data() as Observable<HttpResponse<M>>;
     }
 
     return wait({ code: 500, message: `'${url}' not found!` }) as Observable<
@@ -194,7 +197,7 @@ export class FakeDataService {
     } as ApiResult);
   }
 
-  private api_auth_get_user(): Observable<
+  private api_account_get_user(): Observable<
     HttpResponse<ApiResultData<UserModel>>
   > {
     const bearer = LocalStorageService.get(['user', 'bearer']);
@@ -227,7 +230,7 @@ export class FakeDataService {
     );
   }
 
-  private api_account_traffic_data(): Observable<
+  private api_vpn_traffic_data(): Observable<
     HttpResponse<ApiResultData<TrafficDataModel>>
   > {
     const data: TrafficDataModel = {
@@ -335,11 +338,38 @@ export class FakeDataService {
   }
 
   private api_con_current_state(): Observable<
-    HttpResponse<ApiResultData<number[]>>
+    HttpResponse<ApiResultData<ConnectionStateModel[]>>
   > {
-    return wait({ code: 200, data: [534, 325, 244, 16] } as ApiResultData<
-      number[]
-    >);
+    var data = [
+      {
+        duration: 534,
+        state: ConnectionState.Up,
+        server: '192.168.10.20',
+        sessionId: 'aasr3452',
+      } as ConnectionStateModel,
+      {
+        duration: 325,
+        state: ConnectionState.Up,
+        server: '192.168.10.20',
+        sessionId: 'aasr3452',
+      } as ConnectionStateModel,
+      {
+        duration: 224,
+        state: ConnectionState.Down,
+        server: '192.168.10.20',
+        sessionId: 'aasr3452',
+      } as ConnectionStateModel,
+      {
+        duration: 16,
+        state: ConnectionState.Up,
+        server: '192.168.10.20',
+        sessionId: 'aasr3452',
+      } as ConnectionStateModel,
+    ];
+    return wait({
+      code: 200,
+      data,
+    } as ApiResultData<ConnectionStateModel[]>);
   }
 
   private api_con_close_con(): Observable<HttpResponse<ApiResult>> {

@@ -51,7 +51,7 @@
             </c-card-body>
             <ul cListGroup [flush]="true">
                 <li cListGroupItem *ngFor="let con of connections; let index = index">
-                    <span class="bullet bg-success me-4">&nbsp;</span>
+                    <span class="bullet me-4" [ngClass]="[ con.state === 0 ? 'bg-success' : 'bg-warning' ]">&nbsp;</span>
                     <span>{{ printDuration(con.duration) }}</span>
                     <a (click)="closeConnection(index)" class="float-end pointer"
                         [cTooltip]="'dashboard.connections.closing' | translate">
