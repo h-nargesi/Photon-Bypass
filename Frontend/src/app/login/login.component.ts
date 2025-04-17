@@ -54,6 +54,7 @@ import { AuthService, MessageService, TranslationPipe } from '../@services';
 })
 export class LoginComponent {
   readonly icons = ICON_SUBSET;
+  readonly redirect: string;
   isValidated = false;
   username?: string;
   password?: string;
@@ -65,12 +66,15 @@ export class LoginComponent {
     active_route: ActivatedRoute,
     auth_service: AuthService
   ) {
+    this.redirect = active_route.snapshot.queryParams['redirect'] ?? '/dashboard';
+
     if (active_route.snapshot.routeConfig?.path === 'logout') {
       this.service.logout();
     } else {
       auth_service.check().subscribe((result) => {
         if (result?.status() === ResultStatus.success) {
-          this.router.navigate(['dashboard']);
+          console.log('router', this.router);
+          this.router.navigateByUrl(this.redirect);
         }
       });
     }
@@ -85,7 +89,7 @@ export class LoginComponent {
       this.result = result;
       
       if (result.status() === ResultStatus.success) {
-        setTimeout(() => this.router.navigate(['dashboard']), 1000);
+        setTimeout(() => this.router.navigateByUrl(this.redirect), 1000);
       }
     });
   }

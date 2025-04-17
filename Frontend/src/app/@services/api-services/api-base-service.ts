@@ -27,6 +27,27 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
     super(message_handler);
   }
 
+  protected check(
+    url: string,
+    params?: ApiParam,
+    options?: ApiOptions
+  ): Observable<ApiResult> {
+    const service = this;
+    return this.api
+      .call(url, params)
+      .pipe(
+        map((result) => {
+          const context: ApiResultContext = (options ?? {}) as ApiResultContext;
+          context.title ??= TranslationService.translate('api.call');
+          context.show_message ??= ShowMessageCase.silence;
+          context.result = result;
+          context.service = service;
+          return context;
+        })
+      )
+      .pipe(map(this.resultHandler));
+  }
+
   protected call(
     url: string,
     params?: ApiParam,
@@ -173,7 +194,10 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
       if (!service.router) {
         throw 'The router service is not set. (ApiBaseService)';
       }
-      service.router.navigate(['/auth/login']);
+
+      let url = window.location.pathname + window.location.search;
+      if (url?.length > 0) url = '?redirect=' + url;
+      service.router.navigateByUrl('/login' + url);
     } else {
       LocalStorageService.set(['user', 'last_request'], new Date().getTime());
     }

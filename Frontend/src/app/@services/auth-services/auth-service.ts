@@ -26,10 +26,8 @@ export class AuthService extends ApiBaseService {
     return this.authorization(`${AUTH_API_URL}/token`, params);
   }
 
-  public check(): Observable<ApiResult> {
-    return this.call(`${ACCOUNT_API_URL}/get-user`, undefined, {
-      show_message: ShowMessageCase.silence,
-    });
+  public override check(): Observable<ApiResult> {
+    return super.check(`${ACCOUNT_API_URL}/get-user`);
   }
 
   public logout(): Observable<ApiResult> {
