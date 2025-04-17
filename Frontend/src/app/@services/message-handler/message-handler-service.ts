@@ -31,10 +31,10 @@ export class ApiMessageHandlerService {
         }
 
         if (status >= ResultStatus.error) {
-          console.error(result.message);
+          console.error(result.message ?? 'unknown error');
         } else if (status >= ResultStatus.warning) {
-          console.warn(result.message);
-        } else {
+          console.warn(result.message ?? 'unknown warning');
+        } else if (result.message) {
           console.info(result.message);
         }
       }
