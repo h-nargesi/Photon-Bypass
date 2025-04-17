@@ -10,6 +10,7 @@ import { ICON_SUBSET } from '../@icons';
 import { PriceModel } from '../@models';
 import { TranslationPipe, TranslationService } from '../@services';
 import { HomeService } from './home.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -31,6 +32,7 @@ export class HomeComponent {
 
   constructor(
     private readonly translation: TranslationService,
+    private readonly router: Router,
     service: HomeService
   ) {
     service.prices().subscribe((prices) => (this.prices = prices));
@@ -46,5 +48,9 @@ export class HomeComponent {
 
   public getTitle(item: any): any {
     return item.title;
+  }
+
+  public renewal() {
+    this.router.navigate(['renewal']);
   }
 }

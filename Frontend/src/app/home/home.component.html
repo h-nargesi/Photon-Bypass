@@ -79,7 +79,7 @@
                             {{ line }}
                         </p>
                     </div>
-                    <a href="/login">
+                    <a href="/renewal">
                         {{ "home-page.slogan.more" | translate }}
                     </a>
                 </div>
@@ -137,7 +137,7 @@
                     @for (price of prices; track price) {
                     <c-col sm="6">
                         <div class="h-100 w-=100 bg-sucess">
-                            <h5>
+                            <h5 (click)="renewal()" class="pointer">
                                 <svg [cIcon]="icons.cilStar" height="24"></svg>
                                 {{ price.title }}
                             </h5>
