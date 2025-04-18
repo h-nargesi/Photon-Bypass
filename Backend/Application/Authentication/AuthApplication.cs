@@ -1,5 +1,6 @@
 ﻿using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication.Model;
+using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
@@ -18,18 +19,23 @@ partial class AuthApplication(
     Lazy<IServerManagementService> ServerManageSrv,
     Lazy<IRadiusDeskService> RadiusDeskSrv,
     //Lazy<IWhatsAppHandler> whatsapp_handler,
-    Lazy<IEmailHandler> EmailHdl
+    Lazy<IEmailService> EmailSrv,
+    Lazy<ISocialMediaService> SocialMediaSrv
     ) : IAuthApplication
 {
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
         password = HashHandler.HashPassword(password);
 
-        var account = await AccountRepo.GetAccount(username) ??
-            throw new UserException("کاربر پیدا نشد!");
+        var account = await AccountRepo.GetAccount(username);
 
-        if (account.Password != password)
+        if (account == null || account.Password != password)
         {
+            if (account != null)
+            {
+                _ = SocialMediaSrv.Value.SendInvalidPasswordAlert(account.Username);
+            }
+
             return new ApiResult<UserModel>
             {
                 Code = 401,
@@ -104,7 +110,7 @@ partial class AuthApplication(
                     HashCode = hash_code,
                 });
 
-                await EmailHdl.Value.SendResetPasswordLink(email_mobile, hash_code);
+                await EmailSrv.Value.SendResetPasswordLink(email_mobile, hash_code);
             }
 
             return ApiResult.Success("ایمیل ارسال شد.");

@@ -2,7 +2,7 @@
 
 namespace PhotonBypass.Domain.Server;
 
-public interface IMikrotikHandler
+public interface IVpnNodeService
 {
     Task<(NasEntity server, IList<UserConnectionBinding> connections)> GetActiveConnections(NasEntity server, string username);
 

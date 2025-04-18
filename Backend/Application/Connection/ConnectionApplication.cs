@@ -7,7 +7,7 @@ using PhotonBypass.Result;
 namespace PhotonBypass.Application.Connection;
 
 class ConnectionApplication(
-    IMikrotikHandler MikrotikHdl,
+    IVpnNodeService VpnNodeSrv,
     INasRepository NasRepo,
     Lazy<IRadAcctRepository> RadAcctRepo)
     : IConnectionApplication
@@ -23,7 +23,7 @@ class ConnectionApplication(
 
         var servers_task = new List<Task<(NasEntity server, IList<UserConnectionBinding> connections)>>();
         foreach (var server in servers_info)
-            servers_task.Add(MikrotikHdl.GetActiveConnections(server.Value, target));
+            servers_task.Add(VpnNodeSrv.GetActiveConnections(server.Value, target));
 
         var result = new List<ConnectionStateModel>();
         while (servers_task.Count > 0)
@@ -54,7 +54,7 @@ class ConnectionApplication(
             throw new UserException("دسترسی غیرمجاز!");
         }
 
-        var result = await MikrotikHdl.CloseConnection(server, target, sessionId);
+        var result = await VpnNodeSrv.CloseConnection(server, target, sessionId);
 
         if (!result)
         {
