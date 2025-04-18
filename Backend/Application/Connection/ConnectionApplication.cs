@@ -1,15 +1,20 @@
 ﻿using PhotonBypass.Application.Connection.Model;
+using PhotonBypass.Domain;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Server;
 using PhotonBypass.Result;
+using Serilog;
 
 namespace PhotonBypass.Application.Connection;
 
 class ConnectionApplication(
     IVpnNodeService VpnNodeSrv,
     INasRepository NasRepo,
-    Lazy<IRadAcctRepository> RadAcctRepo)
+    Lazy<IRadAcctRepository> RadAcctRepo,
+    Lazy<IJobContext> JobContext,
+    Lazy<IHistoryRepository> HistoryRepo)
     : IConnectionApplication
 {
     public async Task<ApiResult<IList<ConnectionStateModel>>> GetCurrentConnectionState(string target)
@@ -51,6 +56,8 @@ class ConnectionApplication(
     {
         if (!await NasRepo.Exists(server))
         {
+            Log.Warning("[user: {0}] Closing connection server is invalid: ('{1}', '{2}', '{3}')",
+                JobContext.Value.Username, server, target, sessionId);
             throw new UserException("دسترسی غیرمجاز!");
         }
 
@@ -60,6 +67,17 @@ class ConnectionApplication(
         {
             throw new Exception("بستن کانکشن با خطا مواجه شد!");
         }
+
+        _ = HistoryRepo.Value.Save(new HistoryEntity
+        {
+            Issuer = JobContext.Value.Username,
+            Target = target,
+            EventTime = DateTime.Now,
+            Title = "کانکشن",
+            Description = "کانکشن بسته شد.",
+        });
+        Log.Information("[user: {0}] Connection Closed: ('{1}', '{2}', '{3}')", 
+            server, target, sessionId);
 
         return ApiResult.Success("کانکشن بسته شد.");
     }

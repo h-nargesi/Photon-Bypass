@@ -7,6 +7,8 @@ public class HistoryModel
 {
     public int Id { get; set; }
 
+    public string Issuer { get; set; } = null!;
+
     public string Target { get; set; } = null!;
 
     [JsonConverter(typeof(UnixTimestampConverter))]

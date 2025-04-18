@@ -21,7 +21,8 @@ partial class AuthApplication(
     Lazy<IRadiusDeskService> RadiusDeskSrv,
     //Lazy<IWhatsAppHandler> whatsapp_handler,
     Lazy<IEmailService> EmailSrv,
-    Lazy<ISocialMediaService> SocialMediaSrv
+    Lazy<ISocialMediaService> SocialMediaSrv,
+    Lazy<IHistoryRepository> HistoryRepo
     ) : IAuthApplication
 {
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
@@ -34,8 +35,15 @@ partial class AuthApplication(
         {
             if (account != null)
             {
-                // TODO: History record
                 _ = SocialMediaSrv.Value.InvalidPasswordAlert(account.Username);
+                _ = HistoryRepo.Value.Save(new HistoryEntity
+                {
+                    Target = account.Username,
+                    EventTime = DateTime.Now,
+                    Title = "امنیت",
+                    Description = "تلاش برای ورود با کلمه عبور اشتباه",
+                });
+
                 Log.Warning("Invlid password for {0}", account.Username);
             }
 
@@ -54,6 +62,8 @@ partial class AuthApplication(
                 Email = user.Email,
             })
             .ToDictionary(k => k.Username);
+
+        Log.Information("[user: {0}] User loged in", account.Username);
 
         return new ApiResult<UserModel>
         {
@@ -112,18 +122,26 @@ partial class AuthApplication(
             {
                 var hash_code = HashHandler.GewnerateHashCode(56);
 
-                await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
+                var insertTask = ResetPassRepo.Value.AddHashCode(new ResetPassEntity
                 {
                     AccountId = account.Id,
                     ExpireDate = DateTime.Now.AddDays(1),
                     HashCode = hash_code,
                 });
 
-                await EmailSrv.Value.SendResetPasswordLink(email_mobile, hash_code);
+                var emailTask = EmailSrv.Value.SendResetPasswordLink(email_mobile, hash_code);
 
-                // TODO: History record
+                _ = HistoryRepo.Value.Save(new HistoryEntity
+                {
+                    Target = account.Username,
+                    EventTime = DateTime.Now,
+                    Title = "امنیت",
+                    Description = "درخواست تغییر کلمه عبور (ایمیل)",
+                });
 
                 Log.Verbose("Reset-Password email has been sent: {0}", email_mobile);
+
+                Task.WaitAll(insertTask, emailTask);
             }
 
             return ApiResult.Success("ایمیل ارسال شد.");
@@ -134,6 +152,11 @@ partial class AuthApplication(
 
     public async Task<ApiResult> Register(RegisterContext context)
     {
+        if (string.IsNullOrWhiteSpace(context.Email) && string.IsNullOrWhiteSpace(context.Mobile))
+        {
+            throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
+        }
+
         var currentRealm = await ServerManageSrv.Value.GetCurrentRealm(StaticRepo.Value.WebCloudID);
 
         if (await UserRepo.Value.CheckUsername(context.Username + currentRealm.Suffix))
@@ -141,7 +164,7 @@ partial class AuthApplication(
             throw new UserException("این نام کاربری قبلا استفاده شده است!");
         }
 
-        var user_saving = RadiusDeskSrv.Value.SavePermenentUser(new PermenantUserEntity
+        var user = new PermenantUserEntity
         {
             Username = context.Username ?? string.Empty,
             CloudId = StaticRepo.Value.WebCloudID,
@@ -154,11 +177,13 @@ partial class AuthApplication(
             Profile = StaticRepo.Value.DefaultProfile.Name,
             ProfileId = StaticRepo.Value.DefaultProfile.Id,
             Active = false,
-        });
+        };
+
+        await RadiusDeskSrv.Value.SavePermenentUser(user);
 
         var account = new AccountEntity
         {
-            Username = context.Username ?? string.Empty,
+            Username = user.Username,
             CloudId = StaticRepo.Value.WebCloudID,
             Email = context.Email,
             EmailValid = false,
@@ -173,7 +198,9 @@ partial class AuthApplication(
 
         _ = SocialMediaSrv.Value.NewUserRegistrationAlert(account);
 
-        Task.WaitAll(account_saving, user_saving);
+        Log.Information("New User Registred: ({0}, {1})", account.Username, account.Email);
+
+        await account_saving;
 
         return ApiResult.Success("کاربر شما ساخته شد.");
     }

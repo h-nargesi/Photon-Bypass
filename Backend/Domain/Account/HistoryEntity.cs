@@ -9,6 +9,8 @@ public class HistoryEntity : IBaseEntity
     [Key]
     public int Id { get; set; }
 
+    public string Issuer { get; set; } = null!;
+
     public string Target { get; set; } = null!;
 
     public DateTime EventTime { get; set; }

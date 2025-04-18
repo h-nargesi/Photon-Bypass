@@ -5,9 +5,14 @@ using PhotonBypass.Infra.Repository.DbContext;
 
 namespace PhotonBypass.Infra;
 
-public static class ServiceFactory
+static class ServiceFactory
 {
-    public static void AddDapperDbContext(this IServiceCollection services)
+    static ServiceFactory()
+    {
+        DependencyInjection.OnAddServices += AddLocalDbContext;
+    }
+
+    static void AddLocalDbContext(this IServiceCollection services)
     {
         services.AddSingleton<LocalDapperOptions>();
         services.AddSingleton<LocalDbContext>();

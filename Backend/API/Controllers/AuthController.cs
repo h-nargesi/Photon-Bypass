@@ -2,18 +2,22 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using PhotonBypass.API.Basical;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Authentication.Model;
+using PhotonBypass.Domain;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class AuthController(IAuthApplication application) : ResultHandlerController
+public class AuthController(
+    IAuthApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) :
+    ResultHandlerController(job, cache)
 {
     private readonly IAuthApplication application = application;
 
@@ -73,11 +77,6 @@ public class AuthController(IAuthApplication application) : ResultHandlerControl
         if (string.IsNullOrWhiteSpace(context.Username))
         {
             return BadRequestApiResult(message: "نام کاربری خالی است!");
-        }
-
-        if (string.IsNullOrWhiteSpace(context.Email) && string.IsNullOrWhiteSpace(context.Mobile))
-        {
-            return BadRequestApiResult(message: "حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
         }
 
         if (string.IsNullOrWhiteSpace(context.Password))

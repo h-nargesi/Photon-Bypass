@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.API.Basical;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Application.Vpn.Model;
+using PhotonBypass.Domain;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
@@ -10,13 +12,15 @@ namespace PhotonBypass.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class VpnController(IVpnApplication application) : ResultHandlerController
+public class VpnController(
+    IVpnApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) :
+    ResultHandlerController(job, cache)
 {
-    private readonly IVpnApplication application = application;
-
     [HttpPost("change-ovpn")]
     public async Task<ApiResult> ChangeOvpnPassword([FromBody] ChangeOvpnContext context)
     {
+        LoadJobContext(context.Target);
+
         if (string.IsNullOrWhiteSpace(context.Token))
         {
             return BadRequestApiResult(message: "توکن خالی است!");
@@ -27,7 +31,7 @@ public class VpnController(IVpnApplication application) : ResultHandlerControlle
             return BadRequestApiResult(message: "کلمه عبور خالی است!");
         }
 
-        context.Target = GetSafeTargetArea(context.Target);
+        context.Target = JobContext.Target;
 
         var result = await application.ChangeOvpnPassword(context);
 
@@ -37,9 +41,9 @@ public class VpnController(IVpnApplication application) : ResultHandlerControlle
     [HttpGet("send-cert-email")]
     public async Task<ApiResult> SendCertEmail([FromQuery] string? target)
     {
-        target = GetSafeTargetArea(target);
+        LoadJobContext(target);
 
-        var result = await application.SendCertEmail(target);
+        var result = await application.SendCertEmail(JobContext.Target);
 
         return SafeApiResult(result);
     }
@@ -47,9 +51,9 @@ public class VpnController(IVpnApplication application) : ResultHandlerControlle
     [HttpGet("traffic-data")]
     public async Task<ApiResult> TrafficData([FromQuery] string? target)
     {
-        target = GetSafeTargetArea(target);
+        LoadJobContext(target);
 
-        var result = await application.TrafficData(target);
+        var result = await application.TrafficData(JobContext.Target);
 
         return SafeApiResult(result);
     }

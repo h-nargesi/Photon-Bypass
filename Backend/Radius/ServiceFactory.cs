@@ -6,9 +6,14 @@ using PhotonBypass.Radius.Repository.DbContext;
 
 namespace PhotonBypass.Radius;
 
-public static class ServiceFactory
+static class ServiceFactory
 {
-    public static void AddDapperDbContext(this IServiceCollection services)
+    static ServiceFactory()
+    {
+        DependencyInjection.OnAddServices += AddLocalDbContext;
+    }
+
+    static void AddLocalDbContext(this IServiceCollection services)
     {
         services.AddSingleton<RadDapperOptions>();
         services.AddSingleton<RadDbContext>();

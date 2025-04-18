@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.API.Basical;
 using PhotonBypass.Application.Plan;
 using PhotonBypass.Application.Plan.Model;
+using PhotonBypass.Domain;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
@@ -10,16 +12,18 @@ namespace PhotonBypass.API.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class PlanController(IPlanApplication application) : ResultHandlerController
+public class PlanController(
+    IPlanApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) :
+    ResultHandlerController(job, cache)
 {
     private readonly IPlanApplication application = application;
 
     [HttpGet("plan-state")]
     public async Task<ApiResult> GetPlanState([FromQuery] string? target)
     {
-        target = GetSafeTargetArea(target);
+        LoadJobContext(target);
 
-        var result = await application.GetPlanState(target);
+        var result = await application.GetPlanState(JobContext.Target);
 
         return SafeApiResult(result);
     }
@@ -27,9 +31,9 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     [HttpGet("plan-info")]
     public async Task<ApiResult> GetPlanInfo([FromQuery] string? target)
     {
-        target = GetSafeTargetArea(target);
+        LoadJobContext(target);
 
-        var result = await application.GetPlanInfo(target);
+        var result = await application.GetPlanInfo(JobContext.Target);
 
         return SafeApiResult(result);
     }
@@ -37,9 +41,10 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     [HttpPost("estimate")]
     public async Task<ApiResult> Estimate([FromBody] RenewalContext context)
     {
-        var result = RnewalContextCheck(context);
+        LoadJobContext(context.Target);
+        context.Target = JobContext.Target;
 
-        context.Target = GetSafeTargetArea(context.Target);
+        var result = RnewalContextCheck(context);
 
         result ??= await application.Estimate(context);
 
@@ -49,9 +54,10 @@ public class PlanController(IPlanApplication application) : ResultHandlerControl
     [HttpPost("rnewal")]
     public async Task<ApiResult> Rnewal([FromBody] RenewalContext context)
     {
-        var result = RnewalContextCheck(context);
+        LoadJobContext(context.Target);
+        context.Target = JobContext.Target;
 
-        context.Target = GetSafeTargetArea(context.Target);
+        var result = RnewalContextCheck(context);
 
         result ??= await application.Renewal(context);
 

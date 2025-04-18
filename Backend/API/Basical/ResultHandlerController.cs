@@ -1,26 +1,42 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Caching.Memory;
+using PhotonBypass.Domain;
 using PhotonBypass.Result;
+using Serilog;
 
 namespace PhotonBypass.API.Basical;
 
-public class ResultHandlerController : ControllerBase
+public class ResultHandlerController(Lazy<IJobContext> context, Lazy<IMemoryCache> cache) : ControllerBase
 {
-    public string UserName => User?.Identity?.Name ?? string.Empty;
+    protected IJobContext JobContext => context.Value;
 
-    protected string GetSafeTargetArea(string? target)
+    protected string Username => User?.Identity?.Name ?? string.Empty;
+
+    protected void LoadJobContext(string? target = null)
     {
-        if (target == null) return UserName;
+        Log.Debug("Request.GetDisplayUrl(): {0}", Request.GetDisplayUrl());
 
-        var has_access = HttpContext.RequestServices.GetRequiredService<IMemoryCache>()
-            .Get<HashSet<string>>($"TargetArea|{UserName}")
+        if (JobContext is not JobContext job)
+        {
+            throw new Exception("JobContext not found");
+        }
+
+        job.Username = Username;
+        job.Target = target ?? Username;
+
+        if (target == null) return;
+
+        var has_access = cache.Value.Get<HashSet<string>>($"TargetArea|{Username}")
             ?.Contains(target)
             ?? false;
 
-        if (!has_access) throw new UserException("شما به این کاربر دسترسی ندارید!");
-
-        return target;
+        if (!has_access)
+        {
+            Log.Warning("[user: {0}] Target access denied: ('{1}', '{2}')", target, Request.GetDisplayUrl());
+            throw new UserException("شما به این کاربر دسترسی ندارید!");
+        }
     }
 
     [NonAction]

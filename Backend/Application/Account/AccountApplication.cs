@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Application.Account.Model;
+using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
@@ -11,7 +12,8 @@ class AccountApplication(
     Lazy<IAccountRepository> AccountRepo,
     Lazy<IPermenantUsersRepository> UserRepo,
     Lazy<IHistoryRepository> HistoryRepo,
-    Lazy<IRadiusDeskService> RadiusDeskSrv)
+    Lazy<IRadiusDeskService> RadiusDeskSrv,
+    Lazy<IJobContext> JobContext)
     : IAccountApplication
 {
     public async Task<ApiResult<UserModel>> GetUser(string username)
@@ -58,6 +60,11 @@ class AccountApplication(
 
     public async Task<ApiResult> EditUser(string target, EditUserContext model)
     {
+        if (string.IsNullOrWhiteSpace(model.Email) && string.IsNullOrWhiteSpace(model.Mobile))
+        {
+            throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
+        }
+
         var userLoadingTask = UserRepo.Value.GetUser(target);
         var accountLoadingTask = AccountRepo.Value.GetAccount(target);
 
@@ -69,13 +76,8 @@ class AccountApplication(
 
         var savingUserTask = RadiusDeskSrv.Value.SavePermenentUser(user);
         var savingAccountTask = AccountRepo.Value.Save(account);
-        var savingHistory = HistoryRepo.Value.Save(new HistoryEntity
-        {
-            EventTime = DateTime.Now,
-        });
 
-        await savingAccountTask;
-        await savingUserTask;
+        Task.WaitAll(savingAccountTask, savingUserTask);
 
         return ApiResult.Success("ذخیره شد.");
     }
@@ -120,6 +122,15 @@ class AccountApplication(
 
         await AccountRepo.Value.Save(account);
 
+        _ = HistoryRepo.Value.Save(new HistoryEntity
+        {
+            Issuer = JobContext.Value.Username,
+            Target = target,
+            EventTime = DateTime.Now,
+            Title = "امنیت",
+            Description = "تغییر کلمه عبور اکانت",
+        });
+
         return ApiResult.Success("کلمه عبور تغییر کرد.");
     }
 
@@ -134,7 +145,8 @@ class AccountApplication(
             EventTime = history.EventTime,
             EventTimeTitle = history.EventTime.ToPersianString(),
             Id = history.Id,
-            Target = target,
+            Issuer = history.Issuer,
+            Target = history.Target,
             Title = history.Title,
             Unit = history.Unit,
             Value = history.Value,
