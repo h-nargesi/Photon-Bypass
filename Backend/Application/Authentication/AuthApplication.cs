@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Application.Account.Model;
+﻿using System.Text.RegularExpressions;
+using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
@@ -7,7 +8,7 @@ using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
-using System.Text.RegularExpressions;
+using Serilog;
 
 namespace PhotonBypass.Application.Authentication;
 
@@ -33,7 +34,9 @@ partial class AuthApplication(
         {
             if (account != null)
             {
-                _ = SocialMediaSrv.Value.SendInvalidPasswordAlert(account.Username);
+                // TODO: History record
+                _ = SocialMediaSrv.Value.InvalidPasswordAlert(account.Username);
+                Log.Warning("Invlid password for {0}", account.Username);
             }
 
             return new ApiResult<UserModel>
@@ -67,6 +70,8 @@ partial class AuthApplication(
 
     public async Task<ApiResult> ResetPassword(string email_mobile)
     {
+        Log.Verbose("Reset-Password request: {0}", email_mobile);
+
         email_mobile = email_mobile.Trim();
 
         if (MobileValidator().IsMatch(email_mobile))
@@ -91,6 +96,10 @@ partial class AuthApplication(
             //    });
 
             //    await whatsapp_handler.SendResetPasswordLink(email_mobile, hash_code);
+
+                // TODO: History record
+
+            //   Log.Verbose("Reset-Password message has been sent: {0}", email_mobile);
             //}
 
             //return ApiResult.Success("پیام به واتساپ ارسال شد.");
@@ -111,6 +120,10 @@ partial class AuthApplication(
                 });
 
                 await EmailSrv.Value.SendResetPasswordLink(email_mobile, hash_code);
+
+                // TODO: History record
+
+                Log.Verbose("Reset-Password email has been sent: {0}", email_mobile);
             }
 
             return ApiResult.Success("ایمیل ارسال شد.");
@@ -143,7 +156,7 @@ partial class AuthApplication(
             Active = false,
         });
 
-        var account_saving = AccountRepo.Save(new AccountEntity
+        var account = new AccountEntity
         {
             Username = context.Username ?? string.Empty,
             CloudId = StaticRepo.Value.WebCloudID,
@@ -154,7 +167,11 @@ partial class AuthApplication(
             Name = context.Firstname,
             Surname = context.Lastname,
             Password = HashHandler.HashPassword(context.Password ?? string.Empty),
-        });
+        };
+
+        var account_saving = AccountRepo.Save(account);
+
+        _ = SocialMediaSrv.Value.NewUserRegistrationAlert(account);
 
         Task.WaitAll(account_saving, user_saving);
 

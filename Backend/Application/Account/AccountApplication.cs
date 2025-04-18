@@ -69,6 +69,10 @@ class AccountApplication(
 
         var savingUserTask = RadiusDeskSrv.Value.SavePermenentUser(user);
         var savingAccountTask = AccountRepo.Value.Save(account);
+        var savingHistory = HistoryRepo.Value.Save(new HistoryEntity
+        {
+            EventTime = DateTime.Now,
+        });
 
         await savingAccountTask;
         await savingUserTask;
