@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
-using PhotonBypass.Infra.Database.Dapper;
+using PhotonBypass.Infra.Database;
 
-namespace PhotonBypass.Infra.Database.Local;
+namespace PhotonBypass.Infra.Repository.DbContext;
 
 class LocalDbContext(IOptions<LocalDapperOptions> options) : DapperDbContext(options)
 {

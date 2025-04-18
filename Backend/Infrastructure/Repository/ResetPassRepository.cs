@@ -1,13 +1,14 @@
 ﻿using PhotonBypass.Domain.Account;
-using PhotonBypass.Infra.Database.Local;
+using PhotonBypass.Infra.Database;
+using PhotonBypass.Infra.Repository.DbContext;
 
-namespace PhotonBypass.Application.Database;
+namespace PhotonBypass.Infra.Repository;
 
-class ResetPassRepository(ILocalRepository<ResetPassEntity> repository)
+class ResetPassRepository(LocalDbContext context) : DapperRepository<ResetPassEntity>(context), IResetPassRepository
 {
     public async Task<ResetPassEntity?> GetAccount(string hash_code)
     {
-        var result = await repository.FindAsync(statement => statement
+        var result = await FindAsync(statement => statement
             .Where($"{nameof(ResetPassEntity.HashCode)} = @hash_code")
             .WithParameters(new { hash_code }));
 
@@ -15,7 +16,7 @@ class ResetPassRepository(ILocalRepository<ResetPassEntity> repository)
 
         if (entity != null)
         {
-            _ = repository.DeleteAsync(entity);
+            _ = DeleteAsync(entity);
         }
 
         return entity;
@@ -23,6 +24,6 @@ class ResetPassRepository(ILocalRepository<ResetPassEntity> repository)
 
     public Task AddHashCode(ResetPassEntity hash_code)
     {
-        return repository.AddAsync(hash_code);
+        return AddAsync(hash_code);
     }
 }

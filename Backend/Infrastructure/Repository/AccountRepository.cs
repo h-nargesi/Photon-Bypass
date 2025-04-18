@@ -1,14 +1,14 @@
 ﻿using PhotonBypass.Domain.Account;
 using PhotonBypass.Infra.Database;
-using PhotonBypass.Infra.Database.Local;
+using PhotonBypass.Infra.Repository.DbContext;
 
-namespace PhotonBypass.Application.Database;
+namespace PhotonBypass.Infra.Repository;
 
-class AccountRepository(ILocalRepository<AccountEntity> repo) : EditableRepository<AccountEntity>(repo), IAccountRepository
+class AccountRepository(LocalDbContext context) : EditableRepository<AccountEntity>(context), IAccountRepository
 {
     public async Task<AccountEntity?> GetAccount(string username)
     {
-        var result = await repository.FindAsync(statement => statement
+        var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Username)} = @username")
             .WithParameters(new { username }));
 
@@ -17,7 +17,7 @@ class AccountRepository(ILocalRepository<AccountEntity> repo) : EditableReposito
 
     public async Task<AccountEntity?> GetAccountByMobile(string mobile)
     {
-        var result = await repository.FindAsync(statement => statement
+        var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Mobile)} = @mobile")
             .WithParameters(new { mobile }));
 
@@ -26,7 +26,7 @@ class AccountRepository(ILocalRepository<AccountEntity> repo) : EditableReposito
 
     public async Task<AccountEntity?> GetAccountByEmail(string email)
     {
-        var result = await repository.FindAsync(statement => statement
+        var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Email)} = @email")
             .WithParameters(new { email }));
 
@@ -35,7 +35,7 @@ class AccountRepository(ILocalRepository<AccountEntity> repo) : EditableReposito
 
     public async Task<IList<AccountEntity>> GetTargetArea(int userid)
     {
-        var result = await repository.FindAsync(statement => statement
+        var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Parent)} = @userid")
             .WithParameters(new { userid }));
 

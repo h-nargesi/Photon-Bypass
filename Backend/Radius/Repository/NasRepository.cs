@@ -1,13 +1,14 @@
 ﻿using PhotonBypass.Domain.Radius;
-using PhotonBypass.Infra.Database.Radius;
+using PhotonBypass.Infra.Database;
+using PhotonBypass.Radius.Repository.DbContext;
 
-namespace PhotonBypass.Application.Database;
+namespace PhotonBypass.Radius.Repository;
 
-class NasRepository(IRadRepository<NasEntity> repository)
+class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context), INasRepository
 {
     public async Task<IDictionary<string, NasEntity>> GetNasInfo(IEnumerable<string> ips)
     {
-        var result = await repository.FindAsync(statement => statement
+        var result = await FindAsync(statement => statement
             .Where($"{nameof(NasEntity.IpAddress)} in @ips")
             .WithParameters(new { ips }));
 
@@ -16,7 +17,7 @@ class NasRepository(IRadRepository<NasEntity> repository)
 
     public async Task<bool> Exists(string ip)
     {
-        var result = await repository.FindAsync(statement => statement
+        var result = await FindAsync(statement => statement
             .Where($"{nameof(NasEntity.IpAddress)} = @ip")
             .WithParameters(new { ip }));
 

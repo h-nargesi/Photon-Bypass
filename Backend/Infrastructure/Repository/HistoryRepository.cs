@@ -1,14 +1,14 @@
 ﻿using PhotonBypass.Domain.Account;
 using PhotonBypass.Infra.Database;
-using PhotonBypass.Infra.Database.Local;
+using PhotonBypass.Infra.Repository.DbContext;
 
-namespace PhotonBypass.Application.Database;
+namespace PhotonBypass.Infra.Repository;
 
-class HistoryRepository(ILocalRepository<HistoryEntity> repo) : EditableRepository<HistoryEntity>(repo)
+class HistoryRepository(LocalDbContext context) : EditableRepository<HistoryEntity>(context), IHistoryRepository
 {
     public async Task<IList<HistoryEntity>> GetHistory(string target, DateTime? from, DateTime? to)
     {
-        var result = await repository.FindAsync(statement =>
+        var result = await FindAsync(statement =>
         {
             statement.Where($"{nameof(HistoryEntity.Target)} = @target")
                 .WithParameters(new { target });

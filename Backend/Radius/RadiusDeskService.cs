@@ -5,14 +5,14 @@ using PhotonBypass.Radius.ApiResponseModel;
 
 namespace PhotonBypass.Radius;
 
-public class RadiusDesk : IDisposable
+class RadiusDeskService : IDisposable
 {
     private readonly HttpClient httpClient;
     private string? token;
 
     private const string SEL_LANGUAGE = "4_4";
 
-    public RadiusDesk()
+    public RadiusDeskService()
     {
         httpClient = new HttpClient
         {

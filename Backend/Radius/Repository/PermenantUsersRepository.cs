@@ -1,13 +1,14 @@
 ﻿using PhotonBypass.Domain.Profile;
-using PhotonBypass.Infra.Database.Radius;
+using PhotonBypass.Infra.Database;
+using PhotonBypass.Radius.Repository.DbContext;
 
-namespace PhotonBypass.Application.Database;
+namespace PhotonBypass.Radius.Repository;
 
-class PermenantUsersRepository(IRadRepository<PermenantUserEntity> repository)
+class PermenantUsersRepository(RadDbContext context) : DapperRepository<PermenantUserEntity>(context), IPermenantUsersRepository
 {
     public async Task<PermenantUserEntity?> GetUser(string username)
     {
-        var result = await repository.FindAsync(statement => statement
+        var result = await FindAsync(statement => statement
             .Where($"{nameof(PermenantUserEntity.Username)} = @username")
             .WithParameters(new { username }));
 
@@ -16,7 +17,7 @@ class PermenantUsersRepository(IRadRepository<PermenantUserEntity> repository)
 
     public async Task<bool> CheckUsername(string username)
     {
-        var result = await repository.FindAsync(statement => statement
+        var result = await FindAsync(statement => statement
             .Where($"{nameof(PermenantUserEntity.Username)} = @username")
             .WithParameters(new { username }));
 

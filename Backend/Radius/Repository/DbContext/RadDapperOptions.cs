@@ -1,6 +1,6 @@
-﻿using PhotonBypass.Infra.Database.Dapper;
+﻿using PhotonBypass.Infra.Database;
 
-namespace PhotonBypass.Infra.Database.Radius;
+namespace PhotonBypass.Radius.Repository.DbContext;
 
 class RadDapperOptions : IDapperOptions
 {

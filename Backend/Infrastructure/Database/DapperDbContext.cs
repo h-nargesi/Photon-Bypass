@@ -2,12 +2,10 @@
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 
-namespace PhotonBypass.Infra.Database.Dapper;
+namespace PhotonBypass.Infra.Database;
 
-abstract class DapperDbContext(IOptions<IDapperOptions> options)
+public abstract class DapperDbContext(IOptions<IDapperOptions> options)
 {
-    private readonly IOptions<IDapperOptions> options = options;
-
     public IDbConnection CreateConnection()
     {
         var connection = options.Value.ConnectionString;

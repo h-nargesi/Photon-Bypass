@@ -2,21 +2,18 @@
 
 namespace PhotonBypass.Infra.Database;
 
-public abstract class EditableRepository<TEntity>(IRepository<TEntity> repository)
+public abstract class EditableRepository<TEntity>(DapperDbContext context) : DapperRepository<TEntity>(context)
     where TEntity : class, IBaseEntity
 {
-    protected readonly IRepository<TEntity> repository = repository;
-
     public Task Save(TEntity entity)
     {
         if (entity.Id > 0)
         {
-            return repository.UpdateAsync(entity);
+            return UpdateAsync(entity);
         }
         else
         {
-            return repository.AddAsync(entity);
+            return AddAsync(entity);
         }
     }
-
 }
