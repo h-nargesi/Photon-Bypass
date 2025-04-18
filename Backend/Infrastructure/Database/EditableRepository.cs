@@ -1,4 +1,6 @@
-﻿namespace PhotonBypass.Infra.Database;
+﻿using PhotonBypass.Domain;
+
+namespace PhotonBypass.Infra.Database;
 
 public abstract class EditableRepository<TEntity>(IRepository<TEntity> repository)
     where TEntity : class, IBaseEntity

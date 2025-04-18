@@ -1,17 +1,16 @@
 ﻿using PhotonBypass.Application.Account.Model;
-using PhotonBypass.Application.Database;
-using PhotonBypass.Domain.Local;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
-using PhotonBypass.Infra;
-using PhotonBypass.Infra.Controller;
-using PhotonBypass.OutSource;
+using PhotonBypass.Result;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.Application.Account;
 
 class AccountApplication(
-    Lazy<AccountRepository> AccountRepo,
-    Lazy<PermenantUsersRepository> UserRepo,
-    Lazy<HistoryRepository> HistoryRepo,
+    Lazy<IAccountRepository> AccountRepo,
+    Lazy<IPermenantUsersRepository> UserRepo,
+    Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IRadiusDeskService> RadiusDeskSrv)
     : IAccountApplication
 {

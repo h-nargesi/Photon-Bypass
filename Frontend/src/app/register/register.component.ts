@@ -82,6 +82,7 @@ export class RegisterComponent implements OnInit {
   };
   readonly mode!: PageMode;
 
+  target?: string;
   model: RegisterModel = {} as RegisterModel;
   submitted = false;
   result?: ApiResult;
@@ -125,7 +126,7 @@ export class RegisterComponent implements OnInit {
 
     const job =
       this.mode !== PageMode.Register
-        ? this.service.edit(this.model)
+        ? this.service.edit(this.model, this.target)
         : this.service.register(this.model);
 
     job.subscribe((result) => {
@@ -147,13 +148,13 @@ export class RegisterComponent implements OnInit {
 
   private async loadUserFullData() {
     this.submitted = true;
-    let targetName: string | undefined;
+
     if (this.mode === PageMode.EditSub)
-      targetName =
+      this.target =
         this.user_service.targetName ??
         (await this.user_service.user()).username;
 
-    this.service.fullInfo(targetName).subscribe((user) => {
+    this.service.fullInfo(this.target).subscribe((user) => {
       Object.assign(this.model, user);
       const username_parts = this.model?.username?.split('@');
       if (username_parts) {

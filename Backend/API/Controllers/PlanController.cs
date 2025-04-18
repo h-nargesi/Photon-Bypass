@@ -1,17 +1,19 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
+using PhotonBypass.API.Basical;
 using PhotonBypass.Application.Plan;
 using PhotonBypass.Application.Plan.Model;
-using PhotonBypass.Infra.Controller;
+using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
 
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class PlanController(IPlanApplication application, IMemoryCache cache) : ResultHandlerController(cache)
+public class PlanController(IPlanApplication application) : ResultHandlerController
 {
+    private readonly IPlanApplication application = application;
+
     [HttpGet("plan-state")]
     public async Task<ApiResult> GetPlanState([FromQuery] string? target)
     {
@@ -35,7 +37,7 @@ public class PlanController(IPlanApplication application, IMemoryCache cache) : 
     [HttpPost("estimate")]
     public async Task<ApiResult> Estimate([FromBody] RenewalContext context)
     {
-        var result = RenewalContextCheck(context);
+        var result = RnewalContextCheck(context);
 
         context.Target = GetSafeTargetArea(context.Target);
 
@@ -44,10 +46,10 @@ public class PlanController(IPlanApplication application, IMemoryCache cache) : 
         return SafeApiResult(result);
     }
 
-    [HttpPost("renewal")]
-    public async Task<ApiResult> Renewal([FromBody] RenewalContext context)
+    [HttpPost("rnewal")]
+    public async Task<ApiResult> Rnewal([FromBody] RenewalContext context)
     {
-        var result = RenewalContextCheck(context);
+        var result = RnewalContextCheck(context);
 
         context.Target = GetSafeTargetArea(context.Target);
 
@@ -56,7 +58,7 @@ public class PlanController(IPlanApplication application, IMemoryCache cache) : 
         return SafeApiResult(result);
     }
 
-    private static ApiResult? RenewalContextCheck(RenewalContext context)
+    private static ApiResult? RnewalContextCheck(RenewalContext context)
     {
         if (!context.Type.HasValue)
         {

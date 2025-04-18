@@ -1,0 +1,12 @@
+﻿using PhotonBypass.Domain.Profile;
+
+namespace PhotonBypass.Radius.ApiResponseModel;
+
+internal class PermanentUsersResponse
+{
+    public PermenantUserEntity[]? Items { get; set; }
+
+    public bool Success { get; set; }
+
+    public int TotalCount { get; set; }
+}

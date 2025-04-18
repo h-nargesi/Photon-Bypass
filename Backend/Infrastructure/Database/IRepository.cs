@@ -1,4 +1,5 @@
 ﻿using Dapper.FastCrud.Configuration.StatementOptions.Builders;
+using PhotonBypass.Domain;
 namespace PhotonBypass.Infra.Database;
 
 public interface IRepository<TEntity> : IDisposable

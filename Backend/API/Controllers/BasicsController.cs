@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using PhotonBypass.API.Basical;
 using PhotonBypass.Application.Basics;
-using PhotonBypass.Infra.Controller;
+using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class BasicsController(IBasicsApplication application) : ResultHandlerController(null!)
+public class BasicsController(IBasicsApplication application) : ResultHandlerController
 {
     private readonly IBasicsApplication application = application;
 

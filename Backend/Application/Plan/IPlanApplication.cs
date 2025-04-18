@@ -1,5 +1,5 @@
 ﻿using PhotonBypass.Application.Plan.Model;
-using PhotonBypass.Infra.Controller;
+using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Plan;
 

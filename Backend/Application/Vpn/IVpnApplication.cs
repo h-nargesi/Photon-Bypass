@@ -1,5 +1,5 @@
 ﻿using PhotonBypass.Application.Vpn.Model;
-using PhotonBypass.Infra.Controller;
+using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Vpn;
 

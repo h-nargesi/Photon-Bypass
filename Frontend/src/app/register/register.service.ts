@@ -16,8 +16,8 @@ export class RegisterService extends ApiBaseService {
     return this.getData<FullUserModel>(`${ACCOUNT_API_URL}/full-info`, param);
   }
 
-  edit(model: FullUserModel): Observable<ApiResult> {
-    return this.job(`${ACCOUNT_API_URL}/edit-user`, model);
+  edit(model: FullUserModel, target?: string): Observable<ApiResult> {
+    return this.job(`${ACCOUNT_API_URL}/edit-user?target=${target ?? ''}`, model);
   }
 
   register(model: RegisterModel): Observable<ApiResult> {

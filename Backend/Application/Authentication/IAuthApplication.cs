@@ -1,6 +1,6 @@
 ﻿using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication.Model;
-using PhotonBypass.Infra.Controller;
+using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Authentication;
 

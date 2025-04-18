@@ -1,17 +1,17 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
+using PhotonBypass.API.Basical;
 using PhotonBypass.API.Context;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
-using PhotonBypass.Infra.Controller;
+using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
 
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
-public class AccountController(IAccountApplication application, IMemoryCache cache) : ResultHandlerController(cache)
+public class AccountController(IAccountApplication application) : ResultHandlerController
 {
     private readonly IAccountApplication application = application;
 
@@ -34,14 +34,16 @@ public class AccountController(IAccountApplication application, IMemoryCache cac
     }
 
     [HttpPost("edit-user")]
-    public async Task<ApiResult> EditUser([FromBody] EditUserContext context)
+    public async Task<ApiResult> EditUser([FromQuery] string? target, [FromBody] EditUserContext context)
     {
         if (string.IsNullOrWhiteSpace(context.Email) && string.IsNullOrWhiteSpace(context.Mobile))
         {
             return BadRequestApiResult(message: "حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
         }
 
-        var result = await application.EditUser(UserName, context);
+        target = GetSafeTargetArea(target);
+
+        var result = await application.EditUser(target, context);
 
         return SafeApiResult(result);
     }
@@ -51,17 +53,12 @@ public class AccountController(IAccountApplication application, IMemoryCache cac
     {
         if (string.IsNullOrWhiteSpace(context.Token))
         {
-            return BadRequestApiResult(message: "کلمه عبور فعلی خالی است!");
+            return BadRequestApiResult(message: "کلمه عبور قبلی خالی است!");
         }
 
         if (string.IsNullOrWhiteSpace(context.Password))
         {
             return BadRequestApiResult(message: "کلمه عبور خالی است!");
-        }
-
-        if (context.Token == context.Password)
-        {
-            return BadRequestApiResult(message: "کلمه عبور تغییر نکرده است!");
         }
 
         var result = await application.ChangePassword(UserName, context.Token, context.Password);

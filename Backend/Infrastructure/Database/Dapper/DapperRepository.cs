@@ -1,7 +1,8 @@
-﻿using System.Data;
-using Dapper;
+﻿using Dapper;
 using Dapper.FastCrud;
 using Dapper.FastCrud.Configuration.StatementOptions.Builders;
+using PhotonBypass.Domain;
+using System.Data;
 
 namespace PhotonBypass.Infra.Database.Dapper;
 

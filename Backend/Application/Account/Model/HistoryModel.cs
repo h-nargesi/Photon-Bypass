@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Infra.Controller;
+﻿using PhotonBypass.Tools;
 using System.Text.Json.Serialization;
 
 namespace PhotonBypass.Application.Account.Model;

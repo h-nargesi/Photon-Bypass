@@ -1,22 +1,21 @@
-﻿using System.Text.RegularExpressions;
-using PhotonBypass.Application.Account.Model;
+﻿using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication.Model;
-using PhotonBypass.Application.Database;
-using PhotonBypass.Application.Management;
-using PhotonBypass.Domain.Local;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Management;
+using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
-using PhotonBypass.Infra;
-using PhotonBypass.Infra.Controller;
-using PhotonBypass.OutSource;
+using PhotonBypass.Result;
+using PhotonBypass.Tools;
+using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Application.Authentication;
 
 partial class AuthApplication(
-    AccountRepository AccountRepo,
-    Lazy<ResetPassRepository> ResetPassRepo,
-    Lazy<PermenantUsersRepository> UserRepo,
-    Lazy<StaticRepository> StaticRepo,
-    Lazy<ServerManagementService> ServerManageSrv,
+    IAccountRepository AccountRepo,
+    Lazy<IResetPassRepository> ResetPassRepo,
+    Lazy<IPermenantUsersRepository> UserRepo,
+    Lazy<IStaticRepository> StaticRepo,
+    Lazy<IServerManagementService> ServerManageSrv,
     Lazy<IRadiusDeskService> RadiusDeskSrv,
     //Lazy<IWhatsAppHandler> whatsapp_handler,
     Lazy<IEmailHandler> EmailHdl

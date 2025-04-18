@@ -1,5 +1,6 @@
 ﻿using System.Text.Json.Serialization;
-using PhotonBypass.Infra.Controller;
+using PhotonBypass.API.Basical;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.API.Context;
 

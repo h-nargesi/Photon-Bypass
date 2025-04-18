@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Infra.Database.Dapper;
+﻿using PhotonBypass.Domain;
+using PhotonBypass.Infra.Database.Dapper;
 
 namespace PhotonBypass.Infra.Database.Local;
 

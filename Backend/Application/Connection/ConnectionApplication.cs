@@ -1,17 +1,15 @@
 ﻿using PhotonBypass.Application.Connection.Model;
-using PhotonBypass.Application.Database;
+using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
-using PhotonBypass.Infra;
-using PhotonBypass.Infra.Controller;
-using PhotonBypass.OutSource;
-using PhotonBypass.OutSource.Mikrotik.Model;
+using PhotonBypass.Domain.Server;
+using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Connection;
 
 class ConnectionApplication(
     IMikrotikHandler MikrotikHdl,
-    NasRepository NasRepo,
-    Lazy<RadAcctRepository> RadAcctRepo)
+    INasRepository NasRepo,
+    Lazy<IRadAcctRepository> RadAcctRepo)
     : IConnectionApplication
 {
     public async Task<ApiResult<IList<ConnectionStateModel>>> GetCurrentConnectionState(string target)
