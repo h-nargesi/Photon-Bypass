@@ -4,7 +4,7 @@ using PhotonBypass.Infra.Repository.DbContext;
 
 namespace PhotonBypass.Infra.Repository;
 
-class ResetPassRepository(LocalDbContext context) : DapperRepository<ResetPassEntity>(context), IResetPassRepository
+class ResetPassRepository(LocalDbContext context) : EditableRepository<ResetPassEntity>(context), IResetPassRepository
 {
     public async Task<ResetPassEntity?> GetAccount(string hash_code)
     {

@@ -1,6 +1,6 @@
 ﻿namespace PhotonBypass.Domain.Account;
 
-public interface IResetPassRepository
+public interface IResetPassRepository : IEditableRepository<ResetPassEntity>
 {
     Task<ResetPassEntity?> GetAccount(string hash_code);
 
