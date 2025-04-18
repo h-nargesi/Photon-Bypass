@@ -5,11 +5,9 @@ using PhotonBypass;
 
 var builder = WebApplication.CreateBuilder(args);
 
-LogConfiguration.InitializeLogService(
-    builder.Environment.IsDevelopment(),
-    builder.Configuration["Logging:FilePath"]?.ToString() ?? "event.log");
-
 // Add services to the container.
+
+LogConfiguration.InitializeLogService(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
