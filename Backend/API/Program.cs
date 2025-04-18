@@ -1,8 +1,13 @@
 using PhotonBypass.Infra;
 using PhotonBypass.Application;
 using Microsoft.IdentityModel.Tokens;
+using PhotonBypass;
 
 var builder = WebApplication.CreateBuilder(args);
+
+LogConfiguration.InitializeLogService(
+    builder.Environment.IsDevelopment(),
+    builder.Configuration["Logging:FilePath"]?.ToString() ?? "event.log");
 
 // Add services to the container.
 
