@@ -147,6 +147,8 @@ partial class AuthApplication(
             return ApiResult.Success("ایمیل ارسال شد.");
         }
 
+        Log.Warning("Invalid Email/Mobile: {0}", email_mobile);
+
         throw new UserException("ایمیل/موبایل نا معتبر است!");
     }
 

@@ -56,7 +56,7 @@ class ConnectionApplication(
     {
         if (!await NasRepo.Exists(server))
         {
-            Log.Warning("[user: {0}] Closing connection server is invalid: ('{1}', '{2}', '{3}')",
+            Log.Warning("[user: {0}] Closing connection server is invalid: ({1}, {2}, {3})",
                 JobContext.Value.Username, server, target, sessionId);
             throw new UserException("دسترسی غیرمجاز!");
         }
@@ -76,7 +76,7 @@ class ConnectionApplication(
             Title = "کانکشن",
             Description = "کانکشن بسته شد.",
         });
-        Log.Information("[user: {0}] Connection Closed: ('{1}', '{2}', '{3}')", 
+        Log.Information("[user: {0}] Connection Closed: ({1}, {2}, {3})", 
             server, target, sessionId);
 
         return ApiResult.Success("کانکشن بسته شد.");

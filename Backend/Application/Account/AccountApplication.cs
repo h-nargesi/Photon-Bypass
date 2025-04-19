@@ -5,6 +5,7 @@ using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
+using Serilog;
 
 namespace PhotonBypass.Application.Account;
 
@@ -18,8 +19,13 @@ class AccountApplication(
 {
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
-        var user = await AccountRepo.Value.GetAccount(username) ??
+        var user = await AccountRepo.Value.GetAccount(username);
+
+        if (user == null)
+        {
+            Log.Warning("[user: {0}] Account not found. target:{1}", JobContext.Value.Username, username);
             throw new UserException("کاربر پیدا نشد!");
+        }
 
         var target_area = (await AccountRepo.Value.GetTargetArea(user.Id))
             .Select(user => new TargetModel
@@ -43,8 +49,13 @@ class AccountApplication(
 
     public async Task<ApiResult<FullUserModel>> GetFullInfo(string target)
     {
-        var user = await AccountRepo.Value.GetAccount(target) ??
+        var user = await AccountRepo.Value.GetAccount(target);
+
+        if (user == null)
+        {
+            Log.Warning("[user: {0}] Account not found. target:{1}", JobContext.Value.Username, target);
             throw new UserException("کاربر پیدا نشد!");
+        }
 
         return ApiResult<FullUserModel>.Success(new FullUserModel
         {
