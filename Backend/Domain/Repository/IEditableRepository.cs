@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Domain;
+﻿namespace PhotonBypass.Domain.Repository;
 
 public interface IEditableRepository<TEntity> where TEntity : class, IBaseEntity
 {

@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Domain;
+﻿namespace PhotonBypass.Domain.Services;
 
 public interface IEmailService
 {

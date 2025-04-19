@@ -5,5 +5,5 @@ namespace PhotonBypass.Application.Basics;
 
 public interface IBasicsApplication
 {
-    Task<ApiResult<IEnumerable<PriceModel>>> GetPrices();
+    Task<ApiResult<IList<PriceModel>>> GetPrices();
 }

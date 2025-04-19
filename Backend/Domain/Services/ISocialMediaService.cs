@@ -1,6 +1,6 @@
 ﻿using PhotonBypass.Domain.Account;
 
-namespace PhotonBypass.Domain;
+namespace PhotonBypass.Domain.Services;
 
 public interface ISocialMediaService
 {
