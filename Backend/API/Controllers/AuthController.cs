@@ -19,8 +19,6 @@ public class AuthController(
     IAuthApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) :
     ResultHandlerController(job, cache)
 {
-    private readonly IAuthApplication application = application;
-
     [HttpPost("token")]
     public async Task<ApiResult> Login([FromBody] Context.TokenContext context)
     {

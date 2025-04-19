@@ -1,4 +1,6 @@
-﻿namespace PhotonBypass.Domain.Account;
+﻿using PhotonBypass.Domain.Repository;
+
+namespace PhotonBypass.Domain.Account;
 
 public interface IResetPassRepository : IEditableRepository<ResetPassEntity>
 {

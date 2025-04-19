@@ -13,8 +13,6 @@ public class BasicsController(
     IBasicsApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) :
     ResultHandlerController(job, cache)
 {
-    private readonly IBasicsApplication application = application;
-
     [HttpGet("prices")]
     public async Task<ApiResult> GetPrices()
     {

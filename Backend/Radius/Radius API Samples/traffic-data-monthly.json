@@ -1,0 +1,216 @@
+{
+  "url": "https://rad.photon-bypass.com/cake4/rd_cake/user-stats/index.json",
+  "type": "GET",
+  "request": {
+    "_dc": 1745070200182,
+    "username": "U0233",
+    "type": "permanent",
+    "span": "monthly",
+    "timezone_id": 262,
+    "page": 1,
+    "start": 0,
+    "limit": 25,
+    "token": "01831f18-6691-4c39-af82-5803aa885c0c",
+    "sel_language": "4_4",
+    "cloud_id": 23
+  },
+  "response": {
+    "items": [
+      {
+        "id": 1,
+        "time_unit": 1,
+        "data_in": "46678071",
+        "data_out": "684388642"
+      },
+      {
+        "id": 2,
+        "time_unit": 2,
+        "data_in": "113684015",
+        "data_out": "1852269377"
+      },
+      {
+        "id": 3,
+        "time_unit": 3,
+        "data_in": "63581967",
+        "data_out": "1373269132"
+      },
+      {
+        "id": 4,
+        "time_unit": 4,
+        "data_in": "91067345",
+        "data_out": "1461502838"
+      },
+      {
+        "id": 5,
+        "time_unit": 5,
+        "data_in": "68990490",
+        "data_out": "1845744964"
+      },
+      {
+        "id": 6,
+        "time_unit": 6,
+        "data_in": "37489503",
+        "data_out": "747181754"
+      },
+      {
+        "id": 7,
+        "time_unit": 7,
+        "data_in": "72729947",
+        "data_out": "1545316932"
+      },
+      {
+        "id": 8,
+        "time_unit": 8,
+        "data_in": "43814388",
+        "data_out": "1162384190"
+      },
+      {
+        "id": 9,
+        "time_unit": 9,
+        "data_in": "59238579",
+        "data_out": "641791752"
+      },
+      {
+        "id": 10,
+        "time_unit": 10,
+        "data_in": "12566536",
+        "data_out": "168350620"
+      },
+      {
+        "id": 11,
+        "time_unit": 11,
+        "data_in": "111659618",
+        "data_out": "1939634464"
+      },
+      {
+        "id": 12,
+        "time_unit": 12,
+        "data_in": "40082770",
+        "data_out": "668120098"
+      },
+      {
+        "id": 13,
+        "time_unit": 13,
+        "data_in": "66990532",
+        "data_out": "966435715"
+      },
+      {
+        "id": 14,
+        "time_unit": 14,
+        "data_in": "75223411",
+        "data_out": "549610639"
+      },
+      {
+        "id": 15,
+        "time_unit": 15,
+        "data_in": "3950432",
+        "data_out": "4176"
+      },
+      {
+        "id": 16,
+        "time_unit": 16,
+        "data_in": "131765800",
+        "data_out": "1156681878"
+      },
+      {
+        "id": 17,
+        "time_unit": 17,
+        "data_in": "126966433",
+        "data_out": "2078875895"
+      },
+      {
+        "id": 18,
+        "time_unit": 18,
+        "data_in": "62005307",
+        "data_out": "1482106369"
+      },
+      {
+        "id": 19,
+        "time_unit": 19,
+        "data_in": "75497071",
+        "data_out": "654310882"
+      },
+      {
+        "id": 20,
+        "time_unit": 20,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 21,
+        "time_unit": 21,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 22,
+        "time_unit": 22,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 23,
+        "time_unit": 23,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 24,
+        "time_unit": 24,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 25,
+        "time_unit": 25,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 26,
+        "time_unit": 26,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 27,
+        "time_unit": 27,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 28,
+        "time_unit": 28,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 29,
+        "time_unit": 29,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 30,
+        "time_unit": 30,
+        "data_in": null,
+        "data_out": null
+      }
+    ],
+    "success": true,
+    "metaData": {
+      "totalIn": 1303982215,
+      "totalOut": 20977980317,
+      "totalInOut": 22281962532,
+      "overalIn": "74643176706",
+      "overalOut": "1117198741568",
+      "overalInOut": 1191841918274
+    },
+    "totalIn": 1303982215,
+    "totalOut": 20977980317,
+    "totalInOut": 22281962532,
+    "overalIn": "74643176706",
+    "overalOut": "1117198741568",
+    "overalInOut": 1191841918274
+  }
+}

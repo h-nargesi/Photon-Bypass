@@ -17,8 +17,6 @@ public class AccountController(
     IAccountApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) : 
     ResultHandlerController(job, cache)
 {
-    private readonly IAccountApplication application = application;
-
     [HttpGet("get-user")]
     public async Task<ApiResult> GetUser()
     {

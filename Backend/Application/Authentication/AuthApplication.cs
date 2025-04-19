@@ -1,14 +1,14 @@
-﻿using System.Text.RegularExpressions;
-using PhotonBypass.Application.Account.Model;
+﻿using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication.Model;
-using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
+using PhotonBypass.Domain.Services;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
+using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Application.Authentication;
 
@@ -18,7 +18,7 @@ partial class AuthApplication(
     Lazy<IPermenantUsersRepository> UserRepo,
     Lazy<IStaticRepository> StaticRepo,
     Lazy<IServerManagementService> ServerManageSrv,
-    Lazy<IRadiusDeskService> RadiusDeskSrv,
+    Lazy<IRadiusService> RadiusSrv,
     //Lazy<IWhatsAppHandler> whatsapp_handler,
     Lazy<IEmailService> EmailSrv,
     Lazy<ISocialMediaService> SocialMediaSrv,
@@ -179,7 +179,7 @@ partial class AuthApplication(
             Active = false,
         };
 
-        await RadiusDeskSrv.Value.SavePermenentUser(user);
+        await RadiusSrv.Value.SavePermenentUser(user);
 
         var account = new AccountEntity
         {

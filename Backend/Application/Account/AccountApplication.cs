@@ -12,7 +12,7 @@ class AccountApplication(
     Lazy<IAccountRepository> AccountRepo,
     Lazy<IPermenantUsersRepository> UserRepo,
     Lazy<IHistoryRepository> HistoryRepo,
-    Lazy<IRadiusDeskService> RadiusDeskSrv,
+    Lazy<IRadiusService> RadiusSrv,
     Lazy<IJobContext> JobContext)
     : IAccountApplication
 {
@@ -74,7 +74,7 @@ class AccountApplication(
         var user = await userLoadingTask ?? throw new UserException("کاربر پیدا نشد!");
         SetPermanentUser(user, model);
 
-        var savingUserTask = RadiusDeskSrv.Value.SavePermenentUser(user);
+        var savingUserTask = RadiusSrv.Value.SavePermenentUser(user);
         var savingAccountTask = AccountRepo.Value.Save(account);
 
         Task.WaitAll(savingAccountTask, savingUserTask);

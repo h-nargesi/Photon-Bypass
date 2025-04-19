@@ -2,8 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.API.Basical;
+using PhotonBypass.API.Context;
+using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Vpn;
-using PhotonBypass.Application.Vpn.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Result;
 
@@ -13,7 +14,7 @@ namespace PhotonBypass.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class VpnController(
-    IVpnApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) :
+    IVpnApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache, Lazy<IAuthApplication> auth) :
     ResultHandlerController(job, cache)
 {
     [HttpPost("change-ovpn")]
@@ -31,9 +32,15 @@ public class VpnController(
             return BadRequestApiResult(message: "کلمه عبور خالی است!");
         }
 
-        context.Target = JobContext.Target;
+        var user = await auth.Value.CheckUserPassword(JobContext.Username, context.Token);
 
-        var result = await application.ChangeOvpnPassword(context);
+        if (user.Code == 401)
+        {
+            user.Message = "کلمه عبور اکانت جاری اشتباه وارده شده!";
+            return user;
+        }
+
+        var result = await application.ChangeOvpnPassword(JobContext.Target, context.Password);
 
         return SafeApiResult(result);
     }

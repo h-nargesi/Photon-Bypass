@@ -16,8 +16,6 @@ public class ConnectionController(
     IConnectionApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) :
     ResultHandlerController(job, cache)
 {
-    private readonly IConnectionApplication application = application;
-
     [HttpGet("current-con-state")]
     public async Task<ApiResult> GetCurrentConnectionState([FromQuery] string? target)
     {

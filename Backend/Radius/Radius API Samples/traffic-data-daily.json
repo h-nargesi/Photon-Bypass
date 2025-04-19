@@ -1,0 +1,180 @@
+{
+  "url": "https://rad.photon-bypass.com/cake4/rd_cake/user-stats/index.json",
+  "type": "GET",
+  "request": {
+    "_dc": 1745069891611,
+    "username": "U0233",
+    "type": "permanent",
+    "span": "daily",
+    "timezone_id": 262,
+    "page": 1,
+    "start": 0,
+    "limit": 25,
+    "token": "01831f18-6691-4c39-af82-5803aa885c0c",
+    "sel_language": "4_4",
+    "cloud_id": 23
+  },
+  "response": {
+    "items": [
+      {
+        "id": 0,
+        "time_unit": 0,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 1,
+        "time_unit": 1,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 2,
+        "time_unit": 2,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 3,
+        "time_unit": 3,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 4,
+        "time_unit": 4,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 5,
+        "time_unit": 5,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 6,
+        "time_unit": 6,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 7,
+        "time_unit": 7,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 8,
+        "time_unit": 8,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 9,
+        "time_unit": 9,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 10,
+        "time_unit": 10,
+        "data_in": "14820568",
+        "data_out": "108423404"
+      },
+      {
+        "id": 11,
+        "time_unit": 11,
+        "data_in": "8903386",
+        "data_out": "51238294"
+      },
+      {
+        "id": 12,
+        "time_unit": 12,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 13,
+        "time_unit": 13,
+        "data_in": "17161020",
+        "data_out": "117024976"
+      },
+      {
+        "id": 14,
+        "time_unit": 14,
+        "data_in": "8870038",
+        "data_out": "109189676"
+      },
+      {
+        "id": 15,
+        "time_unit": 15,
+        "data_in": "12410564",
+        "data_out": "148103334"
+      },
+      {
+        "id": 16,
+        "time_unit": 16,
+        "data_in": "3847971",
+        "data_out": "15734578"
+      },
+      {
+        "id": 17,
+        "time_unit": 17,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 18,
+        "time_unit": 18,
+        "data_in": "2944661",
+        "data_out": "19821666"
+      },
+      {
+        "id": 19,
+        "time_unit": 19,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 20,
+        "time_unit": 20,
+        "data_in": "6517770",
+        "data_out": "84720582"
+      },
+      {
+        "id": 21,
+        "time_unit": 21,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 22,
+        "time_unit": 22,
+        "data_in": null,
+        "data_out": null
+      },
+      {
+        "id": 23,
+        "time_unit": 23,
+        "data_in": null,
+        "data_out": null
+      }
+    ],
+    "success": true,
+    "metaData": {
+      "totalIn": 75475978,
+      "totalOut": 654256510,
+      "totalInOut": 729732488,
+      "overalIn": "74643155613",
+      "overalOut": "1117198687196",
+      "overalInOut": 1191841842809
+    },
+    "totalIn": 75475978,
+    "totalOut": 654256510,
+    "totalInOut": 729732488,
+    "overalIn": "74643155613",
+    "overalOut": "1117198687196",
+    "overalInOut": 1191841842809
+  }
+}
