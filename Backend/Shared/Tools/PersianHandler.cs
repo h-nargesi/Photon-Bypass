@@ -8,4 +8,9 @@ public static class PersianHandler
     {
         return new Jalali(date).GetDate().ToNumberic();
     }
+
+    public static string ToPersianString(this DateTime date, string format)
+    {
+        return new Jalali(date).GetDate().ToString(format);
+    }
 }

@@ -4,7 +4,7 @@ using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Result;
-using System.Collections.Generic;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.Application.Vpn;
 
@@ -16,6 +16,7 @@ class VpnApplication(
     : IVpnApplication
 {
     private const int MAX_DATE_BEFORE = 30;
+    private const int BYTES_IN_MEGABYTES = 1024 * 1024;
 
     public async Task<ApiResult> ChangeOvpnPassword(string target, string password)
     {
@@ -110,8 +111,49 @@ class VpnApplication(
         return new_data;
     }
 
-    private TrafficDataModel ConvertToModel(IEnumerable<TrafficDataEntity> data)
+    private static TrafficDataModel ConvertToModel(IEnumerable<TrafficDataEntity> data)
     {
-        throw new NotImplementedException();
+        data = data.OrderBy(x => x.Day);
+
+        var labels = data.Select(x => x.Day.ToPersianString("dd"))
+            .ToArray();
+
+        var upload = new List<int>();
+        var download = new List<int>();
+        var total = new List<int>();
+
+        foreach (var record in data)
+        {
+            var D = (int)(record.DataIn / BYTES_IN_MEGABYTES);
+            var U = (int)(record.DataOut / BYTES_IN_MEGABYTES);
+
+            upload.Add(U);
+            download.Add(D);
+            total.Add(D + U);
+        }
+
+        return new TrafficDataModel
+        {
+            Title = "ترافیک یک ماه گذشته",
+            Collections =
+            [
+                new TrafficRecordModel
+                {
+                    Title = "Download",
+                    Data = [.. download],
+                },
+                new TrafficRecordModel
+                {
+                    Title = "Upload",
+                    Data = [.. upload],
+                },
+                new TrafficRecordModel
+                {
+                    Title = "Download",
+                    Data = [.. total],
+                }
+            ],
+            Labels = labels,
+        };
     }
 }
