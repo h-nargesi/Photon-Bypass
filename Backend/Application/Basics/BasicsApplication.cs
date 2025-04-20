@@ -9,7 +9,7 @@ class BasicsApplication(IPriceRepository PriceRepo) : IBasicsApplication
     public async Task<ApiResult<IList<PriceModel>>> GetPrices()
     {
         var prices = await PriceRepo.GetLeatest()
-            ?? throw new Exception("Price is not set!");
+            ?? throw new Exception("Prices are not set!");
 
         var result = prices
             .Select(x => new PriceModel

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.Domain;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
 
@@ -34,8 +35,8 @@ public class ResultHandlerController(Lazy<IJobContext> context, Lazy<IMemoryCach
 
         if (!has_access)
         {
-            Log.Warning("[user: {0}] Target access denied: ('{1}', '{2}')", target, Request.GetDisplayUrl());
-            throw new UserException("شما به این کاربر دسترسی ندارید!");
+            throw new UserException("شما به این کاربر دسترسی ندارید!",
+                $"Target access denied: ({target}, '{Request.GetDisplayUrl()}')");
         }
     }
 

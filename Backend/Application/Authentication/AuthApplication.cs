@@ -5,6 +5,7 @@ using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
@@ -80,8 +81,6 @@ partial class AuthApplication(
 
     public async Task<ApiResult> ResetPassword(string email_mobile)
     {
-        Log.Verbose("Reset-Password request: {0}", email_mobile);
-
         email_mobile = email_mobile.Trim();
 
         if (MobileValidator().IsMatch(email_mobile))
@@ -147,9 +146,8 @@ partial class AuthApplication(
             return ApiResult.Success("ایمیل ارسال شد.");
         }
 
-        Log.Warning("Invalid Email/Mobile: {0}", email_mobile);
-
-        throw new UserException("ایمیل/موبایل نا معتبر است!");
+        throw new UserException("ایمیل/موبایل نا معتبر است!",
+            $"Invalid Email/Mobile: {email_mobile}");
     }
 
     public async Task<ApiResult> Register(RegisterContext context)

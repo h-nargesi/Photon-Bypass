@@ -3,6 +3,7 @@ using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
@@ -19,13 +20,8 @@ class AccountApplication(
 {
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
-        var user = await AccountRepo.Value.GetAccount(username);
-
-        if (user == null)
-        {
-            Log.Warning("[user: {0}] Account not found. target:{1}", JobContext.Value.Username, username);
-            throw new UserException("کاربر پیدا نشد!");
-        }
+        var user = await AccountRepo.Value.GetAccount(username) ?? 
+            throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
 
         var target_area = (await AccountRepo.Value.GetTargetArea(user.Id))
             .Select(user => new TargetModel
@@ -49,13 +45,8 @@ class AccountApplication(
 
     public async Task<ApiResult<FullUserModel>> GetFullInfo(string target)
     {
-        var user = await AccountRepo.Value.GetAccount(target);
-
-        if (user == null)
-        {
-            Log.Warning("[user: {0}] Account not found. target:{1}", JobContext.Value.Username, target);
-            throw new UserException("کاربر پیدا نشد!");
-        }
+        var user = await AccountRepo.Value.GetAccount(target) ??
+            throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
 
         return ApiResult<FullUserModel>.Success(new FullUserModel
         {
@@ -79,10 +70,12 @@ class AccountApplication(
         var userLoadingTask = UserRepo.Value.GetUser(target);
         var accountLoadingTask = AccountRepo.Value.GetAccount(target);
 
-        var account = await accountLoadingTask ?? throw new UserException("کاربر پیدا نشد!");
+        var account = await accountLoadingTask ??
+            throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
         SetAccount(account, model);
 
-        var user = await userLoadingTask ?? throw new UserException("کاربر پیدا نشد!");
+        var user = await userLoadingTask ??
+            throw new UserException("کاربر پیدا نشد!", $"PermenantUser not found. target:{target}");
         SetPermanentUser(user, model);
 
         var savingUserTask = RadiusSrv.Value.SavePermenentUser(user);
@@ -93,39 +86,29 @@ class AccountApplication(
         return ApiResult.Success("ذخیره شد.");
     }
 
-    private static void SetAccount(AccountEntity account, EditUserContext model)
-    {
-        account.Name = model.Firstname;
-        account.Surname = model.Lastname;
-
-        if (account.Email != model.Email)
-            account.EmailValid = false;
-
-        if (account.Mobile != model.Mobile)
-            account.MobileValid = false;
-
-        account.Email = model.Email;
-        account.Mobile = model.Mobile;
-    }
-
-    private static void SetPermanentUser(PermenantUserEntity user, EditUserContext model)
-    {
-        user.Name = model.Firstname;
-        user.Surname = model.Lastname;
-        user.Email = model.Email;
-        user.Phone = model.Mobile;
-    }
-
     public async Task<ApiResult> ChangePassword(string target, string token, string password)
     {
         token = HashHandler.HashPassword(token);
         password = HashHandler.HashPassword(password);
 
-        var account = await AccountRepo.Value.GetAccount(target) ??
-            throw new UserException("کاربر پیدا نشد!");
+        var account = await AccountRepo.Value.GetAccount(target);
 
-        if (account.Password != token)
+        if (account == null || account.Password != token)
         {
+            if (account != null)
+            {
+                _ = HistoryRepo.Value.Save(new HistoryEntity
+                {
+                    Issuer = JobContext.Value.Username,
+                    Target = account.Username,
+                    EventTime = DateTime.Now,
+                    Title = "امنیت",
+                    Description = "تلاش غیرمجاز برای تغییر کلمه عبور!",
+                });
+
+                Log.Warning("[user: {0}] Invlid password (change-pass) for {1}", account.Username, target);
+            }
+
             throw new UserException("کلمه عبور فعلی اشتباه است!");
         }
 
@@ -164,5 +147,28 @@ class AccountApplication(
         });
 
         return ApiResult<IList<HistoryModel>>.Success([.. result]);
+    }
+
+    private static void SetAccount(AccountEntity account, EditUserContext model)
+    {
+        account.Name = model.Firstname;
+        account.Surname = model.Lastname;
+
+        if (account.Email != model.Email)
+            account.EmailValid = false;
+
+        if (account.Mobile != model.Mobile)
+            account.MobileValid = false;
+
+        account.Email = model.Email;
+        account.Mobile = model.Mobile;
+    }
+
+    private static void SetPermanentUser(PermenantUserEntity user, EditUserContext model)
+    {
+        user.Name = model.Firstname;
+        user.Surname = model.Lastname;
+        user.Email = model.Email;
+        user.Phone = model.Mobile;
     }
 }

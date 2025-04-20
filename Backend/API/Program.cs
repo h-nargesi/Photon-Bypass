@@ -2,6 +2,7 @@ using Microsoft.IdentityModel.Tokens;
 using PhotonBypass;
 using PhotonBypass.API.Basical;
 using PhotonBypass.Application;
+using PhotonBypass.ErrorHandler;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,15 @@ var app = builder.Build();
 //}
 
 app.UseHttpsRedirection();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseMiddleware<ExceptionHandlingMiddlewareInDevelopment>();
+}
+else
+{
+    app.UseMiddleware<ExceptionHandlingMiddleware>();
+}
 
 app.UseAuthentication();
 

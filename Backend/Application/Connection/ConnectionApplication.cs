@@ -4,6 +4,7 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Server;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
 
@@ -56,9 +57,8 @@ class ConnectionApplication(
     {
         if (!await NasRepo.Exists(server))
         {
-            Log.Warning("[user: {0}] Closing connection server is invalid: ({1}, {2}, {3})",
-                JobContext.Value.Username, server, target, sessionId);
-            throw new UserException("دسترسی غیرمجاز!");
+            throw new UserException("دسترسی غیرمجاز!",
+                $"Closing connection server is invalid: ({server}, {target}, {sessionId})");
         }
 
         var result = await VpnNodeSrv.CloseConnection(server, target, sessionId);
