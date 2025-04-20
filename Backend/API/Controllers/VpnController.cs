@@ -36,6 +36,7 @@ public class VpnController(
 
         if (user.Code == 401)
         {
+            user.Code = 400;
             user.Message = "کلمه عبور اکانت جاری اشتباه وارده شده!";
             return user;
         }

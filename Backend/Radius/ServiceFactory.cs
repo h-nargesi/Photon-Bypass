@@ -18,11 +18,12 @@ static class ServiceFactory
         services.AddSingleton<RadDapperOptions>();
         services.AddSingleton<RadDbContext>();
 
+        services.AddSingleton<IStaticRepository, StaticRepository>();
+
         services.AddTransient<ICloudRepository, ICloudRepository>();
         services.AddTransient<INasRepository, NasRepository>();
         services.AddTransient<IPermenantUsersRepository, PermenantUsersRepository>();
         services.AddTransient<IProfileRepository, ProfileRepository>();
         services.AddTransient<IRadAcctRepository, RadAcctRepository>();
-        services.AddTransient<IStaticRepository, StaticRepository>();
     }
 }

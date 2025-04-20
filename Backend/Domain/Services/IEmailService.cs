@@ -4,5 +4,5 @@ public interface IEmailService
 {
     Task SendResetPasswordLink(string email, string hash_code);
 
-    Task SendCertEmail(string email, string cert);
+    Task SendCertEmail(string email, CertEmailContext context);
 }

@@ -1,6 +1,8 @@
 ﻿using PhotonBypass.Application.Vpn.Model;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
+using PhotonBypass.Domain.Server;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Result;
@@ -12,7 +14,9 @@ class VpnApplication(
     Lazy<IRadiusService> RadiusSrv,
     Lazy<IEmailService> EmailSrv,
     Lazy<ITrafficDataRepository> TrafficDataRepo,
-    Lazy<IAccountRepository> AccountRepo)
+    Lazy<IAccountRepository> AccountRepo,
+    Lazy<IVpnNodeService> VpnNodeSrv,
+    Lazy<IPermenantUsersRepository> UserRepo)
     : IVpnApplication
 {
     private const int MAX_DATE_BEFORE = 30;
@@ -20,16 +24,50 @@ class VpnApplication(
 
     public async Task<ApiResult> ChangeOvpnPassword(string target, string password)
     {
-        await RadiusSrv.Value.ChangeOvpnPassword(target, password);
+        var result = await RadiusSrv.Value.ChangeOvpnPassword(target, password);
 
-        return ApiResult.Success("کلمه عبور Ovpn تغییر کرد");
+        if (!result)
+        {
+            return new ApiResult
+            {
+                Code = 500,
+                Message = "تغییر کلمه عبور Ovpn با خطا مواجه شد!",
+            };
+        }
+
+        return ApiResult.Success("کلمه عبور Ovpn تغییر کرد.");
     }
 
     public async Task<ApiResult> SendCertEmail(string target)
     {
-        await EmailSrv.Value.SendCertEmail(target, null);
+        var server = await UserRepo.Value.GetRestrictedServer(target);
+        var user_task = UserRepo.Value.GetUser(target);
 
-        return ApiResult.Success("کلمه عبور Ovpn تغییر کرد");
+        string key;
+        byte[] cert;
+
+        if (server != null)
+        {
+            (key, cert) = await VpnNodeSrv.Value.GetCertificate(server);
+        }
+        else
+        {
+
+        }
+
+        var user = await user_task;
+        var domain = await VpnNodeSrv.Value.GetDomainName(server);
+
+        var context = new CertEmailContext
+        {
+            Username = user.Username,
+            // Password = user.Password, TODO 
+            //Server = 
+        };
+
+        await EmailSrv.Value.SendCertEmail(target, context);
+
+        return ApiResult.Success("ایمیل گواهی اتصال ارسال شد.");
     }
 
     public async Task<ApiResult<TrafficDataModel>> TrafficData(string target)
@@ -90,7 +128,10 @@ class VpnApplication(
 
         foreach (var record in source)
         {
-            if (record.Day < minDateTime) continue;
+            if (record.Day < minDateTime || record.Day >= DateTime.Now)
+            {
+                continue;
+            }
 
             if (!destination_dict.ContainsKey(record.Day))
             {
