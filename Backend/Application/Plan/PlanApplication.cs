@@ -1,18 +1,32 @@
 ﻿using PhotonBypass.Application.Plan.Model;
+using PhotonBypass.Domain;
 using PhotonBypass.Domain.Profile;
-using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
+using Serilog;
 
 namespace PhotonBypass.Application.Plan;
 
 class PlanApplication(
-    Lazy<IPermanentUsersRepository> UserRepo)
+    Lazy<IPermanentUsersRepository> UserRepo,
+    Lazy<ITopUpRepository> TopUpRepo,
+    Lazy<IJobContext> JobContext)
     : IPlanApplication
 {
     public async Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target)
     {
-        var state = await UserRepo.Value.GetPlanState(target) ??
-            throw new UserException("کاربر مورد نظر پیدا نشد!");
+        var state = await UserRepo.Value.GetPlanState(target);
+
+        if (state == null)
+        {
+            return new ApiResult<UserPlanInfoModel>
+            {
+                Message = "بدون پلن",
+            };
+        }
+
+        Log.Information("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, data-left:{4}, total-data:{5}, time-left:{6}-{7})",
+            JobContext.Value.Username, target, state.SimultaneousUserCount, state.ResetTypeData, 
+            state.GigaLeft, state.TotalData, state.LeftDays, state.LeftHours);
 
         var result = new UserPlanInfoModel
         {
@@ -20,9 +34,21 @@ class PlanApplication(
             SimultaneousUserCount = state.SimultaneousUserCount,
         };
 
+        var top_up = await TopUpRepo.Value.LatestOf(state.Id);
+
         if (result.Type == PlanType.Traffic)
         {
-            result.RemainsTitle = $"{state.GigaLeft} گیگ باقی مانده";
+            result.RemainsTitle = $"{state.GigaLeft?.ToString() ?? "--"} گیگ باقی مانده";
+
+            if (state.TotalData.HasValue)
+            {
+                result.RemainsPercent = (int)(100 * (1 - (state.GigaLeft ?? 0) / (top_up?.GigaData ?? state.TotalData)));
+            }
+            else
+            {
+                Log.Fatal("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, left:{4}, total:{5})", 
+                    JobContext.Value.Username, target, state.SimultaneousUserCount, state.ResetTypeData, state.GigaLeft, state.TotalData);
+            }
         }
         else
         {
@@ -31,12 +57,23 @@ class PlanApplication(
                 result.RemainsTitle = $"و {state.LeftDays} روز";
             }
 
-            if (state.LeftHours > 0 || state.LeftDays <= 0)
+            if (state.LeftHours > 0 || !(state.LeftDays > 0))
             {
-                result.RemainsTitle = $"و {state.LeftHours} ساعت";
+                result.RemainsTitle = $"و {state.LeftHours?.ToString() ?? "--"} ساعت";
             }
 
             result.RemainsTitle = $"{result.RemainsTitle[2..]} باقی مانده";
+
+            if (!state.LeftDays.HasValue && !state.LeftHours.HasValue)
+            {
+                Log.Fatal("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, time-left:{4}-{5})",
+                    JobContext.Value.Username, target, state.SimultaneousUserCount, state.ResetTypeData, state.LeftDays, state.LeftHours);
+            }
+            else if (top_up?.DaysToUse != null)
+            {
+                var days = state.LeftDays ?? 0 + (state.LeftHours ?? 0) / 24;
+                result.RemainsPercent = (int)(100 * (1 - days / top_up.DaysToUse));
+            }
         }
 
         return ApiResult<UserPlanInfoModel>.Success(result);

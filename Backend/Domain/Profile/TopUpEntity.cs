@@ -6,6 +6,8 @@ namespace PhotonBypass.Domain.Profile;
 [Table("top_ups")]
 public class TopUpEntity : IBaseEntity
 {
+    private const long BYTES_IN_GIG = 1024 * 1024 * 1024;
+
     [Key]
     public int Id { get; set; }
 
@@ -17,6 +19,9 @@ public class TopUpEntity : IBaseEntity
 
     [Column("date")]
     public long? Data { get; set; }
+
+    [NotMapped]
+    public long? GigaData => Data != null ? (Data / BYTES_IN_GIG) : null;
 
     [Column("time")]
     public long? Time { get; set; }

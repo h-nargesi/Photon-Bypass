@@ -1,11 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PhotonBypass.Domain.Profile;
 
 [Table("ph_v_users_balance")]
 public class UserPlanStateEntity : IBaseEntity
 {
-    [NotMapped]
+    [Key]
     public int Id { get; set; }
 
     [Column("username")]
