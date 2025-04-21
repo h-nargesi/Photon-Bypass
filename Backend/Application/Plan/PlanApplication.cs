@@ -79,9 +79,27 @@ class PlanApplication(
         return ApiResult<UserPlanInfoModel>.Success(result);
     }
 
-    public Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target)
+    public async Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target)
     {
-        throw new NotImplementedException();
+        var state = await UserRepo.Value.GetPlanState(target);
+
+        if (state == null)
+        {
+            return new ApiResult<PlanInfoModel>
+            {
+                Message = "بدون پلن",
+            };
+        }
+
+        var top_up = await TopUpRepo.Value.LatestOf(state.Id);
+
+        return ApiResult<PlanInfoModel>.Success(new PlanInfoModel
+        {
+            Target = target,
+            SimultaneousUserCount = state.SimultaneousUserCount,
+            Type = state.ResetTypeData == "never" ? PlanType.Traffic : PlanType.Monthly,
+            Value = top_up != null ? (state.ResetTypeData == "never" ? (int?)top_up.GigaData : top_up.DaysToUse) : null,
+        });
     }
 
     public Task<ApiResult<long>> Estimate(RenewalContext context)

@@ -4,9 +4,9 @@ public class PlanInfoModel
 {
     public string Target { get; set; } = null!;
 
-    public PlanType Type { get; set; }
+    public PlanType? Type { get; set; }
 
-    public int Value { get; set; }
+    public int? Value { get; set; }
 
-    public int SimultaneousUserCount { get; set; }
+    public int? SimultaneousUserCount { get; set; }
 }

@@ -27,7 +27,7 @@ public class TopUpEntity : IBaseEntity
     public long? Time { get; set; }
 
     [Column("days_to_use")]
-    public long? DaysToUse { get; set; }
+    public int? DaysToUse { get; set; }
 
     public string? Comment { get; set; }
 }
