@@ -1,10 +1,12 @@
 ﻿using PhotonBypass.Application.Vpn.Model;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Server;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.Domain.Vpn;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 
@@ -16,7 +18,8 @@ class VpnApplication(
     Lazy<ITrafficDataRepository> TrafficDataRepo,
     Lazy<IAccountRepository> AccountRepo,
     Lazy<IVpnNodeService> VpnNodeSrv,
-    Lazy<IPermenantUsersRepository> UserRepo)
+    Lazy<IPermanentUsersRepository> UserRepo,
+    Lazy<IServerManagementService> ServerMngSrv)
     : IVpnApplication
 {
     private const int MAX_DATE_BEFORE = 30;
@@ -40,32 +43,45 @@ class VpnApplication(
 
     public async Task<ApiResult> SendCertEmail(string target)
     {
-        var server = await UserRepo.Value.GetRestrictedServer(target);
-        var user_task = UserRepo.Value.GetUser(target);
+        var server_task = UserRepo.Value.GetRestrictedServer(target);
 
-        string key;
-        byte[] cert;
+        var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(target);
+
+        var user = await UserRepo.Value.GetUser(target) ??
+            throw new UserException("کاربر پیدا نشد", $"target: {target}");
+        
+        var server = await server_task;
+
+        if (server == null)
+        {
+            var extra = user.ExtraObject();
+            if (extra?.restricted == true)
+            {
+                server = await ServerMngSrv.Value.GetAvalableServer();
+            }
+        }
+
+        CertContext cert_context;
 
         if (server != null)
         {
-            (key, cert) = await VpnNodeSrv.Value.GetCertificate(server);
+            cert_context = await VpnNodeSrv.Value.GetCertificate(server);
         }
         else
         {
-
+            cert_context = await ServerMngSrv.Value.GetDefaultCertificate(user.Realm);
         }
 
-        var user = await user_task;
-        var domain = await VpnNodeSrv.Value.GetDomainName(server);
-
-        var context = new CertEmailContext
+        var email_context = new CertEmailContext
         {
             Username = user.Username,
-            // Password = user.Password, TODO 
-            //Server = 
+            Password = await ovpn_password_task,
+            Server = cert_context.Server,
+            PrivateKey = cert_context.PrivateKey,
+            CertFile = cert_context.CertFile,
         };
 
-        await EmailSrv.Value.SendCertEmail(target, context);
+        await EmailSrv.Value.SendCertEmail(target, email_context);
 
         return ApiResult.Success("ایمیل گواهی اتصال ارسال شد.");
     }

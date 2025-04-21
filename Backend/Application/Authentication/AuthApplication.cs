@@ -16,23 +16,22 @@ namespace PhotonBypass.Application.Authentication;
 partial class AuthApplication(
     IAccountRepository AccountRepo,
     Lazy<IResetPassRepository> ResetPassRepo,
-    Lazy<IPermenantUsersRepository> UserRepo,
+    Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<IStaticRepository> StaticRepo,
     Lazy<IServerManagementService> ServerManageSrv,
     Lazy<IRadiusService> RadiusSrv,
     //Lazy<IWhatsAppHandler> whatsapp_handler,
     Lazy<IEmailService> EmailSrv,
     Lazy<ISocialMediaService> SocialMediaSrv,
-    Lazy<IHistoryRepository> HistoryRepo
-    ) : IAuthApplication
+    Lazy<IHistoryRepository> HistoryRepo)
+    : IAuthApplication
 {
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
-        password = HashHandler.HashPassword(password);
+        var account = await AccountRepo.GetAccount(username) ??
+            await CopyFromPermanentUser(username, password);
 
-        var account = await AccountRepo.GetAccount(username);
-
-        if (account == null || account.Password != password)
+        if (account == null || account.Password != HashHandler.HashPassword(password))
         {
             if (account != null)
             {
@@ -164,7 +163,7 @@ partial class AuthApplication(
             throw new UserException("این نام کاربری قبلا استفاده شده است!");
         }
 
-        var user = new PermenantUserEntity
+        var user = new PermanentUserEntity
         {
             Username = context.Username ?? string.Empty,
             CloudId = StaticRepo.Value.WebCloudID,
@@ -177,6 +176,7 @@ partial class AuthApplication(
             Profile = StaticRepo.Value.DefaultProfile.Name,
             ProfileId = StaticRepo.Value.DefaultProfile.Id,
             Active = false,
+            ExtraValue = "{ \"restricted\": true }",
         };
 
         await RadiusSrv.Value.SavePermenentUser(user);
@@ -203,6 +203,35 @@ partial class AuthApplication(
         await account_saving;
 
         return ApiResult.Success("کاربر شما ساخته شد.");
+    }
+
+    private async Task<AccountEntity?> CopyFromPermanentUser(string username, string password)
+    {
+        var pass = await RadiusSrv.Value.GetOvpnPassword(username);
+
+        if (pass != password) return null;
+
+        var user = await UserRepo.Value.GetUser(username);
+
+        if (user == null) return null;
+
+        var account = new AccountEntity
+        {
+            Username = username,
+            Password = password,
+            Active = true,
+            CloudId = user.CloudId,
+            Email = user.Email,
+            EmailValid = true,
+            Mobile = user.Phone,
+            MobileValid = true,
+            Name = user.Name,
+            Surname = user.Surname,
+        };
+
+        await AccountRepo.Save(account);
+
+        return account;
     }
 
     [GeneratedRegex(@"^\+?\d{5,16}$")]

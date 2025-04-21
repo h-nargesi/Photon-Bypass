@@ -4,12 +4,12 @@ using PhotonBypass.Radius.Repository.DbContext;
 
 namespace PhotonBypass.Radius.Repository;
 
-class PermenantUsersRepository(RadDbContext context) : DapperRepository<PermenantUserEntity>(context), IPermenantUsersRepository
+class PermanentUsersRepository(RadDbContext context) : DapperRepository<PermanentUserEntity>(context), IPermanentUsersRepository
 {
-    public async Task<PermenantUserEntity?> GetUser(string username)
+    public async Task<PermanentUserEntity?> GetUser(string username)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(PermenantUserEntity.Username)} = @username")
+            .Where($"{nameof(PermanentUserEntity.Username)} = @username and Active = 1")
             .WithParameters(new { username }));
 
         return result.FirstOrDefault();
@@ -18,9 +18,14 @@ class PermenantUsersRepository(RadDbContext context) : DapperRepository<Permenan
     public async Task<bool> CheckUsername(string username)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(PermenantUserEntity.Username)} = @username")
+            .Where($"{nameof(PermanentUserEntity.Username)} = @username and Active = 1")
             .WithParameters(new { username }));
 
         return result.Any();
+    }
+
+    public Task<string> GetRestrictedServer(string username)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -1,10 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 namespace PhotonBypass.Domain.Profile;
 
 [Table("permanent_users")]
-public class PermenantUserEntity : IBaseEntity
+public class PermanentUserEntity : IBaseEntity
 {
     [Key]
     public int Id { get; set; }
@@ -39,4 +40,9 @@ public class PermenantUserEntity : IBaseEntity
 
     [Column("cloud_id")]
     public int CloudId { get; set; }
+
+    [Column("extra_value")]
+    public string ExtraValue {  get; set; } = null!;
+
+    public dynamic? ExtraObject() => JsonSerializer.Deserialize<dynamic>(ExtraValue);
 }

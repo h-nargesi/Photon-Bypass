@@ -5,9 +5,11 @@ namespace PhotonBypass.Domain.Radius;
 
 public interface IRadiusService : IDisposable
 {
+    Task<string> GetOvpnPassword(string username);
+
     Task<bool> ChangeOvpnPassword(string username, string password);
 
-    Task SavePermenentUser(PermenantUserEntity user);
+    Task SavePermenentUser(PermanentUserEntity user);
 
     Task<IList<TrafficDataRadius>> FetchTrafficData(DateTime index, TrafficDataRequestType type);
 }

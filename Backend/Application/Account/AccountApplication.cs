@@ -12,7 +12,7 @@ namespace PhotonBypass.Application.Account;
 
 class AccountApplication(
     Lazy<IAccountRepository> AccountRepo,
-    Lazy<IPermenantUsersRepository> UserRepo,
+    Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IRadiusService> RadiusSrv,
     Lazy<IJobContext> JobContext)
@@ -164,7 +164,7 @@ class AccountApplication(
         account.Mobile = model.Mobile;
     }
 
-    private static void SetPermanentUser(PermenantUserEntity user, EditUserContext model)
+    private static void SetPermanentUser(PermanentUserEntity user, EditUserContext model)
     {
         user.Name = model.Firstname;
         user.Surname = model.Lastname;

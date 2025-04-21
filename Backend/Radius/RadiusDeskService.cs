@@ -20,7 +20,7 @@ class RadiusDeskService : IDisposable
         };
     }
 
-    public PermenantUserEntity? GetPermenentUser(string username)
+    public PermanentUserEntity? GetPermenentUser(string username)
     {
         CheckLogin();
 

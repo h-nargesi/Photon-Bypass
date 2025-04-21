@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Domain.Radius;
+using PhotonBypass.Domain.Services;
 
 namespace PhotonBypass.Domain.Server;
 
@@ -8,7 +9,5 @@ public interface IVpnNodeService
 
     Task<bool> CloseConnection(string server, string username, string sessionId);
 
-    Task<(string key, byte[] cert)> GetCertificate(string server);
-
-    Task<string> GetDomainName(string server);
+    Task<CertContext> GetCertificate(string server);
 }

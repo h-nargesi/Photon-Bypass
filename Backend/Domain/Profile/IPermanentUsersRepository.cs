@@ -1,8 +1,8 @@
 ﻿namespace PhotonBypass.Domain.Profile;
 
-public interface IPermenantUsersRepository
+public interface IPermanentUsersRepository
 {
-    Task<PermenantUserEntity?> GetUser(string username);
+    Task<PermanentUserEntity?> GetUser(string username);
 
     Task<bool> CheckUsername(string username);
 

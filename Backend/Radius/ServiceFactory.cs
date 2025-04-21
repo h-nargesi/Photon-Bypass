@@ -22,7 +22,7 @@ static class ServiceFactory
 
         services.AddTransient<ICloudRepository, ICloudRepository>();
         services.AddTransient<INasRepository, NasRepository>();
-        services.AddTransient<IPermenantUsersRepository, PermenantUsersRepository>();
+        services.AddTransient<IPermanentUsersRepository, PermanentUsersRepository>();
         services.AddTransient<IProfileRepository, ProfileRepository>();
         services.AddTransient<IRadAcctRepository, RadAcctRepository>();
     }
