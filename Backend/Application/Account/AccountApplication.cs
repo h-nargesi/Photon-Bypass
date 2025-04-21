@@ -122,7 +122,7 @@ class AccountApplication(
             Target = target,
             EventTime = DateTime.Now,
             Title = "امنیت",
-            Description = "تغییر کلمه عبور اکانت",
+            Description = "تغییر کلمه عبور اکانت.",
         });
 
         return ApiResult.Success("کلمه عبور تغییر کرد.");

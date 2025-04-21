@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Application.Vpn.Model;
+using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
@@ -19,7 +20,9 @@ class VpnApplication(
     Lazy<IAccountRepository> AccountRepo,
     Lazy<IVpnNodeService> VpnNodeSrv,
     Lazy<IPermanentUsersRepository> UserRepo,
-    Lazy<IServerManagementService> ServerMngSrv)
+    Lazy<IServerManagementService> ServerMngSrv,
+    Lazy<IHistoryRepository> HistoryRepo,
+    Lazy<IJobContext> JobContext)
     : IVpnApplication
 {
     private const int MAX_DATE_BEFORE = 30;
@@ -38,6 +41,15 @@ class VpnApplication(
             };
         }
 
+        _ = HistoryRepo.Value.Save(new HistoryEntity
+        {
+            Issuer = JobContext.Value.Username,
+            Target = target,
+            EventTime = DateTime.Now,
+            Title = "امنیت",
+            Description = "تغییر کلمه عبور ovpn.",
+        });
+
         return ApiResult.Success("کلمه عبور Ovpn تغییر کرد.");
     }
 
@@ -48,7 +60,7 @@ class VpnApplication(
         var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(target);
 
         var user = await UserRepo.Value.GetUser(target) ??
-            throw new UserException("کاربر پیدا نشد", $"target: {target}");
+            throw new UserException("کاربر پیدا نشد!", $"target: {target}");
         
         var server = await server_task;
 
@@ -82,6 +94,15 @@ class VpnApplication(
         };
 
         await EmailSrv.Value.SendCertEmail(target, email_context);
+
+        _ = HistoryRepo.Value.Save(new HistoryEntity
+        {
+            Issuer = JobContext.Value.Username,
+            Target = target,
+            EventTime = DateTime.Now,
+            Title = "امنیت",
+            Description = "ایمیل گواهی اتصال ارسال شد.",
+        });
 
         return ApiResult.Success("ایمیل گواهی اتصال ارسال شد.");
     }

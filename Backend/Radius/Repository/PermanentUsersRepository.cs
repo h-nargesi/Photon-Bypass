@@ -28,4 +28,9 @@ class PermanentUsersRepository(RadDbContext context) : DapperRepository<Permanen
     {
         throw new NotImplementedException();
     }
+
+    public Task<UserPlanStateEntity?> GetPlanState(string username)
+    {
+        throw new NotImplementedException();
+    }
 }

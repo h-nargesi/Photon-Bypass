@@ -7,4 +7,6 @@ public interface IPermanentUsersRepository
     Task<bool> CheckUsername(string username);
 
     Task<string> GetRestrictedServer(string username);
+
+    Task<UserPlanStateEntity?> GetPlanState(string username);
 }
