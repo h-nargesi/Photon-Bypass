@@ -1,6 +1,7 @@
 ﻿using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Profile;
+using PhotonBypass.Domain.Static;
 using PhotonBypass.Result;
 using Serilog;
 
@@ -9,6 +10,7 @@ namespace PhotonBypass.Application.Plan;
 class PlanApplication(
     Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<ITopUpRepository> TopUpRepo,
+    Lazy<IPriceCalculator> PriceCalc,
     Lazy<IJobContext> JobContext)
     : IPlanApplication
 {
@@ -25,12 +27,12 @@ class PlanApplication(
         }
 
         Log.Information("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, data-left:{4}, total-data:{5}, time-left:{6}-{7})",
-            JobContext.Value.Username, target, state.SimultaneousUserCount, state.ResetTypeData, 
+            JobContext.Value.Username, target, state.SimultaneousUserCount, state.PlanType.ToString(), 
             state.GigaLeft, state.TotalData, state.LeftDays, state.LeftHours);
 
         var result = new UserPlanInfoModel
         {
-            Type = state.ResetTypeData == "never" ? PlanType.Traffic : PlanType.Monthly,
+            Type = state.PlanType,
             SimultaneousUserCount = state.SimultaneousUserCount,
         };
 
@@ -47,7 +49,7 @@ class PlanApplication(
             else
             {
                 Log.Fatal("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, left:{4}, total:{5})", 
-                    JobContext.Value.Username, target, state.SimultaneousUserCount, state.ResetTypeData, state.GigaLeft, state.TotalData);
+                    JobContext.Value.Username, target, state.SimultaneousUserCount, state.PlanType.ToString(), state.GigaLeft, state.TotalData);
             }
         }
         else
@@ -67,7 +69,7 @@ class PlanApplication(
             if (!state.LeftDays.HasValue && !state.LeftHours.HasValue)
             {
                 Log.Fatal("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, time-left:{4}-{5})",
-                    JobContext.Value.Username, target, state.SimultaneousUserCount, state.ResetTypeData, state.LeftDays, state.LeftHours);
+                    JobContext.Value.Username, target, state.SimultaneousUserCount, state.PlanType.ToString(), state.LeftDays, state.LeftHours);
             }
             else if (top_up?.DaysToUse != null)
             {
@@ -97,18 +99,20 @@ class PlanApplication(
         {
             Target = target,
             SimultaneousUserCount = state.SimultaneousUserCount,
-            Type = state.ResetTypeData == "never" ? PlanType.Traffic : PlanType.Monthly,
-            Value = top_up != null ? (state.ResetTypeData == "never" ? (int?)top_up.GigaData : top_up.DaysToUse) : null,
+            Type = state.PlanType,
+            Value = top_up != null ? (state.PlanType == PlanType.Traffic ? (int?)top_up.GigaData : top_up.DaysToUse) : null,
         });
     }
 
-    public Task<ApiResult<long>> Estimate(RenewalContext context)
+    public ApiResult<int> Estimate(PlanType type, int users, int value)
     {
-        throw new NotImplementedException();
+        var result = PriceCalc.Value.CalculatePrice(type, users, value);
+        return ApiResult<int>.Success(result);
     }
 
-    public Task<ApiResult<RenewalResult>> Renewal(RenewalContext context)
+    public Task<ApiResult<RenewalResult>> Renewal(string target, PlanType type, int users, int value)
     {
+        var result = PriceCalc.Value.CalculatePrice(type, users, value);
         throw new NotImplementedException();
     }
 }

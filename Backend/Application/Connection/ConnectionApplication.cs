@@ -3,7 +3,7 @@ using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
-using PhotonBypass.Domain.Server;
+using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;

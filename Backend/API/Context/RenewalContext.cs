@@ -1,4 +1,6 @@
-﻿namespace PhotonBypass.Application.Plan.Model;
+﻿using PhotonBypass.Domain.Profile;
+
+namespace PhotonBypass.Application.Plan.Model;
 
 public class RenewalContext
 {

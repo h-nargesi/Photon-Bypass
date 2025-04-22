@@ -4,7 +4,6 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
-using PhotonBypass.Domain.Server;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.Domain.Vpn;
 using PhotonBypass.ErrorHandler;

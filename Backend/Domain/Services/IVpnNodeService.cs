@@ -1,7 +1,6 @@
 ﻿using PhotonBypass.Domain.Radius;
-using PhotonBypass.Domain.Services;
 
-namespace PhotonBypass.Domain.Server;
+namespace PhotonBypass.Domain.Services;
 
 public interface IVpnNodeService
 {

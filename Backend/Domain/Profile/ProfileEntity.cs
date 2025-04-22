@@ -20,6 +20,6 @@ public class ProfileEntity : IBaseEntity
     [Column("mikrotik_rate_limit")]
     public float? MikrotikRateLimit { get; set; }
 
-    [Column("rd_reset_type_data")]
-    public string? RdResetTypeData { get; set; }
+    [Column("plan_type")]
+    public PlanType PlanType { get; set; }
 }

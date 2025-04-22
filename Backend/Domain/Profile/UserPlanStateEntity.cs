@@ -15,8 +15,8 @@ public class UserPlanStateEntity : IBaseEntity
     [Column("simultaneous_user")]
     public int? SimultaneousUserCount { get; set; }
 
-    [Column("reset_type_data")]
-    public string? ResetTypeData { get; set; }
+    [Column("plan_type")]
+    public PlanType PlanType { get; set; }
 
     [Column("left_days")]
     public int? LeftDays { get; set; }

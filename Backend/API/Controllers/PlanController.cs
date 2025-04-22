@@ -39,33 +39,10 @@ public class PlanController(
     }
 
     [HttpPost("estimate")]
-    public async Task<ApiResult> Estimate([FromBody] RenewalContext context)
+    public ApiResult Estimate([FromBody] RenewalContext context)
     {
         LoadJobContext(context.Target);
-        context.Target = JobContext.Target;
 
-        var result = RnewalContextCheck(context);
-
-        result ??= await application.Estimate(context);
-
-        return SafeApiResult(result);
-    }
-
-    [HttpPost("rnewal")]
-    public async Task<ApiResult> Rnewal([FromBody] RenewalContext context)
-    {
-        LoadJobContext(context.Target);
-        context.Target = JobContext.Target;
-
-        var result = RnewalContextCheck(context);
-
-        result ??= await application.Renewal(context);
-
-        return SafeApiResult(result);
-    }
-
-    private static ApiResult? RnewalContextCheck(RenewalContext context)
-    {
         if (!context.Type.HasValue)
         {
             return BadRequestApiResult(message: "نوع پلن مشخص نشده است!");
@@ -81,6 +58,35 @@ public class PlanController(
             return BadRequestApiResult(message: "تعداد کاربران مشخص نشده است!");
         }
 
-        return null;
+        var result = application.Estimate(context.Type.Value, context.SimultaneousUserCount.Value, context.Value.Value);
+
+        return SafeApiResult(result);
+    }
+
+    [HttpPost("rnewal")]
+    public async Task<ApiResult> Rnewal([FromBody] RenewalContext context)
+    {
+        LoadJobContext(context.Target);
+        context.Target = JobContext.Target;
+
+        if (!context.Type.HasValue)
+        {
+            return BadRequestApiResult(message: "نوع پلن مشخص نشده است!");
+        }
+
+        if (!context.Value.HasValue)
+        {
+            return BadRequestApiResult(message: "مقدار درخواست پلن مشخص نشده است!");
+        }
+
+        if (!context.SimultaneousUserCount.HasValue)
+        {
+            return BadRequestApiResult(message: "تعداد کاربران مشخص نشده است!");
+        }
+
+        var result = await application.Renewal(context.Target , 
+            context.Type.Value, context.SimultaneousUserCount.Value, context.Value.Value);
+
+        return SafeApiResult(result);
     }
 }
