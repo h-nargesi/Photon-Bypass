@@ -5,9 +5,9 @@ namespace PhotonBypass.Domain.Management;
 
 public interface IServerManagementService
 {
-    Task<RealmEntity> GetCurrentRealm(int cloud_id);
-
-    Task<string> GetAvalableServer();
+    Task<RealmEntity> GetAvalableRealm(int cloud_id);
 
     Task<CertContext> GetDefaultCertificate(string realm);
+
+    Task CheckUserServerBalance();
 }

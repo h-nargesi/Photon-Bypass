@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.API.Basical;
+using PhotonBypass.API.Context;
 using PhotonBypass.Application.Plan;
-using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Result;
 
@@ -39,9 +39,9 @@ public class PlanController(
     }
 
     [HttpPost("estimate")]
-    public ApiResult Estimate([FromBody] RenewalContext context)
+    public ApiResult Estimate([FromBody] EstimateContext context)
     {
-        LoadJobContext(context.Target);
+        LoadJobContext();
 
         if (!context.Type.HasValue)
         {

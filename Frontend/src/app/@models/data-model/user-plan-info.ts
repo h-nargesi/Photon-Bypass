@@ -5,11 +5,14 @@ export interface UserPlanInfo {
   simultaneousUserCount: number;
 }
 
-export interface PlanInto {
-  target: string;
+export interface PlanEstimate {
   type: PlanType;
   value: number;
   simultaneousUserCount: number;
+}
+
+export interface PlanInfo extends PlanEstimate {
+  target: string;
 }
 
 export enum PlanType {

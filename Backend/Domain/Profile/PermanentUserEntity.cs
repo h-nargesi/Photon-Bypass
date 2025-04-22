@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json;
 
 namespace PhotonBypass.Domain.Profile;
 
@@ -41,8 +40,6 @@ public class PermanentUserEntity : IBaseEntity
     [Column("cloud_id")]
     public int CloudId { get; set; }
 
-    [Column("extra_value")]
-    public string ExtraValue {  get; set; } = null!;
-
-    public dynamic? ExtraObject() => JsonSerializer.Deserialize<dynamic>(ExtraValue);
+    [Column("last_accpet_time")]
+    public DateTime? LastAcceptTime { get; set; }
 }

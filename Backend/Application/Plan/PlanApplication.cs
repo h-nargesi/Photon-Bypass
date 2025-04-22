@@ -1,7 +1,12 @@
 ﻿using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Domain;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
+using PhotonBypass.Domain.Radius;
+using PhotonBypass.Domain.Services;
 using PhotonBypass.Domain.Static;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
 
@@ -11,6 +16,10 @@ class PlanApplication(
     Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<ITopUpRepository> TopUpRepo,
     Lazy<IPriceCalculator> PriceCalc,
+    Lazy<IAccountRepository> AccountRepo,
+    Lazy<IRadiusService> RadiusSrv,
+    Lazy<IServerManagementService> ServerMngSrv,
+    Lazy<IVpnNodeService> VpnNodeSrv,
     Lazy<IJobContext> JobContext)
     : IPlanApplication
 {
@@ -27,7 +36,7 @@ class PlanApplication(
         }
 
         Log.Information("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, data-left:{4}, total-data:{5}, time-left:{6}-{7})",
-            JobContext.Value.Username, target, state.SimultaneousUserCount, state.PlanType.ToString(), 
+            JobContext.Value.Username, target, state.SimultaneousUserCount, state.PlanType.ToString(),
             state.GigaLeft, state.TotalData, state.LeftDays, state.LeftHours);
 
         var result = new UserPlanInfoModel
@@ -48,7 +57,7 @@ class PlanApplication(
             }
             else
             {
-                Log.Fatal("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, left:{4}, total:{5})", 
+                Log.Fatal("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, left:{4}, total:{5})",
                     JobContext.Value.Username, target, state.SimultaneousUserCount, state.PlanType.ToString(), state.GigaLeft, state.TotalData);
             }
         }
@@ -110,9 +119,113 @@ class PlanApplication(
         return ApiResult<int>.Success(result);
     }
 
-    public Task<ApiResult<RenewalResult>> Renewal(string target, PlanType type, int users, int value)
+    public async Task<ApiResult<RenewalResult>> Renewal(string target, PlanType type, int users, int value)
     {
         var result = PriceCalc.Value.CalculatePrice(type, users, value);
+
+        var account = await AccountRepo.Value.GetAccount(target) ??
+            throw new UserException("کاربر مورد نظر پیدا نشد!");
+
+        if (account.Balance < result)
+        {
+            return ApiResult<RenewalResult>.Success(new RenewalResult
+            {
+                CurrentPrice = account.Balance,
+                MoneyNeeds = result - account.Balance,
+            });
+        }
+
+        var change_profile = true;
+        var user_is_changed = false;
+
+        var state = await UserRepo.Value.GetPlanState(target) ??
+            throw new Exception($"Plan state not found for target: {target}");
+
+        if (type == PlanType.Traffic && state.PlanType != PlanType.Traffic)
+        {
+            if (state.LeftDays > 0)
+            {
+                throw new UserException("پلن جاری تمام نشده! برای تغییر نوع پلن باید پلن جاری به اتمام برسد.");
+            }
+
+            await RadiusSrv.Value.UpdateUserDataUsege(account.PermanentUserId);
+        }
+        else if (type == PlanType.Monthly && state.PlanType != PlanType.Monthly)
+        {
+            if (state.GigaLeft > 0.5)
+            {
+                throw new UserException("پلن جاری تمام نشده! برای تغییر نوع پلن باید ترافیک باقی‌مانده کمتر از ۵۱۲ مگابایت برسد.");
+            }
+
+            await RadiusSrv.Value.SetUserDate(account.PermanentUserId, DateTime.Now.Date, DateTime.Now.Date);
+        }
+        else
+        {
+            change_profile = users != state.SimultaneousUserCount;
+        }
+
+        var user = await UserRepo.Value.GetUser(account.PermanentUserId) ??
+            throw new Exception($"Permanent User not found: {account.PermanentUserId}");
+
+        if (change_profile)
+        {
+            var profile = await GetProfile(account.CloudId, type, users);
+            if (profile != null && profile.Id != user.ProfileId)
+            {
+                user.Profile = profile.Name;
+                user.ProfileId = profile.Id;
+
+                user_is_changed = true;
+            }
+        }
+
+        if (user.LastAcceptTime == null || user.LastAcceptTime.Value < DateTime.Now.AddDays(-7))
+        {
+            var realm = await ServerMngSrv.Value.GetAvalableRealm(user.CloudId);
+            if (realm != null && realm.Id != user.RealmId)
+            {
+                user.Realm = realm.Name;
+                user.RealmId = realm.Id;
+
+                await RadiusSrv.Value.SetRestrictedServer(user.Id, realm.RestrictedServerIP);
+
+                user_is_changed = true;
+            }
+        }
+
+        if (users < state.SimultaneousUserCount)
+        {
+            try
+            {
+                _ = VpnNodeSrv.Value.CloseConnections(user.Username, state.SimultaneousUserCount.Value - users);
+            }
+            catch (Exception ex)
+            {
+                Log.Error("[user: {0}] Error on closing extra connections: {1}\n{2}", JobContext.Value.Username, ex.Message, ex.StackTrace);
+            }
+        }
+
+        if (user_is_changed)
+        {
+            await RadiusSrv.Value.SavePermenentUser(user);
+        }
+
+        account.Balance -= result;
+
+        await RadiusSrv.Value.InsertTopUp(target, type, value);
+        await AccountRepo.Value.Save(account);
+
+        _ = ServerMngSrv.Value.CheckUserServerBalance();
+
+        return ApiResult<RenewalResult>.Success(new RenewalResult
+        {
+            CurrentPrice = account.Balance,
+            MoneyNeeds = 0,
+        });
+    }
+
+    private Task<ProfileEntity> GetProfile(int cloud_id, PlanType type, int users)
+    {
         throw new NotImplementedException();
     }
 }

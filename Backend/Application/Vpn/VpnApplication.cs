@@ -21,6 +21,7 @@ class VpnApplication(
     Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IHistoryRepository> HistoryRepo,
+    Lazy<IRealmRepository> RealmRepo,
     Lazy<IJobContext> JobContext)
     : IVpnApplication
 {
@@ -54,22 +55,19 @@ class VpnApplication(
 
     public async Task<ApiResult> SendCertEmail(string target)
     {
-        var server_task = UserRepo.Value.GetRestrictedServer(target);
-
-        var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(target);
-
         var user = await UserRepo.Value.GetUser(target) ??
             throw new UserException("کاربر پیدا نشد!", $"target: {target}");
-        
+
+        var server_task = UserRepo.Value.GetRestrictedServer(target);
+
+        var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(user.Id);
+
         var server = await server_task;
 
         if (server == null)
         {
-            var extra = user.ExtraObject();
-            if (extra?.restricted == true)
-            {
-                server = await ServerMngSrv.Value.GetAvalableServer();
-            }
+            var realm = await RealmRepo.Value.Fetch(user.RealmId);
+            server = realm?.RestrictedServerIP;
         }
 
         CertContext cert_context;

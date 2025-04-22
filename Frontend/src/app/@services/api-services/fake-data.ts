@@ -9,7 +9,7 @@ import {
   FullUserModel,
   HistoryRecord,
   PaymentInvoice,
-  PlanInto,
+  PlanInfo,
   PlanType,
   PriceModel,
   RenewalResult,
@@ -401,7 +401,7 @@ export class FakeDataService {
     } as ApiResultData<UserPlanInfo>);
   }
 
-  private api_plan_info(): Observable<HttpResponse<ApiResultData<PlanInto>>> {
+  private api_plan_info(): Observable<HttpResponse<ApiResultData<PlanInfo>>> {
     const type = Math.random() > 0.5 ? PlanType.Monthly : PlanType.Traffic;
     const value =
       (1 + Math.floor(Math.random() * 5)) *
@@ -414,7 +414,7 @@ export class FakeDataService {
         value,
         simultaneousUserCount: 1 + Math.floor(Math.random() * 5),
       },
-    } as ApiResultData<PlanInto>);
+    } as ApiResultData<PlanInfo>);
   }
 
   private api_plan_estimate(): Observable<HttpResponse<ApiResultData<number>>> {

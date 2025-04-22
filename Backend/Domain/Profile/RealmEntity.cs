@@ -15,4 +15,7 @@ public class RealmEntity : IBaseEntity
     public string Name { get; set; } = null!;
 
     public string Suffix { get; set; } = null!;
+
+    [Column("country")]
+    public string? RestrictedServerIP { get; set; }
 }

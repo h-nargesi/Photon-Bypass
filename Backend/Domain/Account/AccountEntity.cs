@@ -13,6 +13,8 @@ public class AccountEntity : IBaseEntity
 
     public int CloudId { get; set; }
 
+    public int PermanentUserId { get; set; }
+
     public string Username { get; set; } = null!;
 
     public string Password { get; set; } = null!;
@@ -31,7 +33,7 @@ public class AccountEntity : IBaseEntity
 
     public bool EmailValid { get; set; }
 
-    public decimal Balance { get; set; }
+    public int Balance { get; set; }
 
     public string? Picture { get; set; }
 

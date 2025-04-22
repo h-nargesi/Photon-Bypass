@@ -18,7 +18,7 @@ partial class AuthApplication(
     Lazy<IResetPassRepository> ResetPassRepo,
     Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<IStaticRepository> StaticRepo,
-    Lazy<IServerManagementService> ServerManageSrv,
+    Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IRadiusService> RadiusSrv,
     //Lazy<IWhatsAppHandler> whatsapp_handler,
     Lazy<IEmailService> EmailSrv,
@@ -156,9 +156,9 @@ partial class AuthApplication(
             throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
         }
 
-        var currentRealm = await ServerManageSrv.Value.GetCurrentRealm(StaticRepo.Value.WebCloudID);
+        var realm = await ServerMngSrv.Value.GetAvalableRealm(StaticRepo.Value.WebCloudID);
 
-        if (await UserRepo.Value.CheckUsername(context.Username + currentRealm.Suffix))
+        if (await UserRepo.Value.CheckUsername(context.Username + realm.Suffix))
         {
             throw new UserException("این نام کاربری قبلا استفاده شده است!");
         }
@@ -171,20 +171,22 @@ partial class AuthApplication(
             Phone = context.Mobile,
             Name = context.Firstname,
             Surname = context.Lastname,
-            Realm = currentRealm.Name,
-            RealmId = currentRealm.Id,
+            Realm = realm.Name,
+            RealmId = realm.Id,
             Profile = StaticRepo.Value.DefaultProfile.Name,
             ProfileId = StaticRepo.Value.DefaultProfile.Id,
             Active = false,
-            ExtraValue = "{ \"restricted\": true }",
         };
 
         await RadiusSrv.Value.SavePermenentUser(user);
 
+        var setting_server = RadiusSrv.Value.SetRestrictedServer(user.Id, realm.RestrictedServerIP);
+
         var account = new AccountEntity
         {
-            Username = user.Username,
             CloudId = StaticRepo.Value.WebCloudID,
+            PermanentUserId = user.Id,
+            Username = user.Username,
             Email = context.Email,
             EmailValid = false,
             Mobile = context.Mobile,
@@ -198,25 +200,26 @@ partial class AuthApplication(
 
         _ = SocialMediaSrv.Value.NewUserRegistrationAlert(account);
 
-        Log.Information("New User Registred: ({0}, {1})", account.Username, account.Email);
+        Task.WaitAll(account_saving, setting_server);
 
-        await account_saving;
+        Log.Information("New User Registred: ({0}, {1})", account.Username, account.Email);
 
         return ApiResult.Success("کاربر شما ساخته شد.");
     }
 
     private async Task<AccountEntity?> CopyFromPermanentUser(string username, string password)
     {
-        var pass = await RadiusSrv.Value.GetOvpnPassword(username);
-
-        if (pass != password) return null;
-
         var user = await UserRepo.Value.GetUser(username);
 
         if (user == null) return null;
 
+        var pass = await RadiusSrv.Value.GetOvpnPassword(user.Id);
+
+        if (pass != password) return null;
+
         var account = new AccountEntity
         {
+            PermanentUserId = user.Id,
             Username = username,
             Password = password,
             Active = true,

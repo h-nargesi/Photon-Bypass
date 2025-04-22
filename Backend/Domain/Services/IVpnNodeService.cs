@@ -8,5 +8,7 @@ public interface IVpnNodeService
 
     Task<bool> CloseConnection(string server, string username, string sessionId);
 
+    Task<bool> CloseConnections(string username, int count);
+
     Task<CertContext> GetCertificate(string server);
 }

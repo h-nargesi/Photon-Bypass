@@ -16,7 +16,8 @@ import {
   RowComponent,
 } from '@coreui/angular';
 import {
-  PlanInto,
+  PlanEstimate,
+  PlanInfo,
   PlanType,
   PriceModel,
   RenewalResult,
@@ -67,7 +68,7 @@ export class RenewalComponent implements OnInit {
   cost: string = '--';
   valid = false;
 
-  plan = {} as PlanInto;
+  estimate = {} as PlanEstimate;
   current_user!: UserModel;
   prices?: PriceModel[];
   result?: RenewalResult;
@@ -96,12 +97,14 @@ export class RenewalComponent implements OnInit {
   }
 
   submit() {
-    if (!this.plan.value || !this.plan.simultaneousUserCount) return;
+    if (!this.estimate.value || !this.estimate.simultaneousUserCount) return;
 
-    this.plan.target =
+    const plan = this.estimate as PlanInfo;
+    
+    plan.target =
       this.user_service.targetName ?? this.current_user.username;
 
-    this.service.renewal(this.plan).subscribe(async (result) => {
+    this.service.renewal(plan).subscribe(async (result) => {
       this.result = result;
 
       if (result.moneyNeeds > 0) {
@@ -118,8 +121,8 @@ export class RenewalComponent implements OnInit {
   setMonthly() {
     if (this.selectedMonthly === 0) return;
     this.color = 'info';
-    this.plan.type = PlanType.Monthly;
-    this.plan.value = this.selectedMonthly;
+    this.estimate.type = PlanType.Monthly;
+    this.estimate.value = this.selectedMonthly;
     this.selectedTraffic = 0;
     this.fetchEstimate();
   }
@@ -127,28 +130,25 @@ export class RenewalComponent implements OnInit {
   setTraffic() {
     if (this.selectedTraffic === 0) return;
     this.color = 'warning';
-    this.plan.type = PlanType.Traffic;
-    this.plan.value = this.selectedTraffic;
+    this.estimate.type = PlanType.Traffic;
+    this.estimate.value = this.selectedTraffic;
     this.selectedMonthly = 0;
     this.fetchEstimate();
   }
 
   setUserCount() {
-    this.plan.simultaneousUserCount = this.selectedUserCount;
+    this.estimate.simultaneousUserCount = this.selectedUserCount;
     this.fetchEstimate();
   }
 
   private fetchEstimate() {
-    if (!this.plan.value || !this.plan.simultaneousUserCount) {
+    if (!this.estimate.value || !this.estimate.simultaneousUserCount) {
       this.cost = '--';
       this.valid = false;
       return;
     }
 
-    this.plan.target =
-      this.user_service.targetName ?? this.current_user.username;
-
-    this.service.estimate(this.plan).subscribe((cost) => {
+    this.service.estimate(this.estimate).subscribe((cost) => {
       this.valid = cost ? true : false;
       this.cost = printMoney(cost);
     });
@@ -158,7 +158,7 @@ export class RenewalComponent implements OnInit {
     this.current_user = await this.user_service.user();
     this.service.info(this.user_service.targetName).subscribe((plan) => {
       if (!plan) return;
-      this.plan = plan;
+      this.estimate = plan;
 
       if (this.maxUserCounts.includes(plan.simultaneousUserCount)) {
         this.selectedUserCount = plan.simultaneousUserCount;

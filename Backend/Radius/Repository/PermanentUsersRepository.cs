@@ -33,4 +33,9 @@ class PermanentUsersRepository(RadDbContext context) : DapperRepository<Permanen
     {
         throw new NotImplementedException();
     }
+
+    public Task<PermanentUserEntity?> GetUser(int id)
+    {
+        throw new NotImplementedException();
+    }
 }

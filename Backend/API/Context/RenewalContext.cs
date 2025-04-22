@@ -1,14 +1,6 @@
-﻿using PhotonBypass.Domain.Profile;
+﻿namespace PhotonBypass.API.Context;
 
-namespace PhotonBypass.Application.Plan.Model;
-
-public class RenewalContext
+public class RenewalContext : EstimateContext
 {
     public string? Target { get; set; }
-
-    public PlanType? Type { get; set; }
-
-    public int? Value { get; set; }
-
-    public int? SimultaneousUserCount { get; set; }
 }
