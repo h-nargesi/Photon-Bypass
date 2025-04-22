@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Domain.Account;
+﻿using Dapper.FastCrud;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 
@@ -16,7 +17,7 @@ class ResetPassRepository(LocalDbContext context) : EditableRepository<ResetPass
 
         if (entity != null)
         {
-            _ = DeleteAsync(entity);
+            _ = connection.DeleteAsync(entity);
         }
 
         return entity;
@@ -24,6 +25,6 @@ class ResetPassRepository(LocalDbContext context) : EditableRepository<ResetPass
 
     public Task AddHashCode(ResetPassEntity hash_code)
     {
-        return AddAsync(hash_code);
+        return connection.InsertAsync(hash_code);
     }
 }

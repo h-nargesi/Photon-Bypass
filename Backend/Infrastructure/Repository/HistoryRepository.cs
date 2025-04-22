@@ -26,6 +26,6 @@ class HistoryRepository(LocalDbContext context) : EditableRepository<HistoryEnti
             }
         });
 
-        return result.ToList();
+        return [.. result];
     }
 }

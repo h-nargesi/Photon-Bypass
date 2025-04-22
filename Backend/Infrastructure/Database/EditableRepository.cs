@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Domain;
+﻿using Dapper.FastCrud;
+using PhotonBypass.Domain;
 using PhotonBypass.Domain.Repository;
 
 namespace PhotonBypass.Infra.Database;
@@ -12,11 +13,11 @@ public abstract class EditableRepository<TEntity>(DapperDbContext context) : Dap
     {
         if (entity.Id > 0)
         {
-            return UpdateAsync(entity);
+            return connection.UpdateAsync(entity);
         }
         else
         {
-            return AddAsync(entity);
+            return connection.InsertAsync(entity);
         }
     }
 
@@ -28,13 +29,13 @@ public abstract class EditableRepository<TEntity>(DapperDbContext context) : Dap
         {
             if (entity.Id > 0)
             {
-                buffer.Enqueue(UpdateAsync(entity));
+                buffer.Enqueue(connection.UpdateAsync(entity));
                 if (buffer.Count >= UPDATE_MAX_TAKS_COUNT)
                     await buffer.Dequeue();
             }
             else
             {
-                await AddAsync(entity);
+                await connection.InsertAsync(entity);
             }
         }
 
