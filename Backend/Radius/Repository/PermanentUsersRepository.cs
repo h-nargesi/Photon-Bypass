@@ -2,15 +2,22 @@
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Radius.Repository.DbContext;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.Radius.Repository;
 
 class PermanentUsersRepository(RadDbContext context) : DapperRepository<PermanentUserEntity>(context), IPermanentUsersRepository
 {
+    readonly static string Id = EntityExtensions.GetColumnName<PermanentUserEntity>(x => x.Id);
+    readonly static string Username = EntityExtensions.GetColumnName<PermanentUserEntity>(x => x.Username);
+
+    readonly static string StateId = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.Id);
+    readonly static string StateUsername = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.Username);
+
     public async Task<PermanentUserEntity?> GetUser(int id)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(PermanentUserEntity.Id)} = @id")
+            .Where($"{Id} = @id")
             .WithParameters(new { id }));
 
         return result.FirstOrDefault();
@@ -47,7 +54,7 @@ class PermanentUsersRepository(RadDbContext context) : DapperRepository<Permanen
     public async Task<UserPlanStateEntity?> GetPlanState(string username)
     {
         var result = await connection.FindAsync<UserPlanStateEntity>(statement => statement
-            .Where($"{nameof(PermanentUserEntity.Username)} = @username")
+            .Where($"{StateUsername} = @username")
             .WithParameters(new { username }));
 
         return result.FirstOrDefault();
@@ -56,14 +63,14 @@ class PermanentUsersRepository(RadDbContext context) : DapperRepository<Permanen
     private Task<IEnumerable<UserPlanStateEntity>> FindStateAsync(int id)
     {
         return connection.FindAsync<UserPlanStateEntity>(statement => statement
-            .Where($"{nameof(PermanentUserEntity.Id)} = @id")
+            .Where($"{StateId} = @id")
             .WithParameters(new { id }));
     }
 
     private Task<IEnumerable<PermanentUserEntity>> FindUserAsync(string username)
     {
         return FindAsync(statement => statement
-            .Where($"{nameof(PermanentUserEntity.Username)} = @username")
+            .Where($"{Username} = @username")
             .WithParameters(new { username }));
     }
 }

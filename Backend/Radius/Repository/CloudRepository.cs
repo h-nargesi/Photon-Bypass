@@ -2,15 +2,18 @@
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Radius.Repository.DbContext;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.Radius.Repository;
 
 class CloudRepository(RadDbContext context) : DapperRepository<CloudEntity>(context), ICloudRepository
 {
+    readonly static string Name = EntityExtensions.GetColumnName<CloudEntity>(x => x.Name);
+
     public async Task<int> FindWebCloud()
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(CloudEntity.Name)} = 'Web'"));
+            .Where($"{Name} = 'Web'"));
 
         var cloud = result.FirstOrDefault();
 

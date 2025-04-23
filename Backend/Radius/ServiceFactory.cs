@@ -23,6 +23,8 @@ static class ServiceFactory
         services.AddTransient<IPermanentUsersRepository, PermanentUsersRepository>();
         services.AddTransient<IProfileRepository, ProfileRepository>();
         services.AddTransient<IRadAcctRepository, RadAcctRepository>();
+        services.AddTransient<IRealmRepository, RealmRepository>();
+        services.AddTransient<ITopUpRepository, TopUpRepository>();
 
         services.AddSingleton<IStaticRepository, StaticRepository>();
     }

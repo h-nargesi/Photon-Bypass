@@ -30,4 +30,7 @@ public class TopUpEntity : IBaseEntity
     public int? DaysToUse { get; set; }
 
     public string? Comment { get; set; }
+
+    [Column("created")]
+    public DateTime Created { get; set; }
 }
