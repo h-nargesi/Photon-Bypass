@@ -71,9 +71,25 @@ using System;
 
 public class Calculator
 {
-    public static int Compute(int users, int value)
+    public static int Compute(int users, int traffic)
     {
-        return a + b;
+        return 50 + users * 20 + traffic * 80;
+    }
+}
+*/
+
+/*
+using System;
+
+public class Calculator
+{
+    public static int Compute(int users, int count)
+    {
+        var month = 190;
+        if (users >= 2) month += 150;
+        if (users >= 3) month += 120;
+        if (users >= 4) month += 100 * (users - 3);
+        return count * month;
     }
 }
 */

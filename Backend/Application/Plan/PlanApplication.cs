@@ -8,6 +8,7 @@ using PhotonBypass.Domain.Services;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
+using PhotonBypass.Tools;
 using Serilog;
 
 namespace PhotonBypass.Application.Plan;
@@ -135,8 +136,7 @@ class PlanApplication(
             });
         }
 
-        var change_profile = true;
-        var user_is_changed = false;
+        var activation = RadiusSrv.Value.ActivePermanentUser(account.Id, false);
 
         var state = await UserRepo.Value.GetPlanState(target) ??
             throw new Exception($"Plan state not found for target: {target}");
@@ -159,15 +159,18 @@ class PlanApplication(
 
             await RadiusSrv.Value.SetUserDate(account.PermanentUserId, DateTime.Now.Date, DateTime.Now.Date);
         }
-        else
-        {
-            change_profile = users != state.SimultaneousUserCount;
-        }
 
         var user = await UserRepo.Value.GetUser(account.PermanentUserId) ??
             throw new Exception($"Permanent User not found: {account.PermanentUserId}");
 
-        if (change_profile)
+        if (users < state.SimultaneousUserCount)
+        {
+            _ = VpnNodeSrv.Value.CloseConnections(user.Username, state.SimultaneousUserCount.Value - users);
+        }
+
+        var user_is_changed = false;
+
+        if (users != state.SimultaneousUserCount)
         {
             var profile = await GetProfile(account.CloudId, type, users);
             if (profile != null && profile.Id != user.ProfileId)
@@ -193,17 +196,7 @@ class PlanApplication(
             }
         }
 
-        if (users < state.SimultaneousUserCount)
-        {
-            try
-            {
-                _ = VpnNodeSrv.Value.CloseConnections(user.Username, state.SimultaneousUserCount.Value - users);
-            }
-            catch (Exception ex)
-            {
-                Log.Error("[user: {0}] Error on closing extra connections: {1}\n{2}", JobContext.Value.Username, ex.Message, ex.StackTrace);
-            }
-        }
+        await activation;
 
         if (user_is_changed)
         {
@@ -211,9 +204,31 @@ class PlanApplication(
         }
 
         account.Balance -= result;
+        switch (type)
+        {
+            case PlanType.Monthly:
+                value = DateTime.Now.MonthToDays(value);
+                break;
+            case PlanType.Traffic:
+                value *= 25;
+                break;
+        }
 
-        await RadiusSrv.Value.InsertTopUp(target, type, value);
-        await AccountRepo.Value.Save(account);
+        var transaction = AccountRepo.Value.BeginTransaction();
+
+        try
+        {
+            await AccountRepo.Value.Save(account);
+
+            await RadiusSrv.Value.InsertTopUpAndMakeActive(target, type, value);
+
+            transaction.Commit();
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
 
         _ = ServerMngSrv.Value.CheckUserServerBalance();
 

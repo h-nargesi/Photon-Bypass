@@ -5,6 +5,8 @@ namespace PhotonBypass.Domain.Radius;
 
 public interface IRadiusService : IDisposable
 {
+    Task ActivePermanentUser(int user_id, bool active);
+
     Task<string> GetOvpnPassword(int user_id);
 
     Task<bool> ChangeOvpnPassword(string username, string password);
@@ -19,5 +21,5 @@ public interface IRadiusService : IDisposable
 
     Task SetUserDate(int user_id, DateTime from, DateTime to);
 
-    Task InsertTopUp(string target, PlanType type, int value);
+    Task InsertTopUpAndMakeActive(string target, PlanType type, int value);
 }

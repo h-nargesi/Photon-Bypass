@@ -13,4 +13,10 @@ public static class PersianHandler
     {
         return new Jalali(date).GetDate().ToString(format);
     }
+
+    public static int MonthToDays(this DateTime date, int month)
+    {
+        var target = new Jalali(date).Add(month, TimeLevel.Month).ToDateTime();
+        return (int)(target - date).TotalDays;
+    }
 }
