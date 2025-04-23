@@ -32,4 +32,7 @@ public class UserPlanStateEntity : IBaseEntity
 
     [Column("data_usage")]
     public double? DataUsage { get; set; }
+
+    [Column("restricted_nas_ip")]
+    public string? RestrictedServerIP { get; set; }
 }

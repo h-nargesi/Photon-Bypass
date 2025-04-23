@@ -6,14 +6,17 @@ using System.Reflection;
 
 namespace PhotonBypass.Infra.Services;
 
-class PriceCalculator(IPriceRepository repository) : IPriceCalculator
+class PriceCalculator : IPriceCalculator
 {
-    private Dictionary<PlanType, MethodInfo>? Calculators;
+    private readonly Dictionary<PlanType, MethodInfo> Calculators;
+
+    public PriceCalculator(IPriceRepository repository)
+    {
+        Calculators = FetchCalculatorCode(repository);
+    }
 
     public int CalculatePrice(PlanType type, int users, int value)
     {
-        Calculators ??= FetchCalculatorCode();
-
         if (Calculators.TryGetValue(type, out var method))
         {
             return (int)(method.Invoke(null, [users, value]) ?? 0);
@@ -22,7 +25,7 @@ class PriceCalculator(IPriceRepository repository) : IPriceCalculator
         throw new Exception($"Calculator not found for type: {type}");
     }
 
-    private Dictionary<PlanType, MethodInfo> FetchCalculatorCode()
+    private static Dictionary<PlanType, MethodInfo> FetchCalculatorCode(IPriceRepository repository)
     {
         var list = repository.GetLeatest().Result;
 

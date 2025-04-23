@@ -58,7 +58,12 @@ class VpnApplication(
         var user = await UserRepo.Value.GetUser(target) ??
             throw new UserException("کاربر پیدا نشد!", $"target: {target}");
 
-        var server_task = UserRepo.Value.GetRestrictedServer(target);
+        if (!user.Active)
+        {
+            throw new UserException("کاربر پیدا نشد!", $"user is inactive: target={target}");
+        }
+
+        var server_task = UserRepo.Value.GetRestrictedServer(user.Id);
 
         var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(user.Id);
 

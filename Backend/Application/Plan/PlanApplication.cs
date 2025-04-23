@@ -138,7 +138,7 @@ class PlanApplication(
 
         var activation = RadiusSrv.Value.ActivePermanentUser(account.Id, false);
 
-        var state = await UserRepo.Value.GetPlanState(target) ??
+        var state = await UserRepo.Value.GetPlanState(account.Id) ??
             throw new Exception($"Plan state not found for target: {target}");
 
         if (type == PlanType.Traffic && state.PlanType != PlanType.Traffic)

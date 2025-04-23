@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Static;
 using PhotonBypass.Infra.Repository;
 using PhotonBypass.Infra.Repository.DbContext;
+using PhotonBypass.Infra.Services;
 
 namespace PhotonBypass.Infra;
 
@@ -20,5 +22,8 @@ static class ServiceFactory
         services.AddTransient<IAccountRepository, AccountRepository>();
         services.AddTransient<IHistoryRepository, HistoryRepository>();
         services.AddTransient<IResetPassRepository, ResetPassRepository>();
+        services.AddTransient<IPriceRepository, PriceRepository>();
+
+        services.AddSingleton<IPriceCalculator, PriceCalculator>();
     }
 }
