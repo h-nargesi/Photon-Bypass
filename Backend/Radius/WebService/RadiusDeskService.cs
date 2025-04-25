@@ -67,9 +67,22 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.success ?? false;
     }
 
-    public Task<string> GetOvpnPassword(int user_id)
+    public async Task<string?> GetOvpnPassword(int user_id, int cloud_id)
     {
-        throw new NotImplementedException();
+        await CheckLogin();
+
+        var data = new
+        {
+            _dc = GetTime(),
+            token,
+            user_id,
+            cloud_id,
+            sel_language = SEL_LANGUAGE
+        };
+
+        var response = await GetAsync<object, dynamic>("permanent-users/view-password.json", data);
+
+        return response?.value ?? null;
     }
 
     public Task<bool> ChangeOvpnPassword(string username, string password)

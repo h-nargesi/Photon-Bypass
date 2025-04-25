@@ -7,7 +7,7 @@ public interface IRadiusService : IDisposable
 {
     Task<bool> ActivePermanentUser(int user_id, int cloud_id, bool active);
 
-    Task<string> GetOvpnPassword(int user_id);
+    Task<string?> GetOvpnPassword(int user_id, int cloud_id);
 
     Task<bool> ChangeOvpnPassword(string username, string password);
 
