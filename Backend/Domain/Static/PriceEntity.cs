@@ -1,9 +1,13 @@
-﻿using PhotonBypass.Domain.Profile;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using PhotonBypass.Domain.Profile;
 
 namespace PhotonBypass.Domain.Static;
 
+[Table("Price")]
 public class PriceEntity : IBaseEntity
 {
+    [Key]
     public int Id { get; set; }
 
     public bool IsActive { get; set; }

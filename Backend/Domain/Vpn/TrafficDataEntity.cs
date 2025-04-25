@@ -1,7 +1,12 @@
-﻿namespace PhotonBypass.Domain.Vpn;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
+namespace PhotonBypass.Domain.Vpn;
+
+[Table("TrafficData")]
 public class TrafficDataEntity : IBaseEntity
 {
+    [Key]
     public int Id { get; set; }
 
     public int AccountId { get; set; }

@@ -2,7 +2,7 @@
 
 namespace PhotonBypass.Domain.Repository;
 
-public interface IRepository
+public interface ITransactionalRepository
 {
     IDbTransaction BeginTransaction();
 }

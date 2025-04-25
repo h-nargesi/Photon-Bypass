@@ -1,6 +1,6 @@
 ﻿namespace PhotonBypass.Domain.Repository;
 
-public interface IEditableRepository<TEntity> : IRepository where TEntity : class, IBaseEntity
+public interface IEditableRepository<TEntity> : ITransactionalRepository where TEntity : class, IBaseEntity
 {
     public Task Save(TEntity entity);
 

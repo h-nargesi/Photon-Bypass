@@ -26,4 +26,12 @@ public static class EntityExtensions
         var attr = propInfo.GetCustomAttribute<ColumnAttribute>();
         return attr?.Name ?? propInfo.Name ?? string.Empty;
     }
+
+    public static string GetTablename<T>()
+    {
+        var type = typeof(T);
+
+        var attr = type.GetCustomAttribute<TableAttribute>();
+        return attr?.Name ?? type.Name ?? string.Empty;
+    }
 }

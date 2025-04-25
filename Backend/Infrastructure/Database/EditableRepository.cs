@@ -1,4 +1,5 @@
-﻿using Dapper.FastCrud;
+﻿using System.Data;
+using Dapper.FastCrud;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Repository;
 
@@ -8,6 +9,11 @@ public abstract class EditableRepository<TEntity>(DapperDbContext context) : Dap
     where TEntity : class, IBaseEntity
 {
     private const int UPDATE_MAX_TAKS_COUNT = 10;
+
+    public IDbTransaction BeginTransaction()
+    {
+        return connection.BeginTransaction();
+    }
 
     public Task Save(TEntity entity)
     {
