@@ -85,9 +85,22 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.value ?? null;
     }
 
-    public Task<bool> ChangeOvpnPassword(string username, string password)
+    public async Task<bool> ChangeOvpnPassword(int user_id, string password)
     {
-        throw new NotImplementedException();
+        await CheckLogin();
+
+        var data = new
+        {
+            _dc = GetTime(),
+            token,
+            user_id,
+            password,
+            sel_language = SEL_LANGUAGE
+        };
+
+        var response = await PostAsync<object, dynamic>("permanent-users/change-password.json", data);
+
+        return response?.success ?? false;
     }
 
     public Task SavePermenentUser(PermanentUserEntity user)

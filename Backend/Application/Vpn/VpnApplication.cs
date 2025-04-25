@@ -30,7 +30,10 @@ class VpnApplication(
 
     public async Task<ApiResult> ChangeOvpnPassword(string target, string password)
     {
-        var result = await RadiusSrv.Value.ChangeOvpnPassword(target, password);
+        var account = await AccountRepo.Value.GetAccount(target) ??
+            throw new UserException("کاربر پیدا نشد!", $"target: {target}");
+
+        var result = await RadiusSrv.Value.ChangeOvpnPassword(account.PermanentUserId, password);
 
         if (!result)
         {
