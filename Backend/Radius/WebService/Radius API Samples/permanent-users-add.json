@@ -1,0 +1,30 @@
+{
+    "url": "https://rad.photon-bypass.com/cake4/rd_cake/permanent-users/add.json",
+    "type": "POST",
+    "postType": "Form",
+    "request": {
+        "username": "HamedTest",
+        "password": 123456,
+        "realm_id": 30,
+        "profile_id": 136,
+        "name": "Name",
+        "surname": "Surname",
+        "language": "4_4",
+        "phone": "phone",
+        "email": "email",
+        "address": "address",
+        "always_active": "always_active",
+        "static_ip": null,
+        "extra_name": null,
+        "extra_value": null,
+        "site": null,
+        "ppsk": null,
+        "realm_vlan_id": 0,
+        "token": "52bacec2-f64c-4471-8060-c88d8bd938d7",
+        "sel_language": "4_4",
+        "cloud_id": 30
+    },
+    "response": {
+        "success": true
+    }
+}

@@ -163,6 +163,8 @@ partial class AuthApplication(
             throw new UserException("این نام کاربری قبلا استفاده شده است!");
         }
 
+        context.Password ??= string.Empty;
+
         var user = new PermanentUserEntity
         {
             Username = context.Username ?? string.Empty,
@@ -178,7 +180,12 @@ partial class AuthApplication(
             Active = false,
         };
 
-        await RadiusSrv.Value.SavePermenentUser(user);
+        await RadiusSrv.Value.RegisterPermenentUser(user, context.Password);
+
+        if (user.Id < 1)
+        {
+            return ApiResult.Success("کاربر شما ساخته شد.");
+        }
 
         var setting_server = RadiusSrv.Value.SetRestrictedServer(user.Id, realm.RestrictedServerIP);
 
@@ -193,7 +200,7 @@ partial class AuthApplication(
             MobileValid = false,
             Name = context.Firstname,
             Surname = context.Lastname,
-            Password = HashHandler.HashPassword(context.Password ?? string.Empty),
+            Password = HashHandler.HashPassword(context.Password),
         };
 
         var account_saving = AccountRepo.Save(account);

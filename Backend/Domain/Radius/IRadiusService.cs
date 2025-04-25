@@ -13,6 +13,8 @@ public interface IRadiusService : IDisposable
 
     Task<bool> SavePermenentUser(PermanentUserEntity user);
 
+    Task<bool> RegisterPermenentUser(PermanentUserEntity user, string password);
+
     Task<IList<TrafficDataRadius>> FetchTrafficData(DateTime index, TrafficDataRequestType type);
 
     Task<bool> SetRestrictedServer(int user_id, string? server_ip);

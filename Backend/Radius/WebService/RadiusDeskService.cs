@@ -29,27 +29,6 @@ class RadiusDeskService : IRadiusService, IDisposable
         };
     }
 
-    public async Task<PermanentUserEntity?> GetPermenentUser(string username)
-    {
-        await CheckLogin();
-
-        var url = $"permanent-users/index.json?_dc={GetTime()}&page=1&start=0&limit=2&sort=username&dir=ASC";
-
-        url += $"&token={token}&sel_language={SEL_LANGUAGE}&filter=";
-        url += HttpUtility.UrlEncode($"[{{\"operator\":\"==\",\"value\":true,\"property\":\"active\"}},{{\"operator\":\"==\",\"value\":\"{username}\",\"property\": \"username\"}}]");
-
-        var httpMessage = httpClient.GetAsync(url).Result
-            .EnsureSuccessStatusCode();
-
-        if (httpMessage == null) return null;
-
-        var result = await httpMessage.Content.ReadFromJsonAsync<PermanentUsersResponse>();
-
-        if (result?.TotalCount != 1) return null;
-
-        return result.Items?[0];
-    }
-
     public async Task<bool> ActivePermanentUser(int user_id, int cloud_id, bool active)
     {
         await CheckLogin();
@@ -108,6 +87,47 @@ class RadiusDeskService : IRadiusService, IDisposable
         throw new NotImplementedException();
     }
 
+    public async Task<bool> RegisterPermenentUser(PermanentUserEntity user, string password)
+    {
+        await CheckLogin();
+
+        var data = new
+        {
+            username = user.Username,
+            password,
+            realm_id = user.RealmId,
+            profile_id = user.ProfileId,
+            name = user.Name,
+            surname = user.Surname,
+            language = SEL_LANGUAGE,
+            phone = user.Phone,
+            email = user.Email,
+            always_active = "always_active",
+            realm_vlan_id = 0,
+            sel_language = SEL_LANGUAGE,
+            cloud_id = user.CloudId,
+            token,
+        };
+
+        var response = await PostAsync<object, dynamic>("permanent-users/add.json", data);
+
+        var success = response?.success ?? false;
+
+        if (!success)
+        {
+            return success;
+        }
+
+        var reload = await GetPermenentUser(user.Username);
+        
+        if (reload != null)
+        {
+            user.Id = reload.Id;
+        }
+
+        return success;
+    }
+
     public Task<IList<TrafficDataRadius>> FetchTrafficData(DateTime index, TrafficDataRequestType type)
     {
         throw new NotImplementedException();
@@ -138,6 +158,64 @@ class RadiusDeskService : IRadiusService, IDisposable
     private static long GetTime()
     {
         return UnixTimestampConverter.DateTimeToUnixTimeStamp(DateTime.Now);
+    }
+
+    private async Task<PermanentUserEntity?> GetPermenentUser(string username)
+    {
+        await CheckLogin();
+
+        var filters = $"[{{\"operator\":\"==\",\"value\":true,\"property\":\"active\"}},{{\"operator\":\"==\",\"value\":\"{username}\",\"property\": \"username\"}}]";
+
+        var data = new
+        {
+            _dc = GetTime(),
+            page = 1,
+            start = 0,
+            limit = 2,
+            sort = username,
+            dir = "ASC",
+            token,
+            sel_language = SEL_LANGUAGE,
+            filter = "[{\"operator\":\"==\",\"value\":true,\"property\":\"active\"},{\"operator\":\"==\",\"value\":\"U0171@ry\",\"property\": \"username\"}]",
+        };
+
+        var response = await PostAsync<object, PermanentUsersResponse>("permanent-users/index.json", data);
+
+        return response?.Items?[0];
+    }
+
+    protected async Task<bool> EditBasicInfo(PermanentUserEntity user)
+    {
+        var data = new
+        {
+            id = user.Id,
+            token,
+            realm_id = user.RealmId,
+            profile_id = user.ProfileId,
+            time_cap_type = "hard",
+            data_cap_type = "hard",
+        };
+
+        var response = await PostAsync<object, dynamic>("permanent-users/edit-basic-info.json", data);
+
+        return response?.success ?? false;
+    }
+
+    protected async Task<bool> EditPersonalInfo(PermanentUserEntity user)
+    {
+        var data = new
+        {
+            id = user.Id,
+            name = user.Name,
+            surname = user.Surname,
+            phone = user.Phone,
+            email = user.Email,
+            token,
+        };
+
+        var response = await PostAsync<object, dynamic>("permanent-users/edit-personal-info.json", data);
+
+        return response?.success ?? false;
     }
 
     private async Task CheckLogin()

@@ -1,0 +1,20 @@
+{
+    "url": "https://rad.photon-bypass.com/cake4/rd_cake/permanent-users/edit-personal-info.json",
+    "type": "POST",
+    "postType": "Form",
+    "request": {
+        "id": 101,
+        "name": "hamed",
+        "surname": null,
+        "language": "4_4",
+        "phone": null,
+        "email": null,
+        "address": null,
+        "token": "52bacec2-f64c-4471-8060-c88d8bd938d7",
+        "sel_language": "4_4",
+        "cloud_id": 23
+    },
+    "response": {
+        "success": true
+    }
+}
