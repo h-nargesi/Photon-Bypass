@@ -103,7 +103,7 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.success ?? false;
     }
 
-    public Task SavePermenentUser(PermanentUserEntity user)
+    public Task<bool> SavePermenentUser(PermanentUserEntity user)
     {
         throw new NotImplementedException();
     }
@@ -113,22 +113,22 @@ class RadiusDeskService : IRadiusService, IDisposable
         throw new NotImplementedException();
     }
 
-    public Task SetRestrictedServer(int user_id, string? server_ip)
+    public Task<bool> SetRestrictedServer(int user_id, string? server_ip)
     {
         throw new NotImplementedException();
     }
 
-    public Task UpdateUserDataUsege(int user_id)
+    public Task<bool> UpdateUserDataUsege(int user_id)
     {
         throw new NotImplementedException();
     }
 
-    public Task SetUserDate(int user_id, DateTime from, DateTime to)
+    public Task<bool> SetUserDate(int user_id, DateTime from, DateTime to)
     {
         throw new NotImplementedException();
     }
 
-    public Task InsertTopUpAndMakeActive(string target, PlanType type, int value)
+    public Task<bool> InsertTopUpAndMakeActive(string target, PlanType type, int value)
     {
         throw new NotImplementedException();
     }
