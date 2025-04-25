@@ -158,6 +158,10 @@ class RadiusDeskService : IRadiusService, IDisposable
 
     private async Task<bool> CheckToken()
     {
+        var now = DateTime.Now;
+        if ((now - lastRequest).Minutes < 5) return true;
+        else lastRequest = now;
+
         var tokenData = new
         {
             _dc = GetTime(),
