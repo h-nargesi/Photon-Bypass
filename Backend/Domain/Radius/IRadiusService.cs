@@ -5,7 +5,7 @@ namespace PhotonBypass.Domain.Radius;
 
 public interface IRadiusService : IDisposable
 {
-    Task ActivePermanentUser(int user_id, bool active);
+    Task<bool> ActivePermanentUser(int user_id, int cloud_id, bool active);
 
     Task<string> GetOvpnPassword(int user_id);
 

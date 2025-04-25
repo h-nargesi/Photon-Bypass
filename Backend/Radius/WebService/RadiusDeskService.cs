@@ -1,7 +1,5 @@
 ﻿using System.Net.Http.Json;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Web;
 using Microsoft.Extensions.Options;
 using PhotonBypass.Domain.Profile;
@@ -9,8 +7,6 @@ using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Radius.WebService.ApiResponseModel;
 using PhotonBypass.Tools;
-using Swashbuckle.AspNetCore.SwaggerGen;
-using static Microsoft.CodeAnalysis.CSharp.SyntaxTokenParser;
 
 namespace PhotonBypass.Radius.WebService;
 
@@ -19,6 +15,7 @@ class RadiusDeskService : IRadiusService, IDisposable
     private readonly RadiusServiceOptions options;
     private readonly HttpClient httpClient;
     private string? token;
+    private DateTime lastRequest = DateTime.Now;
 
     private const string SEL_LANGUAGE = "4_4";
 
@@ -53,11 +50,21 @@ class RadiusDeskService : IRadiusService, IDisposable
         return result.Items?[0];
     }
 
-    public void Dispose() => Logout();
-
-    public Task ActivePermanentUser(int user_id, bool active)
+    public async Task<bool> ActivePermanentUser(int user_id, int cloud_id, bool active)
     {
-        throw new NotImplementedException();
+        await CheckLogin();
+
+        var data = new Dictionary<string, object?>
+        {
+            {"rb", active },
+            {"token", token },
+            {"cloud_id", cloud_id },
+            {"sel_language", SEL_LANGUAGE },
+        };
+
+        var response = await PostAsync<object, dynamic>("permanent-users/enable-disable.json", data);
+
+        return response?.success ?? false;
     }
 
     public Task<string> GetOvpnPassword(int user_id)
@@ -99,6 +106,8 @@ class RadiusDeskService : IRadiusService, IDisposable
     {
         throw new NotImplementedException();
     }
+
+    public void Dispose() => Logout();
 
     private static long GetTime()
     {
@@ -157,8 +166,7 @@ class RadiusDeskService : IRadiusService, IDisposable
 
     private async Task<HttpResponseMessage> PostAsync<T>(string url, T data)
     {
-        var response = await httpClient.PostAsync(url, FormContent(data)) ??
-            throw new Exception("Invliad post response");
+        var response = await httpClient.PostAsync(url, FormContent(data));
 
         return response.EnsureSuccessStatusCode();
     }
@@ -172,19 +180,14 @@ class RadiusDeskService : IRadiusService, IDisposable
 
     private async Task<HttpResponseMessage> GetAsync(string url)
     {
-        var response = await httpClient.GetAsync(url) ??
-            throw new Exception("Invliad post response");
+        var response = await httpClient.GetAsync(url);
 
         return response.EnsureSuccessStatusCode();
     }
 
-    private async Task<HttpResponseMessage> GetAsync<T>(string url, T data)
+    private Task<HttpResponseMessage> GetAsync<T>(string url, T data)
     {
-        url += QueryString(data);
-        var response = await httpClient.GetAsync(url) ??
-            throw new Exception("Invliad post response");
-
-        return response.EnsureSuccessStatusCode();
+        return GetAsync(url + QueryString(data));
     }
 
     private async Task<R?> GetAsync<R>(string url)
@@ -205,10 +208,20 @@ class RadiusDeskService : IRadiusService, IDisposable
     {
         var keyValues = new List<KeyValuePair<string, string?>>();
 
-        foreach (var item in typeof(T).GetProperties())
+        if (data is IDictionary<string, object?> dict)
         {
-            var value = item.GetValue(data);
-            keyValues.Add(new KeyValuePair<string, string?>(item.Name, value?.ToString()));
+            foreach (var item in dict)
+            {
+                keyValues.Add(new KeyValuePair<string, string?>(item.Key, item.Value?.ToString()));
+            }
+        }
+        else
+        {
+            foreach (var item in typeof(T).GetProperties())
+            {
+                var value = item.GetValue(data);
+                keyValues.Add(new KeyValuePair<string, string?>(item.Name, value?.ToString()));
+            }
         }
 
         return new FormUrlEncodedContent(keyValues);

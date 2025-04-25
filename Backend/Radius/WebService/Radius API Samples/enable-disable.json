@@ -1,0 +1,15 @@
+{
+    "url": "https://rad.photon-bypass.com/cake4/rd_cake/permanent-users/enable-disable.json",
+    "type": "POST",
+    "postType": "Form",
+    "request": {
+        "101": 101,
+        "rb": "enable",
+        "token": "01831f18-6691-4c39-af82-5803aa885c0c",
+        "cloud_id": 23,
+        "sel_language": "4_4"
+    },
+    "response": {
+        "success": true
+    }
+}
