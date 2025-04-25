@@ -18,6 +18,7 @@ class RadiusDeskService : IRadiusService, IDisposable
     private DateTime lastRequest = DateTime.Now;
 
     private const string SEL_LANGUAGE = "4_4";
+    private const int TIMEZONE_ID = 262;
 
     public RadiusDeskService(IOptions<RadiusServiceOptions> options)
     {
@@ -82,9 +83,21 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.success ?? false;
     }
 
-    public Task<bool> SavePermenentUser(PermanentUserEntity user)
+    public async Task<bool> SavePermenentUser(PermanentUserEntity user)
     {
-        throw new NotImplementedException();
+        var data = new
+        {
+            id = user.Id,
+            token,
+            realm_id = user.RealmId,
+            profile_id = user.ProfileId,
+            time_cap_type = "hard",
+            data_cap_type = "hard",
+        };
+
+        var response = await PostAsync<object, dynamic>("permanent-users/edit-basic-info.json", data);
+
+        return response?.success ?? false;
     }
 
     public async Task<bool> RegisterPermenentUser(PermanentUserEntity user, string password)
@@ -119,7 +132,7 @@ class RadiusDeskService : IRadiusService, IDisposable
         }
 
         var reload = await GetPermenentUser(user.Username);
-        
+
         if (reload != null)
         {
             user.Id = reload.Id;
@@ -128,9 +141,32 @@ class RadiusDeskService : IRadiusService, IDisposable
         return success;
     }
 
-    public Task<IList<TrafficDataRadius>> FetchTrafficData(DateTime index, TrafficDataRequestType type)
+    public async Task<TrafficDataRadius[]> FetchTrafficData(string username, DateTime index, TrafficDataRequestType type)
     {
-        throw new NotImplementedException();
+        await CheckLogin();
+
+        var data = new
+        {
+            _dc = GetTime(),
+            username,
+            type = "permanent",
+            span = type.ToString().ToLower(),
+            timezone_id = TIMEZONE_ID,
+            page = 1,
+            start = 0,
+            limit = 25,
+            token,
+            sel_language = SEL_LANGUAGE,
+        };
+
+        var response = await PostAsync<object, dynamic>("user-stats/index.json", data);
+
+        if (response?.success != true)
+        {
+            throw new Exception("Error loading data from 'user-stats/index.json'");
+        }
+
+        return response.items as TrafficDataRadius[];
     }
 
     public Task<bool> SetRestrictedServer(int user_id, string? server_ip)
@@ -184,24 +220,7 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.Items?[0];
     }
 
-    protected async Task<bool> EditBasicInfo(PermanentUserEntity user)
-    {
-        var data = new
-        {
-            id = user.Id,
-            token,
-            realm_id = user.RealmId,
-            profile_id = user.ProfileId,
-            time_cap_type = "hard",
-            data_cap_type = "hard",
-        };
-
-        var response = await PostAsync<object, dynamic>("permanent-users/edit-basic-info.json", data);
-
-        return response?.success ?? false;
-    }
-
-    protected async Task<bool> EditPersonalInfo(PermanentUserEntity user)
+    private async Task<bool> EditPersonalInfo(PermanentUserEntity user)
     {
         var data = new
         {

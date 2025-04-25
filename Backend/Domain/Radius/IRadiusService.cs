@@ -15,7 +15,7 @@ public interface IRadiusService : IDisposable
 
     Task<bool> RegisterPermenentUser(PermanentUserEntity user, string password);
 
-    Task<IList<TrafficDataRadius>> FetchTrafficData(DateTime index, TrafficDataRequestType type);
+    Task<TrafficDataRadius[]> FetchTrafficData(string username, DateTime index, TrafficDataRequestType type);
 
     Task<bool> SetRestrictedServer(int user_id, string? server_ip);
 
