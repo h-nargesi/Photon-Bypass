@@ -1,6 +1,6 @@
 ﻿using PhotonBypass.Domain.Profile;
 
-namespace PhotonBypass.Radius.ApiResponseModel;
+namespace PhotonBypass.Radius.WebService.ApiResponseModel;
 
 internal class PermanentUsersResponse
 {

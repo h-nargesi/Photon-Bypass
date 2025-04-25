@@ -3,6 +3,7 @@ using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Radius.Repository;
 using PhotonBypass.Radius.Repository.DbContext;
+using PhotonBypass.Radius.WebService;
 
 namespace PhotonBypass.Radius;
 
@@ -15,6 +16,7 @@ static class ServiceFactory
 
     static void AddLocalDbContext(this IServiceCollection services)
     {
+        services.AddSingleton<RadiusServiceOptions>();
         services.AddSingleton<RadDapperOptions>();
         services.AddSingleton<RadDbContext>();
 
@@ -27,5 +29,6 @@ static class ServiceFactory
         services.AddTransient<ITopUpRepository, TopUpRepository>();
 
         services.AddSingleton<IStaticRepository, StaticRepository>();
+        services.AddSingleton<IRadiusService, RadiusDeskService>();
     }
 }

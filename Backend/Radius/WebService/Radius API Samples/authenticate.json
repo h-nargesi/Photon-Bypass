@@ -1,10 +1,12 @@
 {
     "url": "https://rad.photon-bypass.com/cake4/rd_cake/dashboard/authenticate.json",
     "type": "POST",
+    "postType":  "Form",
     "request": {
         "auto_compact": false,
         "username": "user",
-        "password": "pass"
+        "password": "pass",
+        "sel_language": "4_4"
     },
     "response": {
         "data": {

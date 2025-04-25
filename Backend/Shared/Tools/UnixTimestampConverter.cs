@@ -22,12 +22,12 @@ public class UnixTimestampConverter : JsonConverter<DateTime>
         writer.WriteNumberValue(unixTimestamp);
     }
 
-    private static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+    public static DateTime UnixTimeStampToDateTime(long unixTimeStamp)
     {
         var dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         dateTime = dateTime.AddMilliseconds(unixTimeStamp).ToLocalTime();
         return dateTime;
     }
 
-    private static double DateTimeToUnixTimeStamp(DateTime input) => new DateTimeOffset(input).ToUnixTimeMilliseconds();
+    public static long DateTimeToUnixTimeStamp(DateTime input) => new DateTimeOffset(input).ToUnixTimeMilliseconds();
 }

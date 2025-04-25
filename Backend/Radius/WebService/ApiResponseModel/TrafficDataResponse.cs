@@ -1,7 +1,7 @@
 ﻿using PhotonBypass.Tools;
 using System.Text.Json.Serialization;
 
-namespace PhotonBypass.Radius.ApiResponseModel;
+namespace PhotonBypass.Radius.WebService.ApiResponseModel;
 
 public class TrafficDataResponse
 {
