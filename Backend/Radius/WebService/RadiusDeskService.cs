@@ -1,12 +1,12 @@
-﻿using System.Net.Http.Json;
-using System.Text;
-using System.Web;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Radius.WebService.ApiResponseModel;
 using PhotonBypass.Tools;
+using System.Net.Http.Json;
+using System.Text;
+using System.Web;
 
 namespace PhotonBypass.Radius.WebService;
 
@@ -159,14 +159,38 @@ class RadiusDeskService : IRadiusService, IDisposable
             sel_language = SEL_LANGUAGE,
         };
 
-        var response = await PostAsync<object, dynamic>("user-stats/index.json", data);
+        Func<double, DateTime> func;
 
-        if (response?.success != true)
+        switch (type)
+        {
+            case TrafficDataRequestType.Daily:
+                index = index.Date;
+                func = index.AddHours;
+                break;
+            case TrafficDataRequestType.Monthly:
+                index = index.Date.AddDays(1 - index.Day);
+                func = index.AddDays;
+                break;
+            default:
+                throw new Exception($"Traffic Data Request Type is not supported: '{type}'");
+        }
+
+        var response = await PostAsync<object, TrafficDataResponse>("user-stats/index.json", data);
+
+        if (response == null || response.Success != true)
         {
             throw new Exception("Error loading data from 'user-stats/index.json'");
         }
 
-        return response.items as TrafficDataRadius[];
+        var result = response.Items?.Select(x => new TrafficDataRadius
+        {
+            DataIn = x.DataIn,
+            DataOut = x.DataOut,
+            Day = func(x.TimeUnit),
+
+        }).ToArray();
+
+        return result ?? [];
     }
 
     public Task<bool> SetRestrictedServer(int user_id, string? server_ip)
@@ -387,5 +411,10 @@ class RadiusDeskService : IRadiusService, IDisposable
         if (result.Length < 1) return string.Empty;
 
         return result.Remove(0, 1).Insert(0, '?').ToString();
+    }
+
+    private static DateTime AddHour(DateTime date, int hours)
+    {
+        return date.AddHours(hours);
     }
 }

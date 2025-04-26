@@ -124,7 +124,7 @@ class VpnApplication(
             var type = firstEmptyDate < DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek) ?
                 TrafficDataRequestType.Monthly : TrafficDataRequestType.Weekly;
 
-            var data = await RadiusSrv.Value.FetchTrafficData(firstEmptyDate, type);
+            var data = await RadiusSrv.Value.FetchTrafficData(target, firstEmptyDate, type);
 
             var new_data = Merge(ref list, data, minDateTime);
 
