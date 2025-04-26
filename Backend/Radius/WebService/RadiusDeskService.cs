@@ -125,21 +125,15 @@ class RadiusDeskService : IRadiusService, IDisposable
 
         var response = await PostAsync<object, dynamic>("permanent-users/add.json", data);
 
-        var success = response?.success ?? false;
-
-        if (!success)
+        if (!(response?.success ?? false))
         {
-            return success;
+            return false;
         }
 
-        var reload = await GetPermenentUser(user.Username);
+        user.Id = response.data.id;
+        user.Username = response.data.username;
 
-        if (reload != null)
-        {
-            user.Id = reload.Id;
-        }
-
-        return success;
+        return true;
     }
 
     public async Task<TrafficDataRadius[]> FetchTrafficData(string username, DateTime index, TrafficDataRequestType type)
@@ -243,33 +237,6 @@ class RadiusDeskService : IRadiusService, IDisposable
     private static long GetTime()
     {
         return UnixTimestampConverter.DateTimeToUnixTimeStamp(DateTime.Now);
-    }
-
-    private async Task<PermanentUserEntityResponse?> GetPermenentUser(string username)
-    {
-        await CheckLogin();
-
-        var data = new
-        {
-            _dc = GetTime(),
-            page = 1,
-            start = 0,
-            limit = 2,
-            sort = username,
-            dir = "ASC",
-            token,
-            sel_language = SEL_LANGUAGE,
-            filter = "[{\"operator\":\"==\",\"value\":true,\"property\":\"active\"},{\"operator\":\"==\",\"value\":\"U0171@ry\",\"property\": \"username\"}]",
-        };
-
-        var response = await PostAsync<object, PermanentUsersResponse>("permanent-users/index.json", data);
-
-        if (response?.Items?.Length != 1)
-        {
-            return null;
-        }
-
-        return response?.Items?[0];
     }
 
     private async Task<bool> EditPersonalInfo(PermanentUserEntity user)
