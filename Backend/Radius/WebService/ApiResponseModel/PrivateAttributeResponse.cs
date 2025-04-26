@@ -17,7 +17,7 @@ class PrivateAttributeResponse
     public string? OP { get; set; }
     
     [JsonPropertyName("value")] 
-    public string? Value { get; set; }
+    public object? Value { get; set; }
     
     [JsonPropertyName("edit")] 
     public bool Edit { get; set; }

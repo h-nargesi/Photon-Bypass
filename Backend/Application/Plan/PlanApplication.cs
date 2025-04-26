@@ -24,6 +24,8 @@ class PlanApplication(
     Lazy<IJobContext> JobContext)
     : IPlanApplication
 {
+    private const long BYTE_IN_GIG = 1024 * 1024 * 1024;
+
     public async Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target)
     {
         var state = await UserRepo.Value.GetPlanState(target);
@@ -148,7 +150,9 @@ class PlanApplication(
                 throw new UserException("پلن جاری تمام نشده! برای تغییر نوع پلن باید پلن جاری به اتمام برسد.");
             }
 
-            await RadiusSrv.Value.UpdateUserDataUsege(account.PermanentUserId);
+            var data_usage = (long)((state.DataUsage ?? 0) * BYTE_IN_GIG);
+
+            await RadiusSrv.Value.UpdateUserDataUsege(account.Username, data_usage);
         }
         else if (type == PlanType.Monthly && state.PlanType != PlanType.Monthly)
         {

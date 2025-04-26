@@ -19,7 +19,7 @@ public interface IRadiusService : IDisposable
 
     Task<bool> SetRestrictedServer(string username, string? server_ip);
 
-    Task<bool> UpdateUserDataUsege(int user_id);
+    Task<bool> UpdateUserDataUsege(string username, long total_data);
 
     Task<bool> SetUserDate(int user_id, DateTime from, DateTime to);
 

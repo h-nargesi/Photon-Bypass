@@ -20,6 +20,7 @@ class RadiusDeskService : IRadiusService, IDisposable
     private const string SEL_LANGUAGE = "4_4";
     private const int TIMEZONE_ID = 262;
     private const string NAS_IP_ADDRESS = "NAS-IP-Address";
+    private const string RD_TOTAL_DATA = "Rd-Total-Data";
 
     public RadiusDeskService(IOptions<RadiusServiceOptions> options)
     {
@@ -192,7 +193,7 @@ class RadiusDeskService : IRadiusService, IDisposable
     {
         await CheckLogin();
 
-        var current = await GetRestrictedServer(username);
+        var current = await GetPrivateAttribute(username, NAS_IP_ADDRESS);
 
         if (server_ip == null && current == null)
         {
@@ -217,9 +218,24 @@ class RadiusDeskService : IRadiusService, IDisposable
         return await ModifyPrivateAttributes(username, current, op);
     }
 
-    public Task<bool> UpdateUserDataUsege(int user_id)
+    public async Task<bool> UpdateUserDataUsege(string username, long total_data)
     {
-        throw new NotImplementedException();
+        await CheckLogin();
+
+        var current = await GetPrivateAttribute(username, RD_TOTAL_DATA) ??
+            new PrivateAttributeResponse
+            {
+                Id = null,
+                Type = "check",
+                Attribute = RD_TOTAL_DATA,
+                OP = ":=",
+                Edit = true,
+                Delete = true,
+            };
+
+        current.Value = total_data;
+
+        return await ModifyPrivateAttributes(username, current, current.Id == null ? "add" : "edit");
     }
 
     public Task<bool> SetUserDate(int user_id, DateTime from, DateTime to)
@@ -256,7 +272,7 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.success ?? false;
     }
 
-    private async Task<PrivateAttributeResponse?> GetRestrictedServer(string username)
+    private async Task<PrivateAttributeResponse?> GetPrivateAttribute(string username, string key)
     {
         var items = await GetPrivateAttributes(username);
 
@@ -264,7 +280,7 @@ class RadiusDeskService : IRadiusService, IDisposable
         {
             foreach (var item in items)
             {
-                if (item.Attribute == NAS_IP_ADDRESS)
+                if (item.Attribute == key)
                     return item;
             }
         }
