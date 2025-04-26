@@ -139,9 +139,16 @@ class PlanApplication(
         }
 
         var activation = RadiusSrv.Value.ActivePermanentUser(account.Id, account.CloudId, false);
+        var fetch_state = UserRepo.Value.GetPlanState(account.PermanentUserId);
+        var fetch_user = UserRepo.Value.GetUser(account.PermanentUserId);
 
-        var state = await UserRepo.Value.GetPlanState(account.Id) ??
+        var state = (await fetch_state) ??
             throw new Exception($"Plan state not found for target: {target}");
+
+        var user = (await fetch_user) ??
+            throw new Exception($"Permanent User not found: {account.PermanentUserId}");
+
+        var user_is_changed = false;
 
         if (type == PlanType.Traffic && state.PlanType != PlanType.Traffic)
         {
@@ -161,18 +168,16 @@ class PlanApplication(
                 throw new UserException("پلن جاری تمام نشده! برای تغییر نوع پلن باید ترافیک باقی‌مانده کمتر از ۵۱۲ مگابایت برسد.");
             }
 
-            await RadiusSrv.Value.SetUserDate(account.PermanentUserId, DateTime.Now.Date, DateTime.Now.Date);
-        }
+            user.FromDate = DateTime.Now;
+            user.ToDate = DateTime.Now;
 
-        var user = await UserRepo.Value.GetUser(account.PermanentUserId) ??
-            throw new Exception($"Permanent User not found: {account.PermanentUserId}");
+            user_is_changed = true;
+        }
 
         if (users < state.SimultaneousUserCount)
         {
             _ = VpnNodeSrv.Value.CloseConnections(user.Username, state.SimultaneousUserCount.Value - users);
         }
-
-        var user_is_changed = false;
 
         if (users != state.SimultaneousUserCount)
         {
@@ -204,7 +209,7 @@ class PlanApplication(
 
         if (user_is_changed)
         {
-            await RadiusSrv.Value.SavePermenentUser(user);
+            await RadiusSrv.Value.SaveUserBaiscInfo(user);
         }
 
         account.Balance -= result;

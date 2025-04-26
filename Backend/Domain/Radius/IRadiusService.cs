@@ -11,7 +11,9 @@ public interface IRadiusService : IDisposable
 
     Task<bool> ChangeOvpnPassword(int user_id, string password);
 
-    Task<bool> SavePermenentUser(PermanentUserEntity user);
+    Task<bool> SaveUserBaiscInfo(PermanentUserEntity user);
+
+    Task<bool> SaveUserPersonalInfo(PermanentUserEntity user);
 
     Task<bool> RegisterPermenentUser(PermanentUserEntity user, string password);
 
@@ -20,8 +22,6 @@ public interface IRadiusService : IDisposable
     Task<bool> SetRestrictedServer(string username, string? server_ip);
 
     Task<bool> UpdateUserDataUsege(string username, long total_data);
-
-    Task<bool> SetUserDate(int user_id, DateTime from, DateTime to);
 
     Task<bool> InsertTopUpAndMakeActive(string target, PlanType type, int value);
 }

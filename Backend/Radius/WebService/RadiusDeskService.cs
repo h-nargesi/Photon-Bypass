@@ -85,7 +85,7 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.success ?? false;
     }
 
-    public async Task<bool> SavePermenentUser(PermanentUserEntity user)
+    public async Task<bool> SaveUserBaiscInfo(PermanentUserEntity user)
     {
         var data = new
         {
@@ -95,9 +95,28 @@ class RadiusDeskService : IRadiusService, IDisposable
             profile_id = user.ProfileId,
             time_cap_type = "hard",
             data_cap_type = "hard",
+            from_date = user.FromDate?.ToString("MM/dd/yyyy"),
+            to_date = user.ToDate?.ToString("MM/dd/yyyy"),
         };
 
         var response = await PostAsync<object, dynamic>("permanent-users/edit-basic-info.json", data);
+
+        return response?.success ?? false;
+    }
+
+    public async Task<bool> SaveUserPersonalInfo(PermanentUserEntity user)
+    {
+        var data = new
+        {
+            id = user.Id,
+            name = user.Name,
+            surname = user.Surname,
+            phone = user.Phone,
+            email = user.Email,
+            token,
+        };
+
+        var response = await PostAsync<object, dynamic>("permanent-users/edit-personal-info.json", data);
 
         return response?.success ?? false;
     }
@@ -238,11 +257,6 @@ class RadiusDeskService : IRadiusService, IDisposable
         return await ModifyPrivateAttributes(username, current, current.Id == null ? "add" : "edit");
     }
 
-    public Task<bool> SetUserDate(int user_id, DateTime from, DateTime to)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<bool> InsertTopUpAndMakeActive(string target, PlanType type, int value)
     {
         throw new NotImplementedException();
@@ -253,23 +267,6 @@ class RadiusDeskService : IRadiusService, IDisposable
     private static long GetTime()
     {
         return UnixTimestampConverter.DateTimeToUnixTimeStamp(DateTime.Now);
-    }
-
-    private async Task<bool> EditPersonalInfo(PermanentUserEntity user)
-    {
-        var data = new
-        {
-            id = user.Id,
-            name = user.Name,
-            surname = user.Surname,
-            phone = user.Phone,
-            email = user.Email,
-            token,
-        };
-
-        var response = await PostAsync<object, dynamic>("permanent-users/edit-personal-info.json", data);
-
-        return response?.success ?? false;
     }
 
     private async Task<PrivateAttributeResponse?> GetPrivateAttribute(string username, string key)

@@ -78,7 +78,7 @@ class AccountApplication(
             throw new UserException("کاربر پیدا نشد!", $"PermenantUser not found. target:{target}");
         SetPermanentUser(user, model);
 
-        var savingUserTask = RadiusSrv.Value.SavePermenentUser(user);
+        var savingUserTask = RadiusSrv.Value.SaveUserPersonalInfo(user);
         var savingAccountTask = AccountRepo.Value.Save(account);
 
         Task.WaitAll(savingAccountTask, savingUserTask);
