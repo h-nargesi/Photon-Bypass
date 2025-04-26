@@ -187,7 +187,7 @@ partial class AuthApplication(
             return ApiResult.Success("کاربر شما ساخته شد.");
         }
 
-        var setting_server = RadiusSrv.Value.SetRestrictedServer(user.Id, realm.RestrictedServerIP);
+        var setting_server = RadiusSrv.Value.SetRestrictedServer(user.Username, realm.RestrictedServerIP);
 
         var account = new AccountEntity
         {

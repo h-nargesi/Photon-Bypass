@@ -17,7 +17,7 @@ public interface IRadiusService : IDisposable
 
     Task<TrafficDataRadius[]> FetchTrafficData(string username, DateTime index, TrafficDataRequestType type);
 
-    Task<bool> SetRestrictedServer(int user_id, string? server_ip);
+    Task<bool> SetRestrictedServer(string username, string? server_ip);
 
     Task<bool> UpdateUserDataUsege(int user_id);
 

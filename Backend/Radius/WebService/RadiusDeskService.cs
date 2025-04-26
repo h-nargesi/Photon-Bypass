@@ -19,6 +19,7 @@ class RadiusDeskService : IRadiusService, IDisposable
 
     private const string SEL_LANGUAGE = "4_4";
     private const int TIMEZONE_ID = 262;
+    private const string NAS_IP_ADDRESS = "NAS-IP-Address";
 
     public RadiusDeskService(IOptions<RadiusServiceOptions> options)
     {
@@ -193,9 +194,33 @@ class RadiusDeskService : IRadiusService, IDisposable
         return result ?? [];
     }
 
-    public Task<bool> SetRestrictedServer(int user_id, string? server_ip)
+    public async Task<bool> SetRestrictedServer(string username, string? server_ip)
     {
-        throw new NotImplementedException();
+        await CheckLogin();
+
+        var current = await GetRestrictedServer(username);
+
+        if (server_ip == null && current == null)
+        {
+            return true;
+        }
+
+        var op = server_ip == null ? "delete" :
+            current == null ? "add" : "edit";
+
+        current ??= new PrivateAttributeResponse
+        {
+            Id = null,
+            Type = "check",
+            Attribute = NAS_IP_ADDRESS,
+            OP = ":=",
+            Edit = true,
+            Delete = true,
+        };
+
+        current.Value = server_ip;
+
+        return await ModifyPrivateAttributes(username, current, op);
     }
 
     public Task<bool> UpdateUserDataUsege(int user_id)
@@ -260,6 +285,61 @@ class RadiusDeskService : IRadiusService, IDisposable
         };
 
         var response = await PostAsync<object, dynamic>("permanent-users/edit-personal-info.json", data);
+
+        return response?.success ?? false;
+    }
+
+    private async Task<PrivateAttributeResponse?> GetRestrictedServer(string username)
+    {
+        var items = await GetPrivateAttributes(username);
+
+        if (items != null)
+        {
+            foreach (var item in items)
+            {
+                if (item.Attribute == NAS_IP_ADDRESS)
+                    return item;
+            }
+        }
+
+        return null;
+    }
+
+    private async Task<PrivateAttributeResponse[]?> GetPrivateAttributes(string username)
+    {
+        var data = new
+        {
+            _dc = GetTime(),
+            username,
+            page = 1,
+            start = 0,
+            limit = 25,
+            token,
+        };
+
+        var response = await PostAsync<object, RadiusServerResponseBase<PrivateAttributeResponse>>("permanent-users/private-attr-index.json", data);
+
+        if (response?.Success ?? false)
+        {
+            return response.Items;
+        }
+
+        return null;
+    }
+
+    private async Task<bool> ModifyPrivateAttributes(string username, PrivateAttributeResponse item, string op)
+    {
+        var query = new
+        {
+            _dc = GetTime(),
+            username,
+            page = 1,
+            start = 0,
+            limit = 25,
+            token,
+        };
+
+        var response = await PostAsync<object, dynamic>($"permanent-users/private-attr-{op}.json" + QueryString(query), item);
 
         return response?.success ?? false;
     }

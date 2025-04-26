@@ -1,0 +1,23 @@
+{
+  "url": "https://rad.photon-bypass.com/cake4/rd_cake/permanent-users/private-attr-delete.json",
+  "type": "POST",
+  "queryString": {
+    "_dc": 1745671324332,
+    "username": "hosi%40ry",
+    "token": "01831f18-6691-4c39-af82-5803aa885c0c",
+    "sel_language": "4_4",
+    "cloud_id": 23
+  },
+  "payload": {
+    "attribute": "NAS-IP-Address",
+    "delete": true,
+    "edit": true,
+    "id": "chk_18898",
+    "op": ":=",
+    "type": "check",
+    "value": "192.168.0.1"
+  },
+  "response": {
+    "success": true
+  }
+}

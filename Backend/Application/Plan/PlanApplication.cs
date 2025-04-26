@@ -190,7 +190,7 @@ class PlanApplication(
                 user.Realm = realm.Name;
                 user.RealmId = realm.Id;
 
-                await RadiusSrv.Value.SetRestrictedServer(user.Id, realm.RestrictedServerIP);
+                await RadiusSrv.Value.SetRestrictedServer(user.Username, realm.RestrictedServerIP);
 
                 user_is_changed = true;
             }
