@@ -220,11 +220,9 @@ class RadiusDeskService : IRadiusService, IDisposable
         return UnixTimestampConverter.DateTimeToUnixTimeStamp(DateTime.Now);
     }
 
-    private async Task<PermanentUserEntity?> GetPermenentUser(string username)
+    private async Task<PermanentUserEntityResponse?> GetPermenentUser(string username)
     {
         await CheckLogin();
-
-        var filters = $"[{{\"operator\":\"==\",\"value\":true,\"property\":\"active\"}},{{\"operator\":\"==\",\"value\":\"{username}\",\"property\": \"username\"}}]";
 
         var data = new
         {
@@ -240,6 +238,11 @@ class RadiusDeskService : IRadiusService, IDisposable
         };
 
         var response = await PostAsync<object, PermanentUsersResponse>("permanent-users/index.json", data);
+
+        if (response?.Items?.Length != 1)
+        {
+            return null;
+        }
 
         return response?.Items?[0];
     }

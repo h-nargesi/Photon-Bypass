@@ -1,12 +1,11 @@
 ﻿using System.Text.Json.Serialization;
-using PhotonBypass.Domain.Profile;
 
 namespace PhotonBypass.Radius.WebService.ApiResponseModel;
 
-internal class PermanentUsersResponse
+class PermanentUsersResponse
 {
     [JsonPropertyName("items")]
-    public PermanentUserEntity[]? Items { get; set; }
+    public PermanentUserEntityResponse[]? Items { get; set; }
 
     [JsonPropertyName("success")]
     public bool Success { get; set; }
