@@ -92,7 +92,7 @@ class VpnApplication(
         var email_context = new CertEmailContext
         {
             Username = user.Username,
-            Password = await ovpn_password_task,
+            Password = (await ovpn_password_task) ?? throw new Exception($"Password not found for user: {target}"),
             Server = cert_context.Server,
             PrivateKey = cert_context.PrivateKey,
             CertFile = cert_context.CertFile,
