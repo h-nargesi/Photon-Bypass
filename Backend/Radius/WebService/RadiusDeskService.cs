@@ -1,12 +1,11 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Net.Http.Json;
+using System.Web;
+using Microsoft.Extensions.Options;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Radius.WebService.ApiResponseModel;
 using PhotonBypass.Tools;
-using System.Net.Http.Json;
-using System.Text;
-using System.Web;
 
 namespace PhotonBypass.Radius.WebService;
 
@@ -32,15 +31,15 @@ class RadiusDeskService : IRadiusService, IDisposable
         };
     }
 
-    public async Task<bool> ActivePermanentUser(int user_id, int cloud_id, bool active)
+    public async Task<bool> ActivePermanentUser(int user_id, bool active)
     {
         await CheckLogin();
 
         var data = new Dictionary<string, object?>
         {
+            {user_id.ToString(), user_id },
             {"rb", active },
             {"token", token },
-            {"cloud_id", cloud_id },
             {"sel_language", SEL_LANGUAGE },
         };
 
@@ -49,7 +48,7 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.success ?? false;
     }
 
-    public async Task<string?> GetOvpnPassword(int user_id, int cloud_id)
+    public async Task<string?> GetOvpnPassword(int user_id)
     {
         await CheckLogin();
 
@@ -58,7 +57,6 @@ class RadiusDeskService : IRadiusService, IDisposable
             _dc = GetTime(),
             token,
             user_id,
-            cloud_id,
             sel_language = SEL_LANGUAGE
         };
 
@@ -87,6 +85,8 @@ class RadiusDeskService : IRadiusService, IDisposable
 
     public async Task<bool> SaveUserBaiscInfo(PermanentUserEntity user)
     {
+        await CheckLogin();
+
         var data = new
         {
             id = user.Id,
@@ -106,6 +106,8 @@ class RadiusDeskService : IRadiusService, IDisposable
 
     public async Task<bool> SaveUserPersonalInfo(PermanentUserEntity user)
     {
+        await CheckLogin();
+
         var data = new
         {
             id = user.Id,
@@ -257,9 +259,35 @@ class RadiusDeskService : IRadiusService, IDisposable
         return await ModifyPrivateAttributes(username, current, current.Id == null ? "add" : "edit");
     }
 
-    public Task<bool> InsertTopUpAndMakeActive(string target, PlanType type, int value)
+    public async Task<bool> InsertTopUpAndMakeActive(int user_id, PlanType type, int value, string? comment = null)
     {
-        throw new NotImplementedException();
+        var success = await ActivePermanentUser(user_id, true);
+
+        if (!success) return false;
+
+        try
+        {
+            var data = new
+            {
+                permanent_user_id = user_id,
+                type = type == PlanType.Traffic ? "data" : "days_to_use",
+                value,
+                data_unit = type == PlanType.Traffic ? "gb" : null,
+                comment,
+                token,
+                sel_language = SEL_LANGUAGE,
+                cloud_id = 30,
+            };
+
+            var response = await PostAsync<object, dynamic>("top-ups/add.json", data);
+
+            return response?.success ?? false;
+        }
+        catch
+        {
+            _ = ActivePermanentUser(user_id, false);
+            throw;
+        }
     }
 
     public void Dispose() => Logout();
@@ -404,13 +432,6 @@ class RadiusDeskService : IRadiusService, IDisposable
         return GetAsync(url + QueryString(data));
     }
 
-    private async Task<R?> GetAsync<R>(string url)
-    {
-        var response = await GetAsync(url);
-
-        return await response.Content.ReadFromJsonAsync<R>();
-    }
-
     private async Task<R?> GetAsync<T, R>(string url, T data)
     {
         var response = await GetAsync(url, data);
@@ -455,29 +476,5 @@ class RadiusDeskService : IRadiusService, IDisposable
         if (result.Count < 1) return string.Empty;
 
         return "?" + result.ToString();
-    }
-
-    private static string QueryStringStringBuilder<T>(T data)
-    {
-        var result = new StringBuilder();
-        foreach (var item in typeof(T).GetProperties())
-        {
-            var value = item.GetValue(data);
-            if (value == null) continue;
-
-            result.Append('$')
-                .Append(HttpUtility.UrlEncode(item.Name))
-                .Append('=')
-                .Append(HttpUtility.UrlEncode(value.ToString()));
-        }
-
-        if (result.Length < 1) return string.Empty;
-
-        return result.Remove(0, 1).Insert(0, '?').ToString();
-    }
-
-    private static DateTime AddHour(DateTime date, int hours)
-    {
-        return date.AddHours(hours);
     }
 }

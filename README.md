@@ -214,6 +214,7 @@ Log Record Types:
 ### Account Management System
 
 - Notif user for end of service
+- Deactive affter a week not renewal
 
 ## Pheases
 

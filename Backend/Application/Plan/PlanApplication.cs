@@ -138,7 +138,7 @@ class PlanApplication(
             });
         }
 
-        var activation = RadiusSrv.Value.ActivePermanentUser(account.Id, account.CloudId, false);
+        var activation = RadiusSrv.Value.ActivePermanentUser(account.Id, false);
         var fetch_state = UserRepo.Value.GetPlanState(account.PermanentUserId);
         var fetch_user = UserRepo.Value.GetUser(account.PermanentUserId);
 
@@ -229,7 +229,12 @@ class PlanApplication(
         {
             await AccountRepo.Value.Save(account);
 
-            await RadiusSrv.Value.InsertTopUpAndMakeActive(target, type, value);
+            var success = await RadiusSrv.Value.InsertTopUpAndMakeActive(user.Id, type, value);
+
+            if (!success)
+            {
+                throw new Exception("Insert top-up and make active was unsuccessful!");
+            }
 
             transaction.Commit();
         }

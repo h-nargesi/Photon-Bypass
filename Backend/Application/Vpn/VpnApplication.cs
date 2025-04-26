@@ -68,7 +68,7 @@ class VpnApplication(
 
         var server_task = UserRepo.Value.GetRestrictedServer(user.Id);
 
-        var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(user.Id, user.CloudId);
+        var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(user.Id);
 
         var server = await server_task;
 

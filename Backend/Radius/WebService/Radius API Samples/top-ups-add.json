@@ -1,0 +1,17 @@
+{
+    "url": "https://rad.photon-bypass.com/cake4/rd_cake/top-ups/add.json",
+    "type": "POST",
+    "form": {
+        "permanent_user_id": 481,
+        "type": "data|days_to_use",
+        "value": 50,
+        "data_unit": "gb",
+        "comment": "x1",
+        "token": "52bacec2-f64c-4471-8060-c88d8bd938d7",
+        "sel_language": "4_4",
+        "cloud_id": 30
+    },
+    "response": {
+        "success": true
+    }
+}

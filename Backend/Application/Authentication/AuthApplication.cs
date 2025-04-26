@@ -220,7 +220,7 @@ partial class AuthApplication(
 
         if (user == null) return null;
 
-        var pass = await RadiusSrv.Value.GetOvpnPassword(user.Id, user.CloudId);
+        var pass = await RadiusSrv.Value.GetOvpnPassword(user.Id);
 
         if (pass != password) return null;
 
