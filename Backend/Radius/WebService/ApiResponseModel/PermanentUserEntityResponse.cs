@@ -1,9 +1,8 @@
-﻿using PhotonBypass.Domain;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace PhotonBypass.Radius.WebService.ApiResponseModel;
 
-class PermanentUserEntityResponse : IBaseEntity
+class PermanentUserEntityResponse
 {
     [JsonPropertyName("id")]
     public int Id { get; set; }

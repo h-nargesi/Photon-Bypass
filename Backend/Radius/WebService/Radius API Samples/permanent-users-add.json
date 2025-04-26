@@ -1,8 +1,7 @@
 {
     "url": "https://rad.photon-bypass.com/cake4/rd_cake/permanent-users/add.json",
     "type": "POST",
-    "postType": "Form",
-    "request": {
+    "form": {
         "username": "HamedTest",
         "password": 123456,
         "realm_id": 30,

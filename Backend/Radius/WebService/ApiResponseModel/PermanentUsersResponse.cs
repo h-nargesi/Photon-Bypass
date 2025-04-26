@@ -2,14 +2,8 @@
 
 namespace PhotonBypass.Radius.WebService.ApiResponseModel;
 
-class PermanentUsersResponse
+class PermanentUsersResponse : RadiusServerResponseBase<PermanentUserEntityResponse>
 {
-    [JsonPropertyName("items")]
-    public PermanentUserEntityResponse[]? Items { get; set; }
-
-    [JsonPropertyName("success")]
-    public bool Success { get; set; }
-
     [JsonPropertyName("totalCount")]
     public int TotalCount { get; set; }
 }

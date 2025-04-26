@@ -1,7 +1,7 @@
 {
   "url": "https://rad.photon-bypass.com/cake4/rd_cake/user-stats/index.json",
   "type": "GET",
-  "request": {
+  "queryString": {
     "_dc": 1745069891611,
     "username": "U0233",
     "type": "permanent",

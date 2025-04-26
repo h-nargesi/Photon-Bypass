@@ -2,7 +2,7 @@
     "url": "https://rad.photon-bypass.com/cake4/rd_cake/dashboard/branding.json",
     "type": "GET",
     "description": "Logout",
-    "request": {
+    "queryString": {
         "_dc": 1740571621935
     },
     "response": {

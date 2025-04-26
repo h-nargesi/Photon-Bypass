@@ -2,14 +2,8 @@
 
 namespace PhotonBypass.Radius.WebService.ApiResponseModel;
 
-class TrafficDataResponse
+class TrafficDataResponse : RadiusServerResponseBase<TrafficDataEntityResponse>
 {
-    [JsonPropertyName("items")]
-    public TrafficDataEntityResponse[]? Items { get; set; }
-
-    [JsonPropertyName("success")]
-    public bool Success { get; set; }
-
     [JsonPropertyName("totalIn")]
     public long TotalIn { get; set; }
 
