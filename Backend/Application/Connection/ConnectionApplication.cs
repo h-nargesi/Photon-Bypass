@@ -76,8 +76,9 @@ class ConnectionApplication(
             Title = "کانکشن",
             Description = "کانکشن بسته شد.",
         });
+
         Log.Information("[user: {0}] Connection Closed: ({1}, {2}, {3})", 
-            server, target, sessionId);
+            JobContext.Value.Username, server, target, sessionId);
 
         return ApiResult.Success("کانکشن بسته شد.");
     }

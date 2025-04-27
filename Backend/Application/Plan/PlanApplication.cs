@@ -21,6 +21,7 @@ class PlanApplication(
     Lazy<IRadiusService> RadiusSrv,
     Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IVpnNodeService> VpnNodeSrv,
+    Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IJobContext> JobContext)
     : IPlanApplication
 {
@@ -122,19 +123,28 @@ class PlanApplication(
         return ApiResult<int>.Success(result);
     }
 
-    public async Task<ApiResult<RenewalResult>> Renewal(string target, PlanType type, int users, int value)
+    public async Task<ApiResult<RenewalResult>> Renewal(string target, PlanType type, int count, int value)
     {
-        var result = PriceCalc.Value.CalculatePrice(type, users, value);
-
         var account = await AccountRepo.Value.GetAccount(target) ??
             throw new UserException("کاربر مورد نظر پیدا نشد!");
 
-        if (account.Balance < result)
+        var estimate = PriceCalc.Value.CalculatePrice(type, count, value);
+
+        Log.Information(@"[user: {0}] Plan renewal request:
+    account=(user:{0}, balance:{6})
+    request=(taget:{1}, type:{2}, count:{3}, value:{4}, estimate:{7})",
+            JobContext.Value.Username, target, type.ToString(), count, value, account.Balance, estimate);
+
+        if (account.Balance < estimate)
         {
+            Log.Information(@"[user: {0}] Plan renewal low balance:
+    renewal=(taget:{1}, balance:{2}, estimate:{3})",
+                JobContext.Value.Username, target, account.Balance, estimate);
+
             return ApiResult<RenewalResult>.Success(new RenewalResult
             {
                 CurrentPrice = account.Balance,
-                MoneyNeeds = result - account.Balance,
+                MoneyNeeds = estimate - account.Balance,
             });
         }
 
@@ -145,6 +155,13 @@ class PlanApplication(
         var state = (await fetch_state) ??
             throw new Exception($"Plan state not found for target: {target}");
 
+        Log.Information(@"[user: {0}] Plan current state
+    request=(taget:{1}, type:{2}, count:{3}, value:{4})
+    current=(type:{5}, count:{7}, left-days:{6}, left-gigabytes:{8})",
+            JobContext.Value.Username, 
+            target, type.ToString(), count, value, state.PlanType.ToString(), 
+            state.LeftDays, state.SimultaneousUserCount, state.GigaLeft);
+
         var user = (await fetch_user) ??
             throw new Exception($"Permanent User not found: {account.PermanentUserId}");
 
@@ -154,6 +171,10 @@ class PlanApplication(
         {
             if (state.LeftDays > 0)
             {
+                Log.Information(@"[user: {0}] Plan renewal can not change plan type: current plan has not finished
+    change=(taget:{1}, type:{2}, to:{3}, left-days:{6})",
+                    JobContext.Value.Username, target, state.PlanType.ToString(), type.ToString(), state.LeftDays);
+
                 throw new UserException("پلن جاری تمام نشده! برای تغییر نوع پلن باید پلن جاری به اتمام برسد.");
             }
 
@@ -165,6 +186,10 @@ class PlanApplication(
         {
             if (state.GigaLeft > 0.5)
             {
+                Log.Information(@"[user: {0}] Plan renewal can not change plan type: current plan has not finished
+    change=(taget:{1}, type:{2}, to:{3}, left-gigabytes:{4})",
+                    JobContext.Value.Username, target, state.PlanType.ToString(), type.ToString(), state.GigaLeft);
+
                 throw new UserException("پلن جاری تمام نشده! برای تغییر نوع پلن باید ترافیک باقی‌مانده کمتر از ۵۱۲ مگابایت برسد.");
             }
 
@@ -174,14 +199,18 @@ class PlanApplication(
             user_is_changed = true;
         }
 
-        if (users < state.SimultaneousUserCount)
+        if (count < state.SimultaneousUserCount)
         {
-            _ = VpnNodeSrv.Value.CloseConnections(user.Username, state.SimultaneousUserCount.Value - users);
+            Log.Information(@"[user: {0}] Plan renewal change user count: (closing connections)
+    change=(taget:{1}, user-count:{2}, to:{3})",
+                JobContext.Value.Username, target, state.SimultaneousUserCount, count);
+
+            _ = VpnNodeSrv.Value.CloseConnections(user.Username, state.SimultaneousUserCount.Value - count);
         }
 
-        if (users != state.SimultaneousUserCount)
+        if (count != state.SimultaneousUserCount)
         {
-            var profile = await GetProfile(account.CloudId, type, users);
+            var profile = await GetProfile(account.CloudId, type, count);
             if (profile != null && profile.Id != user.ProfileId)
             {
                 user.Profile = profile.Name;
@@ -212,7 +241,7 @@ class PlanApplication(
             await RadiusSrv.Value.SaveUserBaiscInfo(user);
         }
 
-        account.Balance -= result;
+        account.Balance -= estimate;
         switch (type)
         {
             case PlanType.Monthly:
@@ -241,10 +270,34 @@ class PlanApplication(
         catch
         {
             transaction.Rollback();
+
+            _ = HistoryRepo.Value.Save(new HistoryEntity
+            {
+                Issuer = JobContext.Value.Username,
+                Target = target,
+                EventTime = DateTime.Now,
+                Title = "تمدید",
+                Description = "خطا در تمدید پلن!",
+            });
+
             throw;
         }
 
+        _ = HistoryRepo.Value.Save(new HistoryEntity
+        {
+            Issuer = JobContext.Value.Username,
+            Target = target,
+            EventTime = DateTime.Now,
+            Title = "تمدید",
+            Description = "پلن تمید شد.",
+            Unit = type == PlanType.Monthly ? "ماهانه" : "ترافیک",
+            Value = value
+        });
+
         _ = ServerMngSrv.Value.CheckUserServerBalance();
+
+        Log.Information("[user: {0}] Plan renewal finished: ({1}, {2}, {3}, {4})",
+            JobContext.Value.Username, target, type.ToString(), count, value);
 
         return ApiResult<RenewalResult>.Success(new RenewalResult
         {
