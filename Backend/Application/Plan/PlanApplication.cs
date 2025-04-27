@@ -22,6 +22,7 @@ class PlanApplication(
     Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IVpnNodeService> VpnNodeSrv,
     Lazy<IHistoryRepository> HistoryRepo,
+    Lazy<IProfileRepository> ProfileRepo,
     Lazy<IJobContext> JobContext)
     : IPlanApplication
 {
@@ -210,7 +211,7 @@ class PlanApplication(
 
         if (count != state.SimultaneousUserCount)
         {
-            var profile = await GetProfile(account.CloudId, type, count);
+            var profile = await ProfileRepo.Value.GetProfile(account.CloudId, type, count);
             if (profile != null && profile.Id != user.ProfileId)
             {
                 user.Profile = profile.Name;
@@ -306,8 +307,4 @@ class PlanApplication(
         });
     }
 
-    private Task<ProfileEntity> GetProfile(int cloud_id, PlanType type, int users)
-    {
-        throw new NotImplementedException();
-    }
 }
