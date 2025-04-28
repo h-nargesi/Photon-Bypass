@@ -22,6 +22,7 @@ class VpnApplication(
     Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IRealmRepository> RealmRepo,
+    Lazy<IUserPlanStateRepository> PlanStateRepo,
     Lazy<IJobContext> JobContext)
     : IVpnApplication
 {
@@ -66,7 +67,7 @@ class VpnApplication(
             throw new UserException("کاربر پیدا نشد!", $"user is inactive: target={target}");
         }
 
-        var server_task = UserRepo.Value.GetRestrictedServer(user.Id);
+        var server_task = PlanStateRepo.Value.GetRestrictedServer(user.Id);
 
         var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(user.Id);
 

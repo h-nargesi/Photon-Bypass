@@ -17,7 +17,7 @@ public class TopUpEntity : IBaseEntity
     [Column("permanent_user_id")]
     public int PermanentUserId { get; set; }
 
-    [Column("date")]
+    [Column("data")]
     public long? Data { get; set; }
 
     [NotMapped]
@@ -30,7 +30,4 @@ public class TopUpEntity : IBaseEntity
     public int? DaysToUse { get; set; }
 
     public string? Comment { get; set; }
-
-    [Column("created")]
-    public DateTime Created { get; set; }
 }

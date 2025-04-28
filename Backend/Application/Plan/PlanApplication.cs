@@ -15,6 +15,7 @@ namespace PhotonBypass.Application.Plan;
 
 class PlanApplication(
     Lazy<IPermanentUsersRepository> UserRepo,
+    Lazy<IUserPlanStateRepository> PlanRepo,
     Lazy<ITopUpRepository> TopUpRepo,
     Lazy<IPriceCalculator> PriceCalc,
     Lazy<IAccountRepository> AccountRepo,
@@ -26,11 +27,9 @@ class PlanApplication(
     Lazy<IJobContext> JobContext)
     : IPlanApplication
 {
-    private const long BYTE_IN_GIG = 1024 * 1024 * 1024;
-
     public async Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target)
     {
-        var state = await UserRepo.Value.GetPlanState(target);
+        var state = await PlanRepo.Value.GetPlanState(target);
 
         if (state == null)
         {
@@ -97,7 +96,7 @@ class PlanApplication(
 
     public async Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target)
     {
-        var state = await UserRepo.Value.GetPlanState(target);
+        var state = await PlanRepo.Value.GetPlanState(target);
 
         if (state == null)
         {
@@ -150,7 +149,7 @@ class PlanApplication(
         }
 
         var activation = RadiusSrv.Value.ActivePermanentUser(account.Id, false);
-        var fetch_state = UserRepo.Value.GetPlanState(account.PermanentUserId);
+        var fetch_state = PlanRepo.Value.GetPlanState(account.PermanentUserId);
         var fetch_user = UserRepo.Value.GetUser(account.PermanentUserId);
 
         var state = (await fetch_state) ??
@@ -179,7 +178,7 @@ class PlanApplication(
                 throw new UserException("پلن جاری تمام نشده! برای تغییر نوع پلن باید پلن جاری به اتمام برسد.");
             }
 
-            var data_usage = (long)((state.DataUsage ?? 0) * BYTE_IN_GIG);
+            var data_usage = (long)(state.DataUsage ?? 0);
 
             await RadiusSrv.Value.UpdateUserDataUsege(account.Username, data_usage);
         }

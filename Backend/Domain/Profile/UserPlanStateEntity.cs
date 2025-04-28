@@ -35,4 +35,7 @@ public class UserPlanStateEntity : IBaseEntity
 
     [Column("restricted_nas_ip")]
     public string? RestrictedServerIP { get; set; }
+
+    [Column("account_disabled")]
+    public string? AccountDisabled { get; set; }
 }

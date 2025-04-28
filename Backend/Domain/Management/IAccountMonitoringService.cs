@@ -2,5 +2,7 @@
 
 public interface IAccountMonitoringService
 {
-    void RunJob();
+    Task NotifSendServices();
+
+    Task DeactiveAbandonedUsers();
 }
