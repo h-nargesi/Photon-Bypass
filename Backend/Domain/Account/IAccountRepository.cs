@@ -11,6 +11,4 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
     Task<AccountEntity?> GetAccountByEmail(string email);
 
     Task<IList<AccountEntity>> GetTargetArea(int userid);
-
-    Task<IList<AccountEntity>> GetAccounts(IEnumerable<int> userids);
 }

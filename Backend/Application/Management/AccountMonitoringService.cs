@@ -36,12 +36,7 @@ class AccountMonitoringService(
 
         var userIds = planStateList.Select(x => x.Id).ToList();
 
-        var contatcsTask = UserRepo.GetUsersContactInfo(userIds);
-
-        var accountListTask = AccountRepo.GetAccounts(userIds);
-
-        var contatcs = await contatcsTask;
-        var accountList = await accountListTask;
+        var contacts = await UserRepo.GetUsersContactInfo(userIds);
 
         var tasks = new List<Task>();
 
@@ -49,7 +44,7 @@ class AccountMonitoringService(
         {
             var remainsTitle = plan.GetRemainsTitle();
 
-            Log.Information("The user '{0}' is going to finish plan ({1}, {2}, x{3}, {4})", 
+            Log.Information("The user '{0}' is going to finish plan ({1}, {2}, x{3}, {4})",
                 plan.Username, plan.PlanType.ToString(), plan.SimultaneousUserCount, plan.GetRemainsTitle());
 
             _ = HistoryRepo.Save(new HistoryEntity
@@ -63,7 +58,7 @@ class AccountMonitoringService(
                 Value = plan.PlanType == PlanType.Monthly ? plan.LeftDays : plan.GigaLeft.ToString(),
             });
 
-            if (!contatcs.TryGetValue(plan.Id, out var contact))
+            if (!contacts.TryGetValue(plan.Id, out var contact))
             {
                 continue;
             }
