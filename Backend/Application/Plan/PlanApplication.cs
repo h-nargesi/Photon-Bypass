@@ -53,7 +53,7 @@ class PlanApplication(
 
         if (result.Type == PlanType.Traffic)
         {
-            result.RemainsTitle = $"{state.GigaLeft?.ToString() ?? "--"} گیگ باقی مانده";
+            result.RemainsTitle = state.GetRemainsTitle();
 
             if (state.TotalData.HasValue)
             {
@@ -67,17 +67,7 @@ class PlanApplication(
         }
         else
         {
-            if (state.LeftDays > 0)
-            {
-                result.RemainsTitle = $"و {state.LeftDays} روز";
-            }
-
-            if (state.LeftHours > 0 || !(state.LeftDays > 0))
-            {
-                result.RemainsTitle = $"و {state.LeftHours?.ToString() ?? "--"} ساعت";
-            }
-
-            result.RemainsTitle = $"{result.RemainsTitle[2..]} باقی مانده";
+            result.RemainsTitle = state.GetRemainsTitle();
 
             if (!state.LeftDays.HasValue && !state.LeftHours.HasValue)
             {

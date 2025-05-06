@@ -41,4 +41,13 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
         return [.. result];
     }
+
+    public async Task<IList<AccountEntity>> GetAccounts(IEnumerable<int> userids)
+    {
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(AccountEntity.PermanentUserId)} in (@userids)")
+            .WithParameters(new { userids }));
+
+        return [.. result];
+    }
 }
