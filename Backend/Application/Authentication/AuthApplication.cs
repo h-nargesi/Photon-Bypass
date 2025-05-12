@@ -28,6 +28,8 @@ partial class AuthApplication(
 {
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
+        password ??= string.Empty;
+
         var account = await AccountRepo.GetAccount(username) ??
             await CopyFromPermanentUser(username, password);
 
@@ -105,7 +107,7 @@ partial class AuthApplication(
 
             //    await whatsapp_handler.SendResetPasswordLink(email_mobile, hash_code);
 
-                // TODO: History record
+            // TODO: History record
 
             //   Log.Verbose("Reset-Password message has been sent: {0}", email_mobile);
             //}
@@ -214,21 +216,25 @@ partial class AuthApplication(
         return ApiResult.Success("کاربر شما ساخته شد.");
     }
 
-    private async Task<AccountEntity?> CopyFromPermanentUser(string username, string password)
+    public async Task<AccountEntity?> CopyFromPermanentUser(string username, string? password)
     {
         var user = await UserRepo.Value.GetUser(username);
 
         if (user == null) return null;
 
-        var pass = await RadiusSrv.Value.GetOvpnPassword(user.Id);
+        var real_pass = await RadiusSrv.Value.GetOvpnPassword(user.Id)
+            ?? throw new Exception("Error to retrive password from radius-desk!");
 
-        if (pass != password) return null;
+        if (password != null && real_pass != password)
+        {
+            return null;
+        }
 
         var account = new AccountEntity
         {
             PermanentUserId = user.Id,
             Username = username,
-            Password = password,
+            Password = real_pass,
             Active = true,
             CloudId = user.CloudId,
             Email = user.Email,

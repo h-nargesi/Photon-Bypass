@@ -5,6 +5,7 @@ using PhotonBypass.Domain.Services;
 using PhotonBypass.Application.Plan;
 using Serilog;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Application.Authentication;
 
 namespace PhotonBypass.Application.Management;
 
@@ -14,6 +15,7 @@ class AccountMonitoringService(
     IPermanentUsersRepository UserRepo,
     IAccountRepository AccountRepo,
     IHistoryRepository HistoryRepo,
+    IAuthApplication AuthApp,
     IEmailService EmailSrv,
     ISocialMediaService SocialSrv)
     : IAccountMonitoringService, IJob
@@ -25,8 +27,10 @@ class AccountMonitoringService(
             NotifSendServices());
     }
 
-    public Task DeactiveAbandonedUsers()
+    public async Task DeactiveAbandonedUsers()
     {
+        var planStateList = await PlanStateRepo.GetPlanOverState(0.01F);
+
         throw new NotImplementedException();
     }
 
@@ -34,9 +38,17 @@ class AccountMonitoringService(
     {
         var planStateList = await PlanStateRepo.GetPlanOverState(0.1F);
 
-        var userIds = planStateList.Select(x => x.Id).ToList();
+        if (planStateList.Count < 1)
+        {
+            return;
+        }
 
-        var contacts = await UserRepo.GetUsersContactInfo(userIds);
+        var userIds = planStateList.Select(x => x.Id).ToList();
+        var contacts_task = UserRepo.GetUsersContactInfo(userIds);
+        var aqccounts_tak = AccountRepo.GetAccounts(userIds);
+
+        var contacts = await contacts_task;
+        var accounts = await aqccounts_tak;
 
         var tasks = new List<Task>();
 
@@ -63,19 +75,42 @@ class AccountMonitoringService(
                 continue;
             }
 
+            if (!accounts.TryGetValue(plan.Id, out var account))
+            {
+                account = await AuthApp.CopyFromPermanentUser(plan.Username, null);
+            }
+
             if (contact.Phone != null)
             {
                 tasks.Add(SocialSrv.FinishServiceAlert(plan.Username, contact.Phone, plan.PlanType, remainsTitle));
+
+                if (account != null)
+                {
+                    IncreaseWarningTimes(account);
+                }
+
                 continue;
             }
 
             if (contact.Email != null)
             {
                 tasks.Add(EmailSrv.FinishServiceAlert(plan.Username, contact.Email, plan.PlanType, remainsTitle));
+
+                if (account != null)
+                {
+                    IncreaseWarningTimes(account);
+                }
+
                 continue;
             }
         }
 
         await Task.WhenAll(tasks);
+    }
+
+    private void IncreaseWarningTimes(AccountEntity account)
+    {
+        account.WarningTimes += 1;
+        _ = AccountRepo.Save(account);
     }
 }

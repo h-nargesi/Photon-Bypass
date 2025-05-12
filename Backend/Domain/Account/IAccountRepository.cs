@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Domain.Repository;
+﻿using PhotonBypass.Domain.Profile;
+using PhotonBypass.Domain.Repository;
 
 namespace PhotonBypass.Domain.Account;
 
@@ -10,5 +11,7 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
 
     Task<AccountEntity?> GetAccountByEmail(string email);
 
-    Task<IList<AccountEntity>> GetTargetArea(int userid);
+    Task<IList<AccountEntity>> GetTargetArea(int accountId);
+
+    Task<IDictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> userids);
 }
