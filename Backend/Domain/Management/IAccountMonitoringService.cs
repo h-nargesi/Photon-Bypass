@@ -1,8 +1,10 @@
-﻿namespace PhotonBypass.Domain.Management;
+﻿using PhotonBypass.Domain.Profile;
+
+namespace PhotonBypass.Domain.Management;
 
 public interface IAccountMonitoringService
 {
-    Task NotifSendServices();
+    Task NotifSendServices(IEnumerable<UserPlanStateEntity> planStateList);
 
-    Task DeactiveAbandonedUsers();
+    Task DeactiveAbandonedUsers(IEnumerable<UserPlanStateEntity> planStateList);
 }
