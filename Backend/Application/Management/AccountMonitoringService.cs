@@ -33,9 +33,9 @@ class AccountMonitoringService(
             return;
         }
 
-        Task.WaitAll(
-            DeactiveAbandonedUsers(planStateList),
-            NotifSendServices(planStateList));
+        await NotifSendServices(planStateList);
+
+        await DeactiveAbandonedUsers(planStateList);
     }
 
     public async Task DeactiveAbandonedUsers(IEnumerable<UserPlanStateEntity> planStateList)
