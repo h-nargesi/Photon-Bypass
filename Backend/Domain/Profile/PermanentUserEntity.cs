@@ -15,6 +15,8 @@ public class PermanentUserEntity : IBaseEntity
 
     public string? Surname { get; set; }
 
+    public string Fullname => (Name + " " + Surname).Trim();
+
     public string? Phone { get; set; }
 
     public string? Email { get; set; }

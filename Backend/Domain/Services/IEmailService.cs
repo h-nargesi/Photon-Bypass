@@ -4,9 +4,9 @@ namespace PhotonBypass.Domain.Services;
 
 public interface IEmailService
 {
-    Task SendResetPasswordLink(string email, string hash_code);
+    Task SendResetPasswordLink(string fullname, string email, string hash_code);
 
-    Task SendCertEmail(string email, CertEmailContext context);
+    Task SendCertEmail(string fullname, string email, CertEmailContext context);
 
-    Task FinishServiceAlert(string username, string email, PlanType type, string left);
+    Task FinishServiceAlert(string fullname, string username, string email, PlanType type, string left);
 }

@@ -39,8 +39,11 @@ class ServerManagementService(
         var cxert_path = Options.Value.Value.DefaultCertPath ??
             throw new Exception("Default cert-path is not set in config!");
 
-        if (Options.Value.Value.PrivateKey == null)
-            throw new Exception("Private key is not set in config!");
+        if (Options.Value.Value.PrivateKeyL2TP == null)
+            throw new Exception("L2TP Private key is not set in config!");
+
+        if (Options.Value.Value.PrivateKeyOvpn == null)
+            throw new Exception("Ovpn Private key is not set in config!");
 
         var realm_task = RealmRepo.Fetch(realmid);
 
@@ -64,7 +67,8 @@ class ServerManagementService(
         return new CertContext
         {
             Server = nas.DomainName,
-            PrivateKey = Options.Value.Value.PrivateKey,
+            PrivateKeyOvpn = Options.Value.Value.PrivateKeyOvpn,
+            PrivateKeyL2TP = Options.Value.Value.PrivateKeyL2TP,
             CertFile = cert_file,
         };
     }

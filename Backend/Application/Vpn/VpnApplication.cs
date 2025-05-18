@@ -67,6 +67,11 @@ class VpnApplication(
             throw new UserException("کاربر پیدا نشد!", $"user is inactive: target={target}");
         }
 
+        if (user.Email == null)
+        {
+            throw new UserException("ایمیل کاربر ثبت نشده است!", $"user is email address is unkown: target={target}");
+        }
+
         var server_task = PlanStateRepo.Value.GetRestrictedServer(user.Id);
 
         var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(user.Id);
@@ -95,11 +100,12 @@ class VpnApplication(
             Username = user.Username,
             Password = (await ovpn_password_task) ?? throw new Exception($"Password not found for user: {target}"),
             Server = cert_context.Server,
-            PrivateKey = cert_context.PrivateKey,
+            PrivateKeyOvpn = cert_context.PrivateKeyOvpn,
+            PrivateKeyL2TP = cert_context.PrivateKeyL2TP,
             CertFile = cert_context.CertFile,
         };
 
-        await EmailSrv.Value.SendCertEmail(target, email_context);
+        await EmailSrv.Value.SendCertEmail(user.Fullname, user.Email, email_context);
 
         _ = HistoryRepo.Value.Save(new HistoryEntity
         {

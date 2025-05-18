@@ -167,7 +167,7 @@ class AccountMonitoringService(
 
             if (contact.Email != null)
             {
-                tasks.Add(EmailSrv.FinishServiceAlert(plan.Username, contact.Email, plan.PlanType, remainsTitle));
+                tasks.Add(EmailSrv.FinishServiceAlert(account.Fullname, plan.Username, contact.Email, plan.PlanType, remainsTitle));
 
                 if (account != null)
                 {

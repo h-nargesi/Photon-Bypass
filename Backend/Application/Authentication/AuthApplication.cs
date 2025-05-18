@@ -129,7 +129,7 @@ partial class AuthApplication(
                     HashCode = hash_code,
                 });
 
-                var emailTask = EmailSrv.Value.SendResetPasswordLink(email_mobile, hash_code);
+                var emailTask = EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
 
                 _ = HistoryRepo.Value.Save(new HistoryEntity
                 {
