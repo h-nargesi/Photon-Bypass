@@ -37,7 +37,7 @@ public class AccountEntity : IBaseEntity
 
     public int Balance { get; set; }
 
-    public int WarningTimes { get; set; }
+    public DateTime? WarningTimes { get; set; }
 
     public string? Picture { get; set; }
 }

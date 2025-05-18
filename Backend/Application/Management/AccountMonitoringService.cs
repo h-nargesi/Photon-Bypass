@@ -11,7 +11,6 @@ using PhotonBypass.Domain.Radius;
 namespace PhotonBypass.Application.Management;
 
 class AccountMonitoringService(
-    ITopUpRepository TopUpRepo,
     IUserPlanStateRepository PlanStateRepo,
     IPermanentUsersRepository UserRepo,
     IAccountRepository AccountRepo,
@@ -23,6 +22,7 @@ class AccountMonitoringService(
     : IAccountMonitoringService, IJob
 {
     private const int MAX_DEACTIVATE_PLAN = 60;
+    private const int DELAY_BETWEEN_WARNINGS = 20;
 
     public async Task Execute(IJobExecutionContext context)
     {
@@ -94,7 +94,7 @@ class AccountMonitoringService(
                 Target = plan.Username,
                 EventTime = DateTime.Now,
                 Title = "غیرفعال",
-                Description = "اکانت شما به علت عدم استفاده غیرفعال می‌شد. مقدار ترافیک یا مدت زمان باقیمانده به جای خود باقی است.",
+                Description = "اکانت شما به علت عدم استفاده بعد از دو ماه غیرفعال شد. مقدار ترافیک یا مدت زمان باقیمانده به جای خود باقی است.",
                 Unit = "روز گذشته",
                 Value = (int)expired_time,
             });
@@ -114,7 +114,15 @@ class AccountMonitoringService(
 
         foreach (var plan in planStateList)
         {
-            var remainsTitle = plan.GetRemainsTitle();
+            if (!accounts.TryGetValue(plan.Id, out var account))
+            {
+                account = await AuthApp.CopyFromPermanentUser(plan.Username, null);
+            }
+            else if (account.WarningTimes.HasValue &&
+                (account.WarningTimes.Value - DateTime.Now).TotalHours <= DELAY_BETWEEN_WARNINGS)
+            {
+                continue;
+            }
 
             Log.Information("The user '{0}' is going to finish plan ({1}, {2}, x{3}, {4})",
                 plan.Username, plan.PlanType.ToString(), plan.SimultaneousUserCount, plan.GetRemainsTitle());
@@ -135,10 +143,7 @@ class AccountMonitoringService(
                 continue;
             }
 
-            if (!accounts.TryGetValue(plan.Id, out var account))
-            {
-                account = await AuthApp.CopyFromPermanentUser(plan.Username, null);
-            }
+            var remainsTitle = plan.GetRemainsTitle();
 
             if (contact.Phone != null)
             {
@@ -170,7 +175,7 @@ class AccountMonitoringService(
 
     private void IncreaseWarningTimes(AccountEntity account)
     {
-        account.WarningTimes += 1;
+        account.WarningTimes = DateTime.Now;
         _ = AccountRepo.Save(account);
     }
 }

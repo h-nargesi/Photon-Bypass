@@ -231,7 +231,7 @@ class PlanApplication(
             await RadiusSrv.Value.SaveUserBaiscInfo(user);
         }
 
-        account.WarningTimes = 0;
+        account.WarningTimes = null;
         account.Balance -= estimate;
         switch (type)
         {
