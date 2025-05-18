@@ -34,6 +34,8 @@ class AccountMonitoringService(
     {
         var planStateList = await PlanStateRepo.GetPlanOverState(0.1F);
 
+        if (planStateList.Count < 1) return;
+
         var userIds = planStateList.Select(x => x.Id).ToList();
 
         var contatcsTask = UserRepo.GetUsersContactInfo(userIds);
