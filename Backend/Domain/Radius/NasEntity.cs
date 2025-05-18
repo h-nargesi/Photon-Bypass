@@ -17,4 +17,7 @@ public class NasEntity : IBaseEntity
 
     [Column("server")]
     public string ShhPassword { get; set; } = null!;
+
+    [Column("description")]
+    public string? DomainName { get; set; }
 }

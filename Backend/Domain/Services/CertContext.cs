@@ -6,5 +6,5 @@ public class CertContext
 
     public string PrivateKey { get; set; } = null!;
 
-    public object[] CertFile { get; set; } = null!;
+    public byte[] CertFile { get; set; } = null!;
 }

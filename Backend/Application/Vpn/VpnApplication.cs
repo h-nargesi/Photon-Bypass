@@ -87,7 +87,7 @@ class VpnApplication(
         }
         else
         {
-            cert_context = await ServerMngSrv.Value.GetDefaultCertificate(user.Realm);
+            cert_context = await ServerMngSrv.Value.GetDefaultCertificate(user.RealmId);
         }
 
         var email_context = new CertEmailContext

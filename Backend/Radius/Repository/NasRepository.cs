@@ -9,6 +9,15 @@ class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context)
 {
     readonly static string IpAddress = EntityExtensions.GetColumnName<NasEntity>(x => x.IpAddress);
 
+    public async Task<NasEntity?> GetNasInfo(string ip)
+    {
+        var result = await FindAsync(statement => statement
+            .Where($"{IpAddress} = @ip")
+            .WithParameters(new { ip }));
+
+        return result.FirstOrDefault();
+    }
+
     public async Task<IDictionary<string, NasEntity>> GetNasInfo(IEnumerable<string> ips)
     {
         var result = await FindAsync(statement => statement

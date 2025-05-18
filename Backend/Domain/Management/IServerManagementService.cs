@@ -7,7 +7,7 @@ public interface IServerManagementService
 {
     Task<RealmEntity> GetAvalableRealm(int cloud_id);
 
-    Task<CertContext> GetDefaultCertificate(string realm);
+    Task<CertContext> GetDefaultCertificate(int realmid);
 
     Task CheckUserServerBalance();
 }
