@@ -18,7 +18,9 @@ class AccountMonitoringService(
     IAuthApplication AuthApp,
     IEmailService EmailSrv,
     IRadiusService RadiusSrv,
-    ISocialMediaService SocialSrv)
+    ISocialMediaService SocialSrv,
+    IRealmRepository RealmRepo,
+    ICloudRepository CloudRepo)
     : IAccountMonitoringService, IJob
 {
     private const int MAX_DEACTIVATE_PLAN = 60;
@@ -35,7 +37,9 @@ class AccountMonitoringService(
 
         await NotifSendServices(planStateList);
 
-        await DeactiveAbandonedUsers(planStateList);
+        Task.WaitAll(
+            DeactiveAbandonedUsers(planStateList),
+            ServerCapacityAlarm());
     }
 
     public async Task DeactiveAbandonedUsers(IEnumerable<UserPlanStateEntity> planStateList)
@@ -138,6 +142,11 @@ class AccountMonitoringService(
                 Value = plan.PlanType == PlanType.Monthly ? plan.LeftDays : plan.GigaLeft.ToString(),
             });
 
+            if (account?.SendWarning != true)
+            {
+                continue;
+            }
+
             if (!contacts.TryGetValue(plan.Id, out var contact))
             {
                 continue;
@@ -171,6 +180,38 @@ class AccountMonitoringService(
         }
 
         await Task.WhenAll(tasks);
+    }
+
+    public async Task ServerCapacityAlarm()
+    {
+        var web_cloud_id = await CloudRepo.FindWebCloud();
+        var servers = await RealmRepo.FetchServerDensityEntity(web_cloud_id);
+
+        var alarms = new List<string>();
+
+        foreach (var server in servers)
+        {
+            if (!float.TryParse(server.Capacity, out var capacity))
+            {
+                continue;
+            }
+
+            var percent = 100 * capacity / server.UsersCount;
+
+            if (percent < 10)
+            {
+                alarms.Add($"Unused Server: {server.RestrictedServerIP} ({percent}% from {server.UsersCount})");
+            }
+            else if (percent > 90)
+            {
+                alarms.Add($"Low Capacity: {server.RestrictedServerIP} ({percent}% from {server.UsersCount})");
+            }
+        }
+
+        if (alarms.Count != 0)
+        {
+            await SocialSrv.AlarmServerCapacity(alarms);
+        }
     }
 
     private void IncreaseWarningTimes(AccountEntity account)

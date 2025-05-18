@@ -39,5 +39,7 @@ public class AccountEntity : IBaseEntity
 
     public DateTime? WarningTimes { get; set; }
 
+    public bool SendWarning { get; set; }
+
     public string? Picture { get; set; }
 }
