@@ -16,6 +16,16 @@ public class RealmEntity : IBaseEntity
 
     public string Suffix { get; set; } = null!;
 
+    [Column("city")]
+    public string? Capacity { get; set; }
+
     [Column("country")]
     public string? RestrictedServerIP { get; set; }
+}
+
+[Table("ph_v_server_density")]
+public class ServerDensityEntity : RealmEntity
+{
+    [Column("users_count")]
+    public int UsersCount { get; set; }
 }

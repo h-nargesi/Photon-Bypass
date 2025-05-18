@@ -9,6 +9,7 @@ namespace PhotonBypass.Radius.Repository;
 class RealmRepository(RadDbContext context) : DapperRepository<RealmEntity>(context), IRealmRepository
 {
     readonly static string Id = EntityExtensions.GetColumnName<RealmEntity>(x => x.Id);
+    readonly static string CloudId = EntityExtensions.GetColumnName<RealmEntity>(x => x.CloudId);
 
     public async Task<RealmEntity?> Fetch(int realm_id)
     {
@@ -19,9 +20,11 @@ class RealmRepository(RadDbContext context) : DapperRepository<RealmEntity>(cont
         return result.FirstOrDefault();
     }
 
-    public async Task<IList<RealmEntity>> FetchAll(int cloud_id)
+    public async Task<IList<ServerDensityEntity>> FetchServerDensityEntity(int cloud_id)
     {
-        var result = await connection.FindAsync<RealmEntity>();
+        var result = await connection.FindAsync<ServerDensityEntity>(statement => statement
+            .Where($"{CloudId} = @cloud_id")
+            .WithParameters(new { cloud_id }));
 
         return [.. result];
     }
