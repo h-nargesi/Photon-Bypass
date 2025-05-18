@@ -9,6 +9,8 @@ namespace PhotonBypass.Application.Management;
 class ServerManagementService(
     IRealmRepository RealmRepo,
     Lazy<INasRepository> NasRepo,
+    Lazy<ICloudRepository> CloudRepo,
+    Lazy<ISocialMediaService> SocialSrv,
     Lazy<IOptions<ManagementOptions>> Options)
     : IServerManagementService
 {
@@ -67,8 +69,35 @@ class ServerManagementService(
         };
     }
 
-    public Task CheckUserServerBalance()
+    public async Task CheckUserServerBalance()
     {
-        throw new NotImplementedException();
+        var web_cloud_id = await CloudRepo.Value.FindWebCloud();
+        var servers = await RealmRepo.FetchServerDensityEntity(web_cloud_id);
+
+        var alarms = new List<string>();
+
+        foreach (var server in servers)
+        {
+            if (!float.TryParse(server.Capacity, out var capacity))
+            {
+                continue;
+            }
+
+            var percent = 100 * capacity / server.UsersCount;
+
+            if (percent < 10)
+            {
+                alarms.Add($"Unused Server: {server.RestrictedServerIP} ({percent}% from {server.UsersCount})");
+            }
+            else if (percent > 90)
+            {
+                alarms.Add($"Low Capacity: {server.RestrictedServerIP} ({percent}% from {server.UsersCount})");
+            }
+        }
+
+        if (alarms.Count != 0)
+        {
+            await SocialSrv.Value.AlarmServerCapacity(alarms);
+        }
     }
 }

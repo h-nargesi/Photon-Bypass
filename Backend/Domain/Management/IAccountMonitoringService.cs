@@ -7,6 +7,4 @@ public interface IAccountMonitoringService
     Task NotifSendServices(IEnumerable<UserPlanStateEntity> planStateList);
 
     Task DeactiveAbandonedUsers(IEnumerable<UserPlanStateEntity> planStateList);
-
-    Task ServerCapacityAlarm();
 }
