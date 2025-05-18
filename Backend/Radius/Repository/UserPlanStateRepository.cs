@@ -68,8 +68,8 @@ where {AccountDisabled} = 0 and exists (
         order by t.{TopUpRepository.Id} desc
         limit 1
     ) t
-    where t.{TopUpRepository.DaysToUse} is not null and (@percent * t.{TopUpRepository.DaysToUse}) > u.{LeftDays}
-       or t.{TopUpRepository.Data} is not null and (@percent * to_gigabyte(t.{TopUpRepository.Data})) > u.{GigaLeft}
+    where t.{TopUpRepository.DaysToUse} is not null and (@percent * t.{TopUpRepository.DaysToUse}) >= u.{LeftDays}
+       or t.{TopUpRepository.Data} is not null and (@percent * to_gigabyte(t.{TopUpRepository.Data})) >= u.{GigaLeft}
 )
         ";
 

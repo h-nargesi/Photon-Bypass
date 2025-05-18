@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Profile;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 
@@ -33,21 +34,21 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return result.FirstOrDefault();
     }
 
-    public async Task<IList<AccountEntity>> GetTargetArea(int userid)
+    public async Task<IList<AccountEntity>> GetTargetArea(int accountId)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Parent)} = @userid")
-            .WithParameters(new { userid }));
+            .Where($"{nameof(AccountEntity.Parent)} = @accountId")
+            .WithParameters(new { accountId }));
 
         return [.. result];
     }
 
-    public async Task<IList<AccountEntity>> GetAccounts(IEnumerable<int> userids)
+    public async Task<IDictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> userids)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.PermanentUserId)} in (@userids)")
+            .Where($"{nameof(AccountEntity.Parent)} in (@userids)")
             .WithParameters(new { userids }));
 
-        return [.. result];
+        return result.ToDictionary(k => k.PermanentUserId);
     }
 }

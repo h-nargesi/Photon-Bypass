@@ -19,6 +19,8 @@ public class AccountEntity : IBaseEntity
 
     public string Password { get; set; } = null!;
 
+    public int? Parent { get; set; }
+
     public string? Name { get; set; }
 
     public string? Surname { get; set; }
@@ -35,7 +37,7 @@ public class AccountEntity : IBaseEntity
 
     public int Balance { get; set; }
 
-    public string? Picture { get; set; }
+    public int WarningTimes { get; set; }
 
-    public int? Parent { get; set; }
+    public string? Picture { get; set; }
 }

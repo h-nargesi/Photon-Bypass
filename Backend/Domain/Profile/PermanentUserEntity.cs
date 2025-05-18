@@ -42,4 +42,7 @@ public class PermanentUserEntity : IBaseEntity
 
     [Column("last_accpet_time")]
     public DateTime? LastAcceptTime { get; set; }
+
+    [Column("created")]
+    public DateTime CreatedTime { get; set; }
 }
