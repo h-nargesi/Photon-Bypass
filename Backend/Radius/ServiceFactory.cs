@@ -11,16 +11,16 @@ static class ServiceFactory
 {
     static ServiceFactory()
     {
-        DependencyInjection.OnAddServices += AddLocalDbContext;
+        DependencyInjection.OnAddServices += AddServices;
     }
 
-    static void AddLocalDbContext(this IServiceCollection services)
+    static void AddServices(this IServiceCollection services)
     {
         services.AddSingleton<RadiusServiceOptions>();
         services.AddSingleton<RadDapperOptions>();
         services.AddSingleton<RadDbContext>();
 
-        services.AddTransient<ICloudRepository, ICloudRepository>();
+        services.AddTransient<ICloudRepository, CloudRepository>();
         services.AddTransient<INasRepository, NasRepository>();
         services.AddTransient<IPermanentUsersRepository, PermanentUsersRepository>();
         services.AddTransient<IProfileRepository, ProfileRepository>();
