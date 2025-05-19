@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Tahoma, sans-serif;
+            background-color: #f4f4f4;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background-color: #ffcc00;
+            padding: 20px;
+            text-align: center;
+        }
+
+            .header img {
+                max-width: 150px;
+                height: auto;
+            }
+
+        .content {
+            padding: 20px;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .footer {
+            background-color: #eeeeee;
+            padding: 15px;
+            text-align: center;
+            font-size: 13px;
+            color: #777;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .content, .header, .footer {
+                padding: 15px;
+                font-size: 14px;
+            }
+
+                .header img {
+                    max-width: 120px;
+                }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://via.placeholder.com/150x50?text=LOGO" alt="لوگو">
+        </div>
+        <div class="content">
+            <h2 style="margin-top: 0;">اطلاعیه پایان سرویس</h2>
+            <p><strong>{fullname}</strong> عزیز،</p>
+            <p>سرویس شما از نوع <strong>{type}</strong> به‌زودی منقضی خواهد شد.</p>
+            <p><strong>زمان باقی‌مانده:</strong> {left}</p>
+            <p>برای جلوگیری از قطع دسترسی، می‌توانید سرویس خود را پیش از انقضا تمدید نمایید.</p>
+        </div>
+        <div class="footer">
+            تیم پشتیبانی | <a target="_blank" href="#">fast-pybass</a>
+        </div>
+    </div>
+</body>
+</html>

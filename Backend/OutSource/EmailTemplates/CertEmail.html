@@ -1,0 +1,123 @@
+﻿<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Tahoma, sans-serif;
+            background-color: #f2f2f2;
+            direction: rtl;
+        }
+
+        .ltr {
+            direction: ltr !important;
+        }
+
+        .container {
+            max-width: 640px;
+            margin: auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #1e90ff;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+
+            .header img {
+                max-width: 150px;
+                height: auto;
+            }
+
+        .content {
+            padding: 20px;
+            color: #333;
+            font-size: 15px;
+        }
+
+        .section {
+            background: #f9f9f9;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            border-right: 4px solid #1e90ff;
+            border-radius: 4px;
+        }
+
+        .footer {
+            background-color: #eeeeee;
+            text-align: center;
+            padding: 15px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        a {
+            color: #1e90ff;
+            text-decoration: none;
+        }
+
+        code {
+            background: #f1f1f1;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .content, .header, .footer {
+                padding: 15px;
+                font-size: 14px;
+            }
+
+            .section {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://via.placeholder.com/150x50?text=LOGO" alt="لوگو">
+            <h2 style="margin: 10px 0 0;">مشخصات اتصال</h2>
+        </div>
+        <div class="content">
+            <div class="section">
+                <strong>اطلاعات کاربری:</strong><br>
+                <span class="ltr">User: <code>{username}</code></span><br>
+                <span class="ltr">Password: <code>{password}</code></span>
+            </div>
+
+            <div class="section">
+                <strong>L2TP/IPSec:</strong><br>
+                <span class="ltr">Server: <code>{server}</code></span><br>
+                <span class="ltr"> PSK: <code>{l2tp}</code></span>
+            </div>
+
+            <div class="section">
+                <strong>OpenVPN (گواهی + رمز):</strong><br>
+                <span class="ltr">User key password: <code>{ovpn}</code></span><br>
+                فایل config.ovpn در پیوست قرار دارد.
+            </div>
+
+            <div class="section">
+                <strong>راهنما:</strong><br>
+                <a target="_blank" href="https://drive.google.com/drive/u/1/folders/1qv_TUemGNftxNcHnz2DnPn9V6S39Pfij">راهنمای اتصال</a> | 
+                <a target="_blank" href="https://drive.google.com/drive/u/1/folders/14jaxqfGGHvG5KIfkPpzMzsL5Hg8ktZxh">نصب‌کننده OpenVPN</a>
+            </div>
+        </div>
+        <div class="footer">
+            در صورت بروز مشکل با پشتیبانی تماس بگیرید.
+        </div>
+    </div>
+</body>
+</html>
