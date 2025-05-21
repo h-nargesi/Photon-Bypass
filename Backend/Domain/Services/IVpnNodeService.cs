@@ -6,7 +6,7 @@ public interface IVpnNodeService
 {
     Task<(NasEntity server, IList<UserConnectionBinding> connections)> GetActiveConnections(NasEntity server, string username);
 
-    Task<bool> CloseConnection(string server, string username, string sessionId);
+    Task<bool> CloseConnection(NasEntity server, string sessionId);
 
     Task<bool> CloseConnections(string username, int count);
 

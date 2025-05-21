@@ -42,7 +42,7 @@ class ServerManagementService(
         if (Options.Value.Value.PrivateKeyL2TP == null)
             throw new Exception("L2TP Private key is not set in config!");
 
-        if (Options.Value.Value.PrivateKeyOvpn == null)
+        if (Options.Value.Value.DefaultPrivateKeyOvpn == null)
             throw new Exception("Ovpn Private key is not set in config!");
 
         var realm_task = RealmRepo.Fetch(realmid);
@@ -67,7 +67,7 @@ class ServerManagementService(
         return new CertContext
         {
             Server = nas.DomainName,
-            PrivateKeyOvpn = Options.Value.Value.PrivateKeyOvpn,
+            PrivateKeyOvpn = Options.Value.Value.DefaultPrivateKeyOvpn,
             PrivateKeyL2TP = Options.Value.Value.PrivateKeyL2TP,
             CertFile = cert_file,
         };

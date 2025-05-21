@@ -55,13 +55,11 @@ class ConnectionApplication(
 
     public async Task<ApiResult> CloseConnection(string server, string target, string sessionId)
     {
-        if (!await NasRepo.Exists(server))
-        {
-            throw new UserException("دسترسی غیرمجاز!",
+        var nas = (await NasRepo.GetNasInfo(server))
+            ?? throw new UserException("دسترسی غیرمجاز!",
                 $"Closing connection server is invalid: ({server}, {target}, {sessionId})");
-        }
 
-        var result = await VpnNodeSrv.CloseConnection(server, target, sessionId);
+        var result = await VpnNodeSrv.CloseConnection(nas, sessionId);
 
         if (!result)
         {

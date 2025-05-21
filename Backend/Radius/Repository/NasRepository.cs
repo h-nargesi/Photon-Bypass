@@ -26,13 +26,4 @@ class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context)
 
         return result.ToDictionary(x => x.IpAddress);
     }
-
-    public async Task<bool> Exists(string ip)
-    {
-        var result = await FindAsync(statement => statement
-            .Where($"{IpAddress} = @ip")
-            .WithParameters(new { ip }));
-
-        return result.Any();
-    }
 }
