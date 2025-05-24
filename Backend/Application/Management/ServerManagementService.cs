@@ -39,9 +39,6 @@ class ServerManagementService(
         var cxert_path = Options.Value.Value.DefaultCertPath ??
             throw new Exception("Default cert-path is not set in config!");
 
-        if (Options.Value.Value.PrivateKeyL2TP == null)
-            throw new Exception("L2TP Private key is not set in config!");
-
         if (Options.Value.Value.DefaultPrivateKeyOvpn == null)
             throw new Exception("Ovpn Private key is not set in config!");
 
@@ -68,7 +65,6 @@ class ServerManagementService(
         {
             Server = nas.DomainName,
             PrivateKeyOvpn = Options.Value.Value.DefaultPrivateKeyOvpn,
-            PrivateKeyL2TP = Options.Value.Value.PrivateKeyL2TP,
             CertFile = cert_file,
         };
     }

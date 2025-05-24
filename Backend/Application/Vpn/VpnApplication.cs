@@ -101,7 +101,6 @@ class VpnApplication(
             Password = (await ovpn_password_task) ?? throw new Exception($"Password not found for user: {target}"),
             Server = cert_context.Server,
             PrivateKeyOvpn = cert_context.PrivateKeyOvpn,
-            PrivateKeyL2TP = cert_context.PrivateKeyL2TP,
             CertFile = cert_context.CertFile,
         };
 
