@@ -3,7 +3,6 @@ using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
 using Renci.SshNet;
 using Serilog;
-using System;
 using System.Text.RegularExpressions;
 
 namespace PhotonBypass.OutSource;
@@ -28,8 +27,10 @@ public partial class VpnNodeService : IVpnNodeService
         return success && string.IsNullOrEmpty(result);
     }
 
-    public Task<bool> CloseConnections(string username, int count)
+    public Task<bool> CloseConnections(IEnumerable<NasEntity> servers, string username, int count)
     {
+        //if (servers == null || !servers.Any() || count < 1 || string.IsNullOrEmpty(username)) return false;
+
         throw new NotImplementedException();
     }
 
@@ -59,8 +60,6 @@ public partial class VpnNodeService : IVpnNodeService
 
     public Task<CertContext> GetCertificate(string server)
     {
-        // /interface/l2tp-server/server> print 
-        // ipsec-secret: 61&ghO!C#Hn8
         /*
          
         /certificate
