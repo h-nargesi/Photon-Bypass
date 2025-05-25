@@ -29,9 +29,28 @@ public partial class VpnNodeService : IVpnNodeService
 
     public Task<bool> CloseConnections(IEnumerable<NasEntity> servers, string username, int count)
     {
-        //if (servers == null || !servers.Any() || count < 1 || string.IsNullOrEmpty(username)) return false;
+        return CloseAllConnections(servers, username);
+    }
 
-        throw new NotImplementedException();
+    public async Task<bool> CloseAllConnections(IEnumerable<NasEntity> servers, string username)
+    {
+        if (servers == null || !servers.Any() || string.IsNullOrWhiteSpace(username)) return false;
+
+        var tasks = servers.Where(x => x != null)
+            .Select(async server =>
+            {
+                using var node = await Connect(server);
+
+                var success = node.Execute($"/ppp active remove [find name={username}]", out string result);
+                if (!success) return false;
+
+                success = node.Execute($"/ppp active print where name={username}", out result);
+                return success && string.IsNullOrEmpty(result);
+            });
+
+        var result = await Task.WhenAll(tasks);
+
+        return !result.Any(x => !x);
     }
 
     public async Task<(NasEntity server, IList<UserConnectionBinding> connections)> GetActiveConnections(NasEntity server, string username)
@@ -103,6 +122,8 @@ static class SshExtentions
 
         var execution = node.RunCommand(command);
         result = execution.Result;
+
+        Log.Debug("Result command on server: {0}\n{1}", node.ConnectionInfo.Host, result);
 
         if (execution.Error != null)
         {
