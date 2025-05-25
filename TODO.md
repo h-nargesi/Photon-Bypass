@@ -3,3 +3,8 @@
 [ ] check all method's parameters in radius repository and radius service to be simple (for example fetch by id not username)
 [ ] warning account is deactive
 [ ] logo/link in email bodyes
+
+## ChatCPT:
+[ ] give missed logs
+[ ] give possible error or performance issues 
+[ ] write test project

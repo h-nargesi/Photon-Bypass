@@ -120,7 +120,7 @@ partial class AuthApplication(
 
             if (account != null)
             {
-                var hash_code = HashHandler.GewnerateHashCode(56);
+                var hash_code = HashHandler.GenerateHashCode(56);
 
                 var insertTask = ResetPassRepo.Value.AddHashCode(new ResetPassEntity
                 {
