@@ -15,7 +15,7 @@ class UserPlanStateRepository(RadDbContext context) : DapperRepository<UserPlanS
     readonly static string AccountDisabled = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.AccountDisabled);
     readonly static string GigaLeft = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.GigaLeft);
 
-    public async Task<string?> GetRestrictedServer(int id)
+    public async Task<string?> GetRestrictedServerIP(int id)
     {
         var result = await FindStateAsync(id);
 

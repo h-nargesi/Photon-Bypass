@@ -1,8 +1,10 @@
 ﻿using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
+using PhotonBypass.Tools;
 using Renci.SshNet;
 using Serilog;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace PhotonBypass.OutSource;
@@ -77,18 +79,58 @@ public partial class VpnNodeService : IVpnNodeService
         return (server, connections);
     }
 
-    public Task<CertContext> GetCertificate(string server)
+    public async Task GetCertificate(NasEntity server, string username, CertContext default_context)
     {
-        /*
-         
-        /certificate
-        add name=CLIENT-TEMPLATE common-name=CLIENT key-usage=tls-client key-size=4096 days-valid=3650 country="IR" state="TH" locality="Tehran" organization="Photon" unit="VPN"
-        add name=CLIENT1 copy-from=CLIENT-TEMPLATE common-name=CLIENT1
-        sign CLIENT1 ca=LMTCA name=CLIENT1
-        export-certificate CLIENT1 export-passphrase="<ovpn-secret>" file-name="CLIENT1"
+        ArgumentNullException.ThrowIfNull(server, nameof(server));
+        ArgumentNullException.ThrowIfNull(username, nameof(username));
+        ArgumentNullException.ThrowIfNull(default_context, nameof(default_context));
+        ArgumentNullException.ThrowIfNull(default_context.CertFile, nameof(default_context.CertFile));
 
-         */
-        throw new NotImplementedException();
+        using var node = await Connect(server);
+
+        default_context.PrivateKeyOvpn = HashHandler.GenerateHashCode();
+
+        var success = node.Execute($"/certificate print where name=\"CLIENT_{username}\"", out string result);
+        if (!success) throw new Exception("Certificate check failed!");
+
+        if (string.IsNullOrWhiteSpace(result))
+        {
+            success = node.Execute($"/certificate add name=\"CLIENT_{username}\" copy-from=CLIENT-TEMPLATE common-name=\"CLIENT_{username}\"", out result);
+            if (!success) throw new Exception("Certificate generation failed!");
+
+            success = node.Execute($"/certificate sign \"CLIENT_{username}\" ca=LMTCA name=\"CLIENT_{username}\"", out result);
+            if (!success) throw new Exception("Certificate signing failed!");
+        }
+
+        success = node.Execute($"/file print where name=\"CLIENT_{username}.crt\"", out result);
+        if (success && !string.IsNullOrWhiteSpace(result))
+        {
+            success = node.Execute($"/file remove \"CLIENT_{username}\".crt", out result);
+            if (!success) throw new Exception("File remove old failed!");
+        }
+
+        success = node.Execute($"/file print where name=\"CLIENT_{username}.key\"", out result);
+        if (success && !string.IsNullOrWhiteSpace(result))
+        {
+            success = node.Execute($"/file remove \"CLIENT_{username}\".key", out result);
+            if (!success) throw new Exception("File remove old failed!");
+        }
+
+        success = node.Execute($"/certificate export-certificate \"CLIENT_{username}\" export-passphrase=\"{default_context.PrivateKeyOvpn}\" file-name=\"CLIENT_{username}\"", out result);
+        if (!success) throw new Exception("Certificate export failed!");
+
+        success = node.Execute($":put [/file get \"CLIENT_{username}\".crt contents]", out result);
+        if (!success) throw new Exception("Certificate download cert failed!");
+        var client_cert = result;
+
+        success = node.Execute($":put [/file get \"CLIENT_{username}\".key contents]", out result);
+        if (!success) throw new Exception("Certificate download key failed!");
+        var client_key = result;
+
+        var ovpn_conf_file = Encoding.UTF8.GetString(default_context.CertFile);
+        ovpn_conf_file = Replace(ovpn_conf_file, "cert", client_cert);
+        ovpn_conf_file = Replace(ovpn_conf_file, "key", client_key);
+        default_context.CertFile = Encoding.UTF8.GetBytes(ovpn_conf_file);
     }
 
     public static async Task<SshClient> Connect(NasEntity server)
@@ -105,6 +147,21 @@ public partial class VpnNodeService : IVpnNodeService
         }
 
         return node;
+    }
+
+    private static string Replace(string source, string type, string value)
+    {
+        var start = source.IndexOf($"<{type}>");
+        if (start < 0) throw new Exception($"The {type} not found in ovpn-conf.");
+        start += 2 + type.Length;
+
+        var end = source.IndexOf($"</{type}>", start + 2 + type.Length);
+        if (end < 0) throw new Exception($"The {type} not found in ovpn-conf.");
+
+        return new StringBuilder(source)
+            .Remove(start, end - start)
+            .Insert(start, value)
+            .ToString();
     }
 
     [GeneratedRegex(@"^[\da-fA-F]+$")]
