@@ -1,6 +1,11 @@
 # Photon Bypass Analyse
 
-api call rate limit
+بعضی نکات:
+
+- محدودیت api call rate limit در یک بازه زمانی
+- کش شدن اطلاعات کاربر در فرانت
+- محدودیت برای ارسال ایمیل در یک زمان مشخص
+- برای ارسال کانفیگ open-vpn در صورت عدم وجود باید گواهی کلاینت ساخته شود
 
 ## API list
 
@@ -295,23 +300,85 @@ api call rate limit
     }
     ```
 
-## Login
-
-- Gmail auth
-- Email/username password
-- Register new
-
 ## Out Source Calls
+
+منابعی که وبسایت باید به آن متصل شود شامل پنج بخش هست:
+- دیتابیس محلی *local db*
+- سرور ردیوس
+    - خواند داده‌ها از طریق اتصال مستقیم به دیتابیس ردیوس انجام می‌شود *rad db*
+    - ویرایش از طریق اتصال به apiها انجام ‌می‌شود *rad api*
+- روترهای میکروتیک *mikrotik ssh*
+- واتساپ *whatsapp api*
+- سرور ایمیل *email server*
+
+### Base On Pages
+
+بررسی خواند/نوشتن روی ردیوس بر اساس صفحات
+
+- Login
+    - (local db) بررسی کاربر و پسورد
+    - (rad db) بررسی اکانت در سرور ردیوس در صورت عدم وجود کاربر در وبسایت
+    - (local db) در صورت عدم وجود اکانت در دیتابیس محلی، اکانت باید از ردیوس کپی شود
+    - (whatsapp api) هشدار پسورد اشتباه با ادمین
+- Register
+    - (local db) ذخیره کاربر
+    - (rad api) ذخیره کاربر
+- Dashboard
+    - Validation
+        - (email server) email verification
+        - (whatsapp api) mobile verification
+    - Name/Email Panel
+        - (local db) خواندن اطلاعات اکانت
+    - Account State > Show User's connection
+        - (rad db) لیست کانکشنهای کاربر
+        - (mikrotik ssh) مقایسه با اتصالات فعال روی روترها
+    - Account State > Close User Connection
+        - (mikrotik ssh) بستن کانکشن روی روتر
+        - (rad api) بستن کانکشن روی سرور ردیوس
+    - Account State Panel > Show Acount Remaining
+        - (rad db) نمایش وضعیت اکانت
+    - Wallet Balance Panel
+        - (local db) موجودی حساب در دیتابیس محلی ذخیره ‌می‌شوند
+    - Usege Chart > Reload
+        - (rad api) بررسی ترافیکهای جدید - این استثنا برای خواند از api استفاده می‌کند
+        - (local db) لاگ ترافیک‌ها برای مشغول نکردن ردیوس روی دیتابیس وبسایت هم ذخیره می‌شود
+
+- Payment
+    - (local db) موجودی حساب در دیتابیس محلی ذخیره ‌می‌شوند
+
+- Edit Info Page
+    - (rad api) & (local db) تغییرات روی هر دو دیتابیس ذخیره می‌شوند
+
+- Change Login Password 
+    - (local db) پسورد لاگین در وبسایت
+
+- Change OVPN Password
+    - (rad api) پسورد اتصال اکانت
+    - (local db) update
+
+- Renewal
+    - (rad api) بعد از تمدید تغیییرات لازم روی ردیوس اعمال می‌شود
+    - (local db) update
+
+- Account Remaining Warning Service
+    - (rad db) بررسی وضعیت کاربر از طریق یک ویو انجام می‌شود
+    - (whatsapp api) | (email service)
 
 ### Rad API
 
-- Login
-- User's Connection
-- Acount Balance
+- Register
+- Close User Connection
 - Usege Chart Reload
 - Edit Info Page
 - Change OVPN Password
 - Renewal
+
+### Rad DB
+
+- Login
+- User's Connection
+- Acount Remaining
+- Account Remaining Warning Service
 
 ### Local DB
 
@@ -335,113 +402,3 @@ api call rate limit
 
 - Register / Validation
 - Account Balance Warning Service
-
-### Base On Pages
-
-- Login
-    - (rad api)
-    - update (local db)
-- Register
-    - (local db)
-    - (whatsapp api) verification
-- User Page
-    - Validation
-        - (local db)
-        - (whatsapp api) verification
-    - Name/Email Panel
-        - (local db)
-    - Account State > User's connection
-        - (rad api)
-    - Account State > Close User Connection
-        - (mikrotik ssh)
-    - Account State Panel > Acount Balance
-        - (rad api | rad db)
-    - Wallet Balance Panel
-        - (local db)
-    - Usege Chart > Reload
-        - (rad api) check new from latest
-        - (local db)
-
-- Payment
-    - (local db)
-
-- Edit Info Page
-    - (rad api)
-    - update (local db)
-
-- Change Login Password 
-    - (local db)
-
-- Change OVPN Password
-    - (rad api)
-    - update (local db)
-
-- Renewal
-    - (rad api)
-    - update (local db)
-
-- Account Balance Warning Service
-    - (rad api)
-    - (whatsapp api)
-
-## Renewal Submit Code
-
-this code is not finished
-
-```c#
-if (context.month is not null && context.traffic is not null)
-    throw new Excetion("Bad request.");
-
-EstimateExpense(account, context, out expense);
-
-if (!AffordFromUserWalet(expense)) {
-    throw new UserException("The walet balance is low!");
-}
-
-var change_profile = true;
-var close_connections = true;
-if (context.traffic is not null && account.Type != AccountType.Traffic) {
-    if (account.ExpireDate > DateTime.Now) {
-        throw new UserException("The account plan has not finished!");
-    }
-
-    var current_total_data_usage = GetUserDataUsage(account.UserID);
-    SetAccountDataUsege(current_total_data_usage);
-
-} else if (context.month is not null && account.Type != AccountType.Monthly) {
-    if (account.RemainTraffic > 512 * 1024 * 1024) {
-        throw new UserException("The account plan has not finished! you need use lan until 512MB.");
-    }
-
-    SetAccountDate(DateTime.Now, DateTime.Now);
-
-} else {
-    close_connections = context.UserCount < account.UserCount;
-    change_profile = context.UserCount != account.UserCount;
-}
-
-if (change_profile) {
-    account.profile = GetProfile(context);
-}
-
-if (account.LastConnection < DateTime.Now.AddWeek(-1)) {
-    var realm = GetFreePlaceInServer();
-    if (account.Realm != realm) {
-        account.Realm = realm;
-        SendChangeServerNotif(account);
-    }
-}
-
-if (account.IsChanged) {
-    SaveAccount(account);
-    SaveAccountRealmDistriction(account);
-}
-
-RegisterNewTopUp(account, context);
-
-if (close_connections) {
-    CloseConnection();
-}
-
-CheckUserServerBalance();
-```

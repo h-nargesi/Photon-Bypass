@@ -2,6 +2,7 @@ using Microsoft.IdentityModel.Tokens;
 using PhotonBypass;
 using PhotonBypass.API.Basical;
 using PhotonBypass.Application;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.ErrorHandler;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,10 +24,12 @@ builder.Services.AddAuthentication("Bearer")
             ValidateIssuerSigningKey = true,
         };
     });
+
+builder.Services.AddScoped<IAccessService, AccessService>();
 builder.Services.AddAuthorization();
 builder.Services.AddJobContextService();
 builder.Services.AddApplicationServices();
-builder.Services.AddServices();
+builder.Services.AddGlobalServices();
 builder.Services.AddMemoryCache();
 
 var app = builder.Build();

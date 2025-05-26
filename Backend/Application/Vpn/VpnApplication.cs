@@ -24,6 +24,7 @@ class VpnApplication(
     Lazy<IRealmRepository> RealmRepo,
     Lazy<IUserPlanStateRepository> PlanStateRepo,
     Lazy<INasRepository> NasRepo,
+    Lazy<INasRepository> NasRepo,
     Lazy<IJobContext> JobContext)
     : IVpnApplication
 {
@@ -73,11 +74,13 @@ class VpnApplication(
             throw new UserException("ایمیل کاربر ثبت نشده است!", $"user is email address is unkown: target={target}");
         }
 
-        var server_task = PlanStateRepo.Value.GetRestrictedServer(user.Id);
+        var server_ip_task = PlanStateRepo.Value.GetRestrictedServerIP(user.Id);
 
         var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(user.Id);
 
-        var server_ip = await server_task;
+        var cert_context = await ServerMngSrv.Value.GetDefaultCertificate(user.RealmId);
+
+        var server_ip = await server_ip_task;
 
         if (server_ip == null)
         {
@@ -85,23 +88,13 @@ class VpnApplication(
             server_ip = realm?.RestrictedServerIP;
         }
 
-        NasEntity? server;
-
         if (server_ip != null)
         {
-            server = await NasRepo.Value.GetNasInfo(server_ip);
-        }
-        else server = null;
-
-        CertContext cert_context;
-
-        if (server != null)
-        {
-            cert_context = await VpnNodeSrv.Value.GetCertificate(server, user.Username);
-        }
-        else
-        {
-            cert_context = await ServerMngSrv.Value.GetDefaultCertificate(user.RealmId);
+            var server = await NasRepo.Value.GetNasInfo(server_ip);
+            if (server != null)
+            {
+                await VpnNodeSrv.Value.GetCertificate(server, user.Username, cert_context);
+            }
         }
 
         var email_context = new CertEmailContext
@@ -110,7 +103,6 @@ class VpnApplication(
             Password = (await ovpn_password_task) ?? throw new Exception($"Password not found for user: {target}"),
             Server = cert_context.Server,
             PrivateKeyOvpn = cert_context.PrivateKeyOvpn,
-            PrivateKeyL2TP = cert_context.PrivateKeyL2TP,
             CertFile = cert_context.CertFile,
         };
 

@@ -6,7 +6,7 @@ public static class DependencyInjection
 {
     public static event AddServicesHandler? OnAddServices;
 
-    public static void AddServices(this IServiceCollection services)
+    public static void AddGlobalServices(this IServiceCollection services)
     {
         OnAddServices?.Invoke(services);
     }

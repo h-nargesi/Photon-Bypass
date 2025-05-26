@@ -52,7 +52,6 @@ class EmailService(IOptions<EmailOptions> options) : IEmailService
         body = body.Replace("{username}", context.Username)
             .Replace("{server}", context.Server)
             .Replace("{password}", context.Password)
-            .Replace("{l2tp}", context.PrivateKeyL2TP)
             .Replace("{ovpn}", context.PrivateKeyOvpn);
 
         using var message = new MailMessage(fromAddress, toAddress)

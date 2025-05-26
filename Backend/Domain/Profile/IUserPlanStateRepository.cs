@@ -6,7 +6,7 @@ public interface IUserPlanStateRepository
 
     Task<UserPlanStateEntity?> GetPlanState(string username);
 
-    Task<string?> GetRestrictedServer(int id);
+    Task<string?> GetRestrictedServerIP(int id);
 
     Task<IList<UserPlanStateEntity>> GetPlanOverState(float percent);
 }

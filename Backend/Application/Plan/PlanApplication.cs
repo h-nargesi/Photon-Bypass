@@ -10,6 +10,7 @@ using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
+using System.Collections.Generic;
 
 namespace PhotonBypass.Application.Plan;
 
@@ -24,6 +25,7 @@ class PlanApplication(
     Lazy<IVpnNodeService> VpnNodeSrv,
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IProfileRepository> ProfileRepo,
+    Lazy<INasRepository> NasRepo,
     Lazy<IJobContext> JobContext)
     : IPlanApplication
 {
@@ -148,8 +150,8 @@ class PlanApplication(
         Log.Information(@"[user: {0}] Plan current state
     request=(taget:{1}, type:{2}, count:{3}, value:{4})
     current=(type:{5}, count:{7}, left-days:{6}, left-gigabytes:{8})",
-            JobContext.Value.Username, 
-            target, type.ToString(), count, value, state.PlanType.ToString(), 
+            JobContext.Value.Username,
+            target, type.ToString(), count, value, state.PlanType.ToString(),
             state.LeftDays, state.SimultaneousUserCount, state.GigaLeft);
 
         var user = (await fetch_user) ??
@@ -195,7 +197,19 @@ class PlanApplication(
     change=(taget:{1}, user-count:{2}, to:{3})",
                 JobContext.Value.Username, target, state.SimultaneousUserCount, count);
 
-            _ = VpnNodeSrv.Value.CloseConnections(user.Username, state.SimultaneousUserCount.Value - count);
+            var nas_list = new List<NasEntity>();
+            if (state.RestrictedServerIP != null)
+            {
+                var nas = await NasRepo.Value.GetNasInfo(state.RestrictedServerIP);
+                if (nas != null) nas_list.Add(nas);
+            }
+
+            if (nas_list.Count < 0)
+            {
+                nas_list.AddRange(await NasRepo.Value.GetAll());
+            }
+
+            _ = VpnNodeSrv.Value.CloseConnections(nas_list, user.Username, state.SimultaneousUserCount.Value - count);
         }
 
         if (count != state.SimultaneousUserCount)

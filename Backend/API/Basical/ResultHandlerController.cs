@@ -1,17 +1,17 @@
 ﻿using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
-using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.Domain;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
 
 namespace PhotonBypass.API.Basical;
 
-public class ResultHandlerController(Lazy<IJobContext> context, Lazy<IMemoryCache> cache) : ControllerBase
+public class ResultHandlerController(Lazy<IJobContext> context, Lazy<IAccessService> access) : ControllerBase
 {
-    protected IJobContext JobContext => context.Value;
+    protected Lazy<IJobContext> JobContext { get; } = context;
 
     protected string Username => User?.Identity?.Name ?? string.Empty;
 
@@ -19,7 +19,7 @@ public class ResultHandlerController(Lazy<IJobContext> context, Lazy<IMemoryCach
     {
         Log.Debug("Request.GetDisplayUrl(): {0}", Request.GetDisplayUrl());
 
-        if (JobContext is not JobContext job)
+        if (JobContext.Value is not JobContext job)
         {
             throw new Exception("JobContext not found");
         }
@@ -29,11 +29,7 @@ public class ResultHandlerController(Lazy<IJobContext> context, Lazy<IMemoryCach
 
         if (target == null) return;
 
-        var has_access = cache.Value.Get<HashSet<string>>($"TargetArea|{Username}")
-            ?.Contains(target)
-            ?? false;
-
-        if (!has_access)
+        if (!access.Value.CheckAccess(Username, target))
         {
             throw new UserException("شما به این کاربر دسترسی ندارید!",
                 $"Target access denied: ({target}, '{Request.GetDisplayUrl()}')");

@@ -1,11 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.API.Basical;
 using PhotonBypass.API.Context;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
@@ -14,8 +14,8 @@ namespace PhotonBypass.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class AccountController(
-    IAccountApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) : 
-    ResultHandlerController(job, cache)
+    IAccountApplication application, Lazy<IJobContext> job, Lazy<IAccessService> access) : 
+    ResultHandlerController(job, access)
 {
     [HttpGet("get-user")]
     public async Task<ApiResult> GetUser()
@@ -32,7 +32,7 @@ public class AccountController(
     {
         LoadJobContext(target);
 
-        var result = await application.GetFullInfo(JobContext.Target);
+        var result = await application.GetFullInfo(JobContext.Value.Target);
 
         return SafeApiResult(result);
     }
@@ -42,7 +42,7 @@ public class AccountController(
     {
         LoadJobContext(target);
 
-        var result = await application.EditUser(JobContext.Target, context);
+        var result = await application.EditUser(JobContext.Value.Target, context);
 
         return SafeApiResult(result);
     }
@@ -72,7 +72,7 @@ public class AccountController(
     {
         LoadJobContext(target);
 
-        var result = await application.GetHistory(JobContext.Target, context.From, context.To);
+        var result = await application.GetHistory(JobContext.Value.Target, context.From, context.To);
 
         return SafeApiResult(result);
     }

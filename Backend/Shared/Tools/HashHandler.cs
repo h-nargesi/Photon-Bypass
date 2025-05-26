@@ -13,7 +13,7 @@ public static class HashHandler
         return Convert.ToBase64String(SHA512.HashData(Encoding.UTF8.GetBytes(plain_text)));
     }
 
-    public static string GewnerateHashCode(int length)
+    public static string GenerateHashCode(int length = 10)
     {
         var captchaArray = new char[length];
         for (int i = 0; i < length; i++)
@@ -22,5 +22,4 @@ public static class HashHandler
         }
         return new string(captchaArray);
     }
-
 }

@@ -1,25 +1,33 @@
 # Photon Bypass Plan
 
-Selling VPN
+وب سایت تامین کننده و فروش vpn
 
-- Advertisement Pages
-- Profile Pages
-- Background Services
+این وبسایت شامل سه بخش هست:
+- تبلیغات شامل یک صفحه خانه هست که خلاصله‌ای مشخصات از پلن‌ها و مزیت‌های این vpn را نشان می‌دهد.
+- پروفایل کاربران که شامل صفحاتی است که برای تمدید، نمایش خلاصه وضعیت و عیره می‌شود.
+    - بعضی کاربران مدیر هستند که می‌تواند اکانتهای زیر مجموعه خود را ویرایش کنند
+- سرویس‌های پس زمینه که وضعیت سرورها و اکانت‌ها را کنترل می‌کند
+- کاربران فقط می‌توانند به یک سرور متصل شوند
+
+این وبسایت به منظور کنترل اکانتها به دو منبع خارجی متصل می‌شود: سرور ردیوس و روترهای میکروتیک
+اتصال یه سرور ردیوس به منظور همگام سازی وضعیت کاربر در وبسایت و سرور ردیوس است
+
+همینطور این وبسایت قابلیت ارسال ایمیل و ارسال پیام از طریق شبکه‌های اجتماعی نیز هست.
 
 ## Advertisement Pages
 
-We have just home page in this category.
+فقط شامل صفحه نخست می‌باشد.
 
 ### Home
 
 Page Elements:
 
-- Slogan *(panel)*:
+- *(panel)* Slogan:
     - Types of plans with price
         - Traffic without time
     - Return value in the middle of the plan
     - first 3 days is free
-- Start *(Button)* => link to login page
+- *(Button)* Start => link to login page
 
 Design Info:
 
@@ -29,134 +37,149 @@ Design Info:
 
 ## Profile Pages
 
+صفحات پروفایل برای کاربران ساخته‌شده‌اند و به منظور مشاهده وضعیت استفاده و باقیمانده پلن و تمدید پلنها استفاده می‌شود. و شامل بخش‌های زیر می‌باشد:
+- لاگین
+- ثبت نام
+- فراموشی کلمه عبور
+- تعیین کلمه عبور
+- داشبورد
+- تغییر کلمه عبور
+- پاپ آپ افزایش موجودی
+- تاریخچه
+- ویرایش اطلاعات
+- پرسش‌های متداول
+- تمدید
+
 Design Info:
 
 [CoreUI](https://coreui.io/product/free-angular-admin-template/#live-preview)
 
 ### Login
 
-Properties:
+صفحه ورود کاربران
 
-- Human Test *(auto action)* => to prevent robats
+اجزا:
 
-Elements:
+- *(auto action)* Human Test (cloudflare)
+- *(button)* Google Auth => (phease 5)
+- *(link)* ثبتنام => go to register page
+- *(link)* Forget Password => go to forget-password page
+- *(required input)* User Name
+- *(required input)* Password
+- *(button)* Submit
 
-- Human Test *(auto action)* => to prevent robats
-- Google Auth *(button)* => (phease 5)
-- Register *(link)* => go to register page
-- Forget Password *(link)* => go to forget-password page
-- User Name *(required input)*
-- Password *(required input)*
-- Submit *(button)*
-    - Notif admin on invalid password
+عملیات‌های جانبی:
 
-**TODO: Human Test**
+- در صورت تلاش برای ورود با پسورد اشتباه به ادمین پیام ارسال شود
 
 ### Register
 
-Properties:
+برای ثبت‌نام کاربران. بعد از ثبتنام سیستم بطور خودکار کاربر را در سرور ردیوس ثبتنام می‌کند
+پسورد لاگین اکانت در وبسایت با پسورد اتصال به سرورها فرق می‌کند ولی در ابتدا یکی هستند
 
-- Human Test *(auto action)* => to prevent robats
-- This page is not in menu
+مشخصات:
 
-Elements:
+- این صفحه در منو وجود ندارد
 
-- User Name *(required input)*
-- Email *(required input)*
-- Mobile *(input)*
-- First Name *(input)*
-- Last Name *(input)*
-- Password *(required input)*
-- Submit *(button)*
-    - one of `email` or `mobile` are required (phease 4)
-    - send admin notif on submit
+اجزا:
 
-**TODO: send admin notif on submit**\
-**TODO: Human Test**
+- *(auto action)* Human Test (cloudflare)
+- *(required input)* User Name
+- *(required input)* Email
+- *(input)* Mobile
+- *(input)* First Name
+- *(input)* Last Name
+- *(required input)* Password
+- *(button)* Submit
+
+عملیات‌های جانبی:
+
+- ارسال پیام به کاربر در صورت ایجاد کاربر جدید
 
 ### Forgot Password
 
-Properties:
+مشخصات:
 
-- Human Test *(auto action)* => to prevent robats
-- This page is not in menu
+- این صفحه در منو وجود ندارد
 
-Elements:
+اجزا:
 
-- Email/Mobile *(input)*
-- Submit *(button)* => send code
-
-**TODO: Human Test**
+- *(auto action)* Human Test (cloudflare)
+- *(input)* Email/Mobile
+- *(button)* Submit => send code (via email/whatsapp)
 
 ### Reset Password
 
-Properties:
+مشخصات:
 
-- No link to this page
+- این صفحه در منو وجود ندارد و هیچ لینکی از این صفحه برای کاربر وجود ندارد
 
-Elements:
+اجزا:
 
-- HashCode *(hiddent input)* => from query string
-- Password *(required input)*
-- Submit *(button)* => to change password
+- *(hiddent input)* HashCode => from query string
+- *(required input)* Password
+- *(button)* Submit => to change password
 
 ### Dashbord
 
-Elements:
+در صفحه داشبورد کاربر وضعیت اکانت خود را مشاهده می‌کند
 
-- Email Validation *(panel)*
-    - Show if email/mobile are not valid
-    - Validation Code *(input)*
-    - Send/Resend *(button)*
-    - Submit *(button)*
-- Support Panel *(panel)*
-    - Chat Button *(link)* => outer link to WhatsApp page
-    - feedback button (phease 4)
-- Account Info *(panel)*
-    - Cache user data
-    - Edit Account Info *(link)* => Edit page
-    - Change Password *(link)* => Change-Password page
-    - Change OVPN Password *(link)* => Change-Password page
-    - Send Config *(button)*
-        - Check send limit
-        - Renew private key pass
-        - Send
-- Account State *(panel)*
+اجزا:
+
+- *(panel)* Message
+    - Email/mobile are not valid
+        - در همینجا کاربر می‌تواند ایمیل و یا موبایل خود را ولید کند
+        - *(input)* Validation Code
+        - *(button)* Send/Resend
+        - *(button)* Submit
+    - Account is disabled
+        - در صورتی که کاربر به هر علتی غیرفعال باشد اگر قابل فعال شدن مجدد وجود داشته باشد از اینجا می‌توان آنرا فعال کرد
+        - *(button)* Submit
+- *(panel)* Support Panel
+    - *(link)* Chat/feedback Button => outer link to WhatsApp page
+- *(panel)* Account Info
+    - نمایش اطلاعات کاربر
+    - *(link)* Edit Account Info => Edit page
+    - *(link)* Change Password => Change-Password page
+    - *(link)* Change OVPN Password => Change-Password page
+    - *(button)* Send Config
+- *(panel)* Account State
     - Show last connection list and live time
-    - Close User Connection Button => close connection in mikrotik
+    - *(button)* Close User Connection => close connection in mikrotik
     - Acount Balance
-    - Renewal/Change Button => Renewal Page
-- Wallet Balance *(panel)*
+    - *(button)* Renewal/Change => Renewal Page
+- *(panel)* Wallet Balance
     - Usege Chart will not load data on page initialize
     - Current Value
-    - Increament Button => Payment Popup => Payment Page
-- Usege Chart *(panel)*
-    - Reload *(button)* => reload data
-- Logout *(link)* => logout => home page
-
-**TODO: Check send limit**
+    - *(button)* Increament Button => Payment Popup => Payment Page
+- *(panel)* Usege Chart
+    - *(button)* Reload => reload data
+- *(link)* Logout => logout => home page
 
 ### Change Password
 
 in two mode (OpenVpn | Account)
+پسورد لاگین اکانت در وبسایت با پسورد اتصال به سرورها فرق می‌کند ولی در ابتدا یکی هستند و هردو از اینجا تغییر می‌کنند
 
-Elements:
+اجزا:
 
-- Type *(hidden input)* => (OpenVpn | Account)
-- Old Password *(input)*
-- New Password *(input)*
+- *(hidden input)* Type => (OpenVpn | Account)
+- *(input)* Old Password
+- *(input)* New Password
 
 ### Payment Popup
 
-Elements:
+اجزا:
 
-- Increment Value *(readonly)*
-- Payment Way *(select)*
+- *(readonly)* Increment Value
+- *(select)* Payment Way
 - Submit => to bank page
 
 ### History
 
-Log Record Types:
+کاربر تاریخچه اقداماتی که از طرف خود، مدیر کاربر، سیستم روی اکانت انجام شده
+
+انوع اقدامات:
 
 - increase/decrease wallet
 - increase plan
@@ -165,21 +188,17 @@ Log Record Types:
 
 ### Edit Info Page
 
-- Email Validation *(panel)*
+- *(panel)* Email Validation
     - Show if email/mobile are not valid
-    - Validation Code *(input)*
+    - *(input)* Validation Code
     - Send/Resend *(button)*
-    - Submit *(button)*
-- Email *(input)*
-- Mobile *(input)*
+    - *(button)* Submit
+- *(required input)* Email
+- *(input)* Mobile
     - to send information via whatsapp (phease 4)
-- Primary Contact *(select)*
-    - email|whatsapp
-    - (phease 4)
-- First Name *(input)*
-- Last Name *(input)*
+- *(input)* First Name
+- *(input)* Last Name
 - Submit
-    - one of `email` or `mobile` are required (phease 4)
 
 ### FAQ
 
@@ -188,18 +207,19 @@ Log Record Types:
 - Wallet Balance Panel
     - Current Value
     - Increament Button => Payment Popup
-- Users Count *(select)*
-- Monthly *(select)* <= month (enabled: account is disabled | account is monthly)
-- Traffic *(select)* <= x25 (enabled: account is disabled | account is trafficaly)
-- Submit *(button)* =>
-    - On Change to Traffic: Make sure account time is finished
-    - On Change to Monthly: Make sure account traffiic is finished
-    - Change Profile and Data if necessary
-    - Close extra connections
-    - On old account: get empty place
-    - Check Server/User Balance
+- *(select)* Users Count
+- *(select)* Monthly <= month (enabled: account is disabled | account is monthly)
+- *(select)* Traffic <= x25 (enabled: account is disabled | account is trafficaly)
+- *(button)* Submit =>
 
-**TODO: enable -> Monthly/Traffic**
+عملیات جانبی:
+
+- On Change to Traffic: Make sure account time is finished
+- On Change to Monthly: Make sure account traffiic is finished
+- Close extra connections
+- اگر کاربر به مدت یک هفته از پایان پلنش می‌گذرد باید به یه سرور دیگر هدایت شود
+- سیستم باید با توجه به تعداد کاربران یک سرور یک جای خالی تعیین کند
+- Check Server/User Balance
 
 ## Background Services
 
@@ -218,12 +238,15 @@ Log Record Types:
 
 ## Pheases
 
+فاز بندی پروژه
+
 1. Web Site Core
     - Consider Unit Test
     - Cloudflare Human Test
     - Multi Account Panel
         - user-service onTargetChanged event
         - optional target in history
+    - FAQ
 2. MySql Performance
     - Ask ChatGPT
     - Search in Youtube
