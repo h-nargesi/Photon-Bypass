@@ -1,10 +1,9 @@
-﻿using PhotonBypass.Domain.Radius;
+﻿using System.Text.RegularExpressions;
+using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
 using Renci.SshNet;
 using Serilog;
-using System;
-using System.Text.RegularExpressions;
 
 namespace PhotonBypass.OutSource;
 
@@ -57,25 +56,37 @@ public partial class VpnNodeService : IVpnNodeService
         return (server, connections);
     }
 
-    public Task<CertContext> GetCertificate(string server)
+    public async Task<CertContext> GetCertificate(NasEntity server, string username)
     {
-        // /interface/l2tp-server/server> print 
-        // ipsec-secret: 61&ghO!C#Hn8
-        /*
-         
-        /certificate
-        add name=CLIENT-TEMPLATE common-name=CLIENT key-usage=tls-client key-size=4096 days-valid=3650 country="IR" state="TH" locality="Tehran" organization="Photon" unit="VPN"
-        add name=CLIENT1 copy-from=CLIENT-TEMPLATE common-name=CLIENT1
-        sign CLIENT1 ca=LMTCA name=CLIENT1
-        export-certificate CLIENT1 export-passphrase="<ovpn-secret>" file-name="CLIENT1"
+        ArgumentNullException.ThrowIfNull(server, nameof(server));
 
-         */
-        throw new NotImplementedException();
+        using var node = await Connect(server);
+
+        var context = new CertContext();
+
+        var success = node.Execute($"/interface l2tp-server server print", out string result);
+        if (success && !string.IsNullOrEmpty(result))
+        {
+            var match = GetIpsecSecret().Match(result);
+            if (match.Success)
+            {
+                context.PrivateKeyL2TP = match.Groups[1].Value;
+            }
+        }
+
+        // TODO Check if exiss
+        // TODO generate password
+
+        success = node.Execute($"/certificate add name=CLIENT_{username} copy-from=CLIENT-TEMPLATE common-name=CLIENT_{username}", out result);
+        success = node.Execute($"/certificate sign CLIENT_{username} ca=LMTCA name=CLIENT_{username}", out result);
+        success = node.Execute($"/certificate export-certificate CLIENT_{username} export-passphrase=\"<ovpn-secret>\" file-name=CLIENT_{username}", out result);
+
+        return context;
     }
 
     public static async Task<SshClient> Connect(NasEntity server)
     {
-        var node = new SshClient(server.IpAddress, 9009, "admin", server.ShhPassword);
+        var node = new SshClient(server.IpAddress, 9009, "admin", server.SshPassword);
 
         await node.ConnectAsync(CancellationToken.None);
 
@@ -94,6 +105,9 @@ public partial class VpnNodeService : IVpnNodeService
 
     [GeneratedRegex(@"\d+.+caller-id=([\.\d""]+) .+uptime=([\w""]*) .+session-id=([\w""]*)( |$)")]
     private static partial Regex ConnectionParse();
+
+    [GeneratedRegex("ipsec-secret: (.*)")]
+    private static partial Regex GetIpsecSecret();
 }
 
 static class SshExtentions

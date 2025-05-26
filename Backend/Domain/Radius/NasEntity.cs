@@ -16,7 +16,7 @@ public class NasEntity : IBaseEntity
     public string IpAddress { get; set; } = null!;
 
     [Column("server")]
-    public string ShhPassword { get; set; } = null!;
+    public string SshPassword { get; set; } = null!;
 
     [Column("description")]
     public string? DomainName { get; set; }

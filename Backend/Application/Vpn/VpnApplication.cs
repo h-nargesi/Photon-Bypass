@@ -23,6 +23,7 @@ class VpnApplication(
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IRealmRepository> RealmRepo,
     Lazy<IUserPlanStateRepository> PlanStateRepo,
+    Lazy<INasRepository> NasRepo,
     Lazy<IJobContext> JobContext)
     : IVpnApplication
 {
@@ -76,19 +77,27 @@ class VpnApplication(
 
         var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(user.Id);
 
-        var server = await server_task;
+        var server_ip = await server_task;
 
-        if (server == null)
+        if (server_ip == null)
         {
             var realm = await RealmRepo.Value.Fetch(user.RealmId);
-            server = realm?.RestrictedServerIP;
+            server_ip = realm?.RestrictedServerIP;
         }
+
+        NasEntity? server;
+
+        if (server_ip != null)
+        {
+            server = await NasRepo.Value.GetNasInfo(server_ip);
+        }
+        else server = null;
 
         CertContext cert_context;
 
         if (server != null)
         {
-            cert_context = await VpnNodeSrv.Value.GetCertificate(server);
+            cert_context = await VpnNodeSrv.Value.GetCertificate(server, user.Username);
         }
         else
         {

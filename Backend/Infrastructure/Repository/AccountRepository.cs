@@ -1,5 +1,4 @@
 ﻿using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Profile;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 

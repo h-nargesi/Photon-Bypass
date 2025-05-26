@@ -13,5 +13,6 @@ static class ServiceFactory
     static void AddLocalDbContext(this IServiceCollection services)
     {
         services.AddSingleton<IEmailService, EmailService>();
+        services.AddSingleton<IVpnNodeService, VpnNodeService>();
     }
 }

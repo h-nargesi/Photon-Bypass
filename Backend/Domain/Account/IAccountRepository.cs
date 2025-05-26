@@ -1,5 +1,4 @@
-﻿using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Repository;
+﻿using PhotonBypass.Domain.Repository;
 
 namespace PhotonBypass.Domain.Account;
 
