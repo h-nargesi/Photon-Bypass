@@ -7,9 +7,3 @@
 [ ] logo/link in email bodyes
 [ ] human test
 [ ] Check email send limit
-
-## ChatCPT:
-[ ] give missed logs
-[ ] forgoten implimentation
-[ ] give possible error or performance issues 
-[ ] write test project

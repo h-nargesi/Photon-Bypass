@@ -1,24 +1,26 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using PhotonBypass.API.Basical;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Authentication.Model;
 using PhotonBypass.Domain;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Result;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace PhotonBypass.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController(
-    IAuthApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) :
-    ResultHandlerController(job, cache)
+    IAuthApplication application, Lazy<IJobContext> job, Lazy<IAccessService> access) :
+    ResultHandlerController(job, access)
 {
+    Lazy<IAccessService> AccessSrv { get; } = access;
+
     [HttpPost("token")]
     public async Task<ApiResult> Login([FromBody] Context.TokenContext context)
     {
@@ -37,6 +39,8 @@ public class AuthController(
         if (result?.Code < 300 && result.Data != null)
         {
             var token = GenerateToken(result.Data);
+
+            AccessSrv.Value.LoginEvent(result.Data.Username, [.. result.Data.TargetArea.Keys]);
 
             return new ApiResult<object>
             {

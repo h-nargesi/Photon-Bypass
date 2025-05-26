@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.API.Basical;
 using PhotonBypass.API.Context;
 using PhotonBypass.Application.Plan;
 using PhotonBypass.Domain;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
@@ -13,8 +13,8 @@ namespace PhotonBypass.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class PlanController(
-    IPlanApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) :
-    ResultHandlerController(job, cache)
+    IPlanApplication application, Lazy<IJobContext> job, Lazy<IAccessService> access) :
+    ResultHandlerController(job, access)
 {
     private readonly IPlanApplication application = application;
 
@@ -23,7 +23,7 @@ public class PlanController(
     {
         LoadJobContext(target);
 
-        var result = await application.GetPlanState(JobContext.Target);
+        var result = await application.GetPlanState(JobContext.Value.Target);
 
         return SafeApiResult(result);
     }
@@ -33,7 +33,7 @@ public class PlanController(
     {
         LoadJobContext(target);
 
-        var result = await application.GetPlanInfo(JobContext.Target);
+        var result = await application.GetPlanInfo(JobContext.Value.Target);
 
         return SafeApiResult(result);
     }
@@ -67,7 +67,7 @@ public class PlanController(
     public async Task<ApiResult> Rnewal([FromBody] RenewalContext context)
     {
         LoadJobContext(context.Target);
-        context.Target = JobContext.Target;
+        context.Target = JobContext.Value.Target;
 
         if (!context.Type.HasValue)
         {

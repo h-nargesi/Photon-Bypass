@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.API.Basical;
 using PhotonBypass.API.Context;
 using PhotonBypass.Application.Connection;
 using PhotonBypass.Domain;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
@@ -13,15 +13,15 @@ namespace PhotonBypass.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class ConnectionController(
-    IConnectionApplication application, Lazy<IJobContext> job, Lazy<IMemoryCache> cache) :
-    ResultHandlerController(job, cache)
+    IConnectionApplication application, Lazy<IJobContext> job, Lazy<IAccessService> access) :
+    ResultHandlerController(job, access)
 {
     [HttpGet("current-con-state")]
     public async Task<ApiResult> GetCurrentConnectionState([FromQuery] string? target)
     {
         LoadJobContext(target);
 
-        var result = await application.GetCurrentConnectionState(JobContext.Target);
+        var result = await application.GetCurrentConnectionState(JobContext.Value.Target);
 
         return SafeApiResult(result);
     }
@@ -41,7 +41,7 @@ public class ConnectionController(
             return BadRequestApiResult(message: "کد اتصال خالی است!");
         }
 
-        var result = await application.CloseConnection(context.Server, JobContext.Target, context.SessionId);
+        var result = await application.CloseConnection(context.Server, JobContext.Value.Target, context.SessionId);
 
         return SafeApiResult(result);
     }
