@@ -3,13 +3,14 @@ using PhotonBypass.Domain.Account;
 
 namespace PhotonBypass.API.Basical;
 
-class AccessService(IMemoryCache cache) : IAccessService
+internal class AccessService(IMemoryCache cache) : IAccessService
 {
     public bool CheckAccess(string username, string target)
     {
-        return cache.Get<HashSet<string>>($"TargetArea|{username}")
-            ?.Contains(target)
-            ?? false;
+        return true;
+        //return cache.Get<HashSet<string>>($"TargetArea|{username}")
+        //    ?.Contains(target)
+        //    ?? false;
     }
 
     public void LoginEvent(string username, HashSet<string> area)

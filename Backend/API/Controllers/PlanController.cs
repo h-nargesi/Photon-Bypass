@@ -13,7 +13,7 @@ namespace PhotonBypass.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class PlanController(
-    IPlanApplication application, Lazy<IJobContext> job, Lazy<IAccessService> access) :
+    IPlanApplication application, IJobContext job, Lazy<IAccessService> access) :
     ResultHandlerController(job, access)
 {
     private readonly IPlanApplication application = application;
@@ -23,7 +23,7 @@ public class PlanController(
     {
         LoadJobContext(target);
 
-        var result = await application.GetPlanState(JobContext.Value.Target);
+        var result = await application.GetPlanState(JobContext.Target);
 
         return SafeApiResult(result);
     }
@@ -33,7 +33,7 @@ public class PlanController(
     {
         LoadJobContext(target);
 
-        var result = await application.GetPlanInfo(JobContext.Value.Target);
+        var result = await application.GetPlanInfo(JobContext.Target);
 
         return SafeApiResult(result);
     }
@@ -67,7 +67,7 @@ public class PlanController(
     public async Task<ApiResult> Rnewal([FromBody] RenewalContext context)
     {
         LoadJobContext(context.Target);
-        context.Target = JobContext.Value.Target;
+        context.Target = JobContext.Target;
 
         if (!context.Type.HasValue)
         {

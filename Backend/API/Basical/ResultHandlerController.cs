@@ -9,9 +9,9 @@ using Serilog;
 
 namespace PhotonBypass.API.Basical;
 
-public class ResultHandlerController(Lazy<IJobContext> context, Lazy<IAccessService> access) : ControllerBase
+public class ResultHandlerController(IJobContext context, Lazy<IAccessService> access) : ControllerBase
 {
-    protected Lazy<IJobContext> JobContext { get; } = context;
+    protected IJobContext JobContext => context;
 
     protected string Username => User?.Identity?.Name ?? string.Empty;
 
@@ -19,7 +19,7 @@ public class ResultHandlerController(Lazy<IJobContext> context, Lazy<IAccessServ
     {
         Log.Debug("Request.GetDisplayUrl(): {0}", Request.GetDisplayUrl());
 
-        if (JobContext.Value is not JobContext job)
+        if (JobContext is not JobContext job)
         {
             throw new Exception("JobContext not found");
         }

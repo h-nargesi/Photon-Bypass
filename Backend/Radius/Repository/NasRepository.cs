@@ -9,12 +9,12 @@ class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context)
 {
     readonly static string IpAddress = EntityExtensions.GetColumnName<NasEntity>(x => x.IpAddress);
     readonly static string DomainName = EntityExtensions.GetColumnName<NasEntity>(x => x.DomainName);
-    readonly static string ShhPassword = EntityExtensions.GetColumnName<NasEntity>(x => x.ShhPassword);
+    readonly static string SshPassword = EntityExtensions.GetColumnName<NasEntity>(x => x.SshPassword);
 
     public async Task<List<NasEntity>> GetAll()
     {
         var result = await FindAsync(statement => statement
-            .Where($"{ShhPassword} is not null"));
+            .Where($"{SshPassword} is not null"));
 
         return [.. result];
     }
@@ -22,7 +22,7 @@ class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context)
     public async Task<NasEntity?> GetNasInfo(string ip)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{ShhPassword} is not null and {DomainName} is not null and {IpAddress} = @ip")
+            .Where($"{SshPassword} is not null and {DomainName} is not null and {IpAddress} = @ip")
             .WithParameters(new { ip }));
 
         return result.FirstOrDefault();
@@ -31,7 +31,7 @@ class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context)
     public async Task<IDictionary<string, NasEntity>> GetNasInfo(IEnumerable<string> ips)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{ShhPassword} is not null and {IpAddress} in @ips")
+            .Where($"{SshPassword} is not null and {IpAddress} in @ips")
             .WithParameters(new { ips }));
 
         return result.ToDictionary(x => x.IpAddress);

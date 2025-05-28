@@ -14,7 +14,7 @@ namespace PhotonBypass.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class AccountController(
-    IAccountApplication application, Lazy<IJobContext> job, Lazy<IAccessService> access) : 
+    IAccountApplication application, IJobContext job, Lazy<IAccessService> access) : 
     ResultHandlerController(job, access)
 {
     [HttpGet("get-user")]
@@ -32,7 +32,7 @@ public class AccountController(
     {
         LoadJobContext(target);
 
-        var result = await application.GetFullInfo(JobContext.Value.Target);
+        var result = await application.GetFullInfo(JobContext.Target);
 
         return SafeApiResult(result);
     }
@@ -42,7 +42,7 @@ public class AccountController(
     {
         LoadJobContext(target);
 
-        var result = await application.EditUser(JobContext.Value.Target, context);
+        var result = await application.EditUser(JobContext.Target, context);
 
         return SafeApiResult(result);
     }
@@ -72,7 +72,7 @@ public class AccountController(
     {
         LoadJobContext(target);
 
-        var result = await application.GetHistory(JobContext.Value.Target, context.From, context.To);
+        var result = await application.GetHistory(JobContext.Target, context.From, context.To);
 
         return SafeApiResult(result);
     }

@@ -13,7 +13,7 @@ namespace PhotonBypass.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class ConnectionController(
-    IConnectionApplication application, Lazy<IJobContext> job, Lazy<IAccessService> access) :
+    IConnectionApplication application, IJobContext job, Lazy<IAccessService> access) :
     ResultHandlerController(job, access)
 {
     [HttpGet("current-con-state")]
@@ -21,7 +21,7 @@ public class ConnectionController(
     {
         LoadJobContext(target);
 
-        var result = await application.GetCurrentConnectionState(JobContext.Value.Target);
+        var result = await application.GetCurrentConnectionState(JobContext.Target);
 
         return SafeApiResult(result);
     }
@@ -41,7 +41,7 @@ public class ConnectionController(
             return BadRequestApiResult(message: "کد اتصال خالی است!");
         }
 
-        var result = await application.CloseConnection(context.Server, JobContext.Value.Target, context.SessionId);
+        var result = await application.CloseConnection(context.Server, JobContext.Target, context.SessionId);
 
         return SafeApiResult(result);
     }

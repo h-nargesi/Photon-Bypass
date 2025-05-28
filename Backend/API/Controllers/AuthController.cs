@@ -16,7 +16,7 @@ namespace PhotonBypass.API.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController(
-    IAuthApplication application, Lazy<IJobContext> job, Lazy<IAccessService> access) :
+    IAuthApplication application, IJobContext job, Lazy<IAccessService> access) :
     ResultHandlerController(job, access)
 {
     Lazy<IAccessService> AccessSrv { get; } = access;

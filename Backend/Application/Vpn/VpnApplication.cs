@@ -24,7 +24,6 @@ class VpnApplication(
     Lazy<IRealmRepository> RealmRepo,
     Lazy<IUserPlanStateRepository> PlanStateRepo,
     Lazy<INasRepository> NasRepo,
-    Lazy<INasRepository> NasRepo,
     Lazy<IJobContext> JobContext)
     : IVpnApplication
 {
