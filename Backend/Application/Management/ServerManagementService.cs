@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Application.Management;
 
-partial class ServerManagementService(
+public partial class ServerManagementService(
     IRealmRepository RealmRepo,
     Lazy<INasRepository> NasRepo,
     Lazy<ICloudRepository> CloudRepo,
@@ -22,7 +22,10 @@ partial class ServerManagementService(
 
         return servers.Select(x =>
             {
-                int.TryParse(x.Capacity, out var capacity);
+                if (!int.TryParse(x.Capacity, out var capacity))
+                {
+                    capacity = 0;
+                }
 
                 return new
                 {

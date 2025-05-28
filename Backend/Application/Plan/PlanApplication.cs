@@ -10,11 +10,10 @@ using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
-using System.Collections.Generic;
 
 namespace PhotonBypass.Application.Plan;
 
-class PlanApplication(
+public class PlanApplication(
     Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<IUserPlanStateRepository> PlanRepo,
     Lazy<ITopUpRepository> TopUpRepo,

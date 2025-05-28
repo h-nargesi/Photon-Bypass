@@ -12,7 +12,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Application.Vpn;
 
-class VpnApplication(
+public class VpnApplication(
     Lazy<IRadiusService> RadiusSrv,
     Lazy<IEmailService> EmailSrv,
     Lazy<ITrafficDataRepository> TrafficDataRepo,
