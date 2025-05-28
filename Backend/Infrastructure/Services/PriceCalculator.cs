@@ -6,14 +6,9 @@ using System.Reflection;
 
 namespace PhotonBypass.Infra.Services;
 
-class PriceCalculator : IPriceCalculator
+public class PriceCalculator(IPriceRepository repository) : IPriceCalculator
 {
-    private readonly Dictionary<PlanType, MethodInfo> Calculators;
-
-    public PriceCalculator(IPriceRepository repository)
-    {
-        Calculators = FetchCalculatorCode(repository);
-    }
+    private readonly Dictionary<PlanType, MethodInfo> Calculators = FetchCalculatorCode(repository);
 
     public int CalculatePrice(PlanType type, int users, int value)
     {
@@ -68,31 +63,3 @@ class PriceCalculator : IPriceCalculator
         return method;
     }
 }
-
-/*
-using System;
-
-public class Calculator
-{
-    public static int Compute(int users, int traffic)
-    {
-        return 50 + users * 20 + traffic * 80;
-    }
-}
-*/
-
-/*
-using System;
-
-public class Calculator
-{
-    public static int Compute(int users, int count)
-    {
-        var month = 190;
-        if (users >= 2) month += 150;
-        if (users >= 3) month += 120;
-        if (users >= 4) month += 100 * (users - 3);
-        return count * month;
-    }
-}
-*/
