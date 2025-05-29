@@ -4,6 +4,7 @@ using PhotonBypass.Domain.Radius;
 using PhotonBypass.Radius.Repository;
 using PhotonBypass.Radius.Repository.DbContext;
 using PhotonBypass.Radius.WebService;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.Radius;
 
@@ -11,19 +12,19 @@ public static class ServiceFactory
 {
     public static void AddRadiuservices(this IServiceCollection services)
     {
-        services.AddSingleton<RadiusServiceOptions>();
-        services.AddSingleton<RadDapperOptions>();
-        services.AddSingleton<RadDbContext>();
+        services.AddLazySingleton<RadiusServiceOptions>();
+        services.AddLazySingleton<RadDapperOptions>();
+        services.AddLazySingleton<RadDbContext>();
 
-        services.AddTransient<ICloudRepository, CloudRepository>();
-        services.AddTransient<INasRepository, NasRepository>();
-        services.AddTransient<IPermanentUsersRepository, PermanentUsersRepository>();
-        services.AddTransient<IProfileRepository, ProfileRepository>();
-        services.AddTransient<IRadAcctRepository, RadAcctRepository>();
-        services.AddTransient<IRealmRepository, RealmRepository>();
-        services.AddTransient<ITopUpRepository, TopUpRepository>();
+        services.AddLazyTransient<ICloudRepository, CloudRepository>();
+        services.AddLazyTransient<INasRepository, NasRepository>();
+        services.AddLazyTransient<IPermanentUsersRepository, PermanentUsersRepository>();
+        services.AddLazyTransient<IProfileRepository, ProfileRepository>();
+        services.AddLazyTransient<IRadAcctRepository, RadAcctRepository>();
+        services.AddLazyTransient<IRealmRepository, RealmRepository>();
+        services.AddLazyTransient<ITopUpRepository, TopUpRepository>();
 
-        services.AddSingleton<IStaticRepository, StaticRepository>();
-        services.AddSingleton<IRadiusService, RadiusDeskService>();
+        services.AddLazySingleton<IStaticRepository, StaticRepository>();
+        services.AddLazySingleton<IRadiusService, RadiusDeskService>();
     }
 }

@@ -5,6 +5,7 @@ using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Infra.Repository;
 using PhotonBypass.Infra.Repository.DbContext;
 using PhotonBypass.Infra.Services;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.Infra;
 
@@ -12,15 +13,15 @@ public static class ServiceFactory
 {
     public static void AddInfrastructureServices(this IServiceCollection services)
     {
-        services.AddSingleton<LocalDapperOptions>();
-        services.AddSingleton<LocalDbContext>();
+        services.AddLazySingleton<LocalDapperOptions>();
+        services.AddLazySingleton<LocalDbContext>();
 
-        services.AddTransient<IAccountRepository, AccountRepository>();
-        services.AddTransient<IHistoryRepository, HistoryRepository>();
-        services.AddTransient<IResetPassRepository, ResetPassRepository>();
-        services.AddTransient<IPriceRepository, PriceRepository>();
-        services.AddTransient<ITrafficDataRepository, TrafficDataRepository>();
+        services.AddLazyTransient<IAccountRepository, AccountRepository>();
+        services.AddLazyTransient<IHistoryRepository, HistoryRepository>();
+        services.AddLazyTransient<IResetPassRepository, ResetPassRepository>();
+        services.AddLazyTransient<IPriceRepository, PriceRepository>();
+        services.AddLazyTransient<ITrafficDataRepository, TrafficDataRepository>();
 
-        services.AddSingleton<IPriceCalculator, PriceCalculator>();
+        services.AddLazySingleton<IPriceCalculator, PriceCalculator>();
     }
 }

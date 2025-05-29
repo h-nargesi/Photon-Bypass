@@ -3,6 +3,7 @@ using PhotonBypass.API.Basical;
 using PhotonBypass.Application;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.API;
 
@@ -28,8 +29,8 @@ public static class ServiceFactory
         builder.Services.AddAuthorization();
         builder.Services.AddMemoryCache();
 
-        builder.Services.AddScoped<IAccessService, AccessService>();
-        builder.Services.AddScoped<IJobContext, JobContext>();
+        builder.Services.AddLazyScoped<IAccessService, AccessService>();
+        builder.Services.AddLazyScoped<IJobContext, JobContext>();
         builder.Services.AddApplicationServices();
 
         return builder;

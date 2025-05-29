@@ -9,6 +9,7 @@ using PhotonBypass.Application.Vpn;
 using PhotonBypass.Infra;
 using PhotonBypass.OutSource;
 using PhotonBypass.Radius;
+using PhotonBypass.Tools;
 using Quartz;
 using Quartz.Simpl;
 
@@ -22,12 +23,12 @@ public static class ServiceFactory
         services.AddRadiuservices();
         services.AddOutSourceServices();
 
-        services.AddScoped<IAccountApplication, AccountApplication>();
-        services.AddScoped<IAuthApplication, AuthApplication>();
-        services.AddScoped<IBasicsApplication, BasicsApplication>();
-        services.AddScoped<IConnectionApplication, ConnectionApplication>();
-        services.AddScoped<IPlanApplication, PlanApplication>();
-        services.AddScoped<IVpnApplication, VpnApplication>();
+        services.AddLazyScoped<IAccountApplication, AccountApplication>();
+        services.AddLazyScoped<IAuthApplication, AuthApplication>();
+        services.AddLazyScoped<IBasicsApplication, BasicsApplication>();
+        services.AddLazyScoped<IConnectionApplication, ConnectionApplication>();
+        services.AddLazyScoped<IPlanApplication, PlanApplication>();
+        services.AddLazyScoped<IVpnApplication, VpnApplication>();
 
         services.AddQuartz(quartz =>
         {
