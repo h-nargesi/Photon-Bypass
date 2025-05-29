@@ -7,14 +7,9 @@ using PhotonBypass.Radius.WebService;
 
 namespace PhotonBypass.Radius;
 
-static class ServiceFactory
+public static class ServiceFactory
 {
-    static ServiceFactory()
-    {
-        DependencyInjection.OnAddServices += AddServices;
-    }
-
-    static void AddServices(this IServiceCollection services)
+    public static void AddRadiuservices(this IServiceCollection services)
     {
         services.AddSingleton<RadiusServiceOptions>();
         services.AddSingleton<RadDapperOptions>();

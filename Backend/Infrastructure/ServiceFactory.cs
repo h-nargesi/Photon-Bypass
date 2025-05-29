@@ -8,14 +8,9 @@ using PhotonBypass.Infra.Services;
 
 namespace PhotonBypass.Infra;
 
-static class ServiceFactory
+public static class ServiceFactory
 {
-    static ServiceFactory()
-    {
-        DependencyInjection.OnAddServices += AddLocalDbContext;
-    }
-
-    static void AddLocalDbContext(this IServiceCollection services)
+    public static void AddInfrastructureServices(this IServiceCollection services)
     {
         services.AddSingleton<LocalDapperOptions>();
         services.AddSingleton<LocalDbContext>();

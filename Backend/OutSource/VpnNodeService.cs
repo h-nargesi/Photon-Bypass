@@ -6,11 +6,10 @@ using PhotonBypass.Tools;
 using Renci.SshNet;
 using Serilog;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace PhotonBypass.OutSource;
 
-public partial class VpnNodeService : IVpnNodeService
+partial class VpnNodeService : IVpnNodeService
 {
     public async Task<bool> CloseConnection(NasEntity server, string sessionId)
     {
@@ -30,12 +29,7 @@ public partial class VpnNodeService : IVpnNodeService
         return success && string.IsNullOrEmpty(result);
     }
 
-    public Task<bool> CloseConnections(IEnumerable<NasEntity> servers, string username, int count)
-    {
-        return CloseAllConnections(servers, username);
-    }
-
-    public async Task<bool> CloseAllConnections(IEnumerable<NasEntity> servers, string username)
+    public async Task<bool> CloseConnections(IEnumerable<NasEntity> servers, string username, int count)
     {
         if (servers == null || !servers.Any() || string.IsNullOrWhiteSpace(username)) return false;
 
@@ -170,9 +164,6 @@ public partial class VpnNodeService : IVpnNodeService
 
     [GeneratedRegex(@"\d+.+caller-id=([\.\d""]+) .+uptime=([\w""]*) .+session-id=([\w""]*)( |$)")]
     private static partial Regex ConnectionParse();
-
-    [GeneratedRegex("ipsec-secret: (.*)")]
-    private static partial Regex GetIpsecSecret();
 }
 
 static class SshExtentions

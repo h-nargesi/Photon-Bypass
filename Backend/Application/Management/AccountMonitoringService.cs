@@ -10,7 +10,7 @@ using PhotonBypass.Domain.Radius;
 
 namespace PhotonBypass.Application.Management;
 
-public class AccountMonitoringService(
+class AccountMonitoringService(
     IUserPlanStateRepository PlanStateRepo,
     IPermanentUsersRepository UserRepo,
     IAccountRepository AccountRepo,

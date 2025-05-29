@@ -2,7 +2,7 @@
 
 namespace PhotonBypass.API.Basical;
 
-public class JobContext : IJobContext
+class JobContext : IJobContext
 {
     public string Username { get; set; } = null!;
 

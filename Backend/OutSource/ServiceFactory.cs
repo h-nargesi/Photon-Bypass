@@ -3,14 +3,9 @@ using PhotonBypass.Domain.Services;
 
 namespace PhotonBypass.OutSource;
 
-static class ServiceFactory
+public static class ServiceFactory
 {
-    static ServiceFactory()
-    {
-        DependencyInjection.OnAddServices += AddLocalDbContext;
-    }
-
-    static void AddLocalDbContext(this IServiceCollection services)
+    public static void AddOutSourceServices(this IServiceCollection services)
     {
         services.AddSingleton<IEmailService, EmailService>();
         services.AddSingleton<IVpnNodeService, VpnNodeService>();

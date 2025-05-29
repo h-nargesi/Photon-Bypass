@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Application.Authentication;
 
-public partial class AuthApplication(
+partial class AuthApplication(
     IAccountRepository AccountRepo,
     Lazy<IResetPassRepository> ResetPassRepo,
     Lazy<IPermanentUsersRepository> UserRepo,

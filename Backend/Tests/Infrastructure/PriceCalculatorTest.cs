@@ -1,34 +1,36 @@
 ﻿using Moq;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Static;
-using PhotonBypass.Infra.Services;
 
 namespace PhotonBypass.Test.Infrastructure;
 
-public class PriceCalculatorTest
+public class PriceCalculatorTest : ServiceInitializer
 {
-    readonly Mock<IPriceRepository> _priceRepository;
-    readonly PriceCalculator _calculator;
-
     public PriceCalculatorTest()
     {
-        _priceRepository = new Mock<IPriceRepository>();
-        _priceRepository.Setup(x => x.GetLeatest())
+        var builder = Initialize();
+
+        var priceRepository = new Mock<IPriceRepository>();
+        priceRepository.Setup(x => x.GetLeatest())
             .Returns(Task.FromResult(Data));
-        _calculator = new PriceCalculator(_priceRepository.Object);
+        builder.Services.AddSingleton(priceRepository.Object);
+
+        Build(builder);
     }
 
     [Fact]
     public void CalculatePrice_ShouldCompileAndCalculate_Traffic_5_100()
     {
-        var result = _calculator.CalculatePrice(PlanType.Traffic, 5, 100 / 25);
+        var calculator = CreateScope().GetRequiredService<IPriceCalculator>();
+        var result = calculator.CalculatePrice(PlanType.Traffic, 5, 100 / 25);
         Assert.Equal(310, result);
     }
 
     [Fact]
     public void CalculatePrice_ShouldCompileAndCalculate_Monthly_5_3()
     {
-        var result = _calculator.CalculatePrice(PlanType.Monthly, 5, 3);
+        var calculator = CreateScope().GetRequiredService<IPriceCalculator>();
+        var result = calculator.CalculatePrice(PlanType.Monthly, 5, 3);
         Assert.Equal(1980, result);
     }
 

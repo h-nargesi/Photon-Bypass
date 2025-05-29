@@ -13,7 +13,7 @@ using Serilog;
 
 namespace PhotonBypass.Application.Plan;
 
-public class PlanApplication(
+class PlanApplication(
     Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<IUserPlanStateRepository> PlanRepo,
     Lazy<ITopUpRepository> TopUpRepo,

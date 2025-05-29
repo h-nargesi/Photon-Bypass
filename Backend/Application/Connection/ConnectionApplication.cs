@@ -10,7 +10,7 @@ using Serilog;
 
 namespace PhotonBypass.Application.Connection;
 
-public class ConnectionApplication(
+class ConnectionApplication(
     IVpnNodeService VpnNodeSrv,
     INasRepository NasRepo,
     Lazy<IRadAcctRepository> RadAcctRepo,

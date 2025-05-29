@@ -6,6 +6,9 @@ using PhotonBypass.Application.Connection;
 using PhotonBypass.Application.Management;
 using PhotonBypass.Application.Plan;
 using PhotonBypass.Application.Vpn;
+using PhotonBypass.Infra;
+using PhotonBypass.OutSource;
+using PhotonBypass.Radius;
 using Quartz;
 using Quartz.Simpl;
 
@@ -15,6 +18,10 @@ public static class ServiceFactory
 {
     public static void AddApplicationServices(this IServiceCollection services)
     {
+        services.AddInfrastructureServices();
+        services.AddRadiuservices();
+        services.AddOutSourceServices();
+
         services.AddScoped<IAccountApplication, AccountApplication>();
         services.AddScoped<IAuthApplication, AuthApplication>();
         services.AddScoped<IBasicsApplication, BasicsApplication>();

@@ -10,7 +10,5 @@ public interface IVpnNodeService
 
     Task<bool> CloseConnections(IEnumerable<NasEntity> servers, string username, int count);
 
-    Task<bool> CloseAllConnections(IEnumerable<NasEntity> servers, string username);
-
     Task GetCertificate(NasEntity server, string username, CertContext default_context);
 }

@@ -10,7 +10,7 @@ using Serilog;
 
 namespace PhotonBypass.Application.Account;
 
-public class AccountApplication(
+class AccountApplication(
     Lazy<IAccountRepository> AccountRepo,
     Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<IHistoryRepository> HistoryRepo,

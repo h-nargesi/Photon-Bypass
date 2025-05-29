@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Application.Management;
 
-public partial class ServerManagementService(
+partial class ServerManagementService(
     IRealmRepository RealmRepo,
     Lazy<INasRepository> NasRepo,
     Lazy<ICloudRepository> CloudRepo,

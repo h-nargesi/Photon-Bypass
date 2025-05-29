@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace PhotonBypass.Infra.Services;
 
-public class PriceCalculator(IPriceRepository repository) : IPriceCalculator
+class PriceCalculator(IPriceRepository repository) : IPriceCalculator
 {
     private readonly Dictionary<PlanType, MethodInfo> Calculators = FetchCalculatorCode(repository);
 
