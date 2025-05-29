@@ -205,7 +205,7 @@ class VpnApplication(
     {
         data = data.OrderBy(x => x.Day);
 
-        var labels = data.Select(x => x.Day.ToPersianString("dd"))
+        var labels = data.Select(x => x.Day.ToPersianDayOfMonth())
             .ToArray();
 
         var upload = new List<int>();

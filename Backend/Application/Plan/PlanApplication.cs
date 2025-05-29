@@ -10,6 +10,7 @@ using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
+using System.Collections.Generic;
 
 namespace PhotonBypass.Application.Plan;
 
@@ -249,7 +250,7 @@ class PlanApplication(
         switch (type)
         {
             case PlanType.Monthly:
-                value = DateTime.Now.MonthToDays(value);
+                value = DateTime.Now.AddMonthToDays(value);
                 break;
             case PlanType.Traffic:
                 value *= 25;
