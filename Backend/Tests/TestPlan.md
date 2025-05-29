@@ -4,7 +4,7 @@
 
 - Shared
 	[+] EntityExtensions: GetColumn, GetTable
-	[ ] ExceptionHandlingMiddleware: Invoke
+	[+] ExceptionHandlingMiddleware: Invoke
 	[+] JsonConverter: UnixTimestampConverter, StringNumberConverter
 	[+] PersianHandlerTest: ToPersianString, MonthToDays
 - Infrastructure

@@ -9,6 +9,8 @@ namespace PhotonBypass.ErrorHandler;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
 {
+    public const string ERROR_MESSAGE = "خطای غیرمنتظره‌ای رخ داده است!";
+
     public async Task Invoke(HttpContext context)
     {
         try
@@ -49,7 +51,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
             result = new ApiResult
             {
                 Code = 400,
-                Message = uex.UserMessage,
+                Message = uex.UserMessage ?? ERROR_MESSAGE,
             };
         }
         else
@@ -57,7 +59,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
             result = new ApiResult
             {
                 Code = 500,
-                Message = "خطای غیرمنتظره‌ای رخ داده است!",
+                Message = ERROR_MESSAGE,
             };
         }
 
