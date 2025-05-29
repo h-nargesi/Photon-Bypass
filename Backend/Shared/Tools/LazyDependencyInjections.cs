@@ -12,6 +12,13 @@ public static class LazyDependencyInjections
         services.AddScoped(provider => new Lazy<TService>(() => provider.GetRequiredService<TService>()));
     }
 
+    public static void AddLazyScoped<TService>(this IServiceCollection services, Func<IServiceProvider, TService> provider)
+        where TService : class
+    {
+        services.AddScoped(provider);
+        services.AddScoped(provider => new Lazy<TService>(() => provider.GetRequiredService<TService>()));
+    }
+
     public static void AddLazyTransient<TService, TImplementation>(this IServiceCollection services)
         where TService : class
         where TImplementation : class, TService

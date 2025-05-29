@@ -29,6 +29,7 @@ public class ServiceInitializer : IDisposable
     public void Dispose()
     {
         host?.Dispose();
-        scope?.Dispose();
+        scope?.Dispose(); 
+        GC.SuppressFinalize(this);
     }
 }
