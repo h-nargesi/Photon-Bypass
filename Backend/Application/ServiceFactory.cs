@@ -6,6 +6,7 @@ using PhotonBypass.Application.Connection;
 using PhotonBypass.Application.Management;
 using PhotonBypass.Application.Plan;
 using PhotonBypass.Application.Vpn;
+using PhotonBypass.Domain.Management;
 using PhotonBypass.Infra;
 using PhotonBypass.OutSource;
 using PhotonBypass.Radius;
@@ -29,6 +30,8 @@ public static class ServiceFactory
         services.AddLazyScoped<IConnectionApplication, ConnectionApplication>();
         services.AddLazyScoped<IPlanApplication, PlanApplication>();
         services.AddLazyScoped<IVpnApplication, VpnApplication>();
+        services.AddLazyScoped<IServerManagementService, ServerManagementService>();
+        services.AddLazyScoped<IAccountMonitoringService, AccountMonitoringService>();
 
         services.AddQuartz(quartz =>
         {

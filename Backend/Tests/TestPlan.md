@@ -10,9 +10,9 @@
 - Infrastructure
 	[+] PriceCalculator: Compile
 - Application
-	[ ] ConnectionApplication: GetCurrentConnectionState 'Merge Connections'
-	[ ] PlanApplication: GetPlanState 'Calculate Ramining', Renewal
-	[ ] VpnApplication: TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
+	[+] ConnectionApplication: GetCurrentConnectionState 'Merge Connections'
+	[+] PlanApplication: GetPlanState 'Calculate Ramining', Renewal
+	[+] VpnApplication: TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 	[ ] AccountMonitoringService: DeactiveAbandonedUsers, NotifSendServices
 	[ ] ServerManagementService: GetAvalableRealm, GetDefaultCertificate, CheckUserServerBalance
 
@@ -37,7 +37,6 @@
 - IAccountApplication: GetUser, GetFullInfo, EditUser, ChangePassword, GetHistory
 - IAuthApplication: CheckUserPassword, ResetPassword, Register, CopyFromPermanentUser
 - IBasicsApplication: GetPrices
-- IConnectionApplication: GetCurrentConnectionState, CloseConnection
 - IPlanApplication: GetPlanState, GetPlanInfo, Estimate, Renewal
 - IVpnApplication: ChangeOvpnPassword, SendCertEmail, TrafficData
 - AccountMonitoringService: DeactiveAbandonedUsers, NotifSendServices

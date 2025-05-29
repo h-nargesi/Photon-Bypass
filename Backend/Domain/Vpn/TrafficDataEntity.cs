@@ -11,11 +11,13 @@ public class TrafficDataEntity : IBaseEntity
 
     public int AccountId { get; set; }
 
-    public DateTime Day {  get; set; }
+    public DateTime Day { get; set; }
 
     public long DataIn { get; set; }
 
     public long DataOut { get; set; }
 
     public long TotalData => DataIn + DataOut;
+
+    public static TrafficDataEntity Empty { get; } = new TrafficDataEntity();
 }

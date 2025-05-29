@@ -23,6 +23,7 @@ public static class ServiceFactory
         services.AddLazyTransient<IRadAcctRepository, RadAcctRepository>();
         services.AddLazyTransient<IRealmRepository, RealmRepository>();
         services.AddLazyTransient<ITopUpRepository, TopUpRepository>();
+        services.AddLazyTransient<IUserPlanStateRepository, UserPlanStateRepository>();
 
         services.AddLazySingleton<IStaticRepository, StaticRepository>();
         services.AddLazySingleton<IRadiusService, RadiusDeskService>();

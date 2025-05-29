@@ -161,13 +161,11 @@ class VpnApplication(
 
     private static DateTime? FindFirstEmptyDate(IEnumerable<TrafficDataEntity> data, DateTime from)
     {
-        foreach (var record in data)
-        {
-            if (record.Day != from) return from;
-            from = from.AddDays(1);
-        }
-
-        return null;
+        return data.OrderByDescending(x => x.Day)
+            .Where(x => x.Day >= from)
+            .Select(x => (DateTime?)x.Day)
+            .FirstOrDefault()?
+            .Date.AddDays(1);
     }
 
     private static List<TrafficDataEntity> Merge(ref IList<TrafficDataEntity> destination, IEnumerable<TrafficDataRadius> source, DateTime minDateTime)
@@ -182,7 +180,16 @@ class VpnApplication(
                 continue;
             }
 
-            if (!destination_dict.ContainsKey(record.Day))
+            if (destination_dict.TryGetValue(record.Day, out var data))
+            {
+                if (data.DataIn != record.DataIn || data.DataOut != record.DataOut)
+                {
+                    data.DataOut = record.DataOut;
+                    data.DataIn = record.DataIn;
+                    new_data.Add(data);
+                }
+            }
+            else
             {
                 var traffic = new TrafficDataEntity
                 {
@@ -203,17 +210,27 @@ class VpnApplication(
 
     private static TrafficDataModel ConvertToModel(IEnumerable<TrafficDataEntity> data)
     {
-        data = data.OrderBy(x => x.Day);
+        var dictData = data.ToDictionary(x => x.Day.Date);
 
-        var labels = data.Select(x => x.Day.ToPersianDayOfMonth())
+        var now = DateTime.Now.Date;
+        var alldays = new string[MAX_DATE_BEFORE]
+            .Select((_, i) => now.AddDays(-i))
+            .ToList();
+
+        var labels = alldays.Select(x => x.ToPersianDayOfMonth())
             .ToArray();
 
         var upload = new List<int>();
         var download = new List<int>();
         var total = new List<int>();
 
-        foreach (var record in data)
+        foreach (var day in alldays)
         {
+            if (!dictData.TryGetValue(day, out var record))
+            {
+                record = TrafficDataEntity.Empty;
+            }
+
             var D = (int)(record.DataIn / BYTES_IN_MEGABYTES);
             var U = (int)(record.DataOut / BYTES_IN_MEGABYTES);
 
