@@ -22,19 +22,18 @@ partial class ServerManagementService(
 
         return servers.Select(x =>
             {
-                if (!int.TryParse(x.Capacity, out var capacity))
+                if (!float.TryParse(x.Capacity, out var capacity) || capacity < 1)
                 {
-                    capacity = 0;
+                    capacity = 1;
                 }
 
                 return new
                 {
                     Realm = x,
-                    Capacity = capacity
+                    Sorting = x.UsersCount / capacity
                 };
             })
-            .OrderBy(s => s.Realm.UsersCount)
-            .ThenByDescending(x => x.Capacity)
+            .OrderBy(s => s.Sorting)
             .First()
             .Realm;
     }
@@ -92,15 +91,15 @@ partial class ServerManagementService(
                 continue;
             }
 
-            var percent = 100 * capacity / server.UsersCount;
+            var percent = 100 * server.UsersCount / capacity;
 
             if (percent < 10)
             {
-                alarms.Add($"Unused Server: {server.RestrictedServerIP} ({percent}% from {server.UsersCount})");
+                alarms.Add($"Unused Server: {server.RestrictedServerIP} ({percent:N2}% from {capacity})");
             }
             else if (percent > 90)
             {
-                alarms.Add($"Low Capacity: {server.RestrictedServerIP} ({percent}% from {server.UsersCount})");
+                alarms.Add($"Low Capacity: {server.RestrictedServerIP} ({percent:N2}% from {capacity})");
             }
         }
 

@@ -14,7 +14,7 @@
 	[+] PlanApplication: GetPlanState 'Calculate Ramining', Renewal
 	[+] VpnApplication: TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 	[+] AccountMonitoringService: DeactiveAbandonedUsers, NotifSendServices
-	[ ] ServerManagementService: GetAvalableRealm, GetDefaultCertificate, CheckUserServerBalance
+	[+] ServerManagementService: GetAvalableRealm, CheckUserServerBalance
 
 ## Level 2 - Queries
 

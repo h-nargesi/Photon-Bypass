@@ -1,5 +1,4 @@
-﻿using FluentAssertions;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Moq;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
