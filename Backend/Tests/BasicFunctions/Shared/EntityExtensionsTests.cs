@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Test.Shared;
+namespace PhotonBypass.Test.BasicFunctions.Shared;
 
 public class EntityExtensionsTests
 {

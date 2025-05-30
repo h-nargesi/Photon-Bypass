@@ -6,9 +6,9 @@ using PhotonBypass.Domain.Services;
 using PhotonBypass.Tools;
 using System.Text.RegularExpressions;
 
-namespace PhotonBypass.Test.Application;
+namespace PhotonBypass.Test.BasicFunctions.Application;
 
-public class ServerManagementServiceBasicalFunctionTest : ServiceInitializer
+public class ServerManagementServiceTest : ServiceInitializer
 {
     public new static HostApplicationBuilder Initialize()
     {

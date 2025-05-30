@@ -2,7 +2,7 @@
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Static;
 
-namespace PhotonBypass.Test.Infrastructure;
+namespace PhotonBypass.Test.BasicFunctions.Infrastructure;
 
 public class PriceCalculatorTest : ServiceInitializer
 {

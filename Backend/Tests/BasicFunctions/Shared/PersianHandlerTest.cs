@@ -1,6 +1,6 @@
 ﻿using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.Shared;
+namespace PhotonBypass.Test.BasicFunctions.Shared;
 
 public class PersianHandlerTest
 {

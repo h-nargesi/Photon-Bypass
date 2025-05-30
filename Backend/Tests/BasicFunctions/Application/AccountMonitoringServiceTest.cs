@@ -7,9 +7,9 @@ using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.Application;
+namespace PhotonBypass.Test.BasicFunctions.Application;
 
-public class AccountMonitoringServiceBasicFunctionTest : ServiceInitializer
+public class AccountMonitoringServiceTest : ServiceInitializer
 {
     public new static HostApplicationBuilder Initialize()
     {

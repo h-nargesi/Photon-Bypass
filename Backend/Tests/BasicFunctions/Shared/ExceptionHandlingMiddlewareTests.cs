@@ -7,7 +7,7 @@ using PhotonBypass.Result;
 using System.Net.Mime;
 using System.Text.Json;
 
-namespace PhotonBypass.Test.Shared;
+namespace PhotonBypass.Test.BasicFunctions.Shared;
 
 public class ExceptionHandlingMiddlewareTests
 {

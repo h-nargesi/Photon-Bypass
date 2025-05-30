@@ -6,7 +6,7 @@ using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.Application;
+namespace PhotonBypass.Test.BasicFunctions.Application;
 
 public class ConnectionApplicationTest : ServiceInitializer
 {

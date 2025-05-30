@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace PhotonBypass.Test.Shared;
+namespace PhotonBypass.Test.BasicFunctions.Shared;
 
 public class JsonConverterTests
 {
