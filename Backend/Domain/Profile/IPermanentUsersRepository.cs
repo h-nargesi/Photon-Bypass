@@ -8,5 +8,5 @@ public interface IPermanentUsersRepository
 
     Task<bool> CheckUsername(string username);
 
-    Task<IDictionary<int, (string Phone, string Email)>> GetUsersContactInfo(IEnumerable<int> userids);
+    Task<IDictionary<int, (string? Phone, string? Email)>> GetUsersContactInfo(IEnumerable<int> userids);
 }

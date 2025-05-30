@@ -153,6 +153,7 @@ class AccountMonitoringService(
 
             var remainsTitle = plan.GetRemainsTitle();
 
+#if SOCIAL
             if (contact.Phone != null)
             {
                 tasks.Add(SocialSrv.FinishServiceAlert(plan.Username, contact.Phone, plan.PlanType, remainsTitle));
@@ -163,7 +164,8 @@ class AccountMonitoringService(
                 }
 
                 continue;
-            }
+        }
+#endif
 
             if (contact.Email != null)
             {

@@ -37,9 +37,9 @@ class PermanentUsersRepository(RadDbContext context) : DapperRepository<Permanen
         return result.Any();
     }
 
-    public async Task<IDictionary<int, (string, string)>> GetUsersContactInfo(IEnumerable<int> userids)
+    public async Task<IDictionary<int, (string?, string?)>> GetUsersContactInfo(IEnumerable<int> userids)
     {
-        var result = new Dictionary<int, (string, string)>();
+        var result = new Dictionary<int, (string?, string?)>();
 
         if (userids?.Any() != true) return result;
 
