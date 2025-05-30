@@ -20,7 +20,6 @@ partial class AuthApplication(
     Lazy<IStaticRepository> StaticRepo,
     Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IRadiusService> RadiusSrv,
-    //Lazy<IWhatsAppHandler> whatsapp_handler,
     Lazy<IEmailService> EmailSrv,
     Lazy<ISocialMediaService> SocialMediaSrv,
     Lazy<IHistoryRepository> HistoryRepo)
@@ -86,33 +85,35 @@ partial class AuthApplication(
 
         if (MobileValidator().IsMatch(email_mobile))
         {
+#if !SOCIAL
             return new ApiResult
             {
                 Code = 100,
                 Message = "موبایل هنوز پشتیبانی نشده است!"
             };
+#else
+            var account = await AccountRepo.GetAccountByMobile(email_mobile);
 
-            //var account = await account_repository.GetAccountByMobile(email_mobile);
+            if (account != null)
+            {
+                var hash_code = HashHandler.GenerateHashCode(56);
 
-            //if (account != null)
-            //{
-            //    var hash_code = HashHandler.GewnerateHashCode(56);
+                await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
+                {
+                    AccountId = account.Id,
+                    ExpireDate = DateTime.Now.AddDays(1),
+                    HashCode = hash_code,
+                });
 
-            //    await reset_pass_repository.AddHashCode(new ResetPassEntity
-            //    {
-            //        AccountId = account.Id,
-            //        ExpireDate = DateTime.Now.AddDays(1),
-            //        HashCode = hash_code,
-            //    });
+                await SocialMediaSrv.Value.SendResetPasswordLink(email_mobile, hash_code);
 
-            //    await whatsapp_handler.SendResetPasswordLink(email_mobile, hash_code);
+                // TODO: History record
 
-            // TODO: History record
+                Log.Verbose("Reset-Password message has been sent: {0}", email_mobile);
+            }
 
-            //   Log.Verbose("Reset-Password message has been sent: {0}", email_mobile);
-            //}
-
-            //return ApiResult.Success("پیام به واتساپ ارسال شد.");
+            return ApiResult.Success("پیام به واتساپ ارسال شد.");
+#endif
         }
         else if (EmailValidator().IsMatch(email_mobile))
         {

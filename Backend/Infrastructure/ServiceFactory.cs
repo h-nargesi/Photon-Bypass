@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Hosting;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.Domain.Vpn;
@@ -11,17 +11,17 @@ namespace PhotonBypass.Infra;
 
 public static class ServiceFactory
 {
-    public static void AddInfrastructureServices(this IServiceCollection services)
+    public static void AddInfrastructureServices<Builder>(this Builder builder) where Builder : IHostApplicationBuilder
     {
-        services.AddLazySingleton<LocalDapperOptions>();
-        services.AddLazySingleton<LocalDbContext>();
+        builder.Services.BindValidateReturn<LocalDapperOptions>(builder.Configuration);
+        builder.Services.AddLazySingleton<LocalDbContext>();
 
-        services.AddLazyTransient<IAccountRepository, AccountRepository>();
-        services.AddLazyTransient<IHistoryRepository, HistoryRepository>();
-        services.AddLazyTransient<IResetPassRepository, ResetPassRepository>();
-        services.AddLazyTransient<IPriceRepository, PriceRepository>();
-        services.AddLazyTransient<ITrafficDataRepository, TrafficDataRepository>();
+        builder.Services.AddLazyTransient<IAccountRepository, AccountRepository>();
+        builder.Services.AddLazyTransient<IHistoryRepository, HistoryRepository>();
+        builder.Services.AddLazyTransient<IResetPassRepository, ResetPassRepository>();
+        builder.Services.AddLazyTransient<IPriceRepository, PriceRepository>();
+        builder.Services.AddLazyTransient<ITrafficDataRepository, TrafficDataRepository>();
 
-        services.AddLazySingleton<IPriceCalculator, PriceCalculator>();
+        builder.Services.AddLazySingleton<IPriceCalculator, PriceCalculator>();
     }
 }

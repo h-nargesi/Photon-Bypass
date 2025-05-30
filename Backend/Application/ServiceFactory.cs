@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Hosting;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Basics;
@@ -18,22 +18,24 @@ namespace PhotonBypass.Application;
 
 public static class ServiceFactory
 {
-    public static void AddApplicationServices(this IServiceCollection services)
+    public static void AddApplicationServices<Builder>(this Builder builder) where Builder : IHostApplicationBuilder
     {
-        services.AddInfrastructureServices();
-        services.AddRadiuservices();
-        services.AddOutSourceServices();
+        builder.AddInfrastructureServices();
+        builder.AddRadiuServices();
+        builder.AddOutSourceServices();
 
-        services.AddLazyScoped<IAccountApplication, AccountApplication>();
-        services.AddLazyScoped<IAuthApplication, AuthApplication>();
-        services.AddLazyScoped<IBasicsApplication, BasicsApplication>();
-        services.AddLazyScoped<IConnectionApplication, ConnectionApplication>();
-        services.AddLazyScoped<IPlanApplication, PlanApplication>();
-        services.AddLazyScoped<IVpnApplication, VpnApplication>();
-        services.AddLazyScoped<IServerManagementService, ServerManagementService>();
-        services.AddLazyScoped<IAccountMonitoringService, AccountMonitoringService>();
+        builder.Services.BindValidateReturn<ManagementOptions>(builder.Configuration);
 
-        services.AddQuartz(quartz =>
+        builder.Services.AddLazyScoped<IAccountApplication, AccountApplication>();
+        builder.Services.AddLazyScoped<IAuthApplication, AuthApplication>();
+        builder.Services.AddLazyScoped<IBasicsApplication, BasicsApplication>();
+        builder.Services.AddLazyScoped<IConnectionApplication, ConnectionApplication>();
+        builder.Services.AddLazyScoped<IPlanApplication, PlanApplication>();
+        builder.Services.AddLazyScoped<IVpnApplication, VpnApplication>();
+        builder.Services.AddLazyScoped<IServerManagementService, ServerManagementService>();
+        builder.Services.AddLazyScoped<IAccountMonitoringService, AccountMonitoringService>();
+
+        builder.Services.AddQuartz(quartz =>
         {
             quartz.UseJobFactory<MicrosoftDependencyInjectionJobFactory>();
 
@@ -50,6 +52,6 @@ public static class ServiceFactory
             );
         });
 
-        services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+        builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
     }
 }

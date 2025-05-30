@@ -13,7 +13,7 @@
 	[+] ConnectionApplication: GetCurrentConnectionState 'Merge Connections'
 	[+] PlanApplication: GetPlanState 'Calculate Ramining', Renewal
 	[+] VpnApplication: TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
-	[ ] AccountMonitoringService: DeactiveAbandonedUsers, NotifSendServices
+	[+] AccountMonitoringService: DeactiveAbandonedUsers, NotifSendServices
 	[ ] ServerManagementService: GetAvalableRealm, GetDefaultCertificate, CheckUserServerBalance
 
 ## Level 2 - Queries

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace PhotonBypass.Tools;
 
@@ -40,5 +41,18 @@ public static class LazyDependencyInjections
     {
         services.AddSingleton<TService>();
         services.AddSingleton(provider => new Lazy<TService>(() => provider.GetRequiredService<TService>()));
+    }
+
+    public static void BindValidateReturn<TOptions>(this IServiceCollection services, IConfiguration configuration) where TOptions : class
+    {
+        services.AddOptions<TOptions>()
+            .BindConfiguration(typeof(TOptions).Name)
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+    }
+
+    public static TOptions LoadOptions<TOptions>(this IConfiguration configuration, string key)
+    {
+        return configuration.GetSection(key).Get<TOptions>() ?? throw new Exception($"Key option not found: {key}");
     }
 }

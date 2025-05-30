@@ -13,7 +13,7 @@ partial class ServerManagementService(
     Lazy<INasRepository> NasRepo,
     Lazy<ICloudRepository> CloudRepo,
     Lazy<ISocialMediaService> SocialSrv,
-    Lazy<IOptions<ManagementOptions>> Options)
+    IOptions<ManagementOptions> Options)
     : IServerManagementService
 {
     public async Task<RealmEntity> GetAvalableRealm(int cloud_id)
@@ -41,10 +41,10 @@ partial class ServerManagementService(
 
     public async Task<CertContext> GetDefaultCertificate(int realmid)
     {
-        var cxert_path = Options.Value.Value.DefaultCertPath ??
+        var cxert_path = Options.Value.DefaultCertPath ??
             throw new Exception("Default cert-path is not set in config!");
 
-        if (Options.Value.Value.DefaultPrivateKeyOvpn == null)
+        if (Options.Value.DefaultPrivateKeyOvpn == null)
             throw new Exception("Ovpn Private key is not set in config!");
 
         var realm_task = RealmRepo.Fetch(realmid);
@@ -73,7 +73,7 @@ partial class ServerManagementService(
         return new CertContext
         {
             Server = nas.DomainName,
-            PrivateKeyOvpn = Options.Value.Value.DefaultPrivateKeyOvpn,
+            PrivateKeyOvpn = Options.Value.DefaultPrivateKeyOvpn,
             CertFile = cert_file,
         };
     }

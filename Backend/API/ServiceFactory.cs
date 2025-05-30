@@ -31,7 +31,7 @@ public static class ServiceFactory
 
         builder.Services.AddLazyScoped<IAccessService, AccessService>();
         builder.Services.AddLazyScoped<IJobContext, JobContext>();
-        builder.Services.AddApplicationServices();
+        builder.AddApplicationServices();
 
         return builder;
     }
