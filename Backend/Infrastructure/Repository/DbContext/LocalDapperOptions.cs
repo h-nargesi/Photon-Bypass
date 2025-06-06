@@ -2,7 +2,7 @@
 
 namespace PhotonBypass.Infra.Repository.DbContext;
 
-class LocalDapperOptions : IDapperOptions
+class LocalDapperOptions
 {
     public string ConnectionString { get; set; } = null!;
 }
