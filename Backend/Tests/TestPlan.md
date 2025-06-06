@@ -2,26 +2,26 @@
 
 ## Level 1 - Baisc Functions - Internal
 
+Implement mock of used dependencies then test the function.
+
 - Shared
-	[+] EntityExtensions: GetColumn, GetTable
+	[+] EntityExtensions: GetColumn
+	[+] EntityExtensions: GetTable
 	[+] ExceptionHandlingMiddleware: Invoke
-	[+] JsonConverter: UnixTimestampConverter, StringNumberConverter
-	[+] PersianHandlerTest: ToPersianString, MonthToDays
+	[+] JsonConverter: UnixTimestampConverter
+	[+] JsonConverter: StringNumberConverter
+	[+] PersianHandlerTest: ToPersianString
+	[+] PersianHandlerTest: MonthToDays
 - Infrastructure
 	[+] PriceCalculator: Compile
 - Application
-	[+] ConnectionApplication: GetCurrentConnectionState 'Merge Connections'
-	[+] PlanApplication: GetPlanState 'Calculate Ramining', Renewal
-	[+] VpnApplication: TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
-	[+] AccountMonitoringService: DeactiveAbandonedUsers, NotifSendServices
-	[+] ServerManagementService: GetAvalableRealm, CheckUserServerBalance
-
-## Level 2 - Queries
-
-[ ] ph_v_all_profiles
-[ ] ph_v_users_balance
+	[+] ServerManagementService: GetAvalableRealm
+	[+] ServerManagementService: CheckUserServerBalance
+	[ ] ServerManagementService: GetDefaultCertificate
 
 ## Level 4 - Services - Integration
+
+Implement mock of all dependencies and test high-level services.
 
 - IAccountApplication:
 	[ ] GetUser
@@ -37,52 +37,26 @@
 - IBasicsApplication:
 	[ ] GetPrices
 - IConnectionApplication:
-	[ ] GetCurrentConnectionState
+	[+] GetCurrentConnectionState
 	[ ] CloseConnection
 - IPlanApplication:
-	[ ] GetPlanState
+	[+] GetPlanState
 	[ ] GetPlanInfo
 	[ ] Estimate
-	[ ] Renewal
+	[+] Renewal
 - IVpnApplication:
 	[ ] ChangeOvpnPassword
 	[ ] SendCertEmail
-	[ ] TrafficData
+	[+] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 - AccountMonitoringService:
-	[ ] DeactiveAbandonedUsers
-	[ ] NotifSendServices
-- ServerManagementService: GetAvalableRealm
-	[ ] GetDefaultCertificate
-	[ ] CheckUserServerBalance
+	[+] DeactiveAbandonedUsers
+	[+] NotifSendServices
 
-## Level 5 - Real Word - Integration
+## Level 5 - OutSources
 
-- IAccountApplication:
-	[ ] GetUser
-	[ ] GetFullInfo
-	[ ] EditUser
-	[ ] ChangePassword
-	[ ] GetHistory
-- IAuthApplication:
-	[ ] CheckUserPassword
-	[ ] ResetPassword
-	[ ] Register
-	[ ] CopyFromPermanentUser
-- IBasicsApplication:
-	[ ] GetPrices
-- IPlanApplication:
-	[ ] GetPlanState
-	[ ] GetPlanInfo
-	[ ] Estimate
-	[ ] Renewal
-- IVpnApplication:
-	[ ] ChangeOvpnPassword
-	[ ] SendCertEmail
-	[ ] TrafficData
-- AccountMonitoringService:
-	[ ] DeactiveAbandonedUsers
-	[ ] NotifSendServices
-- ServerManagementService:
-	[ ] GetAvalableRealm
-	[ ] GetDefaultCertificate
-	[ ] CheckUserServerBalance
+Run out-sources and test out-source interfaces.
+
+- Queries
+	[ ] ph_v_all_profiles
+	[ ] ph_v_users_balance
+
