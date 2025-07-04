@@ -12,6 +12,7 @@
 		<PackageReference Include="Dapper.FastCrud" Version="3.3.2" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+		<PackageReference Include="System.Data.SQLite" Version="1.0.119" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -14,8 +14,9 @@ public class ServiceInitializer : IDisposable
             .AddAppServices();
     }
 
-    public void Build(HostApplicationBuilder builder)
+    public void Build(HostApplicationBuilder? builder = null)
     {
+        builder ??= Initialize();        
         host = builder.Build();
     }
 
