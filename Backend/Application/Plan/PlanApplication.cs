@@ -257,7 +257,7 @@ class PlanApplication(
                 break;
         }
 
-        var transaction = AccountRepo.Value.BeginTransaction();
+        var tranAccount = AccountRepo.Value.BeginTransaction();
 
         try
         {
@@ -270,11 +270,20 @@ class PlanApplication(
                 throw new Exception("Insert top-up and make active was unsuccessful!");
             }
 
-            transaction.Commit();
+            var checkOnRenewal = IPlanApplication.OnRenewalDelegation(new RenewalEvent());
+
+            if (!checkOnRenewal)
+            {
+                throw new Exception("On renewal delegation was unsuccessful!");
+            }
+
+            tranAccount.Commit();
         }
         catch
         {
-            transaction.Rollback();
+            _ = RadiusSrv.Value.ActivePermanentUser(user.Id, false);
+
+            tranAccount.Rollback();
 
             _ = HistoryRepo.Value.Save(new HistoryEntity
             {

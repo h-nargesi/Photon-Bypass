@@ -6,6 +6,8 @@ namespace PhotonBypass.Application.Plan;
 
 public interface IPlanApplication
 {
+    static event Func<RenewalEvent, bool>? OnRenewal;
+
     Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target);
 
     Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target);
@@ -13,4 +15,18 @@ public interface IPlanApplication
     ApiResult<int> Estimate(PlanType type, int users, int value);
 
     Task<ApiResult<RenewalResult>> Renewal(string target, PlanType type, int users, int value);
+
+    protected static bool OnRenewalDelegation(RenewalEvent arg)
+    {
+        if (OnRenewal == null) return true;
+
+        foreach(Func<RenewalEvent, bool> checkOnReneal in OnRenewal.GetInvocationList())
+        {
+            var result = checkOnReneal(arg);
+
+            if (!result) return false;
+        }
+
+        return true;
+    }
 }

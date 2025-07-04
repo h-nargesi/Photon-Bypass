@@ -265,29 +265,21 @@ class RadiusDeskService : IRadiusService, IDisposable
 
         if (!success) return false;
 
-        try
+        var data = new
         {
-            var data = new
-            {
-                permanent_user_id = user_id,
-                type = type == PlanType.Traffic ? "data" : "days_to_use",
-                value,
-                data_unit = type == PlanType.Traffic ? "gb" : null,
-                comment,
-                token,
-                sel_language = SEL_LANGUAGE,
-                cloud_id = 30,
-            };
+            permanent_user_id = user_id,
+            type = type == PlanType.Traffic ? "data" : "days_to_use",
+            value,
+            data_unit = type == PlanType.Traffic ? "gb" : null,
+            comment,
+            token,
+            sel_language = SEL_LANGUAGE,
+            cloud_id = 30,
+        };
 
-            var response = await PostAsync<object, dynamic>("top-ups/add.json", data);
+        var response = await PostAsync<object, dynamic>("top-ups/add.json", data);
 
-            return response?.success ?? false;
-        }
-        catch
-        {
-            _ = ActivePermanentUser(user_id, false);
-            throw;
-        }
+        return response?.success ?? false;
     }
 
     public void Dispose() => Logout();
