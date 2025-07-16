@@ -59,4 +59,6 @@ Run out-sources and test out-source interfaces.
 - Queries
 	[ ] ph_v_all_profiles
 	[ ] ph_v_users_balance
-
+- Radius Desk Web
+- Radius Desk Databse
+- VPN Nodes
