@@ -2,25 +2,15 @@
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.ErrorHandler;
-using PhotonBypass.Test.Application.OutSources;
 
 namespace PhotonBypass.Test.Application;
 
 public class AccountAppTest : ServiceInitializer
 {
-    private readonly PermanentUsersRepositoryMoq permanentUsersRepoMoq;
-    private readonly UserPlanStateRepositoryMoq userPlanStateRepoMoq;
-    private readonly RadiusServiceMoq radiusServiceMoq;
-
     public AccountAppTest()
     {
         var builder = Initialize();
-        AccountRepositoryMoq.CreateInstance(builder.Services);
-        permanentUsersRepoMoq = PermanentUsersRepositoryMoq.CreateInstance(builder.Services);
-        userPlanStateRepoMoq = UserPlanStateRepositoryMoq.CreateInstance(builder.Services);
-        radiusServiceMoq = RadiusServiceMoq.CreateInstance(builder.Services);
-        radiusServiceMoq.PermanentUsersRepoMoq = permanentUsersRepoMoq;
-        radiusServiceMoq.UserPlanStateRepoMoq = userPlanStateRepoMoq;
+        AddDefaultServices(builder);
         Build(builder);
     }
 
@@ -28,12 +18,12 @@ public class AccountAppTest : ServiceInitializer
     public async Task GetUser_ValidUser()
     {
         var account_app = CreateScope().GetRequiredService<IAccountApplication>();
-        var result = await account_app.GetUser("user1");
+        var result = await account_app.GetUser("User1");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
-        Assert.Equal("user1", result.Data.Username);
+        Assert.Equal("User1", result.Data.Username);
     }
 
     [Fact]
@@ -50,12 +40,12 @@ public class AccountAppTest : ServiceInitializer
     public async Task GetFullInfo_ValidUser()
     {
         var account_app = CreateScope().GetRequiredService<IAccountApplication>();
-        var result = await account_app.GetFullInfo("user1");
+        var result = await account_app.GetFullInfo("User1");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
-        Assert.Equal("user1", result.Data.Username);
+        Assert.Equal("User1", result.Data.Username);
     }
 
     [Fact]
@@ -72,7 +62,7 @@ public class AccountAppTest : ServiceInitializer
     public async Task EditUser_ValidUser()
     {
         var account_app = CreateScope().GetRequiredService<IAccountApplication>();
-        var result = await account_app.EditUser("user1", new EditUserContext
+        var result = await account_app.EditUser("User1", new EditUserContext
         {
             Firstname = nameof(EditUserContext.Firstname),
             Lastname = nameof(EditUserContext.Lastname),

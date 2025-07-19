@@ -81,7 +81,7 @@ public class ServerManagementServiceTest : ServiceInitializer
         Assert.True(isCalled);
     }
 
-    readonly static IList<ServerDensityEntity> ServerDensity =
+    readonly static List<ServerDensityEntity> ServerDensity =
     [
         new ServerDensityEntity { Id = 1, Capacity = "100", UsersCount = 56 },
         new ServerDensityEntity { Id = 2, Capacity = "100", UsersCount = 55 },

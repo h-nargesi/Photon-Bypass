@@ -97,7 +97,7 @@ public class ConnectionApplicationTest : ServiceInitializer
         },
     ];
 
-    readonly static IDictionary<string, NasEntity> NasData = new Dictionary<string, NasEntity>()
+    readonly static Dictionary<string, NasEntity> NasData = new Dictionary<string, NasEntity>()
     {
         { "192.168.0.1", new NasEntity { IpAddress = "192.168.0.1" } },
         { "192.168.0.2", new NasEntity { IpAddress = "192.168.0.2" } },

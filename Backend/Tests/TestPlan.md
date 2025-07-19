@@ -14,10 +14,6 @@ Implement mock of used dependencies then test the function.
 	[+] PersianHandlerTest: MonthToDays
 - Infrastructure
 	[+] PriceCalculator: Compile
-- Application
-	[+] ServerManagementService: GetAvalableRealm
-	[+] ServerManagementService: CheckUserServerBalance
-	[ ] ServerManagementService: GetDefaultCertificate
 
 ## Level 4 - Services - Integration
 
@@ -51,6 +47,10 @@ Implement mock of all dependencies and test high-level services.
 - AccountMonitoringService:
 	[+] DeactiveAbandonedUsers
 	[+] NotifSendServices
+- ServerManagementService:
+	[+] GetAvalableRealm
+	[+] CheckUserServerBalance
+	[ ] GetDefaultCertificate
 
 ## Level 5 - OutSources
 
