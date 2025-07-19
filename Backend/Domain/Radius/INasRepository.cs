@@ -6,5 +6,5 @@ public interface INasRepository
 
     Task<NasEntity?> GetNasInfo(string ip);
 
-    Task<IDictionary<string, NasEntity>> GetNasInfo(IEnumerable<string> ips);
+    Task<Dictionary<string, NasEntity>> GetNasInfo(IEnumerable<string> ips);
 }

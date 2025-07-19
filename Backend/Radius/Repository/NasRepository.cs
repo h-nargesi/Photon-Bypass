@@ -28,7 +28,7 @@ class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context)
         return result.FirstOrDefault();
     }
 
-    public async Task<IDictionary<string, NasEntity>> GetNasInfo(IEnumerable<string> ips)
+    public async Task<Dictionary<string, NasEntity>> GetNasInfo(IEnumerable<string> ips)
     {
         var result = await FindAsync(statement => statement
             .Where($"{SshPassword} is not null and {IpAddress} in @ips")

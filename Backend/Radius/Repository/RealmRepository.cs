@@ -20,7 +20,7 @@ class RealmRepository(RadDbContext context) : DapperRepository<RealmEntity>(cont
         return result.FirstOrDefault();
     }
 
-    public async Task<IList<ServerDensityEntity>> FetchServerDensityEntity(int cloud_id)
+    public async Task<List<ServerDensityEntity>> FetchServerDensityEntity(int cloud_id)
     {
         var result = await connection.FindAsync<ServerDensityEntity>(statement => statement
             .Where($"{CloudId} = @cloud_id")
