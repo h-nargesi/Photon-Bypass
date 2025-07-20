@@ -39,6 +39,6 @@ public class UserPlanStateEntity : IBaseEntity
     [Column("data_usage")]
     public double? DataUsage { get; set; }
 
-    [Column("total_data")]
+    [Column("total_data_limit")]
     public double? TotalData { get; set; }
 }
