@@ -1,0 +1,8 @@
+﻿[
+  { "Id": 1, "Username": "User1", "LastAcceptTime": "today-02", "Phone": "11111", "Email": "user1@mail.com" },
+  { "Id": 2, "Username": "User2", "LastAcceptTime": "today-02", "Phone": "22222", "Email": "user2@mail.com" },
+  { "Id": 3, "Username": "User3", "LastAcceptTime": "today-79", "Phone": "33333", "Email": "user3@mail.com" },
+  { "Id": 4, "Username": "User4", "LastAcceptTime": "today-02", "Phone": "44444", "Email": "user4@mail.com" },
+  { "Id": 5, "Username": "User5", "LastAcceptTime": "today-02", "Phone": "55555", "Email": null },
+  { "Id": 6, "Username": "User6", "LastAcceptTime": "today-79", "Phone": null, "Email": "user6@mail.com" }
+]

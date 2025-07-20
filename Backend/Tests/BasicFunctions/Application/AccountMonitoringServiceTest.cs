@@ -1,58 +1,34 @@
-﻿using Microsoft.Extensions.Hosting;
-using Moq;
-using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Management;
+﻿using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
-using PhotonBypass.Tools;
+using PhotonBypass.Test.MockOutSources;
 
 namespace PhotonBypass.Test.BasicFunctions.Application;
 
 public class AccountMonitoringServiceTest : ServiceInitializer
 {
-    public new static HostApplicationBuilder Initialize()
+    public AccountMonitoringServiceTest()
     {
-        var builder = ServiceInitializer.Initialize();
-
-        var userRepo = new Mock<IPermanentUsersRepository>();
-        userRepo.Setup(x => x.GetUser(It.IsAny<int>()))
-            .Returns<int>(id =>
-            {
-                _ = Users.TryGetValue(id, out var user);
-                return Task.FromResult(user);
-            });
-        userRepo.Setup(x => x.GetUsersContactInfo(It.IsAny<IEnumerable<int>>()))
-            .Returns(Task.FromResult(
-                (IDictionary<int, (string?, string?)>)Users.ToDictionary(k => k.Key, v => (v.Value?.Phone, v.Value?.Email))));
-        builder.Services.AddLazyScoped(s => userRepo.Object);
-
-        var historyRepo = new Mock<IHistoryRepository>();
-        historyRepo.Setup(x => x.Save(It.IsNotNull<HistoryEntity>()))
-            .Returns(Task.CompletedTask);
-        builder.Services.AddLazyScoped(s => historyRepo.Object);
-
-        return builder;
+        var builder = Initialize();
+        AddDefaultServices(builder);
+        Build(builder);
     }
 
     [Fact]
     public async Task DeactiveAbandonedUsers_Check()
     {
-        var builder = Initialize();
+        var services = CreateScope();
 
-        var radiusSrv = new Mock<IRadiusService>();
-        radiusSrv.Setup(x => x.ActivePermanentUser(It.IsAny<int>(), It.IsAny<bool>()))
-            .Returns<int, bool>((id, active) =>
-            {
-                Assert.True(Activate.TryGetValue(id, out var activate));
-                Assert.Equal(active, activate);
-                return Task.FromResult(true);
-            });
-        builder.Services.AddLazyScoped(s => radiusSrv.Object);
+        var monitoring = services.GetRequiredService<IAccountMonitoringService>();
+        var radiusSrvMoq = services.GetRequiredService<RadiusServiceMoq>();
 
-        Build(builder);
-
-        var monitoring = CreateScope().GetRequiredService<IAccountMonitoringService>();
+        var deactiveUsers = new HashSet<int>() { 2, 3, 5 };
+        radiusSrvMoq.OnActivePermanentUser += (id, active, result) =>
+        {
+            Assert.True(result);
+            Assert.False(active);
+            Assert.Contains(id, deactiveUsers);
+        };
 
         await monitoring.DeactiveAbandonedUsers(PlanStates);
     }
@@ -60,35 +36,19 @@ public class AccountMonitoringServiceTest : ServiceInitializer
     [Fact]
     public async Task NotifSendServices_Check()
     {
-        var builder = Initialize();
+        var services = CreateScope();
 
-        var radiusSrv = new Mock<IRadiusService>();
-        builder.Services.AddLazyScoped(s => radiusSrv.Object);
+        services.GetRequiredService<IServerManagementService>();
+        services.GetRequiredService<ISocialMediaService>();
 
-        var accountRepo = new Mock<IAccountRepository>();
-        accountRepo.Setup(x => x.GetAccounts(It.IsAny<IEnumerable<int>>()))
-            .Returns<IEnumerable<int>>(s => Task.FromResult(
-                (IDictionary<int, AccountEntity>)
-                Users.ToDictionary(k => k.Key, v => new AccountEntity { WarningTimes = DateTime.Now.AddHours(-5 * v.Key) })));
-        builder.Services.AddLazyScoped(x => accountRepo.Object);
+        var monitoring = services.GetRequiredService<IAccountMonitoringService>();
+        var emailServiceMoq = services.GetRequiredService<EmailServiceMoq>();
 
-        var emailSrv = new Mock<IEmailService>();
-        emailSrv.Setup(x => x.FinishServiceAlert(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<PlanType>(), It.IsAny<string>()))
-            .Returns<string, string, string, PlanType, string>((fullname, username, email, type, remains) =>
-            {
-                var plan = PlanStates.FirstOrDefault(x => x.Username == username);
-                Assert.NotNull(plan);
-                Assert.True(plan.Id > 4);
-                Assert.NotNull(email);
-
-                return Task.CompletedTask;
-            });
-        builder.Services.AddLazyScoped(x => emailSrv.Object);
-
-        Build(builder);
-
-        var monitoring = CreateScope().GetRequiredService<IAccountMonitoringService>();
+        var emails = new HashSet<string>() { "User1", "User4" };
+        emailServiceMoq.OnFinishServiceAlert += (fullname, username, email, type, left) =>
+        {
+            Assert.Contains(username, emails);
+        };
 
         await monitoring.NotifSendServices(PlanStates);
     }
@@ -132,24 +92,4 @@ public class AccountMonitoringServiceTest : ServiceInitializer
             Username = "User6"
         },
     ];
-
-    readonly static Dictionary<int, PermanentUserEntity?> Users = new()
-    {
-        { 1, new PermanentUserEntity { LastAcceptTime = DateTime.Now.AddDays(-2), Phone = "11111", Email = "user1@mail.com" } },
-        { 2, new PermanentUserEntity { LastAcceptTime = DateTime.Now.AddDays(-2), Phone = "22222", Email = "user2@mail.com" } },
-        { 3, new PermanentUserEntity { LastAcceptTime = DateTime.Now.AddDays(-79), Phone = "33333", Email = "user3@mail.com" } },
-        { 4, new PermanentUserEntity { LastAcceptTime = DateTime.Now.AddDays(-2), Phone = "44444", Email = "user4@mail.com" } },
-        { 5, new PermanentUserEntity { LastAcceptTime = DateTime.Now.AddDays(-2), Phone = "55555", Email = null } },
-        { 6, new PermanentUserEntity { LastAcceptTime = DateTime.Now.AddDays(-79), Phone = null, Email = "user6@mail.com" } },
-    };
-
-    readonly static Dictionary<int, bool> Activate = new()
-    {
-        { 1, true },
-        { 2, false },
-        { 3, false },
-        { 4, true },
-        { 5, false },
-        { 6, false },
-    };
 }

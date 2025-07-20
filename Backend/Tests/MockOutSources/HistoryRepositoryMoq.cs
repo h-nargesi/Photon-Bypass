@@ -2,7 +2,7 @@
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.Application.OutSources;
+namespace PhotonBypass.Test.MockOutSources;
 
 class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
 {
@@ -10,9 +10,9 @@ class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
 
     public event Action<string, DateTime?, DateTime?, List<HistoryEntity>>? OnGetHistory;
 
-    public void Setup()
+    public HistoryRepositoryMoq Setup(IDataSource source)
     {
-        var raw_text = File.ReadAllText("Data/history.json");
+        var raw_text = File.ReadAllText(source.FilePath);
         data = System.Text.Json.JsonSerializer.Deserialize<List<HistoryEntity>>(raw_text)
             ?.GroupBy(k => k.Target).ToDictionary(x => x.Key, v => v.ToList())
             ?? [];
@@ -29,13 +29,24 @@ class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
 
                 return Task.FromResult(list as IList<HistoryEntity>);
             });
+
+        return this;
     }
 
-    public static HistoryRepositoryMoq CreateInstance(IServiceCollection services)
+    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
     {
-        var moq = new HistoryRepositoryMoq();
-        moq.Setup();
-        services.AddLazyScoped(s => moq.Object);
-        return moq;
+        return Setup(source);
+    }
+
+    public class DataSource : IDataSource
+    {
+        public string FilePath { get; set; } = "Data/history.json";
+    }
+
+    public static void CreateInstance(IServiceCollection services)
+    {
+        services.AddScoped(s => new DataSource());
+        services.AddScoped(s => new HistoryRepositoryMoq().Setup(s.GetRequiredService<DataSource>()));
+        services.AddLazyScoped(s => s.GetRequiredService<HistoryRepositoryMoq>().Object);
     }
 }

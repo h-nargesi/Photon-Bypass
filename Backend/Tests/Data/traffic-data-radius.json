@@ -1,0 +1,9 @@
+[
+  { "Day" : "today-10", "DataIn" : 80, "DataOut" : 15 },
+  { "Day" : "today-11", "DataIn" : 90, "DataOut" : 99 },
+  { "Day" : "today-9" },
+  { "Day" : "today-8" },
+  { "Day" : "today-6" },
+  { "Day" : "today-2" },
+  { "Day" : "today-1" }
+]

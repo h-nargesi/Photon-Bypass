@@ -1,8 +1,9 @@
 ﻿using Moq;
 using PhotonBypass.Domain.Profile;
+using PhotonBypass.Test.MockOutSources.Models;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.Application.OutSources;
+namespace PhotonBypass.Test.MockOutSources;
 
 class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IOutSourceMoq
 {
@@ -16,11 +17,12 @@ class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IOutSourceM
 
     public event Action<IEnumerable<int>, Dictionary<int, (string? Phone, string? Email)>>? OnGetUsersContactInfo;
 
-    public void Setup()
+    public PermanentUsersRepositoryMoq Setup(IDataSource source)
     {
-        var raw_text = File.ReadAllText("Data/permanent-users.json");
-        Data = System.Text.Json.JsonSerializer.Deserialize<List<PermanentUserEntity>>(raw_text)
-            ?.ToDictionary(x => x.Username)
+        var raw_text = File.ReadAllText(source.FilePath);
+        Data = System.Text.Json.JsonSerializer.Deserialize<List<PermanentUserMoqModel>>(raw_text)
+            ?.Select(x => x.ToEntity())
+            .ToDictionary(x => x.Username)
             ?? [];
 
         Setup(x => x.GetUser(It.IsNotNull<string>()))
@@ -60,13 +62,24 @@ class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IOutSourceM
                 OnGetUsersContactInfo?.Invoke(userids, result);
                 return Task.FromResult(result as IDictionary<int, (string? Phone, string? Email)>);
             });
+
+        return this;
     }
 
-    public static PermanentUsersRepositoryMoq CreateInstance(IServiceCollection services)
+    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
     {
-        var moq = new PermanentUsersRepositoryMoq();
-        moq.Setup();
-        services.AddLazyScoped(s => moq.Object);
-        return moq;
+        return Setup(source);
+    }
+
+    public class DataSource : IDataSource
+    {
+        public string FilePath { get; set; } = "Data/permanent-users.json";
+    }
+
+    public static void CreateInstance(IServiceCollection services)
+    {
+        services.AddScoped(s => new DataSource());
+        services.AddScoped(s => new PermanentUsersRepositoryMoq().Setup(s.GetRequiredService<DataSource>()));
+        services.AddLazyScoped(s => s.GetRequiredService<PermanentUsersRepositoryMoq>().Object);
     }
 }

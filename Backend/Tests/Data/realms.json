@@ -1,0 +1,11 @@
+[
+  {
+    "Id": 1,
+    "CloudId": 1,
+    "Name": "Realm-LO-A",
+    "Suffix": "ry",
+    "Capacity": "100",
+    "RestrictedServerIP": "192.168.0.1",
+    "UsersCount": 40
+  }
+]

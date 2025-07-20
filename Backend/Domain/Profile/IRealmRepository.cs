@@ -4,5 +4,5 @@ public interface IRealmRepository
 {
     Task<RealmEntity?> Fetch(int realm_id);
 
-    Task<IList<ServerDensityEntity>> FetchServerDensityEntity(int cloud_id);
+    Task<List<ServerDensityEntity>> FetchServerDensityEntity(int cloud_id);
 }

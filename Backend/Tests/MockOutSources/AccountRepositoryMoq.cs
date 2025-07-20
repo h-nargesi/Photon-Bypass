@@ -2,7 +2,7 @@
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.Application.OutSources;
+namespace PhotonBypass.Test.MockOutSources;
 
 class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 {
@@ -18,9 +18,9 @@ class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 
     public event Action<IEnumerable<int>, Dictionary<int, AccountEntity>>? OnGetAccounts;
 
-    public void Setup()
+    public AccountRepositoryMoq Setup(IDataSource source)
     {
-        var raw_text = File.ReadAllText("Data/account.json");
+        var raw_text = File.ReadAllText(source.FilePath);
         data = System.Text.Json.JsonSerializer.Deserialize<List<AccountEntity>>(raw_text)
             ?.ToDictionary(x => x.Username)
             ?? [];
@@ -70,13 +70,24 @@ class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
                 OnGetAccounts?.Invoke(userids, result);
                 return Task.FromResult(result as IDictionary<int, AccountEntity>);
             });
+
+        return this;
     }
 
-    public static AccountRepositoryMoq CreateInstance(IServiceCollection services)
+    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
     {
-        var moq = new AccountRepositoryMoq();
-        moq.Setup();
-        services.AddLazyScoped(s => moq.Object);
-        return moq;
+        return Setup(source);
+    }
+
+    public class DataSource : IDataSource
+    {
+        public string FilePath { get; set; } = "Data/account.json";
+    }
+
+    public static void CreateInstance(IServiceCollection services)
+    {
+        services.AddScoped(s => new DataSource());
+        services.AddScoped(s => new AccountRepositoryMoq().Setup(s.GetRequiredService<DataSource>()));
+        services.AddLazyScoped(s => s.GetRequiredService<AccountRepositoryMoq>().Object);
     }
 }

@@ -2,15 +2,14 @@
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Vpn;
+using PhotonBypass.Test.MockOutSources.Models;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.Application.OutSources;
+namespace PhotonBypass.Test.MockOutSources;
 
-class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
+class RadiusServiceMoq(IServiceProvider service) : Mock<IRadiusService>, IOutSourceMoq
 {
-    public PermanentUsersRepositoryMoq? PermanentUsersRepoMoq { get; set; }
-
-    public UserPlanStateRepositoryMoq? UserPlanStateRepoMoq { get; set; }
+    IServiceProvider ServiceProvider { get; } = service;
 
     Dictionary<int, string> passwords = null!;
 
@@ -32,20 +31,28 @@ class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
 
     public event Action<string, string?, bool>? OnSetRestrictedServer;
 
-    public void Setup()
+    public event Action<string, long, bool>? OnUpdateUserDataUsege;
+
+    public event Action<int, PlanType, int, string, bool>? OnInsertTopUpAndMakeActive;
+
+    public RadiusServiceMoq Setup(IDataSource source)
     {
-        var raw_text = File.ReadAllText("Data/passwords.json");
+        if (source is not DataSource data_srouce) throw new ArgumentException(null, nameof(source));
+
+        var raw_text = File.ReadAllText(data_srouce.Passwords);
         passwords = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, string>>(raw_text)
             ?? [];
 
-        raw_text = File.ReadAllText("Data/traffic-data-radius.json");
-        traffic_data = System.Text.Json.JsonSerializer.Deserialize<TrafficDataRadius[]>(raw_text)
+        raw_text = File.ReadAllText(data_srouce.FilePath);
+        traffic_data = System.Text.Json.JsonSerializer.Deserialize<TrafficDataRadiusMoqModel[]>(raw_text)
+            ?.Select(x => x.ToEntity())
+            .ToArray()
             ?? [];
 
         Setup(x => x.ActivePermanentUser(It.IsAny<int>(), It.IsAny<bool>()))
             .Returns<int, bool>((user_id, active) =>
             {
-                if (PermanentUsersRepoMoq == null) throw new ArgumentNullException(nameof(PermanentUsersRepoMoq));
+                var PermanentUsersRepoMoq = ServiceProvider.GetRequiredService<PermanentUsersRepositoryMoq>();
 
                 bool result;
                 var user = PermanentUsersRepoMoq.Data.Values.FirstOrDefault(x => x.Id == user_id);
@@ -64,7 +71,7 @@ class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
         Setup(x => x.GetOvpnPassword(It.IsAny<int>()))
             .Returns<int>(user_id =>
             {
-                if (PermanentUsersRepoMoq == null) throw new ArgumentNullException(nameof(PermanentUsersRepoMoq));
+                var PermanentUsersRepoMoq = ServiceProvider.GetRequiredService<PermanentUsersRepositoryMoq>();
 
                 string? result;
                 var user = PermanentUsersRepoMoq.Data.Values.FirstOrDefault(x => x.Id == user_id);
@@ -82,7 +89,7 @@ class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
         Setup(x => x.ChangeOvpnPassword(It.IsAny<int>(), It.IsNotNull<string>()))
             .Returns<int, string>((user_id, password) =>
             {
-                if (PermanentUsersRepoMoq == null) throw new ArgumentNullException(nameof(PermanentUsersRepoMoq));
+                var PermanentUsersRepoMoq = ServiceProvider.GetRequiredService<PermanentUsersRepositoryMoq>();
 
                 var result = PermanentUsersRepoMoq.Data.Values.Any(x => x.Id == user_id);
                 if (result)
@@ -98,7 +105,7 @@ class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
         Setup(x => x.SaveUserBaiscInfo(It.IsNotNull<PermanentUserEntity>()))
             .Returns<PermanentUserEntity>(user =>
             {
-                if (PermanentUsersRepoMoq == null) throw new ArgumentNullException(nameof(PermanentUsersRepoMoq));
+                var PermanentUsersRepoMoq = ServiceProvider.GetRequiredService<PermanentUsersRepositoryMoq>();
 
                 var result = PermanentUsersRepoMoq.Data.TryGetValue(user.Username, out var current);
                 if (current != null)
@@ -119,7 +126,7 @@ class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
         Setup(x => x.SaveUserPersonalInfo(It.IsNotNull<PermanentUserEntity>()))
             .Returns<PermanentUserEntity>(user =>
             {
-                if (PermanentUsersRepoMoq == null) throw new ArgumentNullException(nameof(PermanentUsersRepoMoq));
+                var PermanentUsersRepoMoq = ServiceProvider.GetRequiredService<PermanentUsersRepositoryMoq>();
 
                 var result = PermanentUsersRepoMoq.Data.TryGetValue(user.Username, out var current);
                 if (current != null)
@@ -138,7 +145,7 @@ class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
         Setup(x => x.RegisterPermenentUser(It.IsNotNull<PermanentUserEntity>(), It.IsNotNull<string>()))
             .Returns<PermanentUserEntity, string>((user, password) =>
             {
-                if (PermanentUsersRepoMoq == null) throw new ArgumentNullException(nameof(PermanentUsersRepoMoq));
+                var PermanentUsersRepoMoq = ServiceProvider.GetRequiredService<PermanentUsersRepositoryMoq>();
 
                 var result = !PermanentUsersRepoMoq.Data.ContainsKey(user.Username);
                 if (result)
@@ -160,7 +167,7 @@ class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
             It.IsAny<TrafficDataRequestType>()))
             .Returns<string, DateTime, TrafficDataRequestType>((user, index, type) =>
             {
-                if (PermanentUsersRepoMoq == null) throw new ArgumentNullException(nameof(PermanentUsersRepoMoq));
+                var PermanentUsersRepoMoq = ServiceProvider.GetRequiredService<PermanentUsersRepositoryMoq>();
 
                 OnFetchTrafficData?.Invoke(user, index, type, traffic_data);
 
@@ -170,7 +177,7 @@ class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
         Setup(x => x.SetRestrictedServer(It.IsNotNull<string>(), It.IsAny<string>()))
             .Returns<string, string?>((username, server_ip) =>
             {
-                if (UserPlanStateRepoMoq == null) throw new ArgumentNullException(nameof(UserPlanStateRepoMoq));
+                var UserPlanStateRepoMoq = ServiceProvider.GetRequiredService<UserPlanStateRepositoryMoq>();
 
                 var current = UserPlanStateRepoMoq.Data.Values.FirstOrDefault(x => x.Username == username);
                 if (current != null)
@@ -182,13 +189,40 @@ class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
 
                 return Task.FromResult(current != null);
             });
+
+        Setup(x => x.UpdateUserDataUsege(It.IsNotNull<string>(), It.IsAny<int>()))
+            .Returns<string, int>((username, total_data) =>
+            {
+                OnUpdateUserDataUsege?.Invoke(username, total_data, true);
+                return Task.FromResult(true);
+            });
+
+        Setup(x => x.InsertTopUpAndMakeActive(It.IsAny<int>(), It.IsAny<PlanType>(), It.IsAny<int>(), It.IsAny<string>()))
+            .Returns<int, PlanType, int, string>((user_id, type, value, comment) =>
+            {
+                OnInsertTopUpAndMakeActive?.Invoke(user_id, type, value, comment, true);
+                return Task.FromResult(true);
+            });
+
+        return this;
     }
 
-    public static RadiusServiceMoq CreateInstance(IServiceCollection services)
+    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
     {
-        var moq = new RadiusServiceMoq();
-        moq.Setup();
-        services.AddLazyScoped(s => moq.Object);
-        return moq;
+        return Setup(source);
+    }
+
+    public class DataSource : IDataSource
+    {
+        public string FilePath { get; set; } = "Data/traffic-data-radius.json";
+
+        public string Passwords { get; set; } = "Data/passwords.json";
+    }
+
+    public static void CreateInstance(IServiceCollection services)
+    {
+        services.AddScoped(s => new DataSource());
+        services.AddScoped(s => new RadiusServiceMoq(s).Setup(s.GetRequiredService<DataSource>()));
+        services.AddLazyScoped(s => s.GetRequiredService<RadiusServiceMoq>().Object);
     }
 }

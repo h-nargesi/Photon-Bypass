@@ -1,15 +1,8 @@
 ﻿using Moq;
-using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Tools;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices.Marshalling;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace PhotonBypass.Test.Application.OutSources;
+namespace PhotonBypass.Test.MockOutSources;
 
 class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOutSourceMoq
 {
@@ -23,9 +16,9 @@ class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOutSourceMoq
 
     public event Action<float, List<UserPlanStateEntity>>? OnGetPlanOverState;
 
-    public void Setup()
+    public UserPlanStateRepositoryMoq Setup(IDataSource source)
     {
-        var raw_text = File.ReadAllText("Data/user-plan-state.json");
+        var raw_text = File.ReadAllText(source.FilePath);
         Data = System.Text.Json.JsonSerializer.Deserialize<List<UserPlanStateEntity>>(raw_text)
             ?.ToDictionary(x => x.Id)
             ?? [];
@@ -67,18 +60,29 @@ class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOutSourceMoq
         Setup(x => x.GetPlanOverState(It.IsAny<float>()))
             .Returns<float>(percent =>
             {
-                var result = Data.Values.Where(x => (x.LeftDays.HasValue && x.LeftDays > percent * 30) || (x.GigaLeft.HasValue && x.GigaLeft > percent * 50))
+                var result = Data.Values.Where(x => x.LeftDays.HasValue && x.LeftDays > percent * 30 || x.GigaLeft.HasValue && x.GigaLeft > percent * 50)
                     .ToList();
                 OnGetPlanOverState?.Invoke(percent, result);
                 return Task.FromResult(result as IList<UserPlanStateEntity>);
             });
+
+        return this;
     }
 
-    public static UserPlanStateRepositoryMoq CreateInstance(IServiceCollection services)
+    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
     {
-        var moq = new UserPlanStateRepositoryMoq();
-        moq.Setup();
-        services.AddLazyScoped(s => moq.Object);
-        return moq;
+        return Setup(source);
+    }
+
+    public class DataSource : IDataSource
+    {
+        public string FilePath { get; set; } = "Data/user-plan-state.json";
+    }
+
+    public static void CreateInstance(IServiceCollection services)
+    {
+        services.AddScoped(s => new DataSource());
+        services.AddScoped(s => new UserPlanStateRepositoryMoq().Setup(s.GetRequiredService<DataSource>()));
+        services.AddLazyScoped(s => s.GetRequiredService<UserPlanStateRepositoryMoq>().Object);
     }
 }
