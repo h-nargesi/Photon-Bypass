@@ -7,3 +7,4 @@
 [ ] logo/link in email bodyes
 [ ] human test
 [ ] Check email send limit
+[ ] مدیریت گواهی‌های صادر شده بدون استفاده در میکروتیک
