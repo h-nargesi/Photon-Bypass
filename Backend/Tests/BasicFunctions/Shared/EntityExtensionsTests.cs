@@ -9,7 +9,7 @@ public class EntityExtensionsTests
     [Fact]
     public void GetColumnName_ShouldReturnColumnName()
     {
-        var result= EntityExtensions.GetColumnName<TestEntity>(x => x.TestColumn);
+        var result = EntityExtensions.GetColumnName<TestEntity>(x => x.TestColumn);
 
         Assert.Equal(nasidentifier, result);
     }
@@ -42,5 +42,4 @@ public class EntityExtensionsTests
         [Column(nasidentifier)]
         public int TestColumn { get; set; }
     }
-
 }
