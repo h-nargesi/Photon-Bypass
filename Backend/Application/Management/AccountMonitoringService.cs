@@ -37,11 +37,11 @@ class AccountMonitoringService(
         await NotifSendServices(planStateList);
 
         Task.WaitAll(
-            DeactiveAbandonedUsers(planStateList),
+            InactiveAbandonedUsers(planStateList),
             ServerMngSrv.CheckUserServerBalance());
     }
 
-    public async Task DeactiveAbandonedUsers(IEnumerable<UserPlanStateEntity> planStateList)
+    public async Task InactiveAbandonedUsers(IEnumerable<UserPlanStateEntity> planStateList)
     {
         foreach (var plan in planStateList)
         {

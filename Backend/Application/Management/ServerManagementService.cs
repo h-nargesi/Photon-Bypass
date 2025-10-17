@@ -16,7 +16,7 @@ partial class ServerManagementService(
     IOptions<ManagementOptions> Options)
     : IServerManagementService
 {
-    public async Task<RealmEntity> GetAvalableRealm(int cloud_id)
+    public async Task<RealmEntity> GetAvailableRealm(int cloud_id)
     {
         var servers = await RealmRepo.FetchServerDensityEntity(cloud_id);
 

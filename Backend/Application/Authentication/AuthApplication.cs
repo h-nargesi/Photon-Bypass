@@ -159,7 +159,7 @@ partial class AuthApplication(
             throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
         }
 
-        var realm = await ServerMngSrv.Value.GetAvalableRealm(StaticRepo.Value.WebCloudID);
+        var realm = await ServerMngSrv.Value.GetAvailableRealm(StaticRepo.Value.WebCloudID);
 
         if (await UserRepo.Value.CheckUsername(context.Username + realm.Suffix))
         {

@@ -1,6 +1,6 @@
 # Test Plan
 
-## Level 1 - Baisc Functions - Unit Test
+## Level 1 - Basic Functions - Unit Test
 
 Implement mock of used dependencies then test the function.
 
@@ -43,10 +43,10 @@ Implement mock of used dependencies then test the function.
 	[ ] SendCertEmail
 	[+] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 - AccountMonitoringService:
-	[+] DeactiveAbandonedUsers
+	[+] InactiveAbandonedUsers
 	[+] NotifSendServices
 - ServerManagementService:
-	[+] GetAvalableRealm
+	[+] GetAvailableRealm
 	[+] CheckUserServerBalance
 	[ ] GetDefaultCertificate
 
@@ -80,10 +80,10 @@ Implement mock of all dependencies and test high-level services.
 	[ ] SendCertEmail
 	[ ] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 - AccountMonitoringService:
-	[ ] DeactiveAbandonedUsers
+	[ ] InactiveAbandonedUsers
 	[ ] NotifSendServices
 - ServerManagementService:
-	[ ] GetAvalableRealm
+	[ ] GetAvailableRealm
 	[ ] CheckUserServerBalance
 	[ ] GetDefaultCertificate
 
@@ -95,5 +95,5 @@ Run out-sources and test out-source interfaces.
 	[ ] ph_v_all_profiles
 	[ ] ph_v_users_balance
 - Radius Desk Web
-- Radius Desk Databse
+- Radius Desk Database
 - VPN Nodes

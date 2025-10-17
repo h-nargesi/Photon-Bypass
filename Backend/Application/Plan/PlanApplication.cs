@@ -230,7 +230,7 @@ class PlanApplication(
 
         if (user.LastAcceptTime == null || user.LastAcceptTime.Value < DateTime.Now.AddDays(-7))
         {
-            var realm = await ServerMngSrv.Value.GetAvalableRealm(user.CloudId);
+            var realm = await ServerMngSrv.Value.GetAvailableRealm(user.CloudId);
             if (realm != null && realm.Id != user.RealmId)
             {
                 user.Realm = realm.Name;

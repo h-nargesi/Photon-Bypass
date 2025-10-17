@@ -30,7 +30,7 @@ public class AccountMonitoringServiceTest : ServiceInitializer
             Assert.Contains(id, inactiveUsers);
         };
 
-        await monitoring.DeactiveAbandonedUsers(PlanStates);
+        await monitoring.InactiveAbandonedUsers(PlanStates);
     }
 
     [Fact]

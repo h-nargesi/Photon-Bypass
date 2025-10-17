@@ -32,7 +32,7 @@ public class ServerManagementServiceTest : ServiceInitializer
         Build(Initialize());
         var manager = CreateScope().GetRequiredService<IServerManagementService>();
 
-        var result = await manager.GetAvalableRealm(0);
+        var result = await manager.GetAvailableRealm(0);
 
         Assert.NotNull(result);
         Assert.Equal(5, result.Id);
