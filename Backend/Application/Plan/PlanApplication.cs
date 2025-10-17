@@ -10,7 +10,6 @@ using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
-using System.Collections.Generic;
 
 namespace PhotonBypass.Application.Plan;
 
@@ -113,6 +112,11 @@ class PlanApplication(
     {
         var result = PriceCalc.Value.CalculatePrice(type, users, value);
         return ApiResult<int>.Success(result);
+    }
+
+    public Task<ApiResult> TemporaryRenewal(string target, PlanType type)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<ApiResult<RenewalResult>> Renewal(string target, PlanType type, int count, int value)

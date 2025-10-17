@@ -14,13 +14,15 @@ public interface IPlanApplication
 
     ApiResult<int> Estimate(PlanType type, int users, int value);
 
+    Task<ApiResult> TemporaryRenewal(string target, PlanType type);
+
     Task<ApiResult<RenewalResult>> Renewal(string target, PlanType type, int users, int value);
 
     protected static bool OnRenewalDelegation(RenewalEvent arg)
     {
         if (OnRenewal == null) return true;
 
-        foreach(Func<RenewalEvent, bool> checkOnReneal in OnRenewal.GetInvocationList())
+        foreach (Func<RenewalEvent, bool> checkOnReneal in OnRenewal.GetInvocationList().Cast<Func<RenewalEvent, bool>>())
         {
             var result = checkOnReneal(arg);
 
