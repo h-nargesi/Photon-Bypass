@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Application.Vpn;
+using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Test.MockOutSources;
 using PhotonBypass.Tools;
 
@@ -6,7 +7,7 @@ namespace PhotonBypass.Test.Application;
 
 public class VpnApplicationTest : ServiceInitializer
 {
-    readonly static DateTime NOW = DateTime.Now.Date;
+    private static readonly DateTime Now = DateTime.Now.Date;
 
     public VpnApplicationTest()
     {
@@ -16,19 +17,21 @@ public class VpnApplicationTest : ServiceInitializer
     }
 
     [Fact]
-    public async Task TrafficData_Overral()
+    public async Task TrafficData_Overall()
     {
-        var scope = CreateScope();
+        var services = CreateScope();
 
-        var trafficRepo = scope.GetRequiredService<TrafficDataRepositoryMoq>();
+        var trafficRepo = services.GetRequiredService<TrafficDataRepositoryMoq>();
         trafficRepo.OnBachSave += traffics =>
         {
-            var ten = traffics.Where(x => x.Day == NOW.AddDays(-10)).FirstOrDefault();
+            var trafficDataEntities = traffics as TrafficDataEntity[] ?? traffics.ToArray();
+            
+            var ten = trafficDataEntities.FirstOrDefault(x => x.Day == Now.AddDays(-10));
             Assert.NotNull(ten);
             Assert.Equal(80, ten.DataIn);
             Assert.Equal(15, ten.DataOut);
 
-            var eleven = traffics.Where(x => x.Day == NOW.AddDays(-11)).FirstOrDefault();
+            var eleven = trafficDataEntities.FirstOrDefault(x => x.Day == Now.AddDays(-11));
             Assert.Null(eleven);
         };
 
@@ -41,7 +44,7 @@ public class VpnApplicationTest : ServiceInitializer
         var index = 0;
         foreach (var t in data.Data.Labels)
         {
-            Assert.Equal(NOW.AddDays(index--).ToPersianDayOfMonth(), t);
+            Assert.Equal(Now.AddDays(index--).ToPersianDayOfMonth(), t);
         }
 
         foreach (var t in data.Data.Collections)

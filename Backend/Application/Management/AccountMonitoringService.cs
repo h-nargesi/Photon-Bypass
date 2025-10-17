@@ -45,25 +45,23 @@ class AccountMonitoringService(
     {
         foreach (var plan in planStateList)
         {
-            var expired_time = 0D;
-            if (plan.PlanType == PlanType.Monthly)
+            var expiredTime = 0D;
+            switch (plan.PlanType)
             {
-                if (plan.ExpirationDate.HasValue)
+                case PlanType.Monthly when plan.ExpirationDate.HasValue:
                 {
-                    expired_time = (plan.ExpirationDate.Value - DateTime.Now).TotalDays;
-                    if (expired_time < MAX_DEACTIVATE_PLAN)
+                    expiredTime = (plan.ExpirationDate.Value - DateTime.Now).TotalDays;
+                    if (expiredTime < MAX_DEACTIVATE_PLAN)
                     {
                         continue;
                     }
+
+                    break;
                 }
-                else
-                {
+                case PlanType.Monthly:
                     Log.Fatal("The user '{0}' is monthly but does not have expiration date. user-id: {1}", plan.Username, plan.Id);
-                }
-            }
-            else if (plan.PlanType == PlanType.Traffic)
-            {
-                if (plan.TotalData.HasValue)
+                    break;
+                case PlanType.Traffic when plan.TotalData.HasValue:
                 {
                     var user = await UserRepo.GetUser(plan.Id);
 
@@ -73,23 +71,26 @@ class AccountMonitoringService(
                     }
                     else
                     {
-                        expired_time = ((user.LastAcceptTime ?? user.CreatedTime) - DateTime.Now).TotalDays;
-                        if (expired_time < MAX_DEACTIVATE_PLAN)
+                        expiredTime = ((user.LastAcceptTime ?? user.CreatedTime) - DateTime.Now).TotalDays;
+                        if (expiredTime < MAX_DEACTIVATE_PLAN)
                         {
                             continue;
                         }
                     }
+
+                    break;
                 }
-                else
-                {
+                case PlanType.Traffic:
                     Log.Fatal("The user '{0}' is traffic but does not have data limitation. user-id: {1}", plan.Username, plan.Id);
-                }
+                    break;
+                default:
+                    throw new Exception("Invalid PlanType!");
             }
 
             _ = RadiusSrv.ActivePermanentUser(plan.Id, false);
 
             Log.Information("The user '{0}' was disabled: ExpiredTime={1} days, ExpirationDate={2}, TotalData={3}, DataUsage={4}", 
-                plan.Username, expired_time, plan.ExpirationDate, plan.TotalData, plan.DataUsage);
+                plan.Username, expiredTime, plan.ExpirationDate, plan.TotalData, plan.DataUsage);
 
             _ = HistoryRepo.Save(new HistoryEntity
             {
@@ -99,7 +100,7 @@ class AccountMonitoringService(
                 Title = "غیرفعال",
                 Description = "اکانت شما به علت عدم استفاده بعد از دو ماه غیرفعال شد. مقدار ترافیک یا مدت زمان باقیمانده به جای خود باقی است.",
                 Unit = "روز گذشته",
-                Value = (int)expired_time,
+                Value = (int)expiredTime,
             });
         }
     }
