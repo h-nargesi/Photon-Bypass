@@ -4,5 +4,5 @@ namespace PhotonBypass.Domain.Vpn;
 
 public interface ITrafficDataRepository : IEditableRepository<TrafficDataEntity>
 {
-    Task<IList<TrafficDataEntity>> Fetch(string target, DateTime from);
+    Task<List<TrafficDataEntity>> Fetch(string target, DateTime from);
 }

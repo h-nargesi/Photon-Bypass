@@ -1,6 +1,6 @@
 [  
-  { "Day": NOW.AddDays(-10), "DataIn": 100, "DataOut": 5 },
-  { "Day": NOW.AddDays(-11), "DataIn": 90, "DataOut": 99 },
-  { "Day": NOW.AddDays(-12) },
-  { "Day": NOW.AddDays(-15) },
+  { "Day": "today-10", "DataIn": 100, "DataOut": 5 },
+  { "Day": "today-11", "DataIn": 90, "DataOut": 99 },
+  { "Day": "today-12" },
+  { "Day": "today-15" }
 ]

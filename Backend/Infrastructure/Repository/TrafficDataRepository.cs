@@ -10,7 +10,7 @@ class TrafficDataRepository(LocalDbContext context) : EditableRepository<Traffic
 {
     readonly static string AccountTableName = EntityExtensions.GetTablename<AccountEntity>();
 
-    public async Task<IList<TrafficDataEntity>> Fetch(string username, DateTime from)
+    public async Task<List<TrafficDataEntity>> Fetch(string username, DateTime from)
     {
         var result = await FindAsync(statement => statement
             .Where($"{nameof(TrafficDataEntity.AccountId)} = (select {nameof(AccountEntity.Id)} from {AccountTableName} where {nameof(AccountEntity.Username)} = @username)")

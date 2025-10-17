@@ -4,6 +4,7 @@ using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Test.MockOutSources.Models;
 using PhotonBypass.Tools;
+using System.Text.Json;
 
 namespace PhotonBypass.Test.MockOutSources;
 
@@ -40,11 +41,13 @@ class RadiusServiceMoq(IServiceProvider service) : Mock<IRadiusService>, IOutSou
         if (source is not DataSource data_srouce) throw new ArgumentException(null, nameof(source));
 
         var raw_text = File.ReadAllText(data_srouce.Passwords);
-        passwords = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, string>>(raw_text)
+        passwords = JsonSerializer.Deserialize<Dictionary<string, string>>(raw_text)?
+            .Select(x => new { Key = int.Parse(x.Key), x.Value })
+            .ToDictionary(k => k.Key, v => v.Value)
             ?? [];
 
         raw_text = File.ReadAllText(data_srouce.FilePath);
-        traffic_data = System.Text.Json.JsonSerializer.Deserialize<TrafficDataRadiusMoqModel[]>(raw_text)
+        traffic_data = JsonSerializer.Deserialize<TrafficDataRadiusMoqModel[]>(raw_text)
             ?.Select(x => x.ToEntity())
             .ToArray()
             ?? [];
@@ -167,7 +170,7 @@ class RadiusServiceMoq(IServiceProvider service) : Mock<IRadiusService>, IOutSou
             It.IsAny<TrafficDataRequestType>()))
             .Returns<string, DateTime, TrafficDataRequestType>((user, index, type) =>
             {
-                var PermanentUsersRepoMoq = ServiceProvider.GetRequiredService<PermanentUsersRepositoryMoq>();
+                //var PermanentUsersRepoMoq = ServiceProvider.GetRequiredService<PermanentUsersRepositoryMoq>();
 
                 OnFetchTrafficData?.Invoke(user, index, type, traffic_data);
 

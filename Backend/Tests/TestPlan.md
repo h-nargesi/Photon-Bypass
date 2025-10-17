@@ -1,6 +1,6 @@
 # Test Plan
 
-## Level 1 - Baisc Functions - Internal
+## Level 1 - Baisc Functions - Unit Test
 
 Implement mock of used dependencies then test the function.
 
@@ -15,9 +15,7 @@ Implement mock of used dependencies then test the function.
 - Infrastructure
 	[+] PriceCalculator: Compile
 
-## Level 4 - Services - Integration
-
-Implement mock of all dependencies and test high-level services.
+## Level 2 - Application - Unit Test
 
 - IAccountApplication:
 	[ ] GetUser
@@ -25,7 +23,7 @@ Implement mock of all dependencies and test high-level services.
 	[ ] EditUser
 	[ ] ChangePassword
 	[ ] GetHistory
-- IAuthApplication: 
+- IAuthApplication:
 	[ ] CheckUserPassword
 	[ ] ResetPassword
 	[ ] Register
@@ -50,6 +48,43 @@ Implement mock of all dependencies and test high-level services.
 - ServerManagementService:
 	[+] GetAvalableRealm
 	[+] CheckUserServerBalance
+	[ ] GetDefaultCertificate
+
+## Level 4 - Application - Integration
+
+Implement mock of all dependencies and test high-level services.
+
+- IAccountApplication:
+	[ ] GetUser
+	[ ] GetFullInfo
+	[ ] EditUser
+	[ ] ChangePassword
+	[ ] GetHistory
+- IAuthApplication:
+	[ ] CheckUserPassword
+	[ ] ResetPassword
+	[ ] Register
+	[ ] CopyFromPermanentUser
+- IBasicsApplication:
+	[ ] GetPrices
+- IConnectionApplication:
+	[ ] GetCurrentConnectionState
+	[ ] CloseConnection
+- IPlanApplication:
+	[ ] GetPlanState
+	[ ] GetPlanInfo
+	[ ] Estimate
+	[ ] Renewal
+- IVpnApplication:
+	[ ] ChangeOvpnPassword
+	[ ] SendCertEmail
+	[ ] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
+- AccountMonitoringService:
+	[ ] DeactiveAbandonedUsers
+	[ ] NotifSendServices
+- ServerManagementService:
+	[ ] GetAvalableRealm
+	[ ] CheckUserServerBalance
 	[ ] GetDefaultCertificate
 
 ## Level 5 - OutSources

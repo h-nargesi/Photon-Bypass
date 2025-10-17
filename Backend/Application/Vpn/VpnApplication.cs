@@ -168,7 +168,7 @@ class VpnApplication(
             .Date.AddDays(1);
     }
 
-    private static List<TrafficDataEntity> Merge(ref IList<TrafficDataEntity> destination, IEnumerable<TrafficDataRadius> source, DateTime minDateTime)
+    private static List<TrafficDataEntity> Merge(ref List<TrafficDataEntity> destination, IEnumerable<TrafficDataRadius> source, DateTime minDateTime)
     {
         var destination_dict = destination.ToDictionary(k => k.Day);
         var new_data = new List<TrafficDataEntity>();

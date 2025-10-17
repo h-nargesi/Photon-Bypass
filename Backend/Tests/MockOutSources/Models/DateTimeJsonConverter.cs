@@ -1,9 +1,10 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Test.MockOutSources.Models;
 
-static class DateTimeConverter
+public static partial class DateTimeConverter
 {
     public static DateTime ConvertToDateTime(this string data)
     {
@@ -42,11 +43,19 @@ static class DateTimeConverter
             }
             else throw new JsonException("Invalid DateTime Value.");
 
-            result.AddDays(days);
+            result = result.AddDays(days);
         }
 
         return result;
     }
+
+    public static string PrepareAllDateTimes(this string json)
+    {
+        return FindDateTime().Replace(json, (match) => JsonSerializer.Serialize(match.Groups[1].Value.ConvertToDateTime()));
+    }
+
+    [GeneratedRegex(@"""((today|now)(-|\+)\d+)""")]
+    private static partial Regex FindDateTime();
 }
 
 class DateTimeJsonConverter : JsonConverter<DateTime>
