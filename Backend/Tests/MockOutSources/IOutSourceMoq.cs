@@ -1,11 +1,5 @@
 ﻿namespace PhotonBypass.Test.MockOutSources;
 
-interface IDataSource
+internal interface IOutSourceMoq
 {
-    string FilePath { get; set; }
-}
-
-interface IOutSourceMoq
-{
-    IOutSourceMoq Setup(IDataSource source);
 }

@@ -1,4 +1,5 @@
-﻿using Moq;
+﻿using Microsoft.Extensions.Hosting;
+using Moq;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Static;
 
@@ -6,22 +7,19 @@ namespace PhotonBypass.Test.BasicFunctions.Infrastructure;
 
 public class PriceCalculatorTest : ServiceInitializer
 {
-    public PriceCalculatorTest()
+    protected override void AddServices(HostApplicationBuilder builder)
     {
-        var builder = Initialize();
-
-        var priceRepository = new Mock<IPriceRepository>();
-        priceRepository.Setup(x => x.GetLeatest())
+        var price_repository = new Mock<IPriceRepository>();
+        price_repository.Setup(x => x.GetLeatest())
             .Returns(Task.FromResult(Data));
-        builder.Services.AddSingleton(priceRepository.Object);
-
-        Build(builder);
+        builder.Services.AddSingleton(price_repository.Object);
     }
 
     [Fact]
     public void CalculatePrice_ShouldCompileAndCalculate_Traffic_5_100()
     {
-        var calculator = CreateScope().GetRequiredService<IPriceCalculator>();
+        using var scope = App.Services.CreateScope();
+        var calculator = scope.ServiceProvider.GetRequiredService<IPriceCalculator>();
         var result = calculator.CalculatePrice(PlanType.Traffic, 5, 100 / 25);
         Assert.Equal(310, result);
     }
@@ -29,29 +27,31 @@ public class PriceCalculatorTest : ServiceInitializer
     [Fact]
     public void CalculatePrice_ShouldCompileAndCalculate_Monthly_5_3()
     {
-        var calculator = CreateScope().GetRequiredService<IPriceCalculator>();
+        using var scope = App.Services.CreateScope();
+        var calculator = scope.ServiceProvider.GetRequiredService<IPriceCalculator>();
         var result = calculator.CalculatePrice(PlanType.Monthly, 5, 3);
         Assert.Equal(1980, result);
     }
 
-    static readonly IList<PriceEntity> Data =
+    private static readonly IList<PriceEntity> Data =
     [
         new() {
             PlanType = PlanType.Traffic,
-            CalculatorCode = @"
+            CalculatorCode = """
 using System;
 
 public class Calculator
 {
-    public static int Compute(int users, int traffic)
-    {
-        return 60 + users * 10 + traffic * 50;
-    }
-}",
+ public static int Compute(int users, int traffic)
+ {
+     return 60 + users * 10 + traffic * 50;
+ }
+}
+""",
         },
         new() {
             PlanType = PlanType.Monthly,
-            CalculatorCode = @"
+            CalculatorCode = """
 using System;
 
 public class Calculator
@@ -64,7 +64,8 @@ public class Calculator
         if (users >= 4) month += 100 * (users - 3);
         return count * month;
     }
-}",
+}
+""",
         }
     ];
 }

@@ -1,14 +1,15 @@
-﻿using Moq;
+﻿using System.Text.Json;
+using Moq;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockOutSources;
 
-class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOutSourceMoq
+internal class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOutSourceMoq
 {
-    public Dictionary<int, UserPlanStateEntity> Data { get; private set; } = null!;
+    public Dictionary<int, UserPlanStateEntity> Data { get; }
 
-    public event Action<int, string?>? OnGetRestrictedServerIP;
+    public event Action<int, string?>? OnGetRestrictedServerIp;
 
     public event Action<int, UserPlanStateEntity?>? OnGetPlanState;
 
@@ -16,24 +17,28 @@ class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOutSourceMoq
 
     public event Action<float, List<UserPlanStateEntity>>? OnGetPlanOverState;
 
-    public UserPlanStateRepositoryMoq Setup(IDataSource source)
+    public UserPlanStateRepositoryMoq() : this(FilePath)
     {
-        var raw_text = File.ReadAllText(source.FilePath);
-        Data = System.Text.Json.JsonSerializer.Deserialize<List<UserPlanStateEntity>>(raw_text)
-            ?.ToDictionary(x => x.Id)
-            ?? [];
+    }
+
+    protected UserPlanStateRepositoryMoq(string file_path)
+    {
+        var raw_text = File.ReadAllText(file_path);
+        Data = JsonSerializer.Deserialize<List<UserPlanStateEntity>>(raw_text)
+                   ?.ToDictionary(x => x.Id)
+               ?? [];
 
         Setup(x => x.GetRestrictedServerIP(It.IsAny<int>()))
             .Returns<int>(id =>
             {
-                if (!Data.TryGetValue(id, out var userplan))
+                if (!Data.TryGetValue(id, out var user_plan))
                 {
-                    userplan = null;
+                    user_plan = null;
                 }
 
-                OnGetRestrictedServerIP?.Invoke(id, userplan?.RestrictedServerIP);
+                OnGetRestrictedServerIp?.Invoke(id, user_plan?.RestrictedServerIP);
 
-                return Task.FromResult(userplan?.RestrictedServerIP);
+                return Task.FromResult(user_plan?.RestrictedServerIP);
             });
 
         Setup(x => x.GetPlanState(It.IsAny<int>()))
@@ -60,29 +65,20 @@ class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOutSourceMoq
         Setup(x => x.GetPlanOverState(It.IsAny<float>()))
             .Returns<float>(percent =>
             {
-                var result = Data.Values.Where(x => x.LeftDays.HasValue && x.LeftDays > percent * 30 || x.GigaLeft.HasValue && x.GigaLeft > percent * 50)
+                var result = Data.Values
+                    .Where(x => x.LeftDays.HasValue && x.LeftDays > percent * 30 ||
+                                x.GigaLeft.HasValue && x.GigaLeft > percent * 50)
                     .ToList();
                 OnGetPlanOverState?.Invoke(percent, result);
                 return Task.FromResult(result as IList<UserPlanStateEntity>);
             });
-
-        return this;
     }
 
-    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
-    {
-        return Setup(source);
-    }
-
-    public class DataSource : IDataSource
-    {
-        public string FilePath { get; set; } = "Data/user-plan-state.json";
-    }
+    private const string FilePath = "Data/user-plan-state.json";
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped(s => new DataSource());
-        services.AddScoped(s => new UserPlanStateRepositoryMoq().Setup(s.GetRequiredService<DataSource>()));
+        services.AddScoped<UserPlanStateRepositoryMoq>();
         services.AddLazyScoped(s => s.GetRequiredService<UserPlanStateRepositoryMoq>().Object);
     }
 }

@@ -1,13 +1,14 @@
-﻿using Moq;
+﻿using System.Text.Json;
+using Moq;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Test.MockOutSources.Models;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockOutSources;
 
-class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IOutSourceMoq
+internal class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IOutSourceMoq
 {
-    public Dictionary<string, PermanentUserEntity> Data { get; private set; } = null!;
+    public Dictionary<string, PermanentUserEntity> Data { get; }
 
     public event Action<string, PermanentUserEntity?>? OnGetUser;
 
@@ -17,13 +18,17 @@ class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IOutSourceM
 
     public event Action<IEnumerable<int>, Dictionary<int, (string? Phone, string? Email)>>? OnGetUsersContactInfo;
 
-    public PermanentUsersRepositoryMoq Setup(IDataSource source)
+    public PermanentUsersRepositoryMoq() : this(FilePath)
     {
-        var raw_text = File.ReadAllText(source.FilePath);
-        Data = System.Text.Json.JsonSerializer.Deserialize<List<PermanentUserMoqModel>>(raw_text)
-            ?.Select(x => x.ToEntity())
-            .ToDictionary(x => x.Username)
-            ?? [];
+    }
+
+    protected PermanentUsersRepositoryMoq(string file_path)
+    {
+        var raw_text = File.ReadAllText(file_path);
+        Data = JsonSerializer.Deserialize<List<PermanentUserMoqModel>>(raw_text)
+                   ?.Select(x => x.ToEntity())
+                   .ToDictionary(x => x.Username)
+               ?? [];
 
         Setup(x => x.GetUser(It.IsNotNull<string>()))
             .Returns<string>(username =>
@@ -55,31 +60,20 @@ class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IOutSourceM
             });
 
         Setup(x => x.GetUsersContactInfo(It.IsNotNull<IEnumerable<int>>()))
-            .Returns<IEnumerable<int>>(userids =>
+            .Returns<IEnumerable<int>>(user_ids =>
             {
-                var result = Data.Values.Where(x => userids.Contains(x.Id))
+                var result = Data.Values.Where(x => user_ids.Contains(x.Id))
                     .ToDictionary(k => k.Id, v => (v.Phone, v.Email));
-                OnGetUsersContactInfo?.Invoke(userids, result);
-                return Task.FromResult(result as IDictionary<int, (string? Phone, string? Email)>);
+                OnGetUsersContactInfo?.Invoke(user_ids, result);
+                return Task.FromResult<IDictionary<int, (string? Phone, string? Email)>>(result);
             });
-
-        return this;
     }
 
-    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
-    {
-        return Setup(source);
-    }
-
-    public class DataSource : IDataSource
-    {
-        public string FilePath { get; set; } = "Data/permanent-users.json";
-    }
+    private const string FilePath = "Data/permanent-users.json";
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped(s => new DataSource());
-        services.AddScoped(s => new PermanentUsersRepositoryMoq().Setup(s.GetRequiredService<DataSource>()));
+        services.AddScoped<PermanentUsersRepositoryMoq>();
         services.AddLazyScoped(s => s.GetRequiredService<PermanentUsersRepositoryMoq>().Object);
     }
 }

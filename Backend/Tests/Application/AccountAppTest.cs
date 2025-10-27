@@ -7,17 +7,11 @@ namespace PhotonBypass.Test.Application;
 
 public class AccountAppTest : ServiceInitializer
 {
-    public AccountAppTest()
-    {
-        var builder = Initialize();
-        AddDefaultServices(builder);
-        Build(builder);
-    }
-
     [Fact]
     public async Task GetUser_ValidUser()
     {
-        var account_app = CreateScope().GetRequiredService<IAccountApplication>();
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
         var result = await account_app.GetUser("User1");
 
         Assert.NotNull(result);
@@ -29,9 +23,10 @@ public class AccountAppTest : ServiceInitializer
     [Fact]
     public void GetUser_InvalidUser()
     {
-        var account_app = CreateScope().GetRequiredService<IAccountApplication>();
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var action = () => account_app.GetUser("invlid username").Wait();
+        var action = () => account_app.GetUser("Invalid username").Wait();
 
         action.Should().Throw<UserException>();
     }
@@ -39,7 +34,8 @@ public class AccountAppTest : ServiceInitializer
     [Fact]
     public async Task GetFullInfo_ValidUser()
     {
-        var account_app = CreateScope().GetRequiredService<IAccountApplication>();
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
         var result = await account_app.GetFullInfo("User1");
 
         Assert.NotNull(result);
@@ -51,9 +47,10 @@ public class AccountAppTest : ServiceInitializer
     [Fact]
     public void GetFullInfo_InvalidUser()
     {
-        var account_app = CreateScope().GetRequiredService<IAccountApplication>();
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var action = () => account_app.GetFullInfo("invlid username").Wait();
+        var action = () => account_app.GetFullInfo("Invalid username").Wait();
 
         action.Should().Throw<UserException>();
     }
@@ -61,7 +58,8 @@ public class AccountAppTest : ServiceInitializer
     [Fact]
     public async Task EditUser_ValidUser()
     {
-        var account_app = CreateScope().GetRequiredService<IAccountApplication>();
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
         var result = await account_app.EditUser("User1", new EditUserContext
         {
             Firstname = nameof(EditUserContext.Firstname),
@@ -77,9 +75,10 @@ public class AccountAppTest : ServiceInitializer
     [Fact]
     public void EditUser_InvalidUser()
     {
-        var account_app = CreateScope().GetRequiredService<IAccountApplication>();
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var action = () => account_app.EditUser("invlid username", new EditUserContext()).Wait();
+        var action = () => account_app.EditUser("Invalid username", new EditUserContext()).Wait();
 
         action.Should().Throw<UserException>();
     }

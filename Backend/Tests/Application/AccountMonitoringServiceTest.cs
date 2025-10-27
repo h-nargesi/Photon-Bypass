@@ -7,27 +7,20 @@ namespace PhotonBypass.Test.Application;
 
 public class AccountMonitoringServiceTest : ServiceInitializer
 {
-    public AccountMonitoringServiceTest()
-    {
-        var builder = Initialize();
-        AddDefaultServices(builder);
-        Build(builder);
-    }
-
     [Fact]
     public async Task InactiveAbandonedUsers_Check()
     {
-        var services = CreateScope();
+        using var scope = App.Services.CreateScope(); 
 
-        var monitoring = services.GetRequiredService<IAccountMonitoringService>();
-        var radiusSrvMoq = services.GetRequiredService<RadiusServiceMoq>();
+        var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var radius_srv_moq = scope.ServiceProvider.GetRequiredService<RadiusServiceMoq>();
 
-        var inactiveUsers = new HashSet<int>() { 2, 3, 5 };
-        radiusSrvMoq.OnActivePermanentUser += (id, active, result) =>
+        var inactive_users = new HashSet<int>() { 2, 3, 5 };
+        radius_srv_moq.OnActivePermanentUser += (id, active, result) =>
         {
             Assert.True(result);
             Assert.False(active);
-            Assert.Contains(id, inactiveUsers);
+            Assert.Contains(id, inactive_users);
         };
 
         await monitoring.InactiveAbandonedUsers(PlanStates);
@@ -36,16 +29,16 @@ public class AccountMonitoringServiceTest : ServiceInitializer
     [Fact]
     public async Task NotifSendServices_Check()
     {
-        var services = CreateScope();
+        using var scope = App.Services.CreateScope(); 
 
-        services.GetRequiredService<IServerManagementService>();
-        services.GetRequiredService<ISocialMediaService>();
+        scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+        scope.ServiceProvider.GetRequiredService<ISocialMediaService>();
 
-        var monitoring = services.GetRequiredService<IAccountMonitoringService>();
-        var emailServiceMoq = services.GetRequiredService<EmailServiceMoq>();
+        var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var email_service_moq = scope.ServiceProvider.GetRequiredService<EmailServiceMoq>();
 
         var emails = new HashSet<string>() { "User1", "User4" };
-        emailServiceMoq.OnFinishServiceAlert += (fullname, username, email, type, left) =>
+        email_service_moq.OnFinishServiceAlert += (fullname, username, email, type, left) =>
         {
             Assert.Contains(username, emails);
         };

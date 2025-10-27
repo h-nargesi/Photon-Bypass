@@ -1,11 +1,51 @@
 [
   {
-    "Id": 1,
+    "Id": 10,
     "CloudId": 1,
     "Name": "Realm-LO-A",
     "Suffix": "ry",
     "Capacity": "100",
     "RestrictedServerIP": "192.168.0.1",
     "UsersCount": 40
+  },
+  {
+    "Id": 1,
+    "CloudId": 1,
+    "Name": "Realm-LO-1",
+    "Suffix": "ry",
+    "Capacity": "100",
+    "UsersCount": 56
+  },
+  {
+    "Id": 2,
+    "CloudId": 1,
+    "Name": "Realm-LO-2",
+    "Suffix": "ry",
+    "Capacity": "100",
+    "UsersCount": 55
+  },
+  {
+    "Id": 3,
+    "CloudId": 1,
+    "Name": "Realm-LO-3",
+    "Suffix": "ry",
+    "Capacity": "100",
+    "UsersCount": 53
+  },
+  {
+    "Id": 4,
+    "CloudId": 1,
+    "Name": "Realm-LO-4",
+    "Suffix": "ry",
+    "Capacity": "300",
+    "UsersCount": 285
+  },
+  {
+    "Id": 5,
+    "CloudId": 1,
+    "Name": "Realm-LO-5",
+    "Suffix": "ry",
+    "Capacity": "300",
+    "UsersCount": 100
   }
 ]

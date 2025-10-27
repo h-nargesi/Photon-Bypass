@@ -1,52 +1,44 @@
-﻿using Moq;
+﻿using System.Text.Json;
+using Moq;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockOutSources;
 
-class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
+internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
 {
-    Dictionary<string, List<HistoryEntity>> data = null!;
-
     public event Action<string, DateTime?, DateTime?, List<HistoryEntity>>? OnGetHistory;
 
-    public HistoryRepositoryMoq Setup(IDataSource source)
+    public HistoryRepositoryMoq() : this(FilePath)
     {
-        var raw_text = File.ReadAllText(source.FilePath);
-        data = System.Text.Json.JsonSerializer.Deserialize<List<HistoryEntity>>(raw_text)
-            ?.GroupBy(k => k.Target).ToDictionary(x => x.Key, v => v.ToList())
-            ?? [];
+    }
+
+    protected HistoryRepositoryMoq(string file_path)
+    {
+        var raw_text = File.ReadAllText(file_path);
+        var data1 = JsonSerializer.Deserialize<List<HistoryEntity>>(raw_text)
+                        ?.GroupBy(k => k.Target).ToDictionary(x => x.Key, v => v.ToList())
+                    ?? [];
 
         Setup(x => x.GetHistory(It.IsNotNull<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>()))
             .Returns<string, DateTime?, DateTime?>((target, from, to) =>
             {
-                if (!data.TryGetValue(target, out var list) || list == null)
+                if (!data1.TryGetValue(target, out var list))
                 {
                     list = [];
                 }
 
                 OnGetHistory?.Invoke(target, from, to, list);
 
-                return Task.FromResult(list as IList<HistoryEntity>);
+                return Task.FromResult<IList<HistoryEntity>>(list);
             });
-
-        return this;
     }
 
-    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
-    {
-        return Setup(source);
-    }
-
-    public class DataSource : IDataSource
-    {
-        public string FilePath { get; set; } = "Data/history.json";
-    }
+    private const string FilePath = "Data/history.json";
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped(s => new DataSource());
-        services.AddScoped(s => new HistoryRepositoryMoq().Setup(s.GetRequiredService<DataSource>()));
+        services.AddScoped<HistoryRepositoryMoq>();
         services.AddLazyScoped(s => s.GetRequiredService<HistoryRepositoryMoq>().Object);
     }
 }

@@ -1,56 +1,62 @@
 ﻿using Microsoft.Extensions.Hosting;
 using PhotonBypass.API;
 using PhotonBypass.Test.MockOutSources;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test;
 
-public class ServiceInitializer : IDisposable
+public abstract class ServiceInitializer : IDisposable
 {
-    private IHost? host;
-    private IServiceScope? scope;
+    protected readonly IHost App;
 
-    public static HostApplicationBuilder Initialize()
+    protected ServiceInitializer(params Type[] types)
     {
-        return Host.CreateApplicationBuilder()
-            .AddAppServices();
+        App = Initialize(types);
     }
 
-    public static void AddDefaultServices(HostApplicationBuilder builder)
+    private IHost Initialize(Type[] types)
     {
-        var mock_types = typeof(IOutSourceMoq);
+        var builder = Host.CreateApplicationBuilder()
+            .AddAppServices();
+
+        AddDefaultServices(builder, types.ToHashSet());
+        AddServices(builder);
+
+        return builder.Build();
+    }
+
+    private static void AddDefaultServices(HostApplicationBuilder builder, HashSet<Type> mock_types)
+    {
+        mock_types.Add(typeof(IOutSourceMoq));
         var types = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(a =>
             {
-                try { return a.GetTypes(); }
-                catch { return []; }
+                try
+                {
+                    return a.GetTypes();
+                }
+                catch
+                {
+                    return [];
+                }
             })
-            .Where(t => mock_types.IsAssignableFrom(t) && t.IsClass && !t.IsAbstract)
+            .Where(t => t is { IsClass: true, IsAbstract: false } &&
+                        mock_types.Any(m => m.IsAssignableFrom(t)))
             .ToList();
 
-        foreach (var type in types)
+        foreach (var initializer in types.Select(type => type.GetMethod("CreateInstance")))
         {
-            var initializer = type.GetMethod("CreateInstance");
             initializer?.Invoke(null, [builder.Services]);
         }
     }
 
-    public void Build(HostApplicationBuilder? builder = null)
+    protected virtual void AddServices(HostApplicationBuilder builder)
     {
-        builder ??= Initialize();
-        host = builder.Build();
-    }
-
-    public IServiceProvider CreateScope()
-    {
-        if (host == null) throw new ArgumentNullException(nameof(host));
-        scope = host.Services.CreateScope();
-        return scope.ServiceProvider;
     }
 
     public void Dispose()
     {
-        host?.Dispose();
-        scope?.Dispose();
+        App.Dispose();
         GC.SuppressFinalize(this);
     }
 }

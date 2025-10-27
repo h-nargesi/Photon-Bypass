@@ -5,7 +5,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockOutSources;
 
-class EmailServiceMoq : Mock<IEmailService>, IOutSourceMoq
+internal class EmailServiceMoq : Mock<IEmailService>, IOutSourceMoq
 {
     public event Action<string, string, string>? OnSendResetPasswordLink;
 
@@ -13,7 +13,7 @@ class EmailServiceMoq : Mock<IEmailService>, IOutSourceMoq
 
     public event Action<string, string, string, PlanType, string>? OnFinishServiceAlert;
 
-    public EmailServiceMoq Setup()
+    public EmailServiceMoq()
     {
         Setup(x => x.SendResetPasswordLink(It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>()))
             .Returns<string, string, string>((fullname, email, hash_code) =>
@@ -35,18 +35,11 @@ class EmailServiceMoq : Mock<IEmailService>, IOutSourceMoq
                 OnFinishServiceAlert?.Invoke(fullname, username, email, type, left);
                 return Task.CompletedTask;
             });
-
-        return this;
-    }
-
-    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
-    {
-        return Setup();
     }
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped(s => new EmailServiceMoq().Setup());
+        services.AddScoped<EmailServiceMoq>();
         services.AddLazyScoped(s => s.GetRequiredService<EmailServiceMoq>().Object);
     }
 }

@@ -9,47 +9,44 @@ public class VpnApplicationTest : ServiceInitializer
 {
     private static readonly DateTime Now = DateTime.Now.Date;
 
-    public VpnApplicationTest()
-    {
-        var builder = Initialize();
-        AddDefaultServices(builder);
-        Build(builder);
-    }
-
     [Fact]
     public async Task TrafficData_Overall()
     {
-        var services = CreateScope();
-
-        var trafficRepo = services.GetRequiredService<TrafficDataRepositoryMoq>();
-        trafficRepo.OnBachSave += traffics =>
+        using (var scope = App.Services.CreateScope())
         {
-            var trafficDataEntities = traffics as TrafficDataEntity[] ?? traffics.ToArray();
-            
-            var ten = trafficDataEntities.FirstOrDefault(x => x.Day == Now.AddDays(-10));
-            Assert.NotNull(ten);
-            Assert.Equal(80, ten.DataIn);
-            Assert.Equal(15, ten.DataOut);
+            var traffic_repo = scope.ServiceProvider.GetRequiredService<TrafficDataRepositoryMoq>();
+            traffic_repo.OnBachSave += traffics =>
+            {
+                var traffic_data_entities = traffics as TrafficDataEntity[] ?? traffics.ToArray();
 
-            var eleven = trafficDataEntities.FirstOrDefault(x => x.Day == Now.AddDays(-11));
-            Assert.Null(eleven);
-        };
+                var ten = traffic_data_entities.FirstOrDefault(x => x.Day == Now.AddDays(-10));
+                Assert.NotNull(ten);
+                Assert.Equal(80, ten.DataIn);
+                Assert.Equal(15, ten.DataOut);
 
-        var data = await CreateScope().GetRequiredService<IVpnApplication>()
-            .TrafficData(string.Empty);
-
-        Assert.NotNull(data.Data);
-        Assert.Equal(30, data.Data.Labels.Length);
-
-        var index = 0;
-        foreach (var t in data.Data.Labels)
-        {
-            Assert.Equal(Now.AddDays(index--).ToPersianDayOfMonth(), t);
+                var eleven = traffic_data_entities.FirstOrDefault(x => x.Day == Now.AddDays(-11));
+                Assert.Null(eleven);
+            };
         }
 
-        foreach (var t in data.Data.Collections)
+        using (var scope = App.Services.CreateScope())
         {
-            Assert.Equal(data.Data.Labels.Length, t.Data.Length);
+            var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+                .TrafficData(string.Empty);
+
+            Assert.NotNull(data.Data);
+            Assert.Equal(30, data.Data.Labels.Length);
+
+            var index = 0;
+            foreach (var t in data.Data.Labels)
+            {
+                Assert.Equal(Now.AddDays(index--).ToPersianDayOfMonth(), t);
+            }
+
+            foreach (var t in data.Data.Collections)
+            {
+                Assert.Equal(data.Data.Labels.Length, t.Data.Length);
+            }
         }
     }
 }

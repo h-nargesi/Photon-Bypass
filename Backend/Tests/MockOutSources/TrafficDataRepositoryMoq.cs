@@ -6,27 +6,29 @@ using System.Text.Json;
 
 namespace PhotonBypass.Test.MockOutSources;
 
-class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSourceMoq
+internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSourceMoq
 {
-    public List<TrafficDataEntity> Data { get; private set; } = null!;
-
     public event Action<List<TrafficDataEntity>>? OnFetch;
 
     public event Action<IEnumerable<TrafficDataEntity>>? OnBachSave;
 
-    public TrafficDataRepositoryMoq Setup(IDataSource source)
+    public TrafficDataRepositoryMoq() : this(FilePath)
     {
-        var raw_text = File.ReadAllText(source.FilePath)
+    }
+
+    protected TrafficDataRepositoryMoq(string file_path)
+    {
+        var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
-        Data = JsonSerializer.Deserialize<List<TrafficDataEntity>>(raw_text)
-            ?? [];
+        var data = JsonSerializer.Deserialize<List<TrafficDataEntity>>(raw_text)
+                   ?? [];
 
         Setup(x => x.Fetch(It.IsNotNull<string>(), It.IsAny<DateTime>()))
             .Returns(() =>
             {
-                OnFetch?.Invoke(Data);
+                OnFetch?.Invoke(data);
 
-                return Task.FromResult(Data);
+                return Task.FromResult(data);
             });
 
         Setup(x => x.BachSave(It.IsNotNull<IEnumerable<TrafficDataEntity>>()))
@@ -36,24 +38,13 @@ class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSourceMoq
 
                 return Task.CompletedTask;
             });
-
-        return this;
     }
 
-    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
-    {
-        return Setup(source);
-    }
-
-    public class DataSource : IDataSource
-    {
-        public string FilePath { get; set; } = "Data/traffic-data.json";
-    }
+    private const string FilePath = "Data/traffic-data.json";
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped(s => new DataSource());
-        services.AddScoped(s => new TrafficDataRepositoryMoq().Setup(s.GetRequiredService<DataSource>()));
+        services.AddScoped<TrafficDataRepositoryMoq>();
         services.AddLazyScoped(s => s.GetRequiredService<TrafficDataRepositoryMoq>().Object);
     }
 }

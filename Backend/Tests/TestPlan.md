@@ -17,6 +17,8 @@ Implement mock of used dependencies then test the function.
 
 ## Level 2 - Application - Unit Test
 
+Implement mock of all dependencies and test mid-level services.
+
 - IAccountApplication:
 	[ ] GetUser
 	[ ] GetFullInfo
@@ -50,9 +52,9 @@ Implement mock of used dependencies then test the function.
 	[+] CheckUserServerBalance
 	[ ] GetDefaultCertificate
 
-## Level 4 - Application - Integration
+## Level 3 - Application - Integration
 
-Implement mock of all dependencies and test high-level services.
+Implement mock of all outsources and test high-level services.
 
 - IAccountApplication:
 	[ ] GetUser

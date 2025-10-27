@@ -1,13 +1,12 @@
-﻿using Moq;
+﻿using System.Text.Json;
+using Moq;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockOutSources;
 
-class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
+internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 {
-    Dictionary<string, AccountEntity> data = null!;
-
     public event Action<string, AccountEntity?>? OnGetAccount;
 
     public event Action<string, AccountEntity?>? OnGetAccountByMobile;
@@ -18,12 +17,16 @@ class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 
     public event Action<IEnumerable<int>, Dictionary<int, AccountEntity>>? OnGetAccounts;
 
-    public AccountRepositoryMoq Setup(IDataSource source)
+    public AccountRepositoryMoq() : this(FilePath)
     {
-        var raw_text = File.ReadAllText(source.FilePath);
-        data = System.Text.Json.JsonSerializer.Deserialize<List<AccountEntity>>(raw_text)
-            ?.ToDictionary(x => x.Username)
-            ?? [];
+    }
+
+    protected AccountRepositoryMoq(string file_path)
+    {
+        var raw_text = File.ReadAllText(file_path);
+        var data = JsonSerializer.Deserialize<List<AccountEntity>>(raw_text)
+                        ?.ToDictionary(x => x.Username)
+                    ?? [];
 
         Setup(x => x.GetAccount(It.IsNotNull<string>()))
             .Returns<string>(username =>
@@ -59,35 +62,24 @@ class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
             {
                 var result = data.Values.Where(x => x.Parent == id).ToList();
                 OnGetTargetArea?.Invoke(id, result);
-                return Task.FromResult(result as IList<AccountEntity>);
+                return Task.FromResult<IList<AccountEntity>>(result);
             });
 
         Setup(x => x.GetAccounts(It.IsNotNull<IEnumerable<int>>()))
-            .Returns<IEnumerable<int>>(userids =>
+            .Returns<IEnumerable<int>>(user_ids =>
             {
-                var result = data.Values.Where(x => userids.Contains(x.PermanentUserId))
+                var result = data.Values.Where(x => user_ids.Contains(x.PermanentUserId))
                     .ToDictionary(k => k.PermanentUserId);
-                OnGetAccounts?.Invoke(userids, result);
-                return Task.FromResult(result as IDictionary<int, AccountEntity>);
+                OnGetAccounts?.Invoke(user_ids, result);
+                return Task.FromResult<IDictionary<int, AccountEntity>>(result);
             });
-
-        return this;
     }
 
-    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
-    {
-        return Setup(source);
-    }
-
-    public class DataSource : IDataSource
-    {
-        public string FilePath { get; set; } = "Data/account.json";
-    }
+    private const string FilePath = "Data/account.json";
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped(s => new DataSource());
-        services.AddScoped(s => new AccountRepositoryMoq().Setup(s.GetRequiredService<DataSource>()));
+        services.AddScoped<AccountRepositoryMoq>();
         services.AddLazyScoped(s => s.GetRequiredService<AccountRepositoryMoq>().Object);
     }
 }

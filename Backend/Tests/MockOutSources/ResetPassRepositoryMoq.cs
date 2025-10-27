@@ -4,15 +4,15 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockOutSources;
 
-class ResetPassRepositoryMoq : Mock<IResetPassRepository>, IOutSourceMoq
+internal class ResetPassRepositoryMoq : Mock<IResetPassRepository>, IOutSourceMoq
 {
-    readonly Dictionary<string, ResetPassEntity> data = [];
+    private readonly Dictionary<string, ResetPassEntity> data = [];
 
     public event Action<ResetPassEntity>? OnAddHashCode;
 
     public event Action<string, ResetPassEntity?>? OnGetAccount;
 
-    public ResetPassRepositoryMoq Setup()
+    public ResetPassRepositoryMoq()
     {
         Setup(x => x.AddHashCode(It.IsNotNull<ResetPassEntity>()))
             .Returns<ResetPassEntity>(hash_code =>
@@ -34,18 +34,11 @@ class ResetPassRepositoryMoq : Mock<IResetPassRepository>, IOutSourceMoq
 
                 return Task.FromResult(entity);
             });
-
-        return this;
-    }
-
-    IOutSourceMoq IOutSourceMoq.Setup(IDataSource source)
-    {
-        return Setup();
     }
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped(s => new ResetPassRepositoryMoq().Setup());
+        services.AddScoped<ResetPassRepositoryMoq>();
         services.AddLazyScoped(s => s.GetRequiredService<ResetPassRepositoryMoq>().Object);
     }
 }

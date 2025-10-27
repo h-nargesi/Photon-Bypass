@@ -8,29 +8,29 @@ using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Test.BasicFunctions.Application;
 
-public class ServerManagementServiceTest : ServiceInitializer
+public partial class ServerManagementServiceTest : ServiceInitializer
 {
-    public new static HostApplicationBuilder Initialize()
+    protected override void AddServices(HostApplicationBuilder builder)
     {
-        var builder = ServiceInitializer.Initialize();
-
-        var realmRepo = new Mock<IRealmRepository>();
-        realmRepo.Setup(x => x.FetchServerDensityEntity(It.IsAny<int>()))
-            .Returns(Task.FromResult(ServerDensity));
-        builder.Services.AddLazyScoped(s => realmRepo.Object);
-
         var cloud = new Mock<ICloudRepository>();
         cloud.Setup(x => x.FindWebCloud()).Returns(Task.FromResult(0));
-        builder.Services.AddLazyScoped(s => cloud.Object);
+        builder.Services.AddLazyScoped(_ => cloud.Object);
 
-        return builder;
+        var social = new Mock<ISocialMediaService>();
+        social.Setup(x => x.AlarmServerCapacity(It.IsAny<IEnumerable<string>>()))
+            .Returns<IEnumerable<string>>(alarms =>
+            {
+                OnSocialMediaCall?.Invoke(social, alarms);
+                return Task.CompletedTask;
+            });
+        builder.Services.AddLazyScoped(s => social.Object);
     }
 
     [Fact]
-    public async Task GetAvalableRealm_Check()
+    public async Task GetAvailableRealm_Check()
     {
-        Build(Initialize());
-        var manager = CreateScope().GetRequiredService<IServerManagementService>();
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
 
         var result = await manager.GetAvailableRealm(0);
 
@@ -41,52 +41,45 @@ public class ServerManagementServiceTest : ServiceInitializer
     [Fact]
     public async Task CheckUserServerBalance_Check()
     {
-        var builder = Initialize();
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
 
-        var percent_Check = new Regex(@"\(([\d\.]+)%\s.*\s(\d+)\)");
-        var isCalled = false;
-        var social = new Mock<ISocialMediaService>();
-        social.Setup(x => x.AlarmServerCapacity(It.IsAny<IEnumerable<string>>()))
-            .Returns<IEnumerable<string>>(alarms =>
+        var is_called = false;
+        OnSocialMediaCall += (sender, alarms) =>
+        {
+            is_called = true;
+
+            foreach (var alarm in alarms)
             {
-                isCalled = true;
+                var m = PercentCheck().Match(alarm);
 
-                foreach (var alarm in alarms)
+                Assert.NotNull(m);
+
+                Assert.True(double.TryParse(m.Groups[1].Value, out var percent));
+                Assert.True(int.TryParse(m.Groups[2].Value, out var capacity));
+
+                switch (capacity)
                 {
-                    var m = percent_Check.Match(alarm);
-
-                    Assert.NotNull(m);
-
-                    Assert.True(double.TryParse(m.Groups[1].Value, out var percent));
-                    Assert.True(int.TryParse(m.Groups[2].Value, out var capacity));
-
-                    if (capacity == 100)
+                    case 100:
                         Assert.Equal(8, percent);
-                    else if (capacity == 300)
+                        break;
+                    case 300:
                         Assert.Equal(95, percent);
-                    else 
+                        break;
+                    default:
                         Assert.True(false);
+                        break;
                 }
-
-                return Task.CompletedTask;
-            });
-        builder.Services.AddLazyScoped(s => social.Object);
-
-        Build(builder);
-
-        var manager = CreateScope().GetRequiredService<IServerManagementService>();
+            }
+        };
 
         await manager.CheckUserServerBalance();
 
-        Assert.True(isCalled);
+        Assert.True(is_called);
     }
 
-    readonly static List<ServerDensityEntity> ServerDensity =
-    [
-        new ServerDensityEntity { Id = 1, Capacity = "100", UsersCount = 56 },
-        new ServerDensityEntity { Id = 2, Capacity = "100", UsersCount = 55 },
-        new ServerDensityEntity { Id = 3, Capacity = "100", UsersCount = 53 },
-        new ServerDensityEntity { Id = 4, Capacity = "300", UsersCount = 285 },
-        new ServerDensityEntity { Id = 5, Capacity = "300", UsersCount = 100 },
-    ];
+    private event EventHandler<IEnumerable<string>>? OnSocialMediaCall;
+
+    [GeneratedRegex(@"\(([\d\.]+)%\s.*\s(\d+)\)")]
+    private static partial Regex PercentCheck();
 }
