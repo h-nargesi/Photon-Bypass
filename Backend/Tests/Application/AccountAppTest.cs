@@ -21,14 +21,14 @@ public class AccountAppTest : ServiceInitializer
     }
 
     [Fact]
-    public void GetUser_InvalidUser()
+    public async Task GetUser_InvalidUser()
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var action = () => account_app.GetUser("Invalid username").Wait();
+        var action = () => account_app.GetUser("Invalid username");
 
-        action.Should().Throw<UserException>();
+        await action.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
@@ -45,14 +45,14 @@ public class AccountAppTest : ServiceInitializer
     }
 
     [Fact]
-    public void GetFullInfo_InvalidUser()
+    public async Task GetFullInfo_InvalidUser()
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var action = () => account_app.GetFullInfo("Invalid username").Wait();
+        var action = () => account_app.GetFullInfo("Invalid username");
 
-        action.Should().Throw<UserException>();
+        await action.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
@@ -73,13 +73,13 @@ public class AccountAppTest : ServiceInitializer
     }
 
     [Fact]
-    public void EditUser_InvalidUser()
+    public async Task EditUser_InvalidUser()
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var action = () => account_app.EditUser("Invalid username", new EditUserContext()).Wait();
+        var action = () => account_app.EditUser("Invalid username", new EditUserContext());
 
-        action.Should().Throw<UserException>();
+        await action.Should().ThrowAsync<UserException>();
     }
 }

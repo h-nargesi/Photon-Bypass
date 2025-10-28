@@ -20,9 +20,9 @@ Implement mock of used dependencies then test the function.
 Implement mock of all dependencies and test mid-level services.
 
 - IAccountApplication:
-	[ ] GetUser
-	[ ] GetFullInfo
-	[ ] EditUser
+	[+] GetUser
+	[+] GetFullInfo
+	[+] EditUser
 	[ ] ChangePassword
 	[ ] GetHistory
 - IAuthApplication:

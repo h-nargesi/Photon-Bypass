@@ -13,7 +13,7 @@ public partial class ServerManagementServiceTest : ServiceInitializer
     protected override void AddServices(HostApplicationBuilder builder)
     {
         var cloud = new Mock<ICloudRepository>();
-        cloud.Setup(x => x.FindWebCloud()).Returns(Task.FromResult(0));
+        cloud.Setup(x => x.FindWebCloud()).Returns(Task.FromResult(1));
         builder.Services.AddLazyScoped(_ => cloud.Object);
 
         var social = new Mock<ISocialMediaService>();
@@ -32,7 +32,7 @@ public partial class ServerManagementServiceTest : ServiceInitializer
         using var scope = App.Services.CreateScope();
         var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
 
-        var result = await manager.GetAvailableRealm(0);
+        var result = await manager.GetAvailableRealm(1);
 
         Assert.NotNull(result);
         Assert.Equal(5, result.Id);
