@@ -10,7 +10,7 @@ namespace PhotonBypass.Test.BasicFunctions.Application;
 
 public partial class ServerManagementServiceTest : ServiceInitializer
 {
-    protected override void AddServices(HostApplicationBuilder builder)
+    protected override void AddServices(IHostApplicationBuilder builder)
     {
         var cloud = new Mock<ICloudRepository>();
         cloud.Setup(x => x.FindWebCloud()).Returns(Task.FromResult(1));
@@ -23,7 +23,7 @@ public partial class ServerManagementServiceTest : ServiceInitializer
                 OnSocialMediaCall?.Invoke(social, alarms);
                 return Task.CompletedTask;
             });
-        builder.Services.AddLazyScoped(s => social.Object);
+        builder.Services.AddLazyScoped(ـ => social.Object);
     }
 
     [Fact]

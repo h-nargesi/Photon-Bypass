@@ -2,7 +2,7 @@
 
 public interface IStaticRepository
 {
-    int WebCloudID { get; }
+    int WebCloudId { get; }
 
     ProfileEntity DefaultProfile { get; }
 }

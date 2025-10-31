@@ -11,7 +11,7 @@ namespace PhotonBypass.Test.Application;
 
 public class ConnectionApplicationTest : ServiceInitializer
 {
-    protected override void AddServices(HostApplicationBuilder builder)
+    protected override void AddServices(IHostApplicationBuilder builder)
     {
         var price_repo = new Mock<IRadAcctRepository>();
         price_repo.Setup(x => x.GetCurrentConnectionList(It.IsNotNull<string>()))

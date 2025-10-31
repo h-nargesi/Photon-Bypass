@@ -9,7 +9,7 @@ namespace PhotonBypass.API;
 
 public static class ServiceFactory
 {
-    public static Builder AddAppServices<Builder>(this Builder builder) where Builder : IHostApplicationBuilder
+    public static TBuilder AddAppServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         LogConfiguration.InitializeLogService(builder.Configuration);
 

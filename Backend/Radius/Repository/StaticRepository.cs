@@ -7,11 +7,11 @@ class StaticRepository : IStaticRepository
     public StaticRepository(ICloudRepository cloud_repo,
         IProfileRepository profile_repo)
     {
-        WebCloudID = cloud_repo.FindWebCloud().Result;
-        DefaultProfile = profile_repo.FindDefaultProfile(WebCloudID).Result;
+        WebCloudId = cloud_repo.FindWebCloud().Result;
+        DefaultProfile = profile_repo.FindDefaultProfile(WebCloudId).Result;
     }
 
-    public int WebCloudID { get; }
+    public int WebCloudId { get; }
 
     public ProfileEntity DefaultProfile { get; }
 }

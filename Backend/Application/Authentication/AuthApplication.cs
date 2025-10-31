@@ -159,7 +159,7 @@ partial class AuthApplication(
             throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
         }
 
-        var realm = await ServerMngSrv.Value.GetAvailableRealm(StaticRepo.Value.WebCloudID);
+        var realm = await ServerMngSrv.Value.GetAvailableRealm(StaticRepo.Value.WebCloudId);
 
         if (await UserRepo.Value.CheckUsername(context.Username + realm.Suffix))
         {
@@ -171,7 +171,7 @@ partial class AuthApplication(
         var user = new PermanentUserEntity
         {
             Username = context.Username ?? string.Empty,
-            CloudId = StaticRepo.Value.WebCloudID,
+            CloudId = StaticRepo.Value.WebCloudId,
             Email = context.Email,
             Phone = context.Mobile,
             Name = context.Firstname,
@@ -194,7 +194,7 @@ partial class AuthApplication(
 
         var account = new AccountEntity
         {
-            CloudId = StaticRepo.Value.WebCloudID,
+            CloudId = StaticRepo.Value.WebCloudId,
             PermanentUserId = user.Id,
             Username = user.Username,
             Email = context.Email,

@@ -7,7 +7,7 @@ namespace PhotonBypass.Test.BasicFunctions.Infrastructure;
 
 public class PriceCalculatorTest : ServiceInitializer
 {
-    protected override void AddServices(HostApplicationBuilder builder)
+    protected override void AddServices(IHostApplicationBuilder builder)
     {
         var price_repository = new Mock<IPriceRepository>();
         price_repository.Setup(x => x.GetLeatest())

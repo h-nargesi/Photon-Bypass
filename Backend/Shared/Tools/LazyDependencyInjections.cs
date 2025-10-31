@@ -10,14 +10,14 @@ public static class LazyDependencyInjections
         where TImplementation : class, TService
     {
         services.AddScoped<TService, TImplementation>();
-        services.AddScoped(provider => new Lazy<TService>(() => provider.GetRequiredService<TService>()));
+        services.AddScoped(p => new Lazy<TService>(p.GetRequiredService<TService>));
     }
 
     public static void AddLazyScoped<TService>(this IServiceCollection services, Func<IServiceProvider, TService> provider)
         where TService : class
     {
         services.AddScoped(provider);
-        services.AddScoped(provider => new Lazy<TService>(() => provider.GetRequiredService<TService>()));
+        services.AddScoped(p => new Lazy<TService>(p.GetRequiredService<TService>));
     }
 
     public static void AddLazyTransient<TService, TImplementation>(this IServiceCollection services)
@@ -25,7 +25,7 @@ public static class LazyDependencyInjections
         where TImplementation : class, TService
     {
         services.AddTransient<TService, TImplementation>();
-        services.AddTransient(provider => new Lazy<TService>(() => provider.GetRequiredService<TService>()));
+        services.AddTransient(p => new Lazy<TService>(p.GetRequiredService<TService>));
     }
 
     public static void AddLazySingleton<TService, TImplementation>(this IServiceCollection services)
@@ -33,14 +33,14 @@ public static class LazyDependencyInjections
         where TImplementation : class, TService
     {
         services.AddSingleton<TService, TImplementation>();
-        services.AddSingleton(provider => new Lazy<TService>(() => provider.GetRequiredService<TService>()));
+        services.AddSingleton(p => new Lazy<TService>(p.GetRequiredService<TService>));
     }
 
     public static void AddLazySingleton<TService>(this IServiceCollection services)
         where TService : class
     {
         services.AddSingleton<TService>();
-        services.AddSingleton(provider => new Lazy<TService>(() => provider.GetRequiredService<TService>()));
+        services.AddSingleton(p => new Lazy<TService>(p.GetRequiredService<TService>));
     }
 
     public static void BindValidateReturn<TOptions>(this IServiceCollection services, IConfiguration configuration) where TOptions : class

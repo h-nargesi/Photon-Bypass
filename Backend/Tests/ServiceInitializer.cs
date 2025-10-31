@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Hosting;
 using PhotonBypass.API;
 using PhotonBypass.Test.MockOutSources;
-using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test;
 
@@ -14,9 +14,9 @@ public abstract class ServiceInitializer : IDisposable
         App = Initialize(types);
     }
 
-    private IHost Initialize(Type[] types)
+    private WebApplication Initialize(Type[] types)
     {
-        var builder = Host.CreateApplicationBuilder()
+        var builder = WebApplication.CreateBuilder()
             .AddAppServices();
 
         AddDefaultServices(builder, types.ToHashSet());
@@ -25,7 +25,7 @@ public abstract class ServiceInitializer : IDisposable
         return builder.Build();
     }
 
-    private static void AddDefaultServices(HostApplicationBuilder builder, HashSet<Type> mock_types)
+    private static void AddDefaultServices(WebApplicationBuilder builder, HashSet<Type> mock_types)
     {
         mock_types.Add(typeof(IOutSourceMoq));
         var types = AppDomain.CurrentDomain.GetAssemblies()
@@ -50,7 +50,7 @@ public abstract class ServiceInitializer : IDisposable
         }
     }
 
-    protected virtual void AddServices(HostApplicationBuilder builder)
+    protected virtual void AddServices(IHostApplicationBuilder builder)
     {
     }
 
