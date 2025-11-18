@@ -19,6 +19,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutSource", "OutSource\OutSource.csproj", "{E64259E9-DF3E-4CDB-B4A7-2E53346B6305}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Administration", "Administration\Administration.csproj", "{775C4ABC-0F71-4435-82F1-7F3E7C03B027}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mikrotik", "Mikrotik\Mikrotik.csproj", "{6C60AFD8-5143-4195-BACC-2E029EE81D9B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +61,14 @@ Global
 		{E64259E9-DF3E-4CDB-B4A7-2E53346B6305}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E64259E9-DF3E-4CDB-B4A7-2E53346B6305}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E64259E9-DF3E-4CDB-B4A7-2E53346B6305}.Release|Any CPU.Build.0 = Release|Any CPU
+		{775C4ABC-0F71-4435-82F1-7F3E7C03B027}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{775C4ABC-0F71-4435-82F1-7F3E7C03B027}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{775C4ABC-0F71-4435-82F1-7F3E7C03B027}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{775C4ABC-0F71-4435-82F1-7F3E7C03B027}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6C60AFD8-5143-4195-BACC-2E029EE81D9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6C60AFD8-5143-4195-BACC-2E029EE81D9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6C60AFD8-5143-4195-BACC-2E029EE81D9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6C60AFD8-5143-4195-BACC-2E029EE81D9B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
