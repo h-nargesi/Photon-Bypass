@@ -1,6 +1,7 @@
-﻿using PhotonBypass.Domain.Repository;
+﻿using PhotonBypass.Domain.Profile.Model;
+using PhotonBypass.Domain.Repository;
 
-namespace PhotonBypass.Domain.Vpn;
+namespace PhotonBypass.Domain.Profile;
 
 public interface ITrafficDataRepository : IEditableRepository<TrafficDataEntity>
 {

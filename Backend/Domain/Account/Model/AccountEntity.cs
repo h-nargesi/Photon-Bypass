@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Account;
+namespace PhotonBypass.Domain.Account.Model;
 
 [Table("Account")]
 public class AccountEntity : IBaseEntity
@@ -12,8 +12,6 @@ public class AccountEntity : IBaseEntity
     public bool Active { get; set; }
 
     public int CloudId { get; set; }
-
-    public int PermanentUserId { get; set; }
 
     public string Username { get; set; } = null!;
 
@@ -35,11 +33,11 @@ public class AccountEntity : IBaseEntity
 
     public bool EmailValid { get; set; }
 
-    public int Balance { get; set; }
-
     public DateTime? WarningTimes { get; set; }
 
     public bool SendWarning { get; set; }
 
     public string? Picture { get; set; }
+    
+    public DateTime CreatedTime { get; set; }
 }

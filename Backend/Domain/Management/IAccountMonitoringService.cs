@@ -6,7 +6,7 @@ public interface IAccountMonitoringService
 {
     static event Action<UserCheckingEvent>? OnUserChecking;
 
-    Task NotifSendServices(IEnumerable<UserPlanStateEntity> planStateList);
+    Task NotifSendServices(IEnumerable<UserPlanStateEntity> plan_state_list);
 
-    Task InactiveAbandonedUsers(IEnumerable<UserPlanStateEntity> planStateList);
+    Task InactiveAbandonedUsers(IEnumerable<UserPlanStateEntity> plan_state_list);
 }

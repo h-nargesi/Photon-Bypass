@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Vpn;
+namespace PhotonBypass.Domain.Profile.Model;
 
 [Table("TrafficData")]
 public class TrafficDataEntity : IBaseEntity
@@ -11,13 +11,17 @@ public class TrafficDataEntity : IBaseEntity
 
     public int AccountId { get; set; }
 
-    public DateTime Day { get; set; }
+    public int NasId { get; set; }
+
+    public DateTime StartSession { get; set; }
+
+    public DateTime EndSession { get; set; }
 
     public long DataIn { get; set; }
 
     public long DataOut { get; set; }
 
     public long TotalData => DataIn + DataOut;
-
+    
     public static TrafficDataEntity Empty { get; } = new TrafficDataEntity();
 }

@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Profile;
+namespace PhotonBypass.Domain.Profile.Model;
 
-[Table("top_ups")]
+[Table("TopUp")]
 public class TopUpEntity : IBaseEntity
 {
     private const long BYTES_IN_GIG = 1024 * 1024 * 1024;
@@ -11,22 +11,17 @@ public class TopUpEntity : IBaseEntity
     [Key]
     public int Id { get; set; }
 
-    [Column("cloud_id")]
     public int CloudId { get; set; }
 
-    [Column("permanent_user_id")]
-    public int PermanentUserId { get; set; }
+    public int AccountId { get; set; }
 
-    [Column("data")]
     public long? Data { get; set; }
 
     [NotMapped]
-    public long? GigaData => Data != null ? (Data / BYTES_IN_GIG) : null;
+    public long? GigaData => Data / BYTES_IN_GIG;
 
-    [Column("time")]
     public long? Time { get; set; }
 
-    [Column("days_to_use")]
     public int? DaysToUse { get; set; }
 
     public string? Comment { get; set; }
