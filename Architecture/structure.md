@@ -13,8 +13,12 @@ Business
 Domain
 
 ## Infrastructure
-Data Repository
-Mikrotik Radius Service
+Data Repository: Infrastructure
+Mikrotik Radius Service: Ssh Service
+FreeRadius: Infrastructure
 Outsource (Email/Media)
-Mikrotik Setup
+Mikrotik Setup: Ssh Service
+
+## Basical Services
+Infrastructure
 Ssh Service

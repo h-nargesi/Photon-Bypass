@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastru
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{5D0382C4-5DE8-4CD8-B54C-B8BE144B9A6D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Radius", "Radius\Radius.csproj", "{32512A36-5BB9-4537-854C-DD6745080892}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreeRadius", "FreeRadius\FreeRadius.csproj", "{32512A36-5BB9-4537-854C-DD6745080892}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{39670357-381C-41C0-B42A-A841FCAAA4D4}"
 EndProject
