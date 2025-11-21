@@ -19,9 +19,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OutSource", "OutSource\OutSource.csproj", "{E64259E9-DF3E-4CDB-B4A7-2E53346B6305}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Administration", "Administration\Administration.csproj", "{775C4ABC-0F71-4435-82F1-7F3E7C03B027}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Portal", "Portal\Portal.csproj", "{775C4ABC-0F71-4435-82F1-7F3E7C03B027}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mikrotik", "Mikrotik\Mikrotik.csproj", "{6C60AFD8-5143-4195-BACC-2E029EE81D9B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikrotikRadius", "MikrotikRadius\MikrotikRadius.csproj", "{6C60AFD8-5143-4195-BACC-2E029EE81D9B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
