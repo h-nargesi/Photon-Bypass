@@ -10,7 +10,7 @@ public class PriceCalculatorTest : ServiceInitializer
     protected override void AddServices(IHostApplicationBuilder builder)
     {
         var price_repository = new Mock<IPriceRepository>();
-        price_repository.Setup(x => x.GetLeatest())
+        price_repository.Setup(x => x.GetLatest())
             .Returns(Task.FromResult(Data));
         builder.Services.AddSingleton(price_repository.Object);
     }

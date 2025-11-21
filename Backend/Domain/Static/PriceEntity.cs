@@ -12,8 +12,6 @@ public class PriceEntity : IBaseEntity
 
     public bool IsActive { get; set; }
 
-    public PlanType PlanType { get; set; }
-
     public string Title { get; set; } = null!;
 
     public string Caption { get; set; } = null!;

@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Profile;
 
 namespace PhotonBypass.Domain.Services;
@@ -11,7 +12,7 @@ public interface ISocialMediaService
 
     Task InvalidPasswordAlert(string username);
 
-    Task FinishServiceAlert(string username, string phone, PlanType type, string left);
+    Task FinishServiceAlert(string username, string phone, string left);
 
     Task AlarmServerCapacity(IEnumerable<string> alarms);
 }

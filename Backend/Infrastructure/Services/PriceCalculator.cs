@@ -22,7 +22,7 @@ class PriceCalculator(IPriceRepository repository) : IPriceCalculator
 
     private static Dictionary<PlanType, MethodInfo> FetchCalculatorCode(IPriceRepository repository)
     {
-        var list = repository.GetLeatest().Result;
+        var list = repository.GetLatest().Result;
 
         return list.ToDictionary(k => k.PlanType, v => Compile(v.CalculatorCode));
     }

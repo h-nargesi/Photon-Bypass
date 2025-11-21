@@ -4,5 +4,5 @@ namespace PhotonBypass.Domain.Static;
 
 public interface IPriceRepository : IEditableRepository<PriceEntity>
 {
-    Task<IList<PriceEntity>> GetLeatest();
+    Task<IList<PriceEntity>> GetLatest();
 }

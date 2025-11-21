@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Radius;
+﻿using PhotonBypass.Domain.Servers;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Radius.Repository.DbContext;
 using PhotonBypass.Tools;
