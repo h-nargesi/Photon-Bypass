@@ -7,6 +7,10 @@
 		<RootNamespace>PhotonBypass.Application</RootNamespace>
 	</PropertyGroup>
 
+    <ItemGroup>
+        <PackageReference Include="Quartz.Extensions.Hosting" Version="3.14.0" />
+    </ItemGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\Domain\Domain.csproj" />
 		<ProjectReference Include="..\Shared\Shared.csproj" />
