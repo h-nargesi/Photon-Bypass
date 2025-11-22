@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>PhotonBypass</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Application\Application.csproj"/>
+        <ProjectReference Include="..\FreeRadius\FreeRadius.csproj"/>
+        <ProjectReference Include="..\MikrotikRadius\MikrotikRadius.csproj"/>
+        <ProjectReference Include="..\OutSource\OutSource.csproj"/>
+        <ProjectReference Include="..\OutSource\OutSource.csproj"/>
+    </ItemGroup>
+
+</Project>

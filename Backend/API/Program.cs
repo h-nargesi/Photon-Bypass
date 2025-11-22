@@ -1,8 +1,10 @@
+using PhotonBypass;
 using PhotonBypass.API;
 using PhotonBypass.ErrorHandler;
 
 var app = WebApplication.CreateBuilder(args)
     .AddAppServices()
+    .AddApiServices()
     .Build();
 
 // Configure the HTTP request pipeline.
