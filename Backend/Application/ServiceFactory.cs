@@ -7,23 +7,14 @@ using PhotonBypass.Application.Management;
 using PhotonBypass.Application.Plan;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain.Management;
-using PhotonBypass.FreeRadius;
-using PhotonBypass.Infra;
-using PhotonBypass.OutSource;
 using PhotonBypass.Tools;
-using Quartz;
-using Quartz.Simpl;
 
 namespace PhotonBypass.Application;
 
 public static class ServiceFactory
 {
-    public static void AddApplicationServices<Builder>(this Builder builder) where Builder : IHostApplicationBuilder
+    public static void AddApplicationServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        builder.AddInfrastructureServices();
-        builder.AddRadiuServices();
-        builder.AddOutSourceServices();
-
         builder.Services.BindValidateReturn<ManagementOptions>(builder.Configuration);
 
         builder.Services.AddLazyScoped<IAccountApplication, AccountApplication>();
@@ -40,11 +31,11 @@ public static class ServiceFactory
         {
             quartz.UseJobFactory<MicrosoftDependencyInjectionJobFactory>();
 
-            var jobKey = new JobKey("AccountMonitoringService");
-            quartz.AddJob<AccountMonitoringService>(opts => opts.WithIdentity(jobKey));
+            var job_key = new JobKey("AccountMonitoringService");
+            quartz.AddJob<AccountMonitoringService>(opts => opts.WithIdentity(job_key));
 
             quartz.AddTrigger(opts => opts
-                .ForJob(jobKey)
+                .ForJob(job_key)
                 .WithIdentity("AccountMonitoringService-trigger")
                 .WithSimpleSchedule(x => x
                     .WithIntervalInHours(1)
