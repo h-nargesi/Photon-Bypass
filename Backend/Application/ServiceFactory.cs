@@ -8,6 +8,8 @@ using PhotonBypass.Application.Plan;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Tools;
+using Quartz;
+using Quartz.Simpl;
 
 namespace PhotonBypass.Application;
 

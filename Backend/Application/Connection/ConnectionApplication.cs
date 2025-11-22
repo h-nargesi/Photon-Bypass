@@ -1,10 +1,9 @@
 ﻿using PhotonBypass.Application.Connection.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
-using PhotonBypass.FreeRadius.Entity;
-using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Result;
 using Serilog;
 
@@ -53,13 +52,13 @@ class ConnectionApplication(
         return ApiResult<IList<ConnectionStateModel>>.Success(result);
     }
 
-    public async Task<ApiResult> CloseConnection(string server, string target, string sessionId)
+    public async Task<ApiResult> CloseConnection(string server, string target, string session_id)
     {
         var nas = (await NasRepo.GetNasInfo(server))
             ?? throw new UserException("دسترسی غیرمجاز!",
-                $"Closing connection server is invalid: ({server}, {target}, {sessionId})");
+                $"Closing connection server is invalid: ({server}, {target}, {session_id})");
 
-        var result = await VpnNodeSrv.CloseConnection(nas, sessionId);
+        var result = await VpnNodeSrv.CloseConnection(nas, session_id);
 
         if (!result)
         {
@@ -76,7 +75,7 @@ class ConnectionApplication(
         });
 
         Log.Information("[user: {0}] Connection Closed: ({1}, {2}, {3})", 
-            JobContext.Value.Username, server, target, sessionId);
+            JobContext.Value.Username, server, target, session_id);
 
         return ApiResult.Success("کانکشن بسته شد.");
     }
