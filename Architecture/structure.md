@@ -16,7 +16,7 @@ Domain
 Data Repository: Infrastructure, Domain
 Mikrotik Radius Service: Ssh Service, Domain
 FreeRadius: Infrastructure, Domain
-Outsource (Email/Media), Domain
+Outsource (Email/Media): Domain
 Mikrotik Setup: Ssh Service, Domain
 
 ## Basical Services
