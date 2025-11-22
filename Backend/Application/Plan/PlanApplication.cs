@@ -16,7 +16,7 @@ namespace PhotonBypass.Application.Plan;
 
 class PlanApplication(
     Lazy<IPermanentUsersRepository> UserRepo,
-    Lazy<IUserPlanStateRepository> PlanRepo,
+    Lazy<IAccountProfileRepository> PlanRepo,
     Lazy<ITopUpRepository> TopUpRepo,
     Lazy<IPriceCalculator> PriceCalc,
     Lazy<IAccountRepository> AccountRepo,

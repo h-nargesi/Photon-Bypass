@@ -21,14 +21,14 @@ class AccountApplication(
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
         var user = await AccountRepo.Value.GetAccount(username) ??
-            throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
+                   throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
 
         var target_area = (await AccountRepo.Value.GetTargetArea(user.Id))
-            .Select(user => new TargetModel
+            .Select(entity => new TargetModel
             {
-                Username = user.Username,
-                Fullname = user.Fullname,
-                Email = user.Email,
+                Username = entity.Username,
+                Fullname = entity.Fullname,
+                Email = entity.Email,
             })
             .ToDictionary(k => k.Username);
 
@@ -46,7 +46,7 @@ class AccountApplication(
     public async Task<ApiResult<FullUserModel>> GetFullInfo(string target)
     {
         var user = await AccountRepo.Value.GetAccount(target) ??
-            throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
+                   throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
 
         return ApiResult<FullUserModel>.Success(new FullUserModel
         {
@@ -62,28 +62,13 @@ class AccountApplication(
 
     public async Task<ApiResult> EditUser(string target, EditUserModel model)
     {
-        if (string.IsNullOrWhiteSpace(model.Email) && string.IsNullOrWhiteSpace(model.Mobile))
-        {
-            throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
-        }
-
         var account = await AccountRepo.Value.GetAccount(target) ??
-            throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
+                      throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
         account.SetFromModel(model);
 
-        Task? radiusSyncTask;
-        if (RadiusSrv.IsValueCreated)
-        {
-            radiusSyncTask = RadiusSrv.Value.SaveUserPersonalInfo(account);
-        }
-        else radiusSyncTask = null;
-
-        await AccountRepo.Value.Save(account);
-
-        if (radiusSyncTask != null)
-        {
-            await radiusSyncTask;
-        }
+        Task.WaitAll(
+            RadiusSrv.Value.SaveUserPersonalInfo(account),
+            AccountRepo.Value.Save(account));
 
         return ApiResult.Success("ذخیره شد.");
     }

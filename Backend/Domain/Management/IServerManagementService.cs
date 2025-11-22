@@ -5,7 +5,7 @@ namespace PhotonBypass.Domain.Management;
 
 public interface IServerManagementService
 {
-    Task<RealmEntity> GetAvailableNas();
+    Task<RealmEntity> GetAvailableRealm();
 
     Task<CertContext> GetDefaultCertificate(int realm_id);
 

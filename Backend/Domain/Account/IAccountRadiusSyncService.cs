@@ -4,7 +4,7 @@ namespace PhotonBypass.Domain.Account;
 
 public interface IAccountRadiusSyncService
 {
-    Task<AccountEntity> GetUser(string username);
+    Task<AccountEntity?> GetUser(string username);
 
     Task SaveUserPersonalInfo(AccountEntity account);
 

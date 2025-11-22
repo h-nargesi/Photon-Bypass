@@ -12,7 +12,7 @@ using PhotonBypass.FreeRadius.Entity;
 namespace PhotonBypass.Application.Management;
 
 class AccountMonitoringService(
-    IUserPlanStateRepository PlanStateRepo,
+    IAccountProfileRepository PlanStateRepo,
     IPermanentUsersRepository UserRepo,
     IAccountRepository AccountRepo,
     IHistoryRepository HistoryRepo,

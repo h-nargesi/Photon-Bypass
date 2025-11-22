@@ -22,7 +22,7 @@ class VpnApplication(
     Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IRealmRepository> RealmRepo,
-    Lazy<IUserPlanStateRepository> PlanStateRepo,
+    Lazy<IAccountProfileRepository> PlanStateRepo,
     Lazy<INasRepository> NasRepo,
     Lazy<IJobContext> JobContext)
     : IVpnApplication

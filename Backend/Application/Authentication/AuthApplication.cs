@@ -27,26 +27,30 @@ partial class AuthApplication(
 {
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
-        password ??= string.Empty;
-
         var account = await AccountRepo.GetAccount(username) ??
             await CopyFromPermanentUser(username, password);
 
         if (account == null || account.Password != HashHandler.HashPassword(password))
         {
-            if (account != null)
+            if (account == null)
             {
-                _ = SocialMediaSrv.Value.InvalidPasswordAlert(account.Username);
-                _ = HistoryRepo.Value.Save(new HistoryEntity
+                return new ApiResult<UserModel>
                 {
-                    Target = account.Username,
-                    EventTime = DateTime.Now,
-                    Title = "امنیت",
-                    Description = "تلاش برای ورود با کلمه عبور اشتباه",
-                });
-
-                Log.Warning("Invlid password for {0}", account.Username);
+                    Code = 401,
+                    Data = null,
+                };
             }
+            
+            _ = SocialMediaSrv.Value.InvalidPasswordAlert(account.Username);
+            _ = HistoryRepo.Value.Save(new HistoryEntity
+            {
+                Target = account.Username,
+                EventTime = DateTime.Now,
+                Title = "امنیت",
+                Description = "تلاش برای ورود با کلمه عبور اشتباه",
+            });
+
+            Log.Warning("Invalid password for {0}", account.Username);
 
             return new ApiResult<UserModel>
             {
@@ -119,31 +123,30 @@ partial class AuthApplication(
         {
             var account = await AccountRepo.GetAccountByMobile(email_mobile);
 
-            if (account != null)
+            if (account == null) throw new UserException("کاربر یافت نشد.");
+            
+            var hash_code = HashHandler.GenerateHashCode(56);
+
+            var insert_task = ResetPassRepo.Value.AddHashCode(new ResetPassEntity
             {
-                var hash_code = HashHandler.GenerateHashCode(56);
+                AccountId = account.Id,
+                ExpireDate = DateTime.Now.AddDays(1),
+                HashCode = hash_code,
+            });
 
-                var insertTask = ResetPassRepo.Value.AddHashCode(new ResetPassEntity
-                {
-                    AccountId = account.Id,
-                    ExpireDate = DateTime.Now.AddDays(1),
-                    HashCode = hash_code,
-                });
+            var email_task = EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
 
-                var emailTask = EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
+            _ = HistoryRepo.Value.Save(new HistoryEntity
+            {
+                Target = account.Username,
+                EventTime = DateTime.Now,
+                Title = "امنیت",
+                Description = "درخواست تغییر کلمه عبور (ایمیل)",
+            });
 
-                _ = HistoryRepo.Value.Save(new HistoryEntity
-                {
-                    Target = account.Username,
-                    EventTime = DateTime.Now,
-                    Title = "امنیت",
-                    Description = "درخواست تغییر کلمه عبور (ایمیل)",
-                });
+            Log.Verbose("Reset-Password email has been sent: {0}", email_mobile);
 
-                Log.Verbose("Reset-Password email has been sent: {0}", email_mobile);
-
-                Task.WaitAll(insertTask, emailTask);
-            }
+            Task.WaitAll(insert_task, email_task);
 
             return ApiResult.Success("ایمیل ارسال شد.");
         }
@@ -156,36 +159,26 @@ partial class AuthApplication(
     {
         var account = AccountBusiness.CreateFromModel(model);
 
-        if (await RadiusSrv.Value.CheckUsername(account.Username))
+        if (await AccountRepo.CheckUsername(account.Username))
         {
             throw new UserException("این نام کاربری قبلا استفاده شده است!");
         }
 
-        model.Password ??= string.Empty;
-
-        await RadiusSrv.Value.RegisterUser(user, model.Password);
-
-        if (user.Id < 1)
-        {
-            return ApiResult.Success("کاربر شما ساخته شد.");
-        }
-
-        var realm = await ServerMngSrv.Value.GetAvailableNas();
-
-        var setting_server = RadiusSrv.Value.SetRestrictedServer(user.Username, realm.RestrictedServerIP);
-
-        var account = kkl;
-
-
-        Password = HashHandler.HashPassword(model.Password);
+        account.Password = HashHandler.HashPassword(model.Password ?? string.Empty);
 
         var account_saving = AccountRepo.Save(account);
+
+        var realm = await ServerMngSrv.Value.GetAvailableRealm();
+
+        var accouint RadiusSrv.Value.RegisterUser(account);
+
+        var setting_server = RadiusSrv.Value.SetRestrictedServer(user.Username, realm);
 
         _ = SocialMediaSrv.Value.NewUserRegistrationAlert(account);
 
         Task.WaitAll(account_saving, setting_server);
 
-        Log.Information("New User Registred: ({0}, {1})", account.Username, account.Email);
+        Log.Information("New User Registered: ({0}, {1})", account.Username, account.Email);
 
         return ApiResult.Success("کاربر شما ساخته شد.");
     }
