@@ -1,24 +1,20 @@
-﻿using PhotonBypass.Application.Account.Model;
+﻿using System.Text.RegularExpressions;
+using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
-using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
-using System.Text.RegularExpressions;
-using PhotonBypass.Domain.Account.Business;
 
 namespace PhotonBypass.Application.Authentication;
 
 partial class AuthApplication(
     IAccountRepository AccountRepo,
     Lazy<IResetPassRepository> ResetPassRepo,
-    Lazy<IPermanentUsersRepository> UserRepo,
-    Lazy<IStaticRepository> StaticRepo,
-    Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IAccountRadiusSyncService> RadiusSrv,
     Lazy<IEmailService> EmailSrv,
     Lazy<ISocialMediaService> SocialMediaSrv,
@@ -166,17 +162,9 @@ partial class AuthApplication(
 
         account.Password = HashHandler.HashPassword(model.Password ?? string.Empty);
 
-        var account_saving = AccountRepo.Save(account);
-
-        var realm = await ServerMngSrv.Value.GetAvailableRealm();
-
-        var accouint RadiusSrv.Value.RegisterUser(account);
-
-        var setting_server = RadiusSrv.Value.SetRestrictedServer(user.Username, realm);
+        await AccountRepo.Save(account);
 
         _ = SocialMediaSrv.Value.NewUserRegistrationAlert(account);
-
-        Task.WaitAll(account_saving, setting_server);
 
         Log.Information("New User Registered: ({0}, {1})", account.Username, account.Email);
 
