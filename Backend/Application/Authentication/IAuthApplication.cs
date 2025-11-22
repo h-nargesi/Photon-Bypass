@@ -1,6 +1,6 @@
 ﻿using PhotonBypass.Application.Account.Model;
-using PhotonBypass.Application.Authentication.Model;
-using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Authentication;
@@ -11,7 +11,7 @@ public interface IAuthApplication
 
     Task<ApiResult> ResetPassword(string email_mobile);
 
-    Task<ApiResult> Register(RegisterContext context);
+    Task<ApiResult> Register(RegisterModel context);
     
     Task<AccountEntity?> CopyFromPermanentUser(string username, string? password);
 }

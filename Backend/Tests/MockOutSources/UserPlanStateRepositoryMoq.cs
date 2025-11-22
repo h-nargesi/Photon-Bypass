@@ -1,6 +1,8 @@
 ﻿using System.Text.Json;
 using Moq;
 using PhotonBypass.Domain.Profile;
+using PhotonBypass.FreeRadius.Entity;
+using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockOutSources;

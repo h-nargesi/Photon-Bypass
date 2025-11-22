@@ -3,7 +3,7 @@ using MySql.Data.MySqlClient;
 using PhotonBypass.Infra.Database;
 using System.Data;
 
-namespace PhotonBypass.Radius.Repository.DbContext;
+namespace PhotonBypass.FreeRadius.Repository.DbContext;
 
 class RadDbContext(IOptions<RadDapperOptions> options) : DapperDbContext()
 {

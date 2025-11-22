@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Account.Model;
+namespace PhotonBypass.Domain.Account.Entity;
 
 [Table("Account")]
 public class AccountEntity : IBaseEntity
@@ -33,11 +33,13 @@ public class AccountEntity : IBaseEntity
 
     public bool EmailValid { get; set; }
 
+    public int Balance { get; set; }
+
     public DateTime? WarningTimes { get; set; }
 
     public bool SendWarning { get; set; }
 
     public string? Picture { get; set; }
-    
+
     public DateTime CreatedTime { get; set; }
 }

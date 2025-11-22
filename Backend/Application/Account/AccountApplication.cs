@@ -1,8 +1,9 @@
 ﻿using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Radius;
+using PhotonBypass.Domain.Account.Business;
+using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
@@ -12,15 +13,14 @@ namespace PhotonBypass.Application.Account;
 
 class AccountApplication(
     Lazy<IAccountRepository> AccountRepo,
-    Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<IHistoryRepository> HistoryRepo,
-    Lazy<IRadiusService> RadiusSrv,
+    Lazy<IAccountRadiusSyncService> RadiusSrv,
     Lazy<IJobContext> JobContext)
     : IAccountApplication
 {
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
-        var user = await AccountRepo.Value.GetAccount(username) ?? 
+        var user = await AccountRepo.Value.GetAccount(username) ??
             throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
 
         var target_area = (await AccountRepo.Value.GetTargetArea(user.Id))
@@ -60,28 +60,30 @@ class AccountApplication(
         });
     }
 
-    public async Task<ApiResult> EditUser(string target, EditUserContext model)
+    public async Task<ApiResult> EditUser(string target, EditUserModel model)
     {
         if (string.IsNullOrWhiteSpace(model.Email) && string.IsNullOrWhiteSpace(model.Mobile))
         {
             throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
         }
 
-        var userLoadingTask = UserRepo.Value.GetUser(target);
-        var accountLoadingTask = AccountRepo.Value.GetAccount(target);
-
-        var account = await accountLoadingTask ??
+        var account = await AccountRepo.Value.GetAccount(target) ??
             throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
-        SetAccount(account, model);
+        account.SetFromModel(model);
 
-        var user = await userLoadingTask ??
-            throw new UserException("کاربر پیدا نشد!", $"PermenantUser not found. target:{target}");
-        SetPermanentUser(user, model);
+        Task? radiusSyncTask;
+        if (RadiusSrv.IsValueCreated)
+        {
+            radiusSyncTask = RadiusSrv.Value.SaveUserPersonalInfo(account);
+        }
+        else radiusSyncTask = null;
 
-        var savingUserTask = RadiusSrv.Value.SaveUserPersonalInfo(user);
-        var savingAccountTask = AccountRepo.Value.Save(account);
+        await AccountRepo.Value.Save(account);
 
-        Task.WaitAll(savingAccountTask, savingUserTask);
+        if (radiusSyncTask != null)
+        {
+            await radiusSyncTask;
+        }
 
         return ApiResult.Success("ذخیره شد.");
     }
@@ -147,28 +149,5 @@ class AccountApplication(
         });
 
         return ApiResult<IList<HistoryModel>>.Success([.. result]);
-    }
-
-    private static void SetAccount(AccountEntity account, EditUserContext model)
-    {
-        account.Name = model.Firstname;
-        account.Surname = model.Lastname;
-
-        if (account.Email != model.Email)
-            account.EmailValid = false;
-
-        if (account.Mobile != model.Mobile)
-            account.MobileValid = false;
-
-        account.Email = model.Email;
-        account.Mobile = model.Mobile;
-    }
-
-    private static void SetPermanentUser(PermanentUserEntity user, EditUserContext model)
-    {
-        user.Name = model.Firstname;
-        user.Surname = model.Lastname;
-        user.Email = model.Email;
-        user.Phone = model.Mobile;
     }
 }

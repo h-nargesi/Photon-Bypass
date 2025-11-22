@@ -2,9 +2,9 @@
 using Moq;
 using PhotonBypass.Application.Connection;
 using PhotonBypass.Application.Connection.Model;
-using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
+using PhotonBypass.FreeRadius.Entity;
+using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Application;

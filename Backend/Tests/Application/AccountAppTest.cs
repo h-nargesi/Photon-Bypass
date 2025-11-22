@@ -1,6 +1,7 @@
 ﻿using FluentAssertions;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
 
 namespace PhotonBypass.Test.Application;
@@ -60,12 +61,12 @@ public class AccountAppTest : ServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
-        var result = await account_app.EditUser("User1", new EditUserContext
+        var result = await account_app.EditUser("User1", new EditUserModel
         {
-            Firstname = nameof(EditUserContext.Firstname),
-            Lastname = nameof(EditUserContext.Lastname),
-            Email = nameof(EditUserContext.Email),
-            Mobile = nameof(EditUserContext.Mobile),
+            Firstname = nameof(EditUserModel.Firstname),
+            Lastname = nameof(EditUserModel.Lastname),
+            Email = nameof(EditUserModel.Email),
+            Mobile = nameof(EditUserModel.Mobile),
         });
 
         Assert.NotNull(result);
@@ -78,7 +79,7 @@ public class AccountAppTest : ServiceInitializer
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var action = () => account_app.EditUser("Invalid username", new EditUserContext());
+        var action = () => account_app.EditUser("Invalid username", new EditUserModel());
 
         await action.Should().ThrowAsync<UserException>();
     }

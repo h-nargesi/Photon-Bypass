@@ -1,5 +1,5 @@
 ﻿using PhotonBypass.Application.Plan.Model;
-using PhotonBypass.Domain.Profile;
+using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Plan;

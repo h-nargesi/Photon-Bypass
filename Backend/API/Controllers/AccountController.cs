@@ -6,6 +6,7 @@ using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
@@ -38,7 +39,7 @@ public class AccountController(
     }
 
     [HttpPost("edit-user")]
-    public async Task<ApiResult> EditUser([FromQuery] string? target, [FromBody] EditUserContext context)
+    public async Task<ApiResult> EditUser([FromQuery] string? target, [FromBody] EditUserModel context)
     {
         LoadJobContext(target);
 
@@ -68,7 +69,7 @@ public class AccountController(
     }
 
     [HttpGet("history")]
-    public async Task<ApiResult> GetHistory([FromQuery] string? target, [FromQuery] HistoryContext context)
+    public async Task<ApiResult> GetHistory([FromQuery] string? target, [FromQuery] Context.HistoryContext context)
     {
         LoadJobContext(target);
 

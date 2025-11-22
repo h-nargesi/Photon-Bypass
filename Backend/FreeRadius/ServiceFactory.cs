@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Hosting;
 using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Radius;
-using PhotonBypass.Radius.Repository;
-using PhotonBypass.Radius.Repository.DbContext;
-using PhotonBypass.Radius.WebService;
+using PhotonBypass.FreeRadius.Interfaces;
+using PhotonBypass.FreeRadius.Repository;
+using PhotonBypass.FreeRadius.Repository.DbContext;
+using PhotonBypass.FreeRadius.WebService;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Radius;
+namespace PhotonBypass.FreeRadius;
 
 public static class ServiceFactory
 {

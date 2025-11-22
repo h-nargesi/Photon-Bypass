@@ -6,7 +6,8 @@ using PhotonBypass.Application.Plan;
 using Serilog;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Application.Authentication;
-using PhotonBypass.Domain.Radius;
+using PhotonBypass.FreeRadius.Interfaces;
+using PhotonBypass.FreeRadius.Entity;
 
 namespace PhotonBypass.Application.Management;
 

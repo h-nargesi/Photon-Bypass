@@ -6,6 +6,7 @@ using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Authentication.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Result;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -74,7 +75,7 @@ public class AuthController(
     }
 
     [HttpPost("register")]
-    public async Task<ApiResult> Register([FromBody] RegisterContext context)
+    public async Task<ApiResult> Register([FromBody] RegisterModel context)
     {
         if (string.IsNullOrWhiteSpace(context.Username))
         {

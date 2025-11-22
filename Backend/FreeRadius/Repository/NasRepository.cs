@@ -1,9 +1,10 @@
 ﻿using PhotonBypass.Domain.Servers;
+using PhotonBypass.Domain.Servers.Model;
+using PhotonBypass.FreeRadius.Repository.DbContext;
 using PhotonBypass.Infra.Database;
-using PhotonBypass.Radius.Repository.DbContext;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Radius.Repository;
+namespace PhotonBypass.FreeRadius.Repository;
 
 class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context), INasRepository
 {

@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Profile;
+﻿using PhotonBypass.FreeRadius.Entity;
 using System.Text.Json.Serialization;
 
 namespace PhotonBypass.Test.MockOutSources.Models;

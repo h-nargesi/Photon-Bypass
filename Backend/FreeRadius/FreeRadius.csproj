@@ -4,7 +4,7 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<RootNamespace>PhotonBypass.Radius</RootNamespace>
+		<RootNamespace>PhotonBypass.FreeRadius</RootNamespace>
 	</PropertyGroup>
 
 	<ItemGroup>

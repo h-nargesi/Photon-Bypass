@@ -1,6 +1,8 @@
 ﻿using PhotonBypass.Domain.Profile;
+using PhotonBypass.FreeRadius.Entity;
+using PhotonBypass.FreeRadius.Interfaces;
 
-namespace PhotonBypass.Radius.Repository;
+namespace PhotonBypass.FreeRadius.Repository;
 
 class StaticRepository : IStaticRepository
 {

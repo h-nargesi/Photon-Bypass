@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Radius.Repository.DbContext;
+﻿namespace PhotonBypass.FreeRadius.Repository.DbContext;
 
 class RadDapperOptions
 {

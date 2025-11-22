@@ -3,10 +3,10 @@ using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
-using PhotonBypass.Domain.Vpn;
 using PhotonBypass.ErrorHandler;
+using PhotonBypass.FreeRadius.Entity;
+using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 

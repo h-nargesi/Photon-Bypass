@@ -1,0 +1,37 @@
+﻿using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
+
+namespace PhotonBypass.Domain.Account.Business;
+
+public static class AccountBusiness
+{
+    public static void SetFromModel(this AccountEntity account, EditUserModel model)
+    {
+        account.Name = model.Firstname;
+        account.Surname = model.Lastname;
+
+        if (account.Email != model.Email)
+            account.EmailValid = false;
+
+        if (account.Mobile != model.Mobile)
+            account.MobileValid = false;
+
+        account.Email = model.Email;
+        account.Mobile = model.Mobile;
+    }
+
+    public static AccountEntity CreateFromModel(EditUserModel model)
+    {
+        return new AccountEntity
+        {
+            CloudId = StaticRepo.Value.WebCloudId,
+            Username = user.Username,
+            Email = model.Email,
+            EmailValid = false,
+            Mobile = model.Mobile,
+            MobileValid = false,
+            Name = model.Firstname,
+            Surname = model.Lastname,
+        };
+    }
+}

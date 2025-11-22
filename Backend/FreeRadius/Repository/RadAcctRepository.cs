@@ -1,9 +1,10 @@
-﻿using PhotonBypass.Domain.Profile;
+﻿using PhotonBypass.FreeRadius.Entity;
+using PhotonBypass.FreeRadius.Interfaces;
+using PhotonBypass.FreeRadius.Repository.DbContext;
 using PhotonBypass.Infra.Database;
-using PhotonBypass.Radius.Repository.DbContext;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Radius.Repository;
+namespace PhotonBypass.FreeRadius.Repository;
 
 class RadAcctRepository(RadDbContext context) : DapperRepository<RadAcctEntity>(context), IRadAcctRepository
 {

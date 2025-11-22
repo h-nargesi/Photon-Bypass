@@ -1,6 +1,6 @@
-﻿namespace PhotonBypass.Application.Account.Model;
+﻿namespace PhotonBypass.Domain.Account.Model;
 
-public class EditUserContext
+public class EditUserModel
 {
     public string? Email { get; set; }
 
@@ -11,7 +11,7 @@ public class EditUserContext
     public string? Lastname { get; set; }
 }
 
-public class FullUserModel : EditUserContext
+public class FullUserModel : EditUserModel
 {
     public string Username { get; set; } = null!;
 

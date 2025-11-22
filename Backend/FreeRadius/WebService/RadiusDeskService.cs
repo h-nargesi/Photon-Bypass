@@ -1,13 +1,12 @@
 ﻿using System.Net.Http.Json;
 using System.Web;
 using Microsoft.Extensions.Options;
-using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Radius;
-using PhotonBypass.Domain.Vpn;
-using PhotonBypass.Radius.WebService.ApiResponseModel;
+using PhotonBypass.FreeRadius.Entity;
+using PhotonBypass.FreeRadius.Interfaces;
+using PhotonBypass.FreeRadius.WebService.ApiResponseModel;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Radius.WebService;
+namespace PhotonBypass.FreeRadius.WebService;
 
 class RadiusDeskService : IRadiusService, IDisposable
 {

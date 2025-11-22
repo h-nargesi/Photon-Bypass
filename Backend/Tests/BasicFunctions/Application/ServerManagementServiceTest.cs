@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Moq;
 using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Services;
+using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Tools;
 using System.Text.RegularExpressions;
 

@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Profile;
+﻿using PhotonBypass.FreeRadius.Entity;
 
 namespace PhotonBypass.API.Context;
 

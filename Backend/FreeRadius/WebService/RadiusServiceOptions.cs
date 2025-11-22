@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Radius.WebService;
+﻿namespace PhotonBypass.FreeRadius.WebService;
 
 class RadiusServiceOptions
 {

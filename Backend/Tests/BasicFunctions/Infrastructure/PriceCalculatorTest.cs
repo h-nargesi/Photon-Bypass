@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Moq;
-using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Static;
+using PhotonBypass.FreeRadius.Entity;
 
 namespace PhotonBypass.Test.BasicFunctions.Infrastructure;
 

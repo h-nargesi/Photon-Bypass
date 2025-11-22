@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Account.Model;
+namespace PhotonBypass.Domain.Account.Entity;
 
 [Table("History")]
 public class HistoryEntity : IBaseEntity

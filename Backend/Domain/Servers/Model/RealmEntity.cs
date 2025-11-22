@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Servers;
+namespace PhotonBypass.Domain.Servers.Model;
 
 [Table("Realm")]
 public class RealmEntity

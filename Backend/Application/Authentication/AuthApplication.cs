@@ -1,9 +1,8 @@
 ﻿using PhotonBypass.Application.Account.Model;
-using PhotonBypass.Application.Authentication.Model;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
@@ -19,7 +18,7 @@ partial class AuthApplication(
     Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<IStaticRepository> StaticRepo,
     Lazy<IServerManagementService> ServerMngSrv,
-    Lazy<IRadiusService> RadiusSrv,
+    Lazy<IAccountRadiusSyncService> RadiusSrv,
     Lazy<IEmailService> EmailSrv,
     Lazy<ISocialMediaService> SocialMediaSrv,
     Lazy<IHistoryRepository> HistoryRepo)
@@ -152,36 +151,24 @@ partial class AuthApplication(
             $"Invalid Email/Mobile: {email_mobile}");
     }
 
-    public async Task<ApiResult> Register(RegisterContext context)
+    public async Task<ApiResult> Register(RegisterModel context)
     {
+        if (string.IsNullOrWhiteSpace(context.Username))
+        {
+            throw new UserException("نام کاربری خالیست!");
+        }
+
         if (string.IsNullOrWhiteSpace(context.Email) && string.IsNullOrWhiteSpace(context.Mobile))
         {
             throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
         }
 
-        var realm = await ServerMngSrv.Value.GetAvailableRealm(StaticRepo.Value.WebCloudId);
+        context.Password ??= string.Empty;
 
-        if (await UserRepo.Value.CheckUsername(context.Username + realm.Suffix))
+        if (await RadiusSrv.Value.CheckUsername(context.Username))
         {
             throw new UserException("این نام کاربری قبلا استفاده شده است!");
         }
-
-        context.Password ??= string.Empty;
-
-        var user = new PermanentUserEntity
-        {
-            Username = context.Username ?? string.Empty,
-            CloudId = StaticRepo.Value.WebCloudId,
-            Email = context.Email,
-            Phone = context.Mobile,
-            Name = context.Firstname,
-            Surname = context.Lastname,
-            Realm = realm.Name,
-            RealmId = realm.Id,
-            Profile = StaticRepo.Value.DefaultProfile.Name,
-            ProfileId = StaticRepo.Value.DefaultProfile.Id,
-            Active = false,
-        };
 
         await RadiusSrv.Value.RegisterPermenentUser(user, context.Password);
 
@@ -190,21 +177,14 @@ partial class AuthApplication(
             return ApiResult.Success("کاربر شما ساخته شد.");
         }
 
+        var realm = await ServerMngSrv.Value.GetAvailableNas();
+
         var setting_server = RadiusSrv.Value.SetRestrictedServer(user.Username, realm.RestrictedServerIP);
 
-        var account = new AccountEntity
-        {
-            CloudId = StaticRepo.Value.WebCloudId,
-            PermanentUserId = user.Id,
-            Username = user.Username,
-            Email = context.Email,
-            EmailValid = false,
-            Mobile = context.Mobile,
-            MobileValid = false,
-            Name = context.Firstname,
-            Surname = context.Lastname,
-            Password = HashHandler.HashPassword(context.Password),
-        };
+        var account = kkl;
+
+
+        Password = HashHandler.HashPassword(model.Password);
 
         var account_saving = AccountRepo.Save(account);
 
@@ -219,32 +199,16 @@ partial class AuthApplication(
 
     public async Task<AccountEntity?> CopyFromPermanentUser(string username, string? password)
     {
-        var user = await UserRepo.Value.GetUser(username);
+        if (!RadiusSrv.IsValueCreated) return null;
 
-        if (user == null) return null;
+        var account = await RadiusSrv.Value.GetUser(username);
 
-        var real_pass = await RadiusSrv.Value.GetOvpnPassword(user.Id)
-            ?? throw new Exception("Error to retrive password from radius-desk!");
+        if (account == null) return null;
 
-        if (password != null && real_pass != password)
+        if (password != null && account.Password != password)
         {
             return null;
         }
-
-        var account = new AccountEntity
-        {
-            PermanentUserId = user.Id,
-            Username = username,
-            Password = real_pass,
-            Active = true,
-            CloudId = user.CloudId,
-            Email = user.Email,
-            EmailValid = true,
-            Mobile = user.Phone,
-            MobileValid = true,
-            Name = user.Name,
-            Surname = user.Surname,
-        };
 
         await AccountRepo.Save(account);
 

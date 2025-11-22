@@ -1,10 +1,10 @@
 ﻿using PhotonBypass.Application.Connection.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Radius;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
+using PhotonBypass.FreeRadius.Entity;
+using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Result;
 using Serilog;
 

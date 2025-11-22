@@ -1,10 +1,11 @@
 ﻿using Dapper.FastCrud;
-using PhotonBypass.Domain.Profile;
+using PhotonBypass.FreeRadius.Entity;
+using PhotonBypass.FreeRadius.Interfaces;
+using PhotonBypass.FreeRadius.Repository.DbContext;
 using PhotonBypass.Infra.Database;
-using PhotonBypass.Radius.Repository.DbContext;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Radius.Repository;
+namespace PhotonBypass.FreeRadius.Repository;
 
 class RealmRepository(RadDbContext context) : DapperRepository<RealmEntity>(context), IRealmRepository
 {
