@@ -26,12 +26,21 @@ public static class AccountBusiness
         account.Mobile = model.Mobile;
     }
 
-    public static AccountEntity CreateFromModel(EditUserModel model)
+    public static AccountEntity CreateFromModel(RegisterModel model)
     {
+        if (string.IsNullOrWhiteSpace(model.Username))
+        {
+            throw new UserException("نام کاربری خالیست!");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Email) && string.IsNullOrWhiteSpace(model.Mobile))
+        {
+            throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
+        }
+
         return new AccountEntity
         {
-            CloudId = StaticRepo.Value.WebCloudId,
-            Username = user.Username,
+            Username = model.Username,
             Email = model.Email,
             EmailValid = false,
             Mobile = model.Mobile,

@@ -154,17 +154,12 @@ partial class AuthApplication(
 
     public async Task<ApiResult> Register(RegisterModel model)
     {
-        if (string.IsNullOrWhiteSpace(model.Username))
-        {
-            throw new UserException("نام کاربری خالیست!");
-        }
+        var account = AccountBusiness.CreateFromModel(model);
 
-        if (await RadiusSrv.Value.CheckUsername(model.Username))
+        if (await RadiusSrv.Value.CheckUsername(account.Username))
         {
             throw new UserException("این نام کاربری قبلا استفاده شده است!");
         }
-
-        var account = AccountBusiness.CreateFromModel(model);
 
         model.Password ??= string.Empty;
 
