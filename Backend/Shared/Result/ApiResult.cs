@@ -20,13 +20,13 @@ public class ApiResult
     }
 }
 
-public class ApiResult<Model> : ApiResult
+public class ApiResult<TModel> : ApiResult
 {
-    public Model? Data { get; set; }
+    public TModel? Data { get; set; }
 
-    public static ApiResult<Model> Success(Model model)
+    public static ApiResult<TModel> Success(TModel model)
     {
-        return new ApiResult<Model>
+        return new ApiResult<TModel>
         {
             Code = 200,
             Data = model,

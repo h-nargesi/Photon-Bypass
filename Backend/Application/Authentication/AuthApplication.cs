@@ -9,6 +9,7 @@ using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
 using System.Text.RegularExpressions;
+using PhotonBypass.Domain.Account.Business;
 
 namespace PhotonBypass.Application.Authentication;
 
@@ -151,26 +152,23 @@ partial class AuthApplication(
             $"Invalid Email/Mobile: {email_mobile}");
     }
 
-    public async Task<ApiResult> Register(RegisterModel context)
+    public async Task<ApiResult> Register(RegisterModel model)
     {
-        if (string.IsNullOrWhiteSpace(context.Username))
+        if (string.IsNullOrWhiteSpace(model.Username))
         {
             throw new UserException("نام کاربری خالیست!");
         }
 
-        if (string.IsNullOrWhiteSpace(context.Email) && string.IsNullOrWhiteSpace(context.Mobile))
-        {
-            throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
-        }
-
-        context.Password ??= string.Empty;
-
-        if (await RadiusSrv.Value.CheckUsername(context.Username))
+        if (await RadiusSrv.Value.CheckUsername(model.Username))
         {
             throw new UserException("این نام کاربری قبلا استفاده شده است!");
         }
 
-        await RadiusSrv.Value.RegisterPermenentUser(user, context.Password);
+        var account = AccountBusiness.CreateFromModel(model);
+
+        model.Password ??= string.Empty;
+
+        await RadiusSrv.Value.RegisterUser(user, model.Password);
 
         if (user.Id < 1)
         {

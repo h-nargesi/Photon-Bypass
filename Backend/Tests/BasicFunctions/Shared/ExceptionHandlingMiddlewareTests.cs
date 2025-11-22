@@ -6,6 +6,7 @@ using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using System.Net.Mime;
 using System.Text.Json;
+using PhotonBypass.API.Basical;
 
 namespace PhotonBypass.Test.BasicFunctions.Shared;
 

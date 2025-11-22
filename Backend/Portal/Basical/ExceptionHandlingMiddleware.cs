@@ -1,11 +1,11 @@
 ﻿using System.Net.Mime;
 using System.Text.Json;
-using Microsoft.AspNetCore.Http;
 using PhotonBypass.Domain;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
 
-namespace PhotonBypass.ErrorHandler;
+namespace PhotonBypass.API.Basical;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
 {

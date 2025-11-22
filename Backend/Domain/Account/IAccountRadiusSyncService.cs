@@ -8,7 +8,7 @@ public interface IAccountRadiusSyncService
 
     Task SaveUserPersonalInfo(AccountEntity account);
 
-    Task RegisterPermenentUser(AccountEntity account);
+    Task RegisterUser(AccountEntity account);
 
     Task<bool> CheckUsername(string username);
 }
