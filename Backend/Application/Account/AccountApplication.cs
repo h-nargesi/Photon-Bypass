@@ -21,6 +21,7 @@ class AccountApplication(
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
         var user = await AccountRepo.Value.GetAccount(username) ??
+                   // TODO: make unit test: it should throw an exception "Account not found."
                    throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
 
         var target_area = (await AccountRepo.Value.GetTargetArea(user.Id))

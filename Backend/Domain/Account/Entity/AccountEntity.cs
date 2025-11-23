@@ -11,8 +11,6 @@ public class AccountEntity : IBaseEntity
 
     public bool Active { get; set; }
 
-    public int CloudId { get; set; }
-
     public string Username { get; set; } = null!;
 
     public string Password { get; set; } = null!;
@@ -42,4 +40,6 @@ public class AccountEntity : IBaseEntity
     public string? Picture { get; set; }
 
     public DateTime CreatedTime { get; set; }
+    
+    public int? ReferenceId { get; set; }
 }

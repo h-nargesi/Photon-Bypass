@@ -6,6 +6,8 @@ public interface IAccountRadiusSyncService
 {
     Task<AccountEntity?> GetUser(string username);
 
+    Task ActiveUser(int id, bool active);
+
     Task SaveUserPersonalInfo(AccountEntity account);
 
     Task RegisterUser(AccountEntity account);

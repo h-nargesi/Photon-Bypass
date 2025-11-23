@@ -2,11 +2,18 @@
 
 public class UserConnectionBinding
 {
+    public string SessionId { get; set; } = null!;
+    
     public string Name { get; set; } = null!;
 
     public string CallerId { get; set; } = null!;
 
-    public string UpTime { get; set; } = null!;
+    public TimeSpan UpTime { get; set; }
 
-    public string SessionId { get; set; } = null!;
+    public ConnectionState State { get; set; }
+}
+
+public enum ConnectionState
+{
+    Up, Down
 }

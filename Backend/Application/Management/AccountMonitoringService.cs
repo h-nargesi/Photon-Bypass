@@ -1,97 +1,77 @@
-﻿using Quartz;
+﻿using PhotonBypass.Application.Authentication;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Business;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
+using PhotonBypass.Domain.Profile.Business;
+using PhotonBypass.Domain.Profile.Model;
 using PhotonBypass.Domain.Services;
-using PhotonBypass.Application.Plan;
+using Quartz;
 using Serilog;
-using PhotonBypass.Domain.Account;
-using PhotonBypass.Application.Authentication;
-using PhotonBypass.FreeRadius.Interfaces;
-using PhotonBypass.FreeRadius.Entity;
 
 namespace PhotonBypass.Application.Management;
 
-class AccountMonitoringService(
-    IAccountProfileRepository PlanStateRepo,
-    IPermanentUsersRepository UserRepo,
+internal class AccountMonitoringService(
+    IAccountStateRepository PlanStateRepo,
     IAccountRepository AccountRepo,
     IHistoryRepository HistoryRepo,
     IAuthApplication AuthApp,
     IEmailService EmailSrv,
-    IRadiusService RadiusSrv,
+    IAccountRadiusSyncService RadiusSrv,
     IServerManagementService ServerMngSrv,
     ISocialMediaService SocialSrv)
     : IAccountMonitoringService, IJob
 {
-    private const int MAX_DEACTIVATE_PLAN = 60;
-    private const int DELAY_BETWEEN_WARNINGS = 20;
-
     public async Task Execute(IJobExecutionContext context)
     {
-        var planStateList = await PlanStateRepo.GetPlanOverState(0.1F);
+        var plan_state_list = await PlanStateRepo.GetPlanOverState(0.1F);
 
-        if (planStateList.Count < 1)
+        if (plan_state_list.Count < 1)
         {
             return;
         }
 
-        await NotifSendServices(planStateList);
+        await NotifSendServices(plan_state_list);
 
         Task.WaitAll(
-            InactiveAbandonedUsers(planStateList),
+            InactiveAbandonedUsers(plan_state_list),
             ServerMngSrv.CheckUserServerBalance());
     }
 
-    public async Task InactiveAbandonedUsers(IEnumerable<UserPlanStateEntity> planStateList)
+    public async Task InactiveAbandonedUsers(IEnumerable<AccountStateEntity> plan_state_list)
     {
-        foreach (var plan in planStateList)
+        foreach (var plan in plan_state_list)
         {
-            var expiredTime = 0D;
-            switch (plan.PlanType)
+            if (plan.ExpirationDate > DateTime.Now)
             {
-                case PlanType.Monthly when plan.ExpirationDate.HasValue:
-                {
-                    expiredTime = (plan.ExpirationDate.Value - DateTime.Now).TotalDays;
-                    if (expiredTime < MAX_DEACTIVATE_PLAN)
-                    {
-                        continue;
-                    }
-
-                    break;
-                }
-                case PlanType.Monthly:
-                    Log.Fatal("The user '{0}' is monthly but does not have expiration date. user-id: {1}", plan.Username, plan.Id);
-                    break;
-                case PlanType.Traffic when plan.TotalData.HasValue:
-                {
-                    var user = await UserRepo.GetUser(plan.Id);
-
-                    if (user == null)
-                    {
-                        Log.Fatal("The user '{0}' is in 'ph_v_users_balance' but not found in 'permanent_users'. user-id: {1}", plan.Username, plan.Id);
-                    }
-                    else
-                    {
-                        expiredTime = ((user.LastAcceptTime ?? user.CreatedTime) - DateTime.Now).TotalDays;
-                        if (expiredTime < MAX_DEACTIVATE_PLAN)
-                        {
-                            continue;
-                        }
-                    }
-
-                    break;
-                }
-                case PlanType.Traffic:
-                    Log.Fatal("The user '{0}' is traffic but does not have data limitation. user-id: {1}", plan.Username, plan.Id);
-                    break;
-                default:
-                    throw new Exception("Invalid PlanType!");
+                continue;
             }
 
-            _ = RadiusSrv.ActivePermanentUser(plan.Id, false);
+            var account = await AccountRepo.GetAccount(plan.Id);
 
-            Log.Information("The user '{0}' was disabled: ExpiredTime={1} days, ExpirationDate={2}, TotalData={3}, DataUsage={4}", 
-                plan.Username, expiredTime, plan.ExpirationDate, plan.TotalData, plan.DataUsage);
+            if (account == null)
+            {
+                Log.Fatal(
+                    "The account '{0}' is in 'PlanStateRepository.GetPlanOverState' but not found in 'AccountRepository'. account-id: {1}",
+                    plan.Username, plan.Id);
+                continue;
+            }
+
+            var expired_days = account.IsRichMaxDeactiveTime(plan.LastConnectTime);
+            if (expired_days < 1)
+            {
+                continue;
+            }
+
+            if (account.ReferenceId.HasValue)
+            {
+                _ = RadiusSrv.ActiveUser(account.ReferenceId.Value, false);
+            }
+
+            Log.Information(
+                "The user '{0}' was disabled: ExpiredTime={1} days, ExpirationDate={2}, TotalData={3}, DataUsage={4}",
+                plan.Username, expired_days, plan.ExpirationDate, plan.TrafficLimit, plan.TrafficUsed);
 
             _ = HistoryRepo.Save(new HistoryEntity
             {
@@ -99,38 +79,38 @@ class AccountMonitoringService(
                 Target = plan.Username,
                 EventTime = DateTime.Now,
                 Title = "غیرفعال",
-                Description = "اکانت شما به علت عدم استفاده بعد از دو ماه غیرفعال شد. مقدار ترافیک یا مدت زمان باقیمانده به جای خود باقی است.",
+                Description =
+                    "اکانت شما به علت عدم استفاده بعد از دو ماه غیرفعال شد. مقدار ترافیک یا مدت زمان باقیمانده به جای خود باقی است.",
                 Unit = "روز گذشته",
-                Value = (int)expiredTime,
+                Value = expired_days,
             });
         }
     }
 
-    public async Task NotifSendServices(IEnumerable<UserPlanStateEntity> planStateList)
+    public async Task NotifSendServices(IEnumerable<AccountStateEntity> plan_states)
     {
-        var userIds = planStateList.Select(x => x.Id).ToList();
-        var contacts_task = UserRepo.GetUsersContactInfo(userIds);
-        var aqccounts_tak = AccountRepo.GetAccounts(userIds);
-
-        var contacts = await contacts_task;
-        var accounts = await aqccounts_tak;
+        var plan_state_list = plan_states.ToArray();
+        var user_ids = plan_state_list.Select(x => x.Id).ToList();
+        var accounts = await AccountRepo.GetAccounts(user_ids);
 
         var tasks = new List<Task>();
 
-        foreach (var plan in planStateList)
+        foreach (var plan in plan_state_list)
         {
             if (!accounts.TryGetValue(plan.Id, out var account))
             {
                 account = await AuthApp.CopyFromPermanentUser(plan.Username, null);
             }
-            else if (account.WarningTimes.HasValue &&
-                (account.WarningTimes.Value - DateTime.Now).TotalHours <= DELAY_BETWEEN_WARNINGS)
+
+            if (account == null || account.OverWarningTime())
             {
                 continue;
             }
 
-            Log.Information("The user '{0}' is going to finish plan ({1}, {2}, x{3}, {4})",
-                plan.Username, plan.PlanType.ToString(), plan.SimultaneousUserCount, plan.GetRemainsTitle());
+            var remains_title = plan.GetRemainsTitle();
+
+            Log.Information("The user '{0}' is going to finish plan (x{1}, {2})",
+                plan.Username, plan.SimultaneousUserCount, remains_title);
 
             _ = HistoryRepo.Save(new HistoryEntity
             {
@@ -139,21 +119,13 @@ class AccountMonitoringService(
                 EventTime = DateTime.Now,
                 Title = "پایان پلن",
                 Description = "اخطار پایان پلن.",
-                Unit = plan.PlanType == PlanType.Monthly ? "ماهانه" : "ترافیک",
-                Value = plan.PlanType == PlanType.Monthly ? plan.LeftDays : plan.GigaLeft.ToString(),
+                Value = remains_title,
             });
 
-            if (account?.SendWarning != true)
+            if (!account.SendWarning)
             {
                 continue;
             }
-
-            if (!contacts.TryGetValue(plan.Id, out var contact))
-            {
-                continue;
-            }
-
-            var remainsTitle = plan.GetRemainsTitle();
 
 #if SOCIAL
             if (contact.Phone != null)
@@ -162,32 +134,28 @@ class AccountMonitoringService(
 
                 if (account != null)
                 {
-                    IncreaseWarningTimes(account);
+                    IncreaseWarningTime(account);
                 }
 
                 continue;
         }
 #endif
 
-            if (contact.Email != null)
+            if (account.Email != null)
             {
-                tasks.Add(EmailSrv.FinishServiceAlert(account.Fullname, plan.Username, contact.Email, plan.PlanType, remainsTitle));
+                tasks.Add(EmailSrv.FinishServiceAlert(
+                    account.Fullname, plan.Username, account.Email, remains_title));
 
-                if (account != null)
-                {
-                    IncreaseWarningTimes(account);
-                }
-
-                continue;
+                IncreaseWarningTime(account);
             }
         }
 
         await Task.WhenAll(tasks);
     }
 
-    private void IncreaseWarningTimes(AccountEntity account)
+    private void IncreaseWarningTime(AccountEntity account)
     {
-        account.WarningTimes = DateTime.Now;
+        account.UpdateWarningTime();
         _ = AccountRepo.Save(account);
     }
 }

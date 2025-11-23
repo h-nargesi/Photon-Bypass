@@ -5,8 +5,6 @@ using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
-using PhotonBypass.FreeRadius.Entity;
-using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 
@@ -22,7 +20,7 @@ class VpnApplication(
     Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IRealmRepository> RealmRepo,
-    Lazy<IAccountProfileRepository> PlanStateRepo,
+    Lazy<IAccountStateRepository> PlanStateRepo,
     Lazy<INasRepository> NasRepo,
     Lazy<IJobContext> JobContext)
     : IVpnApplication
@@ -33,7 +31,7 @@ class VpnApplication(
     public async Task<ApiResult> ChangeOvpnPassword(string target, string password)
     {
         var account = await AccountRepo.Value.GetAccount(target) ??
-            throw new UserException("کاربر پیدا نشد!", $"target: {target}");
+                      throw new UserException("کاربر پیدا نشد!", $"target: {target}");
 
         var result = await RadiusSrv.Value.ChangeOvpnPassword(account.PermanentUserId, password);
 
@@ -61,7 +59,7 @@ class VpnApplication(
     public async Task<ApiResult> SendCertEmail(string target)
     {
         var user = await UserRepo.Value.GetUser(target) ??
-            throw new UserException("کاربر پیدا نشد!", $"target: {target}");
+                   throw new UserException("کاربر پیدا نشد!", $"target: {target}");
 
         if (!user.Active)
         {
@@ -128,8 +126,9 @@ class VpnApplication(
         if (list.Count < MAX_DATE_BEFORE)
         {
             var firstEmptyDate = FindFirstEmptyDate(list, minDateTime) ?? DateTime.Now;
-            var type = firstEmptyDate < DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek) ?
-                TrafficDataRequestType.Monthly : TrafficDataRequestType.Weekly;
+            var type = firstEmptyDate < DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek)
+                ? TrafficDataRequestType.Monthly
+                : TrafficDataRequestType.Weekly;
 
             var data = await RadiusSrv.Value.FetchTrafficData(target, firstEmptyDate, type);
 
@@ -143,7 +142,7 @@ class VpnApplication(
                 else
                 {
                     var account = await AccountRepo.Value.GetAccount(target)
-                        ?? throw new Exception($"Account not found: {target}");
+                                  ?? throw new Exception($"Account not found: {target}");
                     account_id = account.Id;
                 }
 
@@ -168,7 +167,8 @@ class VpnApplication(
             .Date.AddDays(1);
     }
 
-    private static List<TrafficDataEntity> Merge(ref List<TrafficDataEntity> destination, IEnumerable<TrafficDataRadius> source, DateTime minDateTime)
+    private static List<TrafficDataEntity> Merge(ref List<TrafficDataEntity> destination,
+        IEnumerable<TrafficDataRadius> source, DateTime minDateTime)
     {
         var destination_dict = destination.ToDictionary(k => k.Day);
         var new_data = new List<TrafficDataEntity>();

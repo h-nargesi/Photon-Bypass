@@ -4,7 +4,7 @@ namespace PhotonBypass.Domain.Services;
 
 public interface IVpnNodeService
 {
-    Task<(NasEntity server, IList<UserConnectionBinding> connections)> GetActiveConnections(NasEntity server, string username);
+    Task<List<UserConnectionBinding>> GetActiveConnections(NasEntity server, string username);
 
     Task<bool> CloseConnection(NasEntity server, string session_id);
 

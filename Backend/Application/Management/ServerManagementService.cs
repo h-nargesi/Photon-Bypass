@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.Options;
-using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Services;
-using PhotonBypass.FreeRadius.Entity;
-using PhotonBypass.FreeRadius.Interfaces;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Options;
+using PhotonBypass.Domain.Management;
+using PhotonBypass.Domain.Servers;
+using PhotonBypass.Domain.Servers.Model;
+using PhotonBypass.Domain.Services;
 
 namespace PhotonBypass.Application.Management;
 
@@ -16,7 +16,7 @@ partial class ServerManagementService(
     IOptions<ManagementOptions> Options)
     : IServerManagementService
 {
-    public async Task<RealmEntity> GetAvailableRealm(int cloud_id)
+    public async Task<RealmEntity> GetAvailableRealm()
     {
         var servers = await RealmRepo.FetchServerDensityEntity(cloud_id);
 
@@ -43,7 +43,7 @@ partial class ServerManagementService(
         var cxert_path = Options.Value.DefaultCertPath ??
             throw new Exception("Default cert-path is not set in config!");
 
-        if (Options.Value.DefaultPrivateKeyOvpn == null)
+        if (Options.Value.DefaultPrivateKeyOVpn == null)
             throw new Exception("Ovpn Private key is not set in config!");
 
         var realm_task = RealmRepo.Fetch(realmid);
@@ -72,7 +72,7 @@ partial class ServerManagementService(
         return new CertContext
         {
             Server = nas.DomainName,
-            PrivateKeyOvpn = Options.Value.DefaultPrivateKeyOvpn,
+            PrivateKeyOvpn = Options.Value.DefaultPrivateKeyOVpn,
             CertFile = cert_file,
         };
     }

@@ -9,6 +9,8 @@ public class NasEntity : IBaseEntity
     [Key]
     public int Id { get; set; }
 
+    public int RealmId { get; set; }
+
     public string Name { get; set; } = null!;
 
     public string IpAddress { get; set; } = null!;

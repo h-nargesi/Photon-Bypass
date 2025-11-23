@@ -21,7 +21,7 @@ public static class ServiceFactory
         // builder.Services.AddLazyTransient<IProfileRepository, ProfileRepository>();
         // builder.Services.AddLazyTransient<IRadAcctRepository, RadAcctRepository>();
         // builder.Services.AddLazyTransient<IRealmRepository, RealmRepository>();
-        // builder.Services.AddLazyTransient<ITopUpRepository, TopUpRepository>();
+        // builder.Services.AddLazyTransient<IRenewalRepository, TopUpRepository>();
         // builder.Services.AddLazyTransient<IUserPlanStateRepository, UserPlanStateRepository>();
 
         builder.Services.AddLazySingleton<IStaticRepository, StaticRepository>();

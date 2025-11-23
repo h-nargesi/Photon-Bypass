@@ -1,5 +1,5 @@
 ﻿namespace PhotonBypass.Domain.Profile;
 
-public interface ITopUpRepository
+public interface IRenewalRepository
 {
 }

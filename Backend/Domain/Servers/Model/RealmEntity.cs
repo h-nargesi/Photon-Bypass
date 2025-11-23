@@ -9,7 +9,7 @@ public class RealmEntity
     [Key]
     public int Id { get; set; }
     
-    public int NasId { get; set; }
+    public string Name { get; set; }
 
     public string DomainName { get; set; } = null!;
 }

@@ -2,6 +2,8 @@
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Servers;
+using PhotonBypass.Domain.Servers.Model;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
@@ -12,51 +14,46 @@ namespace PhotonBypass.Application.Connection;
 class ConnectionApplication(
     IVpnNodeService VpnNodeSrv,
     INasRepository NasRepo,
-    Lazy<IRadAcctRepository> RadAcctRepo,
+    Lazy<IAccountRepository> AccountRepo,
     Lazy<IJobContext> JobContext,
     Lazy<IHistoryRepository> HistoryRepo)
     : IConnectionApplication
 {
-    public async Task<ApiResult<IList<ConnectionStateModel>>> GetCurrentConnectionState(string target)
+    public async Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(string target)
     {
-        var current_con_list = await RadAcctRepo.Value.GetCurrentConnectionList(target);
+        var target_realm_id = await AccountRepo.Value.GetRealmId(target);
 
-        var current_con_dict = current_con_list.GroupBy(x => x.NasIPAddress)
-            .ToDictionary(k => k.Key, v => v.ToList());
-
-        var servers_info = await NasRepo.GetNasInfo(current_con_dict.Keys);
-
-        var servers_task = new List<Task<(NasEntity server, IList<UserConnectionBinding> connections)>>();
-        foreach (var server in servers_info)
-            servers_task.Add(VpnNodeSrv.GetActiveConnections(server.Value, target));
-
-        var result = new List<ConnectionStateModel>();
-        while (servers_task.Count > 0)
+        if (target_realm_id == null)
         {
-            var server_result_task = await Task.WhenAny(servers_task);
-            servers_task.Remove(server_result_task);
-            var (server, server_connections) = await server_result_task;
-
-            var connection_list = current_con_dict[server.IpAddress];
-            var active_connections = server_connections.Select(k => k.SessionId).ToHashSet();
-
-            result.AddRange(current_con_dict[server.IpAddress].Select(c => new ConnectionStateModel
-            {
-                Duration = (int)c.SessionUpTime.TotalMinutes,
-                State = active_connections.Contains(c.AcctSessionId) ? ConnectionState.Up : ConnectionState.Down,
-                Server = server.IpAddress,
-                SessionId = c.AcctSessionId,
-            }));
+            return ApiResult<List<ConnectionStateModel>>.Success([]);
         }
 
-        return ApiResult<IList<ConnectionStateModel>>.Success(result);
+        var servers_info = await NasRepo.GetAllInRealm(target_realm_id.Value);
+
+        var servers_task = servers_info.ToDictionary(
+            server => server,
+            server => VpnNodeSrv.GetActiveConnections(server, target));
+
+        await Task.WhenAll(servers_task.Values);
+
+        var result = servers_task.SelectMany(task =>
+            task.Value.Result.Select(c => new ConnectionStateModel
+            {
+                SessionId = c.SessionId,
+                Duration = (int)c.UpTime.TotalMinutes,
+                State = c.State,
+                Server = task.Key.IpAddress,
+            }))
+            .ToList();
+
+        return ApiResult<List<ConnectionStateModel>>.Success(result);
     }
 
     public async Task<ApiResult> CloseConnection(string server, string target, string session_id)
     {
         var nas = (await NasRepo.GetNasInfo(server))
-            ?? throw new UserException("دسترسی غیرمجاز!",
-                $"Closing connection server is invalid: ({server}, {target}, {session_id})");
+                  ?? throw new UserException("دسترسی غیرمجاز!",
+                      $"Closing connection server is invalid: ({server}, {target}, {session_id})");
 
         var result = await VpnNodeSrv.CloseConnection(nas, session_id);
 
@@ -74,7 +71,7 @@ class ConnectionApplication(
             Description = "کانکشن بسته شد.",
         });
 
-        Log.Information("[user: {0}] Connection Closed: ({1}, {2}, {3})", 
+        Log.Information("[user: {0}] Connection Closed: ({1}, {2}, {3})",
             JobContext.Value.Username, server, target, session_id);
 
         return ApiResult.Success("کانکشن بسته شد.");

@@ -6,8 +6,6 @@ using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.ErrorHandler;
-using PhotonBypass.FreeRadius.Entity;
-using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
@@ -16,8 +14,8 @@ namespace PhotonBypass.Application.Plan;
 
 class PlanApplication(
     Lazy<IPermanentUsersRepository> UserRepo,
-    Lazy<IAccountProfileRepository> PlanRepo,
-    Lazy<ITopUpRepository> TopUpRepo,
+    Lazy<IAccountStateRepository> PlanRepo,
+    Lazy<IRenewalRepository> TopUpRepo,
     Lazy<IPriceCalculator> PriceCalc,
     Lazy<IAccountRepository> AccountRepo,
     Lazy<IRadiusService> RadiusSrv,
