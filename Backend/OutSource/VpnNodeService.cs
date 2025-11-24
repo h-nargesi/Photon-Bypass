@@ -6,6 +6,7 @@ using PhotonBypass.Tools;
 using Renci.SshNet;
 using Serilog;
 using System.Text;
+using PhotonBypass.Domain.Services.Model;
 
 namespace PhotonBypass.OutSource;
 

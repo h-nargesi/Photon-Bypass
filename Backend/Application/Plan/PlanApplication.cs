@@ -29,7 +29,7 @@ class PlanApplication(
 {
     public async Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target)
     {
-        var state = await PlanRepo.Value.GetPlanState(target);
+        var state = await PlanRepo.Value.GetAccountState(target);
 
         if (state == null)
         {
@@ -86,7 +86,7 @@ class PlanApplication(
 
     public async Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target)
     {
-        var state = await PlanRepo.Value.GetPlanState(target);
+        var state = await PlanRepo.Value.GetAccountState(target);
 
         if (state == null)
         {

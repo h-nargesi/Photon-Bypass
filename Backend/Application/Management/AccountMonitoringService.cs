@@ -13,7 +13,7 @@ using Serilog;
 namespace PhotonBypass.Application.Management;
 
 internal class AccountMonitoringService(
-    IAccountStateRepository PlanStateRepo,
+    IAccountStateRepository AccounyStateRepo,
     IAccountRepository AccountRepo,
     IHistoryRepository HistoryRepo,
     IAuthApplication AuthApp,
@@ -25,7 +25,7 @@ internal class AccountMonitoringService(
 {
     public async Task Execute(IJobExecutionContext context)
     {
-        var plan_state_list = await PlanStateRepo.GetPlanOverState(0.1F);
+        var plan_state_list = await AccounyStateRepo.GetAccountFinishingState();
 
         if (plan_state_list.Count < 1)
         {
@@ -53,7 +53,7 @@ internal class AccountMonitoringService(
             if (account == null)
             {
                 Log.Fatal(
-                    "The account '{0}' is in 'PlanStateRepository.GetPlanOverState' but not found in 'AccountRepository'. account-id: {1}",
+                    "The account '{0}' is in 'PlanStateRepository.GetAccountFinishingState' but not found in 'AccountRepository'. account-id: {1}",
                     plan.Username, plan.Id);
                 continue;
             }

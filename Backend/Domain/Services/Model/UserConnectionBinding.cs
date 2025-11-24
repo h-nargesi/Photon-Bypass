@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Domain.Services;
+﻿namespace PhotonBypass.Domain.Services.Model;
 
 public class UserConnectionBinding
 {

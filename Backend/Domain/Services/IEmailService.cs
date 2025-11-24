@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Profile;
+﻿using PhotonBypass.Domain.Services.Model;
 
 namespace PhotonBypass.Domain.Services;
 

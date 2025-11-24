@@ -1,8 +1,8 @@
-﻿namespace PhotonBypass.Domain.Services;
+﻿namespace PhotonBypass.Domain.Services.Model;
 
 public class CertContext
 {
-    public string Server { get; set; } = null!;
+    public string Realm { get; set; } = null!;
 
     public string PrivateKeyOvpn { get; set; } = null!;
 

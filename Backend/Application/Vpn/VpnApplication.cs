@@ -4,6 +4,7 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Services;
+using PhotonBypass.Domain.Services.Model;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
@@ -98,7 +99,7 @@ class VpnApplication(
         {
             Username = user.Username,
             Password = (await ovpn_password_task) ?? throw new Exception($"Password not found for user: {target}"),
-            Server = cert_context.Server,
+            Realm = cert_context.Realm,
             PrivateKeyOvpn = cert_context.PrivateKeyOvpn,
             CertFile = cert_context.CertFile,
         };

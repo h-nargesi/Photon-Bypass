@@ -4,12 +4,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace PhotonBypass.Domain.Servers.Model;
 
 [Table("Realm")]
-public class RealmEntity
+public class RealmEntity : IBaseEntity
 {
     [Key]
     public int Id { get; set; }
-    
-    public string Name { get; set; }
 
-    public string DomainName { get; set; } = null!;
+    public string Name { get; set; } = null!;
 }

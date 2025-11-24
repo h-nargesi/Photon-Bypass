@@ -1,8 +1,8 @@
-﻿using Microsoft.Extensions.Options;
-using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Services;
-using System.Net;
+﻿using System.Net;
 using System.Net.Mail;
+using Microsoft.Extensions.Options;
+using PhotonBypass.Domain.Services;
+using PhotonBypass.Domain.Services.Model;
 
 namespace PhotonBypass.OutSource;
 
@@ -50,7 +50,7 @@ class EmailService(IOptions<EmailOptions> options) : IEmailService
 
         var body = await File.ReadAllTextAsync("EmailTemplates\\CertEmail.html");
         body = body.Replace("{username}", context.Username)
-            .Replace("{server}", context.Server)
+            .Replace("{server}", context.Realm)
             .Replace("{password}", context.Password)
             .Replace("{ovpn}", context.PrivateKeyOvpn);
 

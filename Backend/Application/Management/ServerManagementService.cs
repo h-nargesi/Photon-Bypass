@@ -2,76 +2,60 @@
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using PhotonBypass.Domain.Management;
+using PhotonBypass.Domain.Profile;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Model;
 using PhotonBypass.Domain.Services;
+using PhotonBypass.Domain.Services.Model;
 
 namespace PhotonBypass.Application.Management;
 
 partial class ServerManagementService(
     IRealmRepository RealmRepo,
+    IProfileRadiusSyncService RadiusSrv,
     Lazy<INasRepository> NasRepo,
-    Lazy<ICloudRepository> CloudRepo,
+    Lazy<ITrafficDataRepository> TrafficDataRepo,
     Lazy<ISocialMediaService> SocialSrv,
     IOptions<ManagementOptions> Options)
     : IServerManagementService
 {
     public async Task<RealmEntity> GetAvailableRealm()
     {
-        var servers = await RealmRepo.FetchServerDensityEntity(cloud_id);
-
-        return servers.Select(x =>
-            {
-                if (!float.TryParse(x.Capacity, out var capacity) || capacity < 1)
-                {
-                    capacity = 1;
-                }
-
-                return new
-                {
-                    Realm = x,
-                    Sorting = x.UsersCount / capacity
-                };
-            })
-            .OrderBy(s => s.Sorting)
+        return (await LoadServersCapacity())
+            .Where(realm => realm.Value.Rate > -1)
+            .OrderBy(s => s.Value)
             .First()
-            .Realm;
+            .Key;
     }
 
-    public async Task<CertContext> GetDefaultCertificate(int realmid)
+    public async Task<CertContext> GetDefaultCertificate(int realm_id)
     {
-        var cxert_path = Options.Value.DefaultCertPath ??
-            throw new Exception("Default cert-path is not set in config!");
+        var cert_path = Options.Value.DefaultCertPath ??
+                        throw new Exception("Default cert-path is not set in config!");
 
         if (Options.Value.DefaultPrivateKeyOVpn == null)
-            throw new Exception("Ovpn Private key is not set in config!");
+            throw new Exception("OVpn Private key is not set in config!");
 
-        var realm_task = RealmRepo.Fetch(realmid);
+        var realm_task = RealmRepo.Fetch(realm_id);
+        var servers_task = NasRepo.Value.GetAllDomainInRealm(realm_id);
 
-        var cert_file = await File.ReadAllBytesAsync(cxert_path);
+        var cert_file = await File.ReadAllBytesAsync(cert_path);
 
-        var realm = (await realm_task) ??
-            throw new Exception($"Realm not found: ({realmid})!");
+        var realm = await realm_task ??
+                    // TODO: test should throw an exception
+                    throw new Exception($"Realm not found: (realm-id={realm_id})!");
 
-        if (realm.RestrictedServerIP == null)
-        {
-            throw new Exception($"Realm does not have server-ip: ({realmid})!");
-        }
-
-        var nas = await NasRepo.Value.GetNasInfo(realm.RestrictedServerIP);
-
-        if (nas?.DomainName == null)
-        {
-            throw new Exception($"Nas/Domain not found: ({realm.RestrictedServerIP}, nas-id={nas?.Id})!");
-        }
+        var servers = await servers_task ??
+                      // TODO: test should throw an exception
+                      throw new Exception($"Nas/Domain not found: (realm-id={realm_id})!");
 
         var ovpn_conf_file = Encoding.UTF8.GetString(cert_file);
-        ovpn_conf_file = SetDomain(ovpn_conf_file, nas.DomainName);
+        ovpn_conf_file = SetDomain(ovpn_conf_file, realm.Name, servers);
         cert_file = Encoding.UTF8.GetBytes(ovpn_conf_file);
 
         return new CertContext
         {
-            Server = nas.DomainName,
+            Realm = realm.Name,
             PrivateKeyOvpn = Options.Value.DefaultPrivateKeyOVpn,
             CertFile = cert_file,
         };
@@ -79,27 +63,22 @@ partial class ServerManagementService(
 
     public async Task CheckUserServerBalance()
     {
-        var web_cloud_id = await CloudRepo.Value.FindWebCloud();
-        var servers = await RealmRepo.FetchServerDensityEntity(web_cloud_id);
+        var realms = await LoadServersCapacity();
 
         var alarms = new List<string>();
 
-        foreach (var server in servers)
+        foreach (var realm in realms.Where(r => r.Value.Rate > -1))
         {
-            if (!float.TryParse(server.Capacity, out var capacity))
-            {
-                continue;
-            }
+            var percent = 100 * realm.Value.Rate;
 
-            var percent = 100 * server.UsersCount / capacity;
-
-            if (percent < 10)
+            switch (percent)
             {
-                alarms.Add($"Unused Server: {server.RestrictedServerIP} ({percent:N2}% from {capacity})");
-            }
-            else if (percent > 90)
-            {
-                alarms.Add($"Low Capacity: {server.RestrictedServerIP} ({percent:N2}% from {capacity})");
+                case < 10:
+                    alarms.Add($"Unused Realm: {realm.Key.Name} ({percent:N2}% from {realm.Value.Cap})");
+                    break;
+                case > 90:
+                    alarms.Add($"Low Capacity: {realm.Key.Name} ({percent:N2}% from {realm.Value.Cap})");
+                    break;
             }
         }
 
@@ -109,19 +88,64 @@ partial class ServerManagementService(
         }
     }
 
-    private static string SetDomain(string cert, string domain)
+    private async Task<Dictionary<RealmEntity, (double Rate, long Cap)>> LoadServersCapacity()
     {
+        var realms = await RealmRepo.FetchAllActiveRealm();
+
+        var clusters = await NasRepo.Value.GetAllInRealm(realms.Select(r => r.Id));
+        var servers = clusters.SelectMany(s => s.Value).ToList();
+
+        await RadiusSrv.UpdateTrafficData(servers);
+
+        var traffics = (await TrafficDataRepo.Value.Fetch(servers.Select(s => s.Id), DateTime.Now.AddDays(-30)))
+            .ToDictionary(k =>
+                k.Key, v =>
+                v.Value.Select(t => (t.StartSession, t.TotalData))
+                    .GroupBy(k => k.StartSession)
+                    .ToDictionary(k => k.Key, a => a.Select(x => x.TotalData).Sum()));
+
+        // TODO: Use IQR to find real average
+        var real_traffics = traffics.ToDictionary(k => k.Key, v => v.Value.Values.Average());
+
+        return clusters.Select(cluster =>
+            {
+                var usage = 0D;
+                var capacity = 0L;
+
+                foreach (var server in cluster.Value)
+                {
+                    capacity += server.BandWidth;
+                    if (real_traffics.TryGetValue(server.Id, out var data_usage))
+                    {
+                        usage += data_usage;
+                    }
+                }
+
+                return new
+                {
+                    Realm = realms[cluster.Key],
+                    Capacity = capacity,
+                    UsageRate = capacity == 0 ? -1 : usage / capacity,
+                };
+            })
+            .ToDictionary(k => k.Realm, v => (v.UsageRate, v.Capacity));
+    }
+
+    private static string SetDomain(string cert, string name, IEnumerable<string> domains)
+    {
+        var remotes = "remote " + string.Join("\nremote ", domains);
         cert = SetRemote()
-            .Replace(cert, $"remote {domain}");
+            .Replace(cert, remotes);
 
         cert = SetTitle()
-            .Replace(cert, $"setenv FRIENDLY_NAME \"{domain.Split('\'').First()}\"");
+            .Replace(cert, $"setenv FRIENDLY_NAME \"{name}\"");
 
         return cert;
     }
 
     [GeneratedRegex(@"remote ([\w\-])\.photon-bypass\.com")]
     private static partial Regex SetRemote();
+
     [GeneratedRegex(@"setenv FRIENDLY_NAME ""[^""]+""")]
     private static partial Regex SetTitle();
 }
