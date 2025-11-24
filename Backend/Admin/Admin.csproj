@@ -11,9 +11,9 @@
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
 	</ItemGroup>
 
-    <ItemGroup>
-        <ProjectReference Include="..\Portal\Portal.csproj" />
-        <ProjectReference Include="..\Shared\Shared.csproj" />
-    </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Portal\Portal.csproj" />
+		<ProjectReference Include="..\Shared\Shared.csproj" />
+	</ItemGroup>
 
 </Project>
