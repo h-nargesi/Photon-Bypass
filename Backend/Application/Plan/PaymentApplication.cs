@@ -2,7 +2,7 @@
 
 namespace PhotonBypass.Application.Plan;
 
-class PaymentAppliocation : IPaymentAppliocation
+class PaymentApplication : IPaymentApplication
 {
     public Task<ApiResult> PaymentCallback(string token)
     {

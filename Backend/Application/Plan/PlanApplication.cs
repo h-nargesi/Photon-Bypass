@@ -107,18 +107,18 @@ class PlanApplication(
         });
     }
 
-    public ApiResult<int> Estimate(PlanType type, int users, int value)
+    public ApiResult<int> Estimate(int users, int months, int gigabytes)
     {
-        var result = PriceCalc.Value.CalculatePrice(type, users, value);
+        var result = PriceCalc.Value.CalculatePrice(users, months, gigabytes);
         return ApiResult<int>.Success(result);
     }
 
-    public Task<ApiResult> TemporaryRenewal(string target, PlanType type)
+    public Task<ApiResult> TemporaryRenewal(string target, int months, int gigabytes)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<ApiResult<RenewalResult>> Renewal(string target, PlanType type, int count, int value)
+    public async Task<ApiResult<RenewalResult>> Renewal(string target, int count, int months, int gigabytes)
     {
         var account = await AccountRepo.Value.GetAccount(target) ??
             throw new UserException("کاربر مورد نظر پیدا نشد!");

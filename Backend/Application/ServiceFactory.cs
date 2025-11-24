@@ -24,7 +24,7 @@ public static class ServiceFactory
         builder.Services.AddLazyScoped<IBasicsApplication, BasicsApplication>();
         builder.Services.AddLazyScoped<IConnectionApplication, ConnectionApplication>();
         builder.Services.AddLazyScoped<IPlanApplication, PlanApplication>();
-        builder.Services.AddLazyScoped<IPaymentAppliocation, PaymentAppliocation>();
+        builder.Services.AddLazyScoped<IPaymentApplication, PaymentApplication>();
         builder.Services.AddLazyScoped<IVpnApplication, VpnApplication>();
         builder.Services.AddLazyScoped<IServerManagementService, ServerManagementService>();
         builder.Services.AddLazyScoped<IAccountMonitoringService, AccountMonitoringService>();

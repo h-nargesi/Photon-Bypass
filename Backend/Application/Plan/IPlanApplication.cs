@@ -1,5 +1,4 @@
 ﻿using PhotonBypass.Application.Plan.Model;
-using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Plan;
@@ -12,23 +11,17 @@ public interface IPlanApplication
 
     Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target);
 
-    ApiResult<int> Estimate(PlanType type, int users, int value);
+    ApiResult<int> Estimate(int users, int months, int gigabytes);
 
-    Task<ApiResult> TemporaryRenewal(string target, PlanType type);
+    Task<ApiResult> TemporaryRenewal(string target, int months, int gigabytes);
 
-    Task<ApiResult<RenewalResult>> Renewal(string target, PlanType type, int users, int value);
+    Task<ApiResult<RenewalResult>> Renewal(string target, int users, int months, int gigabytes);
 
     protected static bool OnRenewalDelegation(RenewalEvent arg)
     {
-        if (OnRenewal == null) return true;
-
-        foreach (Func<RenewalEvent, bool> checkOnReneal in OnRenewal.GetInvocationList().Cast<Func<RenewalEvent, bool>>())
-        {
-            var result = checkOnReneal(arg);
-
-            if (!result) return false;
-        }
-
-        return true;
+        return OnRenewal == null || OnRenewal.GetInvocationList()
+            .Cast<Func<RenewalEvent, bool>>()
+            .Select(check_on_renewal => check_on_renewal(arg)).All(result => result);
     }
 }
+
