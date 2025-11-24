@@ -20,11 +20,11 @@ public static class EntityExtensions
 
         if (member == null) return string.Empty;
 
-        var propInfo = member.Member as PropertyInfo;
-        if (propInfo == null) return string.Empty;
+        var prop_info = member.Member as PropertyInfo;
+        if (prop_info == null) return string.Empty;
 
-        var attr = propInfo.GetCustomAttribute<ColumnAttribute>();
-        return attr?.Name ?? propInfo.Name ?? string.Empty;
+        var attr = prop_info.GetCustomAttribute<ColumnAttribute>();
+        return attr?.Name ?? prop_info.Name ?? string.Empty;
     }
 
     public static string GetTablename<T>()

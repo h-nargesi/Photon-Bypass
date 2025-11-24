@@ -3,7 +3,6 @@ using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Servers;
-using PhotonBypass.Domain.Servers.Model;
 using PhotonBypass.Domain.Services;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;

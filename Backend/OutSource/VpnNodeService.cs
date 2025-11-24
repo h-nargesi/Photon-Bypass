@@ -1,65 +1,65 @@
-﻿using System.Text.RegularExpressions;
-using PhotonBypass.Domain.Radius;
+﻿using System.Text;
+using System.Text.RegularExpressions;
+using PhotonBypass.Domain.Servers.Model;
 using PhotonBypass.Domain.Services;
-using PhotonBypass.ErrorHandler;
-using PhotonBypass.Tools;
-using Renci.SshNet;
-using Serilog;
-using System.Text;
 using PhotonBypass.Domain.Services.Model;
+using PhotonBypass.Mikrotik.Helper;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.OutSource;
 
 partial class VpnNodeService : IVpnNodeService
 {
-    public async Task<bool> CloseConnection(NasEntity server, string sessionId)
+    public async Task<bool> CloseConnection(NasEntity? server, string session_id)
     {
-        if (server == null || string.IsNullOrEmpty(sessionId)) return false;
-
-        if (!SessionIdCheck().IsMatch(sessionId))
+        if (server == null || string.IsNullOrEmpty(session_id) || !SessionIdCheck().IsMatch(session_id))
         {
             return false;
         }
 
-        using var node = await Connect(server);
+        var context = new ProcessContext
+        {
+            ["session-id"] = session_id
+        };
 
-        var success = node.Execute($"/ppp active remove [find session-id=0x{sessionId}]", out string result);
-        if (!success) return false;
-
-        success = node.Execute($"/ppp active print where session-id=0x{sessionId}", out result);
-        return success && string.IsNullOrEmpty(result);
+        var success = await BuiltInProcess.PppActiveRemoveBySession.ActiveOn(server, context);
+        return success && string.IsNullOrEmpty(context.Result);
     }
 
     public async Task<bool> CloseConnections(IEnumerable<NasEntity> servers, string username, int count)
     {
-        if (servers == null || !servers.Any() || string.IsNullOrWhiteSpace(username)) return false;
+        var server_list = servers.ToList();
+        if (server_list.Count < 1 || string.IsNullOrWhiteSpace(username)) return false;
 
-        var tasks = servers.Where(x => x != null)
+        var tasks = server_list
             .Select(async server =>
             {
-                using var node = await Connect(server);
+                var context = new ProcessContext
+                {
+                    ["username"] = username
+                };
 
-                var success = node.Execute($"/ppp active remove [find name={username}]", out string result);
-                if (!success) return false;
-
-                success = node.Execute($"/ppp active print where name={username}", out result);
-                return success && string.IsNullOrEmpty(result);
+                var success = await BuiltInProcess.PppActiveRemoveByUsername.ActiveOn(server, context);
+                return success && string.IsNullOrEmpty(context.Result);
             });
 
         var result = await Task.WhenAll(tasks);
 
-        return !result.Any(x => !x);
+        return result.All(x => x);
     }
 
-    public async Task<(NasEntity server, IList<UserConnectionBinding> connections)> GetActiveConnections(NasEntity server, string username)
+    public async Task<(NasEntity server, IList<UserConnectionBinding> connections)> GetActiveConnections(
+        NasEntity server, string username)
     {
         ArgumentNullException.ThrowIfNull(server, nameof(server));
 
         if (string.IsNullOrEmpty(username)) return (server, []);
 
-        using var node = await Connect(server);
+        using var node = await server.Connect();
 
-        var success = node.Execute($"/ppp active print where name=\"{username}\" uptime session-id caller-id limit-bytes-in", out string result);
+        var success =
+            node.Execute($"/ppp active print where name=\"{username}\" uptime session-id caller-id limit-bytes-in",
+                out string result);
         if (!success || string.IsNullOrEmpty(result)) return (server, []);
 
         var connections = ConnectionParse().Matches(result)
@@ -82,7 +82,7 @@ partial class VpnNodeService : IVpnNodeService
         ArgumentNullException.ThrowIfNull(default_context, nameof(default_context));
         ArgumentNullException.ThrowIfNull(default_context.CertFile, nameof(default_context.CertFile));
 
-        using var node = await Connect(server);
+        using var node = await server.Connect();
 
         default_context.PrivateKeyOvpn = HashHandler.GenerateHashCode();
 
@@ -91,10 +91,13 @@ partial class VpnNodeService : IVpnNodeService
 
         if (string.IsNullOrWhiteSpace(result))
         {
-            success = node.Execute($"/certificate add name=\"CLIENT_{username}\" copy-from=CLIENT-TEMPLATE common-name=\"CLIENT_{username}\"", out result);
+            success = node.Execute(
+                $"/certificate add name=\"CLIENT_{username}\" copy-from=CLIENT-TEMPLATE common-name=\"CLIENT_{username}\"",
+                out result);
             if (!success) throw new Exception("Certificate generation failed!");
 
-            success = node.Execute($"/certificate sign \"CLIENT_{username}\" ca=LMTCA name=\"CLIENT_{username}\"", out result);
+            success = node.Execute($"/certificate sign \"CLIENT_{username}\" ca=LMTCA name=\"CLIENT_{username}\"",
+                out result);
             if (!success) throw new Exception("Certificate signing failed!");
         }
 
@@ -112,7 +115,9 @@ partial class VpnNodeService : IVpnNodeService
             if (!success) throw new Exception("File remove old failed!");
         }
 
-        success = node.Execute($"/certificate export-certificate \"CLIENT_{username}\" export-passphrase=\"{default_context.PrivateKeyOvpn}\" file-name=\"CLIENT_{username}\"", out result);
+        success = node.Execute(
+            $"/certificate export-certificate \"CLIENT_{username}\" export-passphrase=\"{default_context.PrivateKeyOvpn}\" file-name=\"CLIENT_{username}\"",
+            out result);
         if (!success) throw new Exception("Certificate export failed!");
 
         success = node.Execute($":put [/file get \"CLIENT_{username}\".crt contents]", out result);
@@ -127,22 +132,6 @@ partial class VpnNodeService : IVpnNodeService
         ovpn_conf_file = Replace(ovpn_conf_file, "cert", client_cert);
         ovpn_conf_file = Replace(ovpn_conf_file, "key", client_key);
         default_context.CertFile = Encoding.UTF8.GetBytes(ovpn_conf_file);
-    }
-
-    public static async Task<SshClient> Connect(NasEntity server)
-    {
-        var node = new SshClient(server.IpAddress, 9009, "admin", server.SshPassword);
-
-        await node.ConnectAsync(CancellationToken.None);
-
-        if (!node.IsConnected)
-        {
-            node.Dispose();
-            throw new UserException("خطای اتصال به سرور!",
-                $"Cannont connect to server: {server.Name}={server.IpAddress}");
-        }
-
-        return node;
     }
 
     private static string Replace(string source, string type, string value)
@@ -165,25 +154,4 @@ partial class VpnNodeService : IVpnNodeService
 
     [GeneratedRegex(@"\d+.+caller-id=([\.\d""]+) .+uptime=([\w""]*) .+session-id=([\w""]*)( |$)")]
     private static partial Regex ConnectionParse();
-}
-
-static class SshExtentions
-{
-    public static bool Execute(this SshClient node, string command, out string result)
-    {
-        Log.Information("Execute command on server: {0}\n{1}", node.ConnectionInfo.Host, command);
-
-        var execution = node.RunCommand(command);
-        result = execution.Result;
-
-        Log.Debug("Result command on server: {0}\n{1}", node.ConnectionInfo.Host, result);
-
-        if (execution.Error != null)
-        {
-            Log.Error("Error on execute command on server: {0}\n{1}\n{2}", node.ConnectionInfo.Host, command, execution.Error);
-            return false;
-        }
-
-        return true;
-    }
 }

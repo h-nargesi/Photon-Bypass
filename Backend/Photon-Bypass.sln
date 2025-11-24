@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikrotikRadius", "MikrotikR
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceFactoryHandler", "ServiceFactoryHandler\ServiceFactoryHandler.csproj", "{84BA5D9F-4AB4-47E8-A11B-BD6FB3C9A090}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikrotikBase", "MikrotikBase\MikrotikBase.csproj", "{0DAFE75D-AFFD-4F42-A131-1B3290A7C8A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{84BA5D9F-4AB4-47E8-A11B-BD6FB3C9A090}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{84BA5D9F-4AB4-47E8-A11B-BD6FB3C9A090}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{84BA5D9F-4AB4-47E8-A11B-BD6FB3C9A090}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DAFE75D-AFFD-4F42-A131-1B3290A7C8A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DAFE75D-AFFD-4F42-A131-1B3290A7C8A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DAFE75D-AFFD-4F42-A131-1B3290A7C8A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DAFE75D-AFFD-4F42-A131-1B3290A7C8A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

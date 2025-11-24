@@ -5,7 +5,7 @@ using PhotonBypass.Tools;
 namespace PhotonBypass.Domain.Servers.Model;
 
 [Table("Nas")]
-public class NasEntity : IBaseEntity, ISshServer
+public class NasEntity : IBaseEntity
 {
     [Key]
     public int Id { get; set; }
@@ -20,15 +20,11 @@ public class NasEntity : IBaseEntity, ISshServer
 
     public string IpAddress { get; set; } = null!;
 
+    public OsType OsType { get; get; }
+
     public int SshPort { get; set; }
 
     public string SshUsername { get; set; } = null!;
 
     public string SshPassword { get; set; } = null!;
-
-    public int Port => SshPort;
-    
-    public string Username => SshUsername;
-    
-    public string Password => SshPassword;
 }
