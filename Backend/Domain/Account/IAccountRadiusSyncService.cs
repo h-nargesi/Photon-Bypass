@@ -14,4 +14,6 @@ public interface IAccountRadiusSyncService
     Task RegisterUser(AccountEntity account);
 
     Task<bool> CheckUsername(string username);
+
+    Task GetCertificate(NasEntity server, string username, CertContext default_context);
 }

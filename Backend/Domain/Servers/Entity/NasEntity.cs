@@ -20,7 +20,7 @@ public class NasEntity : IBaseEntity
 
     public string IpAddress { get; set; } = null!;
 
-    public OsType OsType { get; get; }
+    public OsType OsType { get; set; }
 
     public int SshPort { get; set; }
 

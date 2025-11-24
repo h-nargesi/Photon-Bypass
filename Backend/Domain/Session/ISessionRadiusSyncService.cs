@@ -1,9 +1,8 @@
-﻿using PhotonBypass.Domain.Servers.Model;
-using PhotonBypass.Domain.Services.Model;
+using PhotonBypass.Domain.Servers.Model;
 
-namespace PhotonBypass.Domain.Services;
+namespace PhotonBypass.Domain.Profile;
 
-public interface IVpnNodeService
+public interface ISessionRadiusSyncService
 {
     Task<List<UserConnectionBinding>> GetActiveConnections(NasEntity server, string username);
 
@@ -11,5 +10,5 @@ public interface IVpnNodeService
 
     Task<bool> CloseConnections(IEnumerable<NasEntity> servers, string username, int count);
 
-    Task GetCertificate(NasEntity server, string username, CertContext default_context);
+    Task UpdateTrafficData(IEnumerable<NasEntity> servers);
 }

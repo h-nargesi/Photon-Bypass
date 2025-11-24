@@ -2,7 +2,7 @@
 
 namespace PhotonBypass.Domain.Profile.Business;
 
-public static class AccountStateBusiness
+public static class SessionStateBusiness
 {
     private const long BytesInGig = 1024 * 1024 * 1024;
     public const float AccountFinishingStatePercent = 0.1f;

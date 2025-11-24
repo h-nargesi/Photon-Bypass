@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PhotonBypass.Domain.Profile.Model;
 
-[Table("AccountState")]
-public class AccountStateEntity : IBaseEntity
+[Table("SessionState")]
+public class SessionStateEntity : IBaseEntity
 {
     [Key]
     public int Id { get; set; }
