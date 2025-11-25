@@ -1,5 +1,5 @@
 ﻿using Dapper.FastCrud;
-using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 

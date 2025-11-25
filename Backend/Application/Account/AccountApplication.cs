@@ -1,8 +1,8 @@
 ﻿using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Account.Business;
-using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session.Business;
+using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
@@ -13,7 +13,6 @@ namespace PhotonBypass.Application.Account;
 class AccountApplication(
     Lazy<IAccountRepository> AccountRepo,
     Lazy<IHistoryRepository> HistoryRepo,
-    Lazy<IAccountRadiusSyncService> RadiusSrv,
     Lazy<IJobContext> JobContext)
     : IAccountApplication
 {
@@ -66,9 +65,7 @@ class AccountApplication(
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
         account.SetFromModel(model);
 
-        Task.WaitAll(
-            RadiusSrv.Value.SaveUserPersonalInfo(account),
-            AccountRepo.Value.Save(account));
+        await AccountRepo.Value.Save(account);
 
         return ApiResult.Success("ذخیره شد.");
     }

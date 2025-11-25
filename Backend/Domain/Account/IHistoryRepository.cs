@@ -1,7 +1,7 @@
-﻿using PhotonBypass.Domain.Account.Entity;
+﻿using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.Domain.Repository;
 
-namespace PhotonBypass.Domain.Account;
+namespace PhotonBypass.Domain.Session;
 
 public interface IHistoryRepository : IEditableRepository<HistoryEntity>
 {

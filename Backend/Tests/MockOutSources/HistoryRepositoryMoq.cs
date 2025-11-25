@@ -1,6 +1,6 @@
 ﻿using Moq;
-using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.Tools;
 using System.Text.Json;
 

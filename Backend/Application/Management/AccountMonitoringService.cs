@@ -1,7 +1,7 @@
 ﻿using PhotonBypass.Application.Authentication;
-using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Account.Business;
-using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session.Business;
+using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.Domain.Management;
 using Quartz;
 using Serilog;

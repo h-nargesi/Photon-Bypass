@@ -1,6 +1,6 @@
-﻿using PhotonBypass.Domain.Account.Entity;
+﻿using PhotonBypass.Domain.Session.Entity;
 
-namespace PhotonBypass.Domain.Account.Business;
+namespace PhotonBypass.Domain.Session.Business;
 
 public static class SessionStateBusiness
 {

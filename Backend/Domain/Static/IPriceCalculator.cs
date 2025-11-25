@@ -1,4 +1,6 @@
-﻿namespace PhotonBypass.Domain.Static;
+﻿using PhotonBypass.Domain.Session;
+
+namespace PhotonBypass.Domain.Static;
 
 public interface IPriceCalculator
 {

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Account.Entity;
+namespace PhotonBypass.Domain.Session.Entity;
 
 [Table("ResetPassword")]
 public class ResetPassEntity : IBaseEntity

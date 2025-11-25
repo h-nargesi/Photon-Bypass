@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Account.Entity;
+﻿using PhotonBypass.Domain.Session.Entity;
 
 namespace PhotonBypass.Domain.Management;
 

@@ -1,7 +1,7 @@
-﻿using PhotonBypass.Domain.Account.Entity;
+﻿using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.ErrorHandler;
 
-namespace PhotonBypass.Domain.Account.Business;
+namespace PhotonBypass.Domain.Session.Business;
 
 public static class AccountBusiness
 {
@@ -50,6 +50,18 @@ public static class AccountBusiness
             Name = model.Firstname,
             Surname = model.Lastname,
         };
+    }
+
+    public static bool CheckMoneyNeed(this AccountEntity account, int estimate, out int money_need)
+    {
+        if (account.Balance < estimate)
+        {
+            money_need = estimate - account.Balance;
+            return true;
+        }
+
+        money_need = 0;
+        return false;
     }
 
     public static int IsRichMaxDeactiveTime(this AccountEntity account, DateTime? last_connect_time)

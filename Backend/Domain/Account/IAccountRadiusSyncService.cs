@@ -1,8 +1,7 @@
-﻿using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Domain.Account.Entity;
+﻿using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.Domain.Servers.Types;
 
-namespace PhotonBypass.Domain.Account;
+namespace PhotonBypass.Domain.Session;
 
 // TODO: Move to Infrastructure
 public interface IAccountRadiusSyncService
@@ -11,9 +10,7 @@ public interface IAccountRadiusSyncService
 
     Task ActiveUser(int id, bool active);
 
-    Task SaveUserPersonalInfo(AccountEntity account);
-
-    Task RegisterUser(AccountEntity account);
+    Task<bool> SyncUserAndActive(AccountEntity account);
 
     Task<bool> CheckUsername(string username);
 
