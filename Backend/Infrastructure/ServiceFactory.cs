@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
-using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.Infra.Repository;
 using PhotonBypass.Infra.Repository.DbContext;

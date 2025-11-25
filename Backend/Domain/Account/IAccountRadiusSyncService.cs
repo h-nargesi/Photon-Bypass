@@ -1,6 +1,8 @@
-﻿using PhotonBypass.Domain.Account.Entity;
+﻿using PhotonBypass.Domain.Session.Entity;
+using PhotonBypass.Domain.Session.Entity;
+using PhotonBypass.Domain.Servers.Types;
 
-namespace PhotonBypass.Domain.Account;
+namespace PhotonBypass.Domain.Session;
 
 // TODO: Move to Infrastructure
 public interface IAccountRadiusSyncService

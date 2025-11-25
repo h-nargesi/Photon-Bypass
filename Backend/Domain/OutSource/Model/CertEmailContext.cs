@@ -1,4 +1,6 @@
-﻿namespace PhotonBypass.Domain.Services.Model;
+﻿using PhotonBypass.Domain.Session.Entity;
+
+namespace PhotonBypass.Domain.Session.Model;
 
 public class CertEmailContext : CertContext
 {

@@ -1,5 +1,5 @@
 ﻿using PhotonBypass.Domain.Servers;
-using PhotonBypass.Domain.Servers.Model;
+using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.FreeRadius.Repository.DbContext;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Tools;

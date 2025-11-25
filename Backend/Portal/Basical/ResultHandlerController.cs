@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;

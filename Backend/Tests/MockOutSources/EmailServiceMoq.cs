@@ -1,6 +1,6 @@
 ﻿using Moq;
-using PhotonBypass.Domain.Services;
-using PhotonBypass.Domain.Services.Model;
+using PhotonBypass.Domain.Session.Model;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.Tools;
 

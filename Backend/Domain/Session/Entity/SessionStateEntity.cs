@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Profile.Model;
+namespace PhotonBypass.Domain.Session.Entity;
 
 [Table("SessionState")]
 public class SessionStateEntity : IBaseEntity

@@ -1,6 +1,6 @@
 ﻿using PhotonBypass.Application.Account.Model;
-using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Domain.Session.Entity;
+using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Authentication;

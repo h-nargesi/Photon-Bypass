@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Domain.Profile;
+﻿namespace PhotonBypass.Domain.Session;
 
 public interface IRenewalRepository
 {

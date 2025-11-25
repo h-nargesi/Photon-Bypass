@@ -1,6 +1,6 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using PhotonBypass.Domain.Profile;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.Domain.Static;
 using System.Reflection;
 

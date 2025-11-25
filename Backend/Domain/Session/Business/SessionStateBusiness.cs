@@ -1,13 +1,13 @@
-﻿using PhotonBypass.Domain.Profile.Model;
+﻿using PhotonBypass.Domain.Session.Entity;
 
-namespace PhotonBypass.Domain.Profile.Business;
+namespace PhotonBypass.Domain.Session.Business;
 
 public static class SessionStateBusiness
 {
     private const long BytesInGig = 1024 * 1024 * 1024;
     public const float AccountFinishingStatePercent = 0.1f;
 
-    public static string GetRemainsTitle(this AccountStateEntity entity)
+    public static string GetRemainsTitle(this SessionStateEntity entity)
     {
         var result = string.Empty;
 

@@ -1,7 +1,8 @@
+using PhotonBypass.Domain.Servers.Types;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Servers.Model;
+namespace PhotonBypass.Domain.Servers.Types;
 
 [Table("Process")]
 public class ProcessEntity : IBaseEntity

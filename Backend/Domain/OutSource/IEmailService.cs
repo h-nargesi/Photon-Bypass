@@ -1,6 +1,6 @@
-﻿using PhotonBypass.Domain.Services.Model;
+﻿using PhotonBypass.Domain.Session.Model;
 
-namespace PhotonBypass.Domain.Services;
+namespace PhotonBypass.Domain.Session;
 
 public interface IEmailService
 {

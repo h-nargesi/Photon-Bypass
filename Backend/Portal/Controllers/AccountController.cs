@@ -5,8 +5,8 @@ using PhotonBypass.API.Context;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;

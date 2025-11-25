@@ -1,6 +1,6 @@
-﻿using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Services;
+﻿using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session;
 
 namespace PhotonBypass.OutSource;
 

@@ -1,8 +1,6 @@
-﻿using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Domain.Profile;
+﻿using PhotonBypass.Domain.Session.Entity;
 
-namespace PhotonBypass.Domain.Services;
+namespace PhotonBypass.Domain.Session;
 
 public interface ISocialMediaService
 {

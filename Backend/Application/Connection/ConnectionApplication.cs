@@ -1,9 +1,8 @@
 ﻿using PhotonBypass.Application.Connection.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Servers;
-using PhotonBypass.Domain.Services;
+using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
@@ -11,7 +10,7 @@ using Serilog;
 namespace PhotonBypass.Application.Connection;
 
 class ConnectionApplication(
-    IVpnNodeService VpnNodeSrv,
+    ISessionRadiusSyncService RadiusSrv,
     INasRepository NasRepo,
     Lazy<IAccountRepository> AccountRepo,
     Lazy<IJobContext> JobContext,
@@ -31,7 +30,7 @@ class ConnectionApplication(
 
         var servers_task = servers_info.ToDictionary(
             server => server,
-            server => VpnNodeSrv.GetActiveConnections(server, target));
+            server => RadiusSrv.GetActiveConnections(server, target));
 
         await Task.WhenAll(servers_task.Values);
 
@@ -54,7 +53,7 @@ class ConnectionApplication(
                   ?? throw new UserException("دسترسی غیرمجاز!",
                       $"Closing connection server is invalid: ({server}, {target}, {session_id})");
 
-        var result = await VpnNodeSrv.CloseConnection(nas, session_id);
+        var result = await RadiusSrv.CloseConnection(nas, session_id);
 
         if (!result)
         {

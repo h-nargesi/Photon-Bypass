@@ -1,10 +1,10 @@
 ﻿using PhotonBypass.Application.Vpn.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Services;
-using PhotonBypass.Domain.Services.Model;
+using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session.Model;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;

@@ -1,4 +1,4 @@
-namespace PhotonBypass.Domain.Servers.Model;
+namespace PhotonBypass.Domain.Servers.Types;
 
 public enum ScriptType
 {

@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Account.Model;
+﻿using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.FreeRadius.Entity;
 
 namespace PhotonBypass.FreeRadius.Business;

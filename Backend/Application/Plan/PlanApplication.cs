@@ -1,9 +1,8 @@
 ﻿using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Services;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;

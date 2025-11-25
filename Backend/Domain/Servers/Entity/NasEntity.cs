@@ -1,8 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PhotonBypass.Domain.Servers.Types;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using PhotonBypass.Tools;
 
-namespace PhotonBypass.Domain.Servers.Model;
+namespace PhotonBypass.Domain.Servers.Types;
 
 [Table("Nas")]
 public class NasEntity : IBaseEntity

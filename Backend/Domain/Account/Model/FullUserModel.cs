@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Domain.Account.Model;
+﻿namespace PhotonBypass.Domain.Session.Entity;
 
 public class EditUserModel
 {

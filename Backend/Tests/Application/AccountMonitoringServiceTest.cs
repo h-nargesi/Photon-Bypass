@@ -1,6 +1,6 @@
 ﻿using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Services;
+using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.Test.MockOutSources;
 

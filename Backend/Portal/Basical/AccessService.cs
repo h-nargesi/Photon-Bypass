@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
-using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Session;
 
 namespace PhotonBypass.API.Basical;
 

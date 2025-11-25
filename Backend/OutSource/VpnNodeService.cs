@@ -1,10 +1,11 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
-using PhotonBypass.Domain.Servers.Model;
-using PhotonBypass.Domain.Services;
-using PhotonBypass.Domain.Services.Model;
+using PhotonBypass.Domain.Session.Entity;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.Mikrotik.Helper;
 using PhotonBypass.Tools;
+using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.Domain.Session.Model;
 
 namespace PhotonBypass.OutSource;
 

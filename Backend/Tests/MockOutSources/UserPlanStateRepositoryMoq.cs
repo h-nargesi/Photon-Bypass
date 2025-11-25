@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using Moq;
-using PhotonBypass.Domain.Profile;
+using PhotonBypass.Domain.Session;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Tools;

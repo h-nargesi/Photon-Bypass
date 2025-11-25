@@ -1,12 +1,12 @@
-﻿using PhotonBypass.Domain.Profile.Model;
+﻿using PhotonBypass.Domain.Session.Entity;
 
-namespace PhotonBypass.Domain.Profile;
+namespace PhotonBypass.Domain.Session;
 
 public interface ISessionStateRepository
 {
-    Task<ASessionStateEntity?> GetASessionState(int id);
+    Task<SessionStateEntity?> GetSessionState(int id);
     
-    Task<ASessionStateEntity?> GetASessionState(string username);
+    Task<SessionStateEntity?> GetSessionState(string username);
  
-    Task<IList<ASessionStateEntity>> GetAccountFinishingState();
+    Task<IList<SessionStateEntity>> GetAccountFinishingState();
 }

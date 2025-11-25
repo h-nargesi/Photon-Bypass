@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Servers.Model;
+namespace PhotonBypass.Domain.Servers.Types;
 
 [Table("Script")]
 public class ScriptEntity : IBaseEntity

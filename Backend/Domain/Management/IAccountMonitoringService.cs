@@ -1,13 +1,12 @@
-﻿using PhotonBypass.Domain.Profile;
-using PhotonBypass.Domain.Profile.Model;
+﻿using PhotonBypass.Domain.Session.Entity;
 
 namespace PhotonBypass.Domain.Management;
 
-public interface IAccountMonitoringService
+public interface ISessionMonitoringService
 {
     static event Action<UserCheckingEvent>? OnUserChecking;
 
-    Task NotifSendServices(IEnumerable<AccountStateEntity> plan_states);
+    Task NotifSendServices(IEnumerable<SessionStateEntity> plan_states);
     
-    Task InactiveAbandonedUsers(IEnumerable<AccountStateEntity> plan_state_list);
+    Task InactiveAbandonedUsers(IEnumerable<SessionStateEntity> plan_state_list);
 }

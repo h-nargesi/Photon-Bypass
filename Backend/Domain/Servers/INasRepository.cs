@@ -1,5 +1,5 @@
 ﻿using PhotonBypass.Domain.Repository;
-using PhotonBypass.Domain.Servers.Model;
+using PhotonBypass.Domain.Servers.Types;
 
 namespace PhotonBypass.Domain.Servers;
 
