@@ -1,6 +1,4 @@
-﻿using PhotonBypass.Domain.Plan;
-
-namespace PhotonBypass.Domain.Static;
+﻿namespace PhotonBypass.Domain.Static;
 
 public interface IPriceCalculator
 {

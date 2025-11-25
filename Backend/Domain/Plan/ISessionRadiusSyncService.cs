@@ -1,5 +1,5 @@
-using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.Domain.Plan.Model;
+using PhotonBypass.Domain.Servers.Entity;
 
 namespace PhotonBypass.Domain.Plan;
 

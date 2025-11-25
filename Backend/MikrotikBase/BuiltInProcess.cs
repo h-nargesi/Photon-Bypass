@@ -1,4 +1,4 @@
-using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
 
 namespace PhotonBypass.Mikrotik.Helper;

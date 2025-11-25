@@ -1,7 +1,9 @@
 ﻿using PhotonBypass.Application.Account.Model;
-using PhotonBypass.Domain.Plan;
-using PhotonBypass.Domain.Plan.Business;
-using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Business;
+using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Domain.OutSource;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
@@ -24,7 +26,7 @@ partial class AuthApplication(
         var account = await AccountRepo.GetAccount(username) ??
             await CopyFromPermanentUser(username, password);
 
-        if (account == null || account.Password != HashHandler.HashPassword(password))
+        if (account == null || !account.Active || account.Password != HashHandler.HashPassword(password))
         {
             if (account == null)
             {
@@ -34,17 +36,21 @@ partial class AuthApplication(
                     Data = null,
                 };
             }
-            
-            _ = SocialMediaSrv.Value.InvalidPasswordAlert(account.Username);
-            _ = HistoryRepo.Value.Save(new HistoryEntity
-            {
-                Target = account.Username,
-                EventTime = DateTime.Now,
-                Title = "امنیت",
-                Description = "تلاش برای ورود با کلمه عبور اشتباه",
-            });
 
-            Log.Warning("Invalid password for {0}", account.Username);
+            _ = SocialMediaSrv.Value.InvalidPasswordAlert(account.Username);
+
+            if (account.Active)
+            {
+                _ = HistoryRepo.Value.Save(new HistoryEntity
+                {
+                    Target = account.Username,
+                    EventTime = DateTime.Now,
+                    Title = "امنیت",
+                    Description = "تلاش برای ورود با کلمه عبور اشتباه",
+                });
+            }
+
+            Log.Warning("Invalid password for {0}, active={1}", account.Username, account.Active);
 
             return new ApiResult<UserModel>
             {
@@ -90,35 +96,42 @@ partial class AuthApplication(
                 Message = "موبایل هنوز پشتیبانی نشده است!"
             };
 #else
-            var account = await AccountRepo.GetAccountByMobile(email_mobile);
-
-            if (account != null)
+            var account = await AccountRepo.GetAccountByMobile(email_mobile) ?? 
+                throw new UserException("کاربر یافت نشد.");
+                
+            if (!account.Active)
             {
-                var hash_code = HashHandler.GenerateHashCode(56);
-
-                await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
-                {
-                    AccountId = account.Id,
-                    ExpireDate = DateTime.Now.AddDays(1),
-                    HashCode = hash_code,
-                });
-
-                await SocialMediaSrv.Value.SendResetPasswordLink(email_mobile, hash_code);
-
-                // TODO: History record
-
-                Log.Verbose("Reset-Password message has been sent: {0}", email_mobile);
+                throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
             }
+            
+            var hash_code = HashHandler.GenerateHashCode(56);
+
+            await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
+            {
+                AccountId = account.Id,
+                ExpireDate = DateTime.Now.AddDays(1),
+                HashCode = hash_code,
+            });
+
+            await SocialMediaSrv.Value.SendResetPasswordLink(email_mobile, hash_code);
+
+            // TODO: History record
+
+            Log.Verbose("Reset-Password message has been sent: {0}", email_mobile);
 
             return ApiResult.Success("پیام به واتساپ ارسال شد.");
 #endif
         }
         else if (EmailValidator().IsMatch(email_mobile))
         {
-            var account = await AccountRepo.GetAccountByMobile(email_mobile);
+            var account = (await AccountRepo.GetAccountByMobile(email_mobile)) ??
+                throw new UserException("کاربر یافت نشد.");
 
-            if (account == null) throw new UserException("کاربر یافت نشد.");
-            
+            if (!account.Active)
+            {
+                throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
+            }
+
             var hash_code = HashHandler.GenerateHashCode(56);
 
             var insert_task = ResetPassRepo.Value.AddHashCode(new ResetPassEntity

@@ -1,6 +1,4 @@
-﻿using PhotonBypass.Domain.Plan.Entity;
-
-namespace PhotonBypass.Domain.Plan.Model;
+﻿namespace PhotonBypass.Domain.OutSource.Model;
 
 public class CertEmailContext : CertContext
 {

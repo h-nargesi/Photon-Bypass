@@ -1,6 +1,5 @@
 
-using PhotonBypass.Domain.Servers.Types;
-using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.Domain.Servers.Entity;
 using Renci.SshNet;
 
 namespace PhotonBypass.Mikrotik.Helper;

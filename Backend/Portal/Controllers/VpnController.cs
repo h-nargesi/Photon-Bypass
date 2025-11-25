@@ -5,7 +5,7 @@ using PhotonBypass.API.Context;
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;
@@ -41,7 +41,7 @@ public class VpnController(
             return user;
         }
 
-        var result = await application.ChangeOvpnPassword(JobContext.Target, context.Password);
+        var result = await application.ChangeVpnPassword(JobContext.Target, context.Password);
 
         return SafeApiResult(result);
     }

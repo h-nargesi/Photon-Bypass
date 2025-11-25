@@ -4,7 +4,7 @@ using PhotonBypass.API.Basical;
 using PhotonBypass.API.Context;
 using PhotonBypass.Application.Connection;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;

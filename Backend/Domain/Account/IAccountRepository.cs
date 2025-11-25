@@ -1,7 +1,7 @@
-﻿using PhotonBypass.Domain.Plan.Entity;
+﻿using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Repository;
 
-namespace PhotonBypass.Domain.Plan;
+namespace PhotonBypass.Domain.Account;
 
 public interface IAccountRepository : IEditableRepository<AccountEntity>
 {
@@ -19,5 +19,7 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
 
     Task<bool> CheckUsername(string username);
 
-    Task<int?> GetRealmId(string username);
+    Task<bool> IsInactive(string username);
+
+    Task<int?> GetActiveAccountRealmId(string username);
 }

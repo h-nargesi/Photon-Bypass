@@ -1,11 +1,14 @@
 ﻿using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Domain;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Business;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Servers;
-using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Servers;
+using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
@@ -29,6 +32,11 @@ class PlanApplication(
 {
     public async Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target)
     {
+        if (await AccountRepo.Value.IsInactive(target))
+        {
+            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
+        }
+
         var renew = await RenewalRepo.LatestOf(target);
 
         if (renew == null)
@@ -91,6 +99,11 @@ class PlanApplication(
 
     public async Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target)
     {
+        if (await AccountRepo.Value.IsInactive(target))
+        {
+            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
+        }
+
         var renew = await RenewalRepo.LatestOf(target);
 
         return ApiResult<PlanInfoModel>.Success(new PlanInfoModel
@@ -117,6 +130,11 @@ class PlanApplication(
     {
         var account = await AccountRepo.Value.GetAccount(target) ??
             throw new UserException("کاربر مورد نظر پیدا نشد!");
+
+        if (!account.Active)
+        {
+            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
+        }
 
         var estimate = PriceCalc.Value.CalculatePrice(count, months, gigabytes);
 
@@ -154,7 +172,10 @@ class PlanApplication(
             SimultaneousUse = count,
         };
 
-        if (state.LastConnectTime == null || state.LastConnectTime.Value < DateTime.Now.AddDays(-7))
+        var previous_plan = await RenewalRepo.LatestOf(account.Id);
+        renew.RestrictedRealmId = previous_plan?.RestrictedRealmId;
+
+        if (renew.RestrictedRealmId == null || state.LastConnectTime == null || state.LastConnectTime.Value < DateTime.Now.AddDays(-7))
         {
             renew.RestrictedRealmId = (await ServerMngSrv.Value.GetAvailableRealm()).Id;
         }
@@ -177,16 +198,15 @@ class PlanApplication(
     change=(taget:{1}, user-count:{2}, to:{3})",
                 JobContext.Value.Username, target, state.SimultaneousUserCount, count);
 
-            var last_renewal = await RenewalRepo.LatestOf(account.Id);
             var nas_list = new List<NasEntity>();
-            if (last_renewal?.RestrictedRealmId != null)
+            if (previous_plan?.RestrictedRealmId != null)
             {
-                nas_list.AddRange(await NasRepo.Value.GetAllInRealm(last_renewal.RestrictedRealmId.Value));
+                nas_list.AddRange(await NasRepo.Value.GetAllActiveInRealm(previous_plan.RestrictedRealmId.Value));
             }
 
             if (nas_list.Count < 0)
             {
-                nas_list.AddRange(await NasRepo.Value.GetAll());
+                nas_list.AddRange(await NasRepo.Value.GetAllActive());
             }
 
             _ = SessionRadiusSrv.Value.CloseConnections(nas_list, account.Username, state.SimultaneousUserCount.Value - count);
@@ -216,8 +236,7 @@ class PlanApplication(
         }
         catch
         {
-            if (account.ReferenceId.HasValue)
-                _ = AccountRadiusSrv.Value.ActiveUser(account.ReferenceId.Value, false);
+            _ = AccountRadiusSrv.Value.DeactivateUser([account.Username]);
 
             tranAccount.Rollback();
 

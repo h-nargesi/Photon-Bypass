@@ -1,6 +1,6 @@
-﻿using PhotonBypass.Domain.Plan.Model;
+﻿using PhotonBypass.Domain.OutSource.Model;
 
-namespace PhotonBypass.Domain.Plan;
+namespace PhotonBypass.Domain.OutSource;
 
 public interface IEmailService
 {

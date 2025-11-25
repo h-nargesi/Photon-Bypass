@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Options;
-using PhotonBypass.Domain.Plan;
-using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Management;
+using PhotonBypass.Domain.OutSource;
+using PhotonBypass.Domain.OutSource.Model;
+using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Servers;
-using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.Domain.Servers.Entity;
 using System.Text;
 using System.Text.RegularExpressions;
-using PhotonBypass.Domain.Plan;
 
 namespace PhotonBypass.Application.Management;
 
@@ -28,7 +28,7 @@ partial class ServerManagementService(
             .Key;
     }
 
-    public async Task<CertContext> GetDefaultCertificate(int realm_id)
+    public async Task<CertContext> GetDefaultCertificate(int? realm_id)
     {
         var cert_path = Options.Value.DefaultCertPath ??
                         throw new Exception("Default cert-path is not set in config!");
@@ -36,26 +36,23 @@ partial class ServerManagementService(
         if (Options.Value.DefaultPrivateKeyOVpn == null)
             throw new Exception("OVpn Private key is not set in config!");
 
-        var realm_task = RealmRepo.Fetch(realm_id);
-        var servers_task = NasRepo.Value.GetAllDomainInRealm(realm_id);
+        var realm_name_task = realm_id.HasValue ? RealmRepo.GetName(realm_id.Value) : Task.FromResult<string?>("All");
+        var servers_task = NasRepo.Value.GetAllActiveDomainInRealm(realm_id);
 
         var cert_file = await File.ReadAllBytesAsync(cert_path);
 
-        var realm = await realm_task ??
-                    // TODO: test should throw an exception
-                    throw new Exception($"Realm not found: (realm-id={realm_id})!");
-
-        var servers = await servers_task ??
-                      // TODO: test should throw an exception
+        var servers = (await servers_task) ??
                       throw new Exception($"Nas/Domain not found: (realm-id={realm_id})!");
 
+        var name = (await realm_name_task) ?? "All";
+
         var ovpn_conf_file = Encoding.UTF8.GetString(cert_file);
-        ovpn_conf_file = SetDomain(ovpn_conf_file, realm.Name, servers);
+        ovpn_conf_file = SetDomain(ovpn_conf_file, name, servers);
         cert_file = Encoding.UTF8.GetBytes(ovpn_conf_file);
 
         return new CertContext
         {
-            Realm = realm.Name,
+            Realm = name,
             PrivateKeyOvpn = Options.Value.DefaultPrivateKeyOVpn,
             CertFile = cert_file,
         };
@@ -92,7 +89,7 @@ partial class ServerManagementService(
     {
         var realms = await RealmRepo.FetchAllActiveRealm();
 
-        var clusters = await NasRepo.Value.GetAllInRealm(realms.Select(r => r.Id));
+        var clusters = await NasRepo.Value.GetAllActiveInRealm(realms.Select(r => r.Id));
         var servers = clusters.SelectMany(s => s.Value).ToList();
 
         await RadiusSrv.UpdateTrafficData(servers);

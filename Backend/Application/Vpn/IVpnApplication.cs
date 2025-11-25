@@ -5,7 +5,7 @@ namespace PhotonBypass.Application.Vpn;
 
 public interface IVpnApplication
 {
-    Task<ApiResult> ChangeOvpnPassword(string target, string password);
+    Task<ApiResult> ChangeVpnPassword(string target, string password);
 
     Task<ApiResult> SendCertEmail(string target);
 

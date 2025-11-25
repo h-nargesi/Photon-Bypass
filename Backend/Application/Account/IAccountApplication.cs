@@ -1,5 +1,5 @@
 ﻿using PhotonBypass.Application.Account.Model;
-using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Account;

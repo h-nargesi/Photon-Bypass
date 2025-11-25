@@ -1,5 +1,5 @@
 ﻿using PhotonBypass.Domain.Servers;
-using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.FreeRadius.Repository.DbContext;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Tools;
@@ -12,7 +12,7 @@ class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context)
     readonly static string DomainName = EntityExtensions.GetColumnName<NasEntity>(x => x.DomainName);
     readonly static string SshPassword = EntityExtensions.GetColumnName<NasEntity>(x => x.SshPassword);
 
-    public async Task<List<NasEntity>> GetAll()
+    public async Task<List<NasEntity>> GetAllActive()
     {
         var result = await FindAsync(statement => statement
             .Where($"{SshPassword} is not null"));
@@ -20,7 +20,7 @@ class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context)
         return [.. result];
     }
 
-    public async Task<NasEntity?> GetNasInfo(string ip)
+    public async Task<NasEntity?> GetActiveNasInfo(string ip)
     {
         var result = await FindAsync(statement => statement
             .Where($"{SshPassword} is not null and {DomainName} is not null and {IpAddress} = @ip")

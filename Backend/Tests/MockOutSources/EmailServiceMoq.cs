@@ -1,8 +1,8 @@
 ﻿using Moq;
-using PhotonBypass.Domain.Plan.Model;
-using PhotonBypass.Domain.Plan;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.Tools;
+using PhotonBypass.Domain.OutSource.Model;
+using PhotonBypass.Domain.OutSource;
 
 namespace PhotonBypass.Test.MockOutSources;
 

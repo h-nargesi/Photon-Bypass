@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
-using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.OutSource;

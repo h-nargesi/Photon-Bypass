@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Domain.Plan;
+﻿namespace PhotonBypass.Domain.Account;
 
 public interface IAccessService
 {

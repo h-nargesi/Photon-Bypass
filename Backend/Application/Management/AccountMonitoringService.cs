@@ -1,11 +1,14 @@
 ﻿using PhotonBypass.Application.Authentication;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Business;
+using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Management;
+using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Plan.Entity;
-using PhotonBypass.Domain.Management;
 using Quartz;
 using Serilog;
-using PhotonBypass.Domain.Plan.Entity;
 
 namespace PhotonBypass.Application.Management;
 
@@ -13,7 +16,6 @@ internal class AccountMonitoringService(
     IPlanStateRepository SessionStateRepo,
     IAccountRepository AccountRepo,
     IHistoryRepository HistoryRepo,
-    IAuthApplication AuthApp,
     IEmailService EmailSrv,
     IAccountRadiusSyncService RadiusSrv,
     IServerManagementService ServerMngSrv,
@@ -38,6 +40,8 @@ internal class AccountMonitoringService(
 
     public async Task InactiveAbandonedUsers(IEnumerable<PlanStateEntity> plan_state_list)
     {
+        var deactivate_list = new List<string>();
+
         foreach (var plan in plan_state_list)
         {
             if (plan.ExpirationDate > DateTime.Now)
@@ -61,10 +65,7 @@ internal class AccountMonitoringService(
                 continue;
             }
 
-            if (account.ReferenceId.HasValue)
-            {
-                _ = RadiusSrv.ActiveUser(account.ReferenceId.Value, false);
-            }
+            deactivate_list.Add(account.Username);
 
             Log.Information(
                 "The user '{0}' was disabled: ExpiredTime={1} days, ExpirationDate={2}, TotalData={3}, DataUsage={4}",
@@ -82,13 +83,18 @@ internal class AccountMonitoringService(
                 Value = expired_days,
             });
         }
+
+        if (deactivate_list.Count > 0)
+        {
+            await RadiusSrv.DeactivateUser(deactivate_list);
+        }
     }
 
     public async Task NotifSendServices(IEnumerable<PlanStateEntity> plan_states)
     {
         var plan_state_list = plan_states.ToArray();
-        var user_ids = plan_state_list.Select(x => x.Id).ToList();
-        var accounts = await AccountRepo.GetAccounts(user_ids);
+        var account_ids = plan_state_list.Select(x => x.Id).ToList();
+        var accounts = await AccountRepo.GetAccounts(account_ids);
 
         var tasks = new List<Task>();
 
@@ -96,7 +102,7 @@ internal class AccountMonitoringService(
         {
             if (!accounts.TryGetValue(plan.Id, out var account))
             {
-                account = await AuthApp.CopyFromPermanentUser(plan.Username, null);
+                throw new Exception($"The id ({plan.Id}) not found in accounts.");
             }
 
             if (account == null || account.OverWarningTime())

@@ -1,6 +1,6 @@
 ﻿using Moq;
-using PhotonBypass.Domain.Plan;
-using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockOutSources;

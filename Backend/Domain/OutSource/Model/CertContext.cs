@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Domain.Plan.Entity;
+﻿namespace PhotonBypass.Domain.OutSource.Model;
 
 public class CertContext
 {

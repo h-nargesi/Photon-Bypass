@@ -1,12 +1,12 @@
 ﻿using PhotonBypass.Application.Connection.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Servers;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Plan;
-using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Servers;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
-using PhotonBypass.Domain.Plan;
 
 namespace PhotonBypass.Application.Connection;
 
@@ -20,14 +20,14 @@ class ConnectionApplication(
 {
     public async Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(string target)
     {
-        var target_realm_id = await AccountRepo.Value.GetRealmId(target);
+        var target_realm_id = await AccountRepo.Value.GetActiveAccountRealmId(target);
 
         if (target_realm_id == null)
         {
             return ApiResult<List<ConnectionStateModel>>.Success([]);
         }
 
-        var servers_info = await NasRepo.GetAllInRealm(target_realm_id.Value);
+        var servers_info = await NasRepo.GetAllActiveInRealm(target_realm_id.Value);
 
         var servers_task = servers_info.ToDictionary(
             server => server,
@@ -50,7 +50,7 @@ class ConnectionApplication(
 
     public async Task<ApiResult> CloseConnection(string server, string target, string session_id)
     {
-        var nas = (await NasRepo.GetNasInfo(server))
+        var nas = (await NasRepo.GetActiveNasInfo(server))
                   ?? throw new UserException("دسترسی غیرمجاز!",
                       $"Closing connection server is invalid: ({server}, {target}, {session_id})");
 

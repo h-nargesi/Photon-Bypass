@@ -4,8 +4,8 @@ using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Mikrotik.Helper;
 using PhotonBypass.Tools;
-using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.Domain.Plan.Model;
+using PhotonBypass.Domain.Servers.Entity;
 
 namespace PhotonBypass.OutSource;
 

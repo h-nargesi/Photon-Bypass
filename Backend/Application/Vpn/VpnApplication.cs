@@ -1,8 +1,13 @@
 ﻿using PhotonBypass.Application.Vpn.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Plan;
-using PhotonBypass.Domain.Plan.Model;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Management;
+using PhotonBypass.Domain.OutSource;
+using PhotonBypass.Domain.OutSource.Model;
+using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Servers;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
@@ -10,16 +15,15 @@ using PhotonBypass.Tools;
 namespace PhotonBypass.Application.Vpn;
 
 class VpnApplication(
-    Lazy<IRadiusService> RadiusSrv,
+    Lazy<IAccountRadiusSyncService> AccountRadiusSrv,
     Lazy<IEmailService> EmailSrv,
     Lazy<ITrafficDataRepository> TrafficDataRepo,
     Lazy<IAccountRepository> AccountRepo,
-    Lazy<IVpnNodeService> VpnNodeSrv,
-    Lazy<IPermanentUsersRepository> UserRepo,
     Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IRealmRepository> RealmRepo,
-    Lazy<IAccountStateRepository> PlanStateRepo,
+    Lazy<IRenewalRepository> RenewalRepo,
+    Lazy<IPlanStateRepository> PlanStateRepo,
     Lazy<INasRepository> NasRepo,
     Lazy<IJobContext> JobContext)
     : IVpnApplication
@@ -27,19 +31,24 @@ class VpnApplication(
     private const int MAX_DATE_BEFORE = 30;
     private const int BYTES_IN_MEGABYTES = 1024 * 1024;
 
-    public async Task<ApiResult> ChangeOvpnPassword(string target, string password)
+    public async Task<ApiResult> ChangeVpnPassword(string target, string password)
     {
-        var account = await AccountRepo.Value.GetAccount(target) ??
-                      throw new UserException("کاربر پیدا نشد!", $"target: {target}");
+        var account = (await AccountRepo.Value.GetAccount(target)) ??
+                      throw new UserException("کاربر پیدا نشد!", $"target not found: {target}");
 
-        var result = await RadiusSrv.Value.ChangeOvpnPassword(account.PermanentUserId, password);
+        if (!account.Active)
+        {
+            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
+        }
+
+        var result = await AccountRadiusSrv.Value.ChangeVpnPassword(account.Username, password);
 
         if (!result)
         {
             return new ApiResult
             {
                 Code = 500,
-                Message = "تغییر کلمه عبور Ovpn با خطا مواجه شد!",
+                Message = "تغییر کلمه عبور VPN با خطا مواجه شد!",
             };
         }
 
@@ -57,52 +66,51 @@ class VpnApplication(
 
     public async Task<ApiResult> SendCertEmail(string target)
     {
-        var user = await UserRepo.Value.GetUser(target) ??
-                   throw new UserException("کاربر پیدا نشد!", $"target: {target}");
+        var account = (await AccountRepo.Value.GetAccount(target)) ??
+            throw new UserException("کاربر پیدا نشد!", $"target not found: {target}");
 
-        if (!user.Active)
+        if (!account.Active)
         {
-            throw new UserException("کاربر پیدا نشد!", $"user is inactive: target={target}");
+            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
 
-        if (user.Email == null)
+        if (account.Email == null)
         {
-            throw new UserException("ایمیل کاربر ثبت نشده است!", $"user is email address is unkown: target={target}");
+            throw new UserException("ایمیل کاربر ثبت نشده است!", $"account is email address is unkown: target={target}");
         }
 
-        var server_ip_task = PlanStateRepo.Value.GetRestrictedServerIP(user.Id);
+        var plan = await PlanStateRepo.Value.GetPlanState(account.Id);
 
-        var ovpn_password_task = RadiusSrv.Value.GetOvpnPassword(user.Id);
-
-        var cert_context = await ServerMngSrv.Value.GetDefaultCertificate(user.RealmId);
-
-        var server_ip = await server_ip_task;
-
-        if (server_ip == null)
+        if (plan == null || 
+            plan.TimeLeft.HasValue && plan.TimeLeft.Value.TotalMinutes < 1 ||
+            plan.TrafficLeft.HasValue && plan.TrafficLeft.Value < 1)
         {
-            var realm = await RealmRepo.Value.Fetch(user.RealmId);
-            server_ip = realm?.RestrictedServerIP;
+            throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
+                                    $"There is not ant plan for user ");
         }
 
-        if (server_ip != null)
+        var vpn_password_task = AccountRadiusSrv.Value.GetVpnPassword(account.Username);
+
+        var cert_context = await ServerMngSrv.Value.GetDefaultCertificate(plan.RestrictedRealmId);
+
+        if (plan?.RestrictedRealmId != null)
         {
-            var server = await NasRepo.Value.GetNasInfo(server_ip);
-            if (server != null)
-            {
-                await VpnNodeSrv.Value.GetCertificate(server, user.Username, cert_context);
-            }
+            var servers = await NasRepo.Value.GetAllActiveInRealm(plan.RestrictedRealmId.Value) ??
+                throw new Exception($"There is not any nas for realm: {plan.RestrictedRealmId.Value}.");
+
+            await AccountRadiusSrv.Value.GetCertificate(servers, account.Username, cert_context);
         }
 
         var email_context = new CertEmailContext
         {
-            Username = user.Username,
-            Password = (await ovpn_password_task) ?? throw new Exception($"Password not found for user: {target}"),
+            Username = account.Username,
+            Password = (await vpn_password_task) ?? throw new Exception($"Password not found for user: {target}"),
             Realm = cert_context.Realm,
             PrivateKeyOvpn = cert_context.PrivateKeyOvpn,
             CertFile = cert_context.CertFile,
         };
 
-        await EmailSrv.Value.SendCertEmail(user.Fullname, user.Email, email_context);
+        await EmailSrv.Value.SendCertEmail(account.Fullname, account.Email, email_context);
 
         _ = HistoryRepo.Value.Save(new HistoryEntity
         {

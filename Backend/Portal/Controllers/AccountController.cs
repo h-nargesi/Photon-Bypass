@@ -5,7 +5,7 @@ using PhotonBypass.API.Context;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Result;
 

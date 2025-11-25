@@ -1,7 +1,8 @@
-﻿using PhotonBypass.Domain.Plan.Entity;
+﻿using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
 
-namespace PhotonBypass.Domain.Plan.Business;
+namespace PhotonBypass.Domain.Account.Business;
 
 public static class AccountBusiness
 {
