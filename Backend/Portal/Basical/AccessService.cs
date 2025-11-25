@@ -7,10 +7,9 @@ internal class AccessService(IMemoryCache cache) : IAccessService
 {
     public bool CheckAccess(string username, string target)
     {
-        return true;
-        //return cache.Get<HashSet<string>>($"TargetArea|{username}")
-        //    ?.Contains(target)
-        //    ?? false;
+        return cache.Get<HashSet<string>>($"TargetArea|{username}")
+            ?.Contains(target)
+            ?? false;
     }
 
     public void LoginEvent(string username, HashSet<string> area)

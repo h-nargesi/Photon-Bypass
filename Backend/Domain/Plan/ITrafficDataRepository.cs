@@ -7,5 +7,5 @@ public interface ITrafficDataRepository : IEditableRepository<TrafficDataEntity>
 {
     Task<List<TrafficDataEntity>> Fetch(string target, DateTime from);
     
-    Task<Dictionary<int, List<TrafficDataEntity>>> Fetch(IEnumerable<int> nas_id, DateTime from);
+    Task<Dictionary<int, List<TrafficDataEntity>>> Fetch(IEnumerable<int> nas_ids, DateTime from);
 }

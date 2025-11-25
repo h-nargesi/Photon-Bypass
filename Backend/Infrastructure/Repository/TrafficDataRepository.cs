@@ -9,7 +9,7 @@ namespace PhotonBypass.Infra.Repository;
 
 class TrafficDataRepository(LocalDbContext context) : EditableRepository<TrafficDataEntity>(context), ITrafficDataRepository
 {
-    readonly static string AccountTableName = EntityExtensions.GetTablename<AccountEntity>();
+    private static readonly string AccountTableName = EntityExtensions.GetTablename<AccountEntity>();
 
     public async Task<List<TrafficDataEntity>> Fetch(string username, DateTime from)
     {
@@ -20,5 +20,17 @@ class TrafficDataRepository(LocalDbContext context) : EditableRepository<Traffic
             .WithParameters(new { username }));
 
         return [.. result];
+    }
+
+    public async Task<Dictionary<int, List<TrafficDataEntity>>> Fetch(IEnumerable<int> nas_ids, DateTime from)
+    {
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(TrafficDataEntity.NasId)} in (@nas_ids) and {nameof(TrafficDataEntity.StartSession)} >= @from")
+            .WithParameters(new { nas_ids, from }));
+
+        return result.GroupBy(k => k.NasId)
+            .ToDictionary(k => k.Key, v => v.ToList());
     }
 }

@@ -15,7 +15,7 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
 
     Task<IList<AccountEntity>> GetTargetArea(int account_id);
 
-    Task<IDictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> user_ids);
+    Task<IDictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids);
 
     Task<bool> CheckUsername(string username);
 

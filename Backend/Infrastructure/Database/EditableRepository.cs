@@ -8,7 +8,7 @@ namespace PhotonBypass.Infra.Database;
 public abstract class EditableRepository<TEntity>(IDapperDbContext context) : DapperRepository<TEntity>(context), IEditableRepository<TEntity>
     where TEntity : class, IBaseEntity
 {
-    private const int UPDATE_MAX_TAKS_COUNT = 10;
+    private const int UpdateMaxTasksCount = 10;
 
     public async Task<IDbTransaction> BeginTransactionAsync()
     {
@@ -39,7 +39,7 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context) : Da
             if (entity.Id > 0)
             {
                 buffer.Enqueue(Connection.UpdateAsync(entity));
-                if (buffer.Count >= UPDATE_MAX_TAKS_COUNT)
+                if (buffer.Count >= UpdateMaxTasksCount)
                     await buffer.Dequeue();
             }
             else

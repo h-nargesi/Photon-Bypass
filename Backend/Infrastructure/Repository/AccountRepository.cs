@@ -7,9 +7,15 @@ namespace PhotonBypass.Infra.Repository;
 
 class AccountRepository(LocalDbContext context) : EditableRepository<AccountEntity>(context), IAccountRepository
 {
-    public Task<AccountEntity?> GetAccount(int id)
+    public async Task<AccountEntity?> GetAccount(int id)
     {
-        throw new NotImplementedException();
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(AccountEntity.Id)} = @id")
+            .WithParameters(new { id }));
+
+        return result.FirstOrDefault();
     }
 
     public async Task<AccountEntity?> GetAccount(string username)
@@ -45,27 +51,26 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return result.FirstOrDefault();
     }
 
-    public async Task<IList<AccountEntity>> GetTargetArea(int accountId)
+    public async Task<IList<AccountEntity>> GetTargetArea(int account_id)
     {
         await OpenAsync();
 
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Parent)} = @accountId")
-            .WithParameters(new { accountId }));
+            .Where($"{nameof(AccountEntity.Parent)} = @account_id")
+            .WithParameters(new { account_id }));
 
         return [.. result];
     }
 
-    public async Task<IDictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> userids)
+    public async Task<IDictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids)
     {
         await OpenAsync();
 
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Parent)} in (@userids)")
-            .WithParameters(new { userids }));
+            .Where($"{nameof(AccountEntity.Parent)} in (@account_ids)")
+            .WithParameters(new { account_ids }));
 
-        return result.Where(a => a.ReferenceId.HasValue)
-            .ToDictionary(k => k.ReferenceId.Value);
+        return result.ToDictionary(k => k.Id);
     }
 
     public Task<bool> CheckUsername(string username)
