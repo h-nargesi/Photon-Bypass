@@ -10,13 +10,13 @@ public class ProcessEntity : IBaseEntity
     [Key]
     public int Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public OsType OsType { get; set; }
 
-    public List<ScriptEntity> Enable { get; set; }
+    public List<ScriptEntity>? Enable { get; set; }
 
-    public List<ScriptEntity> Disable { get; set; }
+    public List<ScriptEntity>? Disable { get; set; }
 
     public ScriptEntity? Check { get; set; }
 }

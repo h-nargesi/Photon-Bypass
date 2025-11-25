@@ -14,8 +14,8 @@ class ConnectionApplication(
     ISessionRadiusSyncService RadiusSrv,
     INasRepository NasRepo,
     Lazy<IAccountRepository> AccountRepo,
-    Lazy<IJobContext> JobContext,
-    Lazy<IHistoryRepository> HistoryRepo)
+    Lazy<IHistoryRepository> HistoryRepo,
+    Lazy<IJobContext> JobContext)
     : IConnectionApplication
 {
     public async Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(string target)

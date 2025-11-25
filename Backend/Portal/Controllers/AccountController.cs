@@ -6,6 +6,7 @@ using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Result;
 

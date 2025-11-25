@@ -23,13 +23,13 @@ class VpnApplication(
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IRealmRepository> RealmRepo,
     Lazy<IRenewalRepository> RenewalRepo,
+    Lazy<ISessionRadiusSyncService> SessionRadiusSyncSrv,
     Lazy<IPlanStateRepository> PlanStateRepo,
     Lazy<INasRepository> NasRepo,
     Lazy<IJobContext> JobContext)
     : IVpnApplication
 {
-    private const int MAX_DATE_BEFORE = 30;
-    private const int BYTES_IN_MEGABYTES = 1024 * 1024;
+    private const int MaxDateBefore = 30;
 
     public async Task<ApiResult> ChangeVpnPassword(string target, string password)
     {
@@ -82,8 +82,8 @@ class VpnApplication(
         var plan = await PlanStateRepo.Value.GetPlanState(account.Id);
 
         if (plan == null || 
-            plan.TimeLeft.HasValue && plan.TimeLeft.Value.TotalMinutes < 1 ||
-            plan.TrafficLeft.HasValue && plan.TrafficLeft.Value < 1)
+            plan.TimeLeft is { TotalMinutes: < 1 } ||
+            plan.TrafficLeft is < 1)
         {
             throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
                                     $"There is not ant plan for user ");
@@ -126,20 +126,19 @@ class VpnApplication(
 
     public async Task<ApiResult<TrafficDataModel>> TrafficData(string target)
     {
-        var minDateTime = DateTime.Now.AddDays(-MAX_DATE_BEFORE);
+        var min_date_time = DateTime.Now.AddDays(-MaxDateBefore);
 
-        var list = await TrafficDataRepo.Value.Fetch(target, minDateTime);
+        await SessionRadiusSyncSrv.Value.UpdateTrafficData(target, min_date_time);
 
-        if (list.Count < MAX_DATE_BEFORE)
+        var list = await TrafficDataRepo.Value.Fetch(target, min_date_time);
+
+        if (list.Count < MaxDateBefore)
         {
-            var firstEmptyDate = FindFirstEmptyDate(list, minDateTime) ?? DateTime.Now;
-            var type = firstEmptyDate < DateTime.Now.AddDays(-(int)DateTime.Now.DayOfWeek)
-                ? TrafficDataRequestType.Monthly
-                : TrafficDataRequestType.Weekly;
+            var first_empty_date = FindFirstEmptyDate(list, min_date_time) ?? DateTime.Now;
 
-            var data = await RadiusSrv.Value.FetchTrafficData(target, firstEmptyDate, type);
+            var data = await RadiusSrv.Value.FetchTrafficData(target, first_empty_date, type);
 
-            var new_data = Merge(ref list, data, minDateTime);
+            var new_data = Merge(ref list, data, min_date_time);
 
             if (new_data?.Count > 0)
             {
@@ -220,7 +219,7 @@ class VpnApplication(
         var dictData = data.ToDictionary(x => x.Day.Date);
 
         var now = DateTime.Now.Date;
-        var alldays = new string[MAX_DATE_BEFORE]
+        var alldays = new string[MaxDateBefore]
             .Select((_, i) => now.AddDays(-i))
             .ToList();
 

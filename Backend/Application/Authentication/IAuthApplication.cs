@@ -12,6 +12,4 @@ public interface IAuthApplication
     Task<ApiResult> ResetPassword(string email_mobile);
 
     Task<ApiResult> Register(RegisterModel model);
-    
-    Task<AccountEntity?> CopyFromPermanentUser(string username, string? password);
 }

@@ -11,5 +11,7 @@ public interface ISessionRadiusSyncService
 
     Task<bool> CloseConnections(IEnumerable<NasEntity> servers, string username, int count);
 
-    Task UpdateTrafficData(IEnumerable<NasEntity> servers);
+    Task UpdateTrafficData(IEnumerable<NasEntity> servers, DateTime index);
+    
+    Task UpdateTrafficData(IEnumerable<NasEntity> servers, string username, DateTime index);
 }

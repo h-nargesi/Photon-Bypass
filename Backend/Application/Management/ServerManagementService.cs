@@ -92,9 +92,10 @@ partial class ServerManagementService(
         var clusters = await NasRepo.Value.GetAllActiveInRealm(realms.Select(r => r.Id));
         var servers = clusters.SelectMany(s => s.Value).ToList();
 
-        await RadiusSrv.UpdateTrafficData(servers);
+        var index = DateTime.Now.AddDays(-30);
+        await RadiusSrv.UpdateTrafficData(servers, index);
 
-        var traffics = (await TrafficDataRepo.Value.Fetch(servers.Select(s => s.Id), DateTime.Now.AddDays(-30)))
+        var traffics = (await TrafficDataRepo.Value.Fetch(servers.Select(s => s.Id), index))
             .ToDictionary(k =>
                 k.Key, v =>
                 v.Value.Select(t => (t.StartSession, t.TotalData))

@@ -12,14 +12,14 @@ using Serilog;
 namespace PhotonBypass.Application.Account;
 
 class AccountApplication(
-    Lazy<IAccountRepository> AccountRepo,
+    IAccountRepository AccountRepo,
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IJobContext> JobContext)
     : IAccountApplication
 {
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
-        var account = await AccountRepo.Value.GetAccount(username) ??
+        var account = await AccountRepo.GetAccount(username) ??
                       // TODO: make unit test: it should throw an exception "Account not found."
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
 
@@ -28,7 +28,7 @@ class AccountApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
 
-        var target_area = (await AccountRepo.Value.GetTargetArea(account.Id))
+        var target_area = (await AccountRepo.GetTargetArea(account.Id))
             .Select(entity => new TargetModel
             {
                 Username = entity.Username,
@@ -50,7 +50,7 @@ class AccountApplication(
 
     public async Task<ApiResult<FullUserModel>> GetFullInfo(string target)
     {
-        var account = await AccountRepo.Value.GetAccount(target) ??
+        var account = await AccountRepo.GetAccount(target) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
 
         if (!account.Active)
@@ -72,7 +72,7 @@ class AccountApplication(
 
     public async Task<ApiResult> EditUser(string target, EditUserModel model)
     {
-        var account = await AccountRepo.Value.GetAccount(target) ??
+        var account = await AccountRepo.GetAccount(target) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
 
         if (!account.Active)
@@ -82,7 +82,7 @@ class AccountApplication(
 
         account.SetFromModel(model);
 
-        await AccountRepo.Value.Save(account);
+        await AccountRepo.Save(account);
 
         return ApiResult.Success("ذخیره شد.");
     }
@@ -92,7 +92,7 @@ class AccountApplication(
         token = HashHandler.HashPassword(token);
         password = HashHandler.HashPassword(password);
 
-        var account = await AccountRepo.Value.GetAccount(target);
+        var account = await AccountRepo.GetAccount(target);
 
         if (account == null || !account.Active || account.Password != token)
         {
@@ -118,7 +118,7 @@ class AccountApplication(
 
         account.Password = password;
 
-        await AccountRepo.Value.Save(account);
+        await AccountRepo.Save(account);
 
         _ = HistoryRepo.Value.Save(new HistoryEntity
         {

@@ -14,11 +14,11 @@ namespace PhotonBypass.Application.Authentication;
 
 partial class AuthApplication(
     IAccountRepository AccountRepo,
+    IHistoryRepository HistoryRepo,
     Lazy<IResetPassRepository> ResetPassRepo,
-    Lazy<IAccountRadiusSyncService> RadiusSrv,
+    ISocialMediaService SocialMediaSrv,
     Lazy<IEmailService> EmailSrv,
-    Lazy<ISocialMediaService> SocialMediaSrv,
-    Lazy<IHistoryRepository> HistoryRepo)
+    Lazy<IAccountRadiusSyncService> AccountRadiusSrv)
     : IAuthApplication
 {
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
@@ -37,11 +37,11 @@ partial class AuthApplication(
                 };
             }
 
-            _ = SocialMediaSrv.Value.InvalidPasswordAlert(account.Username);
+            _ = SocialMediaSrv.InvalidPasswordAlert(account.Username);
 
             if (account.Active)
             {
-                _ = HistoryRepo.Value.Save(new HistoryEntity
+                _ = HistoryRepo.Save(new HistoryEntity
                 {
                     Target = account.Username,
                     EventTime = DateTime.Now,
@@ -143,7 +143,7 @@ partial class AuthApplication(
 
             var email_task = EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
 
-            _ = HistoryRepo.Value.Save(new HistoryEntity
+            _ = HistoryRepo.Save(new HistoryEntity
             {
                 Target = account.Username,
                 EventTime = DateTime.Now,
@@ -175,18 +175,18 @@ partial class AuthApplication(
 
         await AccountRepo.Save(account);
 
-        _ = SocialMediaSrv.Value.NewUserRegistrationAlert(account);
+        _ = SocialMediaSrv.NewUserRegistrationAlert(account);
 
         Log.Information("New User Registered: ({0}, {1})", account.Username, account.Email);
 
         return ApiResult.Success("کاربر شما ساخته شد.");
     }
 
-    public async Task<AccountEntity?> CopyFromPermanentUser(string username, string? password)
+    private async Task<AccountEntity?> CopyFromPermanentUser(string username, string? password)
     {
-        if (!RadiusSrv.IsValueCreated) return null;
+        if (!AccountRadiusSrv.IsValueCreated) return null;
 
-        var account = await RadiusSrv.Value.GetUser(username);
+        var account = await AccountRadiusSrv.Value.GetUser(username);
 
         if (account == null) return null;
 

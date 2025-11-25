@@ -4,7 +4,6 @@ using PhotonBypass.Domain.Servers.Entity;
 
 namespace PhotonBypass.Domain.Account;
 
-// TODO: Move to Infrastructure
 public interface IAccountRadiusSyncService
 {
     Task<AccountEntity?> GetUser(string username);

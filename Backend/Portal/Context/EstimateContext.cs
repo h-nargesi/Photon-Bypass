@@ -4,9 +4,9 @@ namespace PhotonBypass.API.Context;
 
 public class EstimateContext
 {
-    public PlanType? Type { get; set; }
-
-    public int? Value { get; set; }
-
     public int? SimultaneousUserCount { get; set; }
+    
+    public int? Months { get; set; }
+    
+    public int? Gigabytes { get; set; }
 }

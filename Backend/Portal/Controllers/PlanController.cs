@@ -63,8 +63,8 @@ public class PlanController(
         return SafeApiResult(result);
     }
 
-    [HttpPost("rnewal")]
-    public async Task<ApiResult> Rnewal([FromBody] RenewalContext context)
+    [HttpPost("renewal")]
+    public async Task<ApiResult> Renewal([FromBody] RenewalContext context)
     {
         LoadJobContext(context.Target);
         context.Target = JobContext.Target;

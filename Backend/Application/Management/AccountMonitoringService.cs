@@ -16,10 +16,10 @@ internal class AccountMonitoringService(
     IPlanStateRepository SessionStateRepo,
     IAccountRepository AccountRepo,
     IHistoryRepository HistoryRepo,
-    IEmailService EmailSrv,
-    IAccountRadiusSyncService RadiusSrv,
-    IServerManagementService ServerMngSrv,
-    ISocialMediaService SocialSrv)
+    Lazy<IEmailService> EmailSrv,
+    Lazy<IAccountRadiusSyncService> AccountRadiusSrv,
+    Lazy<IServerManagementService> ServerMngSrv,
+    Lazy<ISocialMediaService> SocialSrv)
     : IAccountMonitoringService, IJob
 {
     public async Task Execute(IJobExecutionContext context)
@@ -35,7 +35,7 @@ internal class AccountMonitoringService(
 
         Task.WaitAll(
             InactiveAbandonedUsers(plan_state_list),
-            ServerMngSrv.CheckUserServerBalance());
+            ServerMngSrv.Value.CheckUserServerBalance());
     }
 
     public async Task InactiveAbandonedUsers(IEnumerable<PlanStateEntity> plan_state_list)
@@ -86,7 +86,7 @@ internal class AccountMonitoringService(
 
         if (deactivate_list.Count > 0)
         {
-            await RadiusSrv.DeactivateUser(deactivate_list);
+            await AccountRadiusSrv.Value.DeactivateUser(deactivate_list);
         }
     }
 
@@ -105,7 +105,7 @@ internal class AccountMonitoringService(
                 throw new Exception($"The id ({plan.Id}) not found in accounts.");
             }
 
-            if (account == null || account.OverWarningTime())
+            if (account.OverWarningTime())
             {
                 continue;
             }
@@ -146,7 +146,7 @@ internal class AccountMonitoringService(
 
             if (account.Email != null)
             {
-                tasks.Add(EmailSrv.FinishServiceAlert(
+                tasks.Add(EmailSrv.Value.FinishServiceAlert(
                     account.Fullname, plan.Username, account.Email, remains_title));
 
                 IncreaseWarningTime(account);
