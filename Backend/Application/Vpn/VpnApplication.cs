@@ -1,7 +1,7 @@
 ﻿using PhotonBypass.Application.Vpn.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Model;
+using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;

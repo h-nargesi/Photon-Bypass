@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Session.Model;
+﻿using PhotonBypass.Domain.Plan.Model;
 
 namespace PhotonBypass.Application.Connection.Model;
 

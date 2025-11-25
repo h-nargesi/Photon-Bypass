@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Session.Entity;
+namespace PhotonBypass.Domain.Plan.Entity;
 
-[Table("SessionState")]
-public class SessionStateEntity : IBaseEntity
+[Table("PlanState")]
+public class PlanStateEntity : IBaseEntity
 {
     [Key]
     public int Id { get; set; }

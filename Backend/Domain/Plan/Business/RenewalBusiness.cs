@@ -1,6 +1,6 @@
-﻿using PhotonBypass.Domain.Session.Entity;
+﻿using PhotonBypass.Domain.Plan.Entity;
 
-namespace PhotonBypass.Domain.Account.Business;
+namespace PhotonBypass.Domain.Plan.Business;
 
 public static class RenewalBusiness
 {

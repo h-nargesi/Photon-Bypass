@@ -1,12 +1,12 @@
 ﻿using PhotonBypass.Application.Connection.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Servers;
-using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Entity;
+using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
-using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Plan;
 
 namespace PhotonBypass.Application.Connection;
 

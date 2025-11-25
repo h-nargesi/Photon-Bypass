@@ -1,7 +1,7 @@
-﻿using PhotonBypass.Domain.Session.Entity;
+﻿using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Repository;
 
-namespace PhotonBypass.Domain.Session;
+namespace PhotonBypass.Domain.Plan;
 
 public interface IRenewalRepository : IEditableRepository<RenewalEntity>
 {

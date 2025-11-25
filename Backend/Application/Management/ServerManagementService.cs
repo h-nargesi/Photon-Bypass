@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Options;
-using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Entity;
+using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Types;
 using System.Text;
 using System.Text.RegularExpressions;
-using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Plan;
 
 namespace PhotonBypass.Application.Management;
 

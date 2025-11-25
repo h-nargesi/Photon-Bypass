@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Session;
+﻿using PhotonBypass.Domain.Plan;
 
 namespace PhotonBypass.Domain.Static;
 

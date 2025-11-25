@@ -1,8 +1,8 @@
 ﻿using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Business;
-using PhotonBypass.Domain.Session.Entity;
+using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Business;
+using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;

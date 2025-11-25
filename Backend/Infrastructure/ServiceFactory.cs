@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.Infra.Repository;
 using PhotonBypass.Infra.Repository.DbContext;

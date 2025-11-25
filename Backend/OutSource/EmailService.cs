@@ -1,8 +1,8 @@
 ﻿using System.Net;
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
-using PhotonBypass.Domain.Session.Model;
-using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Plan.Model;
+using PhotonBypass.Domain.Plan;
 
 namespace PhotonBypass.OutSource;
 

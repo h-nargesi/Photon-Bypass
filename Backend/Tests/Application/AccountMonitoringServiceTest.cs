@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Session;
+﻿using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.Test.MockOutSources;

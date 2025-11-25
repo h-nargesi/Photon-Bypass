@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Plan;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.FreeRadius.Repository.DbContext;

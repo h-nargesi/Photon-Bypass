@@ -1,12 +1,11 @@
 ﻿using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Types;
-using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Business;
-using PhotonBypass.Domain.Session.Entity;
+using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Business;
+using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
@@ -16,8 +15,8 @@ using Serilog;
 namespace PhotonBypass.Application.Plan;
 
 class PlanApplication(
-    Lazy<ISessionStateRepository> SessionRepo,
-    Lazy<IRenewalRepository> RenewalRepo,
+    IRenewalRepository RenewalRepo,
+    Lazy<IPlanStateRepository> PlanRepo,
     Lazy<IPriceCalculator> PriceCalc,
     Lazy<IAccountRepository> AccountRepo,
     Lazy<ISessionRadiusSyncService> SessionRadiusSrv,
@@ -30,7 +29,7 @@ class PlanApplication(
 {
     public async Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target)
     {
-        var renew = await RenewalRepo.Value.LatestOf(target);
+        var renew = await RenewalRepo.LatestOf(target);
 
         if (renew == null)
         {
@@ -40,7 +39,7 @@ class PlanApplication(
             };
         }
 
-        var state = await SessionRepo.Value.GetSessionState(renew.AccountId);
+        var state = await PlanRepo.Value.GetPlanState(renew.AccountId);
 
         if (state == null)
         {
@@ -92,7 +91,7 @@ class PlanApplication(
 
     public async Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target)
     {
-        var renew = await RenewalRepo.Value.LatestOf(target);
+        var renew = await RenewalRepo.LatestOf(target);
 
         return ApiResult<PlanInfoModel>.Success(new PlanInfoModel
         {
@@ -135,7 +134,7 @@ class PlanApplication(
             });
         }
 
-        var state = (await SessionRepo.Value.GetSessionState(account.Id)) ??
+        var state = (await PlanRepo.Value.GetPlanState(account.Id)) ??
             throw new Exception($"Plan state not found for target: {target}");
 
         Log.Information(@"[user: {0}] Plan current state:
@@ -178,7 +177,7 @@ class PlanApplication(
     change=(taget:{1}, user-count:{2}, to:{3})",
                 JobContext.Value.Username, target, state.SimultaneousUserCount, count);
 
-            var last_renewal = await RenewalRepo.Value.LatestOf(account.Id);
+            var last_renewal = await RenewalRepo.LatestOf(account.Id);
             var nas_list = new List<NasEntity>();
             if (last_renewal?.RestrictedRealmId != null)
             {
@@ -195,7 +194,7 @@ class PlanApplication(
 
         await syncronization;
 
-        var tranAccount = AccountRepo.Value.BeginTransaction();
+        var tranAccount = await AccountRepo.Value.BeginTransactionAsync();
 
         try
         {
@@ -204,7 +203,7 @@ class PlanApplication(
 
             await AccountRepo.Value.Save(account);
 
-            await RenewalRepo.Value.Save(renew);
+            await RenewalRepo.Save(renew);
 
             var checkOnRenewal = IPlanApplication.OnRenewalDelegation(new RenewalEvent());
 

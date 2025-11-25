@@ -1,5 +1,5 @@
-﻿using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Entity;
+﻿using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 

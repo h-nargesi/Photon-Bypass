@@ -1,12 +1,12 @@
-﻿using PhotonBypass.Domain.Session.Entity;
+﻿using PhotonBypass.Domain.Plan.Entity;
 
-namespace PhotonBypass.Domain.Session.Business;
+namespace PhotonBypass.Domain.Plan.Business;
 
-public static class SessionStateBusiness
+public static class PlanStateBusiness
 {
     public const float AccountFinishingStatePercent = 0.1f;
 
-    public static string GetRemainsTitle(this SessionStateEntity entity)
+    public static string GetRemainsTitle(this PlanStateEntity entity)
     {
         var result = string.Empty;
 
@@ -36,17 +36,17 @@ public static class SessionStateBusiness
         return result;
     }
 
-    public static double? GetTrafficLimitInGig(this SessionStateEntity entity)
+    public static double? GetTrafficLimitInGig(this PlanStateEntity entity)
     {
         return entity.TrafficLimit.HasValue ? Math.Round(entity.TrafficLimit.Value / StaticValues.BytesInGig, 2) : null;
     }
 
-    public static double GetTrafficUsedInGig(this SessionStateEntity entity)
+    public static double GetTrafficUsedInGig(this PlanStateEntity entity)
     {
         return Math.Round(entity.TrafficUsed / StaticValues.BytesInGig, 2);
     }
 
-    public static double? GetTrafficLeftInGig(this SessionStateEntity entity)
+    public static double? GetTrafficLeftInGig(this PlanStateEntity entity)
     {
         return entity.TrafficLeft.HasValue ? Math.Round(entity.TrafficLeft.Value / StaticValues.BytesInGig, 2) : null;
     }
