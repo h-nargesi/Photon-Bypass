@@ -13,5 +13,5 @@ public interface ISessionRadiusSyncService
 
     Task UpdateTrafficData(IEnumerable<NasEntity> servers, DateTime index);
     
-    Task UpdateTrafficData(IEnumerable<NasEntity> servers, string username, DateTime index);
+    Task UpdateTrafficData(string username, DateTime index);
 }

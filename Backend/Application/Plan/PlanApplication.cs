@@ -47,15 +47,8 @@ class PlanApplication(
             };
         }
 
-        var state = await PlanRepo.Value.GetPlanState(renew.AccountId);
-
-        if (state == null)
-        {
-            return new ApiResult<UserPlanInfoModel>
-            {
-                Message = "بدون مصرف",
-            };
-        }
+        var state = (await PlanRepo.Value.GetPlanState(renew.AccountId)) ??
+                    throw new Exception($"The plan-state not found for target={target}, account-id={renew.AccountId}, realm-id={renew.RestrictedRealmId}");
 
         Log.Information("[user: {0}] session state: (target:{1}, user-count:{2}, data-left:{3}, total-data:{4}, time-left:{5}-{6})",
             JobContext.Value.Username, target, state.SimultaneousUserCount,
@@ -82,7 +75,7 @@ class PlanApplication(
 
         if (renew.MonthLimit.HasValue)
         {
-            if (state.TimeLeft.HasValue && state.ExpirationDate.HasValue)
+            if (state is { TimeLeft: not null, ExpirationDate: not null })
             {
                 var time_limit = state.ExpirationDate.Value - state.ExpirationDate.Value.AddPersianMonth(-renew.MonthLimit.Value);
                 result.RemainsTimePercent = (int)(100 * (1 - state.TimeLeft.Value.TotalMinutes / time_limit.TotalMinutes));

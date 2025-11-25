@@ -20,6 +20,4 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
     Task<bool> CheckUsername(string username);
 
     Task<bool> IsInactive(string username);
-
-    Task<int?> GetActiveAccountRealmId(string username);
 }

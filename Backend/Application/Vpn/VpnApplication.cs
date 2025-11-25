@@ -15,17 +15,15 @@ using PhotonBypass.Tools;
 namespace PhotonBypass.Application.Vpn;
 
 class VpnApplication(
-    Lazy<IAccountRadiusSyncService> AccountRadiusSrv,
-    Lazy<IEmailService> EmailSrv,
-    Lazy<ITrafficDataRepository> TrafficDataRepo,
     Lazy<IAccountRepository> AccountRepo,
-    Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IHistoryRepository> HistoryRepo,
-    Lazy<IRealmRepository> RealmRepo,
-    Lazy<IRenewalRepository> RenewalRepo,
-    Lazy<ISessionRadiusSyncService> SessionRadiusSyncSrv,
+    Lazy<ITrafficDataRepository> TrafficDataRepo,
     Lazy<IPlanStateRepository> PlanStateRepo,
     Lazy<INasRepository> NasRepo,
+    Lazy<IAccountRadiusSyncService> AccountRadiusSrv,
+    Lazy<IServerManagementService> ServerMngSrv,
+    Lazy<ISessionRadiusSyncService> SessionRadiusSyncSrv,
+    Lazy<IEmailService> EmailSrv,
     Lazy<IJobContext> JobContext)
     : IVpnApplication
 {
@@ -128,121 +126,50 @@ class VpnApplication(
     {
         var min_date_time = DateTime.Now.AddDays(-MaxDateBefore);
 
-        await SessionRadiusSyncSrv.Value.UpdateTrafficData(target, min_date_time);
-
         var list = await TrafficDataRepo.Value.Fetch(target, min_date_time);
 
-        if (list.Count < MaxDateBefore)
-        {
-            var first_empty_date = FindFirstEmptyDate(list, min_date_time) ?? DateTime.Now;
-
-            var data = await RadiusSrv.Value.FetchTrafficData(target, first_empty_date, type);
-
-            var new_data = Merge(ref list, data, min_date_time);
-
-            if (new_data?.Count > 0)
-            {
-                int account_id;
-
-                if (list.Count > 0) account_id = list[0].AccountId;
-                else
-                {
-                    var account = await AccountRepo.Value.GetAccount(target)
-                                  ?? throw new Exception($"Account not found: {target}");
-                    account_id = account.Id;
-                }
-
-                foreach (var record in new_data)
-                    record.AccountId = account_id;
-
-                _ = TrafficDataRepo.Value.BachSave(new_data);
-            }
-        }
+        _ = SessionRadiusSyncSrv.Value.UpdateTrafficData(target, min_date_time);
 
         var result = ConvertToModel(list);
 
         return ApiResult<TrafficDataModel>.Success(result);
     }
 
-    private static DateTime? FindFirstEmptyDate(IEnumerable<TrafficDataEntity> data, DateTime from)
-    {
-        return data.OrderByDescending(x => x.Day)
-            .Where(x => x.Day >= from)
-            .Select(x => (DateTime?)x.Day)
-            .FirstOrDefault()?
-            .Date.AddDays(1);
-    }
-
-    private static List<TrafficDataEntity> Merge(ref List<TrafficDataEntity> destination,
-        IEnumerable<TrafficDataRadius> source, DateTime minDateTime)
-    {
-        var destination_dict = destination.ToDictionary(k => k.Day);
-        var new_data = new List<TrafficDataEntity>();
-
-        foreach (var record in source)
-        {
-            if (record.Day < minDateTime || record.Day >= DateTime.Now)
-            {
-                continue;
-            }
-
-            if (destination_dict.TryGetValue(record.Day, out var data))
-            {
-                if (data.DataIn != record.DataIn || data.DataOut != record.DataOut)
-                {
-                    data.DataOut = record.DataOut;
-                    data.DataIn = record.DataIn;
-                    new_data.Add(data);
-                }
-            }
-            else
-            {
-                var traffic = new TrafficDataEntity
-                {
-                    Day = record.Day,
-                    DataIn = record.DataIn,
-                    DataOut = record.DataOut,
-                };
-
-                new_data.Add(traffic);
-                destination_dict.Add(record.Day, traffic);
-            }
-        }
-
-        destination = [.. destination_dict.Values.OrderBy(x => x.Day)];
-
-        return new_data;
-    }
-
     private static TrafficDataModel ConvertToModel(IEnumerable<TrafficDataEntity> data)
     {
-        var dictData = data.ToDictionary(x => x.Day.Date);
+        var dict_data = data.GroupBy(k => k.StartSession.Date)
+            .ToDictionary(
+                k => k.Key, 
+                v => v.ToArray());
 
         var now = DateTime.Now.Date;
-        var alldays = new string[MaxDateBefore]
+        var all_days = new string[MaxDateBefore]
             .Select((_, i) => now.AddDays(-i))
             .ToList();
 
-        var labels = alldays.Select(x => x.ToPersianDayOfMonth())
+        var labels = all_days.Select(x => x.ToPersianDayOfMonth())
             .ToArray();
 
         var upload = new List<int>();
         var download = new List<int>();
         var total = new List<int>();
 
-        foreach (var day in alldays)
+        foreach (var day in all_days)
         {
-            if (!dictData.TryGetValue(day, out var record))
+            if (!dict_data.TryGetValue(day, out var record))
             {
-                record = TrafficDataEntity.Empty;
+                upload.Add(0);
+                download.Add(0);
+                total.Add(0);
+                continue;
             }
 
-            var D = (int)(record.DataIn / BYTES_IN_MEGABYTES);
-            var U = (int)(record.DataOut / BYTES_IN_MEGABYTES);
+            var data_in = (int)(record.Sum(x => x.DataIn) / StaticValues.BytesInMeg);
+            var data_out = (int)(record.Sum(x => x.DataOut) / StaticValues.BytesInMeg);
 
-            upload.Add(U);
-            download.Add(D);
-            total.Add(D + U);
+            upload.Add(data_out);
+            download.Add(data_in);
+            total.Add(data_in + data_out);
         }
 
         return new TrafficDataModel

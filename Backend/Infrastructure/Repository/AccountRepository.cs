@@ -7,6 +7,11 @@ namespace PhotonBypass.Infra.Repository;
 
 class AccountRepository(LocalDbContext context) : EditableRepository<AccountEntity>(context), IAccountRepository
 {
+    public Task<AccountEntity?> GetAccount(int id)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<AccountEntity?> GetAccount(string username)
     {
         await OpenAsync();
@@ -61,5 +66,15 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
         return result.Where(a => a.ReferenceId.HasValue)
             .ToDictionary(k => k.ReferenceId.Value);
+    }
+
+    public Task<bool> CheckUsername(string username)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<bool> IsInactive(string username)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -13,14 +13,14 @@ namespace PhotonBypass.Application.Connection;
 class ConnectionApplication(
     ISessionRadiusSyncService RadiusSrv,
     INasRepository NasRepo,
-    Lazy<IAccountRepository> AccountRepo,
     Lazy<IHistoryRepository> HistoryRepo,
+    Lazy<IPlanStateRepository> PlanRepo,
     Lazy<IJobContext> JobContext)
     : IConnectionApplication
 {
     public async Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(string target)
     {
-        var target_realm_id = await AccountRepo.Value.GetActiveAccountRealmId(target);
+        var target_realm_id = await PlanRepo.Value.GetActiveAccountRealmId(target);
 
         if (target_realm_id == null)
         {

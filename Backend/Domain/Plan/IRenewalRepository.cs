@@ -8,4 +8,6 @@ public interface IRenewalRepository : IEditableRepository<RenewalEntity>
     Task<RenewalEntity?> LatestOf(int account_id);
 
     Task<RenewalEntity?> LatestOf(string target);
+
+    Task<int?> LatestRealmIdOf(string target);
 }
