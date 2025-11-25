@@ -4,5 +4,5 @@ namespace PhotonBypass.Domain.Repository;
 
 public interface ITransactionalRepository
 {
-    IDbTransaction BeginTransaction();
+    Task<IDbTransaction> BeginTransactionAsync();
 }

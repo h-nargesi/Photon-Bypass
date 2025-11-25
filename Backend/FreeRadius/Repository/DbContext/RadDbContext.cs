@@ -5,7 +5,7 @@ using System.Data;
 
 namespace PhotonBypass.FreeRadius.Repository.DbContext;
 
-class RadDbContext(IOptions<RadDapperOptions> options) : DapperDbContext()
+class RadDbContext(IOptions<RadDapperOptions> options) : IDapperDbContext()
 {
     public override IDbConnection CreateConnection()
     {

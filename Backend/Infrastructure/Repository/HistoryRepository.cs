@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 
@@ -8,6 +9,8 @@ class HistoryRepository(LocalDbContext context) : EditableRepository<HistoryEnti
 {
     public async Task<IList<HistoryEntity>> GetHistory(string target, DateTime? from, DateTime? to)
     {
+        await OpenAsync();
+
         var result = await FindAsync(statement =>
         {
             statement.Where($"{nameof(HistoryEntity.Target)} = @target")

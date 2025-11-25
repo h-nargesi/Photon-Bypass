@@ -5,12 +5,22 @@ using System.Data.SQLite;
 
 namespace PhotonBypass.Infra.Repository.DbContext;
 
-class LocalDbContext(IOptions<LocalDapperOptions> options) : DapperDbContext()
+class LocalDbContext(IOptions<LocalDapperOptions> options) : IDapperDbContext, IDisposable
 {
-    public override IDbConnection CreateConnection()
+    public SQLiteConnection Connection { get; } = new SQLiteConnection(options.Value.ConnectionString);
+
+    IDbConnection IDapperDbContext.Connection => Connection;
+
+    public Task Open()
     {
-        var connection = new SQLiteConnection(options.Value.ConnectionString);
-        connection.Open();
-        return connection;
+        if (Connection.State == ConnectionState.Open)
+            return Task.CompletedTask;
+
+        return Connection.OpenAsync();
+    }
+
+    public void Dispose()
+    {
+        Connection.Dispose();
     }
 }

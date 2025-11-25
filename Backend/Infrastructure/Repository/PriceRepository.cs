@@ -8,6 +8,8 @@ class PriceRepository(LocalDbContext context) : EditableRepository<PriceEntity>(
 {
     public async Task<IList<PriceEntity>> GetLatest()
     {
+        await OpenAsync();
+
         var result = await FindAsync(statement => statement.Where($"{nameof(PriceEntity.IsActive)} = 1"));
 
         return [.. result];

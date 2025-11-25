@@ -1,5 +1,5 @@
 ﻿using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Vpn;
+using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 using PhotonBypass.Tools;
@@ -12,6 +12,8 @@ class TrafficDataRepository(LocalDbContext context) : EditableRepository<Traffic
 
     public async Task<List<TrafficDataEntity>> Fetch(string username, DateTime from)
     {
+        await OpenAsync();
+
         var result = await FindAsync(statement => statement
             .Where($"{nameof(TrafficDataEntity.AccountId)} = (select {nameof(AccountEntity.Id)} from {AccountTableName} where {nameof(AccountEntity.Username)} = @username)")
             .WithParameters(new { username }));

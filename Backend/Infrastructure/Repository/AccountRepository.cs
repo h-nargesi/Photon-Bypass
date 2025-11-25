@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 
@@ -8,6 +9,8 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 {
     public async Task<AccountEntity?> GetAccount(string username)
     {
+        await OpenAsync();
+
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Username)} = @username")
             .WithParameters(new { username }));
@@ -17,6 +20,8 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<AccountEntity?> GetAccountByMobile(string mobile)
     {
+        await OpenAsync();
+
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Mobile)} = @mobile")
             .WithParameters(new { mobile }));
@@ -26,6 +31,8 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<AccountEntity?> GetAccountByEmail(string email)
     {
+        await OpenAsync();
+
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Email)} = @email")
             .WithParameters(new { email }));
@@ -35,6 +42,8 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<IList<AccountEntity>> GetTargetArea(int accountId)
     {
+        await OpenAsync();
+
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Parent)} = @accountId")
             .WithParameters(new { accountId }));
@@ -44,10 +53,13 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<IDictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> userids)
     {
+        await OpenAsync();
+
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Parent)} in (@userids)")
             .WithParameters(new { userids }));
 
-        return result.ToDictionary(k => k.PermanentUserId);
+        return result.Where(a => a.ReferenceId.HasValue)
+            .ToDictionary(k => k.ReferenceId.Value);
     }
 }

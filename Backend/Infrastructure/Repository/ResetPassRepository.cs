@@ -1,5 +1,6 @@
 ﻿using Dapper.FastCrud;
 using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Session.Entity;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 
@@ -9,6 +10,8 @@ class ResetPassRepository(LocalDbContext context) : EditableRepository<ResetPass
 {
     public async Task<ResetPassEntity?> GetAccount(string hash_code)
     {
+        await OpenAsync();
+
         var result = await FindAsync(statement => statement
             .Where($"{nameof(ResetPassEntity.HashCode)} = @hash_code")
             .WithParameters(new { hash_code }));
@@ -17,14 +20,16 @@ class ResetPassRepository(LocalDbContext context) : EditableRepository<ResetPass
 
         if (entity != null)
         {
-            _ = connection.DeleteAsync(entity);
+            _ = Connection.DeleteAsync(entity);
         }
 
         return entity;
     }
 
-    public Task AddHashCode(ResetPassEntity hash_code)
+    public async Task AddHashCode(ResetPassEntity hash_code)
     {
-        return connection.InsertAsync(hash_code);
+        await OpenAsync();
+
+        await Connection.InsertAsync(hash_code);
     }
 }

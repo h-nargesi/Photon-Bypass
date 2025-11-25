@@ -5,13 +5,29 @@ using PhotonBypass.Domain;
 
 namespace PhotonBypass.Infra.Database;
 
-public abstract class DapperRepository<TEntity>(DapperDbContext context) : IDisposable where TEntity : class, IBaseEntity
+public abstract class DapperRepository<TEntity>(IDapperDbContext context) : IDisposable where TEntity : class, IBaseEntity
 {
-    protected readonly IDbConnection connection = context.CreateConnection();
+    protected IDbConnection Connection
+    {
+        get
+        {
+            if (context.Connection.State != ConnectionState.Open)
+            {
+                context.Connection.Open();
+            }
+
+            return context.Connection;
+        }
+    }
+
+    protected Task OpenAsync()
+    {
+        return context.Open();
+    }
 
     protected Task<IEnumerable<TEntity>> FindAsync(Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>>? statementOptions = null)
     {
-        return connection.FindAsync(statementOptions);
+        return Connection.FindAsync(statementOptions);
     }
 
     public void Dispose() => GC.SuppressFinalize(this);
