@@ -2,7 +2,7 @@
 using PhotonBypass.API.Basical;
 using PhotonBypass.Application;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.API;

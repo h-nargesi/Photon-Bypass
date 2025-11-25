@@ -1,10 +1,9 @@
-﻿using PhotonBypass.Domain.Session.Entity;
+﻿using PhotonBypass.Domain.Account.Entity;
 
-namespace PhotonBypass.Domain.Session.Business;
+namespace PhotonBypass.Domain.Account.Business;
 
 public static class SessionStateBusiness
 {
-    private const long BytesInGig = 1024 * 1024 * 1024;
     public const float AccountFinishingStatePercent = 0.1f;
 
     public static string GetRemainsTitle(this SessionStateEntity entity)
@@ -13,8 +12,7 @@ public static class SessionStateBusiness
 
         if (entity.TrafficLeft.HasValue)
         {
-            var left_gigs = entity.TrafficLeft.Value / BytesInGig;
-            result += $" و {left_gigs} گیگ باقی مانده";
+            result += $" و {entity.GetTrafficLeftInGig()} گیگ باقی مانده";
         }
 
         if (entity.TimeLeft.HasValue)
@@ -36,5 +34,20 @@ public static class SessionStateBusiness
         if (result.Length > 0) result = result[3..];
 
         return result;
+    }
+
+    public static double? GetTrafficLimitInGig(this SessionStateEntity entity)
+    {
+        return entity.TrafficLimit.HasValue ? Math.Round(entity.TrafficLimit.Value / StaticValues.BytesInGig, 2) : null;
+    }
+
+    public static double GetTrafficUsedInGig(this SessionStateEntity entity)
+    {
+        return Math.Round(entity.TrafficUsed / StaticValues.BytesInGig, 2);
+    }
+
+    public static double? GetTrafficLeftInGig(this SessionStateEntity entity)
+    {
+        return entity.TrafficLeft.HasValue ? Math.Round(entity.TrafficLeft.Value / StaticValues.BytesInGig, 2) : null;
     }
 }

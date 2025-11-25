@@ -1,14 +1,12 @@
-﻿using System.Text.RegularExpressions;
-using PhotonBypass.Application.Account.Model;
-using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Business;
-using PhotonBypass.Domain.Session.Entity;
-using PhotonBypass.Domain.Session.Entity;
-using PhotonBypass.Domain.Session;
+﻿using PhotonBypass.Application.Account.Model;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Business;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
+using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Application.Authentication;
 

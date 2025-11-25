@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Session;
+﻿using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;

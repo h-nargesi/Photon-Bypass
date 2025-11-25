@@ -23,7 +23,7 @@ public class PersianHandlerTest
     [Fact]
     public void MonthToDays_ShouldAddMouthAndReturnDays()
     {
-        var result = DateTime.Parse("2025-05-28").AddMonthToDays(2);
+        var result = DateTime.Parse("2025-05-28").AddPersianMonthToDays(2);
 
         Assert.Equal(62, result);
     }

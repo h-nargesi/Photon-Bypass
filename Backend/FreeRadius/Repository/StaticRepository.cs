@@ -1,4 +1,4 @@
-﻿using PhotonBypass.Domain.Session;
+﻿using PhotonBypass.Domain.Account;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 

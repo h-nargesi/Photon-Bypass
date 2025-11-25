@@ -1,7 +1,7 @@
-﻿using PhotonBypass.Domain.Session.Entity;
+﻿using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.ErrorHandler;
 
-namespace PhotonBypass.Domain.Session.Business;
+namespace PhotonBypass.Domain.Account.Business;
 
 public static class AccountBusiness
 {

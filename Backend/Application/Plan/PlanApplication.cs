@@ -1,8 +1,8 @@
 ﻿using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Session;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
@@ -13,8 +13,8 @@ namespace PhotonBypass.Application.Plan;
 
 class PlanApplication(
     Lazy<IPermanentUsersRepository> UserRepo,
-    Lazy<IAccountStateRepository> PlanRepo,
-    Lazy<IRenewalRepository> TopUpRepo,
+    Lazy<ISessionStateRepository> SessionRepo,
+    Lazy<IRenewalRepository> RenewalRepo,
     Lazy<IPriceCalculator> PriceCalc,
     Lazy<IAccountRepository> AccountRepo,
     Lazy<IRadiusService> RadiusSrv,
@@ -28,9 +28,9 @@ class PlanApplication(
 {
     public async Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target)
     {
-        var state = await PlanRepo.Value.GetAccountState(target);
+        var renew = await RenewalRepo.Value.LatestOf(target);
 
-        if (state == null)
+        if (renew == null)
         {
             return new ApiResult<UserPlanInfoModel>
             {
@@ -38,45 +38,50 @@ class PlanApplication(
             };
         }
 
-        Log.Information("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, data-left:{4}, total-data:{5}, time-left:{6}-{7})",
-            JobContext.Value.Username, target, state.SimultaneousUserCount, state.PlanType.ToString(),
-            state.GigaLeft, state.TotalData, state.LeftDays, state.LeftHours);
+        var state = await SessionRepo.Value.GetSessionState(renew.AccountId);
+
+        if (state == null)
+        {
+            return new ApiResult<UserPlanInfoModel>
+            {
+                Message = "بدون مصرف",
+            };
+        }
+
+        Log.Information("[user: {0}] session state: (target:{1}, user-count:{2}, data-left:{3}, total-data:{4}, time-left:{5}-{6})",
+            JobContext.Value.Username, target, state.SimultaneousUserCount,
+            state.GetTrafficLeftInGig(), state.GetTrafficLimitInGig(), state.TimeLeft?.TotalDays, state.TimeLeft?.Hours);
 
         var result = new UserPlanInfoModel
         {
-            Type = state.PlanType,
+            RemainsTitle = state.GetRemainsTitle(),
             SimultaneousUserCount = state.SimultaneousUserCount,
         };
 
-        var top_up = await TopUpRepo.Value.LatestOf(state.Id);
-
-        if (result.Type == PlanType.Traffic)
+        if (renew.TrafficLimit.HasValue)
         {
-            result.RemainsTitle = state.GetRemainsTitle();
-
-            if (state.TotalData.HasValue)
+            if (state.TrafficLeft.HasValue)
             {
-                result.RemainsPercent = (int)(100 * (1 - (state.GigaLeft ?? 0) / (top_up?.GigaData ?? state.TotalData)));
+                result.RemainsTrafficPercent = (int)(100 * (1 - state.TrafficLeft.Value / renew.TrafficLimit.Value));
             }
             else
             {
-                Log.Fatal("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, left:{4}, total:{5})",
-                    JobContext.Value.Username, target, state.SimultaneousUserCount, state.PlanType.ToString(), state.GigaLeft, state.TotalData);
+                Log.Fatal("[user: {0}] invalid sesstion state: (target:{1}, user-count:{2}, traffic-limit:{3})",
+                    JobContext.Value.Username, target, renew.SimultaneousUse, renew.GetTrafficLimitInGig());
             }
-        }
-        else
-        {
-            result.RemainsTitle = state.GetRemainsTitle();
+        }        
 
-            if (!state.LeftDays.HasValue && !state.LeftHours.HasValue)
+        if (renew.MonthLimit.HasValue)
+        {
+            if (state.TimeLeft.HasValue && state.ExpirationDate.HasValue)
             {
-                Log.Fatal("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, type:{3}, time-left:{4}-{5})",
-                    JobContext.Value.Username, target, state.SimultaneousUserCount, state.PlanType.ToString(), state.LeftDays, state.LeftHours);
+                var time_limit = state.ExpirationDate.Value - state.ExpirationDate.Value.AddPersianMonth(-renew.MonthLimit.Value);
+                result.RemainsTimePercent = (int)(100 * (1 - state.TimeLeft.Value.TotalMinutes / time_limit.TotalMinutes));
             }
-            else if (top_up?.DaysToUse != null)
+            else
             {
-                var days = state.LeftDays ?? 0 + (state.LeftHours ?? 0) / 24;
-                result.RemainsPercent = (int)(100 * (1 - days / top_up.DaysToUse));
+                Log.Fatal("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, time-limit:{3})",
+                    JobContext.Value.Username, target, renew.SimultaneousUse, renew.MonthLimit);
             }
         }
 
@@ -85,24 +90,14 @@ class PlanApplication(
 
     public async Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target)
     {
-        var state = await PlanRepo.Value.GetAccountState(target);
-
-        if (state == null)
-        {
-            return new ApiResult<PlanInfoModel>
-            {
-                Message = "بدون پلن",
-            };
-        }
-
-        var top_up = await TopUpRepo.Value.LatestOf(state.Id);
+        var renew = await RenewalRepo.Value.LatestOf(target);
 
         return ApiResult<PlanInfoModel>.Success(new PlanInfoModel
         {
             Target = target,
-            SimultaneousUserCount = state.SimultaneousUserCount,
-            Type = state.PlanType,
-            Value = top_up != null ? (state.PlanType == PlanType.Traffic ? (int?)top_up.GigaData : top_up.DaysToUse) : null,
+            SimultaneousUserCount = renew?.SimultaneousUse,
+            Months = renew?.MonthLimit,
+            Gigabytes = renew?.GetTrafficLimitInGig(),
         });
     }
 
@@ -143,7 +138,7 @@ class PlanApplication(
         }
 
         var activation = RadiusSrv.Value.ActivePermanentUser(account.Id, false);
-        var fetch_state = PlanRepo.Value.GetPlanState(account.PermanentUserId);
+        var fetch_state = SessionRepo.Value.GetPlanState(account.PermanentUserId);
         var fetch_user = UserRepo.Value.GetUser(account.PermanentUserId);
 
         var state = (await fetch_state) ??

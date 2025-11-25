@@ -12,14 +12,16 @@ public static class PersianHandler
 
     public static string ToPersianDayOfMonth(this DateTime date)
     {
-        var cl = new PersianCalendar();
-        return cl.GetDayOfMonth(date).ToString("D2");
+        return new PersianCalendar().GetDayOfMonth(date).ToString("D2");
     }
 
-    public static int AddMonthToDays(this DateTime date, int month)
+    public static DateTime AddPersianMonth(this DateTime date, int month)
     {
-        var cl = new PersianCalendar();
-        var target = cl.AddMonths(date, month);
-        return (int)(target - date).TotalDays;
+        return new PersianCalendar().AddMonths(date, month);
+    }
+
+    public static int AddPersianMonthToDays(this DateTime date, int month)
+    {
+        return (int)(date.AddPersianMonth(month) - date).TotalDays;
     }
 }

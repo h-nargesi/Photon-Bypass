@@ -6,7 +6,7 @@ public class PlanInfoModel
 
     public int? Months { get; set; }
 
-    public int? Gigabytes { get; set; }
+    public double? Gigabytes { get; set; }
 
     public int? SimultaneousUserCount { get; set; }
 }

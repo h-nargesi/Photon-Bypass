@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace PhotonBypass.Domain.Session.Entity;
+namespace PhotonBypass.Domain.Account.Entity;
 
 [Table("Renewal")]
 public class RenewalEntity : IBaseEntity
@@ -17,7 +17,7 @@ public class RenewalEntity : IBaseEntity
 
     public long? TrafficLimit { get; set; }
     
-    public int? TimeLimit { get; set; }
+    public int? MonthLimit { get; set; }
     
     public string? Comment { get; set; }
 }

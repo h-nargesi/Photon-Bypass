@@ -1,8 +1,8 @@
 ﻿using PhotonBypass.Application.Connection.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Servers;
-using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Entity;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;

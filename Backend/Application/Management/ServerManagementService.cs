@@ -1,18 +1,17 @@
-﻿using System.Text;
-using System.Text.RegularExpressions;
-using Microsoft.Extensions.Options;
-using PhotonBypass.Domain.Session.Entity;
+﻿using Microsoft.Extensions.Options;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Session;
 using PhotonBypass.Domain.Servers;
-using PhotonBypass.Domain.Session;
 using PhotonBypass.Domain.Servers.Types;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Application.Management;
 
 partial class ServerManagementService(
     IRealmRepository RealmRepo,
-    IProfileRadiusSyncService RadiusSrv,
+    ISessionRadiusSyncService RadiusSrv,
     Lazy<INasRepository> NasRepo,
     Lazy<ITrafficDataRepository> TrafficDataRepo,
     Lazy<ISocialMediaService> SocialSrv,

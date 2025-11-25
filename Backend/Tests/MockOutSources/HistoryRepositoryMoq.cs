@@ -1,7 +1,8 @@
-﻿using System.Text.Json;
-using Moq;
-using PhotonBypass.Domain.Session;
+﻿using Moq;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Tools;
+using System.Text.Json;
 
 namespace PhotonBypass.Test.MockOutSources;
 

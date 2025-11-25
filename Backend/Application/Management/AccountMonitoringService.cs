@@ -1,19 +1,15 @@
 ﻿using PhotonBypass.Application.Authentication;
-using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Business;
-using PhotonBypass.Domain.Session.Entity;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Business;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Business;
-using PhotonBypass.Domain.Session.Entity;
-using PhotonBypass.Domain.Session;
 using Quartz;
 using Serilog;
 
 namespace PhotonBypass.Application.Management;
 
 internal class AccountMonitoringService(
-    IAccountStateRepository AccounyStateRepo,
+    ISessionStateRepository SessionStateRepo,
     IAccountRepository AccountRepo,
     IHistoryRepository HistoryRepo,
     IAuthApplication AuthApp,
@@ -25,7 +21,7 @@ internal class AccountMonitoringService(
 {
     public async Task Execute(IJobExecutionContext context)
     {
-        var plan_state_list = await AccounyStateRepo.GetAccountFinishingState();
+        var plan_state_list = await SessionStateRepo.GetAccountFinishingState();
 
         if (plan_state_list.Count < 1)
         {
@@ -39,7 +35,7 @@ internal class AccountMonitoringService(
             ServerMngSrv.CheckUserServerBalance());
     }
 
-    public async Task InactiveAbandonedUsers(IEnumerable<AccountStateEntity> plan_state_list)
+    public async Task InactiveAbandonedUsers(IEnumerable<SessionStateEntity> plan_state_list)
     {
         foreach (var plan in plan_state_list)
         {
@@ -53,7 +49,7 @@ internal class AccountMonitoringService(
             if (account == null)
             {
                 Log.Fatal(
-                    "The account '{0}' is in 'PlanStateRepository.GetAccountFinishingState' but not found in 'AccountRepository'. account-id: {1}",
+                    "The account '{0}' is in 'SessionStateRepository.GetAccountFinishingState' but not found in 'AccountRepository'. account-id: {1}",
                     plan.Username, plan.Id);
                 continue;
             }
@@ -87,7 +83,7 @@ internal class AccountMonitoringService(
         }
     }
 
-    public async Task NotifSendServices(IEnumerable<AccountStateEntity> plan_states)
+    public async Task NotifSendServices(IEnumerable<SessionStateEntity> plan_states)
     {
         var plan_state_list = plan_states.ToArray();
         var user_ids = plan_state_list.Select(x => x.Id).ToList();

@@ -1,7 +1,7 @@
 using PhotonBypass.Domain.Servers.Types;
-using PhotonBypass.Domain.Session.Model;
+using PhotonBypass.Domain.Account.Model;
 
-namespace PhotonBypass.Domain.Session;
+namespace PhotonBypass.Domain.Account;
 
 public interface ISessionRadiusSyncService
 {

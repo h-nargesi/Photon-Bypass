@@ -1,8 +1,8 @@
-﻿using PhotonBypass.Domain.Session.Entity;
+﻿using PhotonBypass.Domain.Account.Entity;
 
 namespace PhotonBypass.Domain.Management;
 
-public interface ISessionMonitoringService
+public interface IAccountMonitoringService
 {
     static event Action<UserCheckingEvent>? OnUserChecking;
 

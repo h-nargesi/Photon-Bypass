@@ -1,6 +1,6 @@
-﻿using PhotonBypass.Domain.Session.Entity;
+﻿using PhotonBypass.Domain.Account.Entity;
 
-namespace PhotonBypass.Domain.Session.Model;
+namespace PhotonBypass.Domain.Account.Model;
 
 public class CertEmailContext : CertContext
 {

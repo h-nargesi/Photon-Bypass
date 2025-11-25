@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Moq;
 using PhotonBypass.Application.Connection;
-using PhotonBypass.Domain.Session;
-using PhotonBypass.Domain.Session.Model;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Tools;

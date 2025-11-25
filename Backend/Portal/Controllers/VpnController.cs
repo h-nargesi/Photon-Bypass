@@ -5,7 +5,7 @@ using PhotonBypass.API.Context;
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain;
-using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.API.Controllers;

@@ -1,5 +1,6 @@
 ﻿using Moq;
-using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockOutSources;

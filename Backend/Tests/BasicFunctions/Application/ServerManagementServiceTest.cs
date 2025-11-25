@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Moq;
 using PhotonBypass.Domain.Management;
-using PhotonBypass.Domain.Session;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Tools;
 using System.Text.RegularExpressions;
@@ -32,7 +32,7 @@ public partial class ServerManagementServiceTest : ServiceInitializer
         using var scope = App.Services.CreateScope();
         var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
 
-        var result = await manager.GetAvailableRealm(1);
+        var result = await manager.GetAvailableRealm();
 
         Assert.NotNull(result);
         Assert.Equal(5, result.Id);
