@@ -16,8 +16,10 @@ public class RenewalEntity : IBaseEntity
     public int? SimultaneousUse { get; set; }
 
     public long? TrafficLimit { get; set; }
-    
-    public int? MonthLimit { get; set; }
-    
+
+    public int? TimeLimitInDays { get; set; }
+
     public string? Comment { get; set; }
+
+    public DateTime Created { get; set; } = DateTime.Now;
 }

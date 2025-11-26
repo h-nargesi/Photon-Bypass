@@ -4,7 +4,7 @@ public class PlanInfoModel
 {
     public string Target { get; set; } = null!;
 
-    public int? Months { get; set; }
+    public int? Days { get; set; }
 
     public double? Gigabytes { get; set; }
 

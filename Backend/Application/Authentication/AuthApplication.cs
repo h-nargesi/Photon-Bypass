@@ -23,7 +23,7 @@ partial class AuthApplication(
 {
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
-        var account = await AccountRepo.GetAccount(username) ??
+        var account = (await AccountRepo.GetAccount(username)) ??
             await CopyFromPermanentUser(username, password);
 
         if (account == null || !account.Active || account.Password != HashHandler.HashPassword(password))
@@ -96,7 +96,7 @@ partial class AuthApplication(
                 Message = "موبایل هنوز پشتیبانی نشده است!"
             };
 #else
-            var account = await AccountRepo.GetAccountByMobile(email_mobile) ?? 
+            var account = (await AccountRepo.GetAccountByMobile(email_mobile)) ?? 
                 throw new UserException("کاربر یافت نشد.");
                 
             if (!account.Active)

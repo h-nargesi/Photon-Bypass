@@ -18,4 +18,6 @@ public class PriceEntity : IBaseEntity
     public string Description { get; set; } = null!;
 
     public string CalculatorCode { get; set; } = null!;
+
+    public DateTime Created { get; set; } = DateTime.Now;
 }

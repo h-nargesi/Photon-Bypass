@@ -22,4 +22,6 @@ public class TrafficDataEntity : IBaseEntity
     public long DataOut { get; set; }
 
     public long TotalData => DataIn + DataOut;
+
+    public DateTime Created { get; set; } = DateTime.Now;
 }

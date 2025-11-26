@@ -10,7 +10,7 @@ class PriceCalculator(IPriceRepository repository) : IPriceCalculator
 {
     private readonly Dictionary<PlanType, MethodInfo> Calculators = FetchCalculatorCode(repository);
 
-    public int CalculatePrice(int users, int months, int gigabytes)
+    public int CalculatePrice(int users, int days, int gigabytes)
     {
         if (Calculators.TryGetValue(type, out var method))
         {

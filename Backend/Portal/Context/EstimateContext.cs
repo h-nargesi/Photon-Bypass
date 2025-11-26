@@ -6,7 +6,7 @@ public class EstimateContext
 {
     public int? SimultaneousUserCount { get; set; }
     
-    public int? Months { get; set; }
+    public int? Days { get; set; }
     
     public int? Gigabytes { get; set; }
 }

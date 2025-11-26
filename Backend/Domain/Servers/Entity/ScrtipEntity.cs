@@ -21,4 +21,6 @@ public class ScriptEntity : IBaseEntity
     public string Content { get; set; } = null!;
 
     public string? OutputPattern { get; set; }
+
+    public DateTime Created { get; set; } = DateTime.Now;
 }

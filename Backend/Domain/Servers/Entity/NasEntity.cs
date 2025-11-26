@@ -27,4 +27,6 @@ public class NasEntity : IBaseEntity
     public string SshUsername { get; set; } = null!;
 
     public string SshPassword { get; set; } = null!;
+
+    public DateTime Created { get; set; } = DateTime.Now;
 }

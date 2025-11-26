@@ -242,7 +242,7 @@ class RadiusDeskService : IRadiusService, IDisposable
     {
         await CheckLogin();
 
-        var current = await GetPrivateAttribute(username, RD_TOTAL_DATA) ??
+        var current = (await GetPrivateAttribute(username, RD_TOTAL_DATA)) ??
             new PrivateAttributeResponse
             {
                 Id = null,

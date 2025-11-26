@@ -18,7 +18,7 @@ public class PlanStateEntity : IBaseEntity
 
     public long? TrafficLimit { get; set; }
     
-    public int? TimeLimit { get; set; }
+    public int? TimeLimitInDays { get; set; }
 
     // Last Usage Info
     public DateTime? LastConnectTime { get; set; }
@@ -32,7 +32,16 @@ public class PlanStateEntity : IBaseEntity
     // Remains
     public DateTime? ExpirationDate { get; set; }
 
-    public TimeSpan? TimeLeft { get; set; }
-
     public long? TrafficLeft { get; set; }
+
+    [NotMapped]
+    public TimeSpan? TimeLeft => ExpirationDate >= DateTime.Now ? new TimeSpan() : DateTime.Now - ExpirationDate;
+
+    [NotMapped]
+    public double? TrafficLeftPercent => 100 * TrafficLeft / (double?)TrafficLimit;
+
+    [NotMapped]
+    public double? TimeLeftPercent => TimeLeft.HasValue && TimeLimitInDays.HasValue ? 100 * TimeLeft.Value.TotalDays / (double)TimeLimitInDays : null;
+
+    public DateTime Created { get; set; } = DateTime.Now;
 }

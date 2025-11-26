@@ -93,7 +93,7 @@ class VpnApplication(
 
         if (plan?.RestrictedRealmId != null)
         {
-            var servers = await NasRepo.Value.GetAllActiveInRealm(plan.RestrictedRealmId.Value) ??
+            var servers = (await NasRepo.Value.GetAllActiveInRealm(plan.RestrictedRealmId.Value)) ??
                 throw new Exception($"There is not any nas for realm: {plan.RestrictedRealmId.Value}.");
 
             await AccountRadiusSrv.Value.GetCertificate(servers, account.Username, cert_context);

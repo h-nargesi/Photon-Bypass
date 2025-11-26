@@ -12,7 +12,6 @@ using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
-using PhotonBypass.Tools;
 using Serilog;
 
 namespace PhotonBypass.Application.Plan;
@@ -32,96 +31,61 @@ class PlanApplication(
 {
     public async Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target)
     {
-        if (await AccountRepo.Value.IsInactive(target))
+        var account_id = await AccountRepo.Value.GetActiveAccountId(target);
+        if (!account_id.HasValue)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
         }
 
-        var renew = await RenewalRepo.LatestOf(target);
-
-        if (renew == null)
-        {
-            return new ApiResult<UserPlanInfoModel>
-            {
-                Message = "بدون پلن",
-            };
-        }
-
-        var state = (await PlanRepo.Value.GetPlanState(renew.AccountId)) ??
-                    throw new Exception($"The plan-state not found for target={target}, account-id={renew.AccountId}, realm-id={renew.RestrictedRealmId}");
+        var state = (await PlanRepo.Value.GetPlanState(account_id.Value)) ??
+                    throw new Exception($"The plan-state not found for target={target}, account-id={account_id.Value}");
 
         Log.Information("[user: {0}] session state: (target:{1}, user-count:{2}, data-left:{3}, total-data:{4}, time-left:{5}-{6})",
             JobContext.Value.Username, target, state.SimultaneousUserCount,
             state.GetTrafficLeftInGig(), state.GetTrafficLimitInGig(), state.TimeLeft?.TotalDays, state.TimeLeft?.Hours);
 
-        var result = new UserPlanInfoModel
+        return ApiResult<UserPlanInfoModel>.Success(new UserPlanInfoModel
         {
             RemainsTitle = state.GetRemainsTitle(),
             SimultaneousUserCount = state.SimultaneousUserCount,
-        };
-
-        if (renew.TrafficLimit.HasValue)
-        {
-            if (state.TrafficLeft.HasValue)
-            {
-                result.RemainsTrafficPercent = (int)(100 * (1 - state.TrafficLeft.Value / renew.TrafficLimit.Value));
-            }
-            else
-            {
-                Log.Fatal("[user: {0}] invalid sesstion state: (target:{1}, user-count:{2}, traffic-limit:{3})",
-                    JobContext.Value.Username, target, renew.SimultaneousUse, renew.GetTrafficLimitInGig());
-            }
-        }
-
-        if (renew.MonthLimit.HasValue)
-        {
-            if (state is { TimeLeft: not null, ExpirationDate: not null })
-            {
-                var time_limit = state.ExpirationDate.Value - state.ExpirationDate.Value.AddPersianMonth(-renew.MonthLimit.Value);
-                result.RemainsTimePercent = (int)(100 * (1 - state.TimeLeft.Value.TotalMinutes / time_limit.TotalMinutes));
-            }
-            else
-            {
-                Log.Fatal("[user: {0}] invalid plan state: (target:{1}, user-count:{2}, time-limit:{3})",
-                    JobContext.Value.Username, target, renew.SimultaneousUse, renew.MonthLimit);
-            }
-        }
-
-        return ApiResult<UserPlanInfoModel>.Success(result);
+            RemainsTimePercent = (int?)state.TimeLeftPercent,
+            RemainsTrafficPercent = (int?)state.TrafficLeftPercent,
+        });
     }
 
     public async Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target)
     {
-        if (await AccountRepo.Value.IsInactive(target))
+        var account_id = await AccountRepo.Value.GetActiveAccountId(target);
+        if (!account_id.HasValue)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
         }
 
-        var renew = await RenewalRepo.LatestOf(target);
+        var renew = await RenewalRepo.LatestOf(account_id.Value);
 
         return ApiResult<PlanInfoModel>.Success(new PlanInfoModel
         {
             Target = target,
             SimultaneousUserCount = renew?.SimultaneousUse,
-            Months = renew?.MonthLimit,
+            Days = renew?.TimeLimitInDays,
             Gigabytes = renew?.GetTrafficLimitInGig(),
         });
     }
 
-    public ApiResult<int> Estimate(int users, int months, int gigabytes)
+    public ApiResult<int> Estimate(int users, int days, int gigabytes)
     {
-        var result = PriceCalc.Value.CalculatePrice(users, months, gigabytes);
+        var result = PriceCalc.Value.CalculatePrice(users, days, gigabytes);
         return ApiResult<int>.Success(result);
     }
 
-    public Task<ApiResult> TemporaryRenewal(string target, int months, int gigabytes)
+    public Task<ApiResult> TemporaryRenewal(string target, int days, int gigabytes)
     {
         throw new NotImplementedException();
     }
 
-    public async Task<ApiResult<RenewalResult>> Renewal(string target, int count, int months, int gigabytes)
+    public async Task<ApiResult<RenewalResult>> Renewal(string target, int count, int days, int gigabytes)
     {
-        var account = await AccountRepo.Value.GetAccount(target) ??
+        var account = (await AccountRepo.Value.GetAccount(target)) ??
             throw new UserException("کاربر مورد نظر پیدا نشد!");
 
         if (!account.Active)
@@ -129,14 +93,14 @@ class PlanApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
 
-        var estimate = PriceCalc.Value.CalculatePrice(count, months, gigabytes);
+        var estimate = PriceCalc.Value.CalculatePrice(count, days, gigabytes);
 
         if (account.CheckMoneyNeed(estimate, out var money_need))
         {
             Log.Information(@"[user: {0}] Plan renewal request:
     account=(user:{0}, balance:{6})
-    request=(taget:{1}, user-count:{2}, months={3}, traffic:{4}, estimate:{7})",
-                JobContext.Value.Username, target, count, months, gigabytes, account.Balance, estimate);
+    request=(taget:{1}, user-count:{2}, days={3}, traffic:{4}, estimate:{7})",
+                JobContext.Value.Username, target, count, days, gigabytes, account.Balance, estimate);
 
             return ApiResult<RenewalResult>.Success(new RenewalResult
             {
@@ -150,17 +114,17 @@ class PlanApplication(
 
         Log.Information(@"[user: {0}] Plan current state:
     account=(user:{0}, balance:{9})
-    request=(taget:{1}, count:{2}, months:{3}, gigabytes:{4}, estimate:{10})
+    request=(taget:{1}, count:{2}, days:{3}, gigabytes:{4}, estimate:{10})
     current=(count:{5}, left-days:{6}, left-hours:{7}, left-gigabytes:{8})",
             JobContext.Value.Username,
-            target, count, months, gigabytes,
+            target, count, days, gigabytes,
             state.SimultaneousUserCount, state.TimeLeft?.TotalDays, state.TimeLeft?.Hours, state.GetTrafficLeftInGig(),
             account.Balance, estimate);
 
         var renew = new RenewalEntity
         {
             AccountId = account.Id,
-            MonthLimit = months,
+            TimeLimitInDays = days,
             TrafficLimit = (int)(gigabytes * StaticValues.BytesInGig),
             SimultaneousUse = count,
         };
@@ -176,9 +140,9 @@ class PlanApplication(
         if (renew.RenewalValidation(out var user_message))
         {
             Log.Information(@"[user: {0}] Plan current state:
-    request=(taget:{1}, count:{2}, months:{3}, gigabytes:{4})
+    request=(taget:{1}, count:{2}, days:{3}, gigabytes:{4})
     message={5}",
-                JobContext.Value.Username, target, count, months, gigabytes, user_message);
+                JobContext.Value.Username, target, count, days, gigabytes, user_message);
 
             throw new UserException(user_message);
         }
@@ -258,7 +222,7 @@ class PlanApplication(
         _ = ServerMngSrv.Value.CheckUserServerBalance();
 
         Log.Information("[user: {0}] Plan renewal finished: ({1}, {2}, {3}, {4})",
-            JobContext.Value.Username, target, count, months, gigabytes);
+            JobContext.Value.Username, target, count, days, gigabytes);
 
         return ApiResult<RenewalResult>.Success(new RenewalResult
         {

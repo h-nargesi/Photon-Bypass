@@ -73,12 +73,18 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return result.ToDictionary(k => k.Id);
     }
 
-    public Task<bool> CheckUsername(string username)
+    public async Task<int?> GetActiveAccountId(string username)
     {
-        throw new NotImplementedException();
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(AccountEntity.Username)} = @username")
+            .WithParameters(new { username }));
+
+        return result.Select(x => (int?)x.Id).FirstOrDefault();
     }
 
-    public Task<bool> IsInactive(string username)
+    public Task<bool> CheckUsername(string username)
     {
         throw new NotImplementedException();
     }

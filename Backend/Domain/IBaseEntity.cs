@@ -3,4 +3,6 @@
 public interface IBaseEntity
 {
     public int Id { get; set; }
+
+    DateTime Created { get; set; }
 }

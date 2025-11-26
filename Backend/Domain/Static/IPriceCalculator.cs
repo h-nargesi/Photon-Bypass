@@ -2,5 +2,5 @@
 
 public interface IPriceCalculator
 {
-    int CalculatePrice(int users, int months, int gigabytes);
+    int CalculatePrice(int users, int days, int gigabytes);
 }

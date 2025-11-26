@@ -17,7 +17,7 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
 
     Task<IDictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids);
 
-    Task<bool> CheckUsername(string username);
+    Task<int?> GetActiveAccountId(string username);
 
-    Task<bool> IsInactive(string username);
+    Task<bool> CheckUsername(string username);
 }

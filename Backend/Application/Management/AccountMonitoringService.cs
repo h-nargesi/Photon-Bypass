@@ -68,7 +68,7 @@ internal class AccountMonitoringService(
             deactivate_list.Add(account.Username);
 
             Log.Information(
-                "The user '{0}' was disabled: ExpiredTime={1} days, ExpirationDate={2}, TotalData={3}, DataUsage={4}",
+                "The user '{0}' was disabled: ExpiredTime={1} days, ExpirationDate={2}, TrafficLimit={3}, TrafficUsed={4}",
                 plan.Username, expired_days, plan.ExpirationDate, plan.TrafficLimit, plan.TrafficUsed);
 
             _ = HistoryRepo.Save(new HistoryEntity

@@ -19,8 +19,7 @@ class AccountApplication(
 {
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
-        var account = await AccountRepo.GetAccount(username) ??
-                      // TODO: make unit test: it should throw an exception "Account not found."
+        var account = (await AccountRepo.GetAccount(username)) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
 
         if (!account.Active)
@@ -50,7 +49,7 @@ class AccountApplication(
 
     public async Task<ApiResult<FullUserModel>> GetFullInfo(string target)
     {
-        var account = await AccountRepo.GetAccount(target) ??
+        var account = (await AccountRepo.GetAccount(target)) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
 
         if (!account.Active)
@@ -72,7 +71,7 @@ class AccountApplication(
 
     public async Task<ApiResult> EditUser(string target, EditUserModel model)
     {
-        var account = await AccountRepo.GetAccount(target) ??
+        var account = (await AccountRepo.GetAccount(target)) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
 
         if (!account.Active)

@@ -14,4 +14,6 @@ public class ResetPassEntity : IBaseEntity
     public DateTime ExpireDate { get; set; }
 
     public string HashCode { get; set; } = null!;
+
+    public DateTime Created { get; set; } = DateTime.Now;
 }

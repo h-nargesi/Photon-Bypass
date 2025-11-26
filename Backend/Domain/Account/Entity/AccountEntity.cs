@@ -42,4 +42,6 @@ public class AccountEntity : IBaseEntity
     public DateTime CreatedTime { get; set; }
     
     public int? ReferenceId { get; set; }
+
+    public DateTime Created { get; set; } = DateTime.Now;
 }

@@ -19,4 +19,6 @@ public class ProcessEntity : IBaseEntity
     public List<ScriptEntity>? Disable { get; set; }
 
     public ScriptEntity? Check { get; set; }
+
+    public DateTime Created { get; set; } = DateTime.Now;
 }
