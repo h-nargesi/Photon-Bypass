@@ -1,3 +1,4 @@
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Plan.Entity;
@@ -28,5 +29,16 @@ class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEn
             .WithParameters(new { percent = PlanStateBusiness.AccountFinishingStatePercent }));
 
         return [.. result];
+    }
+
+    public async Task<int?> GetActiveAccountRealmId(string username)
+    {
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(PlanStateEntity.Id)} = (select {nameof(AccountEntity.Id)} from {AccountRepository.TableName} where {nameof(AccountEntity.Username)} = @username)")
+            .WithParameters(new { username }));
+
+        return result.Select(x => x.RestrictedRealmId).FirstOrDefault();
     }
 }

@@ -6,3 +6,8 @@ public interface IBaseEntity
 
     DateTime Created { get; set; }
 }
+
+public class EntityEventArgs(IBaseEntity entity)
+{
+    public IBaseEntity Entity => entity;
+}

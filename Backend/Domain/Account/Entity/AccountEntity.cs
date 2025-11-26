@@ -33,6 +33,8 @@ public class AccountEntity : IBaseEntity
 
     public int Balance { get; set; }
 
+    public int? CalculationMethod { get; set; }
+
     public DateTime? WarningTimes { get; set; }
 
     public bool SendWarning { get; set; }

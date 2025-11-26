@@ -11,7 +11,7 @@ using Serilog;
 namespace PhotonBypass.Application.Connection;
 
 class ConnectionApplication(
-    ISessionRadiusSyncService RadiusSrv,
+    ISessionRadiusSyncService SessionRadiusSrv,
     INasRepository NasRepo,
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IPlanStateRepository> PlanRepo,
@@ -31,7 +31,7 @@ class ConnectionApplication(
 
         var servers_task = servers_info.ToDictionary(
             server => server,
-            server => RadiusSrv.GetActiveConnections(server, target));
+            server => SessionRadiusSrv.GetActiveConnections(server, target));
 
         await Task.WhenAll(servers_task.Values);
 
@@ -54,7 +54,7 @@ class ConnectionApplication(
                   ?? throw new UserException("دسترسی غیرمجاز!",
                       $"Closing connection server is invalid: ({server}, {target}, {session_id})");
 
-        var result = await RadiusSrv.CloseConnection(nas, session_id);
+        var result = await SessionRadiusSrv.CloseConnection(nas, session_id);
 
         if (!result)
         {

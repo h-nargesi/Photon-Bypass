@@ -74,7 +74,7 @@ class PlanApplication(
 
     public ApiResult<int> Estimate(int users, int days, int gigabytes)
     {
-        var result = PriceCalc.Value.CalculatePrice(users, days, gigabytes);
+        var result = PriceCalc.Value.CalculatePrice(0, users, days, gigabytes);
         return ApiResult<int>.Success(result);
     }
 
@@ -93,7 +93,7 @@ class PlanApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
 
-        var estimate = PriceCalc.Value.CalculatePrice(count, days, gigabytes);
+        var estimate = PriceCalc.Value.CalculatePrice(account.CalculationMethod ?? 0, count, days, gigabytes);
 
         if (account.CheckMoneyNeed(estimate, out var money_need))
         {

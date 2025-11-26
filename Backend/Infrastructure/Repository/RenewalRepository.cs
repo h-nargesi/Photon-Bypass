@@ -7,8 +7,14 @@ namespace PhotonBypass.Infra.Repository;
 
 class RenewalRepository(LocalDbContext context) : EditableRepository<RenewalEntity>(context), IRenewalRepository
 {
-    public Task<RenewalEntity?> LatestOf(int account_id)
+    public async Task<int?> GetTopRestrictedRealmId(int account_id)
     {
-        throw new NotImplementedException();
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(RenewalEntity.AccountId)} = @account_id")
+            .WithParameters(new { account_id }));
+
+        return result.Select(x => x.RestrictedRealmId).FirstOrDefault();
     }
 }

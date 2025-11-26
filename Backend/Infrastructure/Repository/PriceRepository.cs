@@ -4,7 +4,7 @@ using PhotonBypass.Infra.Repository.DbContext;
 
 namespace PhotonBypass.Infra.Repository;
 
-class PriceRepository(LocalDbContext context) : EditableRepository<PriceEntity>(context), IPriceRepository
+class PriceRepository(LocalDbContext context, Lazy<IPriceCalculator> calculator) : EditableRepository<PriceEntity>(context), IPriceRepository
 {
     public async Task<IList<PriceEntity>> GetLatest()
     {
@@ -13,5 +13,11 @@ class PriceRepository(LocalDbContext context) : EditableRepository<PriceEntity>(
         var result = await FindAsync(statement => statement.Where($"{nameof(PriceEntity.IsActive)} = 1"));
 
         return [.. result];
+    }
+
+    public override async Task Save(PriceEntity entity)
+    {
+        await base.Save(entity);
+        await calculator.Value.UpdateCalculatorCode();
     }
 }

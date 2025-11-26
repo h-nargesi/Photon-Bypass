@@ -10,15 +10,18 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context) : Da
 {
     private const int UpdateMaxTasksCount = 10;
 
+    public event EventHandler<EntityEventArgs>? Changed;
+
     public async Task<IDbTransaction> BeginTransactionAsync()
     {
         await OpenAsync();
         return Connection.BeginTransaction();
     }
 
-    public async Task Save(TEntity entity)
+    public virtual async Task Save(TEntity entity)
     {
         await OpenAsync();
+
         if (entity.Id > 0)
         {
             await Connection.UpdateAsync(entity);
@@ -27,9 +30,11 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context) : Da
         {
             await Connection.InsertAsync(entity);
         }
+
+        Changed?.Invoke(this, new EntityEventArgs(entity));
     }
 
-    public async Task BachSave(IEnumerable<TEntity> entities)
+    public virtual async Task BachSave(IEnumerable<TEntity> entities)
     {
         await OpenAsync();
         var buffer = new Queue<Task>();

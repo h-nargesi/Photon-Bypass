@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Static;
 using System.Reflection;
 
@@ -8,23 +7,44 @@ namespace PhotonBypass.Infra.Services;
 
 class PriceCalculator(IPriceRepository repository) : IPriceCalculator
 {
-    private readonly Dictionary<PlanType, MethodInfo> Calculators = FetchCalculatorCode(repository);
+    private Dictionary<int, MethodInfo> Calculators = FetchCalculatorCode(repository).Result;
 
-    public int CalculatePrice(int users, int days, int gigabytes)
+    public int CalculatePrice(int price_id, int users, int days, int gigabytes)
     {
-        if (Calculators.TryGetValue(type, out var method))
+        if (!Calculators.TryGetValue(price_id, out var method))
         {
-            return (int)(method.Invoke(null, [users, value]) ?? 0);
+            method = Calculators.Values.First();
         }
 
-        throw new Exception($"Calculator not found for type: {type}");
+        if (method == null)
+        {
+            throw new Exception($"Calculator not found for price-id: {price_id}");
+        }
+
+        return (int)(method.Invoke(null, [users, days, gigabytes]) ?? 0);
     }
 
-    private static Dictionary<PlanType, MethodInfo> FetchCalculatorCode(IPriceRepository repository)
+    public async Task UpdateCalculatorCode()
     {
-        var list = repository.GetLatest().Result;
+        Calculators = await FetchCalculatorCode(repository);
+    }
 
-        return list.ToDictionary(k => k.PlanType, v => Compile(v.CalculatorCode));
+    private static async Task<Dictionary<int, MethodInfo>> FetchCalculatorCode(IPriceRepository repository)
+    {
+        var list = (await repository.GetLatest())
+            .OrderByDescending(c => c.IsDefault)
+            .ThenBy(c => c.Id)
+            .Select(c => (c.Id, Method: Compile(c.CalculatorCode)))
+            .ToList();
+
+        if (list.Count < 1)
+        {
+            return [];
+        }
+
+        list.Add((0, list[0].Method));
+
+        return list.ToDictionary(k => k.Id, v => v.Method);
     }
 
     private static MethodInfo Compile(string code)
