@@ -13,9 +13,9 @@ public static class RenewalBusiness
             result += $" و {(int)(entity.TrafficLimit / StaticValues.BytesInGig)} گیگ";
         }
 
-        if (entity.TimeLimitInMonths.HasValue)
+        if (entity.TimeLimitInDays.HasValue)
         {
-            result += $" و {entity.TimeLimitInMonths} ماه";
+            result += $" و {entity.TimeLimitInDays} روز";
         }
 
         if (result.Length > 0) result = result[3..];

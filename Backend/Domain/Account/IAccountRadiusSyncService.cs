@@ -12,8 +12,6 @@ public interface IAccountRadiusSyncService
 
     Task<bool> SyncUserAndActive(AccountEntity account);
 
-    Task<bool> CheckUsername(string username);
-
     Task<bool> GetCertificate(IEnumerable<NasEntity> server, string username, CertContext default_context);
 
     Task<bool> ChangeVpnPassword(string username, string password);

@@ -17,7 +17,7 @@ using Serilog;
 namespace PhotonBypass.Application.Plan;
 
 class PlanApplication(
-    IRenewalRepository RenewalRepo,
+    Lazy<IRenewalRepository> RenewalRepo,
     Lazy<IPlanStateRepository> PlanRepo,
     Lazy<IPriceCalculator> PriceCalc,
     Lazy<IAccountRepository> AccountRepo,
@@ -61,12 +61,12 @@ class PlanApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
         }
 
-        var renew = await RenewalRepo.LatestOf(account_id.Value);
+        var renew = await PlanRepo.Value.GetPlanState(account_id.Value);
 
         return ApiResult<PlanInfoModel>.Success(new PlanInfoModel
         {
             Target = target,
-            SimultaneousUserCount = renew?.SimultaneousUse,
+            SimultaneousUserCount = renew?.SimultaneousUserCount,
             Days = renew?.TimeLimitInDays,
             Gigabytes = renew?.GetTrafficLimitInGig(),
         });
@@ -127,10 +127,8 @@ class PlanApplication(
             TimeLimitInDays = days,
             TrafficLimit = (int)(gigabytes * StaticValues.BytesInGig),
             SimultaneousUse = count,
+            RestrictedRealmId = await RenewalRepo.Value.GetTopRestrictedRealmId(account.Id),
         };
-
-        var previous_plan = await RenewalRepo.LatestOf(account.Id);
-        renew.RestrictedRealmId = previous_plan?.RestrictedRealmId;
 
         if (renew.RestrictedRealmId == null || state.LastConnectTime == null || state.LastConnectTime.Value < DateTime.Now.AddDays(-7))
         {
@@ -156,9 +154,9 @@ class PlanApplication(
                 JobContext.Value.Username, target, state.SimultaneousUserCount, count);
 
             var nas_list = new List<NasEntity>();
-            if (previous_plan?.RestrictedRealmId != null)
+            if (renew.RestrictedRealmId != null)
             {
-                nas_list.AddRange(await NasRepo.Value.GetAllActiveInRealm(previous_plan.RestrictedRealmId.Value));
+                nas_list.AddRange(await NasRepo.Value.GetAllActiveInRealm(renew.RestrictedRealmId.Value));
             }
 
             if (nas_list.Count < 0)
@@ -180,7 +178,7 @@ class PlanApplication(
 
             await AccountRepo.Value.Save(account);
 
-            await RenewalRepo.Save(renew);
+            await RenewalRepo.Value.Save(renew);
 
             var checkOnRenewal = IPlanApplication.OnRenewalDelegation(new RenewalEvent());
 

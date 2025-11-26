@@ -29,9 +29,4 @@ class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEn
 
         return [.. result];
     }
-
-    public Task<int?> GetActiveAccountRealmId(string username)
-    {
-        throw new NotImplementedException();
-    }
 }

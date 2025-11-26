@@ -5,7 +5,5 @@ namespace PhotonBypass.Domain.Plan;
 
 public interface IRenewalRepository : IEditableRepository<RenewalEntity>
 {
-    Task<RenewalEntity?> LatestOf(int account_id);
-
-    Task<int?> LatestRealmIdOf(string target);
+    Task<int?> GetTopRestrictedRealmId(int account_id);
 }

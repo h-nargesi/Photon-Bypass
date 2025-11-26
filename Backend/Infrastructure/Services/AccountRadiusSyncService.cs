@@ -22,11 +22,6 @@ class AccountRadiusSyncService : IAccountRadiusSyncService
         throw new NotImplementedException();
     }
 
-    public Task<bool> CheckUsername(string username)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<bool> GetCertificate(IEnumerable<NasEntity> server, string username, CertContext default_context)
     {
         throw new NotImplementedException();

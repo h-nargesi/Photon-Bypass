@@ -11,9 +11,4 @@ class RenewalRepository(LocalDbContext context) : EditableRepository<RenewalEnti
     {
         throw new NotImplementedException();
     }
-
-    public Task<int?> LatestRealmIdOf(string target)
-    {
-        throw new NotImplementedException();
-    }
 }
