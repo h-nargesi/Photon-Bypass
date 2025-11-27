@@ -13,7 +13,11 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
         await OpenAsync();
         
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(ServerEntity.Active)} == 1 and {nameof(ServerEntity.Features)} == @nas and {nameof(ServerEntity.IpAddress)} == @ip")
+            .Where($"""
+{nameof(ServerEntity.Active)} == 1
+    and {nameof(ServerEntity.Features)} == ({nameof(ServerEntity.Features)} & @nas)
+    and {nameof(ServerEntity.IpAddress)} == @ip")
+""")
             .WithParameters(new { ip, nas = ServerFeature.Nas }));
 
         return result.FirstOrDefault();
@@ -23,14 +27,44 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
     {
         await OpenAsync();
 
-        var result = await FindAsync(statement => statement
-            .Where($"""
-{nameof(ServerEntity.Active)} == 1 and {nameof(ServerEntity.Features)} == @nas 
-    and (@realm_id is null or {nameof(ServerEntity.RealmId)} == @realm_id)
-""")
-            .WithParameters(new { realm_id, nas = ServerFeature.Nas }));
+        var result = await FindAsync(statement =>
+        {
+            statement
+                .Where($"{nameof(ServerEntity.Active)} == 1 and {nameof(ServerEntity.Features)} = ({nameof(ServerEntity.Features)} & @nas)")
+                .WithParameters(new { nas = ServerFeature.Nas });
+
+            if (realm_id.HasValue)
+            {
+                statement
+                    .Where($"{nameof(ServerEntity.RealmId)} == @realm_id")
+                    .WithParameters(new { realm_id = realm_id.Value });
+
+            }
+        });
 
         return result.Select(n => n.DomainName).ToList();
+    }
+
+    public async Task<List<ServerEntity>> GetAllActiveRadiusInRealm(int? realm_id)
+    {
+        await OpenAsync();
+
+        var result = await FindAsync(statement =>
+        {
+            statement
+                .Where($"{nameof(ServerEntity.Active)} == 1 and {nameof(ServerEntity.Features)} = ({nameof(ServerEntity.Features)} & @radius)")
+                .WithParameters(new { radius = ServerFeature.Radius });
+
+            if (realm_id.HasValue)
+            {
+                statement
+                    .Where($"{nameof(ServerEntity.RealmId)} == @realm_id")
+                    .WithParameters(new { realm_id = realm_id.Value });
+
+            }
+        });
+
+        return result.ToList();
     }
 
     public async Task<Dictionary<int, List<ServerEntity>>> GetAllActiveRadiusInRealm(IEnumerable<int> realm_ids)
@@ -38,7 +72,11 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
         await OpenAsync();
 
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(ServerEntity.Active)} == 1 and {nameof(ServerEntity.Features)} == @radius and {nameof(ServerEntity.RealmId)} in (@realm_ids)")
+            .Where($"""
+{nameof(ServerEntity.Active)} == 1
+    and {nameof(ServerEntity.Features)} == ({nameof(ServerEntity.Features)} & @radius)
+    and {nameof(ServerEntity.RealmId)} in (@realm_ids)
+""")
             .WithParameters(new { realm_ids, radius = ServerFeature.Radius }));
 
         return result.GroupBy(k => k.RealmId)

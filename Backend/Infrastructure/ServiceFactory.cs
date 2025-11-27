@@ -26,6 +26,8 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IServerRepository, ServerRepository>();
         builder.Services.AddLazyTransient<IRealmRepository, RealmRepository>();
         builder.Services.AddLazyTransient<IPriceRepository, PriceRepository>();
+        builder.Services.AddLazyTransient<IAccountRadiusSyncService, AccountRadiusSyncService>();
+        builder.Services.AddLazyTransient<ISessionRadiusSyncService, SessionRadiusSyncService>();
 
         builder.Services.AddLazySingleton<IPriceCalculator, PriceCalculator>();
     }

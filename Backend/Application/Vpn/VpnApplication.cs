@@ -64,7 +64,7 @@ class VpnApplication(
     public async Task<ApiResult> SendCertEmail(string target)
     {
         var account = (await AccountRepo.Value.GetAccount(target)) ??
-            throw new UserException("کاربر پیدا نشد!", $"target not found: {target}");
+                      throw new UserException("کاربر پیدا نشد!", $"target not found: {target}");
 
         if (!account.Active)
         {
@@ -73,17 +73,18 @@ class VpnApplication(
 
         if (account.Email == null)
         {
-            throw new UserException("ایمیل کاربر ثبت نشده است!", $"account is email address is unkown: target={target}");
+            throw new UserException("ایمیل کاربر ثبت نشده است!",
+                $"account is email address is unkown: target={target}");
         }
 
         var plan = await PlanStateRepo.Value.GetPlanState(account.Id);
 
-        if (plan == null || 
+        if (plan == null ||
             plan.TimeLeft is { TotalMinutes: < 1 } ||
             plan.TrafficLeft is < 1)
         {
             throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
-                                    $"There is not ant plan for user ");
+                $"There is not ant plan for user ");
         }
 
         var vpn_password_task = AccountRadiusSrv.Value.GetVpnPassword(account.Username);
@@ -118,10 +119,16 @@ class VpnApplication(
     public async Task<ApiResult<TrafficDataModel>> TrafficData(string target)
     {
         var min_date_time = DateTime.Now.AddDays(-MaxDateBefore);
+        var synchronization = SessionRadiusSyncSrv.Value.UpdateTrafficData(min_date_time);
+        
+        var account_id = await AccountRepo.Value.GetActiveAccountId(target);
+        if (!account_id.HasValue)
+        {
+            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
+        }
 
-        var list = await TrafficDataRepo.Value.Fetch(target, min_date_time);
-
-        _ = SessionRadiusSyncSrv.Value.UpdateTrafficData(target, min_date_time);
+        await synchronization;
+        var list = await TrafficDataRepo.Value.Fetch(account_id.Value, min_date_time);
 
         var result = ConvertToModel(list);
 
@@ -132,7 +139,7 @@ class VpnApplication(
     {
         var dict_data = data.GroupBy(k => k.StartSession.Date)
             .ToDictionary(
-                k => k.Key, 
+                k => k.Key,
                 v => v.ToArray());
 
         var now = DateTime.Now.Date;

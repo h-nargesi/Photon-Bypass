@@ -6,12 +6,10 @@ namespace PhotonBypass.Domain.Plan;
 public interface ISessionRadiusSyncService
 {
     Task<List<UserConnectionBinding>> GetActiveConnections(int? realm_id, string username);
-
-    Task<bool> DirectlyCloseConnection(ServerEntity server, string session_id);
-
-    Task<bool> CloseConnections(int? realm_id, string username, int count);
-
-    Task UpdateTrafficData(IEnumerable<ServerEntity> servers, DateTime index);
     
-    Task UpdateTrafficData(string username, DateTime index);
+    Task<bool> CloseConnectionBySessionId(ServerEntity nas, string session_id);
+
+    Task<bool> CloseConnectionByUsername(int? realm_id, string username);
+
+    Task UpdateTrafficData(DateTime index);
 }

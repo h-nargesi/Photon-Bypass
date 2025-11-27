@@ -8,17 +8,24 @@ namespace PhotonBypass.Infra.Repository;
 
 class TrafficDataRepository(LocalDbContext context) : EditableRepository<TrafficDataEntity>(context), ITrafficDataRepository
 {
-    public async Task<List<TrafficDataEntity>> Fetch(string username, DateTime from)
+    public async Task<List<TrafficDataEntity>> Fetch(DateTime from)
     {
         await OpenAsync();
 
         var result = await FindAsync(statement => statement
-            .Where($"""
-{nameof(TrafficDataEntity.StartSession)} >= @from and
-{nameof(TrafficDataEntity.AccountId)} = (
-    select {nameof(AccountEntity.Id)} from {AccountRepository.TableName} where {nameof(AccountEntity.Username)} = @username
-""")
-            .WithParameters(new { username, from }));
+            .Where($"{nameof(TrafficDataEntity.StartSession)} >= @from")
+            .WithParameters(new { from }));
+
+        return [.. result];
+    }
+
+    public async Task<List<TrafficDataEntity>> Fetch(int account_id, DateTime from)
+    {
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(TrafficDataEntity.AccountId)} = account_id and {nameof(TrafficDataEntity.StartSession)} >= @from")
+            .WithParameters(new { account_id, from }));
 
         return [.. result];
     }
@@ -33,5 +40,13 @@ class TrafficDataRepository(LocalDbContext context) : EditableRepository<Traffic
 
         return result.GroupBy(k => k.NasId)
             .ToDictionary(k => k.Key, v => v.ToList());
+    }
+
+    public async Task<DateTime?> LastUpdateTime()
+    {
+        await OpenAsync();
+        
+        var sql = $"select max({nameof(TrafficDataEntity.StartSession)}) from {TableName}";        
+        return await ExecuteScalarAsync<DateTime>(sql);
     }
 }

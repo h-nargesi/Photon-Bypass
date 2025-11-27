@@ -77,11 +77,6 @@ class PlanApplication(
         return ApiResult<int>.Success(result);
     }
 
-    public Task<ApiResult> TemporaryRenewal(string target, int days, int gigabytes)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<ApiResult<RenewalResult>> Renewal(string target, int count, int days, int gigabytes)
     {
         var account = (await AccountRepo.Value.GetAccount(target)) ??
@@ -110,7 +105,7 @@ class PlanApplication(
             });
         }
 
-        var state = (await PlanRepo.Value.GetPlanState(account.Id)) ??
+        var current_state = (await PlanRepo.Value.GetPlanState(account.Id)) ??
             throw new Exception($"Plan state not found for target: {target}");
 
         Log.Information("""
@@ -121,7 +116,7 @@ class PlanApplication(
 """,
             JobContext.Value.Username,
             target, count, days, gigabytes,
-            state.SimultaneousUserCount, state.TimeLeft?.TotalDays, state.TimeLeft?.Hours, state.GetTrafficLeftInGig(),
+            current_state.SimultaneousUserCount, current_state.TimeLeft?.TotalDays, current_state.TimeLeft?.Hours, current_state.GetTrafficLeftInGig(),
             account.Balance, estimate);
 
         var renew = new RenewalEntity
@@ -133,7 +128,7 @@ class PlanApplication(
             RestrictedRealmId = await RenewalRepo.Value.GetTopRestrictedRealmId(account.Id),
         };
 
-        if (renew.RestrictedRealmId == null || state.LastConnectTime == null || state.LastConnectTime.Value < DateTime.Now.AddDays(-7))
+        if (renew.RestrictedRealmId == null || current_state.LastConnectTime == null || current_state.LastConnectTime.Value < DateTime.Now.AddDays(-7))
         {
             renew.RestrictedRealmId = (await ServerMngSrv.Value.GetAvailableRealm()).Id;
         }
@@ -148,19 +143,6 @@ class PlanApplication(
             throw new UserException(user_message);
         }
 
-        var synchronization = AccountRadiusSrv.Value.SyncUserAndActive(account);
-
-        if (count < state.SimultaneousUserCount)
-        {
-            Log.Information(@"[user: {0}] Plan renewal change user count: (closing connections)
-    change=(taget:{1}, user-count:{2}, to:{3})",
-                JobContext.Value.Username, target, state.SimultaneousUserCount, count);
-
-            _ = SessionRadiusSrv.Value.CloseConnections(renew.RestrictedRealmId, account.Username, state.SimultaneousUserCount.Value - count);
-        }
-
-        await synchronization;
-
         var transaction = await AccountRepo.Value.BeginTransactionAsync();
 
         try
@@ -171,12 +153,19 @@ class PlanApplication(
             await AccountRepo.Value.Save(account);
 
             await RenewalRepo.Value.Save(renew);
-
+            
             var check_on_renewal = IPlanApplication.OnRenewalDelegation(new RenewalEvent());
 
             if (!check_on_renewal)
             {
-                throw new Exception("On renewal delegation was unsuccessful!");
+                throw new Exception($"On renewal delegation was unsuccessful! (target={target})");
+            }
+
+            var radius_sync = await AccountRadiusSrv.Value.SyncUserAndActive(account, renew);
+
+            if (!radius_sync)
+            {
+                throw new Exception($"Radius synchronization was unsuccessful! (target={target})");
             }
 
             transaction.Commit();
@@ -197,6 +186,17 @@ class PlanApplication(
             });
 
             throw;
+        }
+
+        if (count < current_state.SimultaneousUserCount)
+        {
+            Log.Information("""
+[user: {0}] Plan renewal change user count: (closing connections)
+    change=(taget:{1}, user-count:{2}, to:{3})
+""",
+                JobContext.Value.Username, target, current_state.SimultaneousUserCount, count);
+
+            _ = SessionRadiusSrv.Value.CloseConnectionByUsername(renew.RestrictedRealmId, account.Username);
         }
 
         _ = HistoryRepo.Value.Save(new HistoryEntity

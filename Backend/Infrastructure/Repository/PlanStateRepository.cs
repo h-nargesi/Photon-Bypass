@@ -9,13 +9,13 @@ namespace PhotonBypass.Infra.Repository;
 
 class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEntity>(context), IPlanStateRepository
 {
-    public async Task<PlanStateEntity?> GetPlanState(int id)
+    public async Task<PlanStateEntity?> GetPlanState(int account_id)
     {
         await OpenAsync();
 
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(PlanStateEntity.Id)} = @id")
-            .WithParameters(new { id }));
+            .Where($"{nameof(PlanStateEntity.Id)} = @account_id")
+            .WithParameters(new { account_id }));
 
         return result.FirstOrDefault();
     }
@@ -31,13 +31,13 @@ class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEn
         return [.. result];
     }
 
-    public async Task<int?> GetActiveAccountRealmId(string username)
+    public async Task<int?> GetActiveAccountRealmId(int account_id)
     {
         await OpenAsync();
 
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(PlanStateEntity.Id)} = (select {nameof(AccountEntity.Id)} from {AccountRepository.TableName} where {nameof(AccountEntity.Username)} = @username)")
-            .WithParameters(new { username }));
+            .Where($"{nameof(PlanStateEntity.Id)} = @account_id")
+            .WithParameters(new { account_id }));
 
         return result.Select(x => x.RestrictedRealmId).FirstOrDefault();
     }

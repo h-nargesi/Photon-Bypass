@@ -11,6 +11,7 @@ using Serilog;
 namespace PhotonBypass.Application.Connection;
 
 class ConnectionApplication(
+    IAccountRepository AccountRepo,
     ISessionRadiusSyncService SessionRadiusSrv,
     IServerRepository server_repo,
     Lazy<IHistoryRepository> HistoryRepo,
@@ -20,7 +21,13 @@ class ConnectionApplication(
 {
     public async Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(string target)
     {
-        var target_realm_id = await PlanRepo.Value.GetActiveAccountRealmId(target);
+        var account_id = await AccountRepo.GetActiveAccountId(target);
+        if (!account_id.HasValue)
+        {
+            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
+        }
+
+        var target_realm_id = await PlanRepo.Value.GetActiveAccountRealmId(account_id.Value);
 
         var connections = await SessionRadiusSrv.GetActiveConnections(target_realm_id, target);
 
@@ -38,11 +45,25 @@ class ConnectionApplication(
 
     public async Task<ApiResult> CloseConnection(string ip, string target, string session_id)
     {
+        var account_id = await AccountRepo.GetActiveAccountId(target);
+        if (!account_id.HasValue)
+        {
+            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
+        }
+
+        var realm_id = await PlanRepo.Value.GetActiveAccountRealmId(account_id.Value);
+        
         var server = (await server_repo.GetActiveNasInfo(ip)) ??
                      throw new UserException("دسترسی غیرمجاز!",
                          $"Closing connection ip is invalid: ({ip}, {target}, {session_id})");
 
-        var result = await SessionRadiusSrv.DirectlyCloseConnection(server, session_id);
+        if (realm_id.HasValue && server.RealmId != realm_id)
+        {
+            throw new UserException("دسترسی غیرمجاز به سرور!",
+                $"Closing connection ip is invalid: ({ip}, {target}, {session_id}, user-realm-id={realm_id})");
+        }
+        
+        var result = await SessionRadiusSrv.CloseConnectionBySessionId(server, session_id);
 
         if (!result)
         {
@@ -58,8 +79,8 @@ class ConnectionApplication(
             Description = "کانکشن بسته شد.",
         });
 
-        Log.Information("[user: {0}] Connection Closed: ({1}, {2}, {3})",
-            JobContext.Value.Username, ip, target, session_id);
+        Log.Information("[user: {0}] Connection Closed: ({1}, {2})",
+            JobContext.Value.Username, target, session_id);
 
         return ApiResult.Success("کانکشن بسته شد.");
     }

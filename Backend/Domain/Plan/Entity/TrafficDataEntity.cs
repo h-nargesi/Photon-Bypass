@@ -13,15 +13,21 @@ public class TrafficDataEntity : IBaseEntity
 
     public int NasId { get; set; }
 
+    public string SessionId { get; set; } = null!;
+
     public DateTime StartSession { get; set; }
 
-    public DateTime EndSession { get; set; }
+    public DateTime? EndSession { get; set; }
 
     public long DataIn { get; set; }
 
     public long DataOut { get; set; }
 
+    public DateTime Created { get; set; } = DateTime.Now;
+
+    [NotMapped]
     public long TotalData => DataIn + DataOut;
 
-    public DateTime Created { get; set; } = DateTime.Now;
+    [NotMapped]
+    public TimeSpan Duration => (EndSession ?? DateTime.Now) - StartSession;
 }

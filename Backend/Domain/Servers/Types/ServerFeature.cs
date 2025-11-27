@@ -5,7 +5,7 @@ public enum ServerFeature
 {
     Radius = 0xFF,
     RadiusDesk = 0x1,
-    MikrotikUserManager = 0x2,
+    UserManager = 0x2,
     
     Nas = 0xFF00,
     Ikev2 = 0x100,

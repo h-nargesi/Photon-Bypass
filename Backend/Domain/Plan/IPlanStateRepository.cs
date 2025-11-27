@@ -4,9 +4,9 @@ namespace PhotonBypass.Domain.Plan;
 
 public interface IPlanStateRepository
 {
-    Task<PlanStateEntity?> GetPlanState(int id);
+    Task<PlanStateEntity?> GetPlanState(int account_id);
     
     Task<IList<PlanStateEntity>> GetFinishingPlanState();
 
-    Task<int?> GetActiveAccountRealmId(string username);
+    Task<int?> GetActiveAccountRealmId(int account_id);
 }

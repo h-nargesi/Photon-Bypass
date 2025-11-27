@@ -42,7 +42,7 @@ partial class ServerManagementService(
         var cert_file = await File.ReadAllBytesAsync(cert_path);
 
         var nas_list = await nas_task;
-        
+
         if (nas_list.Count < 1)
             throw new Exception($"Nas/Domain not found: (realm-id={realm_id})!");
 
@@ -89,15 +89,16 @@ partial class ServerManagementService(
 
     private async Task<Dictionary<RealmEntity, (double Rate, long Cap)>> LoadServersCapacity()
     {
+        var index = DateTime.Now.AddDays(-30);
+        var synchronization = SessionRadiusSrv.UpdateTrafficData(index);
+
         var realms = await RealmRepo.FetchAllActiveRealm();
 
         var clusters = await ServerRepo.Value.GetAllActiveRadiusInRealm(realms.Select(r => r.Id));
-        var servers = clusters.SelectMany(s => s.Value).ToList();
+        var server_ids = clusters.SelectMany(s => s.Value).Select(s => s.Id).ToList();
 
-        var index = DateTime.Now.AddDays(-30);
-        await SessionRadiusSrv.UpdateTrafficData(servers, index);
-
-        var traffics = (await TrafficDataRepo.Value.Fetch(servers.Select(s => s.Id), index))
+        await synchronization;
+        var traffics = (await TrafficDataRepo.Value.Fetch(server_ids, index))
             .ToDictionary(k =>
                 k.Key, v =>
                 v.Value.Select(t => (t.StartSession, t.TotalData))

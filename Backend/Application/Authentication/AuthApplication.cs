@@ -23,10 +23,9 @@ partial class AuthApplication(
 {
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
-        var account = (await AccountRepo.GetAccount(username)) ??
-            await CopyFromPermanentUser(username, password);
+        var account = await AccountRepo.GetAccount(username);
 
-        if (account == null || !account.Active || account.Password != HashHandler.HashPassword(password))
+        if (account is not { Active: true } || account.Password != HashHandler.HashPassword(password))
         {
             if (account == null)
             {
@@ -68,7 +67,7 @@ partial class AuthApplication(
             })
             .ToDictionary(k => k.Username);
 
-        Log.Information("[user: {0}] User loged in", account.Username);
+        Log.Information("[user: {0}] User logged in", account.Username);
 
         return new ApiResult<UserModel>
         {
@@ -180,24 +179,6 @@ partial class AuthApplication(
         Log.Information("New User Registered: ({0}, {1})", account.Username, account.Email);
 
         return ApiResult.Success("کاربر شما ساخته شد.");
-    }
-
-    private async Task<AccountEntity?> CopyFromPermanentUser(string username, string? password)
-    {
-        if (!AccountRadiusSrv.IsValueCreated) return null;
-
-        var account = await AccountRadiusSrv.Value.GetUser(username);
-
-        if (account == null) return null;
-
-        if (password != null && account.Password != password)
-        {
-            return null;
-        }
-
-        await AccountRepo.Save(account);
-
-        return account;
     }
 
     [GeneratedRegex(@"^\+?\d{5,16}$")]

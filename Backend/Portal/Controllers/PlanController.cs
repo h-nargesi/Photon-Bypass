@@ -43,14 +43,14 @@ public class PlanController(
     {
         LoadJobContext();
 
-        if (!context.Type.HasValue)
+        if (!context.Days.HasValue)
         {
-            return BadRequestApiResult(message: "نوع پلن مشخص نشده است!");
+            return BadRequestApiResult(message: "زمان پلن مشخص نشده است!");
         }
 
-        if (!context.Value.HasValue)
+        if (!context.Gigabytes.HasValue)
         {
-            return BadRequestApiResult(message: "مقدار درخواست پلن مشخص نشده است!");
+            return BadRequestApiResult(message: "حجم درخواست پلن مشخص نشده است!");
         }
 
         if (!context.SimultaneousUserCount.HasValue)
@@ -58,7 +58,7 @@ public class PlanController(
             return BadRequestApiResult(message: "تعداد کاربران مشخص نشده است!");
         }
 
-        var result = application.Estimate(context.Type.Value, context.SimultaneousUserCount.Value, context.Value.Value);
+        var result = application.Estimate( context.SimultaneousUserCount.Value, context.Days.Value, context.Gigabytes.Value);
 
         return SafeApiResult(result);
     }
@@ -69,14 +69,14 @@ public class PlanController(
         LoadJobContext(context.Target);
         context.Target = JobContext.Target;
 
-        if (!context.Type.HasValue)
+        if (!context.Days.HasValue)
         {
-            return BadRequestApiResult(message: "نوع پلن مشخص نشده است!");
+            return BadRequestApiResult(message: "زمان پلن مشخص نشده است!");
         }
 
-        if (!context.Value.HasValue)
+        if (!context.Gigabytes.HasValue)
         {
-            return BadRequestApiResult(message: "مقدار درخواست پلن مشخص نشده است!");
+            return BadRequestApiResult(message: "حجم درخواست پلن مشخص نشده است!");
         }
 
         if (!context.SimultaneousUserCount.HasValue)
@@ -85,7 +85,7 @@ public class PlanController(
         }
 
         var result = await application.Renewal(context.Target , 
-            context.Type.Value, context.SimultaneousUserCount.Value, context.Value.Value);
+            context.SimultaneousUserCount.Value, context.Days.Value, context.Gigabytes.Value);
 
         return SafeApiResult(result);
     }

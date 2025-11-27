@@ -76,22 +76,25 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
     public async Task<int?> GetActiveAccountId(string username)
     {
         await OpenAsync();
+        
+        var result = await ExecuteScalarAsync<int>(
+            $"select {nameof(AccountEntity.Id)} from {TableName} where {nameof(AccountEntity.Username)} = @username"
+            , new { username });
 
-        var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Username)} = @username")
-            .WithParameters(new { username }));
-
-        return result.Select(x => (int?)x.Id).FirstOrDefault();
+        return result;
     }
-
+    
     public async Task<bool> CheckUsername(string username)
     {
         await OpenAsync();
+        
+        var result = await ExecuteScalarAsync<int>($"""
+select case when exists(
+    select * from {TableName} where {nameof(AccountEntity.Username)} = @username
+) then 1 else 0 end
+"""
+            , new { username });
 
-        var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Username)} = @username")
-            .WithParameters(new { username }));
-
-        return result.Any();
+        return result == 1;
     }
 }

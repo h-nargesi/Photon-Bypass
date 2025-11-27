@@ -3,6 +3,7 @@ using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 using PhotonBypass.Domain;
 using PhotonBypass.Tools;
 using System.Data;
+using Dapper;
 
 namespace PhotonBypass.Infra.Database;
 
@@ -29,9 +30,19 @@ public abstract class DapperRepository<TEntity>(IDapperDbContext context) : IDis
         return context.Open();
     }
 
-    protected Task<IEnumerable<TEntity>> FindAsync(Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>>? statement_options = null)
+    protected Task<IEnumerable<TEntity>> FindAsync(Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>>? statement = null)
     {
-        return Connection.FindAsync(statement_options);
+        return Connection.FindAsync(statement);
+    }
+
+    protected Task<IEnumerable<T>> QueryAsync<T>(string sql, object? param = null)
+    {
+        return Connection.QueryAsync<T>(sql, param);
+    }
+
+    protected Task<T?> ExecuteScalarAsync<T>(string sql, object? param = null)
+    {
+        return Connection.ExecuteScalarAsync<T>(sql, param);
     }
 
     public void Dispose() => GC.SuppressFinalize(this);

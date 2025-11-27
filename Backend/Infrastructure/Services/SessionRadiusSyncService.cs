@@ -1,129 +1,167 @@
 using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Plan.Model;
+using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
+using Serilog;
 using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
 namespace PhotonBypass.Infra.Services;
 
 public class SessionRadiusSyncService(
+    Lazy<IServerRepository> ServerRepo,
+    Lazy<ITrafficDataRepository> TrafficRepo,
     Lazy<MikrotikRadius.ISessionRadiusSyncService> MikrotikRadius,
-    Lazy<MikrotikRadius.ISessionRadiusSyncService> FreeRadius) : ISessionRadiusSyncService
+    Lazy<RadiusDesk.ISessionRadiusSyncService> RadiusDesk)
+    : ISessionRadiusSyncService
 {
-    public Task<List<UserConnectionBinding>> GetActiveConnections(int? realm_id, string username)
+    public async Task<List<UserConnectionBinding>> GetActiveConnections(int? realm_id, string username)
     {
-        return server.Features switch
-        {
-            ServerFeature.MikrotikUserManager => MikrotikRadius.Value.GetActiveConnections(realm_id, username),
-            ServerFeature.RadiusDesk => FreeRadius.Value.GetActiveConnections(realm_id, username),
-            _ => throw new IndexOutOfRangeException("Unknown auth type")
-        };
-    }
+        var radius_list = await ServerRepo.Value.GetAllActiveRadiusInRealm(realm_id);
 
-    public Task<bool> DirectlyCloseConnection(ServerEntity server, string session_id)
-    {
-        return server.OsType switch
+        if (radius_list.Count <= 0)
         {
-            OperatingSystem.Mikrotik => MikrotikRadius.Value.CloseConnection(server, session_id),
-            OperatingSystem.Ubuntu => throw new NotImplementedException("The ubuntu is not implemented!"),
-            _ => throw new IndexOutOfRangeException("Unknown operating system type")
-        };
-    }
+            Log.Warning("No radius server found for realm-id: ({0})", realm_id);
+            return [];
+        }
 
-    public Task<bool> CloseConnections(int? realm_id, string username, int count)
-    {
-        var servers_dict = servers.GroupBy(s => s.OsType)
-            .ToDictionary(k => k.Key, v => v.ToList());
-
-        var m = servers_dict.Select(servers_type => servers_type.Key switch
+        var result_list = await radius_list.RunJob(radius =>
         {
-            OperatingSystem.Mikrotik => MikrotikRadius.Value.CloseConnections(servers_type.Value, username, count),
-            OperatingSystem.Ubuntu => throw new NotImplementedException("The ubuntu is not implemented!"),
-            _ => throw new IndexOutOfRangeException("Unknown operating system type")
+            switch (radius.Features)
+            {
+                case ServerFeature.UserManager:
+                    return MikrotikRadius.Value.GetActiveConnections(radius, username);
+                case ServerFeature.RadiusDesk:
+                    return RadiusDesk.Value.GetActiveConnections(radius, username);
+                default:
+                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
+                        realm_id, radius.Id, radius.Features);
+                    return Task.FromResult(new List<UserConnectionBinding>());
+            }
         });
 
-        return servers_dict.Aggregate(true, async (current, servers_type) => (bool)(current & servers_type.Key switch
-        {
-            OperatingSystem.Mikrotik => await MikrotikRadius.Value.CloseConnections(servers_type.Value, username, count),
-            OperatingSystem.Ubuntu => throw new NotImplementedException("The ubuntu is not implemented!"),
-            _ => throw new IndexOutOfRangeException("Unknown operating system type")
-        }));
+        return result_list.SelectMany(list => list).ToList();
     }
 
-    public Task UpdateTrafficData(IEnumerable<ServerEntity> servers, DateTime index)
+    public async Task<bool> CloseConnectionBySessionId(ServerEntity nas, string session_id)
     {
-        throw new NotImplementedException();
-    }
+        var radius_list = await ServerRepo.Value.GetAllActiveRadiusInRealm(nas.RealmId);
 
-    public Task UpdateTrafficData(string username, DateTime index)
-    {
-        var new_data = Merge(ref list, data, min_date_time);
-
-        if (new_data?.Count > 0)
+        if (radius_list.Count <= 0)
         {
-            int account_id;
-
-            if (list.Count > 0) account_id = list[0].AccountId;
-            else
-            {
-                var account = await AccountRepo.Value.GetAccount(target)
-                              ?? throw new Exception($"Account not found: {target}");
-                account_id = account.Id;
-            }
-
-            foreach (var record in new_data)
-                record.AccountId = account_id;
-
-            _ = TrafficDataRepo.Value.BachSave(new_data);
+            Log.Warning("No radius server found for realm-id: ({0})", nas.RealmId);
+            return true;
         }
+
+        var result_list = await radius_list.RunJob(radius =>
+        {
+            switch (radius.Features)
+            {
+                case ServerFeature.UserManager:
+                    return MikrotikRadius.Value.CloseConnectionBySessionId(radius, nas, session_id);
+                case ServerFeature.RadiusDesk:
+                    return RadiusDesk.Value.CloseConnectionBySessionId(radius, nas, session_id);
+                default:
+                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
+                        nas.RealmId, nas.Id, radius.Features);
+                    return Task.FromResult(false);
+            }
+        });
+
+        return result_list.Any(r => !r);
     }
 
-    private static DateTime? FindFirstEmptyDate(IEnumerable<TrafficDataEntity> data, DateTime from)
+    public async Task<bool> CloseConnectionByUsername(int? realm_id, string username)
     {
-        return data.OrderByDescending(x => x.Day)
-            .Where(x => x.Day >= from)
-            .Select(x => (DateTime?)x.Day)
-            .FirstOrDefault()?
-            .Date.AddDays(1);
+        var radius_list = await ServerRepo.Value.GetAllActiveRadiusInRealm(realm_id);
+
+        if (radius_list.Count <= 0)
+        {
+            Log.Warning("No radius server found for realm-id: ({0})", realm_id);
+            return true;
+        }
+
+        var result_list = await radius_list.RunJob(radius =>
+        {
+            switch (radius.Features)
+            {
+                case ServerFeature.UserManager:
+                    return MikrotikRadius.Value.CloseConnectionByUsername(radius, username);
+                case ServerFeature.RadiusDesk:
+                    return RadiusDesk.Value.CloseConnectionByUsername(radius, username);
+                default:
+                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
+                        realm_id, radius.Id, radius.Features);
+                    return Task.FromResult(false);
+            }
+        });
+
+        return result_list.Any(r => !r);
     }
 
-    private static List<TrafficDataEntity> Merge(ref List<TrafficDataEntity> destination,
-        IEnumerable<TrafficDataRadius> source, DateTime minDateTime)
+    public async Task UpdateTrafficData(DateTime index)
     {
-        var destination_dict = destination.ToDictionary(k => k.Day);
+        var radius_list = await ServerRepo.Value.GetAllActiveRadiusInRealm((int?)null);
+
+        if (radius_list.Count <= 0) return;
+
+        var last_update_time = await TrafficRepo.Value.LastUpdateTime();
+
+        if (last_update_time > index)
+            index = last_update_time.Value;
+
+        var current_traffic_data_task = TrafficRepo.Value.Fetch(index);
+        
+        var loaded_data_list_group = await radius_list.RunJob(radius_server =>
+        {
+            switch (radius_server.Features)
+            {
+                case ServerFeature.UserManager:
+                    return MikrotikRadius.Value.UpdateTrafficData(radius_server, index);
+                case ServerFeature.RadiusDesk:
+                    return RadiusDesk.Value.UpdateTrafficData(radius_server, index);
+                default:
+                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
+                        radius_server.RealmId, radius_server.Id, radius_server.Features);
+                    return Task.FromResult(new List<TrafficDataEntity>());
+            }
+        });
+
+        var traffic_data_list = Merge(
+            await current_traffic_data_task,
+            loaded_data_list_group.SelectMany(d => d),
+            index);
+
+        await TrafficRepo.Value.BachSave(traffic_data_list);
+    }
+
+    private static List<TrafficDataEntity> Merge(List<TrafficDataEntity> destination,
+        IEnumerable<TrafficDataEntity> source, DateTime min_date_time)
+    {
+        var destination_dictionary = destination.ToDictionary(k => k.SessionId);
         var new_data = new List<TrafficDataEntity>();
 
-        foreach (var record in source)
+        foreach (var traffic in source)
         {
-            if (record.Day < minDateTime || record.Day >= DateTime.Now)
+            if (traffic.StartSession < min_date_time || traffic.StartSession >= DateTime.Now)
             {
                 continue;
             }
 
-            if (destination_dict.TryGetValue(record.Day, out var data))
+            if (destination_dictionary.TryGetValue(traffic.SessionId, out var data))
             {
-                if (data.DataIn != record.DataIn || data.DataOut != record.DataOut)
-                {
-                    data.DataOut = record.DataOut;
-                    data.DataIn = record.DataIn;
-                    new_data.Add(data);
-                }
+                if (data.DataIn == traffic.DataIn && data.DataOut == traffic.DataOut) continue;
+                
+                data.DataOut = traffic.DataOut;
+                data.DataIn = traffic.DataIn;
+                new_data.Add(data);
             }
             else
             {
-                var traffic = new TrafficDataEntity
-                {
-                    Day = record.Day,
-                    DataIn = record.DataIn,
-                    DataOut = record.DataOut,
-                };
-
                 new_data.Add(traffic);
-                destination_dict.Add(record.Day, traffic);
             }
         }
-
-        destination = [.. destination_dict.Values.OrderBy(x => x.Day)];
 
         return new_data;
     }
