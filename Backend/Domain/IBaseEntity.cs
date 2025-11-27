@@ -7,7 +7,10 @@ public interface IBaseEntity
     DateTime Created { get; set; }
 }
 
-public class EntityEventArgs(IBaseEntity entity)
+public class EntityEventArgs<TEntity>(TEntity entity)
 {
-    public IBaseEntity Entity => entity;
+    public TEntity Entity => entity;
 }
+
+public delegate Task EntityEventHandler<TEntity>(object? sender, EntityEventArgs<TEntity> e) 
+    where TEntity : class, IBaseEntity;

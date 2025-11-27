@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.Infra.Repository;
 using PhotonBypass.Infra.Repository.DbContext;
@@ -20,8 +21,11 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IAccountRepository, AccountRepository>();
         builder.Services.AddLazyTransient<IHistoryRepository, HistoryRepository>();
         builder.Services.AddLazyTransient<IResetPassRepository, ResetPassRepository>();
-        builder.Services.AddLazyTransient<IPriceRepository, PriceRepository>();
+        builder.Services.AddLazyTransient<IRenewalRepository, RenewalRepository>();
         builder.Services.AddLazyTransient<ITrafficDataRepository, TrafficDataRepository>();
+        builder.Services.AddLazyTransient<INasRepository, NasRepository>();
+        builder.Services.AddLazyTransient<IRealmRepository, RealmRepository>();
+        builder.Services.AddLazyTransient<IPriceRepository, PriceRepository>();
 
         builder.Services.AddLazySingleton<IPriceCalculator, PriceCalculator>();
     }

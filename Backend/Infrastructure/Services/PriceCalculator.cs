@@ -5,15 +5,23 @@ using System.Reflection;
 
 namespace PhotonBypass.Infra.Services;
 
-class PriceCalculator(IPriceRepository repository) : IPriceCalculator
+class PriceCalculator : IPriceCalculator
 {
-    private Dictionary<int, MethodInfo> Calculators = FetchCalculatorCode(repository).Result;
+    private Dictionary<int, MethodInfo> calculators;
+    private readonly IPriceRepository repository;
+
+    public PriceCalculator(IPriceRepository repository)
+    {
+        this.repository = repository;
+        this.repository.OnSaved += async (_, _) => calculators = await FetchCalculatorCode();
+        calculators = FetchCalculatorCode().Result;
+    }
 
     public int CalculatePrice(int price_id, int users, int days, int gigabytes)
     {
-        if (!Calculators.TryGetValue(price_id, out var method))
+        if (!calculators.TryGetValue(price_id, out var method))
         {
-            method = Calculators.Values.First();
+            method = calculators.Values.First();
         }
 
         if (method == null)
@@ -24,12 +32,7 @@ class PriceCalculator(IPriceRepository repository) : IPriceCalculator
         return (int)(method.Invoke(null, [users, days, gigabytes]) ?? 0);
     }
 
-    public async Task UpdateCalculatorCode()
-    {
-        Calculators = await FetchCalculatorCode(repository);
-    }
-
-    private static async Task<Dictionary<int, MethodInfo>> FetchCalculatorCode(IPriceRepository repository)
+    private async Task<Dictionary<int, MethodInfo>> FetchCalculatorCode()
     {
         var list = (await repository.GetLatest())
             .OrderByDescending(c => c.IsDefault)
@@ -49,17 +52,17 @@ class PriceCalculator(IPriceRepository repository) : IPriceCalculator
 
     private static MethodInfo Compile(string code)
     {
-        var syntaxTree = CSharpSyntaxTree.ParseText(code);
+        var syntax_tree = CSharpSyntaxTree.ParseText(code);
 
-        var assemblyName = Path.GetRandomFileName();
+        var assembly_name = Path.GetRandomFileName();
         var references = AppDomain.CurrentDomain.GetAssemblies()
             .Where(a => !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
             .Select(a => MetadataReference.CreateFromFile(a.Location))
             .Cast<MetadataReference>();
 
         var compilation = CSharpCompilation.Create(
-            assemblyName,
-            [syntaxTree],
+            assembly_name,
+            [syntax_tree],
             references,
             new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
         );
@@ -69,16 +72,16 @@ class PriceCalculator(IPriceRepository repository) : IPriceCalculator
 
         if (!result.Success)
         {
-            throw new Exception("Price Caculator Error:\n" + string.Join('\n', result.Diagnostics));
+            throw new Exception("Price Calculator Error:\n" + string.Join('\n', result.Diagnostics));
         }
 
         ms.Seek(0, SeekOrigin.Begin);
         var assembly = Assembly.Load(ms.ToArray());
 
         var type = assembly.GetType("Calculator") ??
-            throw new Exception("Price Caculator Error: The 'Calculator' class not found.");
+            throw new Exception("Price Calculator Error: The 'Calculator' class not found.");
         var method = type.GetMethod("Compute") ??
-            throw new Exception("Price Caculator Error: The 'Compute' mothod not found.");
+            throw new Exception("Price Calculator Error: The 'Compute' method not found.");
 
         return method;
     }

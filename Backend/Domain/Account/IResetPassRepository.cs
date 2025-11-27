@@ -3,7 +3,7 @@ using PhotonBypass.Domain.Repository;
 
 namespace PhotonBypass.Domain.Account;
 
-public interface IResetPassRepository : IEditableRepository<ResetPassEntity>
+public interface IResetPassRepository
 {
     Task<ResetPassEntity?> GetAccount(string hash_code);
 

@@ -84,8 +84,14 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return result.Select(x => (int?)x.Id).FirstOrDefault();
     }
 
-    public Task<bool> CheckUsername(string username)
+    public async Task<bool> CheckUsername(string username)
     {
-        throw new NotImplementedException();
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(AccountEntity.Username)} = @username")
+            .WithParameters(new { username }));
+
+        return result.Any();
     }
 }

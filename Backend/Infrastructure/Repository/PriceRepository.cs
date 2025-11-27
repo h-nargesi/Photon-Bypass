@@ -18,6 +18,5 @@ class PriceRepository(LocalDbContext context, Lazy<IPriceCalculator> calculator)
     public override async Task Save(PriceEntity entity)
     {
         await base.Save(entity);
-        await calculator.Value.UpdateCalculatorCode();
     }
 }

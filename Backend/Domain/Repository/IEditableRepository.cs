@@ -1,8 +1,8 @@
 ﻿namespace PhotonBypass.Domain.Repository;
 
-public interface IEditableRepository<in TEntity> : ITransactionalRepository where TEntity : class, IBaseEntity
+public interface IEditableRepository<TEntity> : ITransactionalRepository where TEntity : class, IBaseEntity
 {
-    event EventHandler<EntityEventArgs> Changed;
+    event EntityEventHandler<TEntity> OnSaved;
 
     public Task Save(TEntity entity);
 
