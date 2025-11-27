@@ -6,13 +6,13 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.FreeRadius.Repository;
 
-class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context), INasRepository
+class ServerRepository(RadDbContext context) : DapperRepository<ServerEntity>(context), IServerRepository
 {
-    readonly static string IpAddress = EntityExtensions.GetColumnName<NasEntity>(x => x.IpAddress);
-    readonly static string DomainName = EntityExtensions.GetColumnName<NasEntity>(x => x.DomainName);
-    readonly static string SshPassword = EntityExtensions.GetColumnName<NasEntity>(x => x.SshPassword);
+    readonly static string IpAddress = EntityExtensions.GetColumnName<ServerEntity>(x => x.IpAddress);
+    readonly static string DomainName = EntityExtensions.GetColumnName<ServerEntity>(x => x.DomainName);
+    readonly static string SshPassword = EntityExtensions.GetColumnName<ServerEntity>(x => x.SshPassword);
 
-    public async Task<List<NasEntity>> GetAllActive()
+    public async Task<List<ServerEntity>> GetAllActiveNas()
     {
         var result = await FindAsync(statement => statement
             .Where($"{SshPassword} is not null"));
@@ -20,7 +20,7 @@ class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context)
         return [.. result];
     }
 
-    public async Task<NasEntity?> GetActiveNasInfo(string ip)
+    public async Task<ServerEntity?> GetActiveNasInfo(string ip)
     {
         var result = await FindAsync(statement => statement
             .Where($"{SshPassword} is not null and {DomainName} is not null and {IpAddress} = @ip")
@@ -29,7 +29,7 @@ class NasRepository(RadDbContext context) : DapperRepository<NasEntity>(context)
         return result.FirstOrDefault();
     }
 
-    public async Task<Dictionary<string, NasEntity>> GetNasInfo(IEnumerable<string> ips)
+    public async Task<Dictionary<string, ServerEntity>> GetServerInfo(IEnumerable<string> ips)
     {
         var result = await FindAsync(statement => statement
             .Where($"{SshPassword} is not null and {IpAddress} in @ips")

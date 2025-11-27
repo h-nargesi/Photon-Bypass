@@ -1,8 +1,7 @@
 namespace PhotonBypass.Domain.Servers.Types;
 
-public enum OsType
+public enum OperatingSystem
 {
-    Unkown = 0,
     Mikrotik = 1,
     Ubuntu = 2,
 }

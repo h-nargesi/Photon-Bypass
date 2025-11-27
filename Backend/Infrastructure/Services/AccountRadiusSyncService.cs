@@ -22,7 +22,7 @@ class AccountRadiusSyncService : IAccountRadiusSyncService
         throw new NotImplementedException();
     }
 
-    public Task<bool> GetCertificate(IEnumerable<NasEntity> server, string username, CertContext default_context)
+    public Task<bool> GetCertificate(int? realm_id, string username, CertContext default_context)
     {
         throw new NotImplementedException();
     }

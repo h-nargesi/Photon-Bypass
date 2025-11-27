@@ -16,7 +16,7 @@ public static class ServiceFactory
         builder.Services.AddLazySingleton<RadDbContext>();
 
         // builder.Services.AddLazyTransient<ICloudRepository, CloudRepository>();
-        // builder.Services.AddLazyTransient<INasRepository, NasRepository>();
+        // builder.Services.AddLazyTransient<IServerRepository, ServerRepository>();
         // builder.Services.AddLazyTransient<IPermanentUsersRepository, PermanentUsersRepository>();
         // builder.Services.AddLazyTransient<IProfileRepository, ProfileRepository>();
         // builder.Services.AddLazyTransient<IRadAcctRepository, RadAcctRepository>();

@@ -19,7 +19,6 @@ class VpnApplication(
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<ITrafficDataRepository> TrafficDataRepo,
     Lazy<IPlanStateRepository> PlanStateRepo,
-    Lazy<INasRepository> NasRepo,
     Lazy<IAccountRadiusSyncService> AccountRadiusSrv,
     Lazy<IServerManagementService> ServerMngSrv,
     Lazy<ISessionRadiusSyncService> SessionRadiusSyncSrv,
@@ -91,13 +90,7 @@ class VpnApplication(
 
         var cert_context = await ServerMngSrv.Value.GetDefaultCertificate(plan.RestrictedRealmId);
 
-        if (plan?.RestrictedRealmId != null)
-        {
-            var servers = (await NasRepo.Value.GetAllActiveInRealm(plan.RestrictedRealmId.Value)) ??
-                throw new Exception($"There is not any nas for realm: {plan.RestrictedRealmId.Value}.");
-
-            await AccountRadiusSrv.Value.GetCertificate(servers, account.Username, cert_context);
-        }
+        await AccountRadiusSrv.Value.GetCertificate(plan.RestrictedRealmId, account.Username, cert_context);
 
         var email_context = new CertEmailContext
         {

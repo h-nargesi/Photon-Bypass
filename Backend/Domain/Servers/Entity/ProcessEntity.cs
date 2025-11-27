@@ -1,6 +1,7 @@
 using PhotonBypass.Domain.Servers.Types;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
 namespace PhotonBypass.Domain.Servers.Entity;
 
@@ -12,7 +13,7 @@ public class ProcessEntity : IBaseEntity
 
     public string Name { get; set; } = null!;
 
-    public OsType OsType { get; set; }
+    public OperatingSystem OsType { get; set; }
 
     public List<ScriptEntity>? Enable { get; set; }
 

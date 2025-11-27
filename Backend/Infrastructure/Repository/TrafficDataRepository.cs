@@ -14,10 +14,11 @@ class TrafficDataRepository(LocalDbContext context) : EditableRepository<Traffic
 
         var result = await FindAsync(statement => statement
             .Where($"""
+{nameof(TrafficDataEntity.StartSession)} >= @from and
 {nameof(TrafficDataEntity.AccountId)} = (
     select {nameof(AccountEntity.Id)} from {AccountRepository.TableName} where {nameof(AccountEntity.Username)} = @username
 """)
-            .WithParameters(new { username }));
+            .WithParameters(new { username, from }));
 
         return [.. result];
     }

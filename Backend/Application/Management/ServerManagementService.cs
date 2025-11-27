@@ -12,8 +12,8 @@ namespace PhotonBypass.Application.Management;
 
 partial class ServerManagementService(
     IRealmRepository RealmRepo,
-    ISessionRadiusSyncService RadiusSrv,
-    Lazy<INasRepository> NasRepo,
+    ISessionRadiusSyncService SessionRadiusSrv,
+    Lazy<IServerRepository> ServerRepo,
     Lazy<ITrafficDataRepository> TrafficDataRepo,
     Lazy<ISocialMediaService> SocialSrv,
     IOptions<ManagementOptions> Options)
@@ -37,22 +37,24 @@ partial class ServerManagementService(
             throw new Exception("OVpn Private key is not set in config!");
 
         var realm_name_task = realm_id.HasValue ? RealmRepo.GetName(realm_id.Value) : Task.FromResult<string?>("All");
-        var servers_task = NasRepo.Value.GetAllActiveDomainInRealm(realm_id);
+        var nas_task = ServerRepo.Value.GetAllActiveNasDomainInRealm(realm_id);
 
         var cert_file = await File.ReadAllBytesAsync(cert_path);
 
-        var servers = (await servers_task) ??
-                      throw new Exception($"Nas/Domain not found: (realm-id={realm_id})!");
+        var nas_list = await nas_task;
+        
+        if (nas_list.Count < 1)
+            throw new Exception($"Nas/Domain not found: (realm-id={realm_id})!");
 
-        var name = (await realm_name_task) ?? "All";
+        var realm_name = (await realm_name_task) ?? "All";
 
         var ovpn_conf_file = Encoding.UTF8.GetString(cert_file);
-        ovpn_conf_file = SetDomain(ovpn_conf_file, name, servers);
+        ovpn_conf_file = SetDomain(ovpn_conf_file, realm_name, nas_list);
         cert_file = Encoding.UTF8.GetBytes(ovpn_conf_file);
 
         return new CertContext
         {
-            Realm = name,
+            Realm = realm_name,
             PrivateKeyOvpn = Options.Value.DefaultPrivateKeyOVpn,
             CertFile = cert_file,
         };
@@ -89,11 +91,11 @@ partial class ServerManagementService(
     {
         var realms = await RealmRepo.FetchAllActiveRealm();
 
-        var clusters = await NasRepo.Value.GetAllActiveInRealm(realms.Select(r => r.Id));
+        var clusters = await ServerRepo.Value.GetAllActiveRadiusInRealm(realms.Select(r => r.Id));
         var servers = clusters.SelectMany(s => s.Value).ToList();
 
         var index = DateTime.Now.AddDays(-30);
-        await RadiusSrv.UpdateTrafficData(servers, index);
+        await SessionRadiusSrv.UpdateTrafficData(servers, index);
 
         var traffics = (await TrafficDataRepo.Value.Fetch(servers.Select(s => s.Id), index))
             .ToDictionary(k =>

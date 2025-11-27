@@ -1,5 +1,6 @@
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
+using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
 namespace PhotonBypass.Mikrotik.Helper;
 
@@ -8,7 +9,7 @@ public static class BuiltInProcess
     public static ProcessEntity PppActiveRemoveBySession { get; } = new()
     {
         Name = "Close PPP Session",
-        OsType = OsType.Mikrotik,
+        OsType = OperatingSystem.Mikrotik,
         Enable =
         [
             new ScriptEntity
@@ -26,7 +27,7 @@ public static class BuiltInProcess
     public static ProcessEntity PppActiveRemoveByUsername { get; } = new()
     {
         Name = "Close PPP User",
-        OsType = OsType.Mikrotik,
+        OsType = OperatingSystem.Mikrotik,
         Enable =
         [
             new ScriptEntity

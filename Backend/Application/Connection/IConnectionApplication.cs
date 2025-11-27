@@ -7,5 +7,5 @@ public interface IConnectionApplication
 {
     Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(string target);
 
-    Task<ApiResult> CloseConnection(string server, string target, string session_id);
+    Task<ApiResult> CloseConnection(string ip, string target, string session_id);
 }

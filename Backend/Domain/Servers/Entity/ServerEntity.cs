@@ -1,11 +1,12 @@
 ﻿using PhotonBypass.Domain.Servers.Types;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
 namespace PhotonBypass.Domain.Servers.Entity;
 
-[Table("Nas")]
-public class NasEntity : IBaseEntity
+[Table("Server")]
+public class ServerEntity : IBaseEntity
 {
     [Key]
     public int Id { get; set; }
@@ -14,17 +15,19 @@ public class NasEntity : IBaseEntity
 
     public int RealmId { get; set; }
 
+    public string IpAddress { get; set; } = null!;
+
     public string Name { get; set; } = null!;
     
     public string DomainName { get; set; } = null!;
 
     public long BandWidth { get; set; }
 
-    public string IpAddress { get; set; } = null!;
+    public OperatingSystem OsType { get; set; } = 0;
 
-    public OsType OsType { get; set; }
+    public ServerFeature Features { get; set; } = 0;
 
-    public int SshPort { get; set; }
+    public int SshPort { get; set; } = 22;
 
     public string SshUsername { get; set; } = null!;
 

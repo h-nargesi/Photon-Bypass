@@ -29,9 +29,9 @@ public abstract class DapperRepository<TEntity>(IDapperDbContext context) : IDis
         return context.Open();
     }
 
-    protected Task<IEnumerable<TEntity>> FindAsync(Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>>? statementOptions = null)
+    protected Task<IEnumerable<TEntity>> FindAsync(Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>>? statement_options = null)
     {
-        return Connection.FindAsync(statementOptions);
+        return Connection.FindAsync(statement_options);
     }
 
     public void Dispose() => GC.SuppressFinalize(this);

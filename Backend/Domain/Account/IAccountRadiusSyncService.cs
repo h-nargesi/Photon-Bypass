@@ -12,7 +12,7 @@ public interface IAccountRadiusSyncService
 
     Task<bool> SyncUserAndActive(AccountEntity account);
 
-    Task<bool> GetCertificate(IEnumerable<NasEntity> server, string username, CertContext default_context);
+    Task<bool> GetCertificate(int? realm_id, string username, CertContext default_context);
 
     Task<bool> ChangeVpnPassword(string username, string password);
 

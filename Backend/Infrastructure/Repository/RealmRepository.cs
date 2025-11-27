@@ -7,13 +7,23 @@ namespace PhotonBypass.Infra.Repository;
 
 class RealmRepository(LocalDbContext context) : EditableRepository<RealmEntity>(context), IRealmRepository
 {
-    public Task<string?> GetName(int realm_id)
+    public async Task<string?> GetName(int id)
     {
-        throw new NotImplementedException();
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(RealmEntity.Id)} = @id")
+            .WithParameters(new { id }));
+
+        return result.Select(r => r.Name).FirstOrDefault();
     }
 
-    public Task<List<RealmEntity>> FetchAllActiveRealm()
+    public async Task<List<RealmEntity>> FetchAllActiveRealm()
     {
-        throw new NotImplementedException();
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement.Where($"{nameof(RealmEntity.IsActive)} = 1"));
+
+        return [.. result];
     }
 }

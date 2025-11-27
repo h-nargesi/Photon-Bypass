@@ -7,7 +7,7 @@ namespace PhotonBypass.Mikrotik.Helper;
 
 public static class SshExtensions
 {
-    public static async Task<SshClient> Connect(this NasEntity server)
+    public static async Task<SshClient> Connect(this ServerEntity server)
     {
         var node = new SshClient(server.IpAddress, server.SshPort, server.SshUsername, server.SshPassword);
 

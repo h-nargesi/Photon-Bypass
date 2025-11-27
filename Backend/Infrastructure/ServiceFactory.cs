@@ -23,7 +23,7 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IResetPassRepository, ResetPassRepository>();
         builder.Services.AddLazyTransient<IRenewalRepository, RenewalRepository>();
         builder.Services.AddLazyTransient<ITrafficDataRepository, TrafficDataRepository>();
-        builder.Services.AddLazyTransient<INasRepository, NasRepository>();
+        builder.Services.AddLazyTransient<IServerRepository, ServerRepository>();
         builder.Services.AddLazyTransient<IRealmRepository, RealmRepository>();
         builder.Services.AddLazyTransient<IPriceRepository, PriceRepository>();
 

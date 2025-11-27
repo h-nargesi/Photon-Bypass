@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
+using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Mikrotik.Helper;
@@ -11,7 +12,7 @@ namespace PhotonBypass.OutSource;
 
 partial class VpnNodeService : IVpnNodeService
 {
-    public async Task<bool> CloseConnection(NasEntity? server, string session_id)
+    public async Task<bool> CloseConnection(ServerEntity? server, string session_id)
     {
         if (server == null || string.IsNullOrEmpty(session_id) || !SessionIdCheck().IsMatch(session_id))
         {
@@ -27,7 +28,7 @@ partial class VpnNodeService : IVpnNodeService
         return success && string.IsNullOrEmpty(context.Result);
     }
 
-    public async Task<bool> CloseConnections(IEnumerable<NasEntity> servers, string username, int count)
+    public async Task<bool> CloseConnections(IEnumerable<ServerEntity> servers, string username, int count)
     {
         var server_list = servers.ToList();
         if (server_list.Count < 1 || string.IsNullOrWhiteSpace(username)) return false;
@@ -49,8 +50,8 @@ partial class VpnNodeService : IVpnNodeService
         return result.All(x => x);
     }
 
-    public async Task<(NasEntity server, IList<UserConnectionBinding> connections)> GetActiveConnections(
-        NasEntity server, string username)
+    public async Task<(ServerEntity server, IList<UserConnectionBinding> connections)> GetActiveConnections(
+        ServerEntity server, string username)
     {
         ArgumentNullException.ThrowIfNull(server, nameof(server));
 
@@ -67,7 +68,7 @@ partial class VpnNodeService : IVpnNodeService
             .Select(x => new UserConnectionBinding
             {
                 CallerId = x.Groups[1].Value,
-                Name = username,
+                Username = username,
                 SessionId = x.Groups[3].Value,
                 UpTime = x.Groups[2].Value,
             })
@@ -76,7 +77,7 @@ partial class VpnNodeService : IVpnNodeService
         return (server, connections);
     }
 
-    public async Task GetCertificate(NasEntity server, string username, CertContext default_context)
+    public async Task GetCertificate(ServerEntity server, string username, CertContext default_context)
     {
         ArgumentNullException.ThrowIfNull(server, nameof(server));
         ArgumentNullException.ThrowIfNull(username, nameof(username));

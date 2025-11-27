@@ -12,7 +12,7 @@ namespace PhotonBypass.Application.Connection;
 
 class ConnectionApplication(
     ISessionRadiusSyncService SessionRadiusSrv,
-    INasRepository NasRepo,
+    IServerRepository server_repo,
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IPlanStateRepository> PlanRepo,
     Lazy<IJobContext> JobContext)
@@ -22,39 +22,27 @@ class ConnectionApplication(
     {
         var target_realm_id = await PlanRepo.Value.GetActiveAccountRealmId(target);
 
-        if (target_realm_id == null)
-        {
-            return ApiResult<List<ConnectionStateModel>>.Success([]);
-        }
+        var connections = await SessionRadiusSrv.GetActiveConnections(target_realm_id, target);
 
-        var servers_info = await NasRepo.GetAllActiveInRealm(target_realm_id.Value);
-
-        var servers_task = servers_info.ToDictionary(
-            server => server,
-            server => SessionRadiusSrv.GetActiveConnections(server, target));
-
-        await Task.WhenAll(servers_task.Values);
-
-        var result = servers_task.SelectMany(task =>
-            task.Value.Result.Select(c => new ConnectionStateModel
+        var result = connections.Select(c => new ConnectionStateModel
             {
                 SessionId = c.SessionId,
                 Duration = (int)c.UpTime.TotalMinutes,
                 State = c.State,
-                Server = task.Key.IpAddress,
-            }))
+                Server = c.NasIpAddress,
+            })
             .ToList();
 
         return ApiResult<List<ConnectionStateModel>>.Success(result);
     }
 
-    public async Task<ApiResult> CloseConnection(string server, string target, string session_id)
+    public async Task<ApiResult> CloseConnection(string ip, string target, string session_id)
     {
-        var nas = (await NasRepo.GetActiveNasInfo(server))
-                  ?? throw new UserException("دسترسی غیرمجاز!",
-                      $"Closing connection server is invalid: ({server}, {target}, {session_id})");
+        var server = (await server_repo.GetActiveNasInfo(ip)) ??
+                     throw new UserException("دسترسی غیرمجاز!",
+                         $"Closing connection ip is invalid: ({ip}, {target}, {session_id})");
 
-        var result = await SessionRadiusSrv.CloseConnection(nas, session_id);
+        var result = await SessionRadiusSrv.DirectlyCloseConnection(server, session_id);
 
         if (!result)
         {
@@ -71,7 +59,7 @@ class ConnectionApplication(
         });
 
         Log.Information("[user: {0}] Connection Closed: ({1}, {2}, {3})",
-            JobContext.Value.Username, server, target, session_id);
+            JobContext.Value.Username, ip, target, session_id);
 
         return ApiResult.Success("کانکشن بسته شد.");
     }

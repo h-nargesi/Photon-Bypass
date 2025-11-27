@@ -6,7 +6,7 @@ namespace PhotonBypass.Mikrotik.Helper;
 
 public static class ProcessExtensions
 {
-    public static async Task<bool> ActiveOn(this ProcessEntity process, NasEntity server, ProcessContext context)
+    public static async Task<bool> ActiveOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
     {
         if (server.OsType != process.OsType)
             throw new Exception($"Invalid OS process ({process.OsType}) for server: {server.Name}");
@@ -15,7 +15,7 @@ public static class ProcessExtensions
         return process.ActiveOn(node, context);
     }
 
-    public static async Task<bool> DeactiveOn(this ProcessEntity process, NasEntity server, ProcessContext context)
+    public static async Task<bool> DeactiveOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
     {
         if (server.OsType != process.OsType)
             throw new Exception($"Invalid OS process ({process.OsType}) for server: {server.Name}");
@@ -24,7 +24,7 @@ public static class ProcessExtensions
         return process.DeactiveOn(node, context);
     }
 
-    public static async Task<bool> CheckOn(this ProcessEntity process, NasEntity server, ProcessContext context)
+    public static async Task<bool> CheckOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
     {
         if (server.OsType != process.OsType)
             throw new Exception($"Invalid OS process ({process.OsType}) for server: {server.Name}");

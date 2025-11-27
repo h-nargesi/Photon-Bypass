@@ -25,7 +25,6 @@ class PlanApplication(
     Lazy<IAccountRadiusSyncService> AccountRadiusSrv,
     Lazy<IServerManagementService> ServerMngSrv,
     Lazy<IHistoryRepository> HistoryRepo,
-    Lazy<INasRepository> NasRepo,
     Lazy<IJobContext> JobContext)
     : IPlanApplication
 {
@@ -97,9 +96,11 @@ class PlanApplication(
 
         if (account.CheckMoneyNeed(estimate, out var money_need))
         {
-            Log.Information(@"[user: {0}] Plan renewal request:
+            Log.Information("""
+[user: {0}] Plan renewal request:
     account=(user:{0}, balance:{6})
-    request=(taget:{1}, user-count:{2}, days={3}, traffic:{4}, estimate:{7})",
+    request=(taget:{1}, user-count:{2}, days={3}, traffic:{4}, estimate:{5})
+""",
                 JobContext.Value.Username, target, count, days, gigabytes, account.Balance, estimate);
 
             return ApiResult<RenewalResult>.Success(new RenewalResult
@@ -112,10 +113,12 @@ class PlanApplication(
         var state = (await PlanRepo.Value.GetPlanState(account.Id)) ??
             throw new Exception($"Plan state not found for target: {target}");
 
-        Log.Information(@"[user: {0}] Plan current state:
+        Log.Information("""
+[user: {0}] Plan current state:
     account=(user:{0}, balance:{9})
     request=(taget:{1}, count:{2}, days:{3}, gigabytes:{4}, estimate:{10})
-    current=(count:{5}, left-days:{6}, left-hours:{7}, left-gigabytes:{8})",
+    current=(count:{5}, left-days:{6}, left-hours:{7}, left-gigabytes:{8})
+""",
             JobContext.Value.Username,
             target, count, days, gigabytes,
             state.SimultaneousUserCount, state.TimeLeft?.TotalDays, state.TimeLeft?.Hours, state.GetTrafficLeftInGig(),
@@ -145,7 +148,7 @@ class PlanApplication(
             throw new UserException(user_message);
         }
 
-        var syncronization = AccountRadiusSrv.Value.SyncUserAndActive(account);
+        var synchronization = AccountRadiusSrv.Value.SyncUserAndActive(account);
 
         if (count < state.SimultaneousUserCount)
         {
@@ -153,23 +156,12 @@ class PlanApplication(
     change=(taget:{1}, user-count:{2}, to:{3})",
                 JobContext.Value.Username, target, state.SimultaneousUserCount, count);
 
-            var nas_list = new List<NasEntity>();
-            if (renew.RestrictedRealmId != null)
-            {
-                nas_list.AddRange(await NasRepo.Value.GetAllActiveInRealm(renew.RestrictedRealmId.Value));
-            }
-
-            if (nas_list.Count < 0)
-            {
-                nas_list.AddRange(await NasRepo.Value.GetAllActive());
-            }
-
-            _ = SessionRadiusSrv.Value.CloseConnections(nas_list, account.Username, state.SimultaneousUserCount.Value - count);
+            _ = SessionRadiusSrv.Value.CloseConnections(renew.RestrictedRealmId, account.Username, state.SimultaneousUserCount.Value - count);
         }
 
-        await syncronization;
+        await synchronization;
 
-        var tranAccount = await AccountRepo.Value.BeginTransactionAsync();
+        var transaction = await AccountRepo.Value.BeginTransactionAsync();
 
         try
         {
@@ -180,20 +172,20 @@ class PlanApplication(
 
             await RenewalRepo.Value.Save(renew);
 
-            var checkOnRenewal = IPlanApplication.OnRenewalDelegation(new RenewalEvent());
+            var check_on_renewal = IPlanApplication.OnRenewalDelegation(new RenewalEvent());
 
-            if (!checkOnRenewal)
+            if (!check_on_renewal)
             {
                 throw new Exception("On renewal delegation was unsuccessful!");
             }
 
-            tranAccount.Commit();
+            transaction.Commit();
         }
         catch
         {
             _ = AccountRadiusSrv.Value.DeactivateUser([account.Username]);
 
-            tranAccount.Rollback();
+            transaction.Rollback();
 
             _ = HistoryRepo.Value.Save(new HistoryEntity
             {
