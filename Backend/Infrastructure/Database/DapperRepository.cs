@@ -35,14 +35,14 @@ public abstract class DapperRepository<TEntity>(IDapperDbContext context) : IDis
         return Connection.FindAsync(statement);
     }
 
-    protected Task<IEnumerable<T>> QueryAsync<T>(string sql, object? param = null)
-    {
-        return Connection.QueryAsync<T>(sql, param);
-    }
-
     protected Task<T?> ExecuteScalarAsync<T>(string sql, object? param = null)
     {
         return Connection.ExecuteScalarAsync<T>(sql, param);
+    }
+
+    protected Task<IEnumerable<dynamic>> QueryAsync(string sql, object? param = null)
+    {
+        return Connection.QueryAsync(sql, param);
     }
 
     public void Dispose() => GC.SuppressFinalize(this);

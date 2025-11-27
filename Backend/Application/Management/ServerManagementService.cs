@@ -94,7 +94,7 @@ partial class ServerManagementService(
 
         var realms = await RealmRepo.FetchAllActiveRealm();
 
-        var clusters = await ServerRepo.Value.GetAllActiveRadiusInRealm(realms.Select(r => r.Id));
+        var clusters = await ServerRepo.Value.GetAllActiveNasInRealm(realms.Select(r => r.Id));
         var server_ids = clusters.SelectMany(s => s.Value).Select(s => s.Id).ToList();
 
         await synchronization;

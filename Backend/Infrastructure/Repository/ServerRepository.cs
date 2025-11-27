@@ -67,6 +67,22 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
         return result.ToList();
     }
 
+    public async Task<Dictionary<int, List<ServerEntity>>> GetAllActiveNasInRealm(IEnumerable<int> realm_ids)
+    {
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"""
+{nameof(ServerEntity.Active)} == 1
+    and {nameof(ServerEntity.Features)} == ({nameof(ServerEntity.Features)} & @nas)
+    and {nameof(ServerEntity.RealmId)} in (@realm_ids)
+""")
+            .WithParameters(new { realm_ids, nas = ServerFeature.Nas }));
+
+        return result.GroupBy(k => k.RealmId)
+            .ToDictionary(k => k.Key, v=> v.ToList());
+    }
+
     public async Task<Dictionary<int, List<ServerEntity>>> GetAllActiveRadiusInRealm(IEnumerable<int> realm_ids)
     {
         await OpenAsync();

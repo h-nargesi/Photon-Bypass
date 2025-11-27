@@ -13,4 +13,12 @@ static class ServerEntityExtension
 
         return tasks.Select(t => t.Result).ToList();
     }
+    
+    public static async Task RunJob(this List<ServerEntity> radius_list,
+        Func<ServerEntity, Task> function)
+    {
+        var tasks = radius_list.Select(function).ToArray();
+
+        await Task.WhenAll(tasks);
+    }
 }
