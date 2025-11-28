@@ -42,7 +42,7 @@ public class SessionRadiusSyncService : ISessionRadiusSyncService
             ["username"] = username
         };
 
-        var success = await BuiltInProcess.PppActiveRemoveBySession.ActivateOn(radius, context);
+        var success = await BuiltInProcess.PppActiveRemoveByUsername.ActivateOn(radius, context);
         return success && string.IsNullOrEmpty(context.Result);
     }
 
