@@ -83,7 +83,14 @@ public static partial class ProcessService
         var content = new StringBuilder(script.Content);
 
         foreach (var replace_pair in context)
+        {
+            if (!ValidCharacters().Match(replace_pair.Value).Success)
+            {
+                throw new Exception($"Invalid character for inject: {replace_pair.Key}={replace_pair.Value}");
+            }
+            
             content.Replace($"{{{replace_pair.Key}}}", replace_pair.Value);
+        }
 
         return content.ToString();
     }
@@ -117,11 +124,14 @@ public static partial class ProcessService
                 context[replacement_pair.Value] = match.Groups[replacement_pair.Key].Value;
         }
     }
+
+    [GeneratedRegex(@"^[ \-\.\w\d]+$", RegexOptions.Singleline)]
+    private static partial Regex ValidCharacters();
 }
 
 public class ProcessContext : Dictionary<string, string>
 {
-    public string Error { get; set; }
+    public string? Error { get; set; }
 
     public List<string> Content { get; set; } = [];
 
