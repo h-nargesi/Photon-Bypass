@@ -66,17 +66,17 @@ partial class ServerManagementService(
 
         var alarms = new List<string>();
 
-        foreach (var realm in realms.Where(r => r.Value.Rate > -1))
+        foreach (var realm_pair in realms.Where(r => r.Value.Rate > -1))
         {
-            var percent = 100 * realm.Value.Rate;
+            var percent = 100 * realm_pair.Value.Rate;
 
             switch (percent)
             {
                 case < 10:
-                    alarms.Add($"Unused Realm: {realm.Key.Name} ({percent:N2}% from {realm.Value.Cap})");
+                    alarms.Add($"Unused Realm: {realm_pair.Key.Name} ({percent:N2}% from {realm_pair.Value.Cap})");
                     break;
                 case > 90:
-                    alarms.Add($"Low Capacity: {realm.Key.Name} ({percent:N2}% from {realm.Value.Cap})");
+                    alarms.Add($"Low Capacity: {realm_pair.Key.Name} ({percent:N2}% from {realm_pair.Value.Cap})");
                     break;
             }
         }

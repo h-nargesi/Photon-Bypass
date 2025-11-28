@@ -9,6 +9,13 @@ namespace PhotonBypass.Infra.Repository;
 
 class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEntity>(context), IPlanStateRepository
 {
+    public async Task<IList<PlanStateEntity>> GetAll()
+    {
+        await OpenAsync();
+
+        return [.. await FindAsync()];
+    }
+
     public async Task<PlanStateEntity?> GetPlanState(int account_id)
     {
         await OpenAsync();
@@ -18,17 +25,6 @@ class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEn
             .WithParameters(new { account_id }));
 
         return result.FirstOrDefault();
-    }
-
-    public async Task<IList<PlanStateEntity>> GetFinishingPlanState()
-    {
-        await OpenAsync();
-
-        var result = await FindAsync(statement => statement
-            .Where($"{nameof(PlanStateEntity.TimeLeftPercent)} < @percent or {nameof(PlanStateEntity.TrafficLeftPercent)} < @percent")
-            .WithParameters(new { percent = PlanStateBusiness.AccountFinishingStatePercent }));
-
-        return [.. result];
     }
 
     public async Task<int?> GetActiveAccountRealmId(int account_id)

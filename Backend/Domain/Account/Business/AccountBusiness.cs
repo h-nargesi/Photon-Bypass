@@ -6,7 +6,8 @@ namespace PhotonBypass.Domain.Account.Business;
 
 public static class AccountBusiness
 {
-    private const int MaxDeactivatePlan = 20;
+    private const int MaxDaysDeactivatePlanToDelete = 40;
+    private const int MaxDaysDeactivatePlanToDisable = 7;
     private const int DelayBetweenWarnings = 20;
     
     public static void SetFromModel(this AccountEntity account, EditUserModel model)
@@ -65,11 +66,20 @@ public static class AccountBusiness
         return false;
     }
 
-    public static int IsRichMaxDeactiveTime(this AccountEntity account, DateTime? last_connect_time)
+    public static int IsReachedMaxInactivityDaysToDisable(this AccountEntity account, DateTime? last_connect_time)
     {
         var last_activity = last_connect_time ?? account.CreatedTime;
 
-        var expired_days = MaxDeactivatePlan - (int)(last_activity - DateTime.Now).TotalDays;
+        var expired_days = MaxDaysDeactivatePlanToDisable - (int)(last_activity - DateTime.Now).TotalDays;
+        
+        return expired_days < 0 ? 0 : expired_days;
+    }
+
+    public static int IsReachedMaxInactivityDaysToDelete(this AccountEntity account, DateTime? last_connect_time)
+    {
+        var last_activity = last_connect_time ?? account.CreatedTime;
+
+        var expired_days = MaxDaysDeactivatePlanToDelete - (int)(last_activity - DateTime.Now).TotalDays;
         
         return expired_days < 0 ? 0 : expired_days;
     }

@@ -172,7 +172,7 @@ class PlanApplication(
         }
         catch
         {
-            _ = AccountRadiusSrv.Value.DeactivateUser([account.Username]);
+            _ = AccountRadiusSrv.Value.DeactivateUsers([account.Username]);
 
             transaction.Rollback();
 

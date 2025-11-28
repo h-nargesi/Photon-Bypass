@@ -7,7 +7,11 @@ namespace PhotonBypass.Domain.Account;
 
 public interface IAccountRadiusSyncService
 {
-    Task DeactivateUser(IEnumerable<string> usernames);
+    Task RemoveUsers(IEnumerable<string> usernames);
+
+    Task DeactivateUsers(IEnumerable<string> usernames);
+    
+    Task DeactivateInvalidRadiusUsers(IEnumerable<PlanStateEntity> plan_state_list);
 
     Task<bool> SyncUserAndActive(AccountEntity account, RenewalEntity renewal);
 

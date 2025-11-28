@@ -13,7 +13,7 @@ using Serilog;
 namespace PhotonBypass.Application.Management;
 
 internal class AccountMonitoringService(
-    IPlanStateRepository SessionStateRepo,
+    IPlanStateRepository PlanStateRepo,
     IAccountRepository AccountRepo,
     IHistoryRepository HistoryRepo,
     Lazy<IEmailService> EmailSrv,
@@ -24,27 +24,31 @@ internal class AccountMonitoringService(
 {
     public async Task Execute(IJobExecutionContext context)
     {
-        var plan_state_list = await SessionStateRepo.GetFinishingPlanState();
+        var plan_state_list = await PlanStateRepo.GetAll();
 
         if (plan_state_list.Count < 1)
         {
             return;
         }
+        
+        var finishing_list = plan_state_list.Where(plan => plan.IsFinishing()).ToList();
 
-        await NotifSendServices(plan_state_list);
+        await NotifSendServices(finishing_list);
 
         Task.WaitAll(
-            InactiveAbandonedUsers(plan_state_list),
+            AccountRadiusSrv.Value.DeactivateInvalidRadiusUsers(plan_state_list),
+            InactiveAbandonedUsers(finishing_list),
             ServerMngSrv.Value.CheckUserServerBalance());
     }
 
     public async Task InactiveAbandonedUsers(IEnumerable<PlanStateEntity> plan_state_list)
     {
         var deactivate_list = new List<string>();
+        var remove_list = new List<string>();
 
         foreach (var plan in plan_state_list)
         {
-            if (plan.ExpirationDate > DateTime.Now)
+            if (plan.ExpirationDate > DateTime.Now && plan.TrafficLeft >= StaticValues.BytesInMeg)
             {
                 continue;
             }
@@ -59,9 +63,19 @@ internal class AccountMonitoringService(
                 continue;
             }
 
-            var expired_days = account.IsRichMaxDeactiveTime(plan.LastConnectTime);
+            var expired_days = account.IsReachedMaxInactivityDaysToDisable(plan.LastConnectTime);
             if (expired_days < 1)
             {
+                continue;
+            }
+            
+            expired_days = account.IsReachedMaxInactivityDaysToDelete(plan.LastConnectTime);
+            if (expired_days < 1)
+            {
+                Log.Information(
+                    "The user '{0}' was deleted from radius servers: ExpiredTime={1} days, ExpirationDate={2}, TrafficLimit={3}, TrafficUsed={4}",
+                    plan.Username, expired_days, plan.ExpirationDate, plan.TrafficLimit, plan.TrafficUsed);
+                remove_list.Add(account.Username);
                 continue;
             }
 
@@ -84,9 +98,14 @@ internal class AccountMonitoringService(
             });
         }
 
+        if (remove_list.Count > 0)
+        {
+            await AccountRadiusSrv.Value.RemoveUsers(remove_list);
+        }
+
         if (deactivate_list.Count > 0)
         {
-            await AccountRadiusSrv.Value.DeactivateUser(deactivate_list);
+            await AccountRadiusSrv.Value.DeactivateUsers(deactivate_list);
         }
     }
 

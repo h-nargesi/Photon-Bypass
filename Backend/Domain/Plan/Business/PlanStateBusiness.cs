@@ -6,6 +6,12 @@ public static class PlanStateBusiness
 {
     public const float AccountFinishingStatePercent = 0.1f;
 
+    public static bool IsFinishing(this PlanStateEntity entity)
+    {
+        return entity.TimeLeftPercent < AccountFinishingStatePercent ||
+               entity.TrafficLeftPercent < AccountFinishingStatePercent;
+    }
+
     public static string GetRemainsTitle(this PlanStateEntity entity)
     {
         var result = string.Empty;
@@ -30,7 +36,7 @@ public static class PlanStateBusiness
                 result += $" و {left_hours} ساعت";
             }
         }
-        
+
         if (result.Length > 0) result = result[3..];
 
         return result;

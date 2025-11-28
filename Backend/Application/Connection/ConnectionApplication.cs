@@ -13,7 +13,7 @@ namespace PhotonBypass.Application.Connection;
 class ConnectionApplication(
     IAccountRepository AccountRepo,
     ISessionRadiusSyncService SessionRadiusSrv,
-    IServerRepository server_repo,
+    IServerRepository ServerRepo,
     Lazy<IHistoryRepository> HistoryRepo,
     Lazy<IPlanStateRepository> PlanRepo,
     Lazy<IJobContext> JobContext)
@@ -53,7 +53,7 @@ class ConnectionApplication(
 
         var realm_id = await PlanRepo.Value.GetActiveAccountRealmId(account_id.Value);
         
-        var server = (await server_repo.GetActiveNasInfo(ip)) ??
+        var server = (await ServerRepo.GetActiveNasInfo(ip)) ??
                      throw new UserException("دسترسی غیرمجاز!",
                          $"Closing connection ip is invalid: ({ip}, {target}, {session_id})");
 
