@@ -17,7 +17,7 @@ public interface IAccountRadiusSyncService
 
     Task<bool> GetCertificate(int? realm_id, string username, CertContext default_context);
 
-    Task<bool> ChangeVpnPassword(string username, string password);
+    Task<string> GetVpnPassword(int? realm_id, string username);
 
-    Task<string> GetVpnPassword(string username);
+    Task<bool> ChangeVpnPassword(int? realm_id, string username, string password);
 }

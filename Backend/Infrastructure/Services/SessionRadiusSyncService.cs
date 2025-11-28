@@ -12,13 +12,13 @@ namespace PhotonBypass.Infra.Services;
 public class SessionRadiusSyncService(
     Lazy<IServerRepository> ServerRepo,
     Lazy<ITrafficDataRepository> TrafficRepo,
-    Lazy<MikrotikRadius.ISessionRadiusSyncService> MikrotikRadius,
-    Lazy<RadiusDesk.ISessionRadiusSyncService> RadiusDesk)
+    Lazy<Radius.UserManager.ISessionRadiusSyncService> MikrotikRadius,
+    Lazy<Radius.RadiusDesk.ISessionRadiusSyncService> RadiusDesk)
     : ISessionRadiusSyncService
 {
     public async Task<List<UserConnectionBinding>> GetActiveConnections(int? realm_id, string username)
     {
-        var radius_list = await ServerRepo.Value.GetAllActiveRadiusInRealm(realm_id);
+        var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
 
         if (radius_list.Count <= 0)
         {
@@ -46,7 +46,7 @@ public class SessionRadiusSyncService(
 
     public async Task<bool> CloseConnectionBySessionId(ServerEntity nas, string session_id)
     {
-        var radius_list = await ServerRepo.Value.GetAllActiveRadiusInRealm(nas.RealmId);
+        var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(nas.RealmId);
 
         if (radius_list.Count <= 0)
         {
@@ -74,7 +74,7 @@ public class SessionRadiusSyncService(
 
     public async Task<bool> CloseConnectionByUsername(int? realm_id, string username)
     {
-        var radius_list = await ServerRepo.Value.GetAllActiveRadiusInRealm(realm_id);
+        var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
 
         if (radius_list.Count <= 0)
         {
@@ -102,7 +102,7 @@ public class SessionRadiusSyncService(
 
     public async Task UpdateTrafficData(DateTime index)
     {
-        var radius_list = await ServerRepo.Value.GetAllActiveRadiusInRealm((int?)null);
+        var radius_list = await ServerRepo.Value.GetAllActiveRadius();
 
         if (radius_list.Count <= 0) return;
 
@@ -112,7 +112,7 @@ public class SessionRadiusSyncService(
             index = last_update_time.Value;
 
         var current_traffic_data_task = TrafficRepo.Value.Fetch(index);
-        
+
         var loaded_data_list_group = await radius_list.RunJob(radius_server =>
         {
             switch (radius_server.Features)
@@ -152,7 +152,7 @@ public class SessionRadiusSyncService(
             if (destination_dictionary.TryGetValue(traffic.SessionId, out var data))
             {
                 if (data.DataIn == traffic.DataIn && data.DataOut == traffic.DataOut) continue;
-                
+
                 data.DataOut = traffic.DataOut;
                 data.DataIn = traffic.DataIn;
                 new_data.Add(data);

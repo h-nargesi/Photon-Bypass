@@ -38,7 +38,11 @@ class VpnApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
 
-        var result = await AccountRadiusSrv.Value.ChangeVpnPassword(account.Username, password);
+        var plan = (await PlanStateRepo.Value.GetPlanState(account.Id)) ??
+                   throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
+                       $"There is not ant plan for user: {target}");
+
+        var result = await AccountRadiusSrv.Value.ChangeVpnPassword(plan.RestrictedRealmId, account.Username, password);
 
         if (!result)
         {
@@ -74,7 +78,7 @@ class VpnApplication(
         if (account.Email == null)
         {
             throw new UserException("ایمیل کاربر ثبت نشده است!",
-                $"account is email address is unkown: target={target}");
+                $"account is email address is unknown: target={target}");
         }
 
         var plan = await PlanStateRepo.Value.GetPlanState(account.Id);
@@ -84,10 +88,10 @@ class VpnApplication(
             plan.TrafficLeft is < 1)
         {
             throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
-                $"There is not ant plan for user ");
+                $"There is not ant plan for user {target}");
         }
 
-        var vpn_password_task = AccountRadiusSrv.Value.GetVpnPassword(account.Username);
+        var vpn_password_task = AccountRadiusSrv.Value.GetVpnPassword(plan.RestrictedRealmId, account.Username);
 
         var cert_context = await ServerMngSrv.Value.GetDefaultCertificate(plan.RestrictedRealmId);
 

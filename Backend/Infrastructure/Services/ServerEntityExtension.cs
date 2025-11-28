@@ -4,7 +4,7 @@ namespace PhotonBypass.Infra.Services;
 
 static class ServerEntityExtension
 {
-    public static async Task<List<TResult>> RunJob<TResult>(this List<ServerEntity> radius_list,
+    public static async Task<List<TResult>> RunJob<TResult>(this IEnumerable<ServerEntity> radius_list,
         Func<ServerEntity, Task<TResult>> function)
     {
         var tasks = radius_list.Select(function).ToArray();
@@ -14,7 +14,7 @@ static class ServerEntityExtension
         return tasks.Select(t => t.Result).ToList();
     }
     
-    public static async Task RunJob(this List<ServerEntity> radius_list,
+    public static async Task RunJob(this IEnumerable<ServerEntity> radius_list,
         Func<ServerEntity, Task> function)
     {
         var tasks = radius_list.Select(function).ToArray();
