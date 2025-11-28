@@ -8,7 +8,7 @@ namespace PhotonBypass.OutSource;
 
 class EmailService(IOptions<EmailOptions> options) : IEmailService
 {
-    public async Task FinishServiceAlert(string fullname, string username, string email, PlanType type, string left)
+    public async Task FinishServiceAlert(string fullname, string username, string email, string left)
     {
         if (string.IsNullOrWhiteSpace(options.Value.Address))
         {

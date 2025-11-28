@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Json;
 using System.Web;
 using Microsoft.Extensions.Options;
+using PhotonBypass.Domain.Servers.JsonType;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.FreeRadius.WebService.ApiResponseModel;
@@ -10,8 +11,8 @@ namespace PhotonBypass.FreeRadius.WebService;
 
 class RadiusDeskService : IRadiusService, IDisposable
 {
-    private readonly RadiusServiceOptions options;
-    private readonly HttpClient httpClient;
+    private readonly WebApiConfig options;
+    private HttpClient? httpClient;
     private string? token;
     private DateTime lastRequest = DateTime.Now;
 
@@ -20,14 +21,10 @@ class RadiusDeskService : IRadiusService, IDisposable
     private const string NAS_IP_ADDRESS = "NAS-IP-Address";
     private const string RD_TOTAL_DATA = "Rd-Total-Data";
 
-    public RadiusDeskService(IOptions<RadiusServiceOptions> options)
+    public RadiusDeskService(RadWebApiOptionContext options)
     {
-        this.options = options.Value;
-
-        httpClient = new HttpClient
-        {
-            BaseAddress = new Uri($"{this.options.BaseUrl}/cake4/rd_cake")
-        };
+        this.options = options.WebApiConfig ??
+                       throw new ArgumentNullException(nameof(options));
     }
 
     public async Task<bool> ActivePermanentUser(int user_id, bool active)
@@ -260,6 +257,8 @@ class RadiusDeskService : IRadiusService, IDisposable
 
     public async Task<bool> InsertTopUpAndMakeActive(int user_id, PlanType type, int value, string? comment = null)
     {
+        await CheckLogin();
+
         var success = await ActivePermanentUser(user_id, true);
 
         if (!success) return false;
@@ -345,6 +344,11 @@ class RadiusDeskService : IRadiusService, IDisposable
 
     private async Task CheckLogin()
     {
+        httpClient ??= new HttpClient
+        {
+            BaseAddress = new Uri($"{options.BaseUrl}/cake4/rd_cake")
+        };
+        
         if (token == null || await CheckToken())
         {
             var success = await Login();

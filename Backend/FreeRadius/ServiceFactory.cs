@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.FreeRadius.Repository;
 using PhotonBypass.FreeRadius.Repository.DbContext;
@@ -11,20 +12,19 @@ public static class ServiceFactory
 {
     public static void AddRadiusServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        builder.Services.BindValidateReturn<RadiusServiceOptions>(builder.Configuration);
-        builder.Services.BindValidateReturn<RadDapperOptions>(builder.Configuration);
-        builder.Services.AddLazySingleton<RadDbContext>();
+        builder.Services.AddScoped<RadDbContext>();
+        builder.Services.AddScoped<RadWebApiOptionContext>();
 
-        // builder.Services.AddLazyTransient<ICloudRepository, CloudRepository>();
-        // builder.Services.AddLazyTransient<IServerRepository, ServerRepository>();
-        // builder.Services.AddLazyTransient<IPermanentUsersRepository, PermanentUsersRepository>();
-        // builder.Services.AddLazyTransient<IProfileRepository, ProfileRepository>();
-        // builder.Services.AddLazyTransient<IRadAcctRepository, RadAcctRepository>();
-        // builder.Services.AddLazyTransient<IRealmRepository, RealmRepository>();
-        // builder.Services.AddLazyTransient<IRenewalRepository, TopUpRepository>();
-        // builder.Services.AddLazyTransient<IUserPlanStateRepository, UserPlanStateRepository>();
+        builder.Services.AddLazyTransient<ICloudRepository, CloudRepository>();
+        builder.Services.AddLazyTransient<INasRepository, NasRepository>();
+        builder.Services.AddLazyTransient<IPermanentUsersRepository, PermanentUsersRepository>();
+        builder.Services.AddLazyTransient<IProfileRepository, ProfileRepository>();
+        builder.Services.AddLazyTransient<IRadAcctRepository, RadAcctRepository>();
+        builder.Services.AddLazyTransient<IRealmRepository, RealmRepository>();
+        builder.Services.AddLazyTransient<ITopUpRepository, TopUpRepository>();
+        builder.Services.AddLazyTransient<IUserPlanStateRepository, UserPlanStateRepository>();
 
         builder.Services.AddLazySingleton<IStaticRepository, StaticRepository>();
-        builder.Services.AddLazySingleton<IRadiusService, RadiusDeskService>();
+        builder.Services.AddLazyScoped<IRadiusService, RadiusDeskService>();
     }
 }
