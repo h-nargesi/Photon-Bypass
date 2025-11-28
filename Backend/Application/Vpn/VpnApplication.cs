@@ -123,7 +123,7 @@ class VpnApplication(
     public async Task<ApiResult<TrafficDataModel>> TrafficData(string target)
     {
         var min_date_time = DateTime.Now.AddDays(-MaxDateBefore);
-        var synchronization = SessionRadiusSyncSrv.Value.UpdateTrafficData(min_date_time);
+        await SessionRadiusSyncSrv.Value.UpdateTrafficData(min_date_time);
         
         var account_id = await AccountRepo.Value.GetActiveAccountId(target);
         if (!account_id.HasValue)
@@ -131,7 +131,6 @@ class VpnApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
         }
 
-        await synchronization;
         var list = await TrafficDataRepo.Value.Fetch(account_id.Value, min_date_time);
 
         var result = ConvertToModel(list);

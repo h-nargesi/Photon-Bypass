@@ -36,7 +36,7 @@ partial class ServerManagementService(
         if (Options.Value.DefaultPrivateKeyOVpn == null)
             throw new Exception("OVpn Private key is not set in config!");
 
-        var realm_name_task = realm_id.HasValue ? RealmRepo.GetName(realm_id.Value) : Task.FromResult<string?>("All");
+        var realm_name = realm_id.HasValue ? (await RealmRepo.GetName(realm_id.Value)) : "All";
         var nas_task = ServerRepo.Value.GetAllActiveNasDomainInRealm(realm_id);
 
         var cert_file = await File.ReadAllBytesAsync(cert_path);
@@ -45,8 +45,6 @@ partial class ServerManagementService(
 
         if (nas_list.Count < 1)
             throw new Exception($"Nas/Domain not found: (realm-id={realm_id})!");
-
-        var realm_name = (await realm_name_task) ?? "All";
 
         var ovpn_conf_file = Encoding.UTF8.GetString(cert_file);
         ovpn_conf_file = SetDomain(ovpn_conf_file, realm_name, nas_list);
@@ -90,14 +88,13 @@ partial class ServerManagementService(
     private async Task<Dictionary<RealmEntity, (double Rate, long Cap)>> LoadServersCapacity()
     {
         var index = DateTime.Now.AddDays(-30);
-        var synchronization = SessionRadiusSrv.UpdateTrafficData(index);
+        await SessionRadiusSrv.UpdateTrafficData(index);
 
         var realms = await RealmRepo.FetchAllActiveRealm();
 
         var clusters = await ServerRepo.Value.GetAllActiveNasInRealm(realms.Select(r => r.Id));
         var server_ids = clusters.SelectMany(s => s.Value).Select(s => s.Id).ToList();
 
-        await synchronization;
         var traffics = (await TrafficDataRepo.Value.Fetch(server_ids, index))
             .ToDictionary(k =>
                 k.Key, v =>
