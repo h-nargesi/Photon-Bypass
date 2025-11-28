@@ -1,0 +1,16 @@
+using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Plan.Model;
+using PhotonBypass.Domain.Servers.Entity;
+
+namespace PhotonBypass.Infra.Radius;
+
+public interface ISessionRadiusSyncService
+{
+    Task<List<UserConnectionBinding>> GetActiveConnections(ServerEntity radius, string username);
+
+    Task<bool> CloseConnectionBySessionId(ServerEntity radius, ServerEntity nas, string session_id);
+
+    Task<bool> CloseConnectionByUsername(ServerEntity radius, string username);
+
+    Task<List<TrafficDataEntity>> UpdateTrafficData(ServerEntity radius, DateTime index);
+}
