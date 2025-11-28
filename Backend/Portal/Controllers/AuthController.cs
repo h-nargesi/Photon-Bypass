@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using PhotonBypass.API.Basical;
+using PhotonBypass.Portal.Basical;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Authentication.Model;
@@ -12,7 +12,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace PhotonBypass.API.Controllers;
+namespace PhotonBypass.Portal.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

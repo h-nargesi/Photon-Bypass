@@ -1,6 +1,6 @@
 ﻿using PhotonBypass.Domain;
 
-namespace PhotonBypass.API.Basical;
+namespace PhotonBypass.Portal.Basical;
 
 class JobContext : IJobContext
 {

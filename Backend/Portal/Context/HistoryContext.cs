@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.API.Context;
+namespace PhotonBypass.Portal.Context;
 
 public class HistoryContext
 {

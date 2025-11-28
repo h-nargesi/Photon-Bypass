@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.API.Context;
+﻿namespace PhotonBypass.Portal.Context;
 
 public class TokenContext
 {

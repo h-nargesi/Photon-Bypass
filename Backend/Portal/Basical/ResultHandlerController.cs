@@ -7,7 +7,7 @@ using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
 
-namespace PhotonBypass.API.Basical;
+namespace PhotonBypass.Portal.Basical;
 
 public class ResultHandlerController(IJobContext context, Lazy<IAccessService> access) : ControllerBase
 {

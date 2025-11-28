@@ -1,6 +1,6 @@
 using PhotonBypass;
-using PhotonBypass.API;
-using PhotonBypass.API.Basical;
+using PhotonBypass.Portal;
+using PhotonBypass.Portal.Basical;
 using PhotonBypass.ErrorHandler;
 
 var app = WebApplication.CreateBuilder(args)

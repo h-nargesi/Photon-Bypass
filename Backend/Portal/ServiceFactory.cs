@@ -1,11 +1,11 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using PhotonBypass.API.Basical;
+using PhotonBypass.Portal.Basical;
 using PhotonBypass.Application;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.API;
+namespace PhotonBypass.Portal;
 
 public static class ServiceFactory
 {

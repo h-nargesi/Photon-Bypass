@@ -5,7 +5,7 @@ using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
 
-namespace PhotonBypass.API.Basical;
+namespace PhotonBypass.Portal.Basical;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
 {

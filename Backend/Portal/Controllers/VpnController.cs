@@ -1,14 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PhotonBypass.API.Basical;
-using PhotonBypass.API.Context;
+using PhotonBypass.Portal.Basical;
+using PhotonBypass.Portal.Context;
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Result;
 
-namespace PhotonBypass.API.Controllers;
+namespace PhotonBypass.Portal.Controllers;
 
 [Authorize]
 [ApiController]

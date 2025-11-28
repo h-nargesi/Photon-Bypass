@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PhotonBypass.API.Basical;
+using PhotonBypass.Portal.Basical;
 using PhotonBypass.Application.Basics;
 using PhotonBypass.Result;
 
-namespace PhotonBypass.API.Controllers;
+namespace PhotonBypass.Portal.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

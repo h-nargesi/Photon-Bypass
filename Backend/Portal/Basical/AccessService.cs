@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.Domain.Account;
 
-namespace PhotonBypass.API.Basical;
+namespace PhotonBypass.Portal.Basical;
 
 internal class AccessService(IMemoryCache cache) : IAccessService
 {

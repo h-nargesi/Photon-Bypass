@@ -1,6 +1,6 @@
 ﻿using System.Security.Cryptography;
 
-namespace PhotonBypass.API.Basical;
+namespace PhotonBypass.Portal.Basical;
 
 public static class IdentityHelper
 {
