@@ -10,7 +10,7 @@ public class ScriptEntity : IBaseEntity
     [Key]
     public int Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public int ProcessId { get; set; }
 

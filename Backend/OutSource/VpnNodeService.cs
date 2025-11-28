@@ -3,10 +3,10 @@ using System.Text.RegularExpressions;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Plan;
-using PhotonBypass.Mikrotik.Helper;
 using PhotonBypass.Tools;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Mikrotik.Base;
 
 namespace PhotonBypass.OutSource;
 
@@ -24,7 +24,7 @@ partial class VpnNodeService : IVpnNodeService
             ["session-id"] = session_id
         };
 
-        var success = await BuiltInProcess.PppActiveRemoveBySession.ActiveOn(server, context);
+        var success = await BuiltInProcess.PppActiveRemoveBySession.ActivateOn(server, context);
         return success && string.IsNullOrEmpty(context.Result);
     }
 
@@ -41,7 +41,7 @@ partial class VpnNodeService : IVpnNodeService
                     ["username"] = username
                 };
 
-                var success = await BuiltInProcess.PppActiveRemoveByUsername.ActiveOn(server, context);
+                var success = await BuiltInProcess.PppActiveRemoveByUsername.ActivateOn(server, context);
                 return success && string.IsNullOrEmpty(context.Result);
             });
 

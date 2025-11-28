@@ -1,27 +1,28 @@
-
+using System.Text;
+using System.Text.RegularExpressions;
 using PhotonBypass.Domain.Servers.Entity;
 using Renci.SshNet;
 
-namespace PhotonBypass.Mikrotik.Helper;
+namespace PhotonBypass.Mikrotik.Base;
 
-public static class ProcessExtensions
+public static partial class ProcessService
 {
-    public static async Task<bool> ActiveOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
+    public static async Task<bool> ActivateOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
     {
         if (server.OsType != process.OsType)
             throw new Exception($"Invalid OS process ({process.OsType}) for server: {server.Name}");
 
         using var node = await server.Connect();
-        return process.ActiveOn(node, context);
+        return process.ActivateOn(node, context);
     }
 
-    public static async Task<bool> DeactiveOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
+    public static async Task<bool> DeactivateOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
     {
         if (server.OsType != process.OsType)
             throw new Exception($"Invalid OS process ({process.OsType}) for server: {server.Name}");
 
         using var node = await server.Connect();
-        return process.DeactiveOn(node, context);
+        return process.DeactivateOn(node, context);
     }
 
     public static async Task<bool> CheckOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
@@ -35,14 +36,14 @@ public static class ProcessExtensions
         return process.CheckOn(node, context);
     }
 
-    public static bool ActiveOn(this ProcessEntity process, SshClient node, ProcessContext context)
+    public static bool ActivateOn(this ProcessEntity process, SshClient node, ProcessContext context)
     {
-        return node.Run(process.Enable, context);
+        return process.Enable != null && node.Run(process.Enable, context);
     }
 
-    public static bool DeactiveOn(this ProcessEntity process, SshClient node, ProcessContext context)
+    public static bool DeactivateOn(this ProcessEntity process, SshClient node, ProcessContext context)
     {
-        return node.Run(process.Disable, context);
+        return process.Disable != null && node.Run(process.Disable, context);
     }
 
     public static bool CheckOn(this ProcessEntity process, SshClient node, ProcessContext context)
@@ -57,22 +58,64 @@ public static class ProcessExtensions
 
     private static bool Run(this SshClient node, ScriptEntity script, ProcessContext context)
     {
-        if (!node.Execute(script.Content, out var script_result))
+        if (!node.Execute(InjectContextInScriptCommand(script, context), out var script_result))
         {
             context.Error = script_result;
             return false;
         }
-        
+
         if (script.OutputPattern == "return")
         {
             context.Content.Add(script_result);
         }
         else if (!string.IsNullOrEmpty(script.OutputPattern))
         {
-            // TODO: read output from script-result;
+            ReadScriptResult(script_result, script.OutputPattern, context);
         }
 
         return true;
+    }
+
+    private static string InjectContextInScriptCommand(ScriptEntity script, ProcessContext context)
+    {
+        if (context.Count < 1) return script.Content;
+
+        var content = new StringBuilder(script.Content);
+
+        foreach (var replace_pair in context)
+            content.Replace($"{{{replace_pair.Key}}}", replace_pair.Value);
+
+        return content.ToString();
+    }
+
+    private static void ReadScriptResult(string result, string output_pattern, ProcessContext context)
+    {
+        var patterns = ScriptPatterns.OutputPatternParse()
+            .Split(output_pattern)
+            .Select(pattern => pattern.Trim())
+            .Where(pattern => pattern.Length > 0)
+            .Select(pattern => pattern.Split('#'))
+            .Where(pattern_info => pattern_info.Length > 1)
+            .Select(pattern_info => new
+            {
+                Regex = new Regex(pattern_info[0].Trim(), RegexOptions.Compiled),
+                Names = pattern_info.Skip(1)
+                    .Where(replacement => replacement.Length > 0)
+                    .Select(replacement => replacement.Split(':').Select(v => v.Trim()).ToArray())
+                    .Where(replacement_info => replacement_info.Length == 2)
+                    .Select(replacement_info => (Index: int.Parse(replacement_info[0]), Name: replacement_info[1]))
+                    .GroupBy(k => k.Index)
+                    .ToDictionary(k => k.Key, v=> v.Last().Name),
+            })
+            .ToArray();
+
+        foreach (var pattern in patterns)
+        {
+            var match = pattern.Regex.Match(result);
+            if (!match.Success) continue;
+            foreach (var replacement_pair in pattern.Names.Where(replace_pair => match.Groups.Count > replace_pair.Key))
+                context[replacement_pair.Value] = match.Groups[replacement_pair.Key].Value;
+        }
     }
 }
 
