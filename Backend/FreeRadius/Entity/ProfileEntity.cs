@@ -15,7 +15,7 @@ public class ProfileEntity : IBaseEntity
 
     public string Name { get; set; } = null!;
 
-    [Column("cimultaneous_use")]
+    [Column("simultaneous_use")]
     public int? SimultaneousUse { get; set; }
 
     [Column("mikrotik_rate_limit")]
@@ -23,4 +23,7 @@ public class ProfileEntity : IBaseEntity
 
     [Column("plan_type")]
     public PlanType PlanType { get; set; }
+
+    [Column("created")]
+    public DateTime Created { get; set; }
 }

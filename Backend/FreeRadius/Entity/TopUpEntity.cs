@@ -7,8 +7,6 @@ namespace PhotonBypass.FreeRadius.Entity;
 [Table("top_ups")]
 public class TopUpEntity : IBaseEntity
 {
-    private const long BYTES_IN_GIG = 1024 * 1024 * 1024;
-
     [Key]
     public int Id { get; set; }
 
@@ -22,7 +20,7 @@ public class TopUpEntity : IBaseEntity
     public long? Data { get; set; }
 
     [NotMapped]
-    public long? GigaData => Data != null ? Data / BYTES_IN_GIG : null;
+    public double? GigaData => Data / StaticValues.BytesInGig;
 
     [Column("time")]
     public long? Time { get; set; }
@@ -31,4 +29,7 @@ public class TopUpEntity : IBaseEntity
     public int? DaysToUse { get; set; }
 
     public string? Comment { get; set; }
+
+    [Column("created")]
+    public DateTime Created { get; set; }
 }

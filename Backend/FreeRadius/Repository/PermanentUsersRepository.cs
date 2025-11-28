@@ -9,11 +9,9 @@ namespace PhotonBypass.FreeRadius.Repository;
 
 class PermanentUsersRepository(RadDbContext context) : DapperRepository<PermanentUserEntity>(context), IPermanentUsersRepository
 {
-    readonly static string TableName = EntityExtensions.GetTablename<PermanentUserEntity>();
-    readonly static string Id = EntityExtensions.GetColumnName<PermanentUserEntity>(x => x.Id);
-    readonly static string Username = EntityExtensions.GetColumnName<PermanentUserEntity>(x => x.Username);
-    readonly static string Phone = EntityExtensions.GetColumnName<PermanentUserEntity>(x => x.Phone);
-    readonly static string Email = EntityExtensions.GetColumnName<PermanentUserEntity>(x => x.Email);
+    private static readonly string Username = EntityExtensions.GetColumnName<PermanentUserEntity>(x => x.Username);
+    private static readonly string Phone = EntityExtensions.GetColumnName<PermanentUserEntity>(x => x.Phone);
+    private static readonly string Email = EntityExtensions.GetColumnName<PermanentUserEntity>(x => x.Email);
 
     public async Task<PermanentUserEntity?> GetUser(int id)
     {

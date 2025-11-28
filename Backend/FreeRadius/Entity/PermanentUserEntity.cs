@@ -47,5 +47,5 @@ public class PermanentUserEntity : IBaseEntity
     public DateTime? LastAcceptTime { get; set; }
 
     [Column("created")]
-    public DateTime CreatedTime { get; set; }
+    public DateTime Created { get; set; }
 }

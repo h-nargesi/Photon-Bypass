@@ -9,8 +9,7 @@ namespace PhotonBypass.FreeRadius.Repository;
 
 class RealmRepository(RadDbContext context) : DapperRepository<RealmEntity>(context), IRealmRepository
 {
-    readonly static string Id = EntityExtensions.GetColumnName<RealmEntity>(x => x.Id);
-    readonly static string CloudId = EntityExtensions.GetColumnName<RealmEntity>(x => x.CloudId);
+    private static readonly string CloudId = EntityExtensions.GetColumnName<RealmEntity>(x => x.CloudId);
 
     public async Task<RealmEntity?> Fetch(int realm_id)
     {

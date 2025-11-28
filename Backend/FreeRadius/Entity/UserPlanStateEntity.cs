@@ -42,4 +42,7 @@ public class UserPlanStateEntity : IBaseEntity
 
     [Column("total_data_limit")]
     public double? TotalData { get; set; }
+
+    [Column("created")]
+    public DateTime Created { get; set; }
 }

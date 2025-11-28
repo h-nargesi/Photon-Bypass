@@ -9,10 +9,10 @@ namespace PhotonBypass.FreeRadius.Repository;
 
 class ProfileRepository(RadDbContext context) : DapperRepository<ProfileEntity>(context), IProfileRepository
 {
-    readonly static string SimultaneousUse = EntityExtensions.GetColumnName<ProfileEntity>(x => x.SimultaneousUse);
-    readonly static string MikrotikRateLimit = EntityExtensions.GetColumnName<ProfileEntity>(x => x.MikrotikRateLimit);
-    readonly static string CloudId = EntityExtensions.GetColumnName<ProfileEntity>(x => x.CloudId);
-    readonly static string PlanType = EntityExtensions.GetColumnName<ProfileEntity>(x => x.PlanType);
+    private static readonly string SimultaneousUse = EntityExtensions.GetColumnName<ProfileEntity>(x => x.SimultaneousUse);
+    private static readonly string MikrotikRateLimit = EntityExtensions.GetColumnName<ProfileEntity>(x => x.MikrotikRateLimit);
+    private static readonly string CloudId = EntityExtensions.GetColumnName<ProfileEntity>(x => x.CloudId);
+    private static readonly string PlanType = EntityExtensions.GetColumnName<ProfileEntity>(x => x.PlanType);
 
     public async Task<ProfileEntity> FindDefaultProfile(int cloud_id)
     {

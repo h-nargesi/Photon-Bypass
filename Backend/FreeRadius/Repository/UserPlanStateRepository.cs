@@ -10,12 +10,10 @@ namespace PhotonBypass.FreeRadius.Repository;
 
 class UserPlanStateRepository(RadDbContext context) : DapperRepository<UserPlanStateEntity>(context), IUserPlanStateRepository
 {
-    readonly static string TableName = EntityExtensions.GetTablename<UserPlanStateEntity>();
-    readonly static string Id = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.Id);
-    readonly static string Username = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.Username);
-    readonly static string LeftDays = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.LeftDays);
-    readonly static string AccountDisabled = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.AccountDisabled);
-    readonly static string GigaLeft = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.GigaLeft);
+    private static readonly string Username = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.Username);
+    private static readonly string LeftDays = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.LeftDays);
+    private static readonly string AccountDisabled = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.AccountDisabled);
+    private static readonly string GigaLeft = EntityExtensions.GetColumnName<UserPlanStateEntity>(x => x.GigaLeft);
 
     public async Task<string?> GetRestrictedServerIP(int id)
     {

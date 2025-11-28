@@ -11,4 +11,7 @@ public class CloudEntity : IBaseEntity
     public int Id { get; set; }
 
     public string Name { get; set; } = null!;
+
+    [Column("created")]
+    public DateTime Created { get; set; }
 }

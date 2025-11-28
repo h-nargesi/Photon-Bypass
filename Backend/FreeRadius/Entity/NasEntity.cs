@@ -21,4 +21,7 @@ public class NasEntity : IBaseEntity
 
     [Column("description")]
     public string? DomainName { get; set; }
+
+    [Column("created")]
+    public DateTime Created { get; set; }
 }
