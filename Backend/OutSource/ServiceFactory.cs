@@ -11,7 +11,6 @@ public static class ServiceFactory
         builder.Services.BindValidateReturn<EmailOptions>(builder.Configuration);
 
         builder.Services.AddLazySingleton<IEmailService, EmailService>();
-        builder.Services.AddLazySingleton<IVpnNodeService, VpnNodeService>();
         builder.Services.AddLazySingleton<ISocialMediaService, SocialMediaService>();
     }
 }

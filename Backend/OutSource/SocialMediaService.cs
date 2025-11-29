@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Domain.OutSource;
+﻿using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.OutSource;
 
 namespace PhotonBypass.OutSource;
 
@@ -9,7 +10,7 @@ class SocialMediaService : ISocialMediaService
         throw new NotImplementedException();
     }
 
-    public Task FinishServiceAlert(string username, string phone, PlanType type, string left)
+    public Task FinishServiceAlert(string username, string phone, string type, string left)
     {
         throw new NotImplementedException();
     }

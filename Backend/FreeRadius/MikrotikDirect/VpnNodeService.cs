@@ -1,17 +1,15 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
 using PhotonBypass.Domain.OutSource.Model;
-using PhotonBypass.Domain.Plan.Entity;
-using PhotonBypass.Domain.Plan;
-using PhotonBypass.Tools;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers.Entity;
-using PhotonBypass.Mikrotik.Base;
-using PhotonBypass.Mikrotik.Ssh;
+using PhotonBypass.Mikrotik.Radius.Scripts;
+using PhotonBypass.ServerBridge.Ssh;
+using PhotonBypass.Tools;
 
-namespace PhotonBypass.OutSource;
+namespace PhotonBypass.FreeRadius.MikrotikDirect;
 
-partial class VpnNodeService : IVpnNodeService
+partial class VpnNodeService
 {
     public async Task<bool> CloseConnection(ServerEntity? server, string session_id)
     {
@@ -71,7 +69,7 @@ partial class VpnNodeService : IVpnNodeService
                 CallerId = x.Groups[1].Value,
                 Username = username,
                 SessionId = x.Groups[3].Value,
-                UpTime = x.Groups[2].Value,
+                UpTime = TimeSpan.ParseExact(x.Groups[4].Value, @"hh\:mm\:ss", null)
             })
             .ToList();
 

@@ -16,12 +16,12 @@ public class SessionRadiusSyncService(RadWebApiOptionContext web_web_api_context
         throw new NotImplementedException();
     }
 
-    public Task<bool> CloseConnectionBySessionId(ServerEntity radius, ServerEntity nas, string session_id)
+    public Task CloseConnectionBySessionId(ServerEntity radius, ServerEntity nas, string session_id)
     {
         throw new NotImplementedException();
     }
 
-    public Task<bool> CloseConnectionByUsername(ServerEntity radius, string username)
+    public Task CloseConnectionByUsername(ServerEntity radius, string username)
     {
         throw new NotImplementedException();
     }

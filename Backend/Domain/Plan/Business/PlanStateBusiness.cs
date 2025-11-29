@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Domain.Plan.Entity;
+﻿using System.Text;
+using PhotonBypass.Domain.Plan.Entity;
 
 namespace PhotonBypass.Domain.Plan.Business;
 
@@ -14,11 +15,11 @@ public static class PlanStateBusiness
 
     public static string GetRemainsTitle(this PlanStateEntity entity)
     {
-        var result = string.Empty;
+        var result = new StringBuilder();
 
         if (entity.TrafficLeft.HasValue)
         {
-            result += $" و {entity.GetTrafficLeftInGig()} گیگ باقی مانده";
+            result.Append($" و {entity.GetTrafficLeftInGig()} گیگ باقی مانده");
         }
 
         if (entity.TimeLeft.HasValue)
@@ -28,18 +29,18 @@ public static class PlanStateBusiness
 
             if (left_days > 0)
             {
-                result += $" و {left_days} روز";
+                result.Append($" و {left_days} روز");
             }
 
             if (left_hours > 0)
             {
-                result += $" و {left_hours} ساعت";
+                result.Append($" و {left_hours} ساعت");
             }
         }
 
-        if (result.Length > 0) result = result[3..];
+        if (result.Length > 0) result.Remove(0, 3);
 
-        return result;
+        return result.ToString();
     }
 
     public static double? GetTrafficLimitInGig(this PlanStateEntity entity)

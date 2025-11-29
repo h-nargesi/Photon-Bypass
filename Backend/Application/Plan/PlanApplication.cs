@@ -40,13 +40,13 @@ class PlanApplication(
                     throw new Exception($"The plan-state not found for target={target}, account-id={account_id.Value}");
 
         Log.Information("[user: {0}] session state: (target:{1}, user-count:{2}, data-left:{3}, total-data:{4}, time-left:{5}-{6})",
-            JobContext.Value.Username, target, state.SimultaneousUserCount,
+            JobContext.Value.Username, target, state.SimultaneousUser,
             state.GetTrafficLeftInGig(), state.GetTrafficLimitInGig(), state.TimeLeft?.TotalDays, state.TimeLeft?.Hours);
 
         return ApiResult<UserPlanInfoModel>.Success(new UserPlanInfoModel
         {
             RemainsTitle = state.GetRemainsTitle(),
-            SimultaneousUserCount = state.SimultaneousUserCount,
+            SimultaneousUserCount = state.SimultaneousUser,
             RemainsTimePercent = (int?)state.TimeLeftPercent,
             RemainsTrafficPercent = (int?)state.TrafficLeftPercent,
         });
@@ -65,7 +65,7 @@ class PlanApplication(
         return ApiResult<PlanInfoModel>.Success(new PlanInfoModel
         {
             Target = target,
-            SimultaneousUserCount = renew?.SimultaneousUserCount,
+            SimultaneousUserCount = renew?.SimultaneousUser,
             Days = renew?.TimeLimitInDays,
             Gigabytes = renew?.GetTrafficLimitInGig(),
         });
@@ -116,7 +116,7 @@ class PlanApplication(
 """,
             JobContext.Value.Username,
             target, count, days, gigabytes,
-            current_state.SimultaneousUserCount, current_state.TimeLeft?.TotalDays, current_state.TimeLeft?.Hours, current_state.GetTrafficLeftInGig(),
+            current_state.SimultaneousUser, current_state.TimeLeft?.TotalDays, current_state.TimeLeft?.Hours, current_state.GetTrafficLeftInGig(),
             account.Balance, estimate);
 
         var renew = new RenewalEntity
@@ -124,7 +124,7 @@ class PlanApplication(
             AccountId = account.Id,
             TimeLimitInDays = days,
             TrafficLimit = (int)(gigabytes * StaticValues.BytesInGig),
-            SimultaneousUse = count,
+            SimultaneousUser = count,
             RestrictedRealmId = await RenewalRepo.Value.GetTopRestrictedRealmId(account.Id),
         };
 
@@ -188,13 +188,13 @@ class PlanApplication(
             throw;
         }
 
-        if (count < current_state.SimultaneousUserCount)
+        if (count < current_state.SimultaneousUser)
         {
             Log.Information("""
 [user: {0}] Plan renewal change user count: (closing connections)
     change=(taget:{1}, user-count:{2}, to:{3})
 """,
-                JobContext.Value.Username, target, current_state.SimultaneousUserCount, count);
+                JobContext.Value.Username, target, current_state.SimultaneousUser, count);
 
             _ = SessionRadiusSrv.Value.CloseConnectionByUsername(renew.RestrictedRealmId, account.Username);
         }
@@ -206,7 +206,7 @@ class PlanApplication(
             EventTime = DateTime.Now,
             Title = "تمدید",
             Description = "پلن تمید شد.",
-            Value = renew.GetTitle(),
+            Value = renew.GetPlanTitle(),
         });
 
         _ = ServerMngSrv.Value.CheckUserServerBalance();

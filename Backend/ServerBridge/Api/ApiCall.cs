@@ -7,9 +7,9 @@ namespace PhotonBypass.ServerBridge.Api;
 
 public abstract class ApiCall(IHttpClientFactory factory)
 {
-    public abstract string? BaseUrl { get; }
+    protected abstract string? BaseUrl { get; }
 
-    public abstract string HttpClientKey { get; }
+    protected abstract string HttpClientKey { get; }
 
     public T PrepareApi<T>(ServerEntity server, string? base_path = null)
     {

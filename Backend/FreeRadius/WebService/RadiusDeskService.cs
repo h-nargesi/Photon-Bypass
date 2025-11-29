@@ -19,9 +19,8 @@ class RadiusDeskService : IRadiusService, IDisposable
     private const int TIMEZONE_ID = 262;
     private const string NAS_IP_ADDRESS = "NAS-IP-Address";
     private const string RD_TOTAL_DATA = "Rd-Total-Data";
-    public const string HttpClientKey = "free-radius";
 
-    public RadiusDeskService(RadWebApiOptionContext options)
+    public RadiusDeskService(RadWebApiOptionContext options, RadiusDeskApiCall call)
     {
         this.options = options.WebApiConfig ??
                        throw new ArgumentNullException(nameof(options));
@@ -346,7 +345,7 @@ class RadiusDeskService : IRadiusService, IDisposable
     {
         httpClient ??= new HttpClient
         {
-            BaseAddress = new Uri($"{options.HostUrl}/cake4/rd_cake")
+            BaseAddress = new Uri($"https://{options.HostName}/cake4/rd_cake")
         };
 
         if (token == null || await CheckToken())

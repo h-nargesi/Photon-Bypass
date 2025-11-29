@@ -10,7 +10,7 @@ public interface ISocialMediaService
 
     Task InvalidPasswordAlert(string username);
 
-    Task FinishServiceAlert(string username, string phone, string left);
+    Task FinishServiceAlert(string username, string phone, string type, string left);
 
     Task AlarmServerCapacity(IEnumerable<string> alarms);
 }

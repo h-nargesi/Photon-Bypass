@@ -7,9 +7,9 @@ public interface ISessionRadiusSyncService
 {
     Task<List<UserConnectionBinding>> GetActiveConnections(int? realm_id, string username);
     
-    Task<bool> CloseConnectionBySessionId(ServerEntity nas, string session_id);
+    Task CloseConnectionBySessionId(ServerEntity nas, string session_id);
 
-    Task<bool> CloseConnectionByUsername(int? realm_id, string username);
+    Task CloseConnectionByUsername(int? realm_id, string username);
 
     Task UpdateTrafficData(DateTime index);
 }

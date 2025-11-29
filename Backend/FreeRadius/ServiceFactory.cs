@@ -11,9 +11,10 @@ namespace PhotonBypass.FreeRadius;
 
 public static class ServiceFactory
 {
-    public static void AddRadiusServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    public static void AddRadiusDeskServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        builder.Services.AddHttpClient(RadiusDeskService.HttpClientKey, client =>
+        builder.Services.AddScoped<RadiusDeskApiCall>();
+        builder.Services.AddHttpClient(RadiusDeskApiCall.HttpClientKeyName, client =>
         {
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));

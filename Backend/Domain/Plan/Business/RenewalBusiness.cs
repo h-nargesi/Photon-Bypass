@@ -1,26 +1,27 @@
-﻿using PhotonBypass.Domain.Plan.Entity;
+﻿using System.Text;
+using PhotonBypass.Domain.Plan.Entity;
 
 namespace PhotonBypass.Domain.Plan.Business;
 
 public static class RenewalBusiness
 {
-    public static string GetTitle(this RenewalEntity entity)
+    public static string GetPlanTitle(this IRenewalEntity entity)
     {
-        var result = string.Empty;
+        var result = new StringBuilder();
 
         if (entity.TrafficLimit.HasValue)
         {
-            result += $" و {(int)(entity.TrafficLimit / StaticValues.BytesInGig)} گیگ";
+            result.Append($" و {(int)(entity.TrafficLimit / StaticValues.BytesInGig)} گیگی");
         }
 
         if (entity.TimeLimitInDays.HasValue)
         {
-            result += $" و {entity.TimeLimitInDays} روز";
+            result.Append($" و {entity.TimeLimitInDays} روزه");
         }
 
-        if (result.Length > 0) result = result[3..];
+        if (result.Length > 0) result.Remove(0, 3);
 
-        return result;
+        return result.ToString();
     }
 
     public static double? GetTrafficLimitInGig(this RenewalEntity entity)
@@ -37,7 +38,8 @@ public static class RenewalBusiness
 
         if (validation.TrafficLimit / StaticValues.BytesInGig % 25 != 0)
         {
-            throw new Exception($"Invalid renewal traffic={validation.TrafficLimit}, gigabytes={validation.TrafficLimit / StaticValues.BytesInGig}");
+            throw new Exception(
+                $"Invalid renewal traffic={validation.TrafficLimit}, gigabytes={validation.TrafficLimit / StaticValues.BytesInGig}");
         }
 
         user_message = string.Empty;

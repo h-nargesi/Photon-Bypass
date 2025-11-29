@@ -62,12 +62,14 @@ class ConnectionApplication(
             throw new UserException("دسترسی غیرمجاز به سرور!",
                 $"Closing connection ip is invalid: ({ip}, {target}, {session_id}, user-realm-id={realm_id})");
         }
-        
-        var result = await SessionRadiusSrv.CloseConnectionBySessionId(server, session_id);
 
-        if (!result)
+        try
         {
-            throw new Exception("بستن کانکشن با خطا مواجه شد!");
+            await SessionRadiusSrv.CloseConnectionBySessionId(server, session_id);
+        }
+        catch (Exception ex)
+        {
+            throw new UserException("بستن کانکشن با خطا مواجه شد!", ex);
         }
 
         _ = HistoryRepo.Value.Save(new HistoryEntity

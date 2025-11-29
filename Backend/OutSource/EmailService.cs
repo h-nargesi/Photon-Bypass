@@ -8,7 +8,7 @@ namespace PhotonBypass.OutSource;
 
 class EmailService(IOptions<EmailOptions> options) : IEmailService
 {
-    public async Task FinishServiceAlert(string fullname, string username, string email, string left)
+    public async Task FinishServiceAlert(string fullname, string username, string email, string type, string left)
     {
         if (string.IsNullOrWhiteSpace(options.Value.Address))
         {
@@ -20,20 +20,19 @@ class EmailService(IOptions<EmailOptions> options) : IEmailService
             fullname = username;
         }
 
-        var fromAddress = new MailAddress(options.Value.Address, options.Value.FullName);
-        var toAddress = new MailAddress(email, fullname);
+        var from_address = new MailAddress(options.Value.Address, options.Value.FullName);
+        var to_address = new MailAddress(email, fullname);
 
         var body = await File.ReadAllTextAsync("EmailTemplates\\FinishServiceAlert.html");
         body = body.Replace("{fullname}", fullname)
-            .Replace("{type}", type.ToString())
+            .Replace("{type}", type)
             .Replace("{left}", left);
 
-        using var message = new MailMessage(fromAddress, toAddress)
-        {
-            Subject = $"پایان سرویس | {username}",
-            IsBodyHtml = false,
-            Body = body,
-        };
+        using var message = new MailMessage(from_address, to_address);
+        
+        message.Subject = $"پایان سرویس | {username}";
+        message.IsBodyHtml = false;
+        message.Body = body;
 
         await Send(message);
     }

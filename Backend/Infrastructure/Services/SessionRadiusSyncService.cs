@@ -44,17 +44,17 @@ public class SessionRadiusSyncService(
         return result_list.SelectMany(list => list).ToList();
     }
 
-    public async Task<bool> CloseConnectionBySessionId(ServerEntity nas, string session_id)
+    public async Task CloseConnectionBySessionId(ServerEntity nas, string session_id)
     {
         var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(nas.RealmId);
 
         if (radius_list.Count <= 0)
         {
             Log.Warning("No radius server found for realm-id: ({0})", nas.RealmId);
-            return true;
+            return;
         }
 
-        var result_list = await radius_list.RunJob(radius =>
+        await radius_list.RunJob(radius =>
         {
             switch (radius.Features)
             {
@@ -65,24 +65,22 @@ public class SessionRadiusSyncService(
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
                         nas.RealmId, nas.Id, radius.Features);
-                    return Task.FromResult(false);
+                    return Task.CompletedTask;
             }
         });
-
-        return result_list.Any(r => !r);
     }
 
-    public async Task<bool> CloseConnectionByUsername(int? realm_id, string username)
+    public async Task CloseConnectionByUsername(int? realm_id, string username)
     {
         var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
 
         if (radius_list.Count <= 0)
         {
             Log.Warning("No radius server found for realm-id: ({0})", realm_id);
-            return true;
+            return;
         }
 
-        var result_list = await radius_list.RunJob(radius =>
+        await radius_list.RunJob(radius =>
         {
             switch (radius.Features)
             {
@@ -93,11 +91,9 @@ public class SessionRadiusSyncService(
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
                         realm_id, radius.Id, radius.Features);
-                    return Task.FromResult(false);
+                    return Task.CompletedTask;
             }
         });
-
-        return result_list.Any(r => !r);
     }
 
     public async Task UpdateTrafficData(DateTime index)

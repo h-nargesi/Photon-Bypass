@@ -8,5 +8,5 @@ public interface IEmailService
 
     Task SendCertEmail(string fullname, string email, CertEmailContext context);
 
-    Task FinishServiceAlert(string fullname, string username, string email, string left);
+    Task FinishServiceAlert(string fullname, string username, string email, string type, string left);
 }

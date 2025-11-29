@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace PhotonBypass.Domain.Plan.Entity;
 
 [Table("Renewal")]
-public class RenewalEntity : IBaseEntity
+public class RenewalEntity : IRenewalEntity, IBaseEntity
 {
     [Key]
     public int Id { get; set; }
@@ -13,7 +13,7 @@ public class RenewalEntity : IBaseEntity
 
     public int? RestrictedRealmId { get; set; }
 
-    public int? SimultaneousUse { get; set; }
+    public int? SimultaneousUser { get; set; }
 
     public long? TrafficLimit { get; set; }
 

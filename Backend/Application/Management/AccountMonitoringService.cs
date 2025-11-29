@@ -132,7 +132,7 @@ internal class AccountMonitoringService(
             var remains_title = plan.GetRemainsTitle();
 
             Log.Information("The user '{0}' is going to finish plan (x{1}, {2})",
-                plan.Username, plan.SimultaneousUserCount, remains_title);
+                plan.Username, plan.SimultaneousUser, remains_title);
 
             _ = HistoryRepo.Save(new HistoryEntity
             {
@@ -166,7 +166,7 @@ internal class AccountMonitoringService(
             if (account.Email != null)
             {
                 tasks.Add(EmailSrv.Value.FinishServiceAlert(
-                    account.Fullname, plan.Username, account.Email, remains_title));
+                    account.Fullname, plan.Username, account.Email, plan.GetPlanTitle(), remains_title));
 
                 IncreaseWarningTime(account);
             }
