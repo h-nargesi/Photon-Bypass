@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Hosting;
-using PhotonBypass.API;
+using PhotonBypass.Admin;
+using PhotonBypass.Portal;
 using PhotonBypass.Test.MockOutSources;
 
 namespace PhotonBypass.Test;
@@ -17,7 +18,9 @@ public abstract class ServiceInitializer : IDisposable
     private WebApplication Initialize(Type[] types)
     {
         var builder = WebApplication.CreateBuilder()
-            .AddAppServices();
+            .AddAppServices()
+            .AddPortalServices()
+            .AddAdminServices();
 
         AddDefaultServices(builder, types.ToHashSet());
         AddServices(builder);

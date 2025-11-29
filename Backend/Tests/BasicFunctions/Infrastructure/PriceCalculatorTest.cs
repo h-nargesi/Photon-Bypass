@@ -20,7 +20,7 @@ public class PriceCalculatorTest : ServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var calculator = scope.ServiceProvider.GetRequiredService<IPriceCalculator>();
-        var result = calculator.CalculatePrice(PlanType.Traffic, 5, 100 / 25);
+        var result = calculator.CalculatePrice(1, 5, 120, 100);
         Assert.Equal(310, result);
     }
 
@@ -29,43 +29,45 @@ public class PriceCalculatorTest : ServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var calculator = scope.ServiceProvider.GetRequiredService<IPriceCalculator>();
-        var result = calculator.CalculatePrice(PlanType.Monthly, 5, 3);
+        var result = calculator.CalculatePrice(2, 5, 90, 120);
         Assert.Equal(1980, result);
     }
 
     private static readonly IList<PriceEntity> Data =
     [
-        new() {
-            PlanType = PlanType.Traffic,
+        new()
+        {
+            Id = 1,
             CalculatorCode = """
-using System;
-
-public class Calculator
-{
- public static int Compute(int users, int traffic)
- {
-     return 60 + users * 10 + traffic * 50;
- }
-}
-""",
+                             using System;
+                             
+                             public class Calculator
+                             {
+                                 public static int Compute(int users, int traffic)
+                                 {
+                                     return 60 + users * 10 + traffic * 50;
+                                 }
+                             }
+                             """,
         },
-        new() {
-            PlanType = PlanType.Monthly,
+        new()
+        {
+            Id = 2,
             CalculatorCode = """
-using System;
+                             using System;
 
-public class Calculator
-{
-    public static int Compute(int users, int count)
-    {
-        var month = 190;
-        if (users >= 2) month += 150;
-        if (users >= 3) month += 120;
-        if (users >= 4) month += 100 * (users - 3);
-        return count * month;
-    }
-}
-""",
+                             public class Calculator
+                             {
+                                 public static int Compute(int users, int count)
+                                 {
+                                     var month = 190;
+                                     if (users >= 2) month += 150;
+                                     if (users >= 3) month += 120;
+                                     if (users >= 4) month += 100 * (users - 3);
+                                     return count * month;
+                                 }
+                             }
+                             """,
         }
     ];
 }

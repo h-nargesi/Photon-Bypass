@@ -26,9 +26,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Portal\Portal.csproj" />
+        <ProjectReference Include="../Admin/Admin.csproj" />
+        <ProjectReference Include="../Portal/Portal.csproj" />
 		<ProjectReference Include="../Application/Application.csproj" />
-		<ProjectReference Include="../Infrastructure/Infrastructure.csproj" />
+        <ProjectReference Include="../FreeRadius/FreeRadius.csproj" />
+        <ProjectReference Include="../MikrotikRadius/MikrotikRadius.csproj" />
+        <ProjectReference Include="../ServerBridge/ServerBridge.csproj" />
 		<ProjectReference Include="../Shared/Shared.csproj" />
 		<ProjectReference Include="../Domain/Domain.csproj" />
 	</ItemGroup>

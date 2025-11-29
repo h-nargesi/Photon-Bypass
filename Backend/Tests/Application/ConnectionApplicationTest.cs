@@ -23,18 +23,18 @@ public class ConnectionApplicationTest : ServiceInitializer
             .Returns(Task.FromResult(NasData));
         builder.Services.AddLazyScoped(_ => nas_repo.Object);
 
-        var vpn_nod_srv = new Mock<IVpnNodeService>();
-        vpn_nod_srv.Setup(x => x.GetActiveConnections(It.IsNotNull<NasEntity>(), It.IsNotNull<string>()))
-            .Returns<NasEntity, string>((s, _) =>
-            {
-                if (!NodeData.TryGetValue(s.IpAddress, out var data))
-                {
-                    data = [];
-                }
-
-                return Task.FromResult((s, data));
-            });
-        builder.Services.AddLazyScoped(_ => vpn_nod_srv.Object);
+        // var vpn_nod_srv = new Mock<IVpnNodeService>();
+        // vpn_nod_srv.Setup(x => x.GetActiveConnections(It.IsNotNull<NasEntity>(), It.IsNotNull<string>()))
+        //     .Returns<NasEntity, string>((s, _) =>
+        //     {
+        //         if (!NodeData.TryGetValue(s.IpAddress, out var data))
+        //         {
+        //             data = [];
+        //         }
+        //
+        //         return Task.FromResult((s, data));
+        //     });
+        // builder.Services.AddLazyScoped(_ => vpn_nod_srv.Object);
     }
 
     [Fact]

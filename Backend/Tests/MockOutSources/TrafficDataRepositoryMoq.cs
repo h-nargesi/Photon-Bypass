@@ -1,8 +1,9 @@
 ﻿using Moq;
-using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Test.MockOutSources.Models;
 using PhotonBypass.Tools;
 using System.Text.Json;
+using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Entity;
 
 namespace PhotonBypass.Test.MockOutSources;
 
@@ -23,7 +24,7 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSour
         var data = JsonSerializer.Deserialize<List<TrafficDataEntity>>(raw_text)
                    ?? [];
 
-        Setup(x => x.Fetch(It.IsNotNull<string>(), It.IsAny<DateTime>()))
+        Setup(x => x.Fetch(It.IsNotNull<int>(), It.IsAny<DateTime>()))
             .Returns(() =>
             {
                 OnFetch?.Invoke(data);

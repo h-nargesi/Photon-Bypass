@@ -30,7 +30,7 @@ internal class EmailServiceMoq : Mock<IEmailService>, IOutSourceMoq
                 return Task.CompletedTask;
             });
 
-        Setup(x => x.FinishServiceAlert(It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<PlanType>(), It.IsNotNull<string>()))
+        Setup(x => x.FinishServiceAlert(It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>(), It.IsNotNull<string>()))
             .Returns<string, string, string, PlanType, string>((fullname, username, email, type, left) =>
             {
                 OnFinishServiceAlert?.Invoke(fullname, username, email, type, left);

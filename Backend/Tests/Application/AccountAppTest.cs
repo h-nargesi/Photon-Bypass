@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
 using PhotonBypass.Application.Account;
-using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
 
 namespace PhotonBypass.Test.Application;

@@ -1,22 +1,33 @@
-var builder = WebApplication.CreateBuilder(args);
+using PhotonBypass;
+using PhotonBypass.Admin;
+using PhotonBypass.Portal;
+using PhotonBypass.Portal.Basical;
 
-// Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-var app = builder.Build();
+var app = WebApplication.CreateBuilder(args)
+    .AddAppServices()
+    .AddPortalServices()
+    .AddAdminServices()
+    .Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// if (app.Environment.IsDevelopment())
+// {
+//     app.UseSwagger();
+//     app.UseSwaggerUI();
+// }
 
 app.UseHttpsRedirection();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseMiddleware<ExceptionHandlingMiddlewareInDevelopment>();
+}
+else
+{
+    app.UseMiddleware<ExceptionHandlingMiddleware>();
+}
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

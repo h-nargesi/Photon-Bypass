@@ -1,7 +1,8 @@
 ﻿using PhotonBypass.Domain.Management;
+using PhotonBypass.Domain.OutSource;
+using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.Test.MockOutSources;
-using PhotonBypass.Domain.OutSource;
 
 namespace PhotonBypass.Test.Application;
 
@@ -46,49 +47,49 @@ public class AccountMonitoringServiceTest : ServiceInitializer
         await monitoring.NotifSendServices(PlanStates);
     }
 
-    private static readonly List<UserPlanStateEntity> PlanStates =
+    private static readonly List<PlanStateEntity> PlanStates =
     [
-        new()
-        {
-            Id = 1,
-            PlanType = PlanType.Monthly,
-            ExpirationDate = DateTime.Now.AddDays(-2),
-            Username = "User1"
-        },
-        new()
-        {
-            Id = 2,
-            PlanType = PlanType.Monthly,
-            ExpirationDate = null,
-            Username = "User2"
-        },
-        new()
-        {
-            Id = 3,
-            PlanType = PlanType.Monthly,
-            ExpirationDate = DateTime.Now.AddDays(-70),
-            Username = "User3"
-        },
-        new()
-        {
-            Id = 4,
-            PlanType = PlanType.Traffic,
-            TotalData = 20,
-            Username = "User4"
-        },
-        new()
-        {
-            Id = 5,
-            PlanType = PlanType.Traffic,
-            TotalData = null,
-            Username = "User5"
-        },
-        new()
-        {
-            Id = 6,
-            PlanType = PlanType.Traffic,
-            TotalData = 25,
-            Username = "User6"
-        },
+        // new()
+        // {
+        //     Id = 1,
+        //     PlanType = PlanType.Monthly,
+        //     ExpirationDate = DateTime.Now.AddDays(-2),
+        //     Username = "User1"
+        // },
+        // new()
+        // {
+        //     Id = 2,
+        //     PlanType = PlanType.Monthly,
+        //     ExpirationDate = null,
+        //     Username = "User2"
+        // },
+        // new()
+        // {
+        //     Id = 3,
+        //     PlanType = PlanType.Monthly,
+        //     ExpirationDate = DateTime.Now.AddDays(-70),
+        //     Username = "User3"
+        // },
+        // new()
+        // {
+        //     Id = 4,
+        //     PlanType = PlanType.Traffic,
+        //     TotalData = 20,
+        //     Username = "User4"
+        // },
+        // new()
+        // {
+        //     Id = 5,
+        //     PlanType = PlanType.Traffic,
+        //     TotalData = null,
+        //     Username = "User5"
+        // },
+        // new()
+        // {
+        //     Id = 6,
+        //     PlanType = PlanType.Traffic,
+        //     TotalData = 25,
+        //     Username = "User6"
+        // },
     ];
 }

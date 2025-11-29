@@ -19,15 +19,15 @@ public static class ServiceFactory
     {
         builder.Services.BindValidateReturn<ManagementOptions>(builder.Configuration);
 
-        builder.Services.AddLazyScoped<IAccountApplication, AccountApplication>();
-        builder.Services.AddLazyScoped<IAuthApplication, AuthApplication>();
-        builder.Services.AddLazyScoped<IBasicsApplication, BasicsApplication>();
-        builder.Services.AddLazyScoped<IConnectionApplication, ConnectionApplication>();
-        builder.Services.AddLazyScoped<IPlanApplication, PlanApplication>();
-        builder.Services.AddLazyScoped<IPaymentApplication, PaymentApplication>();
-        builder.Services.AddLazyScoped<IVpnApplication, VpnApplication>();
-        builder.Services.AddLazyScoped<IServerManagementService, ServerManagementService>();
-        builder.Services.AddLazyScoped<IAccountMonitoringService, AccountMonitoringService>();
+        builder.Services.AddLazyTransient<IAccountApplication, AccountApplication>();
+        builder.Services.AddLazyTransient<IAuthApplication, AuthApplication>();
+        builder.Services.AddLazyTransient<IBasicsApplication, BasicsApplication>();
+        builder.Services.AddLazyTransient<IConnectionApplication, ConnectionApplication>();
+        builder.Services.AddLazyTransient<IPlanApplication, PlanApplication>();
+        builder.Services.AddLazyTransient<IPaymentApplication, PaymentApplication>();
+        builder.Services.AddLazyTransient<IVpnApplication, VpnApplication>();
+        builder.Services.AddLazyTransient<IServerManagementService, ServerManagementService>();
+        builder.Services.AddLazyTransient<IAccountMonitoringService, AccountMonitoringService>();
 
         builder.Services.AddQuartz(quartz =>
         {

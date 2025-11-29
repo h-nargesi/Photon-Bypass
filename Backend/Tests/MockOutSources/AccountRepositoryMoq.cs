@@ -66,14 +66,14 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
                 return Task.FromResult<IList<AccountEntity>>(result);
             });
 
-        Setup(x => x.GetAccounts(It.IsNotNull<IEnumerable<int>>()))
-            .Returns<IEnumerable<int>>(user_ids =>
-            {
-                var result = data.Values.Where(x => user_ids.Contains(x.PermanentUserId))
-                    .ToDictionary(k => k.PermanentUserId);
-                OnGetAccounts?.Invoke(user_ids, result);
-                return Task.FromResult<IDictionary<int, AccountEntity>>(result);
-            });
+        // Setup(x => x.GetAccounts(It.IsNotNull<IEnumerable<int>>()))
+        //     .Returns<IEnumerable<int>>(user_ids =>
+        //     {
+        //         var result = data.Values.Where(x => user_ids.Contains(x.PermanentUserId))
+        //             .ToDictionary(k => k.PermanentUserId);
+        //         OnGetAccounts?.Invoke(user_ids, result);
+        //         return Task.FromResult<IDictionary<int, AccountEntity>>(result);
+        //     });
     }
 
     private const string FilePath = "Data/account.json";

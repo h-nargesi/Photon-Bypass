@@ -5,20 +5,14 @@ using System.Reflection;
 
 namespace PhotonBypass.Infra.Services;
 
-class PriceCalculator : IPriceCalculator
+class PriceCalculator(Lazy<IPriceRepository> repository) : IPriceCalculator
 {
-    private Dictionary<int, MethodInfo> calculators;
-    private readonly IPriceRepository repository;
-
-    public PriceCalculator(IPriceRepository repository)
-    {
-        this.repository = repository;
-        this.repository.OnSaved += async (_, _) => calculators = await FetchCalculatorCode();
-        calculators = FetchCalculatorCode().Result;
-    }
+    private Dictionary<int, MethodInfo>? calculators;
 
     public int CalculatePrice(int price_id, int users, int days, int gigabytes)
     {
+        calculators ??= InitializeCalculators().Result;
+
         if (!calculators.TryGetValue(price_id, out var method))
         {
             method = calculators.Values.First();
@@ -32,9 +26,15 @@ class PriceCalculator : IPriceCalculator
         return (int)(method.Invoke(null, [users, days, gigabytes]) ?? 0);
     }
 
+    private Task<Dictionary<int, MethodInfo>> InitializeCalculators()
+    {
+        repository.Value.OnSaved += async (_, _) => calculators = await FetchCalculatorCode();
+        return FetchCalculatorCode();
+    }
+
     private async Task<Dictionary<int, MethodInfo>> FetchCalculatorCode()
     {
-        var list = (await repository.GetLatest())
+        var list = (await repository.Value.GetLatest())
             .OrderByDescending(c => c.IsDefault)
             .ThenBy(c => c.Id)
             .Select(c => (c.Id, Method: Compile(c.CalculatorCode)))
@@ -79,9 +79,9 @@ class PriceCalculator : IPriceCalculator
         var assembly = Assembly.Load(ms.ToArray());
 
         var type = assembly.GetType("Calculator") ??
-            throw new Exception("Price Calculator Error: The 'Calculator' class not found.");
+                   throw new Exception("Price Calculator Error: The 'Calculator' class not found.");
         var method = type.GetMethod("Compute") ??
-            throw new Exception("Price Calculator Error: The 'Compute' method not found.");
+                     throw new Exception("Price Calculator Error: The 'Compute' method not found.");
 
         return method;
     }

@@ -9,7 +9,7 @@ namespace PhotonBypass.Portal;
 
 public static class ServiceFactory
 {
-    public static TBuilder AddApiServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    public static TBuilder AddPortalServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         LogConfiguration.InitializeLogService(builder.Configuration);
 
@@ -31,7 +31,6 @@ public static class ServiceFactory
 
         builder.Services.AddLazyScoped<IAccessService, AccessService>();
         builder.Services.AddLazyScoped<IJobContext, JobContext>();
-        builder.AddApplicationServices();
 
         return builder;
     }
