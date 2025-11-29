@@ -25,7 +25,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikrotikRadius", "MikrotikR
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceFactoryHandler", "ServiceFactoryHandler\ServiceFactoryHandler.csproj", "{84BA5D9F-4AB4-47E8-A11B-BD6FB3C9A090}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikrotikBase", "MikrotikBase\MikrotikBase.csproj", "{0DAFE75D-AFFD-4F42-A131-1B3290A7C8A7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServerBridge", "ServerBridge\ServerBridge.csproj", "{0DAFE75D-AFFD-4F42-A131-1B3290A7C8A7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

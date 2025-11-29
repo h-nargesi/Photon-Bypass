@@ -7,6 +7,7 @@ using PhotonBypass.Tools;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Mikrotik.Base;
+using PhotonBypass.Mikrotik.Ssh;
 
 namespace PhotonBypass.OutSource;
 

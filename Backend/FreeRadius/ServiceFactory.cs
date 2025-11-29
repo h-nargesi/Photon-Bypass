@@ -5,6 +5,7 @@ using PhotonBypass.FreeRadius.Repository;
 using PhotonBypass.FreeRadius.Repository.DbContext;
 using PhotonBypass.FreeRadius.WebService;
 using PhotonBypass.Tools;
+using System.Net.Http.Headers;
 
 namespace PhotonBypass.FreeRadius;
 
@@ -12,6 +13,12 @@ public static class ServiceFactory
 {
     public static void AddRadiusServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.Services.AddHttpClient(RadiusDeskService.HttpClientKey, client =>
+        {
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json"));
+        });
+
         builder.Services.AddScoped<RadDbContext>();
         builder.Services.AddScoped<RadWebApiOptionContext>();
 

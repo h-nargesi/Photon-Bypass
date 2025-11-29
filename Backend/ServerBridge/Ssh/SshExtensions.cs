@@ -3,7 +3,7 @@ using PhotonBypass.ErrorHandler;
 using Renci.SshNet;
 using Serilog;
 
-namespace PhotonBypass.Mikrotik.Base;
+namespace PhotonBypass.ServerBridge.Ssh;
 
 public static class SshExtensions
 {
@@ -35,6 +35,6 @@ public static class SshExtensions
         if (string.IsNullOrEmpty(execution.Error)) return true;
         
         throw new UserException("خطای اجرای دستور در سرور!",
-            $"Cannot connect to server: {node.ConnectionInfo.Host}");
+            $"Cannot connect to server: {node.ConnectionInfo.Host}\n{execution.Error}");
     }
 }

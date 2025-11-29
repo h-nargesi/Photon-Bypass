@@ -1,11 +1,10 @@
-﻿using System.Net.Http.Json;
-using System.Web;
-using Microsoft.Extensions.Options;
-using PhotonBypass.Domain.Servers.JsonType;
+﻿using PhotonBypass.Domain.Servers.JsonType;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.FreeRadius.WebService.ApiResponseModel;
 using PhotonBypass.Tools;
+using System.Net.Http.Json;
+using System.Web;
 
 namespace PhotonBypass.FreeRadius.WebService;
 
@@ -20,6 +19,7 @@ class RadiusDeskService : IRadiusService, IDisposable
     private const int TIMEZONE_ID = 262;
     private const string NAS_IP_ADDRESS = "NAS-IP-Address";
     private const string RD_TOTAL_DATA = "Rd-Total-Data";
+    public const string HttpClientKey = "free-radius";
 
     public RadiusDeskService(RadWebApiOptionContext options)
     {
@@ -33,10 +33,10 @@ class RadiusDeskService : IRadiusService, IDisposable
 
         var data = new Dictionary<string, object?>
         {
-            {user_id.ToString(), user_id },
-            {"rb", active },
-            {"token", token },
-            {"sel_language", SEL_LANGUAGE },
+            { user_id.ToString(), user_id },
+            { "rb", active },
+            { "token", token },
+            { "sel_language", SEL_LANGUAGE },
         };
 
         var response = await PostAsync<object, dynamic>("permanent-users/enable-disable.json", data);
@@ -346,9 +346,9 @@ class RadiusDeskService : IRadiusService, IDisposable
     {
         httpClient ??= new HttpClient
         {
-            BaseAddress = new Uri($"{options.BaseUrl}/cake4/rd_cake")
+            BaseAddress = new Uri($"{options.HostUrl}/cake4/rd_cake")
         };
-        
+
         if (token == null || await CheckToken())
         {
             var success = await Login();

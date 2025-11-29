@@ -4,11 +4,13 @@
 		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<RootNamespace>PhotonBypass.Mikrotik.Base</RootNamespace>
+		<RootNamespace>PhotonBypass.ServerBridge</RootNamespace>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="SSH.NET" Version="2025.0.0" />
+		<PackageReference Include="Refit" Version="8.0.0" />
+		<PackageReference Include="tik4net" Version="3.5.0" />
 	</ItemGroup>
 
     <ItemGroup>

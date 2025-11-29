@@ -2,9 +2,9 @@ using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
 using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
-namespace PhotonBypass.Mikrotik.Base;
+namespace PhotonBypass.ServerBridge.Ssh;
 
-public static class ProcessBusiness
+public static class ProcessParser
 {
     public static async Task<ProcessEntity?> ParseMikrotikScriptFile(string filename)
     {

@@ -9,7 +9,7 @@
 
 	<ItemGroup>
         <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
-        <ProjectReference Include="..\MikrotikBase\MikrotikBase.csproj" />
+        <ProjectReference Include="..\MikrotikBase\ServerBridge.csproj" />
 		<ProjectReference Include="..\Domain\Domain.csproj" />
 		<ProjectReference Include="..\Shared\Shared.csproj" />
 	</ItemGroup>

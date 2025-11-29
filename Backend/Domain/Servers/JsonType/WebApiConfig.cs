@@ -2,7 +2,7 @@ namespace PhotonBypass.Domain.Servers.JsonType;
 
 public class WebApiConfig
 {
-    public string? BaseUrl { get; set; }
+    public string? HostName { get; set; }
 
     public string? Username { get; set; }
 

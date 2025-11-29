@@ -1,15 +1,9 @@
 using System.Text.RegularExpressions;
 
-namespace PhotonBypass.Mikrotik.Base;
+namespace PhotonBypass.ServerBridge.Ssh;
 
 internal static partial class ScriptPatterns
 {
-    /*
-# regex: regex-(code)
-# 0: ip-address
-# 3: result
-     */
-
     [GeneratedRegex(@"^#\s*\[Process\s*:\s*([\w \-]+)\]")]
     public static partial Regex ProcessParser();
 

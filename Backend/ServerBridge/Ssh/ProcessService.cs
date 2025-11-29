@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using PhotonBypass.Domain.Servers.Entity;
 using Renci.SshNet;
 
-namespace PhotonBypass.Mikrotik.Base;
+namespace PhotonBypass.ServerBridge.Ssh;
 
 public static partial class ProcessService
 {

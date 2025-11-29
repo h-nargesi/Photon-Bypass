@@ -1,5 +1,5 @@
 using PhotonBypass.Domain.Servers.Entity;
-using PhotonBypass.Mikrotik.Base;
+using PhotonBypass.ServerBridge.Ssh;
 
 namespace PhotonBypass.Mikrotik.Radius.Scripts;
 
@@ -7,8 +7,8 @@ public static class BuiltInProcess
 {
     static BuiltInProcess()
     {
-        var close_ppp_session_task = ProcessBusiness.ParseMikrotikScriptFile("close_ppp_session.rsc");
-        var close_ppp_user_task = ProcessBusiness.ParseMikrotikScriptFile("close_ppp_user.rsc");
+        var close_ppp_session_task = ProcessParser.ParseMikrotikScriptFile("close_ppp_session.rsc");
+        var close_ppp_user_task = ProcessParser.ParseMikrotikScriptFile("close_ppp_user.rsc");
 
         Task.WaitAll(close_ppp_session_task, close_ppp_user_task);
         
