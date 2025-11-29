@@ -4,16 +4,14 @@ using PhotonBypass.FreeRadius.Interfaces;
 
 namespace PhotonBypass.FreeRadius.Repository;
 
-class StaticRepository : IStaticRepository
+class StaticRepository(
+    Lazy<ICloudRepository> CloudRepo,
+    Lazy<IProfileRepository> ProfileRepo) : IStaticRepository
 {
-    public StaticRepository(ICloudRepository cloud_repo,
-        IProfileRepository profile_repo)
-    {
-        WebCloudId = cloud_repo.FindWebCloud().Result;
-        DefaultProfile = profile_repo.FindDefaultProfile(WebCloudId).Result;
-    }
+    private int? webCloudId;
+    private ProfileEntity? defaultProfile;
 
-    public int WebCloudId { get; }
+    public int WebCloudId => webCloudId ??= CloudRepo.Value.FindWebCloud().Result;
 
-    public ProfileEntity DefaultProfile { get; }
+    public ProfileEntity DefaultProfile => defaultProfile ??= ProfileRepo.Value.FindDefaultProfile(WebCloudId).Result;
 }
