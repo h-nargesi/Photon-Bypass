@@ -345,7 +345,7 @@ class RadiusDeskService : IRadiusService, IDisposable
     {
         httpClient ??= new HttpClient
         {
-            BaseAddress = new Uri($"https://{options.HostName}/cake4/rd_cake")
+            BaseAddress = new Uri($"{options.HttpsUrl}/cake4/rd_cake")
         };
 
         if (token == null || await CheckToken())

@@ -22,16 +22,17 @@ public partial class SessionRadiusSyncService(MikrotikApiCall call) : ISessionRa
         var list = await call.PrepareApi<ISessions>(radius)
             .PrintByUsername(username);
 
-        return list.Select(session => new UserConnectionBinding
-            {
-                CallerId = session.CallerId,
-                NasIpAddress = session.NasIpAddress,
-                SessionId = session.SessionId,
-                State = ConnectionState.Up,
-                UpTime = session.UpTime,
-                Username = session.Username,
-            })
-            .ToList();
+        //return list.Select(session => new UserConnectionBinding
+        //    //{
+        //    //    CallerId = session.CallerId,
+        //    //    NasIpAddress = session.NasIpAddress,
+        //    //    SessionId = session.SessionId,
+        //    //    State = ConnectionState.Up,
+        //    //    UpTime = session.UpTime,
+        //    //    Username = session.Username,
+        //    //})
+        //    .ToList();
+        throw new NotImplementedException();
     }
 
     public async Task CloseConnectionBySessionId(ServerEntity radius, ServerEntity nas, string session_id)

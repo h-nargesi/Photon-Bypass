@@ -12,7 +12,14 @@ public static class Tik4NetExtension
 
         var connection = ConnectionFactory.CreateConnection(TikConnectionType.ApiSsl);
 
-        await connection.OpenAsync(config.HostName, config.Username, config.Password);
+        if (config.Port.HasValue)
+        {
+            await connection.OpenAsync(config.HostName, config.Port.Value, config.Username, config.Password);
+        }
+        else
+        {
+            await connection.OpenAsync(config.HostName, config.Username, config.Password);
+        }
 
         return connection;
     }

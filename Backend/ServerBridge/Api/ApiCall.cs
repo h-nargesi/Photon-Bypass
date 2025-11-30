@@ -21,10 +21,19 @@ public abstract class ApiCall(IHttpClientFactory factory)
             throw new Exception($"The base-url configuration is not set for server ({server.Id}:{server.Name})");
         }
 
+        if (base_path == null)
+        {
+            var base_path_field = typeof(T).GetField("BasePath");
+            if (base_path_field != null)
+            {
+                base_path = base_path_field.GetValue(null)?.ToString();
+            }
+        }
+
         var http = factory.CreateClient(HttpClientKey);
 
         base_path = $"{BaseUrl?.Trim('/')}/{base_path?.Trim('/')}";
-        base_path = $"https://{config.HostName}/{base_path.Trim('/')}";
+        base_path = $"{config.HttpsUrl}/{base_path.Trim('/')}";
         http.BaseAddress = new Uri(base_path);
 
         var auth_array = Encoding.ASCII.GetBytes($"{config.Username}:{config.Password}");
