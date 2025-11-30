@@ -73,26 +73,41 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return result.ToDictionary(k => k.Id);
     }
 
+    public async Task<IDictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames)
+    {
+        await OpenAsync();
+
+        var sql = $"""
+                   select {nameof(AccountEntity.Id)}, {nameof(AccountEntity.Username)}
+                   from {TableName}
+                   where {nameof(AccountEntity.Username)} in (@usernames)
+                   """;
+
+        var list = await QueryAsync(sql, usernames);
+
+        return list.ToDictionary(pair => (string)pair.Username, pair => (int)pair.Id);
+    }
+
     public async Task<int?> GetActiveAccountId(string username)
     {
         await OpenAsync();
-        
+
         var result = await ExecuteScalarAsync<int>(
             $"select {nameof(AccountEntity.Id)} from {TableName} where {nameof(AccountEntity.Username)} = @username"
             , new { username });
 
         return result;
     }
-    
+
     public async Task<bool> CheckUsername(string username)
     {
         await OpenAsync();
-        
+
         var result = await ExecuteScalarAsync<int>($"""
-select case when exists(
-    select * from {TableName} where {nameof(AccountEntity.Username)} = @username
-) then 1 else 0 end
-"""
+                                                    select case when exists(
+                                                        select * from {TableName} where {nameof(AccountEntity.Username)} = @username
+                                                    ) then 1 else 0 end
+                                                    """
             , new { username });
 
         return result == 1;

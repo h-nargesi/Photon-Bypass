@@ -92,6 +92,21 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
             .ToDictionary(k => k.Key, v=> v.ToList());
     }
 
+    public async Task<Dictionary<string, int>> GetServerIdByIpAddress(IEnumerable<string> ips)
+    {
+        await OpenAsync();
+
+        var sql = $"""
+                   select {nameof(ServerEntity.Id)}, {nameof(ServerEntity.IpAddress)}
+                   from {TableName}
+                   where {nameof(ServerEntity.IpAddress)} in (@ips)
+                   """;
+
+        var list = await QueryAsync(sql, ips);
+
+        return list.ToDictionary(pair => (string)pair.IpAddress, pair => (int)pair.Id);
+    }
+
     public async Task<Dictionary<int, ServerEntity>> GetActiveRadiusInRealm(IEnumerable<int> realm_ids)
     {
         await OpenAsync();
