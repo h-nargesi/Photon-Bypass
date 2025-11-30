@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<AssemblyName>tik4net</AssemblyName>
+		<RootNamespace>tik4net</RootNamespace>
+		<Description>Mikrotik API library</Description>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<PackageTags>Mikrotik</PackageTags>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+		<DefineConstants>TRACE;DEBUG</DefineConstants>
+		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+	</PropertyGroup>
+</Project>

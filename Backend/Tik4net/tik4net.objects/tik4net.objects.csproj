@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<AssemblyName>tik4net.objects</AssemblyName>
+		<RootNamespace>tik4net.Objects</RootNamespace>
+		<Description>Mikrotik API library - O/R mapper API</Description>
+		<PackageTags>Mikrotik</PackageTags>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\tik4net\tik4net.csproj" />
+	</ItemGroup>
+</Project>
