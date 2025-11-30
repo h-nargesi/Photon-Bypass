@@ -1,6 +1,5 @@
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers.Entity;
-using PhotonBypass.Infra.Dto;
 using PhotonBypass.Infra.Radius.UserManager;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge.Tik4net;
@@ -75,13 +74,13 @@ public partial class SessionRadiusSyncService : ISessionRadiusSyncService
         }
     }
 
-    public async Task<List<TrafficDataDto>> UpdateTrafficData(ServerEntity radius, DateTime index)
+    public async Task<List<TrafficDataBinding>> UpdateTrafficData(ServerEntity radius, DateTime index)
     {
         using var connection = await radius.TikApiConnect();
 
         return connection.LoadList<SessionModel>(
             TikParam.Greater<SessionModel>(nameof(SessionModel.Started), index.ToString("o")))
-            .Select(session => new TrafficDataDto
+            .Select(session => new TrafficDataBinding
             {
                 Id = session.Id,
                 SessionId = session.SessionId ?? string.Empty,

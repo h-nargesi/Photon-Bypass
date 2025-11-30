@@ -11,5 +11,5 @@ public interface ISessionRadiusSyncService
 
     Task CloseConnectionByUsername(int? realm_id, string username);
 
-    Task UpdateTrafficData(DateTime index);
+    Task<List<TrafficDataBinding>> GetTrafficData(DateTime index);
 }

@@ -15,4 +15,6 @@ public interface IServerRepository : IEditableRepository<ServerEntity>
     Task<List<ServerEntity>> GetActiveRadiusInRealmOrAll(int? realm_id);
 
     Task<Dictionary<int, List<ServerEntity>>> GetAllActiveNasInRealm(IEnumerable<int> realm_ids);
+
+    Task<Dictionary<string, int>> GetServerIdByIpAddress(IEnumerable<string> ips);
 }

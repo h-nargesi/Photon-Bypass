@@ -6,7 +6,8 @@ using PhotonBypass.Infra.Repository.DbContext;
 
 namespace PhotonBypass.Infra.Repository;
 
-class TrafficDataRepository(LocalDbContext context) : EditableRepository<TrafficDataEntity>(context), ITrafficDataRepository
+class TrafficDataRepository(LocalDbContext context)
+    : EditableRepository<TrafficDataEntity>(context), ITrafficDataRepository
 {
     public async Task<List<TrafficDataEntity>> Fetch(DateTime from)
     {
@@ -24,7 +25,8 @@ class TrafficDataRepository(LocalDbContext context) : EditableRepository<Traffic
         await OpenAsync();
 
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(TrafficDataEntity.AccountId)} = account_id and {nameof(TrafficDataEntity.StartSession)} >= @from")
+            .Where(
+                $"{nameof(TrafficDataEntity.AccountId)} = account_id and {nameof(TrafficDataEntity.StartSession)} >= @from")
             .WithParameters(new { account_id, from }));
 
         return [.. result];
@@ -35,7 +37,8 @@ class TrafficDataRepository(LocalDbContext context) : EditableRepository<Traffic
         await OpenAsync();
 
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(TrafficDataEntity.NasId)} in (@nas_ids) and {nameof(TrafficDataEntity.StartSession)} >= @from")
+            .Where(
+                $"{nameof(TrafficDataEntity.NasId)} in (@nas_ids) and {nameof(TrafficDataEntity.StartSession)} >= @from")
             .WithParameters(new { nas_ids, from }));
 
         return result.GroupBy(k => k.NasId)
@@ -45,8 +48,16 @@ class TrafficDataRepository(LocalDbContext context) : EditableRepository<Traffic
     public async Task<DateTime?> LastUpdateTime()
     {
         await OpenAsync();
+
+        var sql = @$"
+select min({nameof(TrafficDataEntity.StartSession)}) from {TableName} 
+where {nameof(TrafficDataEntity.EndSession)} is null";
         
-        var sql = $"select max({nameof(TrafficDataEntity.StartSession)}) from {TableName}";        
-        return await ExecuteScalarAsync<DateTime>(sql);
+        var min_active = await ExecuteScalarAsync<DateTime?>(sql);
+
+        if (min_active.HasValue) return min_active;
+        
+        sql = @$"select max({nameof(TrafficDataEntity.StartSession)}) from {TableName}";
+        return await ExecuteScalarAsync<DateTime?>(sql);
     }
 }

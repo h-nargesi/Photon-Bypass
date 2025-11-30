@@ -10,7 +10,7 @@ namespace PhotonBypass.Test.ServerBridge;
 
 public class ApiCallTest : ServiceInitializer
 {
-    private readonly static ServerEntity server = new ServerEntity
+    private static readonly ServerEntity Server = new ServerEntity
     {
         Config = new ServerConfiguration
         {
@@ -29,7 +29,7 @@ public class ApiCallTest : ServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var call = new MikrotikApiCall(scope.ServiceProvider.GetRequiredService<IHttpClientFactory>());
-        var sessions = call.PrepareApi<ISessions>(server);
+        var sessions = call.PrepareApi<ISessions>(Server);
         
         var sessions_list = await sessions.PrintByUsername("test_hamed@aw");        
     }
@@ -37,7 +37,7 @@ public class ApiCallTest : ServiceInitializer
     [Fact]
     public async Task PppActivePrintTik()
     {
-        using var connection = await server.TikApiConnect();
+        using var connection = await Server.TikApiConnect();
 
         var active_ppp_list = connection.LoadList<PppActive>(new TikParam("name", "Anahid@ry"));
     }
@@ -45,7 +45,7 @@ public class ApiCallTest : ServiceInitializer
     [Fact]
     public async Task UserManaerSessionPrintTik()
     {
-        using var connection = await server.TikApiConnect();
+        using var connection = await Server.TikApiConnect();
 
         var active_ppp_list = connection.LoadList<SessionModel>(new TikParam("user", "test_hamed@aw"));
     }

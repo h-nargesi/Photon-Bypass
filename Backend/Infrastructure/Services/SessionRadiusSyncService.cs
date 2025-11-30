@@ -1,17 +1,14 @@
 using PhotonBypass.Domain.Plan;
-using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
-using PhotonBypass.Infra.Dto;
 using Serilog;
 
 namespace PhotonBypass.Infra.Services;
 
 public class SessionRadiusSyncService(
     Lazy<IServerRepository> ServerRepo,
-    Lazy<ITrafficDataRepository> TrafficRepo,
     Lazy<Radius.UserManager.ISessionRadiusSyncService> MikrotikRadius,
     Lazy<Radius.RadiusDesk.ISessionRadiusSyncService> RadiusDesk)
     : ISessionRadiusSyncService
@@ -96,18 +93,11 @@ public class SessionRadiusSyncService(
         });
     }
 
-    public async Task UpdateTrafficData(DateTime index)
+    public async Task<List<TrafficDataBinding>> GetTrafficData(DateTime index)
     {
         var radius_list = await ServerRepo.Value.GetAllActiveRadius();
 
-        if (radius_list.Count <= 0) return;
-
-        var last_update_time = await TrafficRepo.Value.LastUpdateTime();
-
-        if (last_update_time > index)
-            index = last_update_time.Value;
-
-        var current_traffic_data_task = TrafficRepo.Value.Fetch(index);
+        if (radius_list.Count <= 0) return [];
 
         var loaded_data_list_group = await radius_list.RunJob(radius_server =>
         {
@@ -120,45 +110,10 @@ public class SessionRadiusSyncService(
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
                         radius_server.RealmId, radius_server.Id, radius_server.Features);
-                    return Task.FromResult(new List<TrafficDataDto>());
+                    return Task.FromResult(new List<TrafficDataBinding>());
             }
         });
 
-        var traffic_data_list = Merge(
-            await current_traffic_data_task,
-            loaded_data_list_group.SelectMany(d => d),
-            index);
-
-        await TrafficRepo.Value.BachSave(traffic_data_list);
-    }
-
-    private static List<TrafficDataEntity> Merge(List<TrafficDataEntity> destination,
-        IEnumerable<TrafficDataEntity> source, DateTime min_date_time)
-    {
-        var destination_dictionary = destination.ToDictionary(k => k.SessionId);
-        var new_data = new List<TrafficDataEntity>();
-
-        foreach (var traffic in source)
-        {
-            if (traffic.StartSession < min_date_time || traffic.StartSession >= DateTime.Now)
-            {
-                continue;
-            }
-
-            if (destination_dictionary.TryGetValue(traffic.SessionId, out var data))
-            {
-                if (data.DataIn == traffic.DataIn && data.DataOut == traffic.DataOut) continue;
-
-                data.DataOut = traffic.DataOut;
-                data.DataIn = traffic.DataIn;
-                new_data.Add(data);
-            }
-            else
-            {
-                new_data.Add(traffic);
-            }
-        }
-
-        return new_data;
+        return [..loaded_data_list_group.SelectMany(list => list)];
     }
 }

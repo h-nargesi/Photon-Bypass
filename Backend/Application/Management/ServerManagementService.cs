@@ -1,20 +1,25 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Text;
+using System.Text.RegularExpressions;
+using Microsoft.Extensions.Options;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
-using System.Text;
-using System.Text.RegularExpressions;
+using Serilog;
 
 namespace PhotonBypass.Application.Management;
 
 partial class ServerManagementService(
     IRealmRepository RealmRepo,
-    ISessionRadiusSyncService SessionRadiusSrv,
+    ITrafficDataRepository TrafficDataRepo,
+    Lazy<ISessionRadiusSyncService> SessionRadiusSrv,
     Lazy<IServerRepository> ServerRepo,
-    Lazy<ITrafficDataRepository> TrafficDataRepo,
+    Lazy<IAccountRepository> AccountRepo,
     Lazy<ISocialMediaService> SocialSrv,
     IOptions<ManagementOptions> Options)
     : IServerManagementService
@@ -36,7 +41,8 @@ partial class ServerManagementService(
         if (Options.Value.DefaultPrivateKeyOVpn == null)
             throw new Exception("OVpn Private key is not set in config!");
 
-        var realm_name = realm_id.HasValue ? (await RealmRepo.GetName(realm_id.Value)) : "All";
+        var realm_name = realm_id.HasValue ? (await RealmRepo.GetName(realm_id.Value)) : null;
+        if (realm_name == null) realm_name = "All";
         var nas_task = ServerRepo.Value.GetAllActiveNasDomainInRealm(realm_id);
 
         var cert_file = await File.ReadAllBytesAsync(cert_path);
@@ -85,17 +91,36 @@ partial class ServerManagementService(
         }
     }
 
+    public async Task UpdateTrafficData(DateTime index)
+    {
+        var last_update_time = await TrafficDataRepo.LastUpdateTime();
+
+        if (last_update_time > index)
+            index = last_update_time.Value;
+
+        var current_traffic_task = TrafficDataRepo.Fetch(index);
+
+        var loaded_traffic_task = SessionRadiusSrv.Value.GetTrafficData(index);
+
+        var traffic_data_list = await Merge(
+            await current_traffic_task,
+            await loaded_traffic_task,
+            index);
+
+        await TrafficDataRepo.BachSave(traffic_data_list);
+    }
+
     private async Task<Dictionary<RealmEntity, (double Rate, long Cap)>> LoadServersCapacity()
     {
         var index = DateTime.Now.AddDays(-30);
-        await SessionRadiusSrv.UpdateTrafficData(index);
+        await UpdateTrafficData(index);
 
         var realms = await RealmRepo.FetchAllActiveRealm();
 
         var clusters = await ServerRepo.Value.GetAllActiveNasInRealm(realms.Select(r => r.Id));
         var server_ids = clusters.SelectMany(s => s.Value).Select(s => s.Id).ToList();
 
-        var traffics = (await TrafficDataRepo.Value.Fetch(server_ids, index))
+        var traffics = (await TrafficDataRepo.Fetch(server_ids, index))
             .ToDictionary(k =>
                 k.Key, v =>
                 v.Value.Select(t => (t.StartSession, t.TotalData))
@@ -139,6 +164,70 @@ partial class ServerManagementService(
             .Replace(cert, $"setenv FRIENDLY_NAME \"{name}\"");
 
         return cert;
+    }
+
+    private async Task<List<TrafficDataEntity>> Merge(List<TrafficDataEntity> destination,
+        List<TrafficDataBinding> source, DateTime min_date_time)
+    {
+        var destination_dictionary = destination.ToDictionary(k => k.SessionId);
+        var new_data = new List<TrafficDataEntity>();
+
+        var account_dictionary = 
+            await AccountRepo.Value.GetAccountIdByUsername(source.Select(traffic => traffic.Username).ToHashSet());
+        
+        var server_dictionary =
+            await ServerRepo.Value.GetServerIdByIpAddress(
+                source.Where(traffic=>traffic.NasIpAddress != null)
+                    .Select(traffic => traffic.NasIpAddress ?? string.Empty)
+                    .ToHashSet());
+
+        foreach (var traffic in source)
+        {
+            if (traffic.StartSession < min_date_time || traffic.StartSession >= DateTime.Now)
+            {
+                continue;
+            }
+
+            if (destination_dictionary.TryGetValue(traffic.SessionId, out var data))
+            {
+                if (data.DataIn == traffic.DataIn && data.DataOut == traffic.DataOut) continue;
+
+                data.DataOut = traffic.DataOut;
+                data.DataIn = traffic.DataIn;
+                new_data.Add(data);
+            }
+            else
+            {
+                if (!account_dictionary.TryGetValue(traffic.Username, out var account_id))
+                {
+                    Log.Error("The incoming traffic data had invalid username: ({0}).", 
+                        traffic.Username);
+                    continue;
+                }
+                
+                if (traffic.NasIpAddress == null || 
+                    !server_dictionary.TryGetValue(traffic.NasIpAddress, out var server_id))
+                {
+                    Log.Error("The incoming traffic data had invalid nas-ip: ({0}).", 
+                        traffic.NasIpAddress);
+                    continue;
+                }
+
+                new_data.Add(new TrafficDataEntity
+                {
+                    AccountId = account_id,
+                    NasId = server_id,
+                    SessionId = traffic.SessionId,
+                    DataIn = traffic.DataIn,
+                    DataOut = traffic.DataOut,
+                    StartSession = traffic.StartSession,
+                    EndSession = traffic.EndSession,
+                    Created = traffic.Created,
+                });
+            }
+        }
+
+        return new_data;
     }
 
     [GeneratedRegex(@"remote ([\w\-])\.photon-bypass\.com")]

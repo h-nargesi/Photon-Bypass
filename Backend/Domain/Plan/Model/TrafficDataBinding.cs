@@ -1,12 +1,10 @@
-﻿namespace PhotonBypass.Infra.Dto;
+﻿namespace PhotonBypass.Domain.Plan.Model;
 
-public class TrafficDataDto
+public class TrafficDataBinding
 {
     public int Id { get; set; }
 
     public string Username { get; set; } = null!;
-
-    public string? NasName { get; set; }
 
     public string? NasIpAddress { get; set; }
 

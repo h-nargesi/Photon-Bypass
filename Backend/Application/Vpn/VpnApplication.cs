@@ -7,7 +7,6 @@ using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Entity;
-using PhotonBypass.Domain.Servers;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
@@ -21,7 +20,6 @@ class VpnApplication(
     Lazy<IPlanStateRepository> PlanStateRepo,
     Lazy<IAccountRadiusSyncService> AccountRadiusSrv,
     Lazy<IServerManagementService> ServerMngSrv,
-    Lazy<ISessionRadiusSyncService> SessionRadiusSyncSrv,
     Lazy<IEmailService> EmailSrv,
     Lazy<IJobContext> JobContext)
     : IVpnApplication
@@ -123,7 +121,7 @@ class VpnApplication(
     public async Task<ApiResult<TrafficDataModel>> TrafficData(string target)
     {
         var min_date_time = DateTime.Now.AddDays(-MaxDateBefore);
-        await SessionRadiusSyncSrv.Value.UpdateTrafficData(min_date_time);
+        await ServerMngSrv.Value.UpdateTrafficData(min_date_time);
         
         var account_id = await AccountRepo.Value.GetActiveAccountId(target);
         if (!account_id.HasValue)

@@ -10,4 +10,6 @@ public interface IServerManagementService
     Task<CertContext> GetDefaultCertificate(int? realm_id);
 
     Task CheckUserServerBalance();
+    
+    Task UpdateTrafficData(DateTime index);
 }
