@@ -160,16 +160,16 @@ namespace tik4net.Api
             //parameters
             result.AddRange(_parameters.Concat(additionalParamemeters).Select(p =>
             {
-                if (p.Name.StartsWith("=")) //NameValue format in parameter name
+                if (p.Name.StartsWith('=')) //NameValue format in parameter name
                     return string.Format("{0}={1}", p.Name, p.Value);
-                else if (p.Name.StartsWith("?")) //Filter format in parameter name
+                else if (p.Name.StartsWith('?')) //Filter format in parameter name
                     return string.Format("{0}={1}", p.Name, p.Value);
                 else
                 {
                     switch (ResolveParameterFormat(defaultParameterFormat, _defaultParameterFormat, p))
                     {
                         case TikCommandParameterFormat.Filter:
-                            return string.Format("?{0}={1}", p.Name, p.Value);
+                            return FormatPair('?', p.Name, p.Value);
                         case TikCommandParameterFormat.NameValue:
                             return string.Format("={0}={1}", p.Name, p.Value);
                         case TikCommandParameterFormat.Tag:
@@ -182,6 +182,11 @@ namespace tik4net.Api
                 }
             }));
             return result.ToArray();
+        }
+
+        private static string FormatPair(char code, string key, string value)
+        {
+            return code + (string.IsNullOrEmpty(value) ? key : $"{key}={value}");
         }
 
         private IEnumerable<ApiSentence> EnsureApiSentences(IEnumerable<ITikSentence> sentences)

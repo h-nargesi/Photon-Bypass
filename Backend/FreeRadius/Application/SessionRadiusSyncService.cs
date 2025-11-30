@@ -1,7 +1,7 @@
-using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.FreeRadius.WebService;
+using PhotonBypass.Infra.Dto;
 using PhotonBypass.Infra.Radius.RadiusDesk;
 
 namespace PhotonBypass.FreeRadius.Application;
@@ -26,7 +26,7 @@ public class SessionRadiusSyncService(RadWebApiOptionContext web_web_api_context
         throw new NotImplementedException();
     }
 
-    public Task<List<TrafficDataEntity>> UpdateTrafficData(ServerEntity radius, DateTime index)
+    public Task<List<TrafficDataDto>> UpdateTrafficData(ServerEntity radius, DateTime index)
     {
         throw new NotImplementedException();
     }

@@ -6,6 +6,14 @@ namespace PhotonBypass.Mikrotik.Radius.Model;
 [TikEntity("/user-manager/sessions", IsReadOnly = true)]
 public class SessionModel
 {
+    [JsonPropertyName("id")]
+    [TikProperty(".id", IsReadOnly = true)]
+    public int Id { get; set; }
+
+    [JsonPropertyName("active")]
+    [TikProperty("active", IsReadOnly = true)]
+    public string? Active { get; set; }
+
     [JsonPropertyName("user")]
     [TikProperty("user", IsReadOnly = true)]
     public string? Username { get; set; }

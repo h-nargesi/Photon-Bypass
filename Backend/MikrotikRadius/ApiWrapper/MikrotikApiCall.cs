@@ -1,6 +1,6 @@
 using PhotonBypass.ServerBridge.Api;
 
-namespace PhotonBypass.Mikrotik.Radius;
+namespace PhotonBypass.Mikrotik.Radius.ApiWrapper;
 
 public class MikrotikApiCall(IHttpClientFactory factory) : ApiCall(factory)
 {

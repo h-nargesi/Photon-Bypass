@@ -2,13 +2,13 @@
 
 public class UserConnectionBinding
 {
-    public string SessionId { get; set; } = null!;
+    public string? SessionId { get; set; } = null!;
     
-    public string NasIpAddress { get; set; } = null!;
+    public string? NasIpAddress { get; set; } = null!;
 
-    public string Username { get; set; } = null!;
+    public string? Username { get; set; } = null!;
 
-    public string CallerId { get; set; } = null!;
+    public string? CallerId { get; set; } = null!;
 
     public TimeSpan UpTime { get; set; }
 

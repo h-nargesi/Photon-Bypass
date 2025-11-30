@@ -4,8 +4,8 @@ using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.Infra.Dto;
 using Serilog;
-using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
 namespace PhotonBypass.Infra.Services;
 
@@ -120,7 +120,7 @@ public class SessionRadiusSyncService(
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
                         radius_server.RealmId, radius_server.Id, radius_server.Features);
-                    return Task.FromResult(new List<TrafficDataEntity>());
+                    return Task.FromResult(new List<TrafficDataDto>());
             }
         });
 

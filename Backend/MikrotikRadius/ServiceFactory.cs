@@ -10,12 +10,12 @@ public static class ServiceFactory
 {
     public static void AddMikrotikRadiusServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        builder.Services.AddScoped<MikrotikApiCall>();
-        builder.Services.AddHttpClient(MikrotikApiCall.HttpClientKeyName, client =>
-        {
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json"));
-        });
+        // builder.Services.AddScoped<MikrotikApiCall>();
+        // builder.Services.AddHttpClient(MikrotikApiCall.HttpClientKeyName, client =>
+        // {
+        //     client.DefaultRequestHeaders.Accept.Add(
+        //         new MediaTypeWithQualityHeaderValue("application/json"));
+        // });
         
         builder.Services.AddLazyTransient<ISessionRadiusSyncService, SessionRadiusSyncService>();
         builder.Services.AddLazyTransient<IAccountRadiusSyncService, AccountRadiusSyncService>();

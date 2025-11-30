@@ -1,16 +1,16 @@
-using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Infra.Dto;
 using PhotonBypass.Infra.Radius.UserManager;
+using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge.Tik4net;
 using System.Text.RegularExpressions;
-using PhotonBypass.Mikrotik.Radius.ApiWrapper;
 using tik4net.Objects;
 using tik4net.Objects.Ppp;
 
 namespace PhotonBypass.Mikrotik.Radius;
 
-public partial class SessionRadiusSyncService(MikrotikApiCall call) : ISessionRadiusSyncService
+public partial class SessionRadiusSyncService : ISessionRadiusSyncService
 {
     public async Task<List<UserConnectionBinding>> GetActiveConnections(ServerEntity radius, string username)
     {
@@ -19,20 +19,21 @@ public partial class SessionRadiusSyncService(MikrotikApiCall call) : ISessionRa
             throw new Exception("Username is not valid");
         }
 
-        var list = await call.PrepareApi<ISessions>(radius)
-            .PrintByUsername(username);
+        using var connection = await radius.TikApiConnect();
 
-        //return list.Select(session => new UserConnectionBinding
-        //    //{
-        //    //    CallerId = session.CallerId,
-        //    //    NasIpAddress = session.NasIpAddress,
-        //    //    SessionId = session.SessionId,
-        //    //    State = ConnectionState.Up,
-        //    //    UpTime = session.UpTime,
-        //    //    Username = session.Username,
-        //    //})
-        //    .ToList();
-        throw new NotImplementedException();
+        var session_list = connection.LoadList<SessionModel>(
+            TikParam.Equal<SessionModel>(nameof(SessionModel.Username), username),
+            TikParam.Equal<SessionModel>(nameof(SessionModel.Active), "yes"));
+
+        return [.. session_list.Select(session => new UserConnectionBinding
+        {
+            CallerId = session.CallerId,
+            NasIpAddress = session.NasIpAddress,
+            SessionId = session.SessionId,
+            State = session.Active == "yes" ? ConnectionState.Up : ConnectionState.Down,
+            UpTime = TimeSpan.Parse(session.UpTime ?? string.Empty),
+            Username = session.Username,
+        })];
     }
 
     public async Task CloseConnectionBySessionId(ServerEntity radius, ServerEntity nas, string session_id)
@@ -44,12 +45,14 @@ public partial class SessionRadiusSyncService(MikrotikApiCall call) : ISessionRa
 
         using var connection = await radius.TikApiConnect();
 
-        var active_list = connection.LoadList<PppActive>(new TikFilterParam("session-id", session_id))
+        var session_list = connection.LoadList<PppActive>(
+            TikParam.Equal<SessionModel>(nameof(SessionModel.SessionId), session_id))
             .ToList();
 
-        foreach (var active in active_list)
+        foreach (var session in session_list)
         {
-            connection.Delete(active);
+            connection.ExecuteNonQuery("close-session",
+                TikParam.Equal<SessionModel>(nameof(SessionModel.Id), $"*{session.Id}"));
         }
     }
 
@@ -62,18 +65,34 @@ public partial class SessionRadiusSyncService(MikrotikApiCall call) : ISessionRa
 
         using var connection = await radius.TikApiConnect();
 
-        var active_list = connection.LoadList<PppActive>(new TikFilterParam("user", username))
-            .ToList();
+        var session_list = connection.LoadList<SessionModel>(
+            TikParam.Equal<SessionModel>(nameof(SessionModel.Username), username));
 
-        foreach (var active in active_list)
+        foreach (var session in session_list)
         {
-            connection.Delete(active);
+            connection.ExecuteNonQuery("close-session",
+                TikParam.Equal<SessionModel>(nameof(SessionModel.Id), $"*{session.Id}"));
         }
     }
 
-    public Task<List<TrafficDataEntity>> UpdateTrafficData(ServerEntity radius, DateTime index)
+    public async Task<List<TrafficDataDto>> UpdateTrafficData(ServerEntity radius, DateTime index)
     {
-        throw new NotImplementedException();
+        using var connection = await radius.TikApiConnect();
+
+        return connection.LoadList<SessionModel>(
+            TikParam.Greater<SessionModel>(nameof(SessionModel.Started), index.ToString("o")))
+            .Select(session => new TrafficDataDto
+            {
+                Id = session.Id,
+                SessionId = session.SessionId ?? string.Empty,
+                Username = session.Username ?? string.Empty,
+                NasIpAddress = session.NasIpAddress,
+                StartSession = DateTime.Parse(session.Started ?? string.Empty),
+                EndSession = DateTime.Parse(session.Ended ?? string.Empty),
+                DataIn = session.Download,
+                DataOut = session.Upload,
+            })
+            .ToList();
     }
 
     [GeneratedRegex("^[0-9a-f]+$", RegexOptions.Singleline)]

@@ -1,6 +1,5 @@
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.JsonType;
-using PhotonBypass.Mikrotik.Radius;
 using PhotonBypass.Mikrotik.Radius.ApiWrapper;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge.Tik4net;
@@ -40,7 +39,7 @@ public class ApiCallTest : ServiceInitializer
     {
         using var connection = await server.TikApiConnect();
 
-        var active_ppp_list = connection.LoadList<PppActive>(new TikFilterParam("name", "Anahid@ry"));
+        var active_ppp_list = connection.LoadList<PppActive>(new TikParam("name", "Anahid@ry"));
     }
 
     [Fact]
@@ -48,6 +47,6 @@ public class ApiCallTest : ServiceInitializer
     {
         using var connection = await server.TikApiConnect();
 
-        var active_ppp_list = connection.LoadList<SessionModel>(new TikFilterParam("user", "test_hamed@aw"));
+        var active_ppp_list = connection.LoadList<SessionModel>(new TikParam("user", "test_hamed@aw"));
     }
 }
