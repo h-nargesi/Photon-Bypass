@@ -3,7 +3,7 @@ using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius.Model;
 
-[TikEntity("/user-manager/sessions", IsReadOnly = true)]
+[TikEntity("/user-manager/session")]
 public class SessionModel
 {
     [JsonPropertyName("id")]

@@ -1,16 +1,41 @@
+using System.Text.RegularExpressions;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Infra.Radius.UserManager;
+using PhotonBypass.Mikrotik.Radius.Model;
+using PhotonBypass.ServerBridge.Tik4net;
+using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius;
 
-public class AccountRadiusSyncService : IAccountRadiusSyncService
+public partial class AccountRadiusSyncService : IAccountRadiusSyncService
 {
-    public Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames)
+    public async Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames)
     {
-        throw new NotImplementedException();
+        using var connection = await radius.TikApiConnect();
+
+        foreach (var username in usernames)
+        {
+            if (!MyRegex().Match(username).Success)
+                continue;
+            
+            var session_list = connection.LoadList<SessionModel>(
+                TikParam.Equal<SessionModel>(nameof(SessionModel.Username), username));
+
+            connection.Delete(session_list);
+
+            var user_profiles = connection.LoadList<UserProfileModel>(
+                TikParam.Equal<UserProfileModel>(nameof(UserProfileModel.Username), username));
+
+            connection.Delete(user_profiles);
+
+            var user = connection.LoadList<UserModel>(
+                TikParam.Equal<UserModel>(nameof(UserModel.Name), username));
+
+            connection.Delete(user);
+        }
     }
 
     public Task DeactivateUserExcept(ServerEntity radius, IEnumerable<string> usernames)
@@ -47,4 +72,7 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
     {
         throw new NotImplementedException();
     }
+
+    [GeneratedRegex(@"^[\d\w\-\.]+$")]
+    private static partial Regex MyRegex();
 }
