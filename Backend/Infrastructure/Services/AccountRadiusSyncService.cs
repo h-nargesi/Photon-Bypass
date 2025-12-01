@@ -1,3 +1,4 @@
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan;
@@ -5,7 +6,6 @@ using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
-using PhotonBypass.Infra.Radius.UserManager;
 using Serilog;
 
 namespace PhotonBypass.Infra.Services;
@@ -13,9 +13,9 @@ namespace PhotonBypass.Infra.Services;
 class AccountRadiusSyncService(
     Lazy<IPlanStateRepository> PlanRepo,
     Lazy<IServerRepository> ServerRepo,
-    Lazy<IAccountRadiusSyncService> MikrotikRadius,
+    Lazy<Radius.UserManager.IAccountRadiusSyncService> MikrotikRadius,
     Lazy<Radius.RadiusDesk.IAccountRadiusSyncService> RadiusDesk)
-    : Domain.Account.IAccountRadiusSyncService
+    : IAccountRadiusSyncService
 {
     public async Task RemoveUsers(IEnumerable<string> usernames)
     {
@@ -61,9 +61,9 @@ class AccountRadiusSyncService(
             switch (radius.Features)
             {
                 case ServerFeature.UserManager:
-                    return MikrotikRadius.Value.DeactivateUserExcept(radius, realm_user_dictionary[radius.RealmId]);
+                    return MikrotikRadius.Value.DeactivateUserExcept(radius, realm_user_dictionary[radius.RealmId].ToHashSet());
                 case ServerFeature.RadiusDesk:
-                    return RadiusDesk.Value.DeactivateUserExcept(radius, realm_user_dictionary[radius.RealmId]);
+                    return RadiusDesk.Value.DeactivateUserExcept(radius, realm_user_dictionary[radius.RealmId].ToHashSet());
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
                         radius.RealmId, radius.Id, radius.Features);
@@ -72,7 +72,7 @@ class AccountRadiusSyncService(
         });
     }
 
-    public async Task<bool> SyncUserAndActive(AccountEntity account, RenewalEntity renewal)
+    public async Task SyncUserAndActive(AccountEntity account, RenewalEntity renewal)
     {
         if (renewal.RestrictedRealmId.HasValue)
         {
@@ -83,11 +83,10 @@ class AccountRadiusSyncService(
 
         if (radius_list.Count <= 0)
         {
-            Log.Warning("No radius server found for realm-id: ({0})", renewal.RestrictedRealmId);
-            return false;
+            throw new Exception($"No radius server found for realm-id: ({renewal.RestrictedRealmId})");
         }
 
-        var result_list = await radius_list.RunJob(radius =>
+        await radius_list.RunJob(radius =>
         {
             switch (radius.Features)
             {
@@ -98,21 +97,18 @@ class AccountRadiusSyncService(
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
                         radius.RealmId, radius.Id, radius.Features);
-                    return Task.FromResult(false);
+                    return Task.CompletedTask;
             }
         });
-
-        return result_list.Any(r => !r);
     }
 
-    public async Task<bool> GetCertificate(int? realm_id, string username, CertContext default_context)
+    public async Task GetCertificate(int? realm_id, string username, CertContext default_context)
     {
         var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
 
         if (radius_list.Count <= 0)
         {
-            Log.Warning("No radius server found for realm-id: ({0})", realm_id);
-            return false;
+            throw new Exception($"No radius server found for realm-id: ({realm_id})");
         }
 
         var master_radius_server = radius_list[0];
@@ -127,17 +123,15 @@ class AccountRadiusSyncService(
                 cert = await RadiusDesk.Value.GetCertificate(master_radius_server, username, default_context);
                 break;
             default:
-                Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
-                    master_radius_server.RealmId, master_radius_server.Id, master_radius_server.Features);
-                return false;
+                throw new Exception($"Unknown radius-server: (realm-id={master_radius_server.RealmId}, radius-id={master_radius_server.Id}, feature={master_radius_server.Features})");
         }
 
         if (radius_list.Count < 2)
         {
-            return true;
+            return;
         }
 
-        var result_list = await radius_list.Skip(1).RunJob(radius =>
+        await radius_list.Skip(1).RunJob(radius =>
         {
             switch (radius.Features)
             {
@@ -148,14 +142,12 @@ class AccountRadiusSyncService(
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
                         radius.RealmId, radius.Id, radius.Features);
-                    return Task.FromResult(false);
+                    return Task.CompletedTask;
             }
         });
-
-        return result_list.Any(r => !r);
     }
 
-    public async Task<string> GetVpnPassword(int? realm_id, string username)
+    public async Task<string?> GetVpnPassword(int? realm_id, string username)
     {
         var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
 
@@ -166,7 +158,7 @@ class AccountRadiusSyncService(
 
         var master_radius_server = radius_list[0];
 
-        string result;
+        string? result;
         switch (radius_list[0].Features)
         {
             case ServerFeature.UserManager:
@@ -180,7 +172,7 @@ class AccountRadiusSyncService(
                     $"Unknown radius-server: (realm-id={master_radius_server.RealmId}, radius-id={master_radius_server.Id}, feature={master_radius_server.Features})");
         }
 
-        if (radius_list.Count > 1)
+        if (result != null && radius_list.Count > 1)
         {
             _ = ChangeVpnPassword(radius_list.Skip(1), username, result);
         }
@@ -188,17 +180,17 @@ class AccountRadiusSyncService(
         return result;
     }
 
-    public async Task<bool> ChangeVpnPassword(int? realm_id, string username, string password)
+    public async Task ChangeVpnPassword(int? realm_id, string username, string password)
     {
         var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
 
         if (radius_list.Count > 0)
         {
-            return await ChangeVpnPassword(radius_list, username, password);
+            await ChangeVpnPassword(radius_list, username, password);
+            return;
         }
 
-        Log.Warning("No radius server found for realm-id: ({0})", realm_id);
-        return false;
+        throw new Exception($"No radius server found for realm-id: ({realm_id})");
     }
 
     private async Task DeactivateUsers(IEnumerable<string> usernames, HashSet<int> realm_exceptions)
@@ -226,9 +218,9 @@ class AccountRadiusSyncService(
         });
     }
 
-    private async Task<bool> ChangeVpnPassword(IEnumerable<ServerEntity> radius_list, string username, string password)
+    private async Task ChangeVpnPassword(IEnumerable<ServerEntity> radius_list, string username, string password)
     {
-        var result_list = await radius_list.RunJob(radius =>
+        await radius_list.RunJob(radius =>
         {
             switch (radius.Features)
             {
@@ -239,10 +231,8 @@ class AccountRadiusSyncService(
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
                         radius.RealmId, radius.Id, radius.Features);
-                    return Task.FromResult(false);
+                    return Task.CompletedTask;
             }
         });
-
-        return result_list.Any(r => !r);
     }
 }

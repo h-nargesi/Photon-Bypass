@@ -13,11 +13,11 @@ public interface IAccountRadiusSyncService
     
     Task DeactivateInvalidRadiusUsers(IEnumerable<PlanStateEntity> plan_state_list);
 
-    Task<bool> SyncUserAndActive(AccountEntity account, RenewalEntity renewal);
+    Task SyncUserAndActive(AccountEntity account, RenewalEntity renewal);
 
-    Task<bool> GetCertificate(int? realm_id, string username, CertContext default_context);
+    Task GetCertificate(int? realm_id, string username, CertContext default_context);
 
     Task<string> GetVpnPassword(int? realm_id, string username);
 
-    Task<bool> ChangeVpnPassword(int? realm_id, string username, string password);
+    Task ChangeVpnPassword(int? realm_id, string username, string password);
 }

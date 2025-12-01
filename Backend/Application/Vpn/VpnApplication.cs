@@ -40,16 +40,7 @@ class VpnApplication(
                    throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
                        $"There is not ant plan for user: {target}");
 
-        var result = await AccountRadiusSrv.Value.ChangeVpnPassword(plan.RestrictedRealmId, account.Username, password);
-
-        if (!result)
-        {
-            return new ApiResult
-            {
-                Code = 500,
-                Message = "تغییر کلمه عبور VPN با خطا مواجه شد!",
-            };
-        }
+        await AccountRadiusSrv.Value.ChangeVpnPassword(plan.RestrictedRealmId, account.Username, password);
 
         _ = HistoryRepo.Value.Save(new HistoryEntity
         {
@@ -57,10 +48,10 @@ class VpnApplication(
             Target = target,
             EventTime = DateTime.Now,
             Title = "امنیت",
-            Description = "تغییر کلمه عبور ovpn.",
+            Description = "تغییر کلمه عبور VPN.",
         });
 
-        return ApiResult.Success("کلمه عبور Ovpn تغییر کرد.");
+        return ApiResult.Success("کلمه عبور VPN تغییر کرد.");
     }
 
     public async Task<ApiResult> SendCertEmail(string target)

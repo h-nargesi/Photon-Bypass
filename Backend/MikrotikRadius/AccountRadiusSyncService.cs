@@ -87,6 +87,13 @@ public partial class AccountRadiusSyncService : IAccountRadiusSyncService
 
     public Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
     {
+        // check limitation (just by name)
+        // check profile (just by name)
+        // check profile-limitation assignment (just by name)
+        // check user
+        
+        // active user
+        // assign user to profile
         throw new NotImplementedException();
     }
 

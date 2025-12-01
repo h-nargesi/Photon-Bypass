@@ -161,12 +161,7 @@ class PlanApplication(
                 throw new Exception($"On renewal delegation was unsuccessful! (target={target})");
             }
 
-            var radius_sync = await AccountRadiusSrv.Value.SyncUserAndActive(account, renew);
-
-            if (!radius_sync)
-            {
-                throw new Exception($"Radius synchronization was unsuccessful! (target={target})");
-            }
+            await AccountRadiusSrv.Value.SyncUserAndActive(account, renew);
 
             transaction.Commit();
         }

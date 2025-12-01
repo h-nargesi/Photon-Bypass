@@ -13,7 +13,7 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
         throw new NotImplementedException();
     }
 
-    public Task DeactivateUserExcept(ServerEntity radius, IEnumerable<string> usernames)
+    public Task DeactivateUserExcept(ServerEntity radius, HashSet<string> usernames)
     {
         throw new NotImplementedException();
     }
@@ -23,7 +23,7 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
         throw new NotImplementedException();
     }
 
-    public Task<bool> SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
+    public Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
     {
         throw new NotImplementedException();
     }
@@ -33,17 +33,17 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
         throw new NotImplementedException();
     }
 
-    public Task<bool> SetCertificate(ServerEntity radius, string username, object certificate)
+    public Task SetCertificate(ServerEntity radius, string username, object certificate)
     {
         throw new NotImplementedException();
     }
 
-    public Task<string> GetVpnPassword(ServerEntity radius, string username)
+    public Task<string?> GetVpnPassword(ServerEntity radius, string username)
     {
         throw new NotImplementedException();
     }
 
-    public Task<bool> ChangeVpnPassword(ServerEntity radius, string username, string password)
+    public Task ChangeVpnPassword(ServerEntity radius, string username, string password)
     {
         throw new NotImplementedException();
     }
