@@ -65,7 +65,7 @@ public class TikParam : ITikCommandParameter
         return new TikParam($">{GetFielName<T>(name)}", value);
     }
 
-    private static string? GetFielName<T>(string name)
+    public static string? GetFielName<T>(string name)
     {
         return typeof(T).GetProperty(name)?
             .GetCustomAttributes<TikPropertyAttribute>()
