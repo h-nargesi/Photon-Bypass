@@ -6,17 +6,25 @@ using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.Infra.Nas;
+using PhotonBypass.Tools;
 using Serilog;
+using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
 namespace PhotonBypass.Infra.Services;
 
 class AccountRadiusSyncService(
-    Lazy<IPlanStateRepository> PlanRepo,
-    Lazy<IServerRepository> ServerRepo,
-    Lazy<Radius.UserManager.IAccountRadiusSyncService> MikrotikRadius,
-    Lazy<Radius.RadiusDesk.IAccountRadiusSyncService> RadiusDesk)
+    Lazy<IServerRepository> server_repo,
+    Lazy<IMikrotikDirectService> mikrotik_direct_srv,
+    Lazy<Radius.UserManager.IAccountRadiusSyncService> mikrotik_radius,
+    Lazy<Radius.RadiusDesk.IAccountRadiusSyncService> radius_desk)
     : IAccountRadiusSyncService
 {
+    private Lazy<IServerRepository> ServerRepo { get; } = server_repo;
+    private Lazy<IMikrotikDirectService> MikrotikDirectSrv { get; } = mikrotik_direct_srv;
+    private Lazy<Radius.UserManager.IAccountRadiusSyncService> MikrotikRadius { get; } = mikrotik_radius;
+    private Lazy<Radius.RadiusDesk.IAccountRadiusSyncService> RadiusDesk { get; } = radius_desk; 
+    
     public async Task RemoveUsers(IEnumerable<string> usernames)
     {
         var radius_list = await ServerRepo.Value.GetAllActiveRadius();
@@ -102,52 +110,47 @@ class AccountRadiusSyncService(
         });
     }
 
-    public async Task GetCertificate(int? realm_id, string username, CertContext default_context)
+    public async Task GetOVpnCertificate(int? realm_id, string username, CertContext default_context)
     {
-        var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
+        var nas_list = await ServerRepo.Value.GetActiveNasInRealmOrAll(realm_id);
 
-        if (radius_list.Count <= 0)
+        if (nas_list.Count <= 0)
         {
-            throw new Exception($"No radius server found for realm-id: ({realm_id})");
+            throw new Exception($"No nas server found for realm-id: ({realm_id})");
         }
 
-        var master_radius_server = radius_list[0];
+        var master_nas_server = nas_list[0];
 
-        object cert;
-        switch (radius_list[0].Features)
+        switch (master_nas_server.OsType)
         {
-            case ServerFeature.UserManager:
-                cert = await MikrotikRadius.Value.GetCertificate(master_radius_server, username, default_context);
-                break;
-            case ServerFeature.RadiusDesk:
-                cert = await RadiusDesk.Value.GetCertificate(master_radius_server, username, default_context);
+            case OperatingSystem.Mikrotik:
+                await MikrotikDirectSrv.Value.GetOVpnCertificate(master_nas_server, username, default_context);
                 break;
             default:
-                throw new Exception($"Unknown radius-server: (realm-id={master_radius_server.RealmId}, radius-id={master_radius_server.Id}, feature={master_radius_server.Features})");
+                throw new Exception($"Unknown radius-server: (realm-id={master_nas_server.RealmId}, " +
+                                    $"radius-id={master_nas_server.Id}, feature={master_nas_server.Features})");
         }
 
-        if (radius_list.Count < 2)
+        if (nas_list.Count <= 1)
         {
             return;
         }
 
-        await radius_list.Skip(1).RunJob(radius =>
+        await nas_list.Skip(1).RunJob(nas =>
         {
-            switch (radius.Features)
+            switch (master_nas_server.OsType)
             {
-                case ServerFeature.UserManager:
-                    return MikrotikRadius.Value.SetCertificate(radius, username, cert);
-                case ServerFeature.RadiusDesk:
-                    return RadiusDesk.Value.SetCertificate(radius, username, cert);
+                case OperatingSystem.Mikrotik:
+                    return MikrotikDirectSrv.Value.SetOVpnCertificate(nas, username, default_context);
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
-                        radius.RealmId, radius.Id, radius.Features);
+                        nas.RealmId, nas.Id, nas.Features);
                     return Task.CompletedTask;
             }
         });
     }
 
-    public async Task<string?> GetVpnPassword(int? realm_id, string username)
+    public async Task<string> GetVpnPassword(int? realm_id, string username)
     {
         var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
 
@@ -159,7 +162,7 @@ class AccountRadiusSyncService(
         var master_radius_server = radius_list[0];
 
         string? result;
-        switch (radius_list[0].Features)
+        switch (master_radius_server.Features)
         {
             case ServerFeature.UserManager:
                 result = await MikrotikRadius.Value.GetVpnPassword(master_radius_server, username);
@@ -169,13 +172,22 @@ class AccountRadiusSyncService(
                 break;
             default:
                 throw new Exception(
-                    $"Unknown radius-server: (realm-id={master_radius_server.RealmId}, radius-id={master_radius_server.Id}, feature={master_radius_server.Features})");
+                    $"Unknown radius-server: (realm-id={master_radius_server.RealmId}, " +
+                    $"radius-id={master_radius_server.Id}, feature={master_radius_server.Features})");
         }
 
-        if (result != null && radius_list.Count > 1)
+        if (result != null && radius_list.Count <= 1) return result;
+        
+        if (result == null)
         {
-            _ = ChangeVpnPassword(radius_list.Skip(1), username, result);
+            result = PasswordGenerator.Generate();
         }
+        else
+        {
+            radius_list.RemoveAt(0);
+        }
+
+        _ = ChangeVpnPassword(radius_list, username, result);
 
         return result;
     }

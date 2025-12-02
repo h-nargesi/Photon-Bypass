@@ -15,7 +15,7 @@ public interface IAccountRadiusSyncService
 
     Task SyncUserAndActive(AccountEntity account, RenewalEntity renewal);
 
-    Task GetCertificate(int? realm_id, string username, CertContext default_context);
+    Task GetOVpnCertificate(int? realm_id, string username, CertContext default_context);
 
     Task<string> GetVpnPassword(int? realm_id, string username);
 

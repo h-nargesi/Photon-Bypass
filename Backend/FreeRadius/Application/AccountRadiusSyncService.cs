@@ -28,16 +28,6 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
         throw new NotImplementedException();
     }
 
-    public Task<object> GetCertificate(ServerEntity radius, string username, CertContext default_context)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task SetCertificate(ServerEntity radius, string username, object certificate)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<string?> GetVpnPassword(ServerEntity radius, string username)
     {
         throw new NotImplementedException();

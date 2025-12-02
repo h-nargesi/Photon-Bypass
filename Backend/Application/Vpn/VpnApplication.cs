@@ -84,7 +84,7 @@ class VpnApplication(
 
         var cert_context = await ServerMngSrv.Value.GetDefaultCertificate(plan.RestrictedRealmId);
 
-        await AccountRadiusSrv.Value.GetCertificate(plan.RestrictedRealmId, account.Username, cert_context);
+        await AccountRadiusSrv.Value.GetOVpnCertificate(plan.RestrictedRealmId, account.Username, cert_context);
 
         var email_context = new CertEmailContext
         {

@@ -46,9 +46,40 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
         return result.Select(n => n.DomainName).ToList();
     }
 
-    public Task<List<ServerEntity>> GetAllActiveRadius()
+    public async Task<List<ServerEntity>> GetActiveNasInRealmOrAll(int? realm_id)
     {
-        return GetActiveRadiusInRealmOrAll(null);
+        await OpenAsync();
+
+        var result = await FindAsync(statement =>
+        {
+            statement
+                .Where($"{nameof(ServerEntity.Active)} == 1 and {nameof(ServerEntity.Features)} = ({nameof(ServerEntity.Features)} & @nas)")
+                .WithParameters(new { nas = ServerFeature.Nas });
+
+            if (realm_id.HasValue)
+            {
+                statement
+                    .Where($"{nameof(ServerEntity.RealmId)} == @realm_id")
+                    .WithParameters(new { realm_id = realm_id.Value });
+
+            }
+        });
+
+        return result.GroupBy(server => server.RealmId)
+            .ToDictionary(grouping => grouping.Key, grouping => grouping.First())
+            .Values
+            .ToList();
+    }
+
+    public async Task<List<ServerEntity>> GetAllActiveRadius()
+    {
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(ServerEntity.Active)} == 1 and {nameof(ServerEntity.Features)} = ({nameof(ServerEntity.Features)} & @radius)")
+            .WithParameters(new { radius = ServerFeature.Radius }));
+
+        return [..result];
     }
 
     public async Task<List<ServerEntity>> GetActiveRadiusInRealmOrAll(int? realm_id)

@@ -15,10 +15,6 @@ public interface IAccountRadiusSyncService
 
     Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal);
 
-    Task<object> GetCertificate(ServerEntity radius, string username, CertContext default_context);
-
-    Task SetCertificate(ServerEntity radius, string username, object certificate);
-
     Task<string?> GetVpnPassword(ServerEntity radius, string username);
 
     Task ChangeVpnPassword(ServerEntity radius, string username, string password);

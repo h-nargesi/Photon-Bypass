@@ -10,6 +10,8 @@ public interface IServerRepository : IEditableRepository<ServerEntity>
 
     Task<List<string>> GetAllActiveNasDomainInRealm(int? realm_id);
 
+    Task<List<ServerEntity>> GetActiveNasInRealmOrAll(int? realm_id);
+
     Task<List<ServerEntity>> GetAllActiveRadius();
 
     Task<List<ServerEntity>> GetActiveRadiusInRealmOrAll(int? realm_id);

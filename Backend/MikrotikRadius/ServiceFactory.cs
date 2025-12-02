@@ -1,7 +1,9 @@
 using System.Net.Http.Headers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using PhotonBypass.Infra.Nas;
 using PhotonBypass.Infra.Radius.UserManager;
+using PhotonBypass.Mikrotik.Radius.Application;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Mikrotik.Radius;
@@ -19,5 +21,6 @@ public static class ServiceFactory
         
         builder.Services.AddLazyTransient<ISessionRadiusSyncService, SessionRadiusSyncService>();
         builder.Services.AddLazyTransient<IAccountRadiusSyncService, AccountRadiusSyncService>();
+        builder.Services.AddLazyTransient<IMikrotikDirectService, MikrotikDirectService>();
     }
 }
