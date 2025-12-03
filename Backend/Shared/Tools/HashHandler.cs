@@ -5,8 +5,8 @@ namespace PhotonBypass.Tools;
 
 public static class HashHandler
 {
-    private static readonly Random random = new();
-    private const string CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static readonly Random Random = new();
+    private const string Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     public static string HashPassword(string plain_text)
     {
@@ -15,11 +15,11 @@ public static class HashHandler
 
     public static string GenerateHashCode(int length = 10)
     {
-        var captchaArray = new char[length];
-        for (int i = 0; i < length; i++)
+        var captcha_array = new char[length];
+        for (var i = 0; i < length; i++)
         {
-            captchaArray[i] = CHARS[random.Next(CHARS.Length)];
+            captcha_array[i] = Chars[Random.Next(Chars.Length)];
         }
-        return new string(captchaArray);
+        return new string(captcha_array);
     }
 }

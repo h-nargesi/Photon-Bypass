@@ -15,11 +15,13 @@ Domain
 ## Infrastructure
 Infrastructure: Domain
 Data Repository: Infrastructure, Domain
-Mikrotik Radius Service: Server Bridge, Domain
-FreeRadius: Infrastructure, Domain
-Outsource (Email/Media): Domain
+Mikrotik Radius: Server Bridge, Domain
+FreeRadius: Infrastructure, Server Bridge, Domain
+Outsource (Email/Media): Infrastructure, Domain
 Mikrotik Setup: Server Bridge, Domain
 
 ## Basical Services
 Server Bridge: SSH, API
 Shared
+
+        

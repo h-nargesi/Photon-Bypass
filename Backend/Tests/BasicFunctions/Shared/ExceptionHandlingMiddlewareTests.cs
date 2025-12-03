@@ -12,8 +12,8 @@ namespace PhotonBypass.Test.BasicFunctions.Shared;
 
 public class ExceptionHandlingMiddlewareTests
 {
-    const string error_pr = "خطا";
-    const string error_en = "Error Detail";
+    private const string ErrorPr = "خطا";
+    private const string ErrorEn = "Error Detail";
     private readonly Mock<IJobContext> context;
 
     public ExceptionHandlingMiddlewareTests()
@@ -25,26 +25,24 @@ public class ExceptionHandlingMiddlewareTests
     [Fact]
     public async Task Invoke_OK()
     {
-        static Task request(HttpContext http) => Task.CompletedTask;
+        PrepareResponse(out var http, out var response, out _);
 
-        PrepareResponse(out var http, out var response, out var stream);
-        var json = string.Empty;
-
-        var middleWare = new ExceptionHandlingMiddleware(request, context.Object);
-        await middleWare.Invoke(http);
+        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        await middle_ware.Invoke(http);
 
         response.StatusCode.Should().Be(StatusCodes.Status200OK);
+        return;
+
+        static Task Request(HttpContext http) => Task.CompletedTask;
     }
 
     [Fact]
     public async Task Invoke_EmptyException()
     {
-        static Task request(HttpContext http) => throw new Exception();
-
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middleWare = new ExceptionHandlingMiddleware(request, context.Object);
-        await middleWare.Invoke(http);
+        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        await middle_ware.Invoke(http);
 
         AssertHttpResponse(response);
         await AssertStream(stream, new ApiResult
@@ -52,17 +50,18 @@ public class ExceptionHandlingMiddlewareTests
             Code = 500,
             Message = ExceptionHandlingMiddleware.ERROR_MESSAGE,
         });
+        return;
+
+        static Task Request(HttpContext http) => throw new Exception();
     }
 
     [Fact]
     public async Task Invoke_Exception()
     {
-        static Task request(HttpContext http) => throw new Exception("Error");
-
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middleWare = new ExceptionHandlingMiddleware(request, context.Object);
-        await middleWare.Invoke(http);
+        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        await middle_ware.Invoke(http);
 
         AssertHttpResponse(response);
         await AssertStream(stream, new ApiResult
@@ -70,35 +69,37 @@ public class ExceptionHandlingMiddlewareTests
             Code = 500,
             Message = ExceptionHandlingMiddleware.ERROR_MESSAGE,
         });
+        return;
+
+        static Task Request(HttpContext http) => throw new Exception("Error");
     }
 
     [Fact]
-    public async Task Invoke_UserExceptionMessager()
+    public async Task Invoke_UserExceptionMessenger()
     {
-        static Task request(HttpContext http) => throw new UserException(message: error_pr);
-
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middleWare = new ExceptionHandlingMiddleware(request, context.Object);
-        await middleWare.Invoke(http);
+        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        await middle_ware.Invoke(http);
 
         AssertHttpResponse(response);
         await AssertStream(stream, new ApiResult
         {
             Code = 400,
-            Message = error_pr,
+            Message = ErrorPr,
         });
+        return;
+
+        static Task Request(HttpContext http) => throw new UserException(message: ErrorPr);
     }
 
     [Fact]
     public async Task Invoke_UserExceptionDetail()
     {
-        static Task request(HttpContext http) => throw new UserException(detail: error_en);
-
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middleWare = new ExceptionHandlingMiddleware(request, context.Object);
-        await middleWare.Invoke(http);
+        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        await middle_ware.Invoke(http);
 
         AssertHttpResponse(response);
         await AssertStream(stream, new ApiResult
@@ -106,24 +107,28 @@ public class ExceptionHandlingMiddlewareTests
             Code = 400,
             Message = ExceptionHandlingMiddleware.ERROR_MESSAGE,
         });
+        return;
+
+        static Task Request(HttpContext http) => throw new UserException(detail: ErrorEn);
     }
 
     [Fact]
     public async Task Invoke_UserException()
     {
-        static Task request(HttpContext http) => throw new UserException(error_pr, error_en);
-
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middleWare = new ExceptionHandlingMiddleware(request, context.Object);
-        await middleWare.Invoke(http);
+        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        await middle_ware.Invoke(http);
 
         AssertHttpResponse(response);
         await AssertStream(stream, new ApiResult
         {
             Code = 400,
-            Message = error_pr,
+            Message = ErrorPr,
         });
+        return;
+
+        static Task Request(HttpContext http) => throw new UserException(ErrorPr, ErrorEn);
     }
 
     private static void AssertHttpResponse(HttpResponse response)
@@ -136,9 +141,9 @@ public class ExceptionHandlingMiddlewareTests
     {
         stream.Seek(0, SeekOrigin.Begin);
         var reader = new StreamReader(stream);
-        var resultText = await reader.ReadToEndAsync();
+        var result_text = await reader.ReadToEndAsync();
 
-        resultText.Should().Be(JsonSerializer.Serialize(api));
+        result_text.Should().Be(JsonSerializer.Serialize(api));
     }
 
     private static void PrepareResponse(out HttpContext http, out HttpResponse response, out MemoryStream stream)
@@ -149,9 +154,9 @@ public class ExceptionHandlingMiddlewareTests
         stream = new MemoryStream();
         response.Body = stream;
 
-        var httpMock = new Mock<HttpContext>();
-        httpMock.Setup(x => x.Response).Returns(response);
+        var http_mock = new Mock<HttpContext>();
+        http_mock.Setup(x => x.Response).Returns(response);
 
-        http = httpMock.Object;
+        http = http_mock.Object;
     }
 }

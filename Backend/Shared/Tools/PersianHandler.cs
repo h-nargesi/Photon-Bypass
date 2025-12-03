@@ -15,13 +15,13 @@ public static class PersianHandler
         return new PersianCalendar().GetDayOfMonth(date).ToString("D2");
     }
 
-    public static DateTime AddPersianMonth(this DateTime date, int month)
-    {
-        return new PersianCalendar().AddMonths(date, month);
-    }
-
     public static int AddPersianMonthToDays(this DateTime date, int month)
     {
         return (int)(date.AddPersianMonth(month) - date).TotalDays;
+    }
+
+    private static DateTime AddPersianMonth(this DateTime date, int month)
+    {
+        return new PersianCalendar().AddMonths(date, month);
     }
 }

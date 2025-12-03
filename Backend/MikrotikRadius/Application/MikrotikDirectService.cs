@@ -4,7 +4,6 @@ using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Infra.Nas;
-using PhotonBypass.Mikrotik.Radius.Scripts;
 using PhotonBypass.ServerBridge;
 using PhotonBypass.ServerBridge.Ssh;
 using PhotonBypass.Tools;
@@ -18,47 +17,53 @@ partial class MikrotikDirectService : IMikrotikDirectService
     {
         if (string.IsNullOrEmpty(session_id) || !InjectionRegex.SessionId().IsMatch(session_id))
         {
-            throw new Exception("Invalid server or session-id!");
+            throw new Exception($"Invalid server or session-id! ({session_id})");
+        }
+        
+        using var node = await server.SshConnect();
+
+        var success = node.Execute($"/ppp active remove [find session-id=0x{session_id}]", out var result);
+        if (!success)
+        {
+            Log.Warning("Closing connection on {0}: {1}", server, result);
+            throw new Exception("Closing connection was unsuccessful!");            
         }
 
-        var context = new ProcessContext
+        success = node.Execute($"/ppp active print where session-id=0x{session_id}", out result);
+        if (!success && !string.IsNullOrEmpty(result))
         {
-            ["session-id"] = session_id
-        };
-
-        var success = await BuiltInProcess.PppActiveRemoveBySession.ActivateOn(server, context);
-        if (!success && !string.IsNullOrEmpty(context.Result))
-        {
-            Log.Warning("Closing connection on {0}: {1}", server, context.Result);
+            Log.Warning("Closing connection on {0}: {1}", server, result);
             throw new Exception("Closing connection was unsuccessful!");
         }
     }
 
     public async Task CloseConnections(IEnumerable<ServerEntity> servers, string username)
     {
-        if (string.IsNullOrEmpty(username) || !InjectionRegex.Username().IsMatch(username))
+        if (!InjectionRegex.Username().Match(username).Success)
         {
-            throw new Exception("Invalid server or session-id!");
+            throw new Exception($"Invalid username! ({username})");
         }
 
-        var server_list = servers.ToList();
-        
-        var tasks = server_list
+        var tasks = servers
             .Select(async server =>
             {
-                var context = new ProcessContext
-                {
-                    ["username"] = username
-                };
+                using var node = await server.SshConnect();
 
-                var success = await BuiltInProcess.PppActiveRemoveByUsername.ActivateOn(server, context);
-                if (!success && !string.IsNullOrEmpty(context.Result))
+                var success = node.Execute($"/ppp active remove [find name={username}]", out var result);
+                if (!success) 
                 {
-                    Log.Warning("Closing connection on {0}: {1}", server, context.Result);
+                    Log.Warning("Closing connection on {0}: {1}", server, result);
+                    throw new Exception("Closing connection was unsuccessful!");            
+                }
+
+                success = node.Execute($"/ppp active print where name={username}", out result);
+                if (!success && !string.IsNullOrEmpty(result))
+                {
+                    Log.Warning("Closing connection on {0}: {1}", server, result);
                     throw new Exception("Closing connection was unsuccessful!");
                 }
             });
-        
+
         await Task.WhenAll(tasks);
     }
 
@@ -68,7 +73,12 @@ partial class MikrotikDirectService : IMikrotikDirectService
 
         if (string.IsNullOrEmpty(username)) return [];
 
-        using var node = await server.Connect();
+        if (!InjectionRegex.Username().Match(username).Success)
+        {
+            throw new Exception($"Invalid username! ({username})");
+        }
+
+        using var node = await server.SshConnect();
 
         var success =
             node.Execute($"/ppp active print where name=\"{username}\" uptime session-id caller-id limit-bytes-in",
@@ -95,11 +105,16 @@ partial class MikrotikDirectService : IMikrotikDirectService
         ArgumentNullException.ThrowIfNull(default_context, nameof(default_context));
         ArgumentNullException.ThrowIfNull(default_context.CertFile, nameof(default_context.CertFile));
 
-        using var node = await server.Connect();
+        if (!InjectionRegex.Username().Match(username).Success)
+        {
+            throw new Exception($"Invalid username! ({username})");
+        }
+
+        using var node = await server.SshConnect();
 
         default_context.PrivateKeyOvpn = HashHandler.GenerateHashCode();
 
-        var success = node.Execute($"/certificate print where name=\"CLIENT_{username}\"", out string result);
+        var success = node.Execute($"/certificate print where name=\"CLIENT_{username}\"", out var result);
         if (!success) throw new Exception("Certificate check failed!");
 
         if (string.IsNullOrWhiteSpace(result))
@@ -149,6 +164,11 @@ partial class MikrotikDirectService : IMikrotikDirectService
 
     public Task SetOVpnCertificate(ServerEntity server, string username, CertContext certificate)
     {
+        if (!InjectionRegex.Username().Match(username).Success)
+        {
+            throw new Exception($"Invalid username! ({username})");
+        }
+
         throw new NotImplementedException();
     }
 

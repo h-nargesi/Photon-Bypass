@@ -8,13 +8,13 @@ public static class EntityExtensions
 {
     public static string GetColumnName<T>(Expression<Func<T, object?>> expression)
     {
-        MemberExpression? member = expression.Body as MemberExpression;
+        var member = expression.Body as MemberExpression;
 
         if (member == null)
         {
-            if (expression.Body is UnaryExpression unary && unary.Operand is MemberExpression innerMember)
+            if (expression.Body is UnaryExpression unary && unary.Operand is MemberExpression inner_member)
             {
-                member = innerMember;
+                member = inner_member;
             }
         }
 
@@ -24,14 +24,14 @@ public static class EntityExtensions
         if (prop_info == null) return string.Empty;
 
         var attr = prop_info.GetCustomAttribute<ColumnAttribute>();
-        return attr?.Name ?? prop_info.Name ?? string.Empty;
+        return attr?.Name ?? prop_info.Name;
     }
 
-    public static string GetTablename<T>()
+    public static string GetTableName<T>()
     {
         var type = typeof(T);
 
         var attr = type.GetCustomAttribute<TableAttribute>();
-        return attr?.Name ?? type.Name ?? string.Empty;
+        return attr?.Name ?? type.Name;
     }
 }

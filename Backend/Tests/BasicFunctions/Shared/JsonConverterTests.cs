@@ -1,152 +1,156 @@
 ﻿using PhotonBypass.Tools;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FluentAssertions;
 
 namespace PhotonBypass.Test.BasicFunctions.Shared;
 
 public class JsonConverterTests
 {
     [Fact]
-    public void JsonConvertors_Deserialize_NullableDatetime_ShouldDesrilizeNullValue()
+    public void JsonConvertors_Deserialize_NullableDatetime_ShouldDeserializeNullValue()
     {
-        var text = @"
-{
-    ""Date"": null
-}
-";
+        const string text = """
+                            {
+                                "Date": null
+                            }
+                            """;
         var data = JsonSerializer.Deserialize<NullableDatetime>(text);
 
         Assert.NotNull(data);
-
-        if (data == null) return;
-
         Assert.Null(data.Date);
     }
 
     [Fact]
-    public void JsonConvertors_Deserialize_NullableDatetime_ShouldDesrilizeNotNullValue()
+    public void JsonConvertors_Deserialize_NullableDatetime_ShouldThrowOnInvalidData()
     {
-        var text = @"
-{
-    ""Date"": 1748438640324
-}
-";
+        const string text = """
+                            {
+                                "Date": "invalid-data"
+                            }
+                            """;
+        var func = () => JsonSerializer.Deserialize<NullableDatetime>(text);
+        func.Should().Throw<Exception>().WithMessage("Invalid Unix timestamp.");
+    }
+
+    [Fact]
+    public void JsonConvertors_Deserialize_NullableDatetime_ShouldDeserializeNotNullValue()
+    {
+        const string text = """
+                            {
+                                "Date": 1748438640324
+                            }
+                            """;
         var data = JsonSerializer.Deserialize<NullableDatetime>(text);
 
         Assert.NotNull(data);
-
-        if (data == null) return;
-
         Assert.Equal(DateTime.Parse("2025-05-28 16:54:00.324"), data.Date);
     }
 
     [Fact]
-    public void JsonConvertors_Deserialize_NotNullableDateTime_ShouldDesrilizeNotNullValue()
+    public void JsonConvertors_Deserialize_NotNullableDateTime_ShouldDeserializeNotNullValue()
     {
-        var text = @"
-{
-    ""Date"": 1748438640324
-}
-";
+        const string text = """
+                            {
+                                "Date": 1748438640324
+                            }
+                            """;
         var data = JsonSerializer.Deserialize<NotNullableDateTime>(text);
 
         Assert.NotNull(data);
-
-        if (data == null) return;
-
         Assert.Equal(DateTime.Parse("2025-05-28 16:54:00.324"), data.Date);
     }
 
     [Fact]
-    public void JsonConvertors_Deserialize_NullableLong_ShouldDesrilizeNullValue()
+    public void JsonConvertors_Deserialize_NullableLong_ShouldDeserializeNullValue()
     {
-        var text = @"
-{
-    ""Value"": null
-}
-";
+        const string text = """
+                            {
+                                "Value": null
+                            }
+                            """;
         var data = JsonSerializer.Deserialize<NullableLong>(text);
 
         Assert.NotNull(data);
-
-        if (data == null) return;
-
         Assert.Null(data.Value);
     }
 
     [Fact]
-    public void JsonConvertors_Deserialize_NullableLong_ShouldDesrilizeLongValue()
+    public void JsonConvertors_Deserialize_NullableLong_ShouldDeserializeLongValue()
     {
-        var text = @"
-{
-    ""Value"": 1748438640324
-}
-";
+        const string text = """
+                            {
+                                "Value": 1748438640324
+                            }
+                            """;
         var data = JsonSerializer.Deserialize<NullableLong>(text);
 
         Assert.NotNull(data);
-
-        if (data == null) return;
-
         Assert.Equal(1748438640324, data.Value);
     }
 
     [Fact]
-    public void JsonConvertors_Deserialize_NullableLong_ShouldDesrilizeStringValue()
+    public void JsonConvertors_Deserialize_NullableLong_ShouldDeserializeStringValue()
     {
-        var text = @"
-{
-    ""Value"": ""1748438640324""
-}
-";
+        const string text = """
+                            {
+                                "Value": "1748438640324"
+                            }
+                            """;
         var data = JsonSerializer.Deserialize<NullableLong>(text);
 
         Assert.NotNull(data);
-
-        if (data == null) return;
-
         Assert.Equal(1748438640324, data.Value);
     }
 
     [Fact]
-    public void JsonConvertors_Deserialize_NotNullableLong_ShouldDesrilizeNotNullValue()
+    public void JsonConvertors_Deserialize_NotNullableLong_ShouldDeserializeNotNullValue()
     {
-        var text = @"
-{
-    ""Value"": ""1748438640324""
-}
-";
+        const string text = """
+                            {
+                                "Value": "1748438640324"
+                            }
+                            """;
         var data = JsonSerializer.Deserialize<NotNullableLong>(text);
 
         Assert.NotNull(data);
-
-        if (data == null) return;
-
         Assert.Equal(1748438640324, data.Value);
+    }
+
+    [Fact]
+    public void JsonConvertors_Deserialize_NotNullableLong_ShouldThrowOnInvalidData()
+    {
+        const string text = """
+                            {
+                                "Value": "invalid-data"
+                            }
+                            """;
+        var func = () => JsonSerializer.Deserialize<NotNullableLong>(text);
+        func.Should().Throw<Exception>();
     }
 
     public class NullableDatetime
     {
         [JsonConverter(typeof(UnixTimestampConverter))]
-        public DateTime? Date { get; set; }
+        public DateTime? Date { get; }
     }
 
     public class NotNullableDateTime
     {
         [JsonConverter(typeof(UnixTimestampConverter))]
-        public DateTime Date { get; set; }
+        public DateTime Date { get; }
     }
 
     public class NullableLong
     {
         [JsonConverter(typeof(StringNumberConverter))]
-        public long? Value { get; set; }
+        public long? Value { get; }
     }
 
     public class NotNullableLong
     {
         [JsonConverter(typeof(StringNumberConverter))]
-        public long Value { get; set; }
+        public long Value { get; }
     }
 
 }

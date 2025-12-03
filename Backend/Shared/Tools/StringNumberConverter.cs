@@ -5,19 +5,14 @@ namespace PhotonBypass.Tools;
 
 public class StringNumberConverter : JsonConverter<long>
 {
-    public override long Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override long Read(ref Utf8JsonReader reader, Type type_to_convert, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonTokenType.Number)
+        return reader.TokenType switch
         {
-            return reader.GetInt64();
-        }
-
-        if (reader.TokenType == JsonTokenType.String)
-        {
-            return long.Parse(reader.GetString() ?? string.Empty);
-        }
-
-        throw new JsonException("Invalid Number.");
+            JsonTokenType.Number => reader.GetInt64(),
+            JsonTokenType.String => long.Parse(reader.GetString() ?? string.Empty),
+            _ => throw new JsonException("Invalid Number.")
+        };
     }
 
     public override void Write(Utf8JsonWriter writer, long value, JsonSerializerOptions options)

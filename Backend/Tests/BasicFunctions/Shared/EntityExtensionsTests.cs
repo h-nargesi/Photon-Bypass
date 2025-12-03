@@ -1,6 +1,6 @@
-﻿using PhotonBypass.Tools;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.BasicFunctions.Shared;
 
@@ -11,35 +11,35 @@ public class EntityExtensionsTests
     {
         var result = EntityExtensions.GetColumnName<TestEntity>(x => x.TestColumn);
 
-        Assert.Equal(nasidentifier, result);
+        Assert.Equal(NasIdentifier, result);
     }
 
     [Fact]
     public void GetColumnName_ShouldReturnIDColumn()
     {
-        var result = EntityExtensions.GetColumnName<TestEntity>(x => x.ID);
+        var result = EntityExtensions.GetColumnName<TestEntity>(x => x.Id);
 
-        Assert.Equal(nameof(TestEntity.ID), result);
+        Assert.Equal(nameof(TestEntity.Id), result);
     }
 
     [Fact]
     public void GetTableName_ShouldReturnTableName()
     {
-        var result = EntityExtensions.GetTablename<TestEntity>();
+        var result = EntityExtensions.GetTableName<TestEntity>();
 
-        Assert.Equal(nas, result);
+        Assert.Equal(Nas, result);
     }
 
-    const string nasidentifier = "nasidentifier";
-    const string nas = "nas";
+    private const string NasIdentifier = "nasidentifier";
+    private const string Nas = "nas";
 
-    [Table(nas)]
-    class TestEntity
+    [Table(Nas)]
+    private class TestEntity
     {
         [Key]
-        public int ID { get; set; }
+        public int Id { get; }
 
-        [Column(nasidentifier)]
-        public int TestColumn { get; set; }
+        [Column(NasIdentifier)]
+        public int TestColumn { get; }
     }
 }

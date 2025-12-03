@@ -9,7 +9,7 @@ namespace PhotonBypass.Infra.Database;
 
 public abstract class DapperRepository<TEntity>(IDapperDbContext context) : IDisposable where TEntity : class, IBaseEntity
 {
-    public static readonly string TableName = EntityExtensions.GetTablename<TEntity>();
+    public static readonly string TableName = EntityExtensions.GetTableName<TEntity>();
     public static readonly string Id = EntityExtensions.GetColumnName<TEntity>(x => x.Id);
 
     protected IDbConnection Connection

@@ -86,7 +86,7 @@ partial class AuthApplication(
     {
         email_mobile = email_mobile.Trim();
 
-        if (MobileValidator().IsMatch(email_mobile))
+        if (AccountBusiness.MobileNumberPattern().IsMatch(email_mobile))
         {
 #if !SOCIAL
             return new ApiResult
@@ -121,7 +121,7 @@ partial class AuthApplication(
             return ApiResult.Success("پیام به واتساپ ارسال شد.");
 #endif
         }
-        else if (EmailValidator().IsMatch(email_mobile))
+        else if (AccountBusiness.EmailPattern().IsMatch(email_mobile))
         {
             var account = (await AccountRepo.GetAccountByMobile(email_mobile)) ??
                 throw new UserException("کاربر یافت نشد.");
@@ -180,10 +180,4 @@ partial class AuthApplication(
 
         return ApiResult.Success("کاربر شما ساخته شد.");
     }
-
-    [GeneratedRegex(@"^\+?\d{5,16}$")]
-    private static partial Regex MobileValidator();
-
-    [GeneratedRegex(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$")]
-    private static partial Regex EmailValidator();
 }

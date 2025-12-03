@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using PhotonBypass.Domain.Account.Model;
 
 namespace PhotonBypass.Domain.Account.Entity;
 
@@ -41,8 +42,8 @@ public class AccountEntity : IBaseEntity
 
     public string? Picture { get; set; }
 
-    public DateTime CreatedTime { get; set; }
-    
+    public UserTypes UserType { get; set; }
+
     public int? ReferenceId { get; set; }
 
     public DateTime Created { get; set; } = DateTime.Now;

@@ -12,7 +12,7 @@ public static partial class ProcessService
         if (server.OsType != process.OsType)
             throw new Exception($"Invalid OS process ({process.OsType}) for server: {server.Name}");
 
-        using var node = await server.Connect();
+        using var node = await server.SshConnect();
         return process.ActivateOn(node, context);
     }
 
@@ -21,7 +21,7 @@ public static partial class ProcessService
         if (server.OsType != process.OsType)
             throw new Exception($"Invalid OS process ({process.OsType}) for server: {server.Name}");
 
-        using var node = await server.Connect();
+        using var node = await server.SshConnect();
         return process.DeactivateOn(node, context);
     }
 
@@ -32,7 +32,7 @@ public static partial class ProcessService
 
         if (process.Check == null) return false;
 
-        using var node = await server.Connect();
+        using var node = await server.SshConnect();
         return process.CheckOn(node, context);
     }
 

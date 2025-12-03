@@ -180,7 +180,7 @@ class AccountRadiusSyncService(
         
         if (result == null)
         {
-            result = PasswordGenerator.Generate();
+            result = HashHandler.GenerateHashCode();
         }
         else
         {

@@ -7,7 +7,7 @@ namespace PhotonBypass.ServerBridge.Ssh;
 
 public static class SshExtensions
 {
-    public static async Task<SshClient> Connect(this ServerEntity server)
+    public static async Task<SshClient> SshConnect(this ServerEntity server)
     {
         var config = server.Config?.SshConfig ??
                      throw new Exception($"The ssh configuration is not set for server ({server.Id}:{server.Name})");

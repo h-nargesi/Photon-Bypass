@@ -1,35 +1,16 @@
-﻿using PhotonBypass.Domain.Account.Entity;
+﻿using System.Text.RegularExpressions;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
 
 namespace PhotonBypass.Domain.Account.Business;
 
-public static class AccountBusiness
+public static partial class AccountBusiness
 {
-    private const int MaxDaysDeactivatePlanToDelete = 40;
+    public const int MaxDaysDeactivatePlanToDelete = 40;
+    public const int DelayBetweenWarnings = 20;
     private const int MaxDaysDeactivatePlanToDisable = 7;
-    private const int DelayBetweenWarnings = 20;
     
-    public static void SetFromModel(this AccountEntity account, EditUserModel model)
-    {
-        if (string.IsNullOrWhiteSpace(model.Email) && string.IsNullOrWhiteSpace(model.Mobile))
-        {
-            throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
-        }
-
-        account.Name = model.Firstname;
-        account.Surname = model.Lastname;
-
-        if (account.Email != model.Email)
-            account.EmailValid = false;
-
-        if (account.Mobile != model.Mobile)
-            account.MobileValid = false;
-
-        account.Email = model.Email;
-        account.Mobile = model.Mobile;
-    }
-
     public static AccountEntity CreateFromModel(RegisterModel model)
     {
         if (string.IsNullOrWhiteSpace(model.Username))
@@ -37,26 +18,69 @@ public static class AccountBusiness
             throw new UserException("نام کاربری خالیست!");
         }
 
+        if (!UsernamePattern().Match(model.Username).Success)
+        {
+            throw new UserException("این نام کاربری غیرمجاز است!", $"Invalid Username: {model.Username}");
+        }
+
+        var account = new AccountEntity
+        {
+            Username = model.Username,
+        };
+        
+        account.SetFromModel(model);
+
+        return account;
+    }
+
+    public static void SetFromModel(this AccountEntity account, EditUserModel model)
+    {
         if (string.IsNullOrWhiteSpace(model.Email) && string.IsNullOrWhiteSpace(model.Mobile))
         {
             throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
         }
 
-        return new AccountEntity
+        if (string.IsNullOrWhiteSpace(model.Email))
         {
-            Username = model.Username,
-            Email = model.Email,
-            EmailValid = false,
-            Mobile = model.Mobile,
-            MobileValid = false,
-            Name = model.Firstname,
-            Surname = model.Lastname,
-        };
+            account.Email = null;
+            account.EmailValid = false;
+        }
+        else if (!EmailPattern().Match(model.Email).Success)
+        {
+            throw new UserException("این ایمیل غیرمجاز است!", $"Invalid Email: {model.Email}");
+        }
+        else
+        {
+            if (account.Email != model.Email)
+                account.EmailValid = false;
+
+            account.Email = model.Email;
+        }
+        
+        if (string.IsNullOrWhiteSpace(model.Mobile))
+        {
+            account.Mobile = null;
+            account.MobileValid = false;
+        }
+        else if (!MobileNumberPattern().Match(model.Mobile).Success)
+        {
+            throw new UserException("این شماره موبایل غیرمجاز است!", $"Invalid Mobile: {model.Mobile}");
+        }
+        else
+        {            
+            if (account.Mobile != model.Mobile)
+                account.MobileValid = false;
+
+            account.Mobile = model.Mobile;
+        }
+        
+        account.Name = model.Firstname;
+        account.Surname = model.Lastname;
     }
 
     public static bool CheckMoneyNeed(this AccountEntity account, int estimate, out int money_need)
     {
-        if (account.Balance < estimate)
+        if (account.Balance < 0 || !account.UserType.HasFlag(UserTypes.OldUser) && account.Balance < estimate)
         {
             money_need = estimate - account.Balance;
             return true;
@@ -68,7 +92,7 @@ public static class AccountBusiness
 
     public static int IsReachedMaxInactivityDaysToDisable(this AccountEntity account, DateTime? last_connect_time)
     {
-        var last_activity = last_connect_time ?? account.CreatedTime;
+        var last_activity = last_connect_time ?? account.Created;
 
         var expired_days = MaxDaysDeactivatePlanToDisable - (int)(last_activity - DateTime.Now).TotalDays;
         
@@ -77,7 +101,7 @@ public static class AccountBusiness
 
     public static int IsReachedMaxInactivityDaysToDelete(this AccountEntity account, DateTime? last_connect_time)
     {
-        var last_activity = last_connect_time ?? account.CreatedTime;
+        var last_activity = last_connect_time ?? account.Created;
 
         var expired_days = MaxDaysDeactivatePlanToDelete - (int)(last_activity - DateTime.Now).TotalDays;
         
@@ -94,4 +118,13 @@ public static class AccountBusiness
     {
         account.WarningTimes = DateTime.Now;
     }
+
+    [GeneratedRegex("^[a-zA-Z][a-zA-Z0-9_-]{3,16}[a-zA-Z0-9]$")]
+    private static partial Regex UsernamePattern();
+    
+    [GeneratedRegex(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$")]
+    public static partial Regex EmailPattern();
+    
+    [GeneratedRegex(@"^(\+\d{2}|0)\d{10}$")]
+    public static partial Regex MobileNumberPattern();
 }
