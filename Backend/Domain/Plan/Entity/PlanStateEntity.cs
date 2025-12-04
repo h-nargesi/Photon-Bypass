@@ -35,7 +35,7 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
     public long? TrafficLeft { get; set; }
 
     [NotMapped]
-    public TimeSpan? TimeLeft => ExpirationDate >= DateTime.Now ? new TimeSpan() : DateTime.Now - ExpirationDate;
+    public TimeSpan? TimeLeft => ExpirationDate - DateTime.Now;
 
     [NotMapped]
     public double? TrafficLeftPercent => 100 * TrafficLeft / (double?)TrafficLimit;
