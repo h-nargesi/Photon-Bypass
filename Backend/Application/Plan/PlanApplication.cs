@@ -7,8 +7,6 @@ using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Plan.Entity;
-using PhotonBypass.Domain.Servers;
-using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
@@ -17,17 +15,27 @@ using Serilog;
 namespace PhotonBypass.Application.Plan;
 
 class PlanApplication(
-    Lazy<IRenewalRepository> RenewalRepo,
-    Lazy<IPlanStateRepository> PlanRepo,
-    Lazy<IPriceCalculator> PriceCalc,
-    Lazy<IAccountRepository> AccountRepo,
-    Lazy<ISessionRadiusSyncService> SessionRadiusSrv,
-    Lazy<IAccountRadiusSyncService> AccountRadiusSrv,
-    Lazy<IServerManagementService> ServerMngSrv,
-    Lazy<IHistoryRepository> HistoryRepo,
-    Lazy<IJobContext> JobContext)
+    Lazy<IRenewalRepository> renewal_repo,
+    Lazy<IPlanStateRepository> plan_repo,
+    Lazy<IPriceCalculator> price_calc,
+    Lazy<IAccountRepository> account_repo,
+    Lazy<ISessionRadiusSyncService> session_radius_srv,
+    Lazy<IAccountRadiusSyncService> account_radius_srv,
+    Lazy<IServerManagementService> server_mng_srv,
+    Lazy<IHistoryRepository> history_repo,
+    Lazy<IJobContext> job_context)
     : IPlanApplication
 {
+    private Lazy<IRenewalRepository> RenewalRepo { get; } = renewal_repo;
+    private Lazy<IPlanStateRepository> PlanRepo { get; } = plan_repo;
+    private Lazy<IPriceCalculator> PriceCalc { get; } = price_calc;
+    private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
+    private Lazy<ISessionRadiusSyncService> SessionRadiusSrv { get; } = session_radius_srv;
+    private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
+    private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
+    private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
+    private Lazy<IJobContext> JobContext { get; } = job_context;
+
     public async Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target)
     {
         var account_id = await AccountRepo.Value.GetActiveAccountId(target);
@@ -80,7 +88,7 @@ class PlanApplication(
     public async Task<ApiResult<RenewalResult>> Renewal(string target, int count, int days, int gigabytes)
     {
         var account = (await AccountRepo.Value.GetAccount(target)) ??
-            throw new UserException("کاربر مورد نظر پیدا نشد!");
+                      throw new UserException("کاربر مورد نظر پیدا نشد!");
 
         if (!account.Active)
         {
@@ -106,7 +114,7 @@ class PlanApplication(
         }
 
         var current_state = (await PlanRepo.Value.GetPlanState(account.Id)) ??
-            throw new Exception($"Plan state not found for target: {target}");
+                            throw new Exception($"Plan state not found for target: {target}");
 
         Log.Information("""
 [user: {0}] Plan current state:
@@ -116,7 +124,8 @@ class PlanApplication(
 """,
             JobContext.Value.Username,
             target, count, days, gigabytes,
-            current_state.SimultaneousUser, current_state.TimeLeft?.TotalDays, current_state.TimeLeft?.Hours, current_state.GetTrafficLeftInGig(),
+            current_state.SimultaneousUser, current_state.TimeLeft?.TotalDays, current_state.TimeLeft?.Hours,
+            current_state.GetTrafficLeftInGig(),
             account.Balance, estimate);
 
         var renew = new RenewalEntity
@@ -128,19 +137,20 @@ class PlanApplication(
             RestrictedRealmId = await RenewalRepo.Value.GetTopRestrictedRealmId(account.Id),
         };
 
-        if (renew.RestrictedRealmId == null || current_state.LastConnectTime == null || current_state.LastConnectTime.Value < DateTime.Now.AddDays(-7))
+        if (renew.RestrictedRealmId == null || current_state.LastConnectTime == null ||
+            current_state.LastConnectTime.Value < DateTime.Now.AddDays(-7))
         {
             renew.RestrictedRealmId = (await ServerMngSrv.Value.GetAvailableRealm()).Id;
         }
 
-        if (renew.RenewalValidation(out var user_message))
+        if (renew.RenewalValidation(out var user_exception))
         {
             Log.Information(@"[user: {0}] Plan current state:
     request=(taget:{1}, count:{2}, days:{3}, gigabytes:{4})
     message={5}",
-                JobContext.Value.Username, target, count, days, gigabytes, user_message);
+                JobContext.Value.Username, target, count, days, gigabytes, user_exception.Message);
 
-            throw new UserException(user_message);
+            throw user_exception;
         }
 
         var transaction = await AccountRepo.Value.BeginTransactionAsync();
@@ -153,7 +163,7 @@ class PlanApplication(
             await AccountRepo.Value.Save(account);
 
             await RenewalRepo.Value.Save(renew);
-            
+
             var check_on_renewal = IPlanApplication.OnRenewalDelegation(new RenewalEvent());
 
             if (!check_on_renewal)
@@ -215,5 +225,4 @@ class PlanApplication(
             MoneyNeeds = 0,
         });
     }
-
 }

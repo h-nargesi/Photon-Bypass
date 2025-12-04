@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.ErrorHandler;
 
 namespace PhotonBypass.Domain.Plan.Business;
 
@@ -29,20 +30,25 @@ public static class RenewalBusiness
         return entity.TrafficLimit.HasValue ? Math.Round(entity.TrafficLimit.Value / StaticValues.BytesInGig, 2) : null;
     }
 
-    public static bool RenewalValidation(this RenewalEntity validation, out string user_message)
+    public static bool RenewalValidation(this RenewalEntity validation, out UserException error)
     {
         if (validation.TrafficLimit == null)
         {
-            throw new Exception("Invalid renewal traffic=null");
+            error = new UserException(
+                "نمی‌توانید پلن بدون ترافیک ثبت نمایید!",
+                "Invalid renewal traffic=null");
+            return true;
         }
 
         if (validation.TrafficLimit / StaticValues.BytesInGig % 25 != 0)
         {
-            throw new Exception(
+            error = new UserException(
+                "ترافیک باید ضریبی از ۲۵ باشد.",
                 $"Invalid renewal traffic={validation.TrafficLimit}, gigabytes={validation.TrafficLimit / StaticValues.BytesInGig}");
+            return true;
         }
 
-        user_message = string.Empty;
+        error = null!;
         return false;
     }
 }
