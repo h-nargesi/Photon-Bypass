@@ -9,7 +9,7 @@ public static partial class AccountBusiness
 {
     public const int MaxDaysDeactivatePlanToDelete = 40;
     public const int DelayBetweenWarnings = 20;
-    private const int MaxDaysDeactivatePlanToDisable = 7;
+    public const int MaxDaysDeactivatePlanToDisable = 7;
     
     public static AccountEntity CreateFromModel(RegisterModel model)
     {
@@ -94,7 +94,7 @@ public static partial class AccountBusiness
     {
         var last_activity = last_connect_time ?? account.Created;
 
-        var expired_days = MaxDaysDeactivatePlanToDisable - (int)(last_activity - DateTime.Now).TotalDays;
+        var expired_days = (int)(DateTime.Now - last_activity).TotalDays - MaxDaysDeactivatePlanToDisable;
         
         return expired_days < 0 ? 0 : expired_days;
     }
@@ -103,7 +103,7 @@ public static partial class AccountBusiness
     {
         var last_activity = last_connect_time ?? account.Created;
 
-        var expired_days = MaxDaysDeactivatePlanToDelete - (int)(last_activity - DateTime.Now).TotalDays;
+        var expired_days = (int)(DateTime.Now - last_activity).TotalDays - MaxDaysDeactivatePlanToDelete;
         
         return expired_days < 0 ? 0 : expired_days;
     }
@@ -111,7 +111,7 @@ public static partial class AccountBusiness
     public static bool OverWarningTime(this AccountEntity account)
     {
         return account.WarningTimes.HasValue &&
-               (account.WarningTimes.Value - DateTime.Now).TotalHours <= DelayBetweenWarnings;
+               (DateTime.Now - account.WarningTimes.Value).TotalHours < DelayBetweenWarnings;
     }
 
     public static void UpdateWarningTime(this AccountEntity account)

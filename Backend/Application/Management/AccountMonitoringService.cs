@@ -1,5 +1,4 @@
-﻿using PhotonBypass.Application.Authentication;
-using PhotonBypass.Domain.Account;
+﻿using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Management;
@@ -13,15 +12,23 @@ using Serilog;
 namespace PhotonBypass.Application.Management;
 
 internal class AccountMonitoringService(
-    IPlanStateRepository PlanStateRepo,
-    IAccountRepository AccountRepo,
-    IHistoryRepository HistoryRepo,
-    Lazy<IEmailService> EmailSrv,
-    Lazy<IAccountRadiusSyncService> AccountRadiusSrv,
-    Lazy<IServerManagementService> ServerMngSrv,
-    Lazy<ISocialMediaService> SocialSrv)
+    IPlanStateRepository plan_state_repo,
+    IAccountRepository account_repo,
+    IHistoryRepository history_repo,
+    Lazy<IEmailService> email_srv,
+    Lazy<IAccountRadiusSyncService> account_radius_srv,
+    Lazy<IServerManagementService> server_mng_srv,
+    Lazy<ISocialMediaService> social_srv)
     : IAccountMonitoringService, IJob
 {
+    private IPlanStateRepository PlanStateRepo { get; } = plan_state_repo;
+    private IAccountRepository AccountRepo { get; } = account_repo;
+    private IHistoryRepository HistoryRepo { get; } = history_repo;
+    private Lazy<IEmailService> EmailSrv { get; } = email_srv;
+    private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
+    private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
+    private Lazy<ISocialMediaService> SocialSr { get; } = social_srv;
+    
     public async Task Execute(IJobExecutionContext context)
     {
         var plan_state_list = await PlanStateRepo.GetAll();
@@ -70,7 +77,7 @@ internal class AccountMonitoringService(
             }
             
             expired_days = account.IsReachedMaxInactivityDaysToDelete(plan.LastConnectTime);
-            if (expired_days < 1)
+            if (expired_days > 0)
             {
                 Log.Information(
                     "The user '{0}' was deleted from radius servers: ExpiredTime={1} days, ExpirationDate={2}, TrafficLimit={3}, TrafficUsed={4}",

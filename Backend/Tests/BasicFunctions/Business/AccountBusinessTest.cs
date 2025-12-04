@@ -80,7 +80,10 @@ public class AccountBusinessTest
         action = () => new AccountEntity().SetFromModel(new EditUserModel { Email = "abc@email.com" });
         action.Should().NotThrow<UserException>();
 
-        action = () => new AccountEntity().SetFromModel(new EditUserModel { Mobile = "+0123456789012" });
+        action = () => new AccountEntity().SetFromModel(new EditUserModel { Mobile = "+989125157305" });
+        action.Should().NotThrow<UserException>();
+
+        action = () => new AccountEntity().SetFromModel(new EditUserModel { Mobile = "09125157305" });
         action.Should().NotThrow<UserException>();
     }
 
@@ -112,7 +115,7 @@ public class AccountBusinessTest
     [Fact]
     public void IsReachedMaxInactivityDaysToDisable()
     {
-        const int max = AccountBusiness.MaxDaysDeactivatePlanToDelete;
+        const int max = AccountBusiness.MaxDaysDeactivatePlanToDisable;
 
         Assert.Equal(0, new AccountEntity().IsReachedMaxInactivityDaysToDisable(DateTime.Now.AddDays(1 - max)));
 
@@ -122,11 +125,23 @@ public class AccountBusinessTest
     }
 
     [Fact]
+    public void IsReachedMaxInactivityDaysToDelete()
+    {
+        const int max = AccountBusiness.MaxDaysDeactivatePlanToDelete;
+
+        Assert.Equal(0, new AccountEntity().IsReachedMaxInactivityDaysToDelete(DateTime.Now.AddDays(1 - max)));
+
+        Assert.Equal(0, new AccountEntity().IsReachedMaxInactivityDaysToDelete(DateTime.Now.AddDays(-max)));
+
+        Assert.Equal(10, new AccountEntity().IsReachedMaxInactivityDaysToDelete(DateTime.Now.AddDays(-10 - max)));
+    }
+
+    [Fact]
     public void OverWarningTime()
     {
         const int max = AccountBusiness.DelayBetweenWarnings;
-        Assert.True(new AccountEntity { WarningTimes = DateTime.Now.AddHours(max) }.OverWarningTime());
+        Assert.True(new AccountEntity { WarningTimes = DateTime.Now.AddHours(1 - max) }.OverWarningTime());
+        Assert.False(new AccountEntity { WarningTimes = DateTime.Now.AddHours(-1 - max) }.OverWarningTime());
         Assert.False(new AccountEntity { WarningTimes = null }.OverWarningTime());
-        Assert.False(new AccountEntity { WarningTimes = DateTime.Now.AddHours(1 - max) }.OverWarningTime());
     }
 }
