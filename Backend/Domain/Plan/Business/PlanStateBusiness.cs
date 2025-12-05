@@ -5,7 +5,7 @@ namespace PhotonBypass.Domain.Plan.Business;
 
 public static class PlanStateBusiness
 {
-    public const float AccountFinishingStatePercent = 0.1f;
+    private const float AccountFinishingStatePercent = 0.1f;
 
     public static bool IsFinishing(this PlanStateEntity entity)
     {
@@ -45,16 +45,16 @@ public static class PlanStateBusiness
 
     public static double? GetTrafficLimitInGig(this PlanStateEntity entity)
     {
-        return entity.TrafficLimit.HasValue ? Math.Round(entity.TrafficLimit.Value / StaticValues.BytesInGig, 2) : null;
+        return entity.TrafficLimit.HasValue ? Math.Round(entity.TrafficLimit.Value / StaticValues.BytesInGigDouble, 2) : null;
     }
 
     public static double GetTrafficUsedInGig(this PlanStateEntity entity)
     {
-        return Math.Round(entity.TrafficUsed / StaticValues.BytesInGig, 2);
+        return Math.Round(entity.TrafficUsed / StaticValues.BytesInGigDouble, 2);
     }
 
     public static double? GetTrafficLeftInGig(this PlanStateEntity entity)
     {
-        return entity.TrafficLeft.HasValue ? Math.Round(entity.TrafficLeft.Value / StaticValues.BytesInGig, 2) : null;
+        return entity.TrafficLeft.HasValue ? Math.Round(entity.TrafficLeft.Value / StaticValues.BytesInGigDouble, 2) : null;
     }
 }

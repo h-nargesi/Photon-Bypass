@@ -88,11 +88,31 @@ public class AccountRadiusSyncService(Lazy<IMikrotikDirectService> mikrotik_dire
         }
     }
 
-    public Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
+    public async Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
     {
+        using var connection = await radius.TikApiConnect();
+
         // check limitation (just by name)
+        int? speed = null;
+        var limitations = new HashSet<string>();
+        if (renewal.TrafficLimit == null)
+        {
+            speed = 2;
+            // Check Speed
+            limitations.Add(connection.CheckRateLimit(speed.Value));
+        }
+        // Check Traffic
+        if (renewal.TrafficLimit != null)
+        {
+            limitations.Add(connection.CheckTrafficLimit(renewal.TrafficLimit.Value));
+        }
+        
         // check profile (just by name)
+        var profile_name = connection.CheckProfile(renewal.TimeLimitInDays, renewal.TrafficLimit, speed);
+        
         // check profile-limitation assignment (just by name)
+        connection.CheckLimitationAssignment(profile_name, limitations);
+        
         // check user
         
         // active user

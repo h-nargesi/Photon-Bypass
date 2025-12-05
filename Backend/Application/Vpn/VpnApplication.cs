@@ -14,17 +14,26 @@ using PhotonBypass.Tools;
 namespace PhotonBypass.Application.Vpn;
 
 class VpnApplication(
-    Lazy<IAccountRepository> AccountRepo,
-    Lazy<IHistoryRepository> HistoryRepo,
-    Lazy<ITrafficDataRepository> TrafficDataRepo,
-    Lazy<IPlanStateRepository> PlanStateRepo,
-    Lazy<IAccountRadiusSyncService> AccountRadiusSrv,
-    Lazy<IServerManagementService> ServerMngSrv,
-    Lazy<IEmailService> EmailSrv,
-    Lazy<IJobContext> JobContext)
+    Lazy<IAccountRepository> account_repo,
+    Lazy<IHistoryRepository> history_repo,
+    Lazy<ITrafficDataRepository> traffic_data_repo,
+    Lazy<IPlanStateRepository> plan_state_repo,
+    Lazy<IAccountRadiusSyncService> account_radius_srv,
+    Lazy<IServerManagementService> server_mng_srv,
+    Lazy<IEmailService> email_srv,
+    Lazy<IJobContext> job_context)
     : IVpnApplication
 {
     private const int MaxDateBefore = 30;
+    
+    private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
+    private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
+    private Lazy<ITrafficDataRepository> TrafficDataRepo { get; } = traffic_data_repo;
+    private Lazy<IPlanStateRepository> PlanStateRepo { get; } = plan_state_repo;
+    private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
+    private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
+    private Lazy<IEmailService> EmailSrv { get; } = email_srv;
+    private Lazy<IJobContext> JobContext { get; } = job_context;
 
     public async Task<ApiResult> ChangeVpnPassword(string target, string password)
     {
@@ -156,8 +165,8 @@ class VpnApplication(
                 continue;
             }
 
-            var data_in = (int)(record.Sum(x => x.DataIn) / StaticValues.BytesInMeg);
-            var data_out = (int)(record.Sum(x => x.DataOut) / StaticValues.BytesInMeg);
+            var data_in = (int)(record.Sum(x => x.DataIn) / StaticValues.BytesInMegDouble);
+            var data_out = (int)(record.Sum(x => x.DataOut) / StaticValues.BytesInMegDouble);
 
             upload.Add(data_out);
             download.Add(data_in);

@@ -1,0 +1,32 @@
+using System.Text.Json.Serialization;
+using tik4net.Objects;
+
+namespace PhotonBypass.Mikrotik.Radius.Model;
+
+[TikEntity("/user-manager/profile")]
+public class ProfileModel
+{
+    [JsonPropertyName("id")]
+    [TikProperty(".id", IsReadOnly = true)]
+    public int Id { get; set; }
+
+    [JsonPropertyName("name")]
+    [TikProperty("name")]
+    public string? Name { get; set; }
+
+    [JsonPropertyName("validity")]
+    [TikProperty("validity")]
+    public string? Validity { get; set; }
+
+    [JsonPropertyName("name-for-users")]
+    [TikProperty("name-for-users")]
+    public string? NameForUsers { get; set; }
+
+    [JsonPropertyName("starts-when")]
+    [TikProperty("starts-when")]
+    public string? StartsWhen { get; set; }
+
+    [JsonPropertyName("override-shared-users")]
+    [TikProperty("override-shared-users")]
+    public string? OverrideSharedUsers { get; set; }
+}

@@ -135,7 +135,7 @@ class PlanApplication(
         {
             AccountId = account.Id,
             TimeLimitInDays = days,
-            TrafficLimit = (int)(gigabytes * StaticValues.BytesInGig),
+            TrafficLimit = gigabytes * StaticValues.BytesInGigLong,
             SimultaneousUser = count,
             RestrictedRealmId = await RenewalRepo.Value.GetTopRestrictedRealmId(account.Id),
         };

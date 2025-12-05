@@ -17,8 +17,7 @@ internal class AccountMonitoringService(
     IHistoryRepository history_repo,
     Lazy<IEmailService> email_srv,
     Lazy<IAccountRadiusSyncService> account_radius_srv,
-    Lazy<IServerManagementService> server_mng_srv,
-    Lazy<ISocialMediaService> social_srv)
+    Lazy<IServerManagementService> server_mng_srv)
     : IAccountMonitoringService, IJob
 {
     private IPlanStateRepository PlanStateRepo { get; } = plan_state_repo;
@@ -27,7 +26,6 @@ internal class AccountMonitoringService(
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
     private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
-    private Lazy<ISocialMediaService> SocialSr { get; } = social_srv;
     
     public async Task Execute(IJobExecutionContext context)
     {
@@ -55,7 +53,7 @@ internal class AccountMonitoringService(
 
         foreach (var plan in plan_state_list)
         {
-            if (plan.ExpirationDate > DateTime.Now && plan.TrafficLeft >= StaticValues.BytesInMeg)
+            if (plan.ExpirationDate > DateTime.Now && plan.TrafficLeft >= StaticValues.BytesInMegDouble)
             {
                 continue;
             }

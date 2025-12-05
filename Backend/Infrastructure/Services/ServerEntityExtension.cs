@@ -2,7 +2,7 @@ using PhotonBypass.Domain.Servers.Entity;
 
 namespace PhotonBypass.Infra.Services;
 
-static class ServerEntityExtension
+internal static class ServerEntityExtension
 {
     public static async Task<List<TResult>> RunJob<TResult>(this IEnumerable<ServerEntity> radius_list,
         Func<ServerEntity, Task<TResult>> function)

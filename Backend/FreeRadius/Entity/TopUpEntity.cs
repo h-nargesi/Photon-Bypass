@@ -20,7 +20,7 @@ public class TopUpEntity : IBaseEntity
     public long? Data { get; set; }
 
     [NotMapped]
-    public double? GigaData => Data / StaticValues.BytesInGig;
+    public double? GigaData => Data / StaticValues.BytesInGigDouble;
 
     [Column("time")]
     public long? Time { get; set; }

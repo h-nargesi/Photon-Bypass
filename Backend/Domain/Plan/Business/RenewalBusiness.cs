@@ -12,7 +12,7 @@ public static class RenewalBusiness
 
         if (entity.TrafficLimit.HasValue)
         {
-            result.Append($" و {(int)(entity.TrafficLimit / StaticValues.BytesInGig)} گیگی");
+            result.Append($" و {(int)(entity.TrafficLimit / StaticValues.BytesInGigDouble)} گیگی");
         }
 
         if (entity.TimeLimitInDays.HasValue)
@@ -27,7 +27,7 @@ public static class RenewalBusiness
 
     public static double? GetTrafficLimitInGig(this RenewalEntity entity)
     {
-        return entity.TrafficLimit.HasValue ? Math.Round(entity.TrafficLimit.Value / StaticValues.BytesInGig, 2) : null;
+        return entity.TrafficLimit.HasValue ? Math.Round(entity.TrafficLimit.Value / StaticValues.BytesInGigDouble, 2) : null;
     }
 
     public static bool RenewalValidation(this RenewalEntity validation, out UserException error)
@@ -40,11 +40,11 @@ public static class RenewalBusiness
             return true;
         }
 
-        if (validation.TrafficLimit / StaticValues.BytesInGig % 25 != 0)
+        if (validation.TrafficLimit / StaticValues.BytesInGigDouble % 25 != 0)
         {
             error = new UserException(
                 "ترافیک باید ضریبی از ۲۵ باشد.",
-                $"Invalid renewal traffic={validation.TrafficLimit}, gigabytes={validation.TrafficLimit / StaticValues.BytesInGig}");
+                $"Invalid renewal traffic={validation.TrafficLimit}, gigabytes={validation.TrafficLimit / StaticValues.BytesInGigDouble}");
             return true;
         }
 
