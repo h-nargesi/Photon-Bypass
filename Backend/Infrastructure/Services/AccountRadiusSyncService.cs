@@ -1,7 +1,6 @@
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.OutSource.Model;
-using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
@@ -196,13 +195,12 @@ class AccountRadiusSyncService(
     {
         var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
 
-        if (radius_list.Count > 0)
+        if (radius_list.Count < 1)
         {
-            await ChangeVpnPassword(radius_list, username, password);
-            return;
+            throw new Exception($"No radius server found for realm-id: ({realm_id})");
         }
 
-        throw new Exception($"No radius server found for realm-id: ({realm_id})");
+        await ChangeVpnPassword(radius_list, username, password);
     }
 
     private async Task DeactivateUsers(IEnumerable<string> usernames, HashSet<int> realm_exceptions)
