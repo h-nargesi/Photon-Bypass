@@ -131,7 +131,7 @@ partial class AuthApplication(
                 throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
             }
 
-            var hash_code = HashHandler.GenerateHashCode(56);
+            var hash_code = HashHandler.GenerateHashCode(56, true);
 
             var insert_task = ResetPassRepo.Value.AddHashCode(new ResetPassEntity
             {
