@@ -31,5 +31,5 @@ public class TopUpEntity : IBaseEntity
     public string? Comment { get; set; }
 
     [Column("created")]
-    public DateTime Created { get; set; }
+    public DateTime Created { get; init; }
 }

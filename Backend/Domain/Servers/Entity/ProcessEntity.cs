@@ -21,5 +21,5 @@ public class ProcessEntity : IBaseEntity
 
     public ScriptEntity? Check { get; set; }
 
-    public DateTime Created { get; set; } = DateTime.Now;
+    public DateTime Created { get; init; } = DateTime.Now;
 }

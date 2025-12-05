@@ -24,7 +24,7 @@ public class RealmEntity : IBaseEntity
     public string? RestrictedServerIP { get; set; }
 
     [Column("created")]
-    public DateTime Created { get; set; }
+    public DateTime Created { get; init; }
 }
 
 [Table("ph_v_server_density")]

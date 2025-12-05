@@ -25,5 +25,5 @@ public class ProfileEntity : IBaseEntity
     public PlanType PlanType { get; set; }
 
     [Column("created")]
-    public DateTime Created { get; set; }
+    public DateTime Created { get; init; }
 }

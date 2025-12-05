@@ -23,5 +23,5 @@ public class RenewalEntity : IRenewalEntity, IBaseEntity
 
     public string? Comment { get; set; }
 
-    public DateTime Created { get; set; } = DateTime.Now;
+    public DateTime Created { get; init; } = DateTime.Now;
 }

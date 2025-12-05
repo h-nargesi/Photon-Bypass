@@ -32,7 +32,7 @@ public class RadAcctEntity : IBaseEntity
     public string CallingStationId { get; set; } = null!;
 
     [Column("created")]
-    public DateTime Created { get; set; }
+    public DateTime Created { get; init; }
 
     [NotMapped]
     public TimeSpan SessionUpTime => (AcctStopTime ?? DateTime.Now).Subtract(AcctStartTime);

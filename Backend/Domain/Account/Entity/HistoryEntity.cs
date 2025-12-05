@@ -9,21 +9,21 @@ public class HistoryEntity : IBaseEntity
     [Key]
     public int Id { get; set; }
 
-    public string Issuer { get; set; } = null!;
+    public string Issuer { get; init; } = null!;
 
-    public string Target { get; set; } = null!;
+    public string Target { get; init; } = null!;
 
-    public DateTime EventTime { get; set; }
+    public DateTime EventTime { get; init; }
 
-    public string Title { get; set; } = null!;
+    public string Title { get; init; } = null!;
 
     public string Color { get; set; } = null!;
 
-    public object? Value { get; set; }
+    public object? Value { get; init; }
 
-    public string? Unit { get; set; }
+    public string? Unit { get; init; }
 
-    public string? Description { get; set; }
+    public string? Description { get; init; }
 
-    public DateTime Created { get; set; } = DateTime.Now;
+    public DateTime Created { get; init; } = DateTime.Now;
 }

@@ -13,7 +13,7 @@ public class ResetPassEntity : IBaseEntity
 
     public DateTime ExpireDate { get; set; }
 
-    public string HashCode { get; set; } = null!;
+    public string HashCode { get; init; } = null!;
 
-    public DateTime Created { get; set; } = DateTime.Now;
+    public DateTime Created { get; init; } = DateTime.Now;
 }

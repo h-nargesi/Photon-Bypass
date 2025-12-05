@@ -44,5 +44,5 @@ public class UserPlanStateEntity : IBaseEntity
     public double? TotalData { get; set; }
 
     [Column("created")]
-    public DateTime Created { get; set; }
+    public DateTime Created { get; init; }
 }

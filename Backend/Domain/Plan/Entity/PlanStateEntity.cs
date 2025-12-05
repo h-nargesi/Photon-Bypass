@@ -43,5 +43,5 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
     [NotMapped]
     public double? TimeLeftPercent => TimeLeft.HasValue && TimeLimitInDays.HasValue ? 100 * TimeLeft.Value.TotalDays / (double)TimeLimitInDays : null;
 
-    public DateTime Created { get; set; } = DateTime.Now;
+    public DateTime Created { get; init; } = DateTime.Now;
 }

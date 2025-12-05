@@ -13,5 +13,5 @@ public class RealmEntity : IBaseEntity
 
     public string Name { get; set; } = null!;
 
-    public DateTime Created { get; set; } = DateTime.Now;
+    public DateTime Created { get; init; } = DateTime.Now;
 }

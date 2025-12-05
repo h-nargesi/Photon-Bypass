@@ -12,7 +12,7 @@ public class AccountEntity : IBaseEntity
 
     public bool Active { get; set; }
 
-    public string Username { get; set; } = null!;
+    public string Username { get; init; } = null!;
 
     public string Password { get; set; } = null!;
 
@@ -48,5 +48,5 @@ public class AccountEntity : IBaseEntity
 
     public int? ReferenceId { get; set; }
 
-    public DateTime Created { get; set; } = DateTime.Now;
+    public DateTime Created { get; init; } = DateTime.Now;
 }

@@ -23,5 +23,5 @@ public class NasEntity : IBaseEntity
     public string? DomainName { get; set; }
 
     [Column("created")]
-    public DateTime Created { get; set; }
+    public DateTime Created { get; init; }
 }

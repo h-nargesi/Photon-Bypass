@@ -38,5 +38,5 @@ public class ServerEntity : IBaseEntity
         set => JsonConfig = value != null ? JsonSerializer.Serialize(value) : null;
     }
 
-    public DateTime Created { get; set; } = DateTime.Now;
+    public DateTime Created { get; init; } = DateTime.Now;
 }

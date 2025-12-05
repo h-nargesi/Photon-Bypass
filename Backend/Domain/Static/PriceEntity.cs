@@ -21,7 +21,7 @@ public class PriceEntity : IBaseEntity
 
     public string CalculatorCode { get; set; } = null!;
 
-    public DateTime Created { get; set; } = DateTime.Now;
+    public DateTime Created { get; init; } = DateTime.Now;
 }
 
 public enum PriceStates
