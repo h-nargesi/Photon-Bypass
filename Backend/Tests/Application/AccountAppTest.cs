@@ -26,9 +26,9 @@ public class AccountAppTest : ServiceInitializer
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var action = () => account_app.GetUser("Invalid username");
+        var func = () => account_app.GetUser("Invalid username");
 
-        await action.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
@@ -50,9 +50,9 @@ public class AccountAppTest : ServiceInitializer
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var action = () => account_app.GetFullInfo("Invalid username");
+        var func = () => account_app.GetFullInfo("Invalid username");
 
-        await action.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
@@ -77,7 +77,7 @@ public class AccountAppTest : ServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
-        var function = () => account_app.EditUser("User7", new EditUserModel
+        var func = () => account_app.EditUser("InactiveUser7", new EditUserModel
         {
             Firstname = nameof(EditUserModel.Firstname),
             Lastname = nameof(EditUserModel.Lastname),
@@ -85,7 +85,7 @@ public class AccountAppTest : ServiceInitializer
             Mobile = nameof(EditUserModel.Mobile),
         });
 
-        await function.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
@@ -94,8 +94,53 @@ public class AccountAppTest : ServiceInitializer
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var action = () => account_app.EditUser("Invalid username", new EditUserModel());
+        var func = () => account_app.EditUser("Invalid username", new EditUserModel());
 
-        await action.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task ChangePassword_UnknownAccount()
+    {
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
+
+        var func = () => account_app.ChangePassword("Invalid username", string.Empty, string.Empty);
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task ChangePassword_InactiveAccount()
+    {
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
+
+        var func = () => account_app.ChangePassword("InactiveUser7", string.Empty, string.Empty);
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task ChangePassword_BadPassword()
+    {
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
+
+        var func = () => account_app.ChangePassword("User1", "xyz", "new-password");
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task ChangePassword_OK()
+    {
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
+
+        var result = await account_app.ChangePassword("User1", "abc", "new-password");
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
     }
 }
