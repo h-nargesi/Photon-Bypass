@@ -11,10 +11,14 @@ class RenewalRepository(LocalDbContext context) : EditableRepository<RenewalEnti
     {
         await OpenAsync();
 
-        var result = await FindAsync(statement => statement
-            .Where($"{nameof(RenewalEntity.AccountId)} = @account_id")
-            .WithParameters(new { account_id }));
+        var sql = $"""
+                   select {nameof(RenewalEntity.RestrictedRealmId)}
+                   from {TableName}
+                   where {nameof(RenewalEntity.AccountId)} = @account_id
+                   """;
 
-        return result.Select(x => x.RestrictedRealmId).FirstOrDefault();
+        var result = await QueryAsync<int>(sql, new { account_id });
+
+        return result.FirstOrDefault();
     }
 }

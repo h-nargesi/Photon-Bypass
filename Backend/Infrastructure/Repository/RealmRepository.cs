@@ -11,11 +11,15 @@ class RealmRepository(LocalDbContext context) : EditableRepository<RealmEntity>(
     {
         await OpenAsync();
 
-        var result = await FindAsync(statement => statement
-            .Where($"{nameof(RealmEntity.Id)} = @id")
-            .WithParameters(new { id }));
+        var sql = $"""
+                   select {nameof(RealmEntity.Name)}
+                   from {TableName}
+                   where {nameof(RealmEntity.Id)} = @id
+                   """;
 
-        return result.Select(r => r.Name).FirstOrDefault();
+        var result = await QueryAsync<string>(sql, new { id });
+        
+        return result.FirstOrDefault();
     }
 
     public async Task<List<RealmEntity>> FetchAllActiveRealm()

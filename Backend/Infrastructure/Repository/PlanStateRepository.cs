@@ -34,20 +34,4 @@ class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEn
         var sql = $"select {nameof(PlanStateEntity.RestrictedRealmId)} from {TableName} where {nameof(PlanStateEntity.Id)} = @account_id";
         return await ExecuteScalarAsync<int?>(sql, new { account_id });
     }
-
-    public async Task<Dictionary<int, List<int>>> GetActiveAccountRealmId(IEnumerable<int> account_ids)
-    {
-        await OpenAsync();
-
-        var sql = $"""
-select {nameof(PlanStateEntity.Id)}, {nameof(PlanStateEntity.RestrictedRealmId)}
-from {TableName} where {nameof(PlanStateEntity.Id)} in (@account_id)
-""";
-        
-        var result = await QueryAsync(sql, new { account_ids });
-
-        return result.Select(x => (RealmId: (int?)x.RestrictedRealmId, Id: (int)x.Id))
-            .GroupBy(tuple => tuple.RealmId ?? 0)
-            .ToDictionary(grouping => grouping.Key, grouping => grouping.Select(tuple => tuple.Id).ToList());
-    }
 }

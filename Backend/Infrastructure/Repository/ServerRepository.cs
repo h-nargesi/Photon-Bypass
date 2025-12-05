@@ -25,25 +25,24 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
 
     public async Task<List<string>> GetAllActiveNasDomainInRealm(int? realm_id)
     {
-        // TODO: User Query
         await OpenAsync();
-
-        var result = await FindAsync(statement =>
+        
+        var sql = $"""
+                  select {nameof(ServerEntity.DomainName)}
+                  from {TableName}
+                  where {nameof(ServerEntity.Active)} == 1 and {nameof(ServerEntity.Features)} = ({nameof(ServerEntity.Features)} & @nas)
+                  """;
+        
+        if (realm_id.HasValue)
         {
-            statement
-                .Where($"{nameof(ServerEntity.Active)} == 1 and {nameof(ServerEntity.Features)} = ({nameof(ServerEntity.Features)} & @nas)")
-                .WithParameters(new { nas = ServerFeature.Nas });
+            sql += $"""
+                   {nameof(ServerEntity.RealmId)} == @realm_id
+                   """;
+        }
 
-            if (realm_id.HasValue)
-            {
-                statement
-                    .Where($"{nameof(ServerEntity.RealmId)} == @realm_id")
-                    .WithParameters(new { realm_id = realm_id.Value });
+        var result = await QueryAsync(sql, new { nas = ServerFeature.Nas, realm_id });
 
-            }
-        });
-
-        return result.Select(n => n.DomainName).ToList();
+        return result.Select(n => (string)n.DomainName).ToList();
     }
 
     public async Task<List<ServerEntity>> GetActiveNasInRealmOrAll(int? realm_id)

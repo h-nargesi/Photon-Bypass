@@ -45,5 +45,10 @@ public abstract class DapperRepository<TEntity>(IDapperDbContext context) : IDis
         return Connection.QueryAsync(sql, param);
     }
 
+    protected Task<IEnumerable<T>> QueryAsync<T>(string sql, object? param = null)
+    {
+        return Connection.QueryAsync<T>(sql, param);
+    }
+
     public void Dispose() => GC.SuppressFinalize(this);
 }
