@@ -93,7 +93,7 @@ class AccountApplication(
 
         var account = await AccountRepo.GetAccount(target);
 
-        if (account == null || !account.Active || account.Password != token)
+        if (account is not { Active: true } || account.Password != token)
         {
             if (account != null)
             {
@@ -109,7 +109,7 @@ class AccountApplication(
                     });
                 }
 
-                Log.Warning("[user: {0}] Invlid password (change-pass) for {1}, active={2}", account.Username, target, account.Active);
+                Log.Warning("[user: {0}] Invalid password (change-pass) for {1}, active={2}", account.Username, target, account.Active);
             }
 
             throw new UserException("کلمه عبور فعلی اشتباه است!");
