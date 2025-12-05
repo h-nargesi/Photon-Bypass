@@ -89,14 +89,14 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
         using var connection = await radius.TikApiConnect();
 
         // check limitation (just by name)
-        var limitations = connection.CheckLimitations(renewal);
+        var limitation_names = connection.CheckLimitations(renewal);
 
         // check profile (just by name)
         var profile_name =
             connection.CheckProfile(renewal.TimeLimitInDays, renewal.TrafficLimit, renewal.RateLimitInMeg);
 
         // check profile-limitation assignment (just by name)
-        connection.CheckLimitationAssignment(profile_name, limitations);
+        connection.CheckLimitationAssignment(profile_name, limitation_names);
 
         // check user
         connection.CheckUser(account, renewal.SimultaneousUser);
@@ -112,17 +112,17 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
             throw new Exception("Username is not valid");
         }
 
-        var field_name = TikParam.GetFielName<UserModel>(nameof(UserModel.Password)) ??
-                         throw new Exception("The 'Password' TikProperty not found in 'UserModel'.");
+        var password_field_name = TikParam.GetFielName<UserModel>(nameof(UserModel.Password)) ??
+                                  throw new Exception("The 'Password' TikProperty not found in 'UserModel'.");
 
         using var connection = await radius.TikApiConnect();
 
-        var username_filter = TikParam.Equal<UserModel>(nameof(UserModel.Name), username);
-        var user = connection.LoadList<UserModel>(username_filter)?.FirstOrDefault() ??
+        var username_param = TikParam.Equal<UserModel>(nameof(UserModel.Name), username);
+        var user = connection.LoadList<UserModel>(username_param)?.FirstOrDefault() ??
                    throw new Exception($"User not found: ({username}).");
 
         user.Password = password;
 
-        connection.Save(user, [field_name]);
+        connection.Save(user, [password_field_name]);
     }
 }

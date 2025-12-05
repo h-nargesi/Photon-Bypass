@@ -64,12 +64,28 @@ public class AccountAppTest : ServiceInitializer
         {
             Firstname = nameof(EditUserModel.Firstname),
             Lastname = nameof(EditUserModel.Lastname),
-            Email = nameof(EditUserModel.Email),
-            Mobile = nameof(EditUserModel.Mobile),
+            Email = "mail@google.com",
+            Mobile = "+989315735625",
         });
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
+    }
+
+    [Fact]
+    public async Task EditUser_InactiveUser()
+    {
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
+        var function = () => account_app.EditUser("User7", new EditUserModel
+        {
+            Firstname = nameof(EditUserModel.Firstname),
+            Lastname = nameof(EditUserModel.Lastname),
+            Email = nameof(EditUserModel.Email),
+            Mobile = nameof(EditUserModel.Mobile),
+        });
+
+        await function.Should().ThrowAsync<UserException>();
     }
 
     [Fact]

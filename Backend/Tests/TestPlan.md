@@ -2,7 +2,8 @@
 
 - **Integration**: testing all functions integratedly.
 - **Outsource**: testing functions that require external resources.
-- **Basic**: testing functions that are independent.
+- **Application**: mocking outsource and test all function.
+- **Basic**: testing basic functions that are independent.
 
 ## Level 1 - Basic Functions - Unit Test
 
@@ -16,13 +17,96 @@ Implement mock of used dependencies then test the function.
 	[+] JsonConverter: StringNumberConverter
 	[+] PersianHandlerTest: ToPersianString
 	[+] PersianHandlerTest: MonthToDays
+- Business
+	[+] AccountBusiness
+	[+] PlanStateBusiness
+	[+] RenewalBusiness
 - Infrastructure
 	[+] PriceCalculator: Compile
 
-## Level 2 - Outsource - Unit Test
+## Level 2 - Application - Integration
 
 Implement mock of all dependencies and test mid-level services.
 
-## Level 3 - Integration - Integration
+- IAccountApplication:
+	[+] GetUser
+	[+] GetFullInfo
+	[+] EditUser
+	[ ] ChangePassword
+	[ ] GetHistory
+- IAuthApplication:
+	[ ] CheckUserPassword
+	[ ] ResetPassword
+	[ ] Register
+	[ ] CopyFromPermanentUser
+- IBasicsApplication:
+	[ ] GetPrices
+- IConnectionApplication:
+	[+] GetCurrentConnectionState
+	[ ] CloseConnection
+- IPlanApplication:
+	[+] GetPlanState
+	[ ] GetPlanInfo
+	[ ] Estimate
+	[+] Renewal
+- IVpnApplication:
+	[ ] ChangeOvpnPassword
+	[ ] SendCertEmail
+	[+] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
+- AccountMonitoringService:
+	[+] InactiveAbandonedUsers
+	[+] NotifSendServices
+- ServerManagementService:
+	[+] GetAvailableRealm
+	[+] CheckUserServerBalance
+	[ ] GetDefaultCertificate
+
+## Level 3 - Outsource - Unit Test
+
+Run out-sources and test out-source interfaces.
+
+- Queries
+	[ ] ph_v_all_profiles
+	[ ] ph_v_users_balance
+- Radius Desk Web
+- Radius Desk Database
+- VPN Nodes
+
+## Level 4 - Integration - Integration
 
 Implement mock of all outsources and test high-level services.
+
+Implement mock of all outsources and test high-level services.
+
+- IAccountApplication:
+	[ ] GetUser
+	[ ] GetFullInfo
+	[ ] EditUser
+	[ ] ChangePassword
+	[ ] GetHistory
+- IAuthApplication:
+	[ ] CheckUserPassword
+	[ ] ResetPassword
+	[ ] Register
+	[ ] CopyFromPermanentUser
+- IBasicsApplication:
+	[ ] GetPrices
+- IConnectionApplication:
+	[ ] GetCurrentConnectionState
+	[ ] CloseConnection
+- IPlanApplication:
+	[ ] GetPlanState
+	[ ] GetPlanInfo
+	[ ] Estimate
+	[ ] Renewal
+- IVpnApplication:
+	[ ] ChangeOvpnPassword
+	[ ] SendCertEmail
+	[ ] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
+- AccountMonitoringService:
+	[ ] InactiveAbandonedUsers
+	[ ] NotifSendServices
+- ServerManagementService:
+	[ ] GetAvailableRealm
+	[ ] CheckUserServerBalance
+	[ ] GetDefaultCertificate
