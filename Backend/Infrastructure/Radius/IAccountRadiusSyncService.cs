@@ -1,5 +1,4 @@
 using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers.Entity;
 
@@ -14,8 +13,6 @@ public interface IAccountRadiusSyncService
     Task DeactivateUser(ServerEntity radius, IEnumerable<string> usernames);
 
     Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal);
-
-    Task<string?> GetVpnPassword(ServerEntity radius, string username);
 
     Task ChangeVpnPassword(ServerEntity radius, string username, string password);
 }

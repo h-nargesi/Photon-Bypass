@@ -1,8 +1,6 @@
 using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers.Entity;
-using PhotonBypass.Infra.Nas;
 using PhotonBypass.Infra.Radius.UserManager;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge;
@@ -11,10 +9,8 @@ using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
 
-public class AccountRadiusSyncService(Lazy<IMikrotikDirectService> mikrotik_direct_srv) : IAccountRadiusSyncService
+public class AccountRadiusSyncService : IAccountRadiusSyncService
 {
-    private Lazy<IMikrotikDirectService> MikrotikDirectSrv { get; } = mikrotik_direct_srv;
-
     public async Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames)
     {
         using var connection = await radius.TikApiConnect();
@@ -61,7 +57,7 @@ public class AccountRadiusSyncService(Lazy<IMikrotikDirectService> mikrotik_dire
     public async Task DeactivateUser(ServerEntity radius, IEnumerable<string> usernames)
     {
         var field_name = TikParam.GetFielName<UserModel>(nameof(UserModel.Disabled)) ??
-            throw new Exception("The 'Disabled' TikProperty not found in 'UserModel'.");
+                         throw new Exception("The 'Disabled' TikProperty not found in 'UserModel'.");
 
         using var connection = await radius.TikApiConnect();
 
@@ -76,7 +72,7 @@ public class AccountRadiusSyncService(Lazy<IMikrotikDirectService> mikrotik_dire
                 continue;
 
             var user = connection.LoadList<UserModel>(
-                TikParam.Equal<UserModel>(nameof(UserModel.Name), username))?
+                    TikParam.Equal<UserModel>(nameof(UserModel.Name), username))?
                 .FirstOrDefault();
 
             if (user == null)
@@ -93,47 +89,20 @@ public class AccountRadiusSyncService(Lazy<IMikrotikDirectService> mikrotik_dire
         using var connection = await radius.TikApiConnect();
 
         // check limitation (just by name)
-        int? speed = null;
-        var limitations = new HashSet<string>();
-        if (renewal.TrafficLimit == null)
-        {
-            speed = 2;
-            // Check Speed
-            limitations.Add(connection.CheckRateLimit(speed.Value));
-        }
-        // Check Traffic
-        if (renewal.TrafficLimit != null)
-        {
-            limitations.Add(connection.CheckTrafficLimit(renewal.TrafficLimit.Value));
-        }
-        
+        var limitations = connection.CheckLimitations(renewal);
+
         // check profile (just by name)
-        var profile_name = connection.CheckProfile(renewal.TimeLimitInDays, renewal.TrafficLimit, speed);
-        
+        var profile_name =
+            connection.CheckProfile(renewal.TimeLimitInDays, renewal.TrafficLimit, renewal.RateLimitInMeg);
+
         // check profile-limitation assignment (just by name)
         connection.CheckLimitationAssignment(profile_name, limitations);
-        
+
         // check user
-        
-        // active user
+        connection.CheckUser(account, renewal.SimultaneousUser);
+
         // assign user to profile
-        throw new NotImplementedException();
-    }
-
-    public async Task<string?> GetVpnPassword(ServerEntity radius, string username)
-    {
-        if (string.IsNullOrEmpty(username) || !InjectionRegex.Username().Match(username).Success)
-        {
-            throw new Exception("Username is not valid");
-        }
-
-        using var connection = await radius.TikApiConnect();
-
-        var user = connection.LoadList<UserModel>(
-            TikParam.Equal<UserModel>(nameof(UserModel.Name), username))?
-            .FirstOrDefault();
-
-        return user == null ? throw new Exception($"User not found: ({username}).") : user.Password;
+        connection.AssignUserProfile(account.Username, profile_name);
     }
 
     public async Task ChangeVpnPassword(ServerEntity radius, string username, string password)
@@ -144,14 +113,13 @@ public class AccountRadiusSyncService(Lazy<IMikrotikDirectService> mikrotik_dire
         }
 
         var field_name = TikParam.GetFielName<UserModel>(nameof(UserModel.Password)) ??
-            throw new Exception("The 'Password' TikProperty not found in 'UserModel'.");
+                         throw new Exception("The 'Password' TikProperty not found in 'UserModel'.");
 
         using var connection = await radius.TikApiConnect();
 
-        var user = connection.LoadList<UserModel>(
-            TikParam.Equal<UserModel>(nameof(UserModel.Name), username))?
-            .FirstOrDefault() ??
-            throw new Exception($"User not found: ({username}).");
+        var username_filter = TikParam.Equal<UserModel>(nameof(UserModel.Name), username);
+        var user = connection.LoadList<UserModel>(username_filter)?.FirstOrDefault() ??
+                   throw new Exception($"User not found: ({username}).");
 
         user.Password = password;
 

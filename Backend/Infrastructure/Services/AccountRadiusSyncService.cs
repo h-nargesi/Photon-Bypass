@@ -149,48 +149,6 @@ class AccountRadiusSyncService(
         });
     }
 
-    public async Task<string> GetVpnPassword(int? realm_id, string username)
-    {
-        var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
-
-        if (radius_list.Count <= 0)
-        {
-            throw new Exception($"No radius server found for realm-id: ({realm_id})");
-        }
-
-        var master_radius_server = radius_list[0];
-
-        string? result;
-        switch (master_radius_server.Features)
-        {
-            case ServerFeature.UserManager:
-                result = await MikrotikRadius.Value.GetVpnPassword(master_radius_server, username);
-                break;
-            case ServerFeature.RadiusDesk:
-                result = await RadiusDesk.Value.GetVpnPassword(master_radius_server, username);
-                break;
-            default:
-                throw new Exception(
-                    $"Unknown radius-server: (realm-id={master_radius_server.RealmId}, " +
-                    $"radius-id={master_radius_server.Id}, feature={master_radius_server.Features})");
-        }
-
-        if (result != null && radius_list.Count <= 1) return result;
-        
-        if (result == null)
-        {
-            result = HashHandler.GenerateHashCode();
-        }
-        else
-        {
-            radius_list.RemoveAt(0);
-        }
-
-        _ = ChangeVpnPassword(radius_list, username, result);
-
-        return result;
-    }
-
     public async Task ChangeVpnPassword(int? realm_id, string username, string password)
     {
         var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);

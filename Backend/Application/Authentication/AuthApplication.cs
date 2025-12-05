@@ -8,19 +8,23 @@ using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
-using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Application.Authentication;
 
-partial class AuthApplication(
-    IAccountRepository AccountRepo,
-    IHistoryRepository HistoryRepo,
-    Lazy<IResetPassRepository> ResetPassRepo,
-    ISocialMediaService SocialMediaSrv,
-    Lazy<IEmailService> EmailSrv,
-    Lazy<IAccountRadiusSyncService> AccountRadiusSrv)
+class AuthApplication(
+    IAccountRepository account_repo,
+    IHistoryRepository history_repo,
+    Lazy<IResetPassRepository> reset_pass_repo,
+    ISocialMediaService social_media_srv,
+    Lazy<IEmailService> email_srv)
     : IAuthApplication
 {
+    private IAccountRepository AccountRepo { get; } = account_repo;
+    private IHistoryRepository HistoryRepo { get; } = history_repo;
+    private Lazy<IResetPassRepository> ResetPassRepo { get; } = reset_pass_repo;
+    private ISocialMediaService SocialMediaSrv { get; } = social_media_srv;
+    private Lazy<IEmailService> EmailSrv { get; } = email_srv;
+
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
         var account = await AccountRepo.GetAccount(username);
@@ -124,7 +128,7 @@ partial class AuthApplication(
         else if (AccountBusiness.EmailPattern().IsMatch(email_mobile))
         {
             var account = (await AccountRepo.GetAccountByMobile(email_mobile)) ??
-                throw new UserException("کاربر یافت نشد.");
+                          throw new UserException("کاربر یافت نشد.");
 
             if (!account.Active)
             {
@@ -170,7 +174,7 @@ partial class AuthApplication(
             throw new UserException("این نام کاربری قبلا استفاده شده است!");
         }
 
-        account.Password = HashHandler.HashPassword(model.Password ?? string.Empty);
+        account.VpnPassword = account.Password = HashHandler.HashPassword(model.Password ?? string.Empty);
 
         await AccountRepo.Save(account);
 

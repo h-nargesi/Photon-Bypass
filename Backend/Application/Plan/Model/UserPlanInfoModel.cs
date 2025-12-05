@@ -8,5 +8,5 @@ public class UserPlanInfoModel
 
     public int? RemainsTimePercent { get; set; }
 
-    public int? SimultaneousUserCount { get; set; }
+    public int SimultaneousUserCount { get; set; }
 }

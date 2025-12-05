@@ -16,6 +16,8 @@ public class AccountEntity : IBaseEntity
 
     public string Password { get; set; } = null!;
 
+    public string VpnPassword { get; set; } = null!;
+
     public int? Parent { get; set; }
 
     public string? Name { get; set; }

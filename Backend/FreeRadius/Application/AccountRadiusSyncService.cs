@@ -28,11 +28,6 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
         throw new NotImplementedException();
     }
 
-    public Task<string?> GetVpnPassword(ServerEntity radius, string username)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task ChangeVpnPassword(ServerEntity radius, string username, string password)
     {
         throw new NotImplementedException();

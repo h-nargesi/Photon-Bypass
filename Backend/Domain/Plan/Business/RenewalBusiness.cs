@@ -20,6 +20,8 @@ public static class RenewalBusiness
             result.Append($" و {entity.TimeLimitInDays} روزه");
         }
 
+        result.Append($" و {entity.SimultaneousUser} کاربره");
+
         if (result.Length > 0) result.Remove(0, 3);
 
         return result.ToString();
@@ -32,7 +34,7 @@ public static class RenewalBusiness
 
     public static bool RenewalValidation(this RenewalEntity validation, out UserException error)
     {
-        if (validation.TrafficLimit == null)
+        if (validation.TrafficLimit is null or < 1)
         {
             error = new UserException(
                 "نمی‌توانید پلن بدون ترافیک ثبت نمایید!",

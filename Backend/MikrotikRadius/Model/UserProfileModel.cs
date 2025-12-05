@@ -19,11 +19,11 @@ public class UserProfileModel
     public string? Profile { get; set; }
 
     [JsonPropertyName("end-time")]
-    [TikProperty("end-time")]
+    [TikProperty("end-time", IsReadOnly = true)]
     public string? EndTime { get; set; }
 
     [JsonPropertyName("state")]
-    [TikProperty("state")]
+    [TikProperty("state", IsReadOnly = true)]
     public string? State { get; set; }
 
     [JsonPropertyName("comment")]

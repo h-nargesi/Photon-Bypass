@@ -89,8 +89,6 @@ class VpnApplication(
                 $"There is not ant plan for user {target}");
         }
 
-        var vpn_password_task = AccountRadiusSrv.Value.GetVpnPassword(plan.RestrictedRealmId, account.Username);
-
         var cert_context = await ServerMngSrv.Value.GetDefaultCertificate(plan.RestrictedRealmId);
 
         await AccountRadiusSrv.Value.GetOVpnCertificate(plan.RestrictedRealmId, account.Username, cert_context);
@@ -98,7 +96,7 @@ class VpnApplication(
         var email_context = new CertEmailContext
         {
             Username = account.Username,
-            Password = (await vpn_password_task) ?? throw new Exception($"Password not found for user: {target}"),
+            Password = account.VpnPassword,
             Realm = cert_context.Realm,
             PrivateKeyOvpn = cert_context.PrivateKeyOvpn,
             CertFile = cert_context.CertFile,
