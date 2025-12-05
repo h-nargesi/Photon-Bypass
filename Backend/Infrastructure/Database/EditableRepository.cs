@@ -10,6 +10,7 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context) : Da
 {
     private const int UpdateMaxTasksCount = 10;
 
+    // TODO: make static event for all instances of same type repositories
     public event EntityEventHandler<TEntity>? OnSaved;
 
     public async Task<IDbTransaction> BeginTransactionAsync()

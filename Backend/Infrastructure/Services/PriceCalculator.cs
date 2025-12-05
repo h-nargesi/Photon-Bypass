@@ -34,7 +34,7 @@ class PriceCalculator(Lazy<IPriceRepository> repository) : IPriceCalculator
 
     private async Task<Dictionary<int, MethodInfo>> FetchCalculatorCode()
     {
-        var list = (await repository.Value.GetLatest())
+        var list = (await repository.Value.GetActives())
             .OrderByDescending(c => c.IsDefault)
             .ThenBy(c => c.Id)
             .Select(c => (c.Id, Method: Compile(c.CalculatorCode)))

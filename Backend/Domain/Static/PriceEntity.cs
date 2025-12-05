@@ -9,7 +9,7 @@ public class PriceEntity : IBaseEntity
     [Key]
     public int Id { get; set; }
 
-    public bool IsActive { get; set; }
+    public PriceStates State { get; set; } = PriceStates.Visible;
 
     public string Title { get; set; } = null!;
 
@@ -19,9 +19,14 @@ public class PriceEntity : IBaseEntity
 
     public bool IsDefault { get; set; }
 
-    public bool IsVisible { get; set; } = true;
-
     public string CalculatorCode { get; set; } = null!;
 
     public DateTime Created { get; set; } = DateTime.Now;
+}
+
+public enum PriceStates
+{
+    Inactive = 0,
+    Active = 1,
+    Visible = 2,
 }

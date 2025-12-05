@@ -39,7 +39,7 @@ public class PlanController(
     }
 
     [HttpPost("estimate")]
-    public ApiResult Estimate([FromBody] EstimateContext context)
+    public async Task<ApiResult> Estimate([FromBody] EstimateContext context)
     {
         LoadJobContext();
 
@@ -58,7 +58,7 @@ public class PlanController(
             return BadRequestApiResult(message: "تعداد کاربران مشخص نشده است!");
         }
 
-        var result = application.Estimate( context.SimultaneousUserCount.Value, context.Days.Value, context.Gigabytes.Value);
+        var result = await application.Estimate( context.SimultaneousUserCount.Value, context.Days.Value, context.Gigabytes.Value);
 
         return SafeApiResult(result);
     }
