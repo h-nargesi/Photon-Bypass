@@ -26,7 +26,7 @@ namespace tik4net
                 case TikConnectionType.ApiSsl:
                     return new ApiConnection(true);
                 default:
-                    throw new NotImplementedException(string.Format("Connection type '{0}' not supported.", connectionType));
+                    throw new Exception(string.Format("Connection type '{0}' not supported.", connectionType));
             }
         }
 
