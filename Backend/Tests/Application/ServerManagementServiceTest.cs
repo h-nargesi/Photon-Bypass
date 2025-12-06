@@ -1,10 +1,9 @@
-﻿using System.Text.RegularExpressions;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Moq;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.OutSource;
-using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Tools;
+using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Test.Application;
 
@@ -12,10 +11,6 @@ public partial class ServerManagementServiceTest : ServiceInitializer
 {
     protected override void AddServices(IHostApplicationBuilder builder)
     {
-        var cloud = new Mock<ICloudRepository>();
-        cloud.Setup(x => x.FindWebCloud()).Returns(Task.FromResult(1));
-        builder.Services.AddLazyScoped(_ => cloud.Object);
-
         var social = new Mock<ISocialMediaService>();
         social.Setup(x => x.AlarmServerCapacity(It.IsAny<IEnumerable<string>>()))
             .Returns<IEnumerable<string>>(alarms =>

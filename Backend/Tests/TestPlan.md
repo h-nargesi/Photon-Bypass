@@ -33,7 +33,6 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetFullInfo
 	[+] EditUser
 	[+] ChangePassword
-	[ ] GetHistory
 - IAuthApplication:
 	[ ] CheckUserPassword
 	[ ] ResetPassword
@@ -54,27 +53,21 @@ Implement mock of all dependencies and test mid-level services.
 	[ ] SendCertEmail
 	[+] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 - AccountMonitoringService:
-	[+] InactiveAbandonedUsers
-	[+] NotifSendServices
+	[-] InactiveAbandonedUsers
+	[-] NotifSendServices
 - ServerManagementService:
-	[+] GetAvailableRealm
-	[+] CheckUserServerBalance
+	[-] GetAvailableRealm
+	[-] CheckUserServerBalance
 	[ ] GetDefaultCertificate
 
 ## Level 3 - Outsource - Unit Test
 
 Run out-sources and test out-source interfaces.
 
-- Queries
-	[ ] ph_v_all_profiles
-	[ ] ph_v_users_balance
-- Radius Desk Web
-- Radius Desk Database
-- VPN Nodes
+- Infrastructure Repositories
+- Mikrotik Radius
 
 ## Level 4 - Integration - Integration
-
-Implement mock of all outsources and test high-level services.
 
 Implement mock of all outsources and test high-level services.
 

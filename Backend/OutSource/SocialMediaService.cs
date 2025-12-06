@@ -17,7 +17,8 @@ class SocialMediaService : ISocialMediaService
 
     public Task InvalidPasswordAlert(string username)
     {
-        throw new NotImplementedException();
+        // TODO: Implement
+        return Task.CompletedTask;
     }
 
     public Task NewUserRegistrationAlert(AccountEntity account)

@@ -3,7 +3,8 @@
       "Password": "3a81oZNherrMQXNJriBBMRLm+k6JqX6iCp7u5ktV05ohkpkqJ0/BqDa6PCOj/uu9RU1EI2Q86A4qmslPpUyknw==" },
 	{ "Id": 2, "Active": true, "Username": "User2", "Mobile": "0912", "Email": "user2@gmail.com", "Parent": 1 },
 	{ "Id": 3, "Active": true, "Username": "User3", "Mobile": "0913", "Email": "user3@gmail.com", "Parent": 1 },
-	{ "Id": 4, "Active": true, "Username": "User4", "Mobile": "0914", "Email": "user4@gmail.com", "Parent": null },
+	{ "Id": 4, "Active": true, "Username": "User4", "Mobile": "0914", "Email": "user4@gmail.com", "Parent": null, 
+      "Password": "3a81oZNherrMQXNJriBBMRLm+k6JqX6iCp7u5ktV05ohkpkqJ0/BqDa6PCOj/uu9RU1EI2Q86A4qmslPpUyknw==" },
 	{ "Id": 5, "Active": true, "Username": "User5", "Mobile": "0915", "Email": "user5@gmail.com", "Parent": null },
 	{ "Id": 6, "Active": true, "Username": "User6", "Mobile": "0916", "Email": "user6@gmail.com", "Parent": 5 },
     { "Id": 7, "Active": false, "Username": "InactiveUser7", "Mobile": "0916", "Email": "user7@gmail.com", "Parent": 5 }
