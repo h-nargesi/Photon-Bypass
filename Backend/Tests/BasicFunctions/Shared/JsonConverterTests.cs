@@ -132,25 +132,25 @@ public class JsonConverterTests
     public class NullableDatetime
     {
         [JsonConverter(typeof(UnixTimestampConverter))]
-        public DateTime? Date { get; }
+        public DateTime? Date { get; set; }
     }
 
     public class NotNullableDateTime
     {
         [JsonConverter(typeof(UnixTimestampConverter))]
-        public DateTime Date { get; }
+        public DateTime Date { get; set; }
     }
 
     public class NullableLong
     {
         [JsonConverter(typeof(StringNumberConverter))]
-        public long? Value { get; }
+        public long? Value { get; set; }
     }
 
     public class NotNullableLong
     {
         [JsonConverter(typeof(StringNumberConverter))]
-        public long Value { get; }
+        public long Value { get; set; }
     }
 
 }
