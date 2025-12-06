@@ -13,6 +13,7 @@
 		<ProjectReference Include="..\FreeRadius\FreeRadius.csproj"/>
 		<ProjectReference Include="..\MikrotikRadius\MikrotikRadius.csproj"/>
 		<ProjectReference Include="..\OutSource\OutSource.csproj"/>
+		<ProjectReference Include="..\ServerBridge\ServerBridge.csproj"/>
 	</ItemGroup>
 
 </Project>

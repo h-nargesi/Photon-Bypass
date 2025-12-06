@@ -1,11 +1,11 @@
-﻿using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Domain.Servers.Entity;
 using tik4net;
 
-namespace PhotonBypass.ServerBridge.Tik4net;
+namespace PhotonBypass.ServerBridge.Services;
 
-public static class Tik4NetExtension
+class Tik4NetHandler : ITik4NetHandler
 {
-    public static async Task<ITikConnection> TikApiConnect(this ServerEntity server)
+    public Task<ITikConnection> ConnectTo(ServerEntity server)
     {
         var config = server.Config?.WebApiConfig ??
                      throw new Exception($"The ssh configuration is not set for server ({server.Id}:{server.Name})");

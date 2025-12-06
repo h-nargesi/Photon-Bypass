@@ -4,6 +4,7 @@ using PhotonBypass.FreeRadius;
 using PhotonBypass.Infra;
 using PhotonBypass.Mikrotik.Radius;
 using PhotonBypass.OutSource;
+using PhotonBypass.ServerBridge;
 
 namespace PhotonBypass;
 
@@ -16,6 +17,7 @@ public static class ServiceFactoryHandler
         builder.AddRadiusDeskServices();
         builder.AddMikrotikRadiusServices();
         builder.AddOutSourceServices();
+        builder.AddServerBridgeServices();
         
         return builder;
     }
