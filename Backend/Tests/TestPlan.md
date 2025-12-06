@@ -32,7 +32,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetUser
 	[+] GetFullInfo
 	[+] EditUser
-	[ ] ChangePassword
+	[+] ChangePassword
 	[ ] GetHistory
 - IAuthApplication:
 	[ ] CheckUserPassword
