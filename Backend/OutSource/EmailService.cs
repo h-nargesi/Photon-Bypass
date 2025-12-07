@@ -1,16 +1,15 @@
-﻿using System.Net;
-using System.Net.Mail;
-using Microsoft.Extensions.Options;
+﻿using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
-using PhotonBypass.Domain.OutSource;
+using PhotonBypass.ServerBridge.Services;
+using System.Net.Mail;
 
 namespace PhotonBypass.OutSource;
 
-class EmailService(IOptions<EmailOptions> options) : IEmailService
+class EmailService(IEmailHandler handler) : IEmailService
 {
     public async Task FinishServiceAlert(string fullname, string username, string email, string type, string left)
     {
-        if (string.IsNullOrWhiteSpace(options.Value.Address))
+        if (string.IsNullOrWhiteSpace(handler.Options.Address))
         {
             throw new Exception("Email Address is not set in config");
         }
@@ -20,7 +19,7 @@ class EmailService(IOptions<EmailOptions> options) : IEmailService
             fullname = username;
         }
 
-        var from_address = new MailAddress(options.Value.Address, options.Value.FullName);
+        var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
         var to_address = new MailAddress(email, fullname);
 
         var body = await File.ReadAllTextAsync("EmailTemplates\\FinishServiceAlert.html");
@@ -34,17 +33,17 @@ class EmailService(IOptions<EmailOptions> options) : IEmailService
         message.IsBodyHtml = false;
         message.Body = body;
 
-        await Send(message);
+        await handler.Send(message);
     }
 
     public async Task SendCertEmail(string fullname, string email, CertEmailContext context)
     {
-        if (string.IsNullOrWhiteSpace(options.Value.Address))
+        if (string.IsNullOrWhiteSpace(handler.Options.Address))
         {
             throw new Exception("Email Address is not set in config");
         }
 
-        var fromAddress = new MailAddress(options.Value.Address, options.Value.FullName);
+        var fromAddress = new MailAddress(handler.Options.Address, handler.Options.FullName);
         var toAddress = new MailAddress(email, fullname);
 
         var body = await File.ReadAllTextAsync("EmailTemplates\\CertEmail.html");
@@ -64,17 +63,17 @@ class EmailService(IOptions<EmailOptions> options) : IEmailService
 
         message.Attachments.Add(new Attachment(stream, "cert.ovpn"));
 
-        await Send(message);
+        await handler.Send(message);
     }
 
     public async Task SendResetPasswordLink(string fullname, string email, string hash_code)
     {
-        if (string.IsNullOrWhiteSpace(options.Value.Address))
+        if (string.IsNullOrWhiteSpace(handler.Options.Address))
         {
             throw new Exception("Email Address is not set in config");
         }
 
-        var fromAddress = new MailAddress(options.Value.Address, options.Value.FullName);
+        var fromAddress = new MailAddress(handler.Options.Address, handler.Options.FullName);
         var toAddress = new MailAddress(email, fullname);
 
         var body = await File.ReadAllTextAsync("EmailTemplates\\ResetPassword.html");
@@ -87,31 +86,6 @@ class EmailService(IOptions<EmailOptions> options) : IEmailService
             Body = body,
         };
 
-        await Send(message);
-    }
-
-    private Task Send(MailMessage message)
-    {
-        if (string.IsNullOrWhiteSpace(options.Value.Address))
-        {
-            throw new Exception("Email Address is not set in config");
-        }
-
-        if (string.IsNullOrWhiteSpace(options.Value.Password))
-        {
-            throw new Exception("Email Address is not set in config");
-        }
-
-        var smtp = new SmtpClient
-        {
-            Host = "smtp.gmail.com",
-            Port = 587,
-            EnableSsl = true,
-            DeliveryMethod = SmtpDeliveryMethod.Network,
-            UseDefaultCredentials = false,
-            Credentials = new NetworkCredential(options.Value.Address, options.Value.Password)
-        };
-
-        return smtp.SendMailAsync(message);
+        await handler.Send(message);
     }
 }

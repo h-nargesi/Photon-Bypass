@@ -13,13 +13,15 @@ namespace PhotonBypass.FreeRadius;
 
 public static class ServiceFactory
 {
+    public const string HttpClientKeyName = "free-radius";
+
     public static void AddRadiusDeskServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        builder.Services.AddScoped<RadiusDeskApiCall>();
-        builder.Services.AddHttpClient(RadiusDeskApiCall.HttpClientKeyName, client =>
+        builder.Services.AddHttpClient(HttpClientKeyName, client =>
         {
             client.DefaultRequestHeaders.Accept.Add(
                 new MediaTypeWithQualityHeaderValue("application/json"));
+            client.BaseAddress = new Uri("cake4/rd_cake");
         });
 
         builder.Services.AddScoped<RadDbContext>();

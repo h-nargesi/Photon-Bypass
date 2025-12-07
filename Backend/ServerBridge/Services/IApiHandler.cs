@@ -4,5 +4,7 @@ namespace PhotonBypass.ServerBridge.Services;
 
 public interface IApiHandler
 {
-    T LoginTo<T>(ServerEntity server, string? base_path = null);
+    string? HttpClientKey { get; set; }
+
+    T LoginTo<T>(ServerEntity server);
 }

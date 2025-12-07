@@ -5,7 +5,7 @@ namespace PhotonBypass.Mikrotik.Radius.ApiWrapper;
 
 public interface ISessions
 {
-    public const string BasePath = "/user-manager/session";
+    public const string BasePath = "/rest/user-manager/session";
     
     [Get("/print")]
     Task<List<SessionModel>> PrintBySessionId([AliasAs("acct-session-id")] string session_id);

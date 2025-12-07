@@ -1,5 +1,3 @@
-using System.Net.Http.Headers;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PhotonBypass.Infra.Nas;
 using PhotonBypass.Infra.Radius.UserManager;
@@ -10,10 +8,11 @@ namespace PhotonBypass.Mikrotik.Radius;
 
 public static class ServiceFactory
 {
+    //public const string HttpClientKeyName = "mikrotik-api";
+
     public static void AddMikrotikRadiusServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        // builder.Services.AddScoped<MikrotikApiCall>();
-        // builder.Services.AddHttpClient(MikrotikApiCall.HttpClientKeyName, client =>
+        // builder.Services.AddHttpClient(HttpClientKeyName, client =>
         // {
         //     client.DefaultRequestHeaders.Accept.Add(
         //         new MediaTypeWithQualityHeaderValue("application/json"));

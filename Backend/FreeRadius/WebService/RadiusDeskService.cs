@@ -2,6 +2,7 @@
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.FreeRadius.WebService.ApiResponseModel;
+using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.Tools;
 using System.Net.Http.Json;
 using System.Web;
@@ -20,7 +21,7 @@ class RadiusDeskService : IRadiusService, IDisposable
     private const string NAS_IP_ADDRESS = "NAS-IP-Address";
     private const string RD_TOTAL_DATA = "Rd-Total-Data";
 
-    public RadiusDeskService(RadWebApiOptionContext options, RadiusDeskApiCall call)
+    public RadiusDeskService(RadWebApiOptionContext options, IApiHandler call)
     {
         this.options = options.WebApiConfig ??
                        throw new ArgumentNullException(nameof(options));

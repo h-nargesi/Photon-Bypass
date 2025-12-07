@@ -1,12 +1,13 @@
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.ErrorHandler;
+using PhotonBypass.ServerBridge.Services;
 using Renci.SshNet;
 
-namespace PhotonBypass.ServerBridge.Services;
+namespace PhotonBypass.ServerBridge.Ssh;
 
 class SshHandler : ISshHandler
 {
-    public Task<SshClient> ConnectTo(ServerEntity server)
+    public async Task<SshClient> ConnectTo(ServerEntity server)
     {
         var config = server.Config?.SshConfig ??
                      throw new Exception($"The ssh configuration is not set for server ({server.Id}:{server.Name})");

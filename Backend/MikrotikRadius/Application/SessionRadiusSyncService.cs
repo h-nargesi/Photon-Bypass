@@ -3,13 +3,14 @@ using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Infra.Radius.UserManager;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge;
+using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.ServerBridge.Tik4net;
 using tik4net.Objects;
 using tik4net.Objects.Ppp;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
 
-public class SessionRadiusSyncService : ISessionRadiusSyncService
+public class SessionRadiusSyncService(ITik4NetHandler handler) : ISessionRadiusSyncService
 {
     public async Task<List<UserConnectionBinding>> GetActiveConnections(ServerEntity radius, string username)
     {
@@ -18,7 +19,7 @@ public class SessionRadiusSyncService : ISessionRadiusSyncService
             throw new Exception("Username is not valid");
         }
 
-        using var connection = await radius.TikApiConnect();
+        using var connection = await handler.ConnectTo(radius);
 
         var session_list = connection.LoadList<SessionModel>(
             TikParam.Equal<SessionModel>(nameof(SessionModel.Username), username),
@@ -42,7 +43,7 @@ public class SessionRadiusSyncService : ISessionRadiusSyncService
             throw new Exception("Session id is not valid");
         }
 
-        using var connection = await radius.TikApiConnect();
+        using var connection = await handler.ConnectTo(radius);
 
         var session_list = connection.LoadList<PppActive>(
             TikParam.Equal<SessionModel>(nameof(SessionModel.SessionId), session_id))
@@ -62,7 +63,7 @@ public class SessionRadiusSyncService : ISessionRadiusSyncService
             throw new Exception("Username is not valid");
         }
 
-        using var connection = await radius.TikApiConnect();
+        using var connection = await handler.ConnectTo(radius);
 
         var session_list = connection.LoadList<SessionModel>(
             TikParam.Equal<SessionModel>(nameof(SessionModel.Username), username));
@@ -76,7 +77,7 @@ public class SessionRadiusSyncService : ISessionRadiusSyncService
 
     public async Task<List<TrafficDataBinding>> UpdateTrafficData(ServerEntity radius, DateTime index)
     {
-        using var connection = await radius.TikApiConnect();
+        using var connection = await handler.ConnectTo(radius);
 
         return connection.LoadList<SessionModel>(
             TikParam.Greater<SessionModel>(nameof(SessionModel.Started), index.ToString("o")))

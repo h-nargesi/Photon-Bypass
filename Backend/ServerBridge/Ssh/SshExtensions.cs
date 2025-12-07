@@ -1,4 +1,3 @@
-using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.ErrorHandler;
 using Renci.SshNet;
 using Serilog;

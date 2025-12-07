@@ -4,16 +4,17 @@ using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Infra.Radius.UserManager;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge;
+using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.ServerBridge.Tik4net;
 using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
 
-public class AccountRadiusSyncService : IAccountRadiusSyncService
+public class AccountRadiusSyncService(ITik4NetHandler handler) : IAccountRadiusSyncService
 {
     public async Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames)
     {
-        using var connection = await radius.TikApiConnect();
+        using var connection = await handler.ConnectTo(radius);
 
         foreach (var username in usernames)
         {
@@ -41,7 +42,7 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
 
     public async Task DeactivateUserExcept(ServerEntity radius, HashSet<string> usernames)
     {
-        using var connection = await radius.TikApiConnect();
+        using var connection = await handler.ConnectTo(radius);
 
         var all_users = connection.LoadAll<UserModel>()?
             .Select(u => u.Name ?? string.Empty)
@@ -59,7 +60,7 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
         var field_name = TikParam.GetFielName<UserModel>(nameof(UserModel.Disabled)) ??
                          throw new Exception("The 'Disabled' TikProperty not found in 'UserModel'.");
 
-        using var connection = await radius.TikApiConnect();
+        using var connection = await handler.ConnectTo(radius);
 
         foreach (var username in usernames)
         {
@@ -86,7 +87,7 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
 
     public async Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
     {
-        using var connection = await radius.TikApiConnect();
+        using var connection = await handler.ConnectTo(radius);
 
         // check limitation (just by name)
         var limitation_names = connection.CheckLimitations(renewal);
@@ -115,7 +116,7 @@ public class AccountRadiusSyncService : IAccountRadiusSyncService
         var password_field_name = TikParam.GetFielName<UserModel>(nameof(UserModel.Password)) ??
                                   throw new Exception("The 'Password' TikProperty not found in 'UserModel'.");
 
-        using var connection = await radius.TikApiConnect();
+        using var connection = await handler.ConnectTo(radius);
 
         var username_param = TikParam.Equal<UserModel>(nameof(UserModel.Name), username);
         var user = connection.LoadList<UserModel>(username_param)?.FirstOrDefault() ??

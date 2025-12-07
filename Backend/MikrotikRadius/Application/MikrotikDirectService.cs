@@ -5,13 +5,14 @@ using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Infra.Nas;
 using PhotonBypass.ServerBridge;
+using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.ServerBridge.Ssh;
 using PhotonBypass.Tools;
 using Serilog;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
 
-partial class MikrotikDirectService : IMikrotikDirectService
+partial class MikrotikDirectService(ISshHandler handler) : IMikrotikDirectService
 {
     public async Task CloseConnection(ServerEntity server, string session_id)
     {
@@ -20,7 +21,7 @@ partial class MikrotikDirectService : IMikrotikDirectService
             throw new Exception($"Invalid server or session-id! ({session_id})");
         }
         
-        using var node = await server.SshConnect();
+        using var node = await handler.ConnectTo(server);
 
         var success = node.Execute($"/ppp active remove [find session-id=0x{session_id}]", out var result);
         if (!success)
@@ -47,7 +48,7 @@ partial class MikrotikDirectService : IMikrotikDirectService
         var tasks = servers
             .Select(async server =>
             {
-                using var node = await server.SshConnect();
+                using var node = await handler.ConnectTo(server);
 
                 var success = node.Execute($"/ppp active remove [find name={username}]", out var result);
                 if (!success) 
@@ -78,7 +79,7 @@ partial class MikrotikDirectService : IMikrotikDirectService
             throw new Exception($"Invalid username! ({username})");
         }
 
-        using var node = await server.SshConnect();
+        using var node = await handler.ConnectTo(server);
 
         var success =
             node.Execute($"/ppp active print where name=\"{username}\" uptime session-id caller-id limit-bytes-in",
@@ -110,7 +111,7 @@ partial class MikrotikDirectService : IMikrotikDirectService
             throw new Exception($"Invalid username! ({username})");
         }
 
-        using var node = await server.SshConnect();
+        using var node = await handler.ConnectTo(server);
 
         default_context.PrivateKeyOvpn = HashHandler.GenerateHashCode();
 

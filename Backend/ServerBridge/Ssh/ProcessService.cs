@@ -1,62 +1,63 @@
+using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.ServerBridge.Services;
+using Renci.SshNet;
 using System.Text;
 using System.Text.RegularExpressions;
-using PhotonBypass.Domain.Servers.Entity;
-using Renci.SshNet;
 
 namespace PhotonBypass.ServerBridge.Ssh;
 
-public static partial class ProcessService
+partial class ProcessService(ISshHandler handler) : IProcessService
 {
-    public static async Task<bool> ActivateOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
+    public async Task<bool> ActivateOn(ProcessEntity process, ServerEntity server, ProcessContext context)
     {
         if (server.OsType != process.OsType)
             throw new Exception($"Invalid OS process ({process.OsType}) for server: {server.Name}");
 
-        using var node = await server.SshConnect();
-        return process.ActivateOn(node, context);
+        using var node = await handler.ConnectTo(server);
+        return ActivateOn(process, node, context);
     }
 
-    public static async Task<bool> DeactivateOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
+    public async Task<bool> DeactivateOn(ProcessEntity process, ServerEntity server, ProcessContext context)
     {
         if (server.OsType != process.OsType)
             throw new Exception($"Invalid OS process ({process.OsType}) for server: {server.Name}");
 
-        using var node = await server.SshConnect();
-        return process.DeactivateOn(node, context);
+        using var node = await handler.ConnectTo(server);
+        return DeactivateOn(process, node, context);
     }
 
-    public static async Task<bool> CheckOn(this ProcessEntity process, ServerEntity server, ProcessContext context)
+    public async Task<bool> CheckOn(ProcessEntity process, ServerEntity server, ProcessContext context)
     {
         if (server.OsType != process.OsType)
             throw new Exception($"Invalid OS process ({process.OsType}) for server: {server.Name}");
 
         if (process.Check == null) return false;
 
-        using var node = await server.SshConnect();
-        return process.CheckOn(node, context);
+        using var node = await handler.ConnectTo(server);
+        return CheckOn(process, node, context);
     }
 
-    public static bool ActivateOn(this ProcessEntity process, SshClient node, ProcessContext context)
+    private static bool ActivateOn(ProcessEntity process, SshClient node, ProcessContext context)
     {
-        return process.Enable != null && node.Run(process.Enable, context);
+        return process.Enable != null && Run(node, process.Enable, context);
     }
 
-    public static bool DeactivateOn(this ProcessEntity process, SshClient node, ProcessContext context)
+    private static bool DeactivateOn(ProcessEntity process, SshClient node, ProcessContext context)
     {
-        return process.Disable != null && node.Run(process.Disable, context);
+        return process.Disable != null && Run(node, process.Disable, context);
     }
 
-    public static bool CheckOn(this ProcessEntity process, SshClient node, ProcessContext context)
+    private static bool CheckOn(ProcessEntity process, SshClient node, ProcessContext context)
     {
-        return process.Check != null && node.Run(process.Check, context);
+        return process.Check != null && Run(node, process.Check, context);
     }
 
-    private static bool Run(this SshClient node, IEnumerable<ScriptEntity> scripts, ProcessContext context)
+    private static bool Run(SshClient node, IEnumerable<ScriptEntity> scripts, ProcessContext context)
     {
-        return scripts.All(script => node.Run(script, context));
+        return scripts.All(script => Run(node, script, context));
     }
 
-    private static bool Run(this SshClient node, ScriptEntity script, ProcessContext context)
+    private static bool Run(SshClient node, ScriptEntity script, ProcessContext context)
     {
         if (!node.Execute(InjectContextInScriptCommand(script, context), out var script_result))
         {
