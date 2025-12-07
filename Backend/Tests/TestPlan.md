@@ -37,9 +37,6 @@ Implement mock of all dependencies and test mid-level services.
 	[+] CheckUserPassword
 	[+] ResetPassword
 	[+] Register
-	[ ] CopyFromPermanentUser
-- IBasicsApplication:
-	[ ] GetPrices
 - IConnectionApplication:
 	[+] GetCurrentConnectionState
 	[ ] CloseConnection
@@ -71,31 +68,35 @@ Run out-sources and test out-source interfaces.
 
 Implement mock of all outsources and test high-level services.
 
-- IAccountApplication:
+Controllers:
+
+- AccountController:
 	[ ] GetUser
 	[ ] GetFullInfo
 	[ ] EditUser
 	[ ] ChangePassword
 	[ ] GetHistory
-- IAuthApplication:
-	[ ] CheckUserPassword
+- AuthController:
+	[ ] Login
 	[ ] ResetPassword
 	[ ] Register
-	[ ] CopyFromPermanentUser
-- IBasicsApplication:
+- BasicsController:
 	[ ] GetPrices
-- IConnectionApplication:
+- ConnectionController:
 	[ ] GetCurrentConnectionState
 	[ ] CloseConnection
-- IPlanApplication:
+- PlanController:
 	[ ] GetPlanState
 	[ ] GetPlanInfo
 	[ ] Estimate
 	[ ] Renewal
-- IVpnApplication:
+- VpnController:
 	[ ] ChangeOvpnPassword
 	[ ] SendCertEmail
-	[ ] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
+	[ ] TrafficData
+
+Services:
+
 - AccountMonitoringService:
 	[ ] InactiveAbandonedUsers
 	[ ] NotifSendServices
