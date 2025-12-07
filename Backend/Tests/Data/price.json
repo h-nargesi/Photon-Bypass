@@ -1,0 +1,10 @@
+[
+  {
+    "Id": 1,
+    "CalculatorCode": "using System; public class Calculator { public static int Compute(int users, int days, int gigabytes) { return 60 + users * 10 + (gigabytes / 25) * 50; } }"
+  },
+  {
+    "Id": 2,
+    "CalculatorCode": "using System; public class Calculator { public static int Compute(int users, int days, int gigabytes) { return 40 + users * 10 + (gigabytes / 25) * 40; } }"
+  }
+]

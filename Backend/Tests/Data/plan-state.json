@@ -1,0 +1,11 @@
+[
+  {
+    "Id": 1,
+    "Username": "User1",
+    "Active": true,
+    "SimultaneousUser": 1,
+    "RestrictedRealmId": null,
+    "TrafficLimit": 1073741824,
+    "TimeLimitInDays": 120
+  }
+]
