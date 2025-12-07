@@ -35,7 +35,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] ChangePassword
 - IAuthApplication:
 	[+] CheckUserPassword
-	[ ] ResetPassword
+	[+] ResetPassword
 	[ ] Register
 	[ ] CopyFromPermanentUser
 - IBasicsApplication:

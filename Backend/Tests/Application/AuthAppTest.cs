@@ -1,4 +1,6 @@
-﻿using PhotonBypass.Application.Authentication;
+﻿using FluentAssertions;
+using PhotonBypass.Application.Authentication;
+using PhotonBypass.ErrorHandler;
 
 namespace PhotonBypass.Test.Application;
 
@@ -65,5 +67,46 @@ public class AuthAppTest : ServiceInitializer
         Assert.Equal("User4", result.Data.Username);
         Assert.NotNull(result.Data.TargetArea);
         Assert.Empty(result.Data.TargetArea);
+    }
+
+    [Fact]
+    public async Task ResetPassword_InvalidMobileEmail()
+    {
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var function = () => account_app.ResetPassword("invalid email/mobile");
+
+        await function.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task ResetPassword_InvalidAccount_ViaEmail()
+    {
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var function = () => account_app.ResetPassword("ali_moli@diff.com");
+
+        await function.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task ResetPassword_InactiveAccount_ViaEmail()
+    {
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var function = () => account_app.ResetPassword("user7@gmail.com");
+
+        await function.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task ResetPassword_SendEmail()
+    {
+        using var scope = App.Services.CreateScope();
+        var account_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var result = await account_app.ResetPassword("user4@gmail.com");
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
     }
 }

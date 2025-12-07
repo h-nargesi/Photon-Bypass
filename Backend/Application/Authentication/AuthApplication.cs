@@ -127,7 +127,7 @@ class AuthApplication(
         }
         else if (AccountBusiness.EmailPattern().IsMatch(email_mobile))
         {
-            var account = (await AccountRepo.GetAccountByMobile(email_mobile)) ??
+            var account = (await AccountRepo.GetAccountByEmail(email_mobile)) ??
                           throw new UserException("کاربر یافت نشد.");
 
             if (!account.Active)
