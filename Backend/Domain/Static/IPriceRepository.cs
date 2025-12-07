@@ -4,7 +4,7 @@ namespace PhotonBypass.Domain.Static;
 
 public interface IPriceRepository : IEditableRepository<PriceEntity>
 {
-    Task<IList<PriceEntity>> GetVisibles();
+    Task<List<PriceEntity>> GetVisibles();
     
-    Task<IList<PriceEntity>> GetActives();
+    Task<List<PriceEntity>> GetActives();
 }

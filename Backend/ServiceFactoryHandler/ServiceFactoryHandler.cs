@@ -12,12 +12,12 @@ public static class ServiceFactoryHandler
 {
     public static TBuilder AddAppServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        builder.AddApplicationServices();
+        builder.AddServerBridgeServices();
         builder.AddInfrastructureServices();
         builder.AddRadiusDeskServices();
         builder.AddMikrotikRadiusServices();
         builder.AddOutSourceServices();
-        builder.AddServerBridgeServices();
+        builder.AddApplicationServices();
         
         return builder;
     }

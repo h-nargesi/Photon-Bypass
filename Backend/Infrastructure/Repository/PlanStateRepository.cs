@@ -1,6 +1,4 @@
-using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Plan;
-using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
@@ -9,7 +7,7 @@ namespace PhotonBypass.Infra.Repository;
 
 class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEntity>(context), IPlanStateRepository
 {
-    public async Task<IList<PlanStateEntity>> GetAll()
+    public async Task<List<PlanStateEntity>> GetAll()
     {
         await OpenAsync();
 
@@ -31,7 +29,8 @@ class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEn
     {
         await OpenAsync();
 
-        var sql = $"select {nameof(PlanStateEntity.RestrictedRealmId)} from {TableName} where {nameof(PlanStateEntity.Id)} = @account_id";
+        var sql = $@"select {nameof(PlanStateEntity.RestrictedRealmId)} from {TableName}
+where {nameof(PlanStateEntity.Id)} = @account_id and {nameof(PlanStateEntity.Active)} = 1";
         return await ExecuteScalarAsync<int?>(sql, new { account_id });
     }
 }

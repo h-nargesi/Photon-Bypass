@@ -4,9 +4,9 @@ using PhotonBypass.Infra.Repository.DbContext;
 
 namespace PhotonBypass.Infra.Repository;
 
-class PriceRepository(LocalDbContext context, Lazy<IPriceCalculator> calculator) : EditableRepository<PriceEntity>(context), IPriceRepository
+class PriceRepository(LocalDbContext context) : EditableRepository<PriceEntity>(context), IPriceRepository
 {
-    public async Task<IList<PriceEntity>> GetVisibles()
+    public async Task<List<PriceEntity>> GetVisibles()
     {
         await OpenAsync();
 
@@ -16,7 +16,7 @@ class PriceRepository(LocalDbContext context, Lazy<IPriceCalculator> calculator)
         return [.. result];
     }
     
-    public async Task<IList<PriceEntity>> GetActives()
+    public async Task<List<PriceEntity>> GetActives()
     {
         await OpenAsync();
 

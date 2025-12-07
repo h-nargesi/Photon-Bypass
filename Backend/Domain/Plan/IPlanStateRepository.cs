@@ -4,7 +4,7 @@ namespace PhotonBypass.Domain.Plan;
 
 public interface IPlanStateRepository
 {
-    Task<IList<PlanStateEntity>> GetAll();
+    Task<List<PlanStateEntity>> GetAll();
 
     Task<PlanStateEntity?> GetPlanState(int account_id);
     

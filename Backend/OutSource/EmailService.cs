@@ -22,7 +22,7 @@ class EmailService(IEmailHandler handler) : IEmailService
         var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
         var to_address = new MailAddress(email, fullname);
 
-        var body = await File.ReadAllTextAsync("EmailTemplates\\FinishServiceAlert.html");
+        var body = await File.ReadAllTextAsync("EmailTemplates/FinishServiceAlert.html");
         body = body.Replace("{fullname}", fullname)
             .Replace("{type}", type)
             .Replace("{left}", left);
@@ -43,22 +43,20 @@ class EmailService(IEmailHandler handler) : IEmailService
             throw new Exception("Email Address is not set in config");
         }
 
-        var fromAddress = new MailAddress(handler.Options.Address, handler.Options.FullName);
-        var toAddress = new MailAddress(email, fullname);
+        var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
+        var to_address = new MailAddress(email, fullname);
 
-        var body = await File.ReadAllTextAsync("EmailTemplates\\CertEmail.html");
+        var body = await File.ReadAllTextAsync("EmailTemplates/CertEmail.html");
         body = body.Replace("{username}", context.Username)
             .Replace("{server}", context.Realm)
             .Replace("{password}", context.Password)
             .Replace("{ovpn}", context.PrivateKeyOvpn);
 
-        using var message = new MailMessage(fromAddress, toAddress)
-        {
-            Subject = $"VPN | {fullname}",
-            IsBodyHtml = false,
-            Body = body,
-        };
-        
+        using var message = new MailMessage(from_address, to_address);
+        message.Subject = $"VPN | {fullname}";
+        message.IsBodyHtml = false;
+        message.Body = body;
+
         using var stream = new MemoryStream(context.CertFile);
 
         message.Attachments.Add(new Attachment(stream, "cert.ovpn"));
@@ -73,18 +71,16 @@ class EmailService(IEmailHandler handler) : IEmailService
             throw new Exception("Email Address is not set in config");
         }
 
-        var fromAddress = new MailAddress(handler.Options.Address, handler.Options.FullName);
-        var toAddress = new MailAddress(email, fullname);
+        var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
+        var to_address = new MailAddress(email, fullname);
 
-        var body = await File.ReadAllTextAsync("EmailTemplates\\ResetPassword.html");
+        var body = await File.ReadAllTextAsync("EmailTemplates/ResetPassword.html");
         body = body.Replace("{code}", hash_code);
 
-        using var message = new MailMessage(fromAddress, toAddress)
-        {
-            Subject = $"کد بازیابی",
-            IsBodyHtml = false,
-            Body = body,
-        };
+        using var message = new MailMessage(from_address, to_address);
+        message.Subject = $"کد بازیابی";
+        message.IsBodyHtml = false;
+        message.Body = body;
 
         await handler.Send(message);
     }

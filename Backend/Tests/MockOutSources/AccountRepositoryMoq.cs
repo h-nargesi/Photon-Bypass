@@ -16,8 +16,6 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 
     public event Action<int, IEnumerable<AccountEntity>>? OnGetTargetArea;
 
-    public event Action<IEnumerable<int>, Dictionary<int, AccountEntity>>? OnGetAccounts;
-
     public event Action<AccountEntity>? OnSave;
 
     public AccountRepositoryMoq() : this(FilePath)
@@ -28,8 +26,8 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
     {
         var raw_text = File.ReadAllText(file_path);
         var data = JsonSerializer.Deserialize<List<AccountEntity>>(raw_text)
-                        ?.ToDictionary(x => x.Username)
-                    ?? [];
+                       ?.ToDictionary(x => x.Username)
+                   ?? [];
 
         Setup(x => x.GetAccount(It.IsNotNull<string>()))
             .Returns<string>(username =>
@@ -68,18 +66,30 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
                 return Task.FromResult<IList<AccountEntity>>(result);
             });
 
+        Setup(x => x.GetActiveAccountId(It.IsAny<string>()))
+            .Returns<string>(username =>
+            {
+                if (!data.TryGetValue(username, out var account))
+                {
+                    account = null;
+                }
+
+                return Task.FromResult(account?.Id);
+            });
+
         Setup(x => x.CheckUniqueData(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns<string, string, string>((username, email, mobile) =>
             {
                 var result = data.Values
-                    .Where(x => x.Username == username || mobile != null && x.Mobile == mobile || email != null && x.Email == email)
+                    .Where(x => x.Username == username || mobile != null && x.Mobile == mobile ||
+                                email != null && x.Email == email)
                     .ToList();
 
                 if (result.Count == 0) Task.FromResult(0);
 
                 var validation = (result.Any(d => d.Username == username) ? 1 : 0) |
-                    (result.Any(d => d.Email == email) ? 2 : 0) |
-                    (result.Any(d => d.Mobile == mobile) ? 4 : 0);
+                                 (result.Any(d => d.Email == email) ? 2 : 0) |
+                                 (result.Any(d => d.Mobile == mobile) ? 4 : 0);
 
                 return Task.FromResult(validation);
             });
@@ -97,7 +107,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped<AccountRepositoryMoq>();
-        services.AddLazyScoped(s => s.GetRequiredService<AccountRepositoryMoq>().Object);
+        services.AddTransient<AccountRepositoryMoq>();
+        services.AddLazyTransient(provider => provider.GetRequiredService<AccountRepositoryMoq>().Object);
     }
 }

@@ -17,14 +17,15 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
     protected HistoryRepositoryMoq(string file_path)
     {
         var raw_text = File.ReadAllText(file_path);
-        var data1 = JsonSerializer.Deserialize<List<HistoryEntity>>(raw_text)
-                        ?.GroupBy(k => k.Target).ToDictionary(x => x.Key, v => v.ToList())
+        var data_dictionary = JsonSerializer.Deserialize<List<HistoryEntity>>(raw_text)
+                        ?.GroupBy(k => k.Target)
+                        .ToDictionary(x => x.Key, v => v.ToList())
                     ?? [];
 
         Setup(x => x.GetHistory(It.IsNotNull<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>()))
             .Returns<string, DateTime?, DateTime?>((target, from, to) =>
             {
-                if (!data1.TryGetValue(target, out var list))
+                if (!data_dictionary.TryGetValue(target, out var list))
                 {
                     list = [];
                 }
@@ -39,7 +40,7 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped<HistoryRepositoryMoq>();
-        services.AddLazyScoped(s => s.GetRequiredService<HistoryRepositoryMoq>().Object);
+        services.AddTransient<HistoryRepositoryMoq>();
+        services.AddLazyTransient(provider => provider.GetRequiredService<HistoryRepositoryMoq>().Object);
     }
 }

@@ -15,7 +15,7 @@ public static class ServiceFactory
 {
     public static void AddInfrastructureServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        builder.Services.BindValidateReturn<LocalDapperOptions>(builder.Configuration);
+        builder.Services.BindValidateReturn<LocalDapperOptions>();
         builder.Services.AddScoped<LocalDbContext>();
 
         builder.Services.AddLazyTransient<IAccountRepository, AccountRepository>();

@@ -9,7 +9,7 @@ namespace PhotonBypass.Test.Application;
 
 public partial class ServerManagementServiceTest : ServiceInitializer
 {
-    protected override void AddServices(IHostApplicationBuilder builder)
+    protected override void AddClassTestServices(IHostApplicationBuilder builder)
     {
         var social = new Mock<ISocialMediaService>();
         social.Setup(x => x.AlarmServerCapacity(It.IsAny<IEnumerable<string>>()))

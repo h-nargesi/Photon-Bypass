@@ -79,7 +79,7 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.success ?? false;
     }
 
-    public async Task<bool> SaveUserBaiscInfo(PermanentUserEntity user)
+    public async Task<bool> SaveUserBasicInfo(PermanentUserEntity user)
     {
         await CheckLogin();
 
@@ -119,7 +119,7 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.success ?? false;
     }
 
-    public async Task<bool> RegisterPermenentUser(PermanentUserEntity user, string password)
+    public async Task<bool> RegisterPermanentUser(PermanentUserEntity user, string password)
     {
         await CheckLogin();
 
@@ -235,7 +235,7 @@ class RadiusDeskService : IRadiusService, IDisposable
         return await ModifyPrivateAttributes(username, current, op);
     }
 
-    public async Task<bool> UpdateUserDataUsege(string username, long total_data)
+    public async Task<bool> UpdateUserDataUsage(string username, long total_data)
     {
         await CheckLogin();
 

@@ -22,7 +22,7 @@ public abstract class ServiceInitializer : IDisposable
             .AddAdminServices();
 
         AddDefaultServices(builder, types.ToHashSet());
-        AddServices(builder);
+        AddClassTestServices(builder);
 
         return builder.Build();
     }
@@ -52,7 +52,7 @@ public abstract class ServiceInitializer : IDisposable
         }
     }
 
-    protected virtual void AddServices(IHostApplicationBuilder builder)
+    protected virtual void AddClassTestServices(IHostApplicationBuilder builder)
     {
     }
 

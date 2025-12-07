@@ -13,4 +13,16 @@
 		<ProjectReference Include="..\ServerBridge\ServerBridge.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <None Update="EmailTemplates\CertEmail.html">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="EmailTemplates\FinishServiceAlert.html">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="EmailTemplates\ResetPassword.html">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
+
 </Project>

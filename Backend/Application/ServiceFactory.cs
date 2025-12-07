@@ -17,7 +17,7 @@ public static class ServiceFactory
 {
     public static void AddApplicationServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        builder.Services.BindValidateReturn<ManagementOptions>(builder.Configuration);
+        builder.Services.BindValidateReturn<ManagementOptions>();
 
         builder.Services.AddLazyTransient<IAccountApplication, AccountApplication>();
         builder.Services.AddLazyTransient<IAuthApplication, AuthApplication>();

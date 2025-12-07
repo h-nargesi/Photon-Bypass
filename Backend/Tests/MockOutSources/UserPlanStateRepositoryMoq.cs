@@ -79,7 +79,7 @@ internal class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOut
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped<UserPlanStateRepositoryMoq>();
-        services.AddLazyScoped(s => s.GetRequiredService<UserPlanStateRepositoryMoq>().Object);
+        services.AddTransient<UserPlanStateRepositoryMoq>();
+        services.AddLazyTransient(provider => provider.GetRequiredService<UserPlanStateRepositoryMoq>().Object);
     }
 }

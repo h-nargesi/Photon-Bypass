@@ -1,8 +1,7 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using PhotonBypass.Portal.Basical;
-using PhotonBypass.Application;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Portal.Basical;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Portal;

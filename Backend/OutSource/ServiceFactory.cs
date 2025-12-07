@@ -8,9 +8,9 @@ public static class ServiceFactory
 {
     public static void AddOutSourceServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        builder.Services.BindValidateReturn<EmailOptions>(builder.Configuration);
+        builder.Services.BindValidateReturn<EmailOptions>();
 
-        builder.Services.AddLazySingleton<IEmailService, EmailService>();
-        builder.Services.AddLazySingleton<ISocialMediaService, SocialMediaService>();
+        builder.Services.AddLazyScoped<IEmailService, EmailService>();
+        builder.Services.AddLazyScoped<ISocialMediaService, SocialMediaService>();
     }
 }

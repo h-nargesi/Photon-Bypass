@@ -3,13 +3,14 @@ using PhotonBypass.Application.Authentication;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Test.MockOutSources;
+using PhotonBypass.Test.MockServerBridge;
 
 namespace PhotonBypass.Test.Application;
 
 public class AuthAppTest : ServiceInitializer
 {
     [Fact]
-    public async Task CheckUserPassword_InvlidAccount()
+    public async Task CheckUserPassword_InvalidAccount()
     {
         using var scope = App.Services.CreateScope();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
@@ -31,7 +32,7 @@ public class AuthAppTest : ServiceInitializer
     }
 
     [Fact]
-    public async Task CheckUserPassword_InvlidPassword()
+    public async Task CheckUserPassword_InvalidPassword()
     {
         using var scope = App.Services.CreateScope();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
@@ -105,7 +106,16 @@ public class AuthAppTest : ServiceInitializer
     public async Task ResetPassword_SendEmail()
     {
         using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        email_handler_moq.OnSend += message =>
+        {
+            Assert.NotNull(message);
+            Assert.True(message.To.Count > 0);
+            Assert.Equal("user4@gmail.com", message.To.First().Address);
+        };
+        
         var result = await auth_app.ResetPassword("user4@gmail.com");
 
         Assert.NotNull(result);

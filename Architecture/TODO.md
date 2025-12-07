@@ -1,5 +1,4 @@
-[ ] email is requierd but mobile
-[ ] تکمیل فراموشی پسورد
+[ ] email is required but mobile
 [ ] انتخاب نوع اطلاع رسانی (ایمیل/واتساپ)
 [ ] بررسی صحت نام‌کاربری، ایمیل، موبایل زمان وارد کردن فیلد فرانت
 [ ] use check-mark in home-page footer

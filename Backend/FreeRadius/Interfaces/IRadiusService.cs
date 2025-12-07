@@ -10,17 +10,17 @@ public interface IRadiusService : IDisposable
 
     Task<bool> ChangeOvpnPassword(int user_id, string password);
 
-    Task<bool> SaveUserBaiscInfo(PermanentUserEntity user);
+    Task<bool> SaveUserBasicInfo(PermanentUserEntity user);
 
     Task<bool> SaveUserPersonalInfo(PermanentUserEntity user);
 
-    Task<bool> RegisterPermenentUser(PermanentUserEntity user, string password);
+    Task<bool> RegisterPermanentUser(PermanentUserEntity user, string password);
 
     Task<TrafficDataRadius[]> FetchTrafficData(string username, DateTime index, TrafficDataRequestType type);
 
     Task<bool> SetRestrictedServer(string username, string? server_ip);
 
-    Task<bool> UpdateUserDataUsege(string username, long total_data);
+    Task<bool> UpdateUserDataUsage(string username, long total_data);
 
     Task<bool> InsertTopUpAndMakeActive(int user_id, PlanType type, int value, string? comment = null);
 }
