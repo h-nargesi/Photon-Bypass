@@ -36,7 +36,7 @@ Implement mock of all dependencies and test mid-level services.
 - IAuthApplication:
 	[+] CheckUserPassword
 	[+] ResetPassword
-	[ ] Register
+	[+] Register
 	[ ] CopyFromPermanentUser
 - IBasicsApplication:
 	[ ] GetPrices

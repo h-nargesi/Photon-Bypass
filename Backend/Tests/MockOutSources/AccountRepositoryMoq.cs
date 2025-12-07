@@ -18,6 +18,8 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 
     public event Action<IEnumerable<int>, Dictionary<int, AccountEntity>>? OnGetAccounts;
 
+    public event Action<AccountEntity>? OnSave;
+
     public AccountRepositoryMoq() : this(FilePath)
     {
     }
@@ -66,14 +68,29 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
                 return Task.FromResult<IList<AccountEntity>>(result);
             });
 
-        // Setup(x => x.GetAccounts(It.IsNotNull<IEnumerable<int>>()))
-        //     .Returns<IEnumerable<int>>(user_ids =>
-        //     {
-        //         var result = data.Values.Where(x => user_ids.Contains(x.PermanentUserId))
-        //             .ToDictionary(k => k.PermanentUserId);
-        //         OnGetAccounts?.Invoke(user_ids, result);
-        //         return Task.FromResult<IDictionary<int, AccountEntity>>(result);
-        //     });
+        Setup(x => x.CheckUniqueData(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns<string, string, string>((username, email, mobile) =>
+            {
+                var result = data.Values
+                    .Where(x => x.Username == username || mobile != null && x.Mobile == mobile || email != null && x.Email == email)
+                    .ToList();
+
+                if (result.Count == 0) Task.FromResult(0);
+
+                var validation = (result.Any(d => d.Username == username) ? 1 : 0) |
+                    (result.Any(d => d.Email == email) ? 2 : 0) |
+                    (result.Any(d => d.Mobile == mobile) ? 4 : 0);
+
+                return Task.FromResult(validation);
+            });
+
+        Setup(x => x.Save(It.IsAny<AccountEntity>()))
+            .Returns<AccountEntity>(account =>
+            {
+                account.Id = 10000000;
+                OnSave?.Invoke(account);
+                return Task.CompletedTask;
+            });
     }
 
     private const string FilePath = "Data/account.json";

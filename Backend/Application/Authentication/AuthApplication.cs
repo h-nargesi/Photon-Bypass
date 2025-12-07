@@ -168,10 +168,21 @@ class AuthApplication(
     public async Task<ApiResult> Register(RegisterModel model)
     {
         var account = AccountBusiness.CreateFromModel(model);
+        var duplicated = await AccountRepo.CheckUniqueData(account.Username, account.Email, account.Mobile);
 
-        if (await AccountRepo.CheckUsername(account.Username))
+        if ((duplicated & 1) == 1)
         {
             throw new UserException("این نام کاربری قبلا استفاده شده است!");
+        }
+
+        if ((duplicated & 2) == 2)
+        {
+            throw new UserException("این ایمیل قبلا استفاده شده است!");
+        }
+
+        if ((duplicated & 4) == 4)
+        {
+            throw new UserException("این  شماره همراه قبلا استفاده شده است!");
         }
 
         account.VpnPassword = account.Password = HashHandler.HashPassword(model.Password ?? string.Empty);

@@ -21,5 +21,5 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
 
     Task<int?> GetActiveAccountId(string username);
 
-    Task<bool> CheckUsername(string username);
+    Task<int> CheckUniqueData(string username, string? email, string? mobile);
 }

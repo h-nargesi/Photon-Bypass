@@ -7,12 +7,14 @@ class SocialMediaService : ISocialMediaService
 {
     public Task AlarmServerCapacity(IEnumerable<string> alarms)
     {
-        throw new NotImplementedException();
+        // TODO: Implement
+        return Task.CompletedTask;
     }
 
     public Task FinishServiceAlert(string username, string phone, string type, string left)
     {
-        throw new NotImplementedException();
+        // TODO: Implement
+        return Task.CompletedTask;
     }
 
     public Task InvalidPasswordAlert(string username)
@@ -23,11 +25,13 @@ class SocialMediaService : ISocialMediaService
 
     public Task NewUserRegistrationAlert(AccountEntity account)
     {
-        throw new NotImplementedException();
+        // TODO: Implement
+        return Task.CompletedTask;
     }
 
     public Task SendResetPasswordLink(string email, string hash_code)
     {
-        throw new NotImplementedException();
+        // TODO: Implement
+        return Task.CompletedTask;
     }
 }

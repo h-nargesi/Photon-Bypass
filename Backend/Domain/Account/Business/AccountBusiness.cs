@@ -10,7 +10,7 @@ public static partial class AccountBusiness
     public const int MaxDaysDeactivatePlanToDelete = 40;
     public const int DelayBetweenWarnings = 20;
     public const int MaxDaysDeactivatePlanToDisable = 7;
-    
+
     public static AccountEntity CreateFromModel(RegisterModel model)
     {
         if (string.IsNullOrWhiteSpace(model.Username))
@@ -27,7 +27,7 @@ public static partial class AccountBusiness
         {
             Username = model.Username,
         };
-        
+
         account.SetFromModel(model);
 
         return account;
@@ -56,7 +56,7 @@ public static partial class AccountBusiness
 
             account.Email = model.Email;
         }
-        
+
         if (string.IsNullOrWhiteSpace(model.Mobile))
         {
             account.Mobile = null;
@@ -67,13 +67,16 @@ public static partial class AccountBusiness
             throw new UserException("این شماره موبایل غیرمجاز است!", $"Invalid Mobile: {model.Mobile}");
         }
         else
-        {            
+        {
+            if (model.Mobile.StartsWith('0'))
+                model.Mobile = "+98" + model.Mobile[1..];
+
             if (account.Mobile != model.Mobile)
                 account.MobileValid = false;
 
             account.Mobile = model.Mobile;
         }
-        
+
         account.Name = model.Firstname;
         account.Surname = model.Lastname;
     }
@@ -95,7 +98,7 @@ public static partial class AccountBusiness
         var last_activity = last_connect_time ?? account.Created;
 
         var expired_days = (int)(DateTime.Now - last_activity).TotalDays - MaxDaysDeactivatePlanToDisable;
-        
+
         return expired_days < 0 ? 0 : expired_days;
     }
 
@@ -104,7 +107,7 @@ public static partial class AccountBusiness
         var last_activity = last_connect_time ?? account.Created;
 
         var expired_days = (int)(DateTime.Now - last_activity).TotalDays - MaxDaysDeactivatePlanToDelete;
-        
+
         return expired_days < 0 ? 0 : expired_days;
     }
 
@@ -121,10 +124,10 @@ public static partial class AccountBusiness
 
     [GeneratedRegex("^[a-zA-Z][a-zA-Z0-9_-]{3,16}[a-zA-Z0-9]$")]
     private static partial Regex UsernamePattern();
-    
+
     [GeneratedRegex(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$")]
     public static partial Regex EmailPattern();
-    
+
     [GeneratedRegex(@"^(\+\d{2}|0)\d{10}$")]
     public static partial Regex MobileNumberPattern();
 }

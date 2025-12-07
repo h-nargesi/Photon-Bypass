@@ -99,17 +99,24 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return result;
     }
 
-    public async Task<bool> CheckUsername(string username)
+    public async Task<int> CheckUniqueData(string username, string? email, string? mobile)
     {
         await OpenAsync();
 
-        var result = await ExecuteScalarAsync<int>($"""
-                                                    select case when exists(
-                                                        select * from {TableName} where {nameof(AccountEntity.Username)} = @username
-                                                    ) then 1 else 0 end
-                                                    """
-            , new { username });
+        var sql = $"""
+                  select {nameof(AccountEntity.Username)}, {nameof(AccountEntity.Email)}, {nameof(AccountEntity.Mobile)}
+                  from {TableName}
+                  where {nameof(AccountEntity.Username)} = @username
+                       {(email != null ? $"or {nameof(AccountEntity.Email)} = @email" : "")}
+                       {(email != null ? $"or {nameof(AccountEntity.Mobile)} = @mobile" : "")}
+                  """;
 
-        return result == 1;
+        var data = (await QueryAsync(sql, new { username, email, mobile })).ToList();
+
+        if (data.Count < 1) return 0;
+
+        return (data.Any(d => d.Username == username) ? 1 : 0) |
+            (data.Any(d => d.Email == email) ? 2 : 0) |
+            (data.Any(d => d.Mobile == mobile) ? 4 : 0);
     }
 }
