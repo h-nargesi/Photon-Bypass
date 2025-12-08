@@ -29,7 +29,12 @@ class ConnectionApplication(
 
         var target_realm_id = await PlanRepo.Value.GetActiveAccountRealmId(account_id.Value);
 
-        var connections = await SessionRadiusSrv.GetActiveConnections(target_realm_id, target);
+        if (!target_realm_id.HasValue)
+        {
+            throw new UserException("کاربر هیچ پلن فعالی ندارد!", $"There is not any plan for target={target}");
+        }
+
+        var connections = await SessionRadiusSrv.GetActiveConnections(target_realm_id.Value.RealmId, target);
 
         var result = connections.Select(c => new ConnectionStateModel
             {
@@ -51,16 +56,21 @@ class ConnectionApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
         }
 
-        var realm_id = await PlanRepo.Value.GetActiveAccountRealmId(account_id.Value);
-        
+        var target_realm_id = await PlanRepo.Value.GetActiveAccountRealmId(account_id.Value);
+
+        if (!target_realm_id.HasValue)
+        {
+            throw new UserException("کاربر هیچ پلن فعالی ندارد!", $"There is not any plan for target={target}");
+        }
+
         var server = (await ServerRepo.GetActiveNasInfo(ip)) ??
                      throw new UserException("دسترسی غیرمجاز!",
                          $"Closing connection ip is invalid: ({ip}, {target}, {session_id})");
 
-        if (realm_id.HasValue && server.RealmId != realm_id)
+        if (target_realm_id.HasValue && server.RealmId != target_realm_id.Value.RealmId)
         {
             throw new UserException("دسترسی غیرمجاز به سرور!",
-                $"Closing connection ip is invalid: ({ip}, {target}, {session_id}, user-realm-id={realm_id})");
+                $"Closing connection ip is invalid: ({ip}, {target}, {session_id}, user-realm-id={target_realm_id})");
         }
 
         try

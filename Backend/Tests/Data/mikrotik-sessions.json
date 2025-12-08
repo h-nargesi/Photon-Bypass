@@ -1,0 +1,18 @@
+﻿[
+    
+  { "Username": "User1", "SessionId": "2036A1", "Started": "2025-06-10 10:20:00", "Ended":  "2025-06-10 12:20:00", "DataIn": 100, "DataOut": 5 },
+  { "Username": "User1", "SessionId": "2036A2", "Started": "2025-06-10 11:20:00", "Ended":  "2025-06-10 17:20:00", "DataIn": 90, "DataOut": 99 },
+  { "Username": "User1", "SessionId": "2036A3", "Started": "2025-06-10 10:20:00", "Ended":  null, "DataIn": 10, "DataOut": 99 },
+  { "Username": "User1", "SessionId": "2036A4", "Started": "2025-06-11 10:20:00", "Ended":  "2025-06-11 12:20:00", "DataIn": 120, "DataOut": 32 },
+  { "Username": "User2", "SessionId": "2036A5", "Started": "2025-06-11 11:20:00", "Ended":  "2025-06-11 17:20:00", "DataIn": 90, "DataOut": 99 },
+  { "Username": "User2", "SessionId": "2036A6", "Started": "2025-06-12 10:20:00", "Ended":  null, "DataIn": 90, "DataOut": 4 },
+  { "Username": "User2", "SessionId": "2036A7", "Started": "2025-06-12 10:20:00", "Ended":  "2025-06-12 12:20:00", "DataIn": 80, "DataOut": 5 },
+  { "Username": "User2", "SessionId": "2036A8", "Started": "2025-06-11 11:20:00", "Ended":  "2025-06-11 17:20:00", "DataIn": 90, "DataOut": 74 },
+  { "Username": "User2", "SessionId": "2036A9", "Started": "2025-06-11 10:20:00", "Ended":  null, "DataIn": 12, "DataOut": 3 },
+  { "Username": "User2", "SessionId": "2036B1", "Started": "2025-06-10 10:20:00", "Ended":  "2025-06-10 12:20:00", "DataIn": 95, "DataOut": 5 },
+  { "Username": "User3", "SessionId": "2036B2", "Started": "2025-06-10 11:20:00", "Ended":  "2025-06-10 17:20:00", "DataIn": 120, "DataOut": 50 },
+  { "Username": "User3", "SessionId": "2036B3", "Started": "2025-06-10 10:20:00", "Ended":  null, "DataIn": 56, "DataOut": 2 },
+  { "Username": "User3", "SessionId": "2036B4", "Started": "2025-06-11 10:20:00", "Ended":  "2025-06-11 12:20:00", "DataIn": 123, "DataOut": 5 },
+  { "Username": "User3", "SessionId": "2036B5", "Started": "2025-06-12 11:20:00", "Ended":  "2025-06-12 17:20:00", "DataIn": 45, "DataOut": 99 },
+  { "Username": "User3", "SessionId": "2036B6", "Started": "2025-06-13 10:20:00", "Ended":  null, "DataIn": 65, "DataOut": 1 }
+]

@@ -25,7 +25,7 @@ public class SessionRadiusSyncService(
 
         var result_list = await radius_list.RunJob(radius =>
         {
-            switch (radius.Features)
+            switch (radius.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
                     return MikrotikRadius.Value.GetActiveConnections(radius, username);
@@ -53,7 +53,7 @@ public class SessionRadiusSyncService(
 
         await radius_list.RunJob(radius =>
         {
-            switch (radius.Features)
+            switch (radius.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
                     return MikrotikRadius.Value.CloseConnectionBySessionId(radius, nas, session_id);
@@ -79,7 +79,7 @@ public class SessionRadiusSyncService(
 
         await radius_list.RunJob(radius =>
         {
-            switch (radius.Features)
+            switch (radius.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
                     return MikrotikRadius.Value.CloseConnectionByUsername(radius, username);

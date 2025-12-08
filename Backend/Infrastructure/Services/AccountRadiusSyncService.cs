@@ -30,7 +30,7 @@ class AccountRadiusSyncService(
 
         await radius_list.RunJob(radius =>
         {
-            switch (radius.Features)
+            switch (radius.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
                     return MikrotikRadius.Value.RemoveUsers(radius, usernames);
@@ -65,7 +65,7 @@ class AccountRadiusSyncService(
 
         await radius_list.RunJob(radius =>
         {
-            switch (radius.Features)
+            switch (radius.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
                     return MikrotikRadius.Value.DeactivateUserExcept(radius, realm_user_dictionary[radius.RealmId].ToHashSet());
@@ -95,7 +95,7 @@ class AccountRadiusSyncService(
 
         await radius_list.RunJob(radius =>
         {
-            switch (radius.Features)
+            switch (radius.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
                     return MikrotikRadius.Value.SyncUserAndActive(radius, account, renewal);
@@ -172,7 +172,7 @@ class AccountRadiusSyncService(
                 return Task.CompletedTask;
             }
 
-            switch (radius.Features)
+            switch (radius.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
                     return MikrotikRadius.Value.DeactivateUser(radius, usernames);
@@ -190,7 +190,7 @@ class AccountRadiusSyncService(
     {
         await radius_list.RunJob(radius =>
         {
-            switch (radius.Features)
+            switch (radius.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
                     return MikrotikRadius.Value.ChangeVpnPassword(radius, username, password);

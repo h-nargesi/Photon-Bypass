@@ -38,10 +38,10 @@ public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IOutSourceMoq
             {
                 if (data_dictionary.TryGetValue(id, out var state) || state?.Active == false)
                 {
-                    state = null;
+                    return Task.FromResult<(int, int?)?>(null);
                 }
 
-                return Task.FromResult(state?.RestrictedRealmId);
+                return Task.FromResult<(int, int?)?>((id, state?.RestrictedRealmId));
             });
     }
 

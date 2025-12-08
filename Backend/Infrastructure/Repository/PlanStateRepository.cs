@@ -25,12 +25,20 @@ class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEn
         return result.FirstOrDefault();
     }
 
-    public async Task<int?> GetActiveAccountRealmId(int account_id)
+    public async Task<(int, int?)?> GetActiveAccountRealmId(int account_id)
     {
         await OpenAsync();
 
         var sql = $@"select {nameof(PlanStateEntity.RestrictedRealmId)} from {TableName}
 where {nameof(PlanStateEntity.Id)} = @account_id and {nameof(PlanStateEntity.Active)} = 1";
-        return await ExecuteScalarAsync<int?>(sql, new { account_id });
+
+        var result = (await QueryAsync(sql, new { account_id })).ToList();
+
+        if (result.Count == 0)
+        {
+            return null;
+        }
+
+        return (account_id, result.First().RestrictedRealmId);
     }
 }

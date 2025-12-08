@@ -9,7 +9,7 @@ class Tik4NetHandler : ITik4NetHandler
     public async Task<ITikConnection> ConnectTo(ServerEntity server)
     {
         var config = server.Config?.WebApiConfig ??
-                     throw new Exception($"The ssh configuration is not set for server ({server.Id}:{server.Name})");
+                     throw new Exception($"The web-api configuration is not set for server ({server.Id}:{server.Name})");
 
         var connection = ConnectionFactory.CreateConnection(TikConnectionType.ApiSsl);
 

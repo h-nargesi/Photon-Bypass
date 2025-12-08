@@ -27,12 +27,12 @@ public class SessionRadiusSyncService(ITik4NetHandler handler) : ISessionRadiusS
 
         return [.. session_list.Select(session => new UserConnectionBinding
         {
-            CallerId = session.CallerId,
-            NasIpAddress = session.NasIpAddress,
-            SessionId = session.SessionId,
+            CallerId = session.CallerId ?? string.Empty,
+            NasIpAddress = session.NasIpAddress ?? string.Empty,
+            SessionId = session.SessionId ?? string.Empty,
             State = session.Active == "yes" ? ConnectionState.Up : ConnectionState.Down,
             UpTime = TimeSpan.Parse(session.UpTime ?? string.Empty),
-            Username = session.Username,
+            Username = session.Username ?? string.Empty,
         })];
     }
 
