@@ -1,7 +1,8 @@
 ﻿using PhotonBypass.FreeRadius.Entity;
+using PhotonBypass.Test.MockOutSources.Models;
 using System.Text.Json.Serialization;
 
-namespace PhotonBypass.Test.MockOutSources.Models;
+namespace PhotonBypass.Test.MockFreeRadius.Models;
 
 class PermanentUserMoqModel
 {

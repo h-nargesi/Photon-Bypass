@@ -4,7 +4,7 @@ using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.MockOutSources;
+namespace PhotonBypass.Test.MockFreeRadius;
 
 public class RadAcctRepositoryMoq : Mock<IRadAcctRepository>, IOutSourceMoq
 {

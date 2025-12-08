@@ -3,7 +3,7 @@ using Moq;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.MockOutSources;
+namespace PhotonBypass.Test.MockLocalRepository;
 
 public class PriceRepositoryMoq : Mock<IPriceRepository>, IOutSourceMoq
 {

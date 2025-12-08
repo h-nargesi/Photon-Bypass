@@ -5,7 +5,7 @@ using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Test.MockOutSources.Models;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.MockOutSources;
+namespace PhotonBypass.Test.MockLocalRepository;
 
 internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSourceMoq
 {

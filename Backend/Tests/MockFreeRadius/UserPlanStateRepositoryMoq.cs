@@ -4,7 +4,7 @@ using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Tools;
 using System.Text.Json;
 
-namespace PhotonBypass.Test.MockOutSources;
+namespace PhotonBypass.Test.MockFreeRadius;
 
 internal class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOutSourceMoq
 {

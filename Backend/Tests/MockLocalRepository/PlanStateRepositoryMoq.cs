@@ -4,7 +4,7 @@ using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.MockOutSources;
+namespace PhotonBypass.Test.MockLocalRepository;
 
 public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IOutSourceMoq
 {

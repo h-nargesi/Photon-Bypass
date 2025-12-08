@@ -4,7 +4,7 @@ using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Tools;
 using System.Text.Json;
 
-namespace PhotonBypass.Test.MockOutSources;
+namespace PhotonBypass.Test.MockLocalRepository;
 
 internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
 {

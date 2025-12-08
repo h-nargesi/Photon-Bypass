@@ -3,7 +3,7 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.MockOutSources;
+namespace PhotonBypass.Test.MockLocalRepository;
 
 internal class ResetPassRepositoryMoq : Mock<IResetPassRepository>, IOutSourceMoq
 {

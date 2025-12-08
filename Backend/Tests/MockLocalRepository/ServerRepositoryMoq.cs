@@ -4,7 +4,7 @@ using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Tools;
 
-namespace PhotonBypass.Test.MockOutSources;
+namespace PhotonBypass.Test.MockLocalRepository;
 
 public class ServerRepositoryMoq : Mock<IServerRepository>, IOutSourceMoq
 {

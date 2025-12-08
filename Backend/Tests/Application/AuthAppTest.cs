@@ -2,7 +2,7 @@
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
-using PhotonBypass.Test.MockOutSources;
+using PhotonBypass.Test.MockLocalRepository;
 using PhotonBypass.Test.MockServerBridge;
 
 namespace PhotonBypass.Test.Application;
