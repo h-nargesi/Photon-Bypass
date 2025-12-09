@@ -46,7 +46,7 @@
 		<None Update="Data\history.json">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Update="Data\mikrotik-sessions.json">
+		<None Update="Data\mikrotik-user-manager-session-print.json">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="Data\nas.json">

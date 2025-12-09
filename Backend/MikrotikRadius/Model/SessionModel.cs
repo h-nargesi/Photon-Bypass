@@ -1,11 +1,10 @@
 using System.Text.Json.Serialization;
-using tik4net;
 using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius.Model;
 
 [TikEntity("/user-manager/session")]
-public class SessionModel : ITikReSentence
+public class SessionModel
 {
     [JsonPropertyName("id")]
     [TikProperty(".id", IsReadOnly = true)]
@@ -50,28 +49,4 @@ public class SessionModel : ITikReSentence
     [JsonPropertyName("upload")]
     [TikProperty("upload", IsReadOnly = true)]
     public long Upload { get; set; }
-
-    public IReadOnlyDictionary<string, string> Words => throw new NotImplementedException();
-
-    public string Tag => throw new NotImplementedException();
-
-    public string GetId() => Id.ToString();
-
-    public string GetResponseField(string fieldName)
-    {
-        switch(fieldName)
-        {
-            case 
-        }
-    }
-
-    public string GetResponseFieldOrDefault(string fieldName, string defaultValue)
-    {
-        throw new NotImplementedException();
-    }
-
-    public bool TryGetResponseField(string fieldName, out string fieldValue)
-    {
-        throw new NotImplementedException();
-    }
 }
