@@ -13,7 +13,7 @@ public class ResultHandlerController(IJobContext context, Lazy<IAccessService> a
 {
     protected IJobContext JobContext => context;
 
-    protected string Username => User?.Identity?.Name ?? string.Empty;
+    protected string Username => User.Identity?.Name ?? string.Empty;
 
     protected void LoadJobContext(string? target = null)
     {
@@ -27,12 +27,13 @@ public class ResultHandlerController(IJobContext context, Lazy<IAccessService> a
         job.Username = Username;
         job.Target = target ?? Username;
 
-        if (target == null) return;
+        if (target == null || target == Username) return;
 
         if (!access.Value.CheckAccess(Username, target))
         {
             throw new UserException("شما به این کاربر دسترسی ندارید!",
-                $"Target access denied: ({target}, '{Request.GetDisplayUrl()}')");
+                $"Target access denied: ({target}, '{Request.GetDisplayUrl()}')",
+                403);
         }
     }
 
