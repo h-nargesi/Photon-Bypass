@@ -39,7 +39,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] Register
 - IConnectionApplication:
 	[+] GetCurrentConnectionState
-	[ ] CloseConnection
+	[+] CloseConnection
 - IPlanApplication:
 	[+] GetPlanState
 	[ ] GetPlanInfo

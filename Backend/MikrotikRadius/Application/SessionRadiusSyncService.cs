@@ -6,7 +6,6 @@ using PhotonBypass.ServerBridge;
 using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.ServerBridge.Tik4net;
 using tik4net.Objects;
-using tik4net.Objects.Ppp;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
 
@@ -45,7 +44,7 @@ public class SessionRadiusSyncService(ITik4NetHandler handler) : ISessionRadiusS
 
         using var connection = await handler.ConnectTo(radius);
 
-        var session_list = connection.LoadList<PppActive>(
+        var session_list = connection.LoadList<SessionModel>(
             TikParam.Equal<SessionModel>(nameof(SessionModel.SessionId), session_id))
             .ToList();
 

@@ -7,5 +7,23 @@
     "RestrictedRealmId": null,
     "TrafficLimit": 1073741824,
     "TimeLimitInDays": 120
+  },
+  {
+    "Id": 2,
+    "Username": "User2",
+    "Active": true,
+    "SimultaneousUser": 1,
+    "RestrictedRealmId": 2,
+    "TrafficLimit": 1073741824,
+    "TimeLimitInDays": 120
+  },
+  {
+    "Id": 4,
+    "Username": "User4",
+    "Active": true,
+    "SimultaneousUser": 1,
+    "RestrictedRealmId": 10,
+    "TrafficLimit": 1073741824,
+    "TimeLimitInDays": 120
   }
 ]

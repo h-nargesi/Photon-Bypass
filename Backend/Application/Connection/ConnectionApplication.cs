@@ -11,14 +11,21 @@ using Serilog;
 namespace PhotonBypass.Application.Connection;
 
 class ConnectionApplication(
-    IAccountRepository AccountRepo,
-    ISessionRadiusSyncService SessionRadiusSrv,
-    IServerRepository ServerRepo,
-    Lazy<IHistoryRepository> HistoryRepo,
-    Lazy<IPlanStateRepository> PlanRepo,
-    Lazy<IJobContext> JobContext)
+    IAccountRepository account_repo,
+    ISessionRadiusSyncService session_radius_srv,
+    IServerRepository server_repo,
+    Lazy<IHistoryRepository> history_repo,
+    Lazy<IPlanStateRepository> plan_repo,
+    Lazy<IJobContext> job_context)
     : IConnectionApplication
 {
+    private IAccountRepository AccountRepo { get; } = account_repo;
+    private ISessionRadiusSyncService SessionRadiusSrv { get; } = session_radius_srv;
+    private IServerRepository ServerRepo { get; } = server_repo;
+    private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
+    private Lazy<IPlanStateRepository> PlanRepo { get; } = plan_repo;
+    private Lazy<IJobContext> JobContext { get; } = job_context;
+
     public async Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(string target)
     {
         var account_id = await AccountRepo.GetActiveAccountId(target);

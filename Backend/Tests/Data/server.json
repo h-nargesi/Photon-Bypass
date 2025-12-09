@@ -1,3 +1,4 @@
 [
-  { "Id": 1, "Active":  true, "RealmId": 1, "Features": 1794 }
+  { "Id": 1, "IP":  "192.168.125.11", "Active":  true, "RealmId": 1, "Features": 1794 },
+  { "Id": 2, "IP":  "192.168.125.21", "Active":  true, "RealmId": 2, "Features": 1792 }
 ]
