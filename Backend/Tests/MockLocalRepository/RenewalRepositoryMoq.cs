@@ -34,7 +34,7 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddTransient<RenewalRepositoryMoq>();
+        services.AddSingleton<RenewalRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<RenewalRepositoryMoq>().Object);
     }
 

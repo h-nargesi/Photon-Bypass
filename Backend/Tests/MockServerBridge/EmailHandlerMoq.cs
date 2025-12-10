@@ -24,7 +24,7 @@ internal class EmailHandlerMoq : Mock<IEmailHandler>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped<EmailHandlerMoq>();
+        services.AddSingleton<EmailHandlerMoq>();
         services.AddLazyScoped(s => s.GetRequiredService<EmailHandlerMoq>().Object);
     }
 }

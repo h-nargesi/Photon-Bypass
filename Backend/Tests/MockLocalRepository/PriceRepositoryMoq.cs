@@ -25,7 +25,7 @@ public class PriceRepositoryMoq : Mock<IPriceRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddTransient<PriceRepositoryMoq>();
+        services.AddSingleton<PriceRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<PriceRepositoryMoq>().Object);
     }
 }

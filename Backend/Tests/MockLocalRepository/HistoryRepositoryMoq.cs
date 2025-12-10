@@ -40,7 +40,7 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddTransient<HistoryRepositoryMoq>();
+        services.AddSingleton<HistoryRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<HistoryRepositoryMoq>().Object);
     }
 }

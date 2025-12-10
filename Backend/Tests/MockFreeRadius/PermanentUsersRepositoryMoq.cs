@@ -74,7 +74,7 @@ internal class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IO
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddTransient<PermanentUsersRepositoryMoq>();
+        services.AddSingleton<PermanentUsersRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<PermanentUsersRepositoryMoq>().Object);
     }
 }

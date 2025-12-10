@@ -211,7 +211,7 @@ internal class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped<RadiusServiceMoq>();
+        services.AddSingleton<RadiusServiceMoq>();
         services.AddLazyScoped(s => s.GetRequiredService<RadiusServiceMoq>().Object);
     }
 }
