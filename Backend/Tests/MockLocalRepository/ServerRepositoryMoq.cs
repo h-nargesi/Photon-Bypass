@@ -41,7 +41,7 @@ public class ServerRepositoryMoq : Mock<IServerRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddSingleton<ServerRepositoryMoq>();
+        services.AddScoped<ServerRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<ServerRepositoryMoq>().Object);
     }
 }

@@ -59,7 +59,7 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSour
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddSingleton<TrafficDataRepositoryMoq>();
+        services.AddScoped<TrafficDataRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<TrafficDataRepositoryMoq>().Object);
     }
 }

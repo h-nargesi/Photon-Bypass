@@ -1,8 +1,6 @@
 ﻿using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.OutSource;
-using PhotonBypass.Domain.Plan.Entity;
-using PhotonBypass.FreeRadius.Entity;
-using PhotonBypass.Test.MockOutSources;
+using PhotonBypass.Domain.Plan;
 using PhotonBypass.Test.MockServerBridge;
 
 namespace PhotonBypass.Test.Application;
@@ -15,17 +13,16 @@ public class AccountMonitoringServiceTest : ServiceInitializer
         using var scope = App.Services.CreateScope(); 
 
         var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
-        var radius_srv_moq = scope.ServiceProvider.GetRequiredService<RadiusServiceMoq>();
+        var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
+        var tik4net = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
 
-        var inactive_users = new HashSet<int>() { 2, 3, 5 };
-        radius_srv_moq.OnActivePermanentUser += (id, active, result) =>
+        var plan_state_list = await plan_state_repo.GetAll();
+        tik4net.OnDelete += (command_text, parameters) =>
         {
-            Assert.True(result);
-            Assert.False(active);
-            Assert.Contains(id, inactive_users);
+
         };
 
-        await monitoring.InactiveAbandonedUsers(PlanStates);
+        await monitoring.InactiveAbandonedUsers(plan_state_list);
     }
 
     [Fact]
@@ -48,50 +45,4 @@ public class AccountMonitoringServiceTest : ServiceInitializer
 
         await monitoring.NotifSendServices(PlanStates);
     }
-
-    private static readonly List<PlanStateEntity> PlanStates =
-    [
-        // new()
-        // {
-        //     Id = 1,
-        //     PlanType = PlanType.Monthly,
-        //     ExpirationDate = DateTime.Now.AddDays(-2),
-        //     Username = "User1"
-        // },
-        // new()
-        // {
-        //     Id = 2,
-        //     PlanType = PlanType.Monthly,
-        //     ExpirationDate = null,
-        //     Username = "User2"
-        // },
-        // new()
-        // {
-        //     Id = 3,
-        //     PlanType = PlanType.Monthly,
-        //     ExpirationDate = DateTime.Now.AddDays(-70),
-        //     Username = "User3"
-        // },
-        // new()
-        // {
-        //     Id = 4,
-        //     PlanType = PlanType.Traffic,
-        //     TotalData = 20,
-        //     Username = "User4"
-        // },
-        // new()
-        // {
-        //     Id = 5,
-        //     PlanType = PlanType.Traffic,
-        //     TotalData = null,
-        //     Username = "User5"
-        // },
-        // new()
-        // {
-        //     Id = 6,
-        //     PlanType = PlanType.Traffic,
-        //     TotalData = 25,
-        //     Username = "User6"
-        // },
-    ];
 }

@@ -1,24 +1,46 @@
 ﻿using Moq;
+using PhotonBypass.ServerBridge.Tik4net;
 using System.Text.Json;
 using tik4net;
 
 namespace PhotonBypass.Test.MockServerBridge;
 
-internal class TikCommandMoq : Mock<ITikCommand>, IOutSourceMoq
+internal class TikCommandMoq : Mock<ITikCommand>
 {
     private readonly List<ITikCommandParameter> parameters = [];
 
-    public TikCommandMoq(string command_text, IEnumerable<ITikCommandParameter> parameters)
+    public TikCommandMoq(Tik4NetHandlerMoq parent, string command_text, IEnumerable<ITikCommandParameter> parameters)
     {
         this.parameters.AddRange(parameters);
 
-        Setup(command => command.Parameters).Returns(() => this.parameters);
-
-        Setup(command => command.ExecuteList())
-            .Returns(() => GetSessions($"Data/mikrotik{command_text.Replace('/', '-')}.json"));
+        Setup(parent, command_text);
     }
 
-    private IEnumerable<ITikReSentence> GetSessions(string file_name)
+    public TikCommandMoq(Tik4NetHandlerMoq parent, string command_text, IEnumerable<string> parameters)
+    {
+        foreach (var parameter in parameters)
+            this.parameters.Add(new TikParam(parameter));
+
+        Setup(parent, command_text);
+    }
+
+    private void Setup(Tik4NetHandlerMoq parent, string command_text)
+    {
+        Setup(command => command.Parameters).Returns(() => parameters);
+
+        Setup(command => command.ExecuteList())
+            .Returns(() => LoadFile($"Data/mikrotik{command_text.Replace('/', '-')}.json"));
+
+        switch (command_text.Split('/').Last())
+        {
+            case "remove":
+                Setup(command => command.ExecuteNonQuery())
+                    .Raises(_ => parent.Delete(command_text, parameters));
+                break;
+        }
+    }
+
+    private IEnumerable<ITikReSentence> LoadFile(string file_name)
     {
         var raw_text = File.ReadAllText(file_name);
         IEnumerable<TikReSentence>? session_list = JsonSerializer.Deserialize<List<TikReSentence>>(raw_text);

@@ -107,7 +107,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddSingleton<AccountRepositoryMoq>();
+        services.AddScoped<AccountRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<AccountRepositoryMoq>().Object);
     }
 }

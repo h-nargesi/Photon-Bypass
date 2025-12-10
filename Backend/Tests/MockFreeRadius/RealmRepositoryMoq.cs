@@ -50,7 +50,7 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddSingleton<RealmRepositoryMoq>();
+        services.AddScoped<RealmRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<RealmRepositoryMoq>().Object);
     }
 }

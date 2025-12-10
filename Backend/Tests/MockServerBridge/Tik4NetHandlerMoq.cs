@@ -8,6 +8,8 @@ namespace PhotonBypass.Test.MockServerBridge;
 
 internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IOutSourceMoq
 {
+    public event Action<string, List<ITikCommandParameter>>? OnDelete;
+
     public Tik4NetHandlerMoq()
     {
         var connection = new Mock<ITikConnection>();
@@ -17,12 +19,21 @@ internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IOutSourceMoq
 
         connection.Setup(connection => connection.CreateCommand(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<ITikCommandParameter[]>()))
             .Returns<string, TikCommandParameterFormat, ITikCommandParameter[]>((commandText, _, parameters) =>
-            new TikCommandMoq(commandText, parameters).Object);
+            new TikCommandMoq(this, commandText, parameters).Object);
+
+        connection.Setup(connection => connection.CreateCommandAndParameters(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<string[]>()))
+            .Returns<string, TikCommandParameterFormat, string[]>((commandText, _, parameters) =>
+            new TikCommandMoq(this, commandText, parameters).Object);
+    }
+
+    public void Delete(string command_text, List<ITikCommandParameter> parameters)
+    {
+        OnDelete?.Invoke(command_text, parameters);
     }
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddSingleton<Tik4NetHandlerMoq>();
-        services.AddLazySingleton(s => s.GetRequiredService<Tik4NetHandlerMoq>().Object);
+        services.AddScoped<Tik4NetHandlerMoq>();
+        services.AddLazyScoped(s => s.GetRequiredService<Tik4NetHandlerMoq>().Object);
     }
 }

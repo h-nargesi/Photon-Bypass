@@ -49,7 +49,7 @@ public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddSingleton<PlanStateRepositoryMoq>();
+        services.AddScoped<PlanStateRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<PlanStateRepositoryMoq>().Object);
     }
 }

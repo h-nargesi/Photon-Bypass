@@ -39,7 +39,7 @@ internal class ResetPassRepositoryMoq : Mock<IResetPassRepository>, IOutSourceMo
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddSingleton<ResetPassRepositoryMoq>();
+        services.AddScoped<ResetPassRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<ResetPassRepositoryMoq>().Object);
     }
 }

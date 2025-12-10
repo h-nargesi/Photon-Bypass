@@ -36,7 +36,7 @@ public class RadAcctRepositoryMoq : Mock<IRadAcctRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddSingleton<RadAcctRepositoryMoq>();
+        services.AddScoped<RadAcctRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<RadAcctRepositoryMoq>().Object);
     }
 }

@@ -47,7 +47,7 @@ internal class NasRepositoryMoq : Mock<INasRepository>, IOutSourceMoq
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddSingleton<NasRepositoryMoq>();
+        services.AddScoped<NasRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<NasRepositoryMoq>().Object);
     }
 }
