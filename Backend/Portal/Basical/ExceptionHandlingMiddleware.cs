@@ -9,7 +9,7 @@ namespace PhotonBypass.Portal.Basical;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
 {
-    public const string ERROR_MESSAGE = "خطای غیرمنتظره‌ای رخ داده است!";
+    public const string ErrorMessage = "خطای غیرمنتظره‌ای رخ داده است!";
 
     public async Task Invoke(HttpContext context)
     {
@@ -19,22 +19,23 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
         }
         catch (Exception ex)
         {
-            var api_result = GetApiResult(ex);
+            var api_result = GetApiResult(ex, out var http_code);
+            var log_message = GetMessage(ex);
 
             if (api_result.Code == 400)
             {
-                Log.Warning($"[user: {job.Username}]" + GetMessage(ex));
+                Log.Warning("[user: {0}] {1}", job.Username, log_message);
             }
             else
             {
-                Log.Error($"[user: {job.Username}]" + GetMessage(ex));
+                Log.Error("[user: {0}] {1}", job.Username, log_message);
             }
 
-            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.StatusCode = http_code;
             context.Response.ContentType = MediaTypeNames.Application.Json;
 
             await context.Response.WriteAsync(JsonSerializer.Serialize(api_result));
-        } 
+        }
     }
 
     protected static string GetMessage(Exception ex)
@@ -42,24 +43,26 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
         return ex.Message + "\n" + ex.StackTrace;
     }
 
-    protected virtual ApiResult GetApiResult(Exception ex)
+    protected virtual ApiResult GetApiResult(Exception ex, out short http_code)
     {
         ApiResult result;
 
         if (ex is UserException uex)
         {
+            http_code = uex.HttpCode ?? StatusCodes.Status400BadRequest;
             result = new ApiResult
             {
-                Code = 400,
-                Message = uex.UserMessage ?? ERROR_MESSAGE,
+                Code = http_code,
+                Message = uex.UserMessage ?? ErrorMessage,
             };
         }
         else
         {
+            http_code = StatusCodes.Status500InternalServerError;
             result = new ApiResult
             {
-                Code = 500,
-                Message = ERROR_MESSAGE,
+                Code = http_code,
+                Message = ErrorMessage,
             };
         }
 
@@ -70,9 +73,9 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
 public class ExceptionHandlingMiddlewareInDevelopment(RequestDelegate next, IJobContext job)
     : ExceptionHandlingMiddleware(next, job)
 {
-    protected override ApiResult GetApiResult(Exception ex)
+    protected override ApiResult GetApiResult(Exception ex, out short http_code)
     {
-        var result = base.GetApiResult(ex);
+        var result = base.GetApiResult(ex, out http_code);
 
         result.Developer = GetMessage(ex);
 

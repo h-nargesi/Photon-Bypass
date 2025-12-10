@@ -20,7 +20,7 @@ public class AuthController(
     IAuthApplication application, IJobContext job, Lazy<IAccessService> access) :
     ResultHandlerController(job, access)
 {
-    Lazy<IAccessService> AccessSrv { get; } = access;
+    private Lazy<IAccessService> AccessSrv { get; } = access;
 
     [HttpPost("token")]
     public async Task<ApiResult> Login([FromBody] Context.TokenContext context)
@@ -37,28 +37,25 @@ public class AuthController(
 
         var result = await application.CheckUserPassword(context.Username, context.Password);
 
-        if (result?.Code < 300 && result.Data != null)
+        if (result is not { Code: < 300, Data: not null }) return SafeApiResult(result);
+        
+        var token = GenerateToken(result.Data);
+
+        AccessSrv.Value.LoginEvent(result.Data.Username, [.. result.Data.TargetArea.Keys]);
+
+        return new ApiResult<object>
         {
-            var token = GenerateToken(result.Data);
-
-            AccessSrv.Value.LoginEvent(result.Data.Username, [.. result.Data.TargetArea.Keys]);
-
-            return new ApiResult<object>
+            Code = result.Code,
+            Message = result.Message,
+            Developer = result.Developer,
+            MessageMethod = result.MessageMethod,
+            Data = new
             {
-                Code = result.Code,
-                Message = result.Message,
-                Developer = result.Developer,
-                MessageMethod = result.MessageMethod,
-                Data = new
-                {
-                    access_token = token,
-                    token_type = "Bearer",
-                    expires_in = 3600
-                }
-            };
-        }
-
-        return SafeApiResult(result);
+                access_token = token,
+                token_type = "Bearer",
+                expires_in = 3600
+            }
+        };
     }
 
     [HttpPost("reset-pass")]

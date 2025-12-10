@@ -44,11 +44,11 @@ public class ExceptionHandlingMiddlewareTests
         var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
         await middle_ware.Invoke(http);
 
-        AssertHttpResponse(response);
+        AssertHttpResponse(response, StatusCodes.Status500InternalServerError);
         await AssertStream(stream, new ApiResult
         {
             Code = 500,
-            Message = ExceptionHandlingMiddleware.ERROR_MESSAGE,
+            Message = ExceptionHandlingMiddleware.ErrorMessage,
         });
         return;
 
@@ -63,11 +63,11 @@ public class ExceptionHandlingMiddlewareTests
         var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
         await middle_ware.Invoke(http);
 
-        AssertHttpResponse(response);
+        AssertHttpResponse(response, StatusCodes.Status500InternalServerError);
         await AssertStream(stream, new ApiResult
         {
             Code = 500,
-            Message = ExceptionHandlingMiddleware.ERROR_MESSAGE,
+            Message = ExceptionHandlingMiddleware.ErrorMessage,
         });
         return;
 
@@ -82,7 +82,7 @@ public class ExceptionHandlingMiddlewareTests
         var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
         await middle_ware.Invoke(http);
 
-        AssertHttpResponse(response);
+        AssertHttpResponse(response, StatusCodes.Status400BadRequest);
         await AssertStream(stream, new ApiResult
         {
             Code = 400,
@@ -101,11 +101,11 @@ public class ExceptionHandlingMiddlewareTests
         var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
         await middle_ware.Invoke(http);
 
-        AssertHttpResponse(response);
+        AssertHttpResponse(response, StatusCodes.Status400BadRequest);
         await AssertStream(stream, new ApiResult
         {
             Code = 400,
-            Message = ExceptionHandlingMiddleware.ERROR_MESSAGE,
+            Message = ExceptionHandlingMiddleware.ErrorMessage,
         });
         return;
 
@@ -120,7 +120,7 @@ public class ExceptionHandlingMiddlewareTests
         var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
         await middle_ware.Invoke(http);
 
-        AssertHttpResponse(response);
+        AssertHttpResponse(response, StatusCodes.Status400BadRequest);
         await AssertStream(stream, new ApiResult
         {
             Code = 400,
@@ -131,9 +131,28 @@ public class ExceptionHandlingMiddlewareTests
         static Task Request(HttpContext http) => throw new UserException(ErrorPr, ErrorEn);
     }
 
-    private static void AssertHttpResponse(HttpResponse response)
+    [Fact]
+    public async Task Invoke_UserException_WithHttpCode()
     {
-        response.StatusCode.Should().Be(StatusCodes.Status500InternalServerError);
+        PrepareResponse(out var http, out var response, out var stream);
+
+        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        await middle_ware.Invoke(http);
+
+        AssertHttpResponse(response, StatusCodes.Status403Forbidden);
+        await AssertStream(stream, new ApiResult
+        {
+            Code = StatusCodes.Status403Forbidden,
+            Message = ErrorPr,
+        });
+        return;
+
+        static Task Request(HttpContext http) => throw new UserException(ErrorPr, ErrorEn, StatusCodes.Status403Forbidden);
+    }
+
+    private static void AssertHttpResponse(HttpResponse response, int http_code)
+    {
+        response.StatusCode.Should().Be(http_code);
         response.ContentType.Should().Be(MediaTypeNames.Application.Json);
     }
 

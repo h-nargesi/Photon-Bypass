@@ -25,7 +25,7 @@ public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IOutSourceMoq
         Setup(x => x.GetPlanState(It.IsAny<int>()))
             .Returns<int>(id =>
             {
-                if (data_dictionary.TryGetValue(id, out var state))
+                if (!data_dictionary.TryGetValue(id, out var state))
                 {
                     state = null;
                 }
@@ -36,12 +36,12 @@ public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IOutSourceMoq
         Setup(x => x.GetActiveAccountRealmId(It.IsAny<int>()))
             .Returns<int>(id =>
             {
-                if (data_dictionary.TryGetValue(id, out var state) || state?.Active == false)
+                if (!data_dictionary.TryGetValue(id, out var state) || !state.Active)
                 {
                     return Task.FromResult<(int, int?)?>(null);
                 }
 
-                return Task.FromResult<(int, int?)?>((id, state?.RestrictedRealmId));
+                return Task.FromResult<(int, int?)?>((id, state.RestrictedRealmId));
             });
     }
 

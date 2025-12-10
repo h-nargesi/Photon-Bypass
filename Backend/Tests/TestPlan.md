@@ -23,6 +23,8 @@ Implement mock of used dependencies then test the function.
 	[+] RenewalBusiness
 - Infrastructure
 	[+] PriceCalculator: Compile
+- Controller
+    [+] AccessService
 
 ## Level 2 - Application - Integration
 
@@ -39,7 +41,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] Register
 - IConnectionApplication:
 	[+] GetCurrentConnectionState
-	[ ] CloseConnection
+	[+] CloseConnection
 - IPlanApplication:
 	[ ] GetPlanState
 	[ ] GetPlanInfo

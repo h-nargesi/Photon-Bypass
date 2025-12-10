@@ -8,11 +8,15 @@ using Serilog;
 namespace PhotonBypass.Infra.Services;
 
 public class SessionRadiusSyncService(
-    Lazy<IServerRepository> ServerRepo,
-    Lazy<Radius.UserManager.ISessionRadiusSyncService> MikrotikRadius,
-    Lazy<Radius.RadiusDesk.ISessionRadiusSyncService> RadiusDesk)
+    Lazy<IServerRepository> server_repo,
+    Lazy<Radius.UserManager.ISessionRadiusSyncService> mikrotik_radius,
+    Lazy<Radius.RadiusDesk.ISessionRadiusSyncService> radius_desk)
     : ISessionRadiusSyncService
 {
+    private Lazy<IServerRepository> ServerRepo { get; } = server_repo;
+    private Lazy<Radius.UserManager.ISessionRadiusSyncService> MikrotikRadius { get; } = mikrotik_radius;
+    private Lazy<Radius.RadiusDesk.ISessionRadiusSyncService> RadiusDesk { get; } = radius_desk;
+
     public async Task<List<UserConnectionBinding>> GetActiveConnections(int? realm_id, string username)
     {
         var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);

@@ -4,11 +4,12 @@
 [ ] use check-mark in home-page footer
 [ ] handle null-value / null-result for plan-info / user-plan-state in front
 [ ] check all method's parameters in radius repository and radius service to be simple (for example fetch by id not username)
-[ ] warning account is deactive
-[ ] logo/link in email bodyes
+[ ] warning current account is inactive
+[ ] logo/link in email bodies
 [ ] human test
 [ ] Check email send limit
 [ ] مدیریت گواهی‌های صادر شده بدون استفاده در میکروتیک
 [ ] امکان تولید اسکریپت جدید برای سرور جدید
+[ ] خروج از سیستم 
 ----------------------
 [ ] امکان تغییر سرور بر اساس نیاز نوع وی‌پی‌ان توسط خود مشتری
