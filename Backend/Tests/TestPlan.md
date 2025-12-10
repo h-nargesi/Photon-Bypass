@@ -41,14 +41,14 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetCurrentConnectionState
 	[ ] CloseConnection
 - IPlanApplication:
-	[+] GetPlanState
+	[ ] GetPlanState
 	[ ] GetPlanInfo
 	[ ] Estimate
-	[+] Renewal
+	[ ] Renewal
 - IVpnApplication:
 	[ ] ChangeOvpnPassword
 	[ ] SendCertEmail
-	[+] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
+	[-] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 - AccountMonitoringService:
 	[-] InactiveAbandonedUsers
 	[-] NotifSendServices
