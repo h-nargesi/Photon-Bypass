@@ -8,7 +8,9 @@ namespace PhotonBypass.Test.MockLocalRepository;
 
 internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 {
-    public event Action<string, AccountEntity?>? OnGetAccount;
+    public event Action<int, AccountEntity?>? OnGetAccountById;
+
+    public event Action<string, AccountEntity?>? OnGetAccountByUsername;
 
     public event Action<string, AccountEntity?>? OnGetAccountByMobile;
 
@@ -29,6 +31,16 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
                        ?.ToDictionary(x => x.Username)
                    ?? [];
 
+        Setup(x => x.GetAccount(It.IsNotNull<int>()))
+            .Returns<int>(id =>
+            {
+                var account = data.Values.FirstOrDefault(account => account.Id == id);
+
+                OnGetAccountById?.Invoke(id, account);
+                
+                return Task.FromResult(account);
+            });
+
         Setup(x => x.GetAccount(It.IsNotNull<string>()))
             .Returns<string>(username =>
             {
@@ -37,7 +49,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
                     account = null;
                 }
 
-                OnGetAccount?.Invoke(username, account);
+                OnGetAccountByUsername?.Invoke(username, account);
 
                 return Task.FromResult(account);
             });

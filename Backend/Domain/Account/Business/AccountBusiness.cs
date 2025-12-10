@@ -93,20 +93,20 @@ public static partial class AccountBusiness
         return false;
     }
 
-    public static int IsReachedMaxInactivityDaysToDisable(this AccountEntity account, DateTime? last_connect_time)
+    public static double IsReachedMaxInactivityDaysToDisable(this AccountEntity account, DateTime? last_connect_time)
     {
         var last_activity = last_connect_time ?? account.Created;
 
-        var expired_days = (int)(DateTime.Now - last_activity).TotalDays - MaxDaysDeactivatePlanToDisable;
+        var expired_days = (DateTime.Now - last_activity).TotalDays - MaxDaysDeactivatePlanToDisable;
 
         return expired_days < 0 ? 0 : expired_days;
     }
 
-    public static int IsReachedMaxInactivityDaysToDelete(this AccountEntity account, DateTime? last_connect_time)
+    public static double IsReachedMaxInactivityDaysToDelete(this AccountEntity account, DateTime? last_connect_time)
     {
         var last_activity = last_connect_time ?? account.Created;
 
-        var expired_days = (int)(DateTime.Now - last_activity).TotalDays - MaxDaysDeactivatePlanToDelete;
+        var expired_days = (DateTime.Now - last_activity).TotalDays - MaxDaysDeactivatePlanToDelete;
 
         return expired_days < 0 ? 0 : expired_days;
     }

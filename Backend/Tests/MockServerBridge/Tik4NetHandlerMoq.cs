@@ -8,27 +8,27 @@ namespace PhotonBypass.Test.MockServerBridge;
 
 internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IOutSourceMoq
 {
-    public event Action<string, List<ITikCommandParameter>>? OnDelete;
+    public event Action<string, List<ITikCommandParameter>>? OnExecute;
 
     public Tik4NetHandlerMoq()
     {
-        var connection = new Mock<ITikConnection>();
+        var connection_mock = new Mock<ITikConnection>();
 
         Setup(x => x.ConnectTo(It.IsAny<ServerEntity>()))
-            .Returns<ServerEntity>(server => Task.FromResult(connection.Object));
+            .Returns<ServerEntity>(server => Task.FromResult(connection_mock.Object));
 
-        connection.Setup(connection => connection.CreateCommand(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<ITikCommandParameter[]>()))
-            .Returns<string, TikCommandParameterFormat, ITikCommandParameter[]>((commandText, _, parameters) =>
-            new TikCommandMoq(this, commandText, parameters).Object);
+        connection_mock.Setup(connection => connection.CreateCommand(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<ITikCommandParameter[]>()))
+            .Returns<string, TikCommandParameterFormat, ITikCommandParameter[]>((command_text, _, parameters) =>
+            new TikCommandMoq(this, command_text, parameters).Object);
 
-        connection.Setup(connection => connection.CreateCommandAndParameters(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<string[]>()))
-            .Returns<string, TikCommandParameterFormat, string[]>((commandText, _, parameters) =>
-            new TikCommandMoq(this, commandText, parameters).Object);
+        connection_mock.Setup(connection => connection.CreateCommandAndParameters(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<string[]>()))
+            .Returns<string, TikCommandParameterFormat, string[]>((command_text, _, parameters) =>
+            new TikCommandMoq(this, command_text, parameters).Object);
     }
 
-    public void Delete(string command_text, List<ITikCommandParameter> parameters)
+    public void Execute(string command_text, List<ITikCommandParameter> parameters)
     {
-        OnDelete?.Invoke(command_text, parameters);
+        OnExecute?.Invoke(command_text, parameters);
     }
 
     public static void CreateInstance(IServiceCollection services)

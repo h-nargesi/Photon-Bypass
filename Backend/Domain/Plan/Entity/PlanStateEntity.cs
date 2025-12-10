@@ -11,8 +11,6 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
 
     public string Username { get; set; } = null!;
     
-    public bool Active { get; set; }
-    
     // Plan Info (Latest Renewal)
     public int SimultaneousUser { get; set; }
 

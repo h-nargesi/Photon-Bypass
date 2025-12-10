@@ -2,6 +2,7 @@ using System.Text.Json;
 using Moq;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockLocalRepository;
@@ -19,6 +20,16 @@ public class ServerRepositoryMoq : Mock<IServerRepository>, IOutSourceMoq
                                   .GroupBy(server => server.Id)
                                   .ToDictionary(grouping => grouping.Key, grouping => grouping.ToList())
                               ?? [];
+
+        Setup(repository => repository.GetAllActiveRadius())
+            .Returns(() =>
+            {
+                var server_list = data_dictionary.SelectMany(pair => pair.Value)
+                    .Where(server => (server.Features & ServerFeature.Radius) != 0)
+                    .ToList();
+
+                return Task.FromResult(server_list);
+            });
 
         Setup(repository => repository.GetActiveRadiusInRealmOrAll(It.IsAny<int?>()))
             .Returns<int?>(realm_id =>

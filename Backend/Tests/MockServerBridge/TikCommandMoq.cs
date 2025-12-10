@@ -31,13 +31,8 @@ internal class TikCommandMoq : Mock<ITikCommand>
         Setup(command => command.ExecuteList())
             .Returns(() => LoadFile($"Data/mikrotik{command_text.Replace('/', '-')}.json"));
 
-        switch (command_text.Split('/').Last())
-        {
-            case "remove":
-                Setup(command => command.ExecuteNonQuery())
-                    .Raises(_ => parent.Delete(command_text, parameters));
-                break;
-        }
+        Setup(command => command.ExecuteNonQuery())
+            .Callback(() => parent.Execute(command_text, parameters));
     }
 
     private IEnumerable<ITikReSentence> LoadFile(string file_name)

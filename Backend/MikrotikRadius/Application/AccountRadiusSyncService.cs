@@ -26,17 +26,20 @@ public class AccountRadiusSyncService(ITik4NetHandler handler) : IAccountRadiusS
             var session_list = connection.LoadList<SessionModel>(
                 TikParam.Equal<SessionModel>(nameof(SessionModel.Username), username));
 
-            connection.Delete(session_list);
+            foreach (var session in session_list)
+                connection.Delete(session);
 
             var user_profiles = connection.LoadList<UserProfileModel>(
                 TikParam.Equal<UserProfileModel>(nameof(UserProfileModel.Username), username));
 
-            connection.Delete(user_profiles);
+            foreach (var profile in user_profiles)
+                connection.Delete(profile);
 
-            var user = connection.LoadList<UserModel>(
+            var users = connection.LoadList<UserModel>(
                 TikParam.Equal<UserModel>(nameof(UserModel.Name), username));
 
-            connection.Delete(user);
+            foreach (var user in users)
+                connection.Delete(user);
         }
     }
 

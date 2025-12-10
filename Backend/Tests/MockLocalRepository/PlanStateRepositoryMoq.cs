@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Moq;
 using PhotonBypass.Domain.Plan;
-using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Test.MockFreeRadius.Models;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockLocalRepository;
@@ -15,13 +15,14 @@ public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IOutSourceMoq
     protected PlanStateRepositoryMoq(string file_path)
     {
         var raw_text = File.ReadAllText(file_path);
-        var data_dictionary = JsonSerializer.Deserialize<List<PlanStateEntity>>(raw_text)
-                       ?.ToDictionary(x => x.Id)
-                   ?? [];
+        var data_dictionary = JsonSerializer.Deserialize<List<PlanStateMoqModel>>(raw_text)
+                                  ?.Select(m => m.ToEntity())
+                                  .ToDictionary(x => x.Id)
+                              ?? [];
 
         Setup(x => x.GetAll())
             .Returns(() => Task.FromResult(data_dictionary.Values.ToList()));
-        
+
         Setup(x => x.GetPlanState(It.IsAny<int>()))
             .Returns<int>(id =>
             {
@@ -32,11 +33,11 @@ public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IOutSourceMoq
 
                 return Task.FromResult(state);
             });
-        
+
         Setup(x => x.GetActiveAccountRealmId(It.IsAny<int>()))
             .Returns<int>(id =>
             {
-                if (!data_dictionary.TryGetValue(id, out var state) || !state.Active)
+                if (!data_dictionary.TryGetValue(id, out var state))
                 {
                     return Task.FromResult<(int, int?)?>(null);
                 }

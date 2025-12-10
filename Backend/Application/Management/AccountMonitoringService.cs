@@ -53,7 +53,8 @@ internal class AccountMonitoringService(
 
         foreach (var plan in plan_state_list)
         {
-            if (plan.ExpirationDate > DateTime.Now && plan.TrafficLeft >= StaticValues.BytesInMegDouble)
+            if ((!plan.ExpirationDate.HasValue || plan.ExpirationDate > DateTime.Now) && 
+                (!plan.TrafficLeft.HasValue || plan.TrafficLeft >= StaticValues.BytesInMegDouble))
             {
                 continue;
             }
@@ -69,7 +70,7 @@ internal class AccountMonitoringService(
             }
 
             var expired_days = account.IsReachedMaxInactivityDaysToDisable(plan.LastConnectTime);
-            if (expired_days < 1)
+            if (expired_days <= 0)
             {
                 continue;
             }
@@ -81,6 +82,9 @@ internal class AccountMonitoringService(
                     "The user '{0}' was deleted from radius servers: ExpiredTime={1} days, ExpirationDate={2}, TrafficLimit={3}, TrafficUsed={4}",
                     plan.Username, expired_days, plan.ExpirationDate, plan.TrafficLimit, plan.TrafficUsed);
                 remove_list.Add(account.Username);
+                
+                account.Active = false;
+                _ = AccountRepo.Save(account);
                 continue;
             }
 

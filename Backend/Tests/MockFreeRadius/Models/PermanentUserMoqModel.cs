@@ -1,6 +1,6 @@
-﻿using PhotonBypass.FreeRadius.Entity;
-using PhotonBypass.Test.MockOutSources.Models;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using PhotonBypass.FreeRadius.Entity;
+using PhotonBypass.Test.MockOptions;
 
 namespace PhotonBypass.Test.MockFreeRadius.Models;
 

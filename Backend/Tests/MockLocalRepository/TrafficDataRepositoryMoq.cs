@@ -2,7 +2,7 @@
 using Moq;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Entity;
-using PhotonBypass.Test.MockOutSources.Models;
+using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockLocalRepository;

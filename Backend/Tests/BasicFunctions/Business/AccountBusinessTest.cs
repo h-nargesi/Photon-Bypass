@@ -119,9 +119,11 @@ public class AccountBusinessTest
 
         Assert.Equal(0, new AccountEntity().IsReachedMaxInactivityDaysToDisable(DateTime.Now.AddDays(1 - max)));
 
-        Assert.Equal(0, new AccountEntity().IsReachedMaxInactivityDaysToDisable(DateTime.Now.AddDays(-max)));
+        var value = new AccountEntity().IsReachedMaxInactivityDaysToDisable(DateTime.Now.AddDays(-max));
+        Assert.True(value > 0);
+        Assert.True(value < 1);
 
-        Assert.Equal(10, new AccountEntity().IsReachedMaxInactivityDaysToDisable(DateTime.Now.AddDays(-10 - max)));
+        Assert.Equal(10, (int)new AccountEntity().IsReachedMaxInactivityDaysToDisable(DateTime.Now.AddDays(-10 - max)));
     }
 
     [Fact]
@@ -131,9 +133,11 @@ public class AccountBusinessTest
 
         Assert.Equal(0, new AccountEntity().IsReachedMaxInactivityDaysToDelete(DateTime.Now.AddDays(1 - max)));
 
-        Assert.Equal(0, new AccountEntity().IsReachedMaxInactivityDaysToDelete(DateTime.Now.AddDays(-max)));
+        var value = new AccountEntity().IsReachedMaxInactivityDaysToDelete(DateTime.Now.Date.AddDays(-max));
+        Assert.True(value > 0);
+        Assert.True(value < 1);
 
-        Assert.Equal(10, new AccountEntity().IsReachedMaxInactivityDaysToDelete(DateTime.Now.AddDays(-10 - max)));
+        Assert.Equal(10, (int)new AccountEntity().IsReachedMaxInactivityDaysToDelete(DateTime.Now.AddDays(-10 - max)));
     }
 
     [Fact]

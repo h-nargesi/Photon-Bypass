@@ -2,7 +2,7 @@
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
-namespace PhotonBypass.Test.MockOutSources.Models;
+namespace PhotonBypass.Test.MockOptions;
 
 public static partial class DateTimeConverter
 {
@@ -12,39 +12,38 @@ public static partial class DateTimeConverter
         if (data.StartsWith("now"))
         {
             result = DateTime.Now;
-            data = data.Substring(3);
+            data = data[3..];
         }
         else if (data.StartsWith("today"))
         {
             result = DateTime.Now.Date;
-            data = data.Substring(5);
+            data = data[5..];
         }
         else throw new JsonException("Invalid DateTime Value.");
 
-        if (data.Length > 0)
+        if (data.Length <= 0) return result;
+        
+        int days;
+
+        if (data.StartsWith('+'))
         {
-            int days;
-
-            if (data.StartsWith('+'))
+            if (!int.TryParse(data.AsSpan(1), out days))
             {
-                if (!int.TryParse(data.AsSpan(1), out days))
-                {
-                    throw new JsonException("Invalid DateTime Value.");
-                }
+                throw new JsonException("Invalid DateTime Value.");
             }
-            else if (data.StartsWith('-'))
-            {
-                if (!int.TryParse(data.AsSpan(1), out days))
-                {
-                    throw new JsonException("Invalid DateTime Value.");
-                }
-
-                days = -days;
-            }
-            else throw new JsonException("Invalid DateTime Value.");
-
-            result = result.AddDays(days);
         }
+        else if (data.StartsWith('-'))
+        {
+            if (!int.TryParse(data.AsSpan(1), out days))
+            {
+                throw new JsonException("Invalid DateTime Value.");
+            }
+
+            days = -days;
+        }
+        else throw new JsonException("Invalid DateTime Value.");
+
+        result = result.AddDays(days);
 
         return result;
     }
@@ -60,35 +59,31 @@ public static partial class DateTimeConverter
 
 class DateTimeJsonConverter : JsonConverter<DateTime>
 {
-    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override DateTime Read(ref Utf8JsonReader reader, Type type_to_convert, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonTokenType.String)
-        {
-            var data = reader.GetString() ?? throw new JsonException("Invalid DateTime Value.");
-            return data.ConvertToDateTime();
-        }
-
-        throw new JsonException("Invalid DateTime Format.");
+        if (reader.TokenType != JsonTokenType.String) throw new JsonException("Invalid DateTime Format.");
+        
+        var data = reader.GetString() ?? throw new JsonException("Invalid DateTime Value.");
+        
+        return data.ConvertToDateTime();
     }
 
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
     {
-        writer.WriteStringValue(value.ToString());
+        writer.WriteStringValue(value.ToUniversalTime());
     }
 }
 
 class DateTimeNullableJsonConverter : JsonConverter<DateTime?>
 {
-    public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override DateTime? Read(ref Utf8JsonReader reader, Type type_to_convert, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonTokenType.String)
-        {
-            var data = reader.GetString();
-            if (data == null) return null;
-            else return data.ConvertToDateTime();
-        }
-
-        throw new JsonException("Invalid DateTime Format.");
+        if (reader.TokenType != JsonTokenType.String) 
+            throw new JsonException("Invalid DateTime Format.");
+        
+        var data = reader.GetString();
+        
+        return data?.ConvertToDateTime();
     }
 
     public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
