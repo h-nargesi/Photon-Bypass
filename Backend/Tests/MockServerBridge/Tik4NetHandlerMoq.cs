@@ -3,6 +3,7 @@ using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.Tools;
 using tik4net;
+using tik4net.Objects;
 
 namespace PhotonBypass.Test.MockServerBridge;
 
@@ -15,15 +16,20 @@ internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IOutSourceMoq
         var connection_mock = new Mock<ITikConnection>();
 
         Setup(x => x.ConnectTo(It.IsAny<ServerEntity>()))
-            .Returns<ServerEntity>(server => Task.FromResult(connection_mock.Object));
+            .Returns<ServerEntity>(_ => Task.FromResult(connection_mock.Object));
 
         connection_mock.Setup(connection => connection.CreateCommand(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<ITikCommandParameter[]>()))
             .Returns<string, TikCommandParameterFormat, ITikCommandParameter[]>((command_text, _, parameters) =>
             new TikCommandMoq(this, command_text, parameters).Object);
 
         connection_mock.Setup(connection => connection.CreateCommandAndParameters(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<string[]>()))
-            .Returns<string, TikCommandParameterFormat, string[]>((command_text, _, parameters) =>
-            new TikCommandMoq(this, command_text, parameters).Object);
+            .Returns<string, TikCommandParameterFormat, string[]>((command_text, format, parameters) =>
+            new TikCommandMoq(this, command_text, format, parameters).Object);
+    }
+
+    public IEnumerable<TModel> GetData<TModel>() where TModel : new()
+    {
+        return Object.ConnectTo(null!).Result.LoadList<TModel>();
     }
 
     public void Execute(string command_text, List<ITikCommandParameter> parameters)

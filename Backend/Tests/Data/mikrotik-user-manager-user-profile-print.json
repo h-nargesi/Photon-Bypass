@@ -1,0 +1,8 @@
+[
+  { ".id": "1", "user": "User1", "profile": "profile-1G", "end-time": "2025-11-23 13:56:20", "state": "used" },
+  { ".id": "2", "user": "User1", "profile": "profile-1G", "end-time": "2026-11-23 13:56:20", "state": "running" },
+  { ".id": "3", "user": "User4", "profile": "profile-1G", "end-time": "2025-11-23 13:56:20", "state": "used" },
+  { ".id": "4", "user": "User4", "profile": "profile-1G", "end-time": "2026-11-23 13:56:20", "state": "running" },
+  { ".id": "5", "user": "User3", "profile": "profile-1G", "end-time": "2025-11-23 13:56:20", "state": "used" },
+  { ".id": "6", "user": "User3", "profile": "profile-1G", "end-time": "2026-11-23 13:56:20", "state": "running" }
+]

@@ -1,0 +1,6 @@
+[
+  { ".id": "1", "disabled": "false", "name": "User1", "password": "abc", "shared-users": "1" },
+  { ".id": "2", "disabled": "false", "name": "User2", "password": "abc", "shared-users": "1" },
+  { ".id": "3", "disabled": "false", "name": "User3", "password": "abc", "shared-users": "1" },
+  { ".id": "4", "disabled": "false", "name": "User4", "password": "abc", "shared-users": "1" }
+]

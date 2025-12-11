@@ -52,7 +52,7 @@ Implement mock of all dependencies and test mid-level services.
 	[ ] SendCertEmail
 	[-] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 - AccountMonitoringService:
-	[-] InactiveAbandonedUsers
+	[+] InactiveAbandonedUsers
 	[-] NotifSendServices
 - ServerManagementService:
 	[-] GetAvailableRealm
