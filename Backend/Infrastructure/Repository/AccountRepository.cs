@@ -51,7 +51,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return result.FirstOrDefault();
     }
 
-    public async Task<IList<AccountEntity>> GetTargetArea(int account_id)
+    public async Task<List<AccountEntity>> GetTargetArea(int account_id)
     {
         await OpenAsync();
 
@@ -62,7 +62,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return [.. result];
     }
 
-    public async Task<IDictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids)
+    public async Task<Dictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids)
     {
         await OpenAsync();
 
@@ -73,7 +73,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return result.ToDictionary(k => k.Id);
     }
 
-    public async Task<IDictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames)
+    public async Task<Dictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames)
     {
         await OpenAsync();
 

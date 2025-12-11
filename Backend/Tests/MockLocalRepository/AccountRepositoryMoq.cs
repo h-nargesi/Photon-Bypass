@@ -54,6 +54,15 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
                 return Task.FromResult(account);
             });
 
+        Setup(x => x.GetAccounts(It.IsNotNull<IEnumerable<int>>()))
+            .Returns<IEnumerable<int>>(ids =>
+            {
+                var mask_hash = ids.ToHashSet();
+                var list = data.Values.Where(account => mask_hash.Contains(account.Id)).ToList();
+
+                return Task.FromResult(list.ToDictionary(account => account.Id));
+            });
+
         Setup(x => x.GetAccountByMobile(It.IsNotNull<string>()))
             .Returns<string>(mobile =>
             {
@@ -75,7 +84,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
             {
                 var result = data.Values.Where(x => x.Parent == id).ToList();
                 OnGetTargetArea?.Invoke(id, result);
-                return Task.FromResult<IList<AccountEntity>>(result);
+                return Task.FromResult(result);
             });
 
         Setup(x => x.GetActiveAccountId(It.IsAny<string>()))

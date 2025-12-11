@@ -13,11 +13,11 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
 
     Task<AccountEntity?> GetAccountByEmail(string email);
 
-    Task<IList<AccountEntity>> GetTargetArea(int account_id);
+    Task<List<AccountEntity>> GetTargetArea(int account_id);
 
-    Task<IDictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids);
+    Task<Dictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids);
 
-    Task<IDictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames);
+    Task<Dictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames);
 
     Task<int?> GetActiveAccountId(string username);
 
