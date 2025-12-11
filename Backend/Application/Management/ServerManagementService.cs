@@ -51,19 +51,18 @@ partial class ServerManagementService(
         if (Options.Value.DefaultPrivateKeyOVpn == null)
             throw new Exception("OVpn Private key is not set in config!");
 
-        var realm_name = realm_id.HasValue ? (await RealmRepo.GetName(realm_id.Value)) : null;
-        if (realm_name == null) realm_name = "All";
-        var nas_task = ServerRepo.Value.GetAllActiveNasDomainInRealm(realm_id);
+        var realm_name = (realm_id.HasValue ? (await RealmRepo.GetName(realm_id.Value)) : null) ?? "All";
+        var nas_domain_task = ServerRepo.Value.GetAllActiveNasDomainInRealm(realm_id);
 
         var cert_file = await File.ReadAllBytesAsync(cert_path);
 
-        var nas_list = await nas_task;
+        var nas_domain_list = await nas_domain_task;
 
-        if (nas_list.Count < 1)
+        if (nas_domain_list.Count < 1)
             throw new Exception($"Nas/Domain not found: (realm-id={realm_id})!");
 
         var ovpn_conf_file = Encoding.UTF8.GetString(cert_file);
-        ovpn_conf_file = SetDomain(ovpn_conf_file, realm_name, nas_list);
+        ovpn_conf_file = SetDomain(ovpn_conf_file, realm_name, nas_domain_list);
         cert_file = Encoding.UTF8.GetBytes(ovpn_conf_file);
 
         return new CertContext
@@ -169,7 +168,7 @@ partial class ServerManagementService(
 
     private static string SetDomain(string cert, string name, IEnumerable<string> domains)
     {
-        var remotes = "remote " + string.Join("\nremote ", domains);
+        var remotes = string.Join("\n", domains.Select(domain => $"remote {domain}"));
         cert = SetRemote()
             .Replace(cert, remotes);
 
@@ -243,7 +242,7 @@ partial class ServerManagementService(
         return new_data;
     }
 
-    [GeneratedRegex(@"remote ([\w\-])\.photon-bypass\.com")]
+    [GeneratedRegex(@"remote server\.domain\.name")]
     private static partial Regex SetRemote();
 
     [GeneratedRegex(@"setenv FRIENDLY_NAME ""[^""]+""")]

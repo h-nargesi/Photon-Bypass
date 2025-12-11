@@ -4,6 +4,6 @@
     "Name": "Fanab-05",
     "IpAddress": "192.168.0.1",
     "SshPassword": "abc",
-    "DomainName": "fnb05"
+    "DomainName": "fnb05.photon-bypass.com"
   }
 ]

@@ -24,7 +24,7 @@ Implement mock of used dependencies then test the function.
 - Infrastructure
 	[+] PriceCalculator: Compile
 - Controller
-    [+] AccessService
+	[+] AccessService
 
 ## Level 2 - Application - Integration
 
@@ -53,11 +53,12 @@ Implement mock of all dependencies and test mid-level services.
 	[-] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 - AccountMonitoringService:
 	[+] InactiveAbandonedUsers
-	[-] NotifSendServices
+	[+] NotifSendServices
 - ServerManagementService:
-	[-] GetAvailableRealm
+	[+] GetAvailableRealm
 	[-] CheckUserServerBalance
-	[ ] GetDefaultCertificate
+	[+] GetDefaultCertificate
+	[ ] UpdateTrafficData
 
 ## Level 3 - Outsource - Unit Test
 

@@ -85,6 +85,9 @@
 		<None Update="Data\mikrotik-user-manager-user-print.json">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+		<None Update="Data\config.ovpn">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 </Project>

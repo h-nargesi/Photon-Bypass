@@ -21,7 +21,7 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IOutSourceMoq
         Setup(repository => repository.GetName(It.IsAny<int>()))
             .Returns<int>(id =>
             {
-                if (data_dictionary.TryGetValue(id, out var realm))
+                if (!data_dictionary.TryGetValue(id, out var realm))
                 {
                     realm = null;
                 }

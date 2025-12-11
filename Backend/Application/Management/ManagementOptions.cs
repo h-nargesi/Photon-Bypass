@@ -1,6 +1,6 @@
 ﻿namespace PhotonBypass.Application.Management;
 
-internal class ManagementOptions
+public class ManagementOptions
 {
     public string? DefaultCertPath { get; set; }
 

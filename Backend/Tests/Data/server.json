@@ -1,6 +1,6 @@
 [
-  { "Id": 1, "IP":  "192.168.125.11", "Active":  true, "RealmId": 1, "Features": 1794, "BandWidth": 110 },
-  { "Id": 2, "IP":  "192.168.125.21", "Active":  true, "RealmId": 2, "Features": 1792, "BandWidth": 100 },
-  { "Id": 3, "IP":  "192.168.125.31", "Active":  true, "RealmId": 3, "Features": 1794, "BandWidth": 150 },
-  { "Id": 4, "IP":  "192.168.125.41", "Active":  true, "RealmId": 4, "Features": 1794, "BandWidth": 100 }
+  { "Id": 1, "IP":  "192.168.125.11", "Active":  true, "RealmId": 1, "Features": 1794, "BandWidth": 110, "DomainName": "srv1.photon-bypass.com" },
+  { "Id": 2, "IP":  "192.168.125.21", "Active":  true, "RealmId": 2, "Features": 1792, "BandWidth": 100, "DomainName": "srv2.photon-bypass.com" },
+  { "Id": 3, "IP":  "192.168.125.31", "Active":  true, "RealmId": 3, "Features": 1794, "BandWidth": 150, "DomainName": "srv3.photon-bypass.com" },
+  { "Id": 4, "IP":  "192.168.125.41", "Active":  true, "RealmId": 4, "Features": 1794, "BandWidth": 100, "DomainName": "srv4.photon-bypass.com" }
 ]

@@ -1,0 +1,22 @@
+using Microsoft.Extensions.Options;
+using Moq;
+using PhotonBypass.Application.Management;
+
+namespace PhotonBypass.Test.MockOptions;
+
+internal class ManagementOptionsMoq : Mock<IOptions<ManagementOptions>>, IOutSourceMoq
+{
+    public ManagementOptionsMoq()
+    {
+        Setup(options => options.Value).Returns(new ManagementOptions
+        {
+            DefaultCertPath = "Data/config.ovpn",
+            DefaultPrivateKeyOVpn =  "DefaultPrivateKeyOVpn",
+        });
+    }
+
+    public static void CreateInstance(IServiceCollection services)
+    {
+        services.AddSingleton(new ManagementOptionsMoq().Object);
+    }
+}
