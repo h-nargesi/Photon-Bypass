@@ -205,7 +205,7 @@ internal class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
             });
     }
 
-    private const string FilePath = "Data/traffic-data-radius.json";
+    private const string FilePath = "Data/radius-traffic-data.json";
 
     private const string Passwords = "Data/passwords.json";
 

@@ -18,7 +18,7 @@ public partial class ServerManagementServiceTest : ServiceInitializer
                 OnSocialMediaCall?.Invoke(social, alarms);
                 return Task.CompletedTask;
             });
-        builder.Services.AddLazyScoped(ـ => social.Object);
+        builder.Services.AddLazyScoped(_ => social.Object);
     }
 
     [Fact]
@@ -30,7 +30,7 @@ public partial class ServerManagementServiceTest : ServiceInitializer
         var realm = await manager.GetAvailableRealm();
 
         Assert.NotNull(realm);
-        Assert.Equal(5, realm.Id);
+        Assert.Equal(4, realm.Id);
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public partial class ServerManagementServiceTest : ServiceInitializer
         var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
 
         var is_called = false;
-        OnSocialMediaCall += (sender, alarms) =>
+        OnSocialMediaCall += (_, alarms) =>
         {
             is_called = true;
 

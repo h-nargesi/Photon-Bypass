@@ -22,14 +22,14 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSour
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
         var data_list = JsonSerializer.Deserialize<List<TrafficDataEntity>>(raw_text)
-                   ?? [];
+                        ?? [];
 
-        Setup(x => x.Fetch( It.IsAny<DateTime>()))
+        Setup(x => x.Fetch(It.IsAny<DateTime>()))
             .Returns<DateTime>(from =>
             {
                 var filtered_list = data_list.Where(traffic => traffic.StartSession >= from)
                     .ToList();
-                
+
                 OnFetch?.Invoke(filtered_list);
 
                 return Task.FromResult(filtered_list);
@@ -38,10 +38,24 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSour
         Setup(x => x.Fetch(It.IsNotNull<int>(), It.IsAny<DateTime>()))
             .Returns<int, DateTime>((account_id, from) =>
             {
-                var filtered_list = data_list.Where(traffic => traffic.StartSession >= from && account_id == traffic.AccountId)
+                var filtered_list = data_list
+                    .Where(traffic => traffic.StartSession >= from && account_id == traffic.AccountId)
                     .ToList();
-                
+
                 OnFetch?.Invoke(filtered_list);
+
+                return Task.FromResult(filtered_list);
+            });
+
+        Setup(x => x.Fetch(It.IsNotNull<IEnumerable<int>>(), It.IsAny<DateTime>()))
+            .Returns<IEnumerable<int>, DateTime>((nas_ids, from) =>
+            {
+                var mask = nas_ids.ToHashSet();
+
+                var filtered_list = data_list
+                    .Where(traffic => traffic.StartSession >= from && mask.Contains(traffic.NasId))
+                    .GroupBy(k => k.NasId)
+                    .ToDictionary(k => k.Key, v => v.ToList());
 
                 return Task.FromResult(filtered_list);
             });

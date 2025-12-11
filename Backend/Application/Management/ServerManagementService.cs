@@ -15,20 +15,30 @@ using Serilog;
 namespace PhotonBypass.Application.Management;
 
 partial class ServerManagementService(
-    IRealmRepository RealmRepo,
-    ITrafficDataRepository TrafficDataRepo,
-    Lazy<ISessionRadiusSyncService> SessionRadiusSrv,
-    Lazy<IServerRepository> ServerRepo,
-    Lazy<IAccountRepository> AccountRepo,
-    Lazy<ISocialMediaService> SocialSrv,
-    IOptions<ManagementOptions> Options)
+    IRealmRepository realm_repo,
+    ITrafficDataRepository traffic_data_repo,
+    Lazy<ISessionRadiusSyncService> session_radius_srv,
+    Lazy<IServerRepository> server_repo,
+    Lazy<IAccountRepository> account_repo,
+    Lazy<ISocialMediaService> social_srv,
+    IOptions<ManagementOptions> options)
     : IServerManagementService
 {
+    private IRealmRepository RealmRepo { get; } = realm_repo;
+    private ITrafficDataRepository TrafficDataRepo { get; } = traffic_data_repo;
+    private Lazy<ISessionRadiusSyncService> SessionRadiusSrv { get; } = session_radius_srv;
+    private Lazy<IServerRepository> ServerRepo { get; } = server_repo;
+    private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
+    private Lazy<ISocialMediaService> SocialSrv { get; } = social_srv;
+    private IOptions<ManagementOptions> Options { get; } = options;
+
     public async Task<RealmEntity> GetAvailableRealm()
     {
-        return (await LoadServersCapacity())
+        var server_capacities = await LoadServersCapacity();
+
+        return server_capacities
             .Where(realm => realm.Value.Rate > -1)
-            .OrderBy(s => s.Value)
+            .OrderBy(s => s.Value.Rate)
             .First()
             .Key;
     }
@@ -107,6 +117,8 @@ partial class ServerManagementService(
             await loaded_traffic_task,
             index);
 
+        if (traffic_data_list.Count < 1) return;
+
         await TrafficDataRepo.BachSave(traffic_data_list);
     }
 
@@ -125,10 +137,11 @@ partial class ServerManagementService(
                 k.Key, v =>
                 v.Value.Select(t => (t.StartSession, t.TotalData))
                     .GroupBy(k => k.StartSession)
-                    .ToDictionary(k => k.Key, a => a.Select(x => x.TotalData).Sum()));
+                    .Select(a => a.Select(x => x.TotalData).Sum())
+                    .ToList());
 
         // TODO: Use IQR to find real average
-        var real_traffics = traffics.ToDictionary(k => k.Key, v => v.Value.Values.Average());
+        var real_traffics = traffics.ToDictionary(k => k.Key, v => v.Value.Average());
 
         return clusters.Select(cluster =>
             {
@@ -172,12 +185,12 @@ partial class ServerManagementService(
         var destination_dictionary = destination.ToDictionary(k => k.SessionId);
         var new_data = new List<TrafficDataEntity>();
 
-        var account_dictionary = 
+        var account_dictionary =
             await AccountRepo.Value.GetAccountIdByUsername(source.Select(traffic => traffic.Username).ToHashSet());
-        
+
         var server_dictionary =
             await ServerRepo.Value.GetServerIdByIpAddress(
-                source.Where(traffic=>traffic.NasIpAddress != null)
+                source.Where(traffic => traffic.NasIpAddress != null)
                     .Select(traffic => traffic.NasIpAddress ?? string.Empty)
                     .ToHashSet());
 
@@ -200,15 +213,15 @@ partial class ServerManagementService(
             {
                 if (!account_dictionary.TryGetValue(traffic.Username, out var account_id))
                 {
-                    Log.Error("The incoming traffic data had invalid username: ({0}).", 
+                    Log.Error("The incoming traffic data had invalid username: ({0}).",
                         traffic.Username);
                     continue;
                 }
-                
-                if (traffic.NasIpAddress == null || 
+
+                if (traffic.NasIpAddress == null ||
                     !server_dictionary.TryGetValue(traffic.NasIpAddress, out var server_id))
                 {
-                    Log.Error("The incoming traffic data had invalid nas-ip: ({0}).", 
+                    Log.Error("The incoming traffic data had invalid nas-ip: ({0}).",
                         traffic.NasIpAddress);
                     continue;
                 }

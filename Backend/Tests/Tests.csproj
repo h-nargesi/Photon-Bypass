@@ -61,13 +61,13 @@
 		<None Update="Data\realms.json">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Update="Data\traffic-data-radius.json">
+		<None Update="Data\radius-traffic-data.json">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Data\traffic-data.json">
-		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
-		<None Update="Data\user-plan-state.json">
+		<None Update="Data\radius-user-plan-state.json">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Data\plan-state.json">

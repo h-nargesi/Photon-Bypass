@@ -14,9 +14,9 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IOutSourceMoq
 
     protected RealmRepositoryMoq(string file_path)
     {
-        var raw_text = File.Exists(file_path) ? File.ReadAllText(file_path) : null;
-        var data_dictionary = raw_text != null ? JsonSerializer.Deserialize<List<RealmEntity>>(raw_text)?
-            .ToDictionary(k => k.Id) ?? [] : [];
+        var raw_text = File.ReadAllText(file_path);
+        var data_dictionary = JsonSerializer.Deserialize<List<RealmEntity>>(raw_text)?
+            .ToDictionary(k => k.Id) ?? [];
 
         Setup(repository => repository.GetName(It.IsAny<int>()))
             .Returns<int>(id =>
@@ -32,13 +32,13 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IOutSourceMoq
         Setup(repository => repository.FetchAllActiveRealm())
             .Returns(() =>
             {
-                var result = data_dictionary.Select(realm => realm.Value.IsActive).ToList();
+                var result = data_dictionary.Values.Where(realm => realm.IsActive).ToList();
 
                 return Task.FromResult(result);
             });
     }
 
-    private const string FilePath = "Data/realm.json";
+    private const string FilePath = "Data/realms.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

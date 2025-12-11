@@ -75,7 +75,7 @@ internal class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOut
             });
     }
 
-    private const string FilePath = "Data/user-plan-state.json";
+    private const string FilePath = "Data/radius-user-plan-state.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

@@ -31,6 +31,20 @@ public class ServerRepositoryMoq : Mock<IServerRepository>, IOutSourceMoq
                 return Task.FromResult(server_list);
             });
 
+        Setup(repository => repository.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
+            .Returns<IEnumerable<int>>((realm_ids) =>
+            {
+                var mask_hash = realm_ids.ToHashSet();
+                
+                var server_list = data_dictionary.SelectMany(pair => pair.Value)
+                    .Where(server => mask_hash.Contains(server.RealmId) &&
+                                     (server.Features & ServerFeature.Nas) != 0)
+                    .GroupBy(k => k.RealmId)
+                    .ToDictionary(k => k.Key, k => k.ToList());
+
+                return Task.FromResult(server_list);
+            });
+
         Setup(repository => repository.GetActiveRadiusInRealmOrAll(It.IsAny<int?>()))
             .Returns<int?>(realm_id =>
             {
