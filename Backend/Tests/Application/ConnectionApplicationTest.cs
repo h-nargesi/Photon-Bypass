@@ -53,10 +53,10 @@ public class ConnectionApplicationTest : ServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var result_list = (await connection_app.GetCurrentConnectionState("User1")).Data;
+        var result_list = (await connection_app.GetCurrentConnectionState("User3")).Data;
 
         Assert.NotNull(result_list);
-        Assert.Single(result_list);
+        Assert.Equal(2, result_list.Count);
     }
     
     [Fact]

@@ -19,7 +19,7 @@
     "Id": 3,
     "Username": "User3",
     "SimultaneousUser": 1,
-    "RestrictedRealmId": 2,
+    "RestrictedRealmId": 3,
     "TrafficLimit": 1073741824,
     "TimeLimitInDays": 120,
     "LastConnectTime": "today-7",
