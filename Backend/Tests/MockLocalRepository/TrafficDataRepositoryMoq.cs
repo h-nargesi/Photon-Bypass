@@ -64,8 +64,16 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSour
             .Returns(() =>
             {
                 var last_update_time = data_list
-                    .Where(traffic => traffic.EndSession.HasValue)
+                    .Where(traffic => !traffic.EndSession.HasValue)
                     .Min(traffic => (DateTime?)traffic.StartSession);
+                
+                if (last_update_time.HasValue)
+                {
+                    return Task.FromResult(last_update_time);
+                }
+                
+                last_update_time = data_list
+                    .Max(traffic => traffic.StartSession);
 
                 return Task.FromResult(last_update_time);
             });
@@ -74,7 +82,6 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSour
             .Returns<IEnumerable<TrafficDataEntity>>(list =>
             {
                 OnBachSave?.Invoke(list);
-
                 return Task.CompletedTask;
             });
     }

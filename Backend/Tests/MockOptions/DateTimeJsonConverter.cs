@@ -7,7 +7,7 @@ public static partial class DateTimeConverter
 {
     public static string PrepareAllDateTimes(this string json)
     {
-        return FindDateTime().Replace(json, match => JsonSerializer.Serialize(match.ConvertToDateTime()));
+        return FindDateTime().Replace(json, match => $"\"{match.ConvertToDateTime():s}\"");
     }
 
     private static DateTime ConvertToDateTime(this Match match)

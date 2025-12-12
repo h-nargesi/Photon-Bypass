@@ -5,7 +5,9 @@ using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Tools;
 using System.Text.RegularExpressions;
+using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Servers;
+using PhotonBypass.Test.MockLocalRepository;
 
 namespace PhotonBypass.Test.Application;
 
@@ -68,6 +70,19 @@ public class ServerManagementServiceTest : ServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+        var traffic_repo_mock = scope.ServiceProvider.GetRequiredService<TrafficDataRepositoryMoq>();
+
+        var saved = false;
+        traffic_repo_mock.OnBachSave += records =>
+        {
+            saved = true;
+            Assert.NotNull(records);
+            Assert.Equal(12, records.Count());
+        };
+
+        await manager.UpdateTrafficData(DateTime.Now.AddDays(-30));
+        
+        Assert.True(saved);
     }
 
     [Fact(Skip = "Not implemented")]

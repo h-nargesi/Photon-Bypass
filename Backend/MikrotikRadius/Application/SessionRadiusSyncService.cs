@@ -79,7 +79,7 @@ public class SessionRadiusSyncService(ITik4NetHandler handler) : ISessionRadiusS
         using var connection = await handler.ConnectTo(radius);
 
         var data = connection.LoadList<SessionModel>(
-            TikParam.Greater<SessionModel>(nameof(SessionModel.Started), index.ToString("o")))
+            TikParam.Greater<SessionModel>(nameof(SessionModel.Started), index.AddSeconds(-1).ToString("s")))
             .ToList();
 
         return data

@@ -59,7 +59,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetAvailableRealm
 	[-] CheckUserServerBalance
 	[+] GetDefaultCertificate
-	[-] UpdateTrafficData
+	[+] UpdateTrafficData
 - Radius
 	[+] GetTrafficData
 
