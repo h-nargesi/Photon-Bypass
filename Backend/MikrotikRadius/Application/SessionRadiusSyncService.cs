@@ -74,7 +74,7 @@ public class SessionRadiusSyncService(ITik4NetHandler handler) : ISessionRadiusS
         }
     }
 
-    public async Task<List<TrafficDataBinding>> UpdateTrafficData(ServerEntity radius, DateTime index)
+    public async Task<List<TrafficDataBinding>> GetTrafficData(ServerEntity radius, DateTime index)
     {
         using var connection = await handler.ConnectTo(radius);
 

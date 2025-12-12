@@ -2,6 +2,7 @@ using System.Text.Json;
 using Moq;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Test.MockFreeRadius.Model;
+using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockLocalRepository;
@@ -14,7 +15,8 @@ public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IOutSourceMoq
 
     protected PlanStateRepositoryMoq(string file_path)
     {
-        var raw_text = File.ReadAllText(file_path);
+        var raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
         var data_dictionary = JsonSerializer.Deserialize<List<PlanStateMoqModel>>(raw_text)
                                   ?.Select(m => m.ToEntity())
                                   .ToDictionary(x => x.Id)

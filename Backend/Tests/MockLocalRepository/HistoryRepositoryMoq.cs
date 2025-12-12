@@ -3,6 +3,7 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Tools;
 using System.Text.Json;
+using PhotonBypass.Test.MockOptions;
 
 namespace PhotonBypass.Test.MockLocalRepository;
 
@@ -16,7 +17,8 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
 
     protected HistoryRepositoryMoq(string file_path)
     {
-        var raw_text = File.ReadAllText(file_path);
+        var raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
         var data_dictionary = JsonSerializer.Deserialize<List<HistoryEntity>>(raw_text)
                         ?.GroupBy(k => k.Target)
                         .ToDictionary(x => x.Key, v => v.ToList())

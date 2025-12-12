@@ -25,7 +25,7 @@ public class SessionRadiusSyncService(RadWebApiOptionContext web_web_api_context
         throw new NotImplementedException();
     }
 
-    public Task<List<TrafficDataBinding>> UpdateTrafficData(ServerEntity radius, DateTime index)
+    public Task<List<TrafficDataBinding>> GetTrafficData(ServerEntity radius, DateTime index)
     {
         throw new NotImplementedException();
     }

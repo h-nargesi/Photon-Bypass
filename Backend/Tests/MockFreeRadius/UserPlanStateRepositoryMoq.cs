@@ -3,6 +3,7 @@ using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Tools;
 using System.Text.Json;
+using PhotonBypass.Test.MockOptions;
 
 namespace PhotonBypass.Test.MockFreeRadius;
 
@@ -24,7 +25,8 @@ internal class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOut
 
     protected UserPlanStateRepositoryMoq(string file_path)
     {
-        var raw_text = File.ReadAllText(file_path);
+        var raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
         Data = JsonSerializer.Deserialize<List<UserPlanStateEntity>>(raw_text)
                    ?.ToDictionary(x => x.Id)
                ?? [];

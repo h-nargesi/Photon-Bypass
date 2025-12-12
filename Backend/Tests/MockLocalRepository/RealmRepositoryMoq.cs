@@ -3,6 +3,7 @@ using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Tools;
 using System.Text.Json;
+using PhotonBypass.Test.MockOptions;
 
 namespace PhotonBypass.Test.MockLocalRepository;
 
@@ -14,7 +15,8 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IOutSourceMoq
 
     protected RealmRepositoryMoq(string file_path)
     {
-        var raw_text = File.ReadAllText(file_path);
+        var raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
         var data_dictionary = JsonSerializer.Deserialize<List<RealmEntity>>(raw_text)?
             .ToDictionary(k => k.Id) ?? [];
 

@@ -3,6 +3,7 @@ using Moq;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Test.MockFreeRadius.Model;
+using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockFreeRadius;
@@ -25,7 +26,8 @@ internal class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IO
 
     protected PermanentUsersRepositoryMoq(string file_path)
     {
-        var raw_text = File.ReadAllText(file_path);
+        var raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
         Data = JsonSerializer.Deserialize<List<PermanentUserMoqModel>>(raw_text)
                    ?.Select(x => x.ToEntity())
                    .ToDictionary(x => x.Username)

@@ -3,6 +3,7 @@ using Moq;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.Test.MockFreeRadius.Model;
+using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockFreeRadius;
@@ -35,13 +36,15 @@ internal class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
 
     protected RadiusServiceMoq(IServiceProvider service, string file_path, string passwords_path)
     {
-        var raw_text = File.ReadAllText(passwords_path);
+        var raw_text = File.ReadAllText(passwords_path)
+            .PrepareAllDateTimes();
         var passwords1 = JsonSerializer.Deserialize<Dictionary<string, string>>(raw_text)?
                              .Select(x => new { Key = int.Parse(x.Key), x.Value })
                              .ToDictionary(k => k.Key, v => v.Value)
                          ?? [];
 
-        raw_text = File.ReadAllText(file_path);
+        raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
         var traffic_data = JsonSerializer.Deserialize<TrafficDataRadiusMoqModel[]>(raw_text)
                                ?.Select(x => x.ToEntity())
                                .ToArray()

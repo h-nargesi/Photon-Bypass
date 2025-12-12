@@ -18,10 +18,8 @@ public class PlanStateMoqModel
     
     public int? TimeLimitInDays { get; set; }
 
-    [JsonConverter(typeof(DateTimeJsonConverter))]
     public DateTime? LastConnectTime { get; set; }
 
-    [JsonConverter(typeof(DateTimeJsonConverter))]
     public DateTime? ExpirationDate { get; set; }
 
     public long? TrafficLeft { get; set; }

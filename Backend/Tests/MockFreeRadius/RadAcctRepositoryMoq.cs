@@ -2,6 +2,7 @@ using System.Text.Json;
 using Moq;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
+using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockFreeRadius;
@@ -14,7 +15,8 @@ public class RadAcctRepositoryMoq : Mock<IRadAcctRepository>, IOutSourceMoq
 
     protected RadAcctRepositoryMoq(string file_path)
     {
-        var raw_text = File.ReadAllText(file_path);
+        var raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
         var data = JsonSerializer.Deserialize<List<RadAcctEntity>>(raw_text)
                        ?.GroupBy(k => k.Username)
                        .ToDictionary(k => k.Key, v => v.ToList())

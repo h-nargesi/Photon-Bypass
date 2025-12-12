@@ -108,9 +108,9 @@ public class SessionRadiusSyncService(
             switch (radius_server.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
-                    return MikrotikRadius.Value.UpdateTrafficData(radius_server, index);
+                    return MikrotikRadius.Value.GetTrafficData(radius_server, index);
                 case ServerFeature.RadiusDesk:
-                    return RadiusDesk.Value.UpdateTrafficData(radius_server, index);
+                    return RadiusDesk.Value.GetTrafficData(radius_server, index);
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
                         radius_server.RealmId, radius_server.Id, radius_server.Features);

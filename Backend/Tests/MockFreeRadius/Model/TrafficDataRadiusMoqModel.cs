@@ -6,7 +6,6 @@ namespace PhotonBypass.Test.MockFreeRadius.Model;
 
 class TrafficDataRadiusMoqModel
 {
-    [JsonConverter(typeof(DateTimeJsonConverter))]
     public DateTime Day { get; set; }
 
     public long DataIn { get; set; }

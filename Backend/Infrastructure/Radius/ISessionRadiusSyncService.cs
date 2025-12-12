@@ -11,5 +11,5 @@ public interface ISessionRadiusSyncService
 
     Task CloseConnectionByUsername(ServerEntity radius, string username);
 
-    Task<List<TrafficDataBinding>> UpdateTrafficData(ServerEntity radius, DateTime index);
+    Task<List<TrafficDataBinding>> GetTrafficData(ServerEntity radius, DateTime index);
 }

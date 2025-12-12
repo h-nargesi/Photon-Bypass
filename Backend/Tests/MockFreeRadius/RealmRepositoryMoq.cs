@@ -2,6 +2,7 @@
 using Moq;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
+using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockFreeRadius;
@@ -18,7 +19,8 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IOutSourceMoq
 
     protected RealmRepositoryMoq(string file_path)
     {
-        var raw_text = File.ReadAllText(file_path);
+        var raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
         var data = JsonSerializer.Deserialize<List<ServerDensityEntity>>(raw_text)
                    ?.ToDictionary(x => x.Id)
                ?? [];

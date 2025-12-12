@@ -3,6 +3,7 @@ using Moq;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockLocalRepository;
@@ -15,7 +16,8 @@ public class ServerRepositoryMoq : Mock<IServerRepository>, IOutSourceMoq
 
     protected ServerRepositoryMoq(string file_path)
     {
-        var raw_text = File.ReadAllText(file_path);
+        var raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
         var data_dictionary = JsonSerializer.Deserialize<List<ServerEntity>>(raw_text)?
                                   .GroupBy(server => server.Id)
                                   .ToDictionary(grouping => grouping.Key, grouping => grouping.ToList())

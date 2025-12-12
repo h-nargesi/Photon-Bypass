@@ -10,7 +10,6 @@ class PermanentUserMoqModel
 
     public string Username { get; set; } = null!;
 
-    [JsonConverter(typeof(DateTimeNullableJsonConverter))]
     public DateTime? LastAcceptTime { get; set; }
 
     public string Phone { get; set; } = null!;

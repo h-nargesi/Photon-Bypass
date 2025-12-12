@@ -1,101 +1,66 @@
 ﻿using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Test.MockOptions;
 
 public static partial class DateTimeConverter
 {
-    public static DateTime ConvertToDateTimeStrict(this string data)
+    public static string PrepareAllDateTimes(this string json)
     {
-        return data.ConvertToDateTime() ??
-               throw new JsonException("Invalid DateTime Value.");
+        return FindDateTime().Replace(json, match => JsonSerializer.Serialize(match.ConvertToDateTime()));
     }
 
-    public static DateTime? ConvertToDateTime(this string? data)
+    private static DateTime ConvertToDateTime(this Match match)
     {
-        if (string.IsNullOrEmpty(data)) return null;
-        
-        DateTime result;
-        if (data.StartsWith("now"))
+        if (match == null || match.Groups.Count < 3)
         {
-            result = DateTime.Now;
-            data = data[3..];
+            throw new JsonException("Invalid DateTime Value.");
         }
-        else if (data.StartsWith("today"))
+
+        var result = match.Groups[2].Value switch
         {
-            result = DateTime.Now.Date;
-            data = data[5..];
-        }
-        else return null;
+            "now" => DateTime.Now,
+            "today" => DateTime.Now.Date,
+            _ => throw new JsonException("Invalid DateTime Value.")
+        };
 
-        if (data.Length <= 0) return result;
-        
-        int days;
-
-        if (data.StartsWith('+'))
+        if (match.Groups.Count < 6 || string.IsNullOrEmpty(match.Groups[3].Value))
         {
-            if (!int.TryParse(data.AsSpan(1), out days))
-            {
-                return null;
-            }
+            return result;
         }
-        else if (data.StartsWith('-'))
+
+        if (!int.TryParse(match.Groups[5].Value, out var days))
         {
-            if (!int.TryParse(data.AsSpan(1), out days))
-            {
-                return null;
-            }
-
-            days = -days;
+            throw new JsonException("Invalid DateTime Value.");
         }
-        else return null;
 
-        result = result.AddDays(days);
+        result = match.Groups[4].Value switch
+        {
+            "+" => result.AddDays(days),
+            "-" => result.AddDays(-days),
+            _ => throw new JsonException("Invalid DateTime Value.")
+        };
+
+        if (match.Groups.Count < 9 || string.IsNullOrEmpty(match.Groups[6].Value))
+        {
+            return result;
+        }
+
+        if (!int.TryParse(match.Groups[8].Value, out var hours))
+        {
+            throw new JsonException("Invalid DateTime Value.");
+        }
+
+        result = match.Groups[7].Value switch
+        {
+            "+" => result.AddHours(hours),
+            "-" => result.AddHours(-hours),
+            _ => throw new JsonException("Invalid DateTime Value.")
+        };
 
         return result;
     }
 
-    public static string PrepareAllDateTimes(this string json)
-    {
-        return FindDateTime().Replace(json, (match) => JsonSerializer.Serialize(match.Groups[1].Value.ConvertToDateTime()));
-    }
-
-    [GeneratedRegex(@"""((today|now)(-|\+)\d+)""")]
+    [GeneratedRegex(@"""((today|now)((-|\+)(\d+))?((-|\+)(\d+))?)""")]
     private static partial Regex FindDateTime();
-}
-
-class DateTimeJsonConverter : JsonConverter<DateTime>
-{
-    public override DateTime Read(ref Utf8JsonReader reader, Type type_to_convert, JsonSerializerOptions options)
-    {
-        if (reader.TokenType != JsonTokenType.String) throw new JsonException("Invalid DateTime Format.");
-        
-        var data = reader.GetString() ?? throw new JsonException("Invalid DateTime Value.");
-
-        return data.ConvertToDateTimeStrict();
-    }
-
-    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
-    {
-        writer.WriteStringValue(value.ToUniversalTime());
-    }
-}
-
-class DateTimeNullableJsonConverter : JsonConverter<DateTime?>
-{
-    public override DateTime? Read(ref Utf8JsonReader reader, Type type_to_convert, JsonSerializerOptions options)
-    {
-        if (reader.TokenType != JsonTokenType.String) 
-            throw new JsonException("Invalid DateTime Format.");
-        
-        var data = reader.GetString();
-        
-        return data?.ConvertToDateTimeStrict();
-    }
-
-    public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
-    {
-        writer.WriteStringValue(value.ToString());
-    }
 }

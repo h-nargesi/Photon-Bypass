@@ -3,6 +3,7 @@ using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Tools;
 using System.Text.Json;
+using PhotonBypass.Test.MockOptions;
 
 namespace PhotonBypass.Test.MockLocalRepository;
 
@@ -14,9 +15,10 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IOutSourceMoq
 
     protected RenewalRepositoryMoq(string file_path)
     {
-        var raw_text = File.Exists(file_path) ? File.ReadAllText(file_path) : null;
-        var data_dictionary = raw_text != null ? JsonSerializer.Deserialize<List<RenewalEntity>>(raw_text)
-            ?.ToDictionary(k => k.AccountId) ?? [] : [];
+        var raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
+        var data_dictionary = JsonSerializer.Deserialize<List<RenewalEntity>>(raw_text)
+            ?.ToDictionary(k => k.AccountId) ?? [];
 
         Setup(repository => repository.GetTopRestrictedRealmId(It.IsAny<int>()))
             .Returns<int>(account_id =>

@@ -3,6 +3,7 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Tools;
 using System.Text.Json;
+using PhotonBypass.Test.MockOptions;
 
 namespace PhotonBypass.Test.MockLocalRepository;
 
@@ -26,7 +27,8 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 
     protected AccountRepositoryMoq(string file_path)
     {
-        var raw_text = File.ReadAllText(file_path);
+        var raw_text = File.ReadAllText(file_path)
+            .PrepareAllDateTimes();
         var data = JsonSerializer.Deserialize<List<AccountEntity>>(raw_text)
                        ?.ToDictionary(x => x.Username)
                    ?? [];
@@ -37,7 +39,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
                 var account = data.Values.FirstOrDefault(account => account.Id == id);
 
                 OnGetAccountById?.Invoke(id, account);
-                
+
                 return Task.FromResult(account);
             });
 
@@ -76,6 +78,14 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
             {
                 var result = data.Values.FirstOrDefault(x => x.Email == email);
                 OnGetAccountByEmail?.Invoke(email, result);
+                return Task.FromResult(result);
+            });
+
+        Setup(x => x.GetAccountIdByUsername(It.IsNotNull<HashSet<string>>()))
+            .Returns<HashSet<string>>(names =>
+            {
+                var result = data.Where(pair => names.Contains(pair.Key))
+                    .ToDictionary(k => k.Key, v => v.Value.Id);
                 return Task.FromResult(result);
             });
 
