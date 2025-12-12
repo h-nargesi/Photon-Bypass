@@ -2,7 +2,7 @@
 using Moq;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
-using PhotonBypass.Test.MockFreeRadius.Models;
+using PhotonBypass.Test.MockFreeRadius.Model;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockFreeRadius;
@@ -70,7 +70,7 @@ internal class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IO
             });
     }
 
-    private const string FilePath = "Data/permanent-users.json";
+    private const string FilePath = "Data/Radius/permanent-users.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

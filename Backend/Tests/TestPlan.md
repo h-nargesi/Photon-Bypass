@@ -1,5 +1,6 @@
 # Test Plan
 
+- **Senario**: testing all functions integratedly with complex senarios.
 - **Integration**: testing all functions integratedly.
 - **Outsource**: testing functions that require external resources.
 - **Application**: mocking outsource and test all function.
@@ -58,7 +59,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetAvailableRealm
 	[-] CheckUserServerBalance
 	[+] GetDefaultCertificate
-	[ ] UpdateTrafficData
+	[+] UpdateTrafficData
 
 ## Level 3 - Outsource - Unit Test
 

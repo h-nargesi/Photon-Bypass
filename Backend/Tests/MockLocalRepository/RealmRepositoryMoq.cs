@@ -38,7 +38,7 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IOutSourceMoq
             });
     }
 
-    private const string FilePath = "Data/realms.json";
+    private const string FilePath = "Data/Local/realms.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

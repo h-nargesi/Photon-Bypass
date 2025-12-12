@@ -124,7 +124,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
             });
     }
 
-    private const string FilePath = "Data/account.json";
+    private const string FilePath = "Data/Local/account.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

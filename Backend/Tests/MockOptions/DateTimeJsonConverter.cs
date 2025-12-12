@@ -6,8 +6,16 @@ namespace PhotonBypass.Test.MockOptions;
 
 public static partial class DateTimeConverter
 {
-    public static DateTime ConvertToDateTime(this string data)
+    public static DateTime ConvertToDateTimeStrict(this string data)
     {
+        return data.ConvertToDateTime() ??
+               throw new JsonException("Invalid DateTime Value.");
+    }
+
+    public static DateTime? ConvertToDateTime(this string? data)
+    {
+        if (string.IsNullOrEmpty(data)) return null;
+        
         DateTime result;
         if (data.StartsWith("now"))
         {
@@ -19,7 +27,7 @@ public static partial class DateTimeConverter
             result = DateTime.Now.Date;
             data = data[5..];
         }
-        else throw new JsonException("Invalid DateTime Value.");
+        else return null;
 
         if (data.Length <= 0) return result;
         
@@ -29,19 +37,19 @@ public static partial class DateTimeConverter
         {
             if (!int.TryParse(data.AsSpan(1), out days))
             {
-                throw new JsonException("Invalid DateTime Value.");
+                return null;
             }
         }
         else if (data.StartsWith('-'))
         {
             if (!int.TryParse(data.AsSpan(1), out days))
             {
-                throw new JsonException("Invalid DateTime Value.");
+                return null;
             }
 
             days = -days;
         }
-        else throw new JsonException("Invalid DateTime Value.");
+        else return null;
 
         result = result.AddDays(days);
 
@@ -64,8 +72,8 @@ class DateTimeJsonConverter : JsonConverter<DateTime>
         if (reader.TokenType != JsonTokenType.String) throw new JsonException("Invalid DateTime Format.");
         
         var data = reader.GetString() ?? throw new JsonException("Invalid DateTime Value.");
-        
-        return data.ConvertToDateTime();
+
+        return data.ConvertToDateTimeStrict();
     }
 
     public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
@@ -83,7 +91,7 @@ class DateTimeNullableJsonConverter : JsonConverter<DateTime?>
         
         var data = reader.GetString();
         
-        return data?.ConvertToDateTime();
+        return data?.ConvertToDateTimeStrict();
     }
 
     public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)

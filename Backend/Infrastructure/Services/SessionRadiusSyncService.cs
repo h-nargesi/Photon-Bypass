@@ -105,7 +105,7 @@ public class SessionRadiusSyncService(
 
         var loaded_data_list_group = await radius_list.RunJob(radius_server =>
         {
-            switch (radius_server.Features)
+            switch (radius_server.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
                     return MikrotikRadius.Value.UpdateTrafficData(radius_server, index);

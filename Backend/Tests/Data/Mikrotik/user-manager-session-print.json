@@ -1,0 +1,17 @@
+﻿[
+  { ".id": "1", "user": "User1", ".server-id": "1", "active": "no", "acct-session-id": "2036A1", "uptime": "10:20:00", "started": "2025-06-10 10:20:00", "ended":  "2025-06-10 12:20:00", "download": "100", "upload": "5" },
+  { ".id": "2", "user": "User1", ".server-id": "1", "active": "no", "acct-session-id": "2036A2", "uptime": "11:20:00", "started": "2025-06-10 11:20:00", "ended":  "2025-06-10 17:20:00", "download": "90", "upload": "99" },
+  { ".id": "3", "user": "User1", ".server-id": "1", "active": "yes", "acct-session-id": "2036A3", "uptime": "10:20:00", "started": "2025-06-10 10:20:00", "ended":  null, "download": "10", "upload": "99" },
+  { ".id": "4", "user": "User1", ".server-id": "1", "active": "no", "acct-session-id": "2036A4", "uptime": "10:20:00", "started": "2025-06-11 10:20:00", "ended":  "2025-06-11 12:20:00", "download": "120", "upload": "32" },
+  { ".id": "5", "user": "User2", ".server-id": "2", "active": "no", "acct-session-id": "2036A5", "uptime": "11:20:00", "started": "2025-06-11 11:20:00", "ended":  "2025-06-11 17:20:00", "download": "90", "upload": "99" },
+  { ".id": "6", "user": "User2", ".server-id": "2", "active": "yes", "acct-session-id": "2036A6", "uptime": "10:20:00", "started": "2025-06-12 10:20:00", "ended":  null, "download": "90", "upload": "4" },
+  { ".id": "7", "user": "User2", ".server-id": "2", "active": "no", "acct-session-id": "2036A7", "uptime": "10:20:00", "started": "2025-06-12 10:20:00", "ended":  "2025-06-12 12:20:00", "download": "80", "upload": "5" },
+  { ".id": "8", "user": "User2", ".server-id": "2", "active": "no", "acct-session-id": "2036A8", "uptime": "11:20:00", "started": "2025-06-11 11:20:00", "ended":  "2025-06-11 17:20:00", "download": "90", "upload": "74" },
+  { ".id": "9", "user": "User2", ".server-id": "2", "active": "yes", "acct-session-id": "2036A9", "uptime": "10:20:00", "started": "2025-06-11 10:20:00", "ended":  null, "download": "12", "upload": "3" },
+  { ".id": "10", "user": "User3", ".server-id": "3", "active": "no", "acct-session-id": "2036B1", "uptime": "10:20:00", "started": "2025-06-10 10:20:00", "ended":  "2025-06-10 12:20:00", "download": "95", "upload": "5" },
+  { ".id": "11", "user": "User3", ".server-id": "3", "active": "no", "acct-session-id": "2036B2", "uptime": "11:20:00", "started": "2025-06-10 11:20:00", "ended":  "2025-06-10 17:20:00", "download": "120", "upload": "50" },
+  { ".id": "12", "user": "User3", ".server-id": "3", "active": "yes", "acct-session-id": "2036B3", "uptime": "10:20:00", "started": "2025-06-10 10:20:00", "ended":  null, "download": "56", "upload": "2" },
+  { ".id": "13", "user": "User3", ".server-id": "3", "active": "no", "acct-session-id": "2036B4", "uptime": "10:20:00", "started": "2025-06-11 10:20:00", "ended":  "2025-06-11 12:20:00", "download": "123", "upload": "5" },
+  { ".id": "14", "user": "User3", ".server-id": "3", "active": "no", "acct-session-id": "2036B5", "uptime": "11:20:00", "started": "2025-06-12 11:20:00", "ended":  "2025-06-12 17:20:00", "download": "45", "upload": "99" },
+  { ".id": "15", "user": "User3", ".server-id": "3", "active": "yes", "acct-session-id": "2036B6", "uptime": "10:20:00", "started": "2025-06-13 10:20:00", "ended":  null, "download": "65", "upload": "1" }
+]

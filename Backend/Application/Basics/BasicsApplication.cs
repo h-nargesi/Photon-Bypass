@@ -4,11 +4,11 @@ using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Basics;
 
-class BasicsApplication(IPriceRepository PriceRepo) : IBasicsApplication
+class BasicsApplication(IPriceRepository price_repo) : IBasicsApplication
 {
     public async Task<ApiResult<IList<PriceModel>>> GetPrices()
     {
-        var prices = await PriceRepo.GetVisibles()
+        var prices = await price_repo.GetVisibles()
             ?? throw new Exception("Prices are not set!");
 
         var result = prices

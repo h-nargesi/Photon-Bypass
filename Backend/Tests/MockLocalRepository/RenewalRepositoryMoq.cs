@@ -30,7 +30,7 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IOutSourceMoq
             });
     }
 
-    private const string FilePath = "Data/renewal.json";
+    private const string FilePath = "Data/Local/renewal.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

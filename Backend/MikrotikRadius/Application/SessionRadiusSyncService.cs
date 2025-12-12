@@ -78,8 +78,11 @@ public class SessionRadiusSyncService(ITik4NetHandler handler) : ISessionRadiusS
     {
         using var connection = await handler.ConnectTo(radius);
 
-        return connection.LoadList<SessionModel>(
+        var data = connection.LoadList<SessionModel>(
             TikParam.Greater<SessionModel>(nameof(SessionModel.Started), index.ToString("o")))
+            .ToList();
+
+        return data
             .Select(session => new TrafficDataBinding
             {
                 Id = session.Id,
@@ -87,7 +90,7 @@ public class SessionRadiusSyncService(ITik4NetHandler handler) : ISessionRadiusS
                 Username = session.Username ?? string.Empty,
                 NasIpAddress = session.NasIpAddress,
                 StartSession = DateTime.Parse(session.Started ?? string.Empty),
-                EndSession = DateTime.Parse(session.Ended ?? string.Empty),
+                EndSession = string.IsNullOrEmpty(session.Ended) ? null : DateTime.Parse(session.Ended),
                 DataIn = session.Download,
                 DataOut = session.Upload,
             })

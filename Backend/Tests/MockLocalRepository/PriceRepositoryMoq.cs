@@ -21,7 +21,7 @@ public class PriceRepositoryMoq : Mock<IPriceRepository>, IOutSourceMoq
             .Returns(Task.FromResult(data_list));
     }
 
-    private const string FilePath = "Data/price.json";
+    private const string FilePath = "Data/Local/price.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

@@ -74,7 +74,7 @@ public class ServerRepositoryMoq : Mock<IServerRepository>, IOutSourceMoq
             });
     }
 
-    private const string FilePath = "Data/server.json";
+    private const string FilePath = "Data/Local/server.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

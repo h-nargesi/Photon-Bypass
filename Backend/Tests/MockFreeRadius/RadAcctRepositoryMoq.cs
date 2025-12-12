@@ -32,7 +32,7 @@ public class RadAcctRepositoryMoq : Mock<IRadAcctRepository>, IOutSourceMoq
             });
     }
 
-    private const string FilePath = "Data/rad-account.json";
+    private const string FilePath = "Data/Radius/rad-account.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

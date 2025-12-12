@@ -43,7 +43,7 @@ internal class NasRepositoryMoq : Mock<INasRepository>, IOutSourceMoq
             });
     }
 
-    private const string FilePath = "Data/nas.json";
+    private const string FilePath = "Data/Radius/nas.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

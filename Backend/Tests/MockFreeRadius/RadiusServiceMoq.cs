@@ -1,12 +1,11 @@
-﻿using Moq;
+﻿using System.Text.Json;
+using Moq;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
-using PhotonBypass.Test.MockFreeRadius;
-using PhotonBypass.Test.MockFreeRadius.Models;
+using PhotonBypass.Test.MockFreeRadius.Model;
 using PhotonBypass.Tools;
-using System.Text.Json;
 
-namespace PhotonBypass.Test.MockOutSources;
+namespace PhotonBypass.Test.MockFreeRadius;
 
 internal class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
 {
@@ -205,9 +204,9 @@ internal class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
             });
     }
 
-    private const string FilePath = "Data/radius-traffic-data.json";
+    private const string FilePath = "Data/Radius/traffic-data.json";
 
-    private const string Passwords = "Data/passwords.json";
+    private const string Passwords = "Data/Radius/passwords.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

@@ -60,7 +60,7 @@ public class AccountRadiusSyncService(ITik4NetHandler handler) : IAccountRadiusS
 
     public async Task DeactivateUser(ServerEntity radius, IEnumerable<string> usernames)
     {
-        var field_name = TikParam.GetFielName<UserModel>(nameof(UserModel.Disabled)) ??
+        var field_name = TikParam.GetFieldName<UserModel>(nameof(UserModel.Disabled)) ??
                          throw new Exception("The 'Disabled' TikProperty not found in 'UserModel'.");
 
         using var connection = await handler.ConnectTo(radius);
@@ -116,7 +116,7 @@ public class AccountRadiusSyncService(ITik4NetHandler handler) : IAccountRadiusS
             throw new Exception("Username is not valid");
         }
 
-        var password_field_name = TikParam.GetFielName<UserModel>(nameof(UserModel.Password)) ??
+        var password_field_name = TikParam.GetFieldName<UserModel>(nameof(UserModel.Password)) ??
                                   throw new Exception("The 'Password' TikProperty not found in 'UserModel'.");
 
         using var connection = await handler.ConnectTo(radius);

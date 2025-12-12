@@ -36,7 +36,7 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
             });
     }
 
-    private const string FilePath = "Data/history.json";
+    private const string FilePath = "Data/Local/history.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

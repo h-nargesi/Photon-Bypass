@@ -13,18 +13,8 @@ internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IOutSourceMoq
 
     public Tik4NetHandlerMoq()
     {
-        var connection_mock = new Mock<ITikConnection>();
-
         Setup(x => x.ConnectTo(It.IsAny<ServerEntity>()))
-            .Returns<ServerEntity>(_ => Task.FromResult(connection_mock.Object));
-
-        connection_mock.Setup(connection => connection.CreateCommand(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<ITikCommandParameter[]>()))
-            .Returns<string, TikCommandParameterFormat, ITikCommandParameter[]>((command_text, _, parameters) =>
-            new TikCommandMoq(this, command_text, parameters).Object);
-
-        connection_mock.Setup(connection => connection.CreateCommandAndParameters(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<string[]>()))
-            .Returns<string, TikCommandParameterFormat, string[]>((command_text, format, parameters) =>
-            new TikCommandMoq(this, command_text, format, parameters).Object);
+            .Returns<ServerEntity>(server => Task.FromResult(CreateMoq(server)));
     }
 
     public IEnumerable<TModel> GetData<TModel>() where TModel : new()
@@ -35,6 +25,21 @@ internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IOutSourceMoq
     public void Execute(string command_text, List<ITikCommandParameter> parameters)
     {
         OnExecute?.Invoke(command_text, parameters);
+    }
+    
+    private ITikConnection CreateMoq(ServerEntity server)
+    {
+        var connection_mock = new Mock<ITikConnection>();
+
+        connection_mock.Setup(connection => connection.CreateCommand(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<ITikCommandParameter[]>()))
+            .Returns<string, TikCommandParameterFormat, ITikCommandParameter[]>((command_text, _, parameters) =>
+                new TikCommandMoq(this, server, command_text, parameters).Object);
+
+        connection_mock.Setup(connection => connection.CreateCommandAndParameters(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<string[]>()))
+            .Returns<string, TikCommandParameterFormat, string[]>((command_text, format, parameters) =>
+                new TikCommandMoq(this, server, command_text, format, parameters).Object);
+
+        return connection_mock.Object;
     }
 
     public static void CreateInstance(IServiceCollection services)

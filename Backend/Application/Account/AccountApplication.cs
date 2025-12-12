@@ -12,11 +12,15 @@ using Serilog;
 namespace PhotonBypass.Application.Account;
 
 class AccountApplication(
-    IAccountRepository AccountRepo,
-    Lazy<IHistoryRepository> HistoryRepo,
-    Lazy<IJobContext> JobContext)
+    IAccountRepository account_repo,
+    Lazy<IHistoryRepository> history_repo,
+    Lazy<IJobContext> job_context)
     : IAccountApplication
 {
+    private IAccountRepository AccountRepo { get; } = account_repo;
+    private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
+    private Lazy<IJobContext> JobContext { get; } = job_context;
+    
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
         var account = (await AccountRepo.GetAccount(username)) ??

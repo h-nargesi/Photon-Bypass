@@ -60,6 +60,16 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSour
                 return Task.FromResult(filtered_list);
             });
 
+        Setup(x => x.LastUpdateTime())
+            .Returns(() =>
+            {
+                var last_update_time = data_list
+                    .Where(traffic => traffic.EndSession.HasValue)
+                    .Min(traffic => (DateTime?)traffic.StartSession);
+
+                return Task.FromResult(last_update_time);
+            });
+
         Setup(x => x.BachSave(It.IsNotNull<IEnumerable<TrafficDataEntity>>()))
             .Returns<IEnumerable<TrafficDataEntity>>(list =>
             {
@@ -69,7 +79,7 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSour
             });
     }
 
-    private const string FilePath = "Data/traffic-data.json";
+    private const string FilePath = "Data/Local/traffic-data.json";
 
     public static void CreateInstance(IServiceCollection services)
     {

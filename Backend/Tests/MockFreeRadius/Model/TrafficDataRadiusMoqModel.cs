@@ -2,7 +2,7 @@
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.Test.MockOptions;
 
-namespace PhotonBypass.Test.MockFreeRadius.Models;
+namespace PhotonBypass.Test.MockFreeRadius.Model;
 
 class TrafficDataRadiusMoqModel
 {

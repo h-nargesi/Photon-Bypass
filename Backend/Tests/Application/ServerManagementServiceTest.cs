@@ -63,6 +63,13 @@ public class ServerManagementServiceTest : ServiceInitializer
         Assert.Contains(remotes, text_file);
     }
 
+    [Fact]
+    public async Task UpdateTrafficData()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+    }
+
     [Fact(Skip = "Not implemented")]
     public async Task CheckUserServerBalance_Check()
     {

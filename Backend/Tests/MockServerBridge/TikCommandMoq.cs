@@ -1,6 +1,8 @@
 ﻿using Moq;
 using PhotonBypass.ServerBridge.Tik4net;
 using System.Text.Json;
+using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Test.MockOptions;
 using tik4net;
 
 namespace PhotonBypass.Test.MockServerBridge;
@@ -8,18 +10,23 @@ namespace PhotonBypass.Test.MockServerBridge;
 internal class TikCommandMoq : Mock<ITikCommand>
 {
     private readonly List<ITikCommandParameter> parameters = [];
+    private readonly ServerEntity server;
 
-    public TikCommandMoq(Tik4NetHandlerMoq parent, string command_text, IEnumerable<ITikCommandParameter> parameters)
+    public TikCommandMoq(Tik4NetHandlerMoq parent, ServerEntity server, string command_text,
+        IEnumerable<ITikCommandParameter> parameters)
     {
         this.parameters.AddRange(parameters);
+        this.server = server;
 
         Setup(parent, command_text);
     }
 
-    public TikCommandMoq(Tik4NetHandlerMoq parent, string command_text, TikCommandParameterFormat format,
+    public TikCommandMoq(Tik4NetHandlerMoq parent, ServerEntity server, string command_text,
+        TikCommandParameterFormat format,
         IEnumerable<string> parameters)
     {
         var parameters_list = parameters.ToList();
+        this.server = server;
 
         switch (format)
         {
@@ -58,7 +65,7 @@ internal class TikCommandMoq : Mock<ITikCommand>
             });
 
         Setup(command => command.ExecuteList())
-            .Returns(() => LoadFile($"Data/mikrotik{command_text.Replace('/', '-')}.json"));
+            .Returns(() => LoadFile($"Data/Mikrotik/{command_text.Remove(0, 1).Replace('/', '-')}.json"));
 
         Setup(command => command.ExecuteNonQuery())
             .Callback(() => parent.Execute(command_text, parameters));
@@ -75,12 +82,32 @@ internal class TikCommandMoq : Mock<ITikCommand>
         }
 
         var raw_text = File.ReadAllText(file_name);
-        IEnumerable<TikReSentence>? session_list = JsonSerializer.Deserialize<List<TikReSentence>>(raw_text);
+        var session_list = JsonSerializer.Deserialize<List<TikReSentence>>(raw_text)?
+            .Where(sentence => !sentence.TryGetValue(".server-id", out var value) ||
+                               int.TryParse(value, out var server_id) && server_id == server.Id);
 
         if (session_list == null) return [];
 
         foreach (var param in parameters)
-            session_list = session_list.Where(sentence => sentence.TryGetValue(param.Name, out var value) && value == param.Value);
+        {
+            if (param.Name.StartsWith('>'))
+            {
+                var name = param.Name.Remove(0, 1);
+                session_list = session_list.Where(sentence => sentence.TryGetValue(name, out var value) &&
+                                                              string.CompareOrdinal(param.Value, value) > 0);
+            }
+            else if (param.Name.StartsWith('<'))
+            {
+                var name = param.Name.Remove(0, 1);
+                session_list = session_list.Where(sentence => sentence.TryGetValue(name, out var value) &&
+                                                              string.CompareOrdinal(param.Value, value) < 0);
+            }
+            else
+            {
+                session_list = session_list.Where(sentence => sentence.TryGetValue(param.Name, out var value) &&
+                                                              value == param.Value);
+            }
+        }
 
         return session_list;
     }
@@ -93,7 +120,7 @@ internal class TikCommandMoq : Mock<ITikCommand>
 
         public string GetId() => this[".id"];
 
-        public string GetResponseField(string field_name) => this[field_name];
+        public string? GetResponseField(string field_name) => Read(this[field_name]);
 
         public string GetResponseFieldOrDefault(string field_name, string default_value)
         {
@@ -102,10 +129,19 @@ internal class TikCommandMoq : Mock<ITikCommand>
                 return field_value;
             }
 
-            return default_value;
+            return Read(default_value) ?? default_value;
         }
 
-        public bool TryGetResponseField(string field_name, out string? field_value) =>
-            TryGetValue(field_name, out field_value);
+        public bool TryGetResponseField(string field_name, out string? field_value)
+        {
+            var result = TryGetValue(field_name, out field_value);
+            field_value = Read(field_value);
+            return result;
+        }
+
+        private static string? Read(string? value)
+        {
+            return value?.ConvertToDateTime()?.ToString("o") ?? value;
+        }
     }
 }

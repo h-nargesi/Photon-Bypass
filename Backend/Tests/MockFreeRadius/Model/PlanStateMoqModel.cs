@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Test.MockOptions;
 
-namespace PhotonBypass.Test.MockFreeRadius.Models;
+namespace PhotonBypass.Test.MockFreeRadius.Model;
 
 public class PlanStateMoqModel
 {

@@ -42,30 +42,30 @@ public class TikParam : ITikCommandParameter
 
     public static TikParam True<T>(string name)
     {
-        return new TikParam(GetFielName<T>(name) ?? string.Empty);
+        return new TikParam(GetFieldName<T>(name) ?? string.Empty);
     }
 
     public static TikParam Not<T>(string name)
     {
-        return new TikParam($"!{GetFielName<T>(name)}");
+        return new TikParam($"!{GetFieldName<T>(name)}");
     }
 
     public static TikParam Equal<T>(string name, string value)
     {
-        return new TikParam(GetFielName<T>(name) ?? string.Empty, value);
+        return new TikParam(GetFieldName<T>(name) ?? string.Empty, value);
     }
 
     public static TikParam Less<T>(string name, string value)
     {
-        return new TikParam($"<{GetFielName<T>(name)}", value);
+        return new TikParam($"<{GetFieldName<T>(name)}", value);
     }
 
     public static TikParam Greater<T>(string name, string value)
     {
-        return new TikParam($">{GetFielName<T>(name)}", value);
+        return new TikParam($">{GetFieldName<T>(name)}", value);
     }
 
-    public static string? GetFielName<T>(string name)
+    public static string? GetFieldName<T>(string name)
     {
         return typeof(T).GetProperty(name)?
             .GetCustomAttributes<TikPropertyAttribute>()

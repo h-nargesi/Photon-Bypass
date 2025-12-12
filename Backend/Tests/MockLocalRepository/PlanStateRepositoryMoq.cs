@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Moq;
 using PhotonBypass.Domain.Plan;
-using PhotonBypass.Test.MockFreeRadius.Models;
+using PhotonBypass.Test.MockFreeRadius.Model;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.MockLocalRepository;
@@ -46,7 +46,7 @@ public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IOutSourceMoq
             });
     }
 
-    private const string FilePath = "Data/plan-state.json";
+    private const string FilePath = "Data/Local/plan-state.json";
 
     public static void CreateInstance(IServiceCollection services)
     {
