@@ -51,7 +51,7 @@ Implement mock of all dependencies and test mid-level services.
 - IVpnApplication:
 	[ ] ChangeOvpnPassword
 	[ ] SendCertEmail
-	[-] TrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
+	[+] TrafficData 
 - AccountMonitoringService:
 	[+] InactiveAbandonedUsers
 	[+] NotifSendServices
@@ -59,7 +59,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetAvailableRealm
 	[-] CheckUserServerBalance
 	[+] GetDefaultCertificate
-	[+] UpdateTrafficData
+	[+] UpdateTrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 - Radius
 	[+] GetTrafficData
 
