@@ -17,4 +17,7 @@
 		<ProjectReference Include="..\Shared\Shared.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="PhotonBypass.Test" />
+	</ItemGroup>
 </Project>

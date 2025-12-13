@@ -4,7 +4,7 @@ using PhotonBypass.Application.Management;
 
 namespace PhotonBypass.Test.MockOptions;
 
-internal class ManagementOptionsMoq : Mock<IOptions<ManagementOptions>>, IOutSourceMoq
+internal class ManagementOptionsMoq : Mock<IOptions<ManagementOptions>>, IOutSourceMoq, IOptionsMoq
 {
     public ManagementOptionsMoq()
     {

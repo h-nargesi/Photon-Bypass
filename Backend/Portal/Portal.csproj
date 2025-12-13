@@ -19,5 +19,8 @@
 		<ProjectReference Include="..\Application\Application.csproj" />
 		<ProjectReference Include="..\ServiceFactoryHandler\ServiceFactoryHandler.csproj" />
 	</ItemGroup>
-
+	
+	<ItemGroup>
+		<InternalsVisibleTo Include="PhotonBypass.Test" />
+	</ItemGroup>
 </Project>

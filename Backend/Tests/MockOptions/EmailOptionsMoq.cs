@@ -4,7 +4,7 @@ using PhotonBypass.ServerBridge.Email;
 
 namespace PhotonBypass.Test.MockOptions;
 
-internal class EmailOptionsMoq : Mock<IOptions<EmailOptions>>, IOutSourceMoq
+internal class EmailOptionsMoq : Mock<IOptions<EmailOptions>>, IOutSourceMoq, IOptionsMoq
 {
     public EmailOptionsMoq()
     {
