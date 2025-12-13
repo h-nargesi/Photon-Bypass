@@ -80,9 +80,9 @@ class PlanApplication(
         });
     }
 
-    public async Task<ApiResult<int>> Estimate(int users, int days, int gigabytes)
+    public async Task<ApiResult<int>> Estimate(string target, int users, int days, int gigabytes)
     {
-        var account = (await AccountRepo.Value.GetAccount(JobContext.Value.Target)) ??
+        var account = (await AccountRepo.Value.GetAccount(target)) ??
                       throw new UserException("کاربر مورد نظر پیدا نشد!");
         
         var result = PriceCalc.Value.CalculatePrice(account.CalculationMethod ?? 0, users, days, gigabytes);

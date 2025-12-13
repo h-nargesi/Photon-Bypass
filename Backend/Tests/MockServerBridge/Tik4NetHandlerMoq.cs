@@ -1,6 +1,7 @@
 ﻿using Moq;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.ServerBridge.Services;
+using PhotonBypass.ServerBridge.Tik4net;
 using PhotonBypass.Tools;
 using tik4net;
 using tik4net.Objects;
@@ -38,6 +39,9 @@ internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IOutSourceMoq
         connection_mock.Setup(connection => connection.CreateCommandAndParameters(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<string[]>()))
             .Returns<string, TikCommandParameterFormat, string[]>((command_text, format, parameters) =>
                 new TikCommandMoq(this, server, command_text, format, parameters).Object);
+
+        connection_mock.Setup(connection => connection.CreateParameter(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns<string, string>((name, value) => new TikParam(name, value));
 
         return connection_mock.Object;
     }

@@ -11,7 +11,7 @@ public interface IPlanApplication
 
     Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target);
 
-    Task<ApiResult<int>> Estimate(int users, int days, int gigabytes);
+    Task<ApiResult<int>> Estimate(string target, int users, int days, int gigabytes);
 
     Task<ApiResult<RenewalResult>> Renewal(string target, int users, int days, int gigabytes);
 

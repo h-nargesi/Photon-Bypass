@@ -1,9 +1,10 @@
 ﻿using Moq;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Tools;
-using System.Text.Json;
 using PhotonBypass.Test.MockOptions;
+using PhotonBypass.Tools;
+using System.Data;
+using System.Text.Json;
 
 namespace PhotonBypass.Test.MockLocalRepository;
 
@@ -131,6 +132,17 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
                 account.Id = 10000000;
                 OnSave?.Invoke(account);
                 return Task.CompletedTask;
+            });
+
+        Setup(x => x.BeginTransactionAsync())
+            .Returns(() =>
+            {
+                var mock = new Mock<IDbTransaction>();
+
+                mock.Setup(t => t.Commit());
+                mock.Setup(t => t.Rollback());
+
+                return Task.FromResult(mock.Object);
             });
     }
 

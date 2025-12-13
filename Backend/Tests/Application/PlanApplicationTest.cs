@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using PhotonBypass.Application.Plan;
+using PhotonBypass.Domain;
 using PhotonBypass.ErrorHandler;
 
 namespace PhotonBypass.Test.Application;
@@ -121,5 +122,63 @@ public class PlanApplicationTest : ServiceInitializer
         Assert.Equal(1, plan_state.Data.SimultaneousUserCount);
         Assert.Equal(120, plan_state.Data.Days);
         Assert.Equal(1, plan_state.Data.Gigabytes);
+    }
+
+    [Fact]
+    public async Task Renewal_InvalidUsername()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var func = () => plan_app.Renewal("InvalidUser", 2, 10, 20);
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task Renewal_InactiveAccount()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var func = () => plan_app.Renewal("InactiveUser7", 2, 10, 20);
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task Renewal()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+
+        var estimate = await plan_app.Estimate("User2", 2, 120, 25);
+
+        Assert.NotNull(estimate);
+
+        var result = await plan_app.Renewal("User2", 2, 120, 25);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+        Assert.NotNull(result.Data);
+        Assert.Equal(1500 - estimate.Data, result.Data.CurrentPrice);
+        Assert.Equal(0, result.Data.MoneyNeeds);
+    }
+
+    [Fact]
+    public async Task Renewal_EmptyMoney()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+
+        var estimate = await plan_app.Estimate("User3", 2, 120, 25);
+
+        Assert.NotNull(estimate);
+
+        var result = await plan_app.Renewal("User3", 2, 120, 25);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+        Assert.NotNull(result.Data);
+        Assert.Equal(0, result.Data.CurrentPrice);
+        Assert.Equal(estimate.Data, result.Data.MoneyNeeds);
     }
 }
