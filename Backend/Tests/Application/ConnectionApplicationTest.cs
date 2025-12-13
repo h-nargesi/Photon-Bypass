@@ -22,7 +22,7 @@ public class ConnectionApplicationTest : ServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.GetCurrentConnectionState("User7");
+        var func = () => connection_app.GetCurrentConnectionState("InactiveUser7");
 
         return func.Should().ThrowAsync<UserException>();
     }
@@ -74,7 +74,7 @@ public class ConnectionApplicationTest : ServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("ip", "User7", "session_id");
+        var func = () => connection_app.CloseConnection("ip", "InactiveUser7", "session_id");
 
         return func.Should().ThrowAsync<UserException>();
     }

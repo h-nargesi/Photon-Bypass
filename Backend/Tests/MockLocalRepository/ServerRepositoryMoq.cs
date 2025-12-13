@@ -47,6 +47,24 @@ public class ServerRepositoryMoq : Mock<IServerRepository>, IOutSourceMoq
                 return Task.FromResult(server_list);
             });
 
+        Setup(repository => repository.GetActiveNasInRealmOrAll(It.IsAny<int?>()))
+            .Returns<int?>(realm_id =>
+            {
+                List<ServerEntity>? server_list;
+                if (!realm_id.HasValue)
+                {
+                    server_list = data_dictionary.SelectMany(pair => pair.Value).ToList();
+                }
+                else if (!data_dictionary.TryGetValue(realm_id.Value, out server_list))
+                {
+                    server_list = [];
+                }
+
+                server_list = server_list.Where(s => (s.Features & ServerFeature.Nas) != 0).ToList();
+
+                return Task.FromResult(server_list);
+            });
+
         Setup(repository => repository.GetAllActiveNasDomainInRealm(It.IsAny<int?>()))
             .Returns<int?>(realm_id =>
             {
@@ -83,6 +101,8 @@ public class ServerRepositoryMoq : Mock<IServerRepository>, IOutSourceMoq
                 {
                     server_list = [];
                 }
+
+                server_list = server_list.Where(s => (s.Features & ServerFeature.Radius) != 0).ToList();
 
                 return Task.FromResult(server_list);
             });

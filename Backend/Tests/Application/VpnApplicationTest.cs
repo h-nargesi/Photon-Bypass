@@ -25,7 +25,7 @@ public class VpnApplicationTest : ServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User7", "new_password");
+            .ChangeVpnPassword("InactiveUser7", "new_password");
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -60,6 +60,68 @@ public class VpnApplicationTest : ServiceInitializer
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
             .ChangeVpnPassword("User1", new_password);
+
+        Assert.True(is_saved);
+    }
+
+    [Fact]
+    public async Task SendCertEmail_InvlaidAccount()
+    {
+        using var scope = App.Services.CreateScope();
+        var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .SendCertEmail("Invalid Username");
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task SendCertEmail_DisabledAccount()
+    {
+        using var scope = App.Services.CreateScope();
+        var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .SendCertEmail("InactiveUser7");
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task SendCertEmail_WithoutEmail()
+    {
+        using var scope = App.Services.CreateScope();
+        var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .SendCertEmail("User8");
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task SendCertEmail_WithoutPlan()
+    {
+        using var scope = App.Services.CreateScope();
+        var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .SendCertEmail("User6");
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task SendCertEmail()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var is_saved = false;
+        var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        email_moq.OnSend += mail =>
+        {
+            is_saved = true;
+            Assert.Single(mail.To);
+            Assert.Equal("user2@gmail.com", mail.To.First().Address);
+            Assert.NotNull(mail.Attachments);
+            Assert.Single(mail.Attachments);
+        };
+
+        var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .SendCertEmail("User2");
 
         Assert.True(is_saved);
     }

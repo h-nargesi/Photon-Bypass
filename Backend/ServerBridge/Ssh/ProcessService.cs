@@ -37,27 +37,27 @@ partial class ProcessService(ISshHandler handler) : IProcessService
         return CheckOn(process, node, context);
     }
 
-    private static bool ActivateOn(ProcessEntity process, SshClient node, ProcessContext context)
+    private static bool ActivateOn(ProcessEntity process, ISshConnection node, ProcessContext context)
     {
         return process.Enable != null && Run(node, process.Enable, context);
     }
 
-    private static bool DeactivateOn(ProcessEntity process, SshClient node, ProcessContext context)
+    private static bool DeactivateOn(ProcessEntity process, ISshConnection node, ProcessContext context)
     {
         return process.Disable != null && Run(node, process.Disable, context);
     }
 
-    private static bool CheckOn(ProcessEntity process, SshClient node, ProcessContext context)
+    private static bool CheckOn(ProcessEntity process, ISshConnection node, ProcessContext context)
     {
         return process.Check != null && Run(node, process.Check, context);
     }
 
-    private static bool Run(SshClient node, IEnumerable<ScriptEntity> scripts, ProcessContext context)
+    private static bool Run(ISshConnection node, IEnumerable<ScriptEntity> scripts, ProcessContext context)
     {
         return scripts.All(script => Run(node, script, context));
     }
 
-    private static bool Run(SshClient node, ScriptEntity script, ProcessContext context)
+    private static bool Run(ISshConnection node, ScriptEntity script, ProcessContext context)
     {
         if (!node.Execute(InjectContextInScriptCommand(script, context), out var script_result))
         {

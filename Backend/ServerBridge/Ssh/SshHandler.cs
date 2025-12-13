@@ -7,7 +7,7 @@ namespace PhotonBypass.ServerBridge.Ssh;
 
 class SshHandler : ISshHandler
 {
-    public async Task<SshClient> ConnectTo(ServerEntity server)
+    public async Task<ISshConnection> ConnectTo(ServerEntity server)
     {
         var config = server.Config?.SshConfig ??
                      throw new Exception($"The ssh configuration is not set for server ({server.Id}:{server.Name})");
@@ -16,7 +16,7 @@ class SshHandler : ISshHandler
 
         await node.ConnectAsync(CancellationToken.None);
 
-        if (node.IsConnected) return node;
+        if (node.IsConnected) return new SshConnection(node, server);
         
         node.Dispose();
         throw new UserException("خطای اتصال به سرور!",

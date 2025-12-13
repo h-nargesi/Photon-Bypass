@@ -1,6 +1,4 @@
 [ ] email is required but mobile
-[ ] انتخاب نوع اطلاع رسانی (ایمیل/واتساپ)
-[ ] بررسی صحت نام‌کاربری، ایمیل، موبایل زمان وارد کردن فیلد فرانت
 [ ] use check-mark in home-page footer
 [ ] handle null-value / null-result for plan-info / user-plan-state in front
 [ ] check all method's parameters in radius repository and radius service to be simple (for example fetch by id not username)
@@ -9,9 +7,12 @@
 [ ] human test
 [ ] Check email send limit
 [ ] مدیریت گواهی‌های صادر شده بدون استفاده در میکروتیک
-[ ] امکان تولید اسکریپت جدید برای سرور جدید
-[ ] خروج از سیستم 
-[] استفاده از خروجی لیست بجای Enumerable
-[+] استفاده از تاریخ داینامیک برای همه داده‌های تست
+[ ] خروج از سیستم
+[ ] استفاده از خروجی لیست بجای Enumerable
 ----------------------
+[ ] بررسی صحت نام‌کاربری، ایمیل، موبایل زمان وارد کردن فیلد فرانت
+[ ] انتخاب نوع اطلاع رسانی (ایمیل/واتساپ)
+[ ] SetOVpnCertificate
 [ ] امکان تغییر سرور بر اساس نیاز نوع وی‌پی‌ان توسط خود مشتری
+----------------------
+[ ] امکان تولید اسکریپت جدید برای سرور جدید
