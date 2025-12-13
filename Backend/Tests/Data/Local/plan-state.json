@@ -5,7 +5,9 @@
     "SimultaneousUser": 1,
     "RestrictedRealmId": null,
     "TrafficLimit": 1073741824,
-    "TimeLimitInDays": 120
+    "TimeLimitInDays": 120,
+    "ExpirationDate": "today+110",
+    "TrafficLeft": 1073001004
   },
   {
     "Id": 2,

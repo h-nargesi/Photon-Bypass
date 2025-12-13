@@ -45,7 +45,8 @@ class PlanApplication(
         }
 
         var state = (await PlanRepo.Value.GetPlanState(account_id.Value)) ??
-                    throw new Exception($"The plan-state not found for target={target}, account-id={account_id.Value}");
+                    throw new UserException("هیچ پلنی برای این کاربر فعال نیست!",
+                        $"The plan-state not found for target={target}, account-id={account_id.Value}");
 
         Log.Information("[user: {0}] session state: (target:{1}, user-count:{2}, data-left:{3}, total-data:{4}, time-left:{5}-{6})",
             JobContext.Value.Username, target, state.SimultaneousUser,

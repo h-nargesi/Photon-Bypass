@@ -44,9 +44,8 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetCurrentConnectionState
 	[+] CloseConnection
 - IPlanApplication:
-	[ ] GetPlanState
+	[+] GetPlanState
 	[ ] GetPlanInfo
-	[ ] Estimate
 	[ ] Renewal
 - IVpnApplication:
 	[+] ChangeVpnPassword
