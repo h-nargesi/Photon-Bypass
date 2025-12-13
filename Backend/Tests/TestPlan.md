@@ -49,7 +49,7 @@ Implement mock of all dependencies and test mid-level services.
 	[ ] Estimate
 	[ ] Renewal
 - IVpnApplication:
-	[ ] ChangeOvpnPassword
+	[+] ChangeVpnPassword
 	[ ] SendCertEmail
 	[+] TrafficData 
 - AccountMonitoringService:
@@ -97,7 +97,7 @@ Controllers:
 	[ ] Estimate
 	[ ] Renewal
 - VpnController:
-	[ ] ChangeOvpnPassword
+	[ ] ChangeVpnPassword
 	[ ] SendCertEmail
 	[ ] TrafficData
 
