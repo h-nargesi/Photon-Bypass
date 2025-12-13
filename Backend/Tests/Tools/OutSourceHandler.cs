@@ -1,37 +1,92 @@
-﻿namespace PhotonBypass.Test.Tools;
+﻿using System.Data;
+using Dapper;
+using Microsoft.Data.SqlClient;
+using PhotonBypass.Test.MockOptions;
+
+namespace PhotonBypass.Test.Tools;
 
 public static class OutSourceHandler
 {
-    private static bool is_initilized = false;
-    private static readonly SemaphoreSlim semaphote = new(0);
+    private static readonly Dictionary<string, OutSource> OutSources = new();
 
-    public static async Task Initialize()
+    public static Task<OutSource> Get(string key)
     {
-        if (is_initilized) return;
+        OutSource? out_source;
 
-        await semaphote.WaitAsync();
+        lock (OutSources)
+        {
+            if (!OutSources.TryGetValue(key, out out_source))
+            {
+                OutSources.Add(key, out_source = new OutSource());
+            }
+        }
 
-        if (is_initilized) return;
-
-        await InitializeOptions();
-
-        Task.WaitAll(
-            InitializeLocalDatabase(),
-            InitializeMikrotik());
-
-        is_initilized = true;
-        semaphote.Release(int.MaxValue);
+        return out_source.Initialize();
     }
 
-    private static async Task InitializeOptions()
+    public class OutSource
     {
-    }
+        private bool isInitialized;
+        private readonly List<Exception> Exceptions = [];
+        private readonly SemaphoreSlim semaphore = new(0);
 
-    private static async Task InitializeLocalDatabase()
-    {
-    }
+        public async Task<OutSource> Initialize()
+        {
+            if (isInitialized) return this;
 
-    private static async Task InitializeMikrotik()
-    {
+            await semaphore.WaitAsync();
+
+            if (isInitialized) return this;
+
+            Task.WaitAll(
+                InitializeLocalDatabase(),
+                InitializeMikrotik());
+
+            if (Exceptions.Count > 0)
+            {
+                throw new Exception("Some error happened in initialization.", Exceptions[0]);
+            }
+
+            isInitialized = true;
+            semaphore.Release(int.MaxValue);
+            return this;
+        }
+
+        private async Task InitializeLocalDatabase()
+        {
+            try
+            {
+                var loading_structure_files =
+                    SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseStructureInitializerFilePath);
+                
+                var options = new LocalDapperOptionsMoq().Object;
+                await using var connection = new SqlConnection(options.Value.ConnectionString);
+                
+                await connection.OpenAsync();
+                var structures = await loading_structure_files;
+
+                var loading_data_files =
+                    SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseDataInitializerFilePath);
+
+                foreach (var sql in structures)
+                    await connection.ExecuteAsync(sql);
+                
+                var data = await loading_data_files;
+                
+                foreach (var sql in data)
+                    await connection.ExecuteAsync(sql);
+            }
+            catch (Exception exception)
+            {
+                lock (Exceptions)
+                {
+                    Exceptions.Add(exception);
+                }
+            }
+        }
+
+        private async Task InitializeMikrotik()
+        {
+        }
     }
 }
