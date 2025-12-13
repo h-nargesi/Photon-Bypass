@@ -20,11 +20,11 @@ public class AccountMonitoringServiceTest : ServiceInitializer
         var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
 
         var user_data_dictionary = tik4_net_moq.GetData<UserModel>()
-            .ToDictionary(user => user.Id, user => user.Name);
+            .ToDictionary(user => user.Id ?? string.Empty, user => user.Name);
         var user_profile_data_dictionary = tik4_net_moq.GetData<UserProfileModel>()
-            .ToDictionary(profile => profile.Id, profile => profile.Username);
+            .ToDictionary(profile => profile.Id ?? string.Empty, profile => profile.Username);
         var session_data_dictionary = tik4_net_moq.GetData<SessionModel>()
-            .ToDictionary(session => session.Id, session => session.Username);
+            .ToDictionary(session => session.Id ?? string.Empty, session => session.Username);
 
         var other = false;
         var user_4_actions = new bool[4];
@@ -41,7 +41,7 @@ public class AccountMonitoringServiceTest : ServiceInitializer
                 return;
             }
 
-            Dictionary<int, string?> username_dictionary;
+            Dictionary<string, string?>? username_dictionary;
             int index;
             switch (action_types[1])
             {
@@ -72,7 +72,7 @@ public class AccountMonitoringServiceTest : ServiceInitializer
                 return;
             }
 
-            var username = username_dictionary[int.Parse(id)];
+            var username = username_dictionary[id];
 
             if (command_text.EndsWith("/remove") && username == "User4")
             {

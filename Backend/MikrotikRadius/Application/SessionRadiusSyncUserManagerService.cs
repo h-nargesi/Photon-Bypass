@@ -85,7 +85,6 @@ public class SessionRadiusSyncUserManagerService(ITik4NetHandler handler) : ISes
         return data
             .Select(session => new TrafficDataBinding
             {
-                Id = session.Id,
                 SessionId = session.SessionId ?? string.Empty,
                 Username = session.Username ?? string.Empty,
                 NasIpAddress = session.NasIpAddress,

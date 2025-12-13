@@ -97,18 +97,18 @@ public static class UserManagerHelper
             })
             .ToList();
 
-        if (adding_list.Count > 0)
+        foreach (var add in adding_list)
         {
-            connection.Save(adding_list);
+            connection.Save(add);
         }
 
         var removing_list = assignments_dictionary.Where(assignment => !limitations.Contains(assignment.Key))
             .Select(assignment => assignment.Value)
             .ToList();
 
-        if (removing_list.Count > 0)
+        foreach (var remove in removing_list)
         {
-            connection.Delete(removing_list);
+            connection.Delete(remove);
         }
     }
 
@@ -209,18 +209,12 @@ public static class UserManagerHelper
         return limitation_name;
     }
 
-    private static string GetNameForUser(int? days, int? traffic, int? speed)
+    private static string GetNameForUser(int? days, int? gigabytes, int? speed)
     {
         var profile_name = string.Empty;
 
-        if (traffic.HasValue)
+        if (gigabytes.HasValue)
         {
-            if (traffic % StaticValues.BytesInGigLong != 0)
-            {
-                throw new Exception("Traffic limit is exceeding gigabytes");
-            }
-
-            var gigabytes = traffic / StaticValues.BytesInGigLong;
             if (gigabytes % 25 != 0)
             {
                 throw new Exception("Traffic limit must be a multiple of 25 gigabytes.");

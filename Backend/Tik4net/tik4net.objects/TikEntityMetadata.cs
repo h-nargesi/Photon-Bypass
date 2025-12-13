@@ -120,10 +120,10 @@ namespace tik4net.Objects
             _properties = entityType.GetTypeInfo().GetProperties()
                 .Where(propInfo => propInfo.GetCustomAttribute<TikPropertyAttribute>(true) != null)
                 .Select(propInfo => new TikEntityPropertyAccessor(this, propInfo))
-                .ToDictionary(propDescriptor => propDescriptor.FieldName);                
+                .ToDictionary(propDescriptor => propDescriptor.FieldName);
         }
 
-        private TikEntityPropertyAccessor GetPropertyDescriptor(string fieldName) 
+        private TikEntityPropertyAccessor GetPropertyDescriptor(string fieldName)
         {
             TikEntityPropertyAccessor result;
             if (_properties.TryGetValue(fieldName, out result))

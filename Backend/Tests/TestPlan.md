@@ -61,6 +61,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] UpdateTrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
 - Radius
 	[+] GetTrafficData
+	[+] SyncUserAndActive
 
 ## Level 3 - Outsource - Unit Test
 

@@ -7,8 +7,8 @@ namespace PhotonBypass.Mikrotik.Radius.Model;
 public class UserModel
 {
     [JsonPropertyName("id")]
-    [TikProperty(".id", IsReadOnly = true)]
-    public int Id { get; set; }
+    [TikProperty(".id", IsReadOnly = true, IsMandatory = true)]
+    public string? Id { get; private set; }
 
     [JsonPropertyName("disabled")]
     [TikProperty("disabled")]

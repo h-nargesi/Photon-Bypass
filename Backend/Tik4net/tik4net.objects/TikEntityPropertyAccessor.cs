@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 
 namespace tik4net.Objects
 {
@@ -115,13 +113,13 @@ namespace tik4net.Objects
                     return strValue;
                 else if (PropertyType == typeof(TimeSpan))
                     return TikTimeHelper.FromTikTimeToTimeSpan(strValue);
-                else if (PropertyType == typeof(int))
+                else if (PropertyType == typeof(int) || (PropertyType == typeof(int?)))
                     return int.Parse(strValue);
-                else if (PropertyType == typeof(long))
+                else if (PropertyType == typeof(long) || PropertyType == typeof(long?))
                     return long.Parse(strValue);
-                else if (PropertyType == typeof(byte))
+                else if (PropertyType == typeof(byte) || PropertyType == typeof(byte?))
                     return byte.Parse(strValue);
-                else if (PropertyType == typeof(bool))
+                else if (PropertyType == typeof(bool) || PropertyType == typeof(bool?))
                     return string.Equals(strValue, "true", StringComparison.OrdinalIgnoreCase) || string.Equals(strValue, "yes", StringComparison.OrdinalIgnoreCase);
                 else if (PropertyType.GetTypeInfo().IsEnum)
                     return Enum.GetNames(PropertyType)
@@ -137,11 +135,11 @@ namespace tik4net.Objects
                 else
                     throw new NotImplementedException(string.Format("Property type {0} not supported.", PropertyType));
             }
-            catch(NotImplementedException)
+            catch (NotImplementedException)
             {
                 throw;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new FormatException(string.Format("Value '{0}' for property '{1}({2})' is not in expected format '{3}'.", strValue, PropertyName, FieldName, PropertyType), ex);
             }
@@ -149,19 +147,26 @@ namespace tik4net.Objects
 
         private string ConvertToString(object propValue)
         {
-            if (propValue is string)
-                return (string)propValue;
+            if (propValue == null)
+            {
+                return string.Empty;
+            }
 
-            //convert to string used in mikrotik            
+            if (propValue is string stringValue)
+            {
+                return stringValue;
+            }
+
+            //convert to string used in mikrotik
             if (PropertyType == typeof(string))
                 return propValue.ToString();
-            else if (PropertyType == typeof(TimeSpan))
+            else if (PropertyType == typeof(TimeSpan) || PropertyType == typeof(TimeSpan?))
                 return TikTimeHelper.ToTikTime((int)((TimeSpan)propValue).TotalSeconds);
-            else if (PropertyType == typeof(int))
+            else if (PropertyType == typeof(int) || PropertyType == typeof(int?))
                 return ((int)propValue).ToString();
-            else if (PropertyType == typeof(long))
+            else if (PropertyType == typeof(long) || PropertyType == typeof(long?))
                 return ((long)propValue).ToString();
-            else if (PropertyType == typeof(bool))
+            else if (PropertyType == typeof(bool) || PropertyType == typeof(bool?))
                 return ((bool)propValue) ? "yes" : "no"; //TODO add attribute definition for support true/false
             else if (PropertyType.GetTypeInfo().IsEnum)
                 return PropertyType.GetRuntimeField(propValue.ToString()).GetCustomAttribute<TikEnumAttribute>(false).Value; //TODO safer implementation
@@ -206,7 +211,7 @@ namespace tik4net.Objects
         {
             object propValue = PropertyInfo.GetValue(entity);
             if (propValue == null)
-                propValue = DefaultValue;   
+                propValue = DefaultValue;
             return ConvertToString(propValue);
         }
     }

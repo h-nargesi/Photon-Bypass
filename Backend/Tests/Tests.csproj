@@ -10,6 +10,18 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <Content Include="Data\Mikrotik\user-manager-profile-limitation-print.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Data\Mikrotik\user-manager-profile-print.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	  <Content Include="Data\Mikrotik\user-manager-limitation-print.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="coverlet.collector" Version="6.0.2" />
 		<PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.21" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
@@ -41,6 +53,9 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
 		<None Update="Data\config.ovpn">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="Data\Local\renewal.json">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 		<None Update="Data\Mikrotik\user-manager-session-print.json">

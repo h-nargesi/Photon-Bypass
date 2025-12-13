@@ -85,7 +85,7 @@ internal class TikCommandMoq : Mock<ITikCommand>
             .PrepareAllDateTimes();
         IEnumerable<TikReSentence>? session_list = JsonSerializer.Deserialize<List<TikReSentence>>(raw_text);
 
-        if (session_list == null) return [];
+        if (session_list == null || !session_list.Any()) return [];
 
         if (server != null)
         {
