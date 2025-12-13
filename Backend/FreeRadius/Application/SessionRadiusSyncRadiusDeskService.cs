@@ -5,7 +5,7 @@ using PhotonBypass.Infra.Radius.RadiusDesk;
 
 namespace PhotonBypass.FreeRadius.Application;
 
-public class SessionRadiusSyncService(RadWebApiOptionContext web_web_api_context) : ISessionRadiusSyncService
+public class SessionRadiusSyncRadiusDeskService(RadWebApiOptionContext web_web_api_context) : ISessionRadiusSyncRadiusDeskService
 {
     public Task<List<UserConnectionBinding>> GetActiveConnections(ServerEntity radius, string username)
     {

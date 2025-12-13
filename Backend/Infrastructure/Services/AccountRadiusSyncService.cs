@@ -6,7 +6,8 @@ using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.Infra.Nas;
-using PhotonBypass.Tools;
+using PhotonBypass.Infra.Radius.RadiusDesk;
+using PhotonBypass.Infra.Radius.UserManager;
 using Serilog;
 using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
@@ -15,14 +16,14 @@ namespace PhotonBypass.Infra.Services;
 class AccountRadiusSyncService(
     Lazy<IServerRepository> server_repo,
     Lazy<IMikrotikDirectService> mikrotik_direct_srv,
-    Lazy<Radius.UserManager.IAccountRadiusSyncService> mikrotik_radius,
-    Lazy<Radius.RadiusDesk.IAccountRadiusSyncService> radius_desk)
+    Lazy<IAccountRadiusSyncUserManagerService> mikrotik_radius,
+    Lazy<IAccountRadiusSyncRadiusDeskService> radius_desk)
     : IAccountRadiusSyncService
 {
     private Lazy<IServerRepository> ServerRepo { get; } = server_repo;
     private Lazy<IMikrotikDirectService> MikrotikDirectSrv { get; } = mikrotik_direct_srv;
-    private Lazy<Radius.UserManager.IAccountRadiusSyncService> MikrotikRadius { get; } = mikrotik_radius;
-    private Lazy<Radius.RadiusDesk.IAccountRadiusSyncService> RadiusDesk { get; } = radius_desk; 
+    private Lazy<IAccountRadiusSyncUserManagerService> MikrotikRadius { get; } = mikrotik_radius;
+    private Lazy<IAccountRadiusSyncRadiusDeskService> RadiusDesk { get; } = radius_desk; 
     
     public async Task RemoveUsers(IEnumerable<string> usernames)
     {

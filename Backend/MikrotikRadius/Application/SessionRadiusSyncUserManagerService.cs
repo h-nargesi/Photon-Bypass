@@ -9,7 +9,7 @@ using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
 
-public class SessionRadiusSyncService(ITik4NetHandler handler) : ISessionRadiusSyncService
+public class SessionRadiusSyncUserManagerService(ITik4NetHandler handler) : ISessionRadiusSyncUserManagerService
 {
     public async Task<List<UserConnectionBinding>> GetActiveConnections(ServerEntity radius, string username)
     {

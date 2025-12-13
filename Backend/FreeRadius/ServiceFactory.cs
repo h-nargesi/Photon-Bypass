@@ -36,8 +36,8 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<ITopUpRepository, TopUpRepository>();
         builder.Services.AddLazyTransient<IUserPlanStateRepository, UserPlanStateRepository>();
         
-        builder.Services.AddLazyTransient<ISessionRadiusSyncService, SessionRadiusSyncService>();
-        builder.Services.AddLazyTransient<IAccountRadiusSyncService, AccountRadiusSyncService>();
+        builder.Services.AddLazyTransient<ISessionRadiusSyncRadiusDeskService, SessionRadiusSyncRadiusDeskService>();
+        builder.Services.AddLazyTransient<IAccountRadiusSyncRadiusDeskService, AccountRadiusSyncRadiusDeskService>();
 
         builder.Services.AddLazySingleton<IStaticRepository, StaticRepository>();
         builder.Services.AddLazyScoped<IRadiusService, RadiusDeskService>();

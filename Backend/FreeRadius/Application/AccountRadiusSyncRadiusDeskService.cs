@@ -1,12 +1,11 @@
 using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Infra.Radius.RadiusDesk;
 
 namespace PhotonBypass.FreeRadius.Application;
 
-public class AccountRadiusSyncService : IAccountRadiusSyncService
+public class AccountRadiusSyncRadiusDeskService : IAccountRadiusSyncRadiusDeskService
 {
     public Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames)
     {

@@ -10,7 +10,7 @@ using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
 
-public class AccountRadiusSyncService(ITik4NetHandler handler) : IAccountRadiusSyncService
+public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler) : IAccountRadiusSyncUserManagerService
 {
     public async Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames)
     {
