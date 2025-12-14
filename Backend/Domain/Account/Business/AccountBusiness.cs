@@ -113,13 +113,13 @@ public static partial class AccountBusiness
 
     public static bool OverWarningTime(this AccountEntity account)
     {
-        return account.WarningTimes.HasValue &&
-               (DateTime.Now - account.WarningTimes.Value).TotalHours < DelayBetweenWarnings;
+        return account.LastWarningTime.HasValue &&
+               (DateTime.Now - account.LastWarningTime.Value).TotalHours < DelayBetweenWarnings;
     }
 
     public static void UpdateWarningTime(this AccountEntity account)
     {
-        account.WarningTimes = DateTime.Now;
+        account.LastWarningTime = DateTime.Now;
     }
 
     [GeneratedRegex("^[a-zA-Z][a-zA-Z0-9_-]{3,16}[a-zA-Z0-9]$")]

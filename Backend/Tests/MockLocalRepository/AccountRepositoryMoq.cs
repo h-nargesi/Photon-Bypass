@@ -93,7 +93,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
         Setup(x => x.GetTargetArea(It.IsAny<int>()))
             .Returns<int>(id =>
             {
-                var result = data.Values.Where(x => x.Parent == id).ToList();
+                var result = data.Values.Where(x => x.Owner == id).ToList();
                 OnGetTargetArea?.Invoke(id, result);
                 return Task.FromResult(result);
             });

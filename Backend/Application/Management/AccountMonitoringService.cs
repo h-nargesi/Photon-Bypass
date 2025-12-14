@@ -172,10 +172,10 @@ internal class AccountMonitoringService(
         }
 #endif
 
-            if (account.Email != null)
+            if (account.EmailAddress != null)
             {
                 tasks.Add(EmailSrv.Value.FinishServiceAlert(
-                    account.Fullname, plan.Username, account.Email, plan.GetPlanTitle(), remains_title));
+                    account.Fullname, plan.Username, account.EmailAddress, plan.GetPlanTitle(), remains_title));
 
                 IncreaseWarningTime(account);
             }

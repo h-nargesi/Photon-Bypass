@@ -16,37 +16,46 @@ public class AccountEntity : IBaseEntity
 
     public string Password { get; set; } = null!;
 
-    public string VpnPassword { get; set; } = null!;
+    public int? Owner { get; set; }
 
-    public int? Parent { get; set; }
+    public DateTime Created { get; init; } = DateTime.Now;
+
+    // Account Perosanl Info
 
     public string? Name { get; set; }
 
     public string? Surname { get; set; }
 
+    [NotMapped]
     public string Fullname => (Name + " " + Surname).Trim();
 
     public string? Mobile { get; set; }
 
     public bool MobileValid { get; set; }
 
+    [NotMapped]
+    public string? MobileNumber => MobileValid ? Mobile : null;
+
     public string? Email { get; set; }
 
     public bool EmailValid { get; set; }
+
+    [NotMapped]
+    public string? EmailAddress => EmailValid ? Email : null;
+
+    public string? Picture { get; set; }
+
+    // Profile Info
 
     public int Balance { get; set; }
 
     public int? CalculationMethod { get; set; }
 
-    public DateTime? WarningTimes { get; set; }
-
-    public bool SendWarning { get; set; }
-
-    public string? Picture { get; set; }
-
     public UserTypes UserType { get; set; }
 
-    public int? ReferenceId { get; set; }
+    public string VpnPassword { get; set; } = null!;
 
-    public DateTime Created { get; init; } = DateTime.Now;
+    public DateTime? LastWarningTime { get; set; }
+
+    public bool SendWarning { get; set; } = true;
 }

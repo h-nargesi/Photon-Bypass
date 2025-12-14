@@ -73,7 +73,7 @@ class VpnApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
 
-        if (account.Email == null)
+        if (account.EmailAddress == null)
         {
             throw new UserException("ایمیل کاربر ثبت نشده است!",
                 $"account is email address is unknown: target={target}");
@@ -102,7 +102,7 @@ class VpnApplication(
             CertFile = cert_context.CertFile,
         };
 
-        await EmailSrv.Value.SendCertEmail(account.Fullname, account.Email, email_context);
+        await EmailSrv.Value.SendCertEmail(account.Fullname, account.EmailAddress, email_context);
 
         _ = HistoryRepo.Value.Save(new HistoryEntity
         {

@@ -56,7 +56,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         await OpenAsync();
 
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Parent)} = @account_id")
+            .Where($"{nameof(AccountEntity.Owner)} = @account_id")
             .WithParameters(new { account_id }));
 
         return [.. result];
@@ -67,7 +67,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         await OpenAsync();
 
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Parent)} in (@account_ids)")
+            .Where($"{nameof(AccountEntity.Id)} in (@account_ids)")
             .WithParameters(new { account_ids }));
 
         return result.ToDictionary(k => k.Id);

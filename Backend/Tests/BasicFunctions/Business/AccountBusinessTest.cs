@@ -144,8 +144,8 @@ public class AccountBusinessTest
     public void OverWarningTime()
     {
         const int max = AccountBusiness.DelayBetweenWarnings;
-        Assert.True(new AccountEntity { WarningTimes = DateTime.Now.AddHours(1 - max) }.OverWarningTime());
-        Assert.False(new AccountEntity { WarningTimes = DateTime.Now.AddHours(-1 - max) }.OverWarningTime());
-        Assert.False(new AccountEntity { WarningTimes = null }.OverWarningTime());
+        Assert.True(new AccountEntity { LastWarningTime = DateTime.Now.AddHours(1 - max) }.OverWarningTime());
+        Assert.False(new AccountEntity { LastWarningTime = DateTime.Now.AddHours(-1 - max) }.OverWarningTime());
+        Assert.False(new AccountEntity { LastWarningTime = null }.OverWarningTime());
     }
 }

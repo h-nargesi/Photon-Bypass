@@ -1,5 +1,4 @@
-﻿using System.Data;
-using Dapper;
+﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using PhotonBypass.Test.MockOptions;
 
@@ -7,7 +6,7 @@ namespace PhotonBypass.Test.Tools;
 
 public static class OutSourceHandler
 {
-    private static readonly Dictionary<string, OutSource> OutSources = new();
+    private static readonly Dictionary<string, OutSource> OutSources = [];
 
     public static Task<OutSource> Get(string key)
     {
@@ -17,14 +16,14 @@ public static class OutSourceHandler
         {
             if (!OutSources.TryGetValue(key, out out_source))
             {
-                OutSources.Add(key, out_source = new OutSource());
+                OutSources.Add(key, out_source = new OutSource(key));
             }
         }
 
         return out_source.Initialize();
     }
 
-    public class OutSource
+    public class OutSource(string key)
     {
         private bool isInitialized;
         private readonly List<Exception> Exceptions = [];
@@ -66,7 +65,7 @@ public static class OutSourceHandler
                 var structures = await loading_structure_files;
 
                 var loading_data_files =
-                    SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseDataInitializerFilePath);
+                    SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseDataInitializerFilePath + key);
 
                 foreach (var sql in structures)
                     await connection.ExecuteAsync(sql);
@@ -87,6 +86,7 @@ public static class OutSourceHandler
 
         private async Task InitializeMikrotik()
         {
+            if (key.StartsWith("DbTest")) return;
         }
     }
 }

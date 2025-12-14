@@ -162,7 +162,6 @@ class PlanApplication(
 
         try
         {
-            account.WarningTimes = null;
             account.Balance -= estimate;
 
             await AccountRepo.Value.Save(account);

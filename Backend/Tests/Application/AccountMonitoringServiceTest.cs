@@ -136,8 +136,8 @@ public class AccountMonitoringServiceTest : ServiceInitializer
 
         account_repo_moq.OnSave += account =>
         {
-            Assert.NotNull(account.WarningTimes);
-            var running_time_delay = (account.WarningTimes.Value - DateTime.Now).TotalSeconds;
+            Assert.NotNull(account.LastWarningTime);
+            var running_time_delay = (account.LastWarningTime.Value - DateTime.Now).TotalSeconds;
             Assert.True(running_time_delay < 1);
         };
 
