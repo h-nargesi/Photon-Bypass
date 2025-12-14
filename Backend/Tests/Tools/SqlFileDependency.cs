@@ -31,6 +31,8 @@ public static class SqlFileDependencyHelper
 
         foreach (var file in list)
         {
+            if (Path.GetExtension(file.Name) != "sql") continue;
+
             context.Add(new Node
             {
                 Name = file.Name,

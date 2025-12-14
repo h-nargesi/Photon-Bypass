@@ -13,7 +13,8 @@ public class HistoryEntity : IBaseEntity
 
     public string Target { get; init; } = null!;
 
-    public DateTime EventTime { get; init; }
+    [NotMapped]
+    public DateTime EventTime => Created;
 
     public string Title { get; init; } = null!;
 

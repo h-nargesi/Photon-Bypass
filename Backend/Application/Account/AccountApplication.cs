@@ -67,9 +67,9 @@ class AccountApplication(
             Firstname = account.Name,
             Lastname = account.Surname,
             Email = account.Email,
-            EmailValid = account.EmailValid,
+            EmailValid = account.IsEmailValid,
             Mobile = account.Mobile,
-            MobileValid = account.MobileValid,
+            MobileValid = account.IsMobileValid,
         });
     }
 

@@ -10,6 +10,7 @@ public static partial class AccountBusiness
     public const int MaxDaysDeactivatePlanToDelete = 40;
     public const int DelayBetweenWarnings = 20;
     public const int MaxDaysDeactivatePlanToDisable = 7;
+    public const string PicturePath = "map/to/picture/";
 
     public static AccountEntity CreateFromModel(RegisterModel model)
     {
@@ -43,7 +44,7 @@ public static partial class AccountBusiness
         if (string.IsNullOrWhiteSpace(model.Email))
         {
             account.Email = null;
-            account.EmailValid = false;
+            account.IsEmailValid = false;
         }
         else if (!EmailPattern().Match(model.Email).Success)
         {
@@ -52,7 +53,7 @@ public static partial class AccountBusiness
         else
         {
             if (account.Email != model.Email)
-                account.EmailValid = false;
+                account.IsEmailValid = false;
 
             account.Email = model.Email;
         }
@@ -60,7 +61,7 @@ public static partial class AccountBusiness
         if (string.IsNullOrWhiteSpace(model.Mobile))
         {
             account.Mobile = null;
-            account.MobileValid = false;
+            account.IsMobileValid = false;
         }
         else if (!MobileNumberPattern().Match(model.Mobile).Success)
         {
@@ -72,7 +73,7 @@ public static partial class AccountBusiness
                 model.Mobile = "+98" + model.Mobile[1..];
 
             if (account.Mobile != model.Mobile)
-                account.MobileValid = false;
+                account.IsMobileValid = false;
 
             account.Mobile = model.Mobile;
         }

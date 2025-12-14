@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Model;
 
 namespace PhotonBypass.Domain.Account.Entity;
@@ -31,19 +32,20 @@ public class AccountEntity : IBaseEntity
 
     public string? Mobile { get; set; }
 
-    public bool MobileValid { get; set; }
+    public bool IsMobileValid { get; set; }
 
     [NotMapped]
-    public string? MobileNumber => MobileValid ? Mobile : null;
+    public string? MobileNumber => IsMobileValid ? Mobile : null;
 
     public string? Email { get; set; }
 
-    public bool EmailValid { get; set; }
+    public bool IsEmailValid { get; set; }
 
     [NotMapped]
-    public string? EmailAddress => EmailValid ? Email : null;
+    public string? EmailAddress => IsEmailValid ? Email : null;
 
-    public string? Picture { get; set; }
+    [NotMapped]
+    public string? Picture => AccountBusiness.PicturePath + Id;
 
     // Profile Info
 
