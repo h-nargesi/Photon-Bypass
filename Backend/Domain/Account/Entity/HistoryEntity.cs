@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using PhotonBypass.Domain.Account.Model;
 
 namespace PhotonBypass.Domain.Account.Entity;
 
@@ -9,20 +10,19 @@ public class HistoryEntity : IBaseEntity
     [Key]
     public int Id { get; set; }
 
-    public string Issuer { get; init; } = null!;
+    public int? Issuer { get; set; }
 
-    public string Target { get; init; } = null!;
+    public int Target { get; init; }
+    
+    public EventCategory Category { get; init; }
 
-    [NotMapped]
-    public DateTime EventTime => Created;
+    public EventType Type { get; init; }
 
     public string Title { get; init; } = null!;
 
-    public string Color { get; set; } = null!;
+    public string? Value { get; init; }
 
-    public object? Value { get; init; }
-
-    public string? Unit { get; init; }
+    public int? Price { get; init; }
 
     public string? Description { get; init; }
 

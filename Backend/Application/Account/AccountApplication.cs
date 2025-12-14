@@ -103,11 +103,11 @@ class AccountApplication(
             {
                 if (account.Active)
                 {
-                    _ = HistoryRepo.Value.Save(new HistoryEntity
+                    _ = HistoryRepo.Value.Save(JobContext.Value.Username,new HistoryEntity
                     {
-                        Issuer = JobContext.Value.Username,
-                        Target = account.Username,
-                        EventTime = DateTime.Now,
+                        Target = account.Id,
+                        Category = EventCategory.Security,
+                        Type = EventType.Critical,
                         Title = "امنیت",
                         Description = "تلاش غیرمجاز برای تغییر کلمه عبور!",
                     });
@@ -123,11 +123,11 @@ class AccountApplication(
 
         await AccountRepo.Save(account);
 
-        _ = HistoryRepo.Value.Save(new HistoryEntity
+        _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
-            Issuer = JobContext.Value.Username,
-            Target = target,
-            EventTime = DateTime.Now,
+            Target = account.Id,
+            Category = EventCategory.Security,
+            Type = EventType.Success,
             Title = "امنیت",
             Description = "تغییر کلمه عبور اکانت.",
         });
@@ -138,19 +138,23 @@ class AccountApplication(
     public async Task<ApiResult<IList<HistoryModel>>> GetHistory(string target, DateTime? from, DateTime? to)
     {
         var records = await HistoryRepo.Value.GetHistory(target, from, to);
+        var issuer_ids = records.Select(h => h.Issuer ?? 0).Where(id => id > 0);
+        var issuers = await AccountRepo.GetUsernamesByAccountId(issuer_ids);
 
         var result = records.Select(history => new HistoryModel
         {
-            Color = history.Color,
+            Category = history.Category,
+            Type = history.Type,
             Description = history.Description,
-            EventTime = history.EventTime,
-            EventTimeTitle = history.EventTime.ToPersianString(),
+            EventTime = history.Created,
+            EventTimeTitle = history.Created.ToPersianString(),
             Id = history.Id,
-            Issuer = history.Issuer,
-            Target = history.Target,
+            Issuer = history.Issuer.HasValue && issuers.TryGetValue(history.Issuer.Value, out var issuer) ? 
+                issuer : null,
+            Target = target,
             Title = history.Title,
-            Unit = history.Unit,
             Value = history.Value,
+            Price = history.Price,
         });
 
         return ApiResult<IList<HistoryModel>>.Success([.. result]);

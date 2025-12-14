@@ -5,5 +5,7 @@ namespace PhotonBypass.Domain.Account;
 
 public interface IHistoryRepository : IEditableRepository<HistoryEntity>
 {
-    Task<IList<HistoryEntity>> GetHistory(string target, DateTime? from, DateTime? to);
+    Task<List<HistoryEntity>> GetHistory(string target, DateTime? from, DateTime? to);
+
+    Task Save(string issuer_name, HistoryEntity entity);
 }

@@ -120,7 +120,7 @@ public class VpnApplicationTest : ServiceInitializer
             Assert.Single(mail.Attachments);
         };
 
-        var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+        await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
             .SendCertEmail("User2");
 
         Assert.True(is_saved);

@@ -5,9 +5,9 @@ using PhotonBypass.Infra.Repository.DbContext;
 
 namespace PhotonBypass.Infra.Repository;
 
-class HistoryRepository(LocalDbContext context) : EditableRepository<HistoryEntity>(context), IHistoryRepository
+class HistoryRepository(LocalDbContext context, Lazy<IAccountRepository> account_repo) : EditableRepository<HistoryEntity>(context), IHistoryRepository
 {
-    public async Task<IList<HistoryEntity>> GetHistory(string target, DateTime? from, DateTime? to)
+    public async Task<List<HistoryEntity>> GetHistory(string target, DateTime? from, DateTime? to)
     {
         await OpenAsync();
 
@@ -18,17 +18,23 @@ class HistoryRepository(LocalDbContext context) : EditableRepository<HistoryEnti
 
             if (from.HasValue)
             {
-                statement.Where($"{nameof(HistoryEntity.EventTime)} >= @from")
+                statement.Where($"{nameof(HistoryEntity.Created)} >= @from")
                     .WithParameters(new { from });
             }
 
             if (to.HasValue)
             {
-                statement.Where($"{nameof(HistoryEntity.EventTime)} <= @to")
+                statement.Where($"{nameof(HistoryEntity.Created)} <= @to")
                     .WithParameters(new { to });
             }
         });
 
         return [.. result];
+    }
+
+    public async Task Save(string issuer_name, HistoryEntity entity)
+    {
+        entity.Issuer = await account_repo.Value.GetActiveAccountId(issuer_name);
+        await Save(entity);
     }
 }

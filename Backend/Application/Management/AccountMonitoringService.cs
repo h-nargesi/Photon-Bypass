@@ -1,6 +1,7 @@
 ﻿using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.Plan;
@@ -96,14 +97,13 @@ internal class AccountMonitoringService(
 
             _ = HistoryRepo.Save(new HistoryEntity
             {
-                Issuer = "ادمین",
-                Target = plan.Username,
-                EventTime = DateTime.Now,
+                Target = plan.Id,
+                Category = EventCategory.Security,
+                Type = EventType.Warning,
                 Title = "غیرفعال",
                 Description =
                     "اکانت شما به علت عدم استفاده بعد از دو ماه غیرفعال شد. مقدار ترافیک یا مدت زمان باقیمانده به جای خود باقی است.",
-                Unit = "روز گذشته",
-                Value = expired_days,
+                Value = DayHour((int)expired_days) + " گذشته" ,
             });
         }
 
@@ -145,9 +145,9 @@ internal class AccountMonitoringService(
 
             _ = HistoryRepo.Save(new HistoryEntity
             {
-                Issuer = "ادمین",
-                Target = plan.Username,
-                EventTime = DateTime.Now,
+                Target = plan.Id,
+                Category = EventCategory.Renewal,
+                Type = EventType.Warning,
                 Title = "پایان پلن",
                 Description = "اخطار پایان پلن.",
                 Value = remains_title,
@@ -188,5 +188,19 @@ internal class AccountMonitoringService(
     {
         account.UpdateWarningTime();
         _ = AccountRepo.Save(account);
+    }
+
+    private static string DayHour(double time)
+    {
+        if (time == 0) return "هیچ";
+        var result = string.Empty;
+        
+        var day = (int)time;
+        if (day > 0) result += $" و {day} روز";
+        
+        var hour = (int)((time - day) * 24);
+        if (hour > 0) result += $" و {hour} ساعت";
+
+        return result.Remove(0, 3);
     }
 }

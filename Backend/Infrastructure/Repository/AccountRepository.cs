@@ -88,6 +88,21 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return list.ToDictionary(pair => (string)pair.Username, pair => (int)pair.Id);
     }
 
+    public async Task<Dictionary<int, string>> GetUsernamesByAccountId(IEnumerable<int> ids)
+    {
+        await OpenAsync();
+
+        var sql = $"""
+                   select {nameof(AccountEntity.Id)}, {nameof(AccountEntity.Username)}
+                   from {TableName}
+                   where {nameof(AccountEntity.Id)} in (@usernames)
+                   """;
+
+        var list = await QueryAsync(sql, ids);
+
+        return list.ToDictionary(pair => (int)pair.Id, pair => (string)pair.Username);
+    }
+
     public async Task<int?> GetActiveAccountId(string username)
     {
         await OpenAsync();

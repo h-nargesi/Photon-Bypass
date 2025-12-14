@@ -46,8 +46,9 @@ class AuthApplication(
             {
                 _ = HistoryRepo.Save(new HistoryEntity
                 {
-                    Target = account.Username,
-                    EventTime = DateTime.Now,
+                    Target = account.Id,
+                    Category = EventCategory.Security,
+                    Type = EventType.Critical,
                     Title = "امنیت",
                     Description = "تلاش برای ورود با کلمه عبور اشتباه",
                 });
@@ -148,8 +149,9 @@ class AuthApplication(
 
             _ = HistoryRepo.Save(new HistoryEntity
             {
-                Target = account.Username,
-                EventTime = DateTime.Now,
+                Target = account.Id,
+                Category = EventCategory.Security,
+                Type = EventType.Information,
                 Title = "امنیت",
                 Description = "درخواست تغییر کلمه عبور (ایمیل)",
             });

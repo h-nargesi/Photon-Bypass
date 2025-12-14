@@ -19,6 +19,8 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
 
     Task<Dictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames);
 
+    Task<Dictionary<int, string>> GetUsernamesByAccountId(IEnumerable<int> ids);
+
     Task<int?> GetActiveAccountId(string username);
 
     Task<int> CheckUniqueData(string username, string? email, string? mobile);

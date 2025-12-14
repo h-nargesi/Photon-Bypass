@@ -2,6 +2,7 @@
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.ErrorHandler;
@@ -89,11 +90,11 @@ class ConnectionApplication(
             throw new UserException("بستن کانکشن با خطا مواجه شد!", ex);
         }
 
-        _ = HistoryRepo.Value.Save(new HistoryEntity
+        _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
-            Issuer = JobContext.Value.Username,
-            Target = target,
-            EventTime = DateTime.Now,
+            Target = account_id.Value,
+            Category = EventCategory.Action,
+            Type = EventType.Success,
             Title = "کانکشن",
             Description = "کانکشن بسته شد.",
         });

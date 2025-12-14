@@ -2,6 +2,7 @@
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
@@ -51,11 +52,11 @@ class VpnApplication(
 
         await AccountRadiusSrv.Value.ChangeVpnPassword(plan.RestrictedRealmId, account.Username, password);
 
-        _ = HistoryRepo.Value.Save(new HistoryEntity
+        _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
-            Issuer = JobContext.Value.Username,
-            Target = target,
-            EventTime = DateTime.Now,
+            Target = account.Id,
+            Category = EventCategory.Security,
+            Type = EventType.Success,
             Title = "امنیت",
             Description = "تغییر کلمه عبور VPN.",
         });
@@ -104,11 +105,11 @@ class VpnApplication(
 
         await EmailSrv.Value.SendCertEmail(account.Fullname, account.EmailAddress, email_context);
 
-        _ = HistoryRepo.Value.Save(new HistoryEntity
+        _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
-            Issuer = JobContext.Value.Username,
-            Target = target,
-            EventTime = DateTime.Now,
+            Target = account.Id,
+            Category = EventCategory.Security,
+            Type = EventType.Information,
             Title = "امنیت",
             Description = "ایمیل گواهی اتصال ارسال شد.",
         });

@@ -17,25 +17,25 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
 
     protected HistoryRepositoryMoq(string file_path)
     {
-        var raw_text = File.ReadAllText(file_path)
-            .PrepareAllDateTimes();
-        var data_dictionary = JsonSerializer.Deserialize<List<HistoryEntity>>(raw_text)
-                        ?.GroupBy(k => k.Target)
-                        .ToDictionary(x => x.Key, v => v.ToList())
-                    ?? [];
+        // var raw_text = File.ReadAllText(file_path)
+        //     .PrepareAllDateTimes();
+        // var data_dictionary = JsonSerializer.Deserialize<List<HistoryEntity>>(raw_text)
+        //                 ?.GroupBy(k => k.Target)
+        //                 .ToDictionary(x => x.Key, v => v.ToList())
+        //             ?? [];
 
-        Setup(x => x.GetHistory(It.IsNotNull<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>()))
-            .Returns<string, DateTime?, DateTime?>((target, from, to) =>
-            {
-                if (!data_dictionary.TryGetValue(target, out var list))
-                {
-                    list = [];
-                }
-
-                OnGetHistory?.Invoke(target, from, to, list);
-
-                return Task.FromResult<IList<HistoryEntity>>(list);
-            });
+        // Setup(x => x.GetHistory(It.IsNotNull<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>()))
+        //     .Returns<string, DateTime?, DateTime?>((target, from, to) =>
+        //     {
+        //         if (!data_dictionary.TryGetValue(target, out var list))
+        //         {
+        //             list = [];
+        //         }
+        //
+        //         OnGetHistory?.Invoke(target, from, to, list);
+        //
+        //         return Task.FromResult(list);
+        //     });
     }
 
     private const string FilePath = "Data/Local/history.json";

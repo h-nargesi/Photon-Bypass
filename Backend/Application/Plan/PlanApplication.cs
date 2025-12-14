@@ -3,6 +3,7 @@ using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Business;
@@ -48,9 +49,11 @@ class PlanApplication(
                     throw new UserException("هیچ پلنی برای این کاربر فعال نیست!",
                         $"The plan-state not found for target={target}, account-id={account_id.Value}");
 
-        Log.Information("[user: {0}] session state: (target:{1}, user-count:{2}, data-left:{3}, total-data:{4}, time-left:{5}-{6})",
+        Log.Information(
+            "[user: {0}] session state: (target:{1}, user-count:{2}, data-left:{3}, total-data:{4}, time-left:{5}-{6})",
             JobContext.Value.Username, target, state.SimultaneousUser,
-            state.GetTrafficLeftInGig(), state.GetTrafficLimitInGig(), state.TimeLeft?.TotalDays, state.TimeLeft?.Hours);
+            state.GetTrafficLeftInGig(), state.GetTrafficLimitInGig(), state.TimeLeft?.TotalDays,
+            state.TimeLeft?.Hours);
 
         return ApiResult<UserPlanInfoModel>.Success(new UserPlanInfoModel
         {
@@ -84,7 +87,7 @@ class PlanApplication(
     {
         var account = (await AccountRepo.Value.GetAccount(target)) ??
                       throw new UserException("کاربر مورد نظر پیدا نشد!");
-        
+
         var result = PriceCalc.Value.CalculatePrice(account.CalculationMethod ?? 0, users, days, gigabytes);
         return ApiResult<int>.Success(result);
     }
@@ -103,12 +106,13 @@ class PlanApplication(
 
         if (account.CheckMoneyNeed(estimate, out var money_need))
         {
-            Log.Information("""
+            Log.Information(@"
 [user: {0}] Plan renewal request:
-    account=(user:{0}, balance:{6})
+    account=(user:{7}, balance:{6})
     request=(taget:{1}, user-count:{2}, days={3}, traffic:{4}, estimate:{5})
-""",
-                JobContext.Value.Username, target, count, days, gigabytes, account.Balance, estimate);
+",
+                JobContext.Value.Username, target, count, days, gigabytes, account.Balance, estimate,
+                JobContext.Value.Username);
 
             return ApiResult<RenewalResult>.Success(new RenewalResult
             {
@@ -120,17 +124,18 @@ class PlanApplication(
         var current_state = (await PlanRepo.Value.GetPlanState(account.Id)) ??
                             throw new Exception($"Plan state not found for target: {target}");
 
-        Log.Information("""
+        Log.Information(@"
 [user: {0}] Plan current state:
-    account=(user:{0}, balance:{9})
+    account=(user:{11}, balance:{9})
     request=(taget:{1}, count:{2}, days:{3}, gigabytes:{4}, estimate:{10})
     current=(count:{5}, left-days:{6}, left-hours:{7}, left-gigabytes:{8})
-""",
+",
             JobContext.Value.Username,
             target, count, days, gigabytes,
             current_state.SimultaneousUser, current_state.TimeLeft?.TotalDays, current_state.TimeLeft?.Hours,
             current_state.GetTrafficLeftInGig(),
-            account.Balance, estimate);
+            account.Balance, estimate,
+            JobContext.Value.Username);
 
         var renew = new RenewalEntity
         {
@@ -164,6 +169,16 @@ class PlanApplication(
         {
             account.Balance -= estimate;
 
+            await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+            {
+                Target = account.Id,
+                Category = EventCategory.Transaction,
+                Type = EventType.Information,
+                Title = "مالی",
+                Description = "از حساب کم شد.",
+                Price = -estimate,
+            });
+
             await AccountRepo.Value.Save(account);
 
             await RenewalRepo.Value.Save(renew);
@@ -185,11 +200,11 @@ class PlanApplication(
 
             transaction.Rollback();
 
-            _ = HistoryRepo.Value.Save(new HistoryEntity
+            _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
             {
-                Issuer = JobContext.Value.Username,
-                Target = target,
-                EventTime = DateTime.Now,
+                Target = account.Id,
+                Category = EventCategory.Renewal,
+                Type = EventType.Error,
                 Title = "تمدید",
                 Description = "خطا در تمدید پلن!",
             });
@@ -200,19 +215,19 @@ class PlanApplication(
         if (count < current_state.SimultaneousUser)
         {
             Log.Information("""
-[user: {0}] Plan renewal change user count: (closing connections)
-    change=(taget:{1}, user-count:{2}, to:{3})
-""",
+                            [user: {0}] Plan renewal change user count: (closing connections)
+                                change=(taget:{1}, user-count:{2}, to:{3})
+                            """,
                 JobContext.Value.Username, target, current_state.SimultaneousUser, count);
 
             _ = SessionRadiusSrv.Value.CloseConnectionByUsername(renew.RestrictedRealmId, account.Username);
         }
 
-        _ = HistoryRepo.Value.Save(new HistoryEntity
+        _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
-            Issuer = JobContext.Value.Username,
-            Target = target,
-            EventTime = DateTime.Now,
+            Target = account.Id,
+            Category = EventCategory.Renewal,
+            Type = EventType.Success,
             Title = "تمدید",
             Description = "پلن تمید شد.",
             Value = renew.GetPlanTitle(),
