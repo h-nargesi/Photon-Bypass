@@ -17,27 +17,27 @@ public class LimitationModel
     [JsonPropertyName("download-limit")]
     [TikProperty("download-limit")]
     public long? DownloadLimit { get; set; }
-    
+
     [JsonPropertyName("upload-limit")]
     [TikProperty("upload-limit")]
     public long? UploadLimit { get; set; }
-    
+
     [JsonPropertyName("transfer-limit")]
     [TikProperty("transfer-limit")]
     public long? TransferLimit { get; set; }
-    
+
     [JsonPropertyName("rate-limit-rx")]
     [TikProperty("rate-limit-rx")]
     public string? RateLimitRx { get; set; }
-    
+
     [JsonPropertyName("rate-limit-tx")]
     [TikProperty("rate-limit-tx")]
     public string? RateLimitTx { get; set; }
-    
+
     [JsonPropertyName("rate-limit-burst-rx")]
     [TikProperty("rate-limit-burst-rx")]
     public string? RateLimitBurstRx { get; set; }
-    
+
     [JsonPropertyName("rate-limit-burst-tx")]
     [TikProperty("rate-limit-burst-tx")]
     public string? RateLimitBurstTx { get; set; }

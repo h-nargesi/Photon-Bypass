@@ -104,13 +104,13 @@ namespace tik4net.Objects.Interface.Bridge
 
         /// <summary>
         /// ip-protocol
-        /// 
+        ///
         /// IP protocol (only if MAC protocol is set to IPv4)
-        /// 
+        ///
         /// ddp - datagram delivery protocol
         /// egp - exterior gateway protocol
         /// encap - ip encapsulation
-        /// etherip - 
+        /// etherip -
         /// ggp - gateway-gateway protocol
         /// gre - general routing encapsulation
         /// hmp - host monitoring protocol
@@ -122,18 +122,18 @@ namespace tik4net.Objects.Interface.Bridge
         /// ipip - ip encapsulation
         /// ipsec-ah - IPsec AH protocol
         /// ipsec-esp - IPsec ESP protocol
-        /// ipv6 - 
-        /// ipv6-frag - 
-        /// ipv6-nonxt - 
-        /// ipv6-opts - 
-        /// ipv6-route - 
-        /// iso-tp4 - iso transport protocol class 4 
-        /// l2tp - 
+        /// ipv6 -
+        /// ipv6-frag -
+        /// ipv6-nonxt -
+        /// ipv6-opts -
+        /// ipv6-route -
+        /// iso-tp4 - iso transport protocol class 4
+        /// l2tp -
         /// ospf - open shortest path first
-        /// pim - protocol independent multicast 
-        /// pup - parc universal packet protocol 
+        /// pim - protocol independent multicast
+        /// pup - parc universal packet protocol
         /// rspf - radio shortest path first
-        /// rsvp - 
+        /// rsvp -
         /// rdp - reliable datagram protocol
         /// st - st datagram mode
         /// tcp - transmission control protocol
@@ -142,7 +142,7 @@ namespace tik4net.Objects.Interface.Bridge
         /// vrrp - Virtual Router Redundancy Protocol
         /// xns-idp - xerox ns idp
         /// xtp – xpress transfer protocol
-        ///     
+        ///
         /// </summary>
         [TikProperty("ip-protocol", UnsetOnDefault = true)]
         public string/*ddp | egp | encap | etherip | ggp | gre | hmp | icmp | icmpv6 | idpr-cmtp | igmp | ipencap | ipip | ipsec-ah | ipsec-esp | ipv6 | ipv6-frag | ipv6-nonxt | ipv6-opts | ipv6-route | iso-tp4 | l2tp | ospf | pim | pup | rdp | rspf | rsvp | st | tcp | udp | vmtp | vrrp | xns-idp | xtp*/ IpProtocol { get; set; }

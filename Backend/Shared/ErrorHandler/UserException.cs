@@ -14,6 +14,6 @@ public class UserException : Exception
     }
 
     public string? UserMessage { get; }
-    
+
     public short? HttpCode { get; }
 }

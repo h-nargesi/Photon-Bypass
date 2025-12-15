@@ -35,15 +35,15 @@ public class ServerManagementServiceTest : ServiceInitializer
         var context = await manager.GetDefaultCertificate(null);
         var nas_domain_list = await server_repo.GetAllActiveNasDomainInRealm(null);
         var remotes = string.Join("\n", nas_domain_list.Select(domain => $"remote {domain}"));
-        
+
         Assert.NotNull(context);
-        
+
         var text_file = Encoding.UTF8.GetString(context.CertFile);
 
         Assert.Contains("setenv FRIENDLY_NAME \"All\"", text_file);
         Assert.Contains(remotes, text_file);
     }
-    
+
     [Fact]
     public async Task GetDefaultCertificate_SingleRealm()
     {
@@ -56,9 +56,9 @@ public class ServerManagementServiceTest : ServiceInitializer
         var context = await manager.GetDefaultCertificate(1);
         var nas_domain_list = await server_repo.GetAllActiveNasDomainInRealm(1);
         var remotes = string.Join("\n", nas_domain_list.Select(domain => $"remote {domain}"));
-        
+
         Assert.NotNull(context);
-        
+
         var text_file = Encoding.UTF8.GetString(context.CertFile);
 
         Assert.Contains($"setenv FRIENDLY_NAME \"{realm_name}\"", text_file);
@@ -81,7 +81,7 @@ public class ServerManagementServiceTest : ServiceInitializer
         };
 
         await manager.UpdateTrafficData(DateTime.Now.AddDays(-30));
-        
+
         Assert.True(saved);
     }
 

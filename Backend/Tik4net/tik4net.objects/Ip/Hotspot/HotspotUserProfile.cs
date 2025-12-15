@@ -1,7 +1,7 @@
 ﻿namespace tik4net.Objects.Ip.Hotspot
 {
     /// <summary>
-    /// ip/hotspot/user: User profile menu is used for common HotSpot client settings. Profiles are like User groups with the same set of settings, rate-limit, filter chain name, etc. 
+    /// ip/hotspot/user: User profile menu is used for common HotSpot client settings. Profiles are like User groups with the same set of settings, rate-limit, filter chain name, etc.
     /// </summary>
     [TikEntity("ip/hotspot/user/profile")]
     public class HotspotUserProfile
@@ -120,7 +120,7 @@
         /// <summary>
         /// open-status-page
         /// Option to show status page for user authenticated with mac login method. For example to show advertisement on status page (alogin.html)
-        ///  http-login - open status page only for HTTP login (includes cookie and HTTPS) 	
+        ///  http-login - open status page only for HTTP login (includes cookie and HTTPS)
         ///  always - open HTTP status page in case of mac login as well
         /// </summary>
         [TikProperty("open-status-page", DefaultValue = "always")]

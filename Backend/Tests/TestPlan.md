@@ -50,7 +50,7 @@ Implement mock of all dependencies and test mid-level services.
 - IVpnApplication:
 	[+] ChangeVpnPassword
 	[+] SendCertEmail
-	[+] TrafficData 
+	[+] TrafficData
 - AccountMonitoringService:
 	[+] InactiveAbandonedUsers
 	[+] NotifSendServices

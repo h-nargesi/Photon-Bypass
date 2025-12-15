@@ -7,10 +7,10 @@ namespace tik4net.Objects.Ip.DhcpServer
 {
     /// <summary>
     ///  To find any rogue DHCP servers as soon as they appear in your network, DHCP Alert tool can be used. It will monitor the ethernet interface for all DHCP replies and check if this reply comes from a valid DHCP server. If a reply from an unknown DHCP server is detected, alert gets triggered:
-    /// 
+    ///
     /// When the system alerts about a rogue DHCP server, it can execute a custom script.
-    /// 
-    /// As DHCP replies can be unicast, the 'rogue dhcp detector' may not receive any offer to other dhcp clients at all. To deal with this, the rogue dhcp detector acts as a dhcp client as well - it sends out dhcp discover requests once a minute 
+    ///
+    /// As DHCP replies can be unicast, the 'rogue dhcp detector' may not receive any offer to other dhcp clients at all. To deal with this, the rogue dhcp detector acts as a dhcp client as well - it sends out dhcp discover requests once a minute
     /// </summary>
     [TikEntity("ip/dhcp-server/alert")]
     public class DhcpServerAlert

@@ -110,7 +110,7 @@ namespace tik4net.Objects.Ip.Firewall
             /// related - a packet which is related to, but not part of an existing connection, such as ICMP errors or a packet which begins FTP data connection
             /// </summary>
             [TikEnum("related")]
-            Related,              
+            Related,
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace tik4net.Objects.Ip.Firewall
             ///  output - used to process packets originated from the router and leaving it through one of the interfaces.Packets passing through the router are not processed against the rules of the output chain
             /// </summary>
             public const string Output = "output";
-        }          
+        }
 
         /// <summary>
         /// .id: primary key of row
@@ -141,7 +141,7 @@ namespace tik4net.Objects.Ip.Firewall
         public string Id { get; private set; }
 
         /// <summary>
-        /// action: Action to take if packet is matched by the rule: 
+        /// action: Action to take if packet is matched by the rule:
         /// accept - accept the packet.Packet is not passed to next firewall rule.
         /// add-dst-to-address-list - add destination address to  address list specified by address-list parameter
         /// add-src-to-address-list - add source address to  address list specified by address-list parameter
@@ -157,7 +157,7 @@ namespace tik4net.Objects.Ip.Firewall
         public ActionType Action { get; set; }
 
         /// <summary>
-        /// address-list: Name of the address list to be used. Applicable if action is add-dst-to-address-list or add-src-to-address-list 
+        /// address-list: Name of the address list to be used. Applicable if action is add-dst-to-address-list or add-src-to-address-list
         /// </summary>
         [TikProperty("address-list")]
         public string AddressList { get; set; }
@@ -170,7 +170,7 @@ namespace tik4net.Objects.Ip.Firewall
         public string/*time*/ AddressListTimeout { get; set; }
 
         /// <summary>
-        /// chain: Specifies to which chain rule will be added. If the input does not match the name of an already defined chain, a new chain will be created. 
+        /// chain: Specifies to which chain rule will be added. If the input does not match the name of an already defined chain, a new chain will be created.
         /// </summary>
         /// <seealso cref="ChainType"/>
         [TikProperty("chain")]
@@ -183,13 +183,13 @@ namespace tik4net.Objects.Ip.Firewall
         public string Comment { get; set; }
 
         /// <summary>
-        /// connection-bytes: Matches packets only if a given amount of bytes has been transfered through the particular connection. 0 - means infinity, for example connection-bytes=2000000-0 means that the rule matches if more than 2MB has been transfered through the relevant connection 
+        /// connection-bytes: Matches packets only if a given amount of bytes has been transfered through the particular connection. 0 - means infinity, for example connection-bytes=2000000-0 means that the rule matches if more than 2MB has been transfered through the relevant connection
         /// </summary>
         [TikProperty("connection-bytes", UnsetOnDefault = true)]
         public long ConnectionBytes { get; set; }
 
         /// <summary>
-        /// connection-limit: Restrict connection limit per address or address block up to and including given value 
+        /// connection-limit: Restrict connection limit per address or address block up to and including given value
         /// </summary>
         [TikProperty("connection-limit", UnsetOnDefault = true)]
         public int ConnectionLimit { get; set; }
@@ -280,7 +280,7 @@ namespace tik4net.Objects.Ip.Firewall
         public bool Fragment { get; set; }
 
         /// <summary>
-        /// hotspot: 
+        /// hotspot:
         /// </summary>
         [TikProperty("hotspot", UnsetOnDefault = true)]
         public string Hotspot { get; set; }
@@ -310,7 +310,7 @@ namespace tik4net.Objects.Ip.Firewall
         public int IngressPriority { get; set; }
 
         ///// <summary>
-        ///// ipsec-policy: Matches the policy used by IpSec. Value is written in following format: direction, policy. Direction is Used to select whether to match the policy used for decapsulation or the policy that will be used for encapsulation.            
+        ///// ipsec-policy: Matches the policy used by IpSec. Value is written in following format: direction, policy. Direction is Used to select whether to match the policy used for decapsulation or the policy that will be used for encapsulation.
         ///// in - valid in the PREROUTING, INPUT and FORWARD chains
         ///// out - valid in the POSTROUTING, OUTPUT and FORWARD chains
         ///// ipsec - matches if the packet is subject to IPsec processing;
@@ -458,7 +458,7 @@ namespace tik4net.Objects.Ip.Firewall
         public string/*name*/ SrcAddressList { get; set; }
 
         /// <summary>
-        /// src-address-type: 
+        /// src-address-type:
         /// Matches source address type:
         /// unicast - IP address used for point to point transmission
         /// local - if address is assigned to one of router's interfaces

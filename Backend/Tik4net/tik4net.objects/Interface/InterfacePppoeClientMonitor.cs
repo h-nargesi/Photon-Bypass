@@ -16,7 +16,7 @@
         public string Encoding { get; private set; }
 
         [TikProperty("service-name", IsMandatory = false, IsReadOnly = true)]
-        public string ServiceName { get; private set; }        
+        public string ServiceName { get; private set; }
 
         [TikProperty("ac-name", IsMandatory = false, IsReadOnly = true)]
         public string AcName { get; private set; }
@@ -26,7 +26,7 @@
 
         [TikProperty("mtu", IsMandatory = false, IsReadOnly = true)]
         public string Mtu { get; private set; }
-        
+
         [TikProperty("mru", IsMandatory = false, IsReadOnly = true)]
         public string Mru { get; private set; }
 
@@ -35,7 +35,7 @@
 
         [TikProperty("remote-address", IsMandatory = false, IsReadOnly = true)]
         public string RemoteAddress { get; private set; }
-        
+
         /// <summary>
         /// Gets snapshot of actual values for given <paramref name="interfaceName"/>.
         /// </summary>

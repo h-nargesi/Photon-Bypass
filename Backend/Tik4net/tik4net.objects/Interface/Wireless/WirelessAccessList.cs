@@ -56,7 +56,7 @@ namespace tik4net.Objects.Interface.Wireless
         public string Comment { get; set; }
 
         /// <summary>
-        /// disabled: 
+        /// disabled:
         /// </summary>
         [TikProperty("disabled", DefaultValue = "no")]
         public bool Disabled { get; set; }
@@ -83,7 +83,7 @@ namespace tik4net.Objects.Interface.Wireless
         public string/*MAC*/ MacAddress { get; set; }
 
         /// <summary>
-        /// management-protection-key: 
+        /// management-protection-key:
         /// </summary>
         [TikProperty("management-protection-key", DefaultValue = "")]
         public string ManagementProtectionKey { get; set; }

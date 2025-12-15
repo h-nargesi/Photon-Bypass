@@ -13,7 +13,7 @@ public class RenewalBusinessTest
         Assert.True(has_error);
         Assert.NotNull(user_exception);
     }
-    
+
     [Fact]
     public void RenewalValidation_UnroundedTraffic()
     {
@@ -23,7 +23,7 @@ public class RenewalBusinessTest
         Assert.True(has_error);
         Assert.NotNull(user_exception);
     }
-    
+
     [Fact]
     public void RenewalValidation_ValidTraffic()
     {

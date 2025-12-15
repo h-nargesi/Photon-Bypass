@@ -32,7 +32,7 @@ namespace tik4net.Objects.Interface
         public string/*time*/ AgeingTime { get; set; }
 
         /// <summary>
-        /// Address Resolution Protocol setting  
+        /// Address Resolution Protocol setting
         /// </summary>
         /// <seealso cref="Arp"/>
         public enum ArpMode
@@ -61,7 +61,7 @@ namespace tik4net.Objects.Interface
 
         /// <summary>
         /// arp
-        /// Address Resolution Protocol setting    
+        /// Address Resolution Protocol setting
         ///          disabled - the interface will not use ARP
         ///          enabled - the interface will use ARP
         ///          proxy-arp - the interface will use the ARP proxy feature
@@ -84,7 +84,7 @@ namespace tik4net.Objects.Interface
         public string/*time*/ ForwardDelay { get; set; }
 
         /// <summary>
-        /// l2mtu: Layer2 Maximum transmission unit.  read more&#187; 
+        /// l2mtu: Layer2 Maximum transmission unit.  read more&#187;
         /// </summary>
         [TikProperty("l2mtu", IsReadOnly = true)]
         public string/*integer; read-only*/ L2mtu { get; private set; }
@@ -121,7 +121,7 @@ namespace tik4net.Objects.Interface
         public enum ProtocolModeModes
         {
             /// <summary>
-            /// 
+            ///
             /// </summary>
             [TikEnum("none")]
             None,

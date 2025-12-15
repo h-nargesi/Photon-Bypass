@@ -2,7 +2,7 @@ namespace tik4net.Objects.System
 {
 	/// <summary>
     /// Gets the infor provided by
-	/// /system/routerboard 
+	/// /system/routerboard
 	/// </summary>
 	[TikEntity("/system/routerboard", IsReadOnly = true)]
 	public class SystemRouterboard
@@ -14,7 +14,7 @@ namespace tik4net.Objects.System
 		public bool Routerboard { get; set; }
 
 		/// <summary>
-		/// Gets the name of the board. 
+		/// Gets the name of the board.
 		/// </summary>
 		[TikProperty("board-name")]
 		public string BoardName { get; set; }

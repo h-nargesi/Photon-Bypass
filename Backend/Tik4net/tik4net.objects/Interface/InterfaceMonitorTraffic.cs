@@ -42,7 +42,7 @@ namespace tik4net.Objects.Interface
         /// REMARKS: not available in all versions
         /// </summary>
         [TikProperty("rx-errors-per-second", IsMandatory = false, IsReadOnly = true)]
-        public string RxErrorsPerSecond { get; private set; }        
+        public string RxErrorsPerSecond { get; private set; }
 
         /// <summary>
         /// tx-packets-per-second

@@ -60,7 +60,7 @@ namespace tik4net.tests
             const string INTERFACE = "ether1";
             Cleanup_DeteleAddressByIp(IP);
 
-            var createCommand = Connection.CreateCommandAndParameters("/ip/address/add", 
+            var createCommand = Connection.CreateCommandAndParameters("/ip/address/add",
                 "address", IP,
                 "interface", INTERFACE);
             var id = createCommand.ExecuteScalar();
@@ -115,8 +115,8 @@ namespace tik4net.tests
                 .OfType<ITikReSentence>()
                 .Single()
                 .GetId();
-                
-            */            
+
+            */
 
             Assert.IsNotNull(response);
             Assert.AreEqual(2, response.Count());
@@ -198,8 +198,8 @@ namespace tik4net.tests
             Cleanup_DeteleAddressByIp(IP);
             var id = Init_CreateAddress(IP, INTERFACE);
 
-            var updateCmd = Connection.CreateCommandAndParameters("/ip/address/set", 
-                "comment", "test comment", 
+            var updateCmd = Connection.CreateCommandAndParameters("/ip/address/set",
+                "comment", "test comment",
                 TikSpecialProperties.Id, id);
             updateCmd.ExecuteNonQuery();
 

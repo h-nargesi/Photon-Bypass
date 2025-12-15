@@ -24,14 +24,14 @@ namespace tik4net
         [Obsolete("Use 'Api' version - works for both old and new version of the login", true)]
         Api_v2,
         /// <summary>
-        /// Mikrotik API-SSL connection for then RouterOS version 6.43 and newer. (supports only mode with certificate on mikrotik). See https://github.com/danikf/tik4net/wiki/SSL-connection for details. 
+        /// Mikrotik API-SSL connection for then RouterOS version 6.43 and newer. (supports only mode with certificate on mikrotik). See https://github.com/danikf/tik4net/wiki/SSL-connection for details.
         /// </summary>
         [Obsolete("Use 'Api' version - works for both old and new version of the login", true)]
         ApiSsl_v2,
         /// <summary>
         /// SSH connection - NOT IMPLEMENTED YET.
         /// </summary>
-        [Obsolete("For future use.", true)]        
+        [Obsolete("For future use.", true)]
         Ssh,
         /// <summary>
         /// Telnet connection - NOT IMPLEMENTED YET.

@@ -2,7 +2,7 @@
 {
     /// <summary>
     /// ip/hotspot/user
-    /// 
+    ///
     /// This is the menu, where client's user/password information is actually added, additional configuration options for HotSpot users are configured here as well.
     /// </summary>
     [TikEntity("ip/hotspot/user")]
@@ -93,37 +93,37 @@
         public string/*string | all*/ Server { get; set; }
 
         /// <summary>
-        /// disabled: 
+        /// disabled:
         /// </summary>
         [TikProperty("disabled")]
         public bool Disabled { get; set; }
 
         /// <summary>
-        /// bytes-in: 
+        /// bytes-in:
         /// </summary>
         [TikProperty("bytes-in", IsReadOnly = true)]
         public long BytesIn { get; private set; }
 
         /// <summary>
-        /// bytes-out: 
+        /// bytes-out:
         /// </summary>
         [TikProperty("bytes-out", IsReadOnly = true)]
         public long BytesOut { get; private set; }
 
         /// <summary>
-        /// packets-in: 
+        /// packets-in:
         /// </summary>
         [TikProperty("packets-in", IsReadOnly = true)]
         public long PacketsIn { get; private set; }
 
         /// <summary>
-        /// packets-out: 
+        /// packets-out:
         /// </summary>
         [TikProperty("packets-out", IsReadOnly = true)]
         public long PacketsOut { get; private set; }
 
         /// <summary>
-        /// uptime: 
+        /// uptime:
         /// </summary>
         [TikProperty("uptime", IsReadOnly = true)]
         public string Uptime { get; private set; }

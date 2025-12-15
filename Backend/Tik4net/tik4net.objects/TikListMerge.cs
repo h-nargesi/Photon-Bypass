@@ -261,7 +261,7 @@ namespace tik4net.Objects
             deleteCnt = 0;
             moveCnt = 0;
 
-            //TODO ensure all fields set                
+            //TODO ensure all fields set
             List<TEntity> result = new List<TEntity>();
             Dictionary<string, TEntity> expectedDict = _expected.ToDictionaryEx(_keyExtractor);
             Dictionary<string, TEntity> originalDict = _original.ToDictionaryEx(_keyExtractor);

@@ -54,7 +54,7 @@ namespace tik4net.Objects.Interface.Bridge
         public string/*auto | no | no-discover | yes | yes-discover*/ Edge { get; set; }
 
         /// <summary>
-        /// point-to-point: 
+        /// point-to-point:
         /// </summary>
         [TikProperty("point-to-point", DefaultValue = "auto")]
         public string/*auto | yes | no*/ PointToPoint { get; set; }

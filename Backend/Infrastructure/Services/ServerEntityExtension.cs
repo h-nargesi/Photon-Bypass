@@ -13,7 +13,7 @@ internal static class ServerEntityExtension
 
         return tasks.Select(t => t.Result).ToList();
     }
-    
+
     public static async Task RunJob(this IEnumerable<ServerEntity> radius_list,
         Func<ServerEntity, Task> function)
     {

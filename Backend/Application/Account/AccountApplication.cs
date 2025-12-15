@@ -20,7 +20,7 @@ class AccountApplication(
     private IAccountRepository AccountRepo { get; } = account_repo;
     private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
     private Lazy<IJobContext> JobContext { get; } = job_context;
-    
+
     public async Task<ApiResult<UserModel>> GetUser(string username)
     {
         var account = (await AccountRepo.GetAccount(username)) ??
@@ -149,7 +149,7 @@ class AccountApplication(
             EventTime = history.Created,
             EventTimeTitle = history.Created.ToPersianString(),
             Id = history.Id,
-            Issuer = history.Issuer.HasValue && issuers.TryGetValue(history.Issuer.Value, out var issuer) ? 
+            Issuer = history.Issuer.HasValue && issuers.TryGetValue(history.Issuer.Value, out var issuer) ?
                 issuer : null,
             Target = target,
             Title = history.Title,

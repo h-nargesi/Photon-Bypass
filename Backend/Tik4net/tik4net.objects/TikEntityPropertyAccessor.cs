@@ -108,7 +108,7 @@ namespace tik4net.Objects
         {
             try
             {
-                //convert to property real type            
+                //convert to property real type
                 if (PropertyType == typeof(string))
                     return strValue;
                 else if (PropertyType == typeof(TimeSpan))

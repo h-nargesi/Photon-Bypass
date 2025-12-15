@@ -2,7 +2,7 @@
 {
     /// <summary>
     /// ip/hotspot/user
-    /// 
+    ///
     /// This is the menu, where client's user/password information is actually added, additional configuration options for HotSpot users are configured here as well.
     /// </summary>
     [TikEntity("ip/hotspot/active", IsReadOnly = true)]
@@ -69,13 +69,13 @@
         public /*time*/ string IdleTimeout { get; set; }
 
         /// <summary>
-        /// bytes-in: 
+        /// bytes-in:
         /// </summary>
         [TikProperty("bytes-in", IsReadOnly = true)]
         public long BytesIn { get; private set; }
 
         /// <summary>
-        /// bytes-out: 
+        /// bytes-out:
         /// </summary>
         [TikProperty("bytes-out", IsReadOnly = true)]
         public long BytesOut { get; private set; }

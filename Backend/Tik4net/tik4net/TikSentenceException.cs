@@ -26,7 +26,7 @@ namespace tik4net
         /// </summary>
         /// <param name="message">Exception message.</param>
         /// <param name="sentecne">Sentence with error - not proper format.</param>
-        public TikSentenceException(string message, ITikSentence sentecne) 
+        public TikSentenceException(string message, ITikSentence sentecne)
             : base(message)
         {
             _sentence = sentecne;

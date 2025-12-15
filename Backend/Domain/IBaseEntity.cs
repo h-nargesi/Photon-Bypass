@@ -12,5 +12,5 @@ public class EntityEventArgs<TEntity>(TEntity entity)
     public TEntity Entity => entity;
 }
 
-public delegate Task EntityEventHandler<TEntity>(object? sender, EntityEventArgs<TEntity> e) 
+public delegate Task EntityEventHandler<TEntity>(object? sender, EntityEventArgs<TEntity> e)
     where TEntity : class, IBaseEntity;

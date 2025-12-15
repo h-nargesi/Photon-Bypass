@@ -7,7 +7,7 @@ namespace tik4net.Objects.Tool
 {
     /// <summary>
     /// This tool is introduced in RouterOS since v3.23 and can send the Wake on LAN MagicPacket to any MAC address of your choosing. If the target device supports WOL, it should wake from sleep. Secure WOL is not supported.
-    /// 
+    ///
     /// </summary>
     public static class ToolWol
     {

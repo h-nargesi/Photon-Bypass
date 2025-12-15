@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace tik4net.Api
-{  
+{
     internal sealed class ApiConnection : ITikConnection
     {
         ///// <summary>
@@ -126,7 +126,7 @@ namespace tik4net.Api
 
             _tcpConnectionStream.Dispose();
             _tcpConnection.Dispose();
-            _isOpened = false;        
+            _isOpened = false;
         }
 
         public void Open(string host, string user, string password)
@@ -170,7 +170,7 @@ namespace tik4net.Api
             }
 
             _isOpened = true;
-            Login_v3(user, password);  //LoginInternal(user, password);            
+            Login_v3(user, password);  //LoginInternal(user, password);
         }
 
         public async System.Threading.Tasks.Task OpenAsync(string host, string user, string password)
@@ -207,7 +207,7 @@ namespace tik4net.Api
             }
 
             _isOpened = true;
-            Login_v3(user, password); // LoginInternal(user, password);           
+            Login_v3(user, password); // LoginInternal(user, password);
         }
 
         private void Login_v3(string user, string password)
@@ -241,7 +241,7 @@ namespace tik4net.Api
         }
 
         private static bool ValidateServerCertificate(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {            
+        {
             return true; // Accept all certificates
         }
 
@@ -308,7 +308,7 @@ namespace tik4net.Api
             {
                 long wordLength = ReadWordLength();
 
-                if (wordLength < 0) //workaround (after !fatal response MinInt is returned) 
+                if (wordLength < 0) //workaround (after !fatal response MinInt is returned)
                 {
                     result = "";
                     break;
@@ -324,7 +324,7 @@ namespace tik4net.Api
 
                     result = resultBuilder.ToString();
                 }
-            } while (skipEmptyRow && string.IsNullOrWhiteSpace(result));            
+            } while (skipEmptyRow && string.IsNullOrWhiteSpace(result));
 
             if (OnReadRow != null)
                 OnReadRow(this, new TikConnectionCommCallbackEventArgs(result));
@@ -426,7 +426,7 @@ namespace tik4net.Api
                 }
             } while (true); //TODO max attempts???  //repeat until get any response for specific tag
         }
-        
+
         private IEnumerable<ITikSentence> GetAll(string tag)
         {
             ITikSentence sentence;
@@ -444,7 +444,7 @@ namespace tik4net.Api
             EnsureOpened();
 
             //read .tag from commandRows - if present
-            var tagOrEmptyString = string.Empty;            
+            var tagOrEmptyString = string.Empty;
             foreach(var row in commandRows)
             {
                 var match = tagRegex.Match(row);
@@ -473,9 +473,9 @@ namespace tik4net.Api
             return CallCommandSync(commandRows.ToArray());
         }
 
-        public Thread CallCommandAsync(IEnumerable<string> commandRows, string tag, 
+        public Thread CallCommandAsync(IEnumerable<string> commandRows, string tag,
             Action<ITikSentence> oneResponseCallback)
-        {            
+        {
             Guard.ArgumentNotNullOrEmptyString(tag, "tag");
             EnsureOpened();
 

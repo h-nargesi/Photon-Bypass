@@ -100,14 +100,14 @@ class AuthApplication(
                 Message = "موبایل هنوز پشتیبانی نشده است!"
             };
 #else
-            var account = (await AccountRepo.GetAccountByMobile(email_mobile)) ?? 
+            var account = (await AccountRepo.GetAccountByMobile(email_mobile)) ??
                 throw new UserException("کاربر یافت نشد.");
-                
+
             if (!account.Active)
             {
                 throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
             }
-            
+
             var hash_code = HashHandler.GenerateHashCode(56);
 
             await ResetPassRepo.Value.AddHashCode(new ResetPassEntity

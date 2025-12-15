@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net.Objects.Ip.Dns
 {
     /// <summary>
-    /// ip/dns: This menu provides a complete list with all DNS records stored on the server 
+    /// ip/dns: This menu provides a complete list with all DNS records stored on the server
     /// </summary>
     [TikEntity("ip/dns/cache/all", IsReadOnly = true)]
     public class DnsCacheAll

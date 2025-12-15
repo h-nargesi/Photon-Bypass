@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net
 {
     /// <summary>
-    /// Response sentence (<see cref="ITikSentence"/>) from mikrotik router with !trap status. 
+    /// Response sentence (<see cref="ITikSentence"/>) from mikrotik router with !trap status.
     /// This sentence is returned when any error occurs.
     /// </summary>
     /// <seealso cref="ITikSentence"/>

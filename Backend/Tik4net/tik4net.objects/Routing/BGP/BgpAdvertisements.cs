@@ -8,7 +8,7 @@ namespace tik4net.Objects.Routing.Bgp
     public class BgpAdvertisements
     {
         /// <summary>
-        /// .id: 
+        /// .id:
         /// </summary>
         [TikProperty(".id", IsReadOnly = true, IsMandatory = true)]
         public string Id { get; private set; }
@@ -44,7 +44,7 @@ namespace tik4net.Objects.Routing.Bgp
         public string Origin { get; set; }
 
         /// <summary>
-        /// communities: 
+        /// communities:
         /// </summary>
         [TikProperty("communities")]
         public string Communities { get; set; }

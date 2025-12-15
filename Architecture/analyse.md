@@ -31,7 +31,7 @@
     request:
     ```json
     {
-        username: string; 
+        username: string;
         password: string;
     }
     ```
@@ -349,7 +349,7 @@
 - Edit Info Page
     - (rad api) & (local db) تغییرات روی هر دو دیتابیس ذخیره می‌شوند
 
-- Change Login Password 
+- Change Login Password
     - (local db) پسورد لاگین در وبسایت
 
 - Change OVPN Password

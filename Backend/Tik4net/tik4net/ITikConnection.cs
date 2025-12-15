@@ -8,12 +8,12 @@ namespace tik4net
 {
     /// <summary>
     /// Mikrotik Connection. Main object to access mikrotik router.
-    /// Implementation of interface depends on technology that 
+    /// Implementation of interface depends on technology that
     /// is used to access mikrotik (API, SSH, TELNET, ...).
     /// <example>
     /// using(ITikConnection connection = ConnectionFactory.OpenConnection(TikConnectionType.Api, "192.168.1.1", "user", "pass"))
     /// {
-    ///     // ... do work ... 
+    ///     // ... do work ...
     ///     // ... do query ...
     ///     Connection.Close();
     /// }
@@ -170,7 +170,7 @@ namespace tik4net
         /// <param name="defaultParameterFormat">How will be parameter formated in mikrotik command - default value for command (could be overriden per parameter).</param>
         /// <param name="parameters">Parameters to be added to newly created command.</param>
         /// <returns>Commend with assiged <see cref="ITikCommand.Connection"/>.</returns>
-        ITikCommand CreateCommand(string commandText, TikCommandParameterFormat defaultParameterFormat, params ITikCommandParameter[] parameters);        
+        ITikCommand CreateCommand(string commandText, TikCommandParameterFormat defaultParameterFormat, params ITikCommandParameter[] parameters);
 
         /// <summary>
         /// Factory method - creates command specific for connection type with assiged <see cref="ITikCommand.Connection"/>.
@@ -189,7 +189,7 @@ namespace tik4net
         /// <param name="defaultParameterFormat">How will be parameter formated in mikrotik command - default value for command (could be overriden per parameter).</param>
         /// <param name="parameterNamesAndValues">Name and value of parameters for command. (name, value, name2, value2, ..., name9, value9, ...)</param>
         /// <returns>Command with assiged <see cref="ITikCommand.Connection"/>.</returns>
-        ITikCommand CreateCommandAndParameters(string commandText, TikCommandParameterFormat defaultParameterFormat, params string[] parameterNamesAndValues);        
+        ITikCommand CreateCommandAndParameters(string commandText, TikCommandParameterFormat defaultParameterFormat, params string[] parameterNamesAndValues);
 
         /// <summary>
         /// Factory method - creates parameters instance specific for connection and command type.
@@ -244,7 +244,7 @@ namespace tik4net
 
         /// <summary>
         /// Calls command to mikrotik (in connection specific format). Response is returned via <paramref name="oneResponseCallback"/> callback when it is read from mikrotik (for given <paramref name="tag"/>).
-        /// REMARKS: <paramref name="oneResponseCallback"/> is called from another NON-GUI thread. If you want to show response in UI, 
+        /// REMARKS: <paramref name="oneResponseCallback"/> is called from another NON-GUI thread. If you want to show response in UI,
         /// you should use some kind of synchronization like BeginInvoke in WinForms. You can not touch UI controls directly without it.
         /// </summary>
         /// <exception cref="TikConnectionNotOpenException" />

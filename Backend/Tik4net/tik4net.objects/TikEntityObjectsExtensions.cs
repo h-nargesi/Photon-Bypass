@@ -11,7 +11,7 @@ namespace tik4net.Objects
     public static class TikEntityObjectsExtensions
     {
         /// <summary>
-        /// Creates clone of all entities in list by their fields. Usefull for storing state before list modification - <see cref="TikConnectionExtensions.SaveListDifferences"/>. 
+        /// Creates clone of all entities in list by their fields. Usefull for storing state before list modification - <see cref="TikConnectionExtensions.SaveListDifferences"/>.
         /// </summary>
         /// <typeparam name="TEntity">Type of entity in list</typeparam>
         /// <param name="originalList">Original list to be cloned</param>
@@ -21,7 +21,7 @@ namespace tik4net.Objects
         public static IEnumerable<TEntity> CloneEntityList<TEntity>(this IEnumerable<TEntity> originalList)
             where TEntity: new()
         {
-            List<TEntity> result = originalList.Select(entity => CloneEntity(entity)).ToList();            
+            List<TEntity> result = originalList.Select(entity => CloneEntity(entity)).ToList();
 
             return result;
         }
@@ -33,7 +33,7 @@ namespace tik4net.Objects
         /// <param name="entity">Entity to be cloned.</param>
         /// <returns>Cloned instance of entity.</returns>
         /// <remarks>Clones only fields marked with <see cref="TikPropertyAttribute"/>.</remarks>
-        public static TEntity CloneEntity<TEntity>(this TEntity entity) 
+        public static TEntity CloneEntity<TEntity>(this TEntity entity)
             where TEntity : new()
         {
             var metadata = TikEntityMetadataCache.GetMetadata<TEntity>();
@@ -45,11 +45,11 @@ namespace tik4net.Objects
                 property.SetEntityValue(result, property.GetEntityValue(entity));
             }
 
-            return result;                      
+            return result;
         }
 
         /// <summary>
-        /// Compares two instances of entity by their fields. 
+        /// Compares two instances of entity by their fields.
         /// </summary>
         /// <typeparam name="TEntity"></typeparam>
         /// <param name="entity1">First entity.</param>
@@ -89,7 +89,7 @@ namespace tik4net.Objects
         }
 
         /// <summary>
-        /// Compares IDs (.id) of two instances of entity. 
+        /// Compares IDs (.id) of two instances of entity.
         /// </summary>
         /// <param name="entity1">First entity.</param>
         /// <param name="entity2">Seconf entity.</param>

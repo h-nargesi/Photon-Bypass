@@ -50,13 +50,13 @@ class TrafficDataRepository(LocalDbContext context)
         await OpenAsync();
 
         var sql = @$"
-select min({nameof(TrafficDataEntity.StartSession)}) from {TableName} 
+select min({nameof(TrafficDataEntity.StartSession)}) from {TableName}
 where {nameof(TrafficDataEntity.EndSession)} is null";
-        
+
         var min_active = await ExecuteScalarAsync<DateTime?>(sql);
 
         if (min_active.HasValue) return min_active;
-        
+
         sql = @$"select max({nameof(TrafficDataEntity.StartSession)}) from {TableName}";
         return await ExecuteScalarAsync<DateTime?>(sql);
     }

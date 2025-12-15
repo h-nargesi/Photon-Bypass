@@ -87,7 +87,7 @@ export class LoginComponent {
 
     this.service.login(this.username, this.password).subscribe((result) => {
       this.result = result;
-      
+
       if (result.status() === ResultStatus.success) {
         setTimeout(() => this.router.navigateByUrl(this.redirect), 1000);
       }

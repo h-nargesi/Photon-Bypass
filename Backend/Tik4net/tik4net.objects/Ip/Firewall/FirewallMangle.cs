@@ -25,7 +25,7 @@ namespace tik4net.Objects.Ip.Firewall
             /// <summary>
             /// add-dst-to-address-list - add destination address to Address list specified by address-list parameter
             /// </summary>
-            [TikEnum("add-dst-to-address-list")]            
+            [TikEnum("add-dst-to-address-list")]
             AddDstToAddressList,
 
             /// <summary>
@@ -49,7 +49,7 @@ namespace tik4net.Objects.Ip.Firewall
             /// <summary>
             /// change-ttl - change Time to Live field value of the packet to a value specified by the new-ttl parameter
             /// </summary>
-            [TikEnum("change-ttl")]        
+            [TikEnum("change-ttl")]
             ChangeTtl,
 
             /// <summary>
@@ -83,7 +83,7 @@ namespace tik4net.Objects.Ip.Firewall
             MarkPacket,
 
             /// <summary>
-            /// 
+            ///
             /// </summary>
             [TikEnum("")]
             MarkRouting,
@@ -221,7 +221,7 @@ namespace tik4net.Objects.Ip.Firewall
         /// </summary>
         [TikProperty("jump-target")]
         public string JumpTarget { get; set; }
-        
+
         /// <summary>
         /// address-list
         /// </summary>

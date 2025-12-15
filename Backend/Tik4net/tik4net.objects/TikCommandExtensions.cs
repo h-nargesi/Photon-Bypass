@@ -49,7 +49,7 @@ namespace tik4net.Objects
             where TEntity : new()
         {
             var candidates = LoadList<TEntity>(command);
-            
+
             var cnt = candidates.Count();
             if (cnt == 0)
                 throw new TikNoSuchItemException(command);
@@ -113,9 +113,9 @@ namespace tik4net.Objects
         /// <summary>
         /// Calls command and starts backgroud reading thread. After that returns control to calling thread.
         /// All read rows are returned as callbacks (<paramref name="onLoadItemCallback"/>, <paramref name="onExceptionCallback"/>) from loading thread.
-        /// REMARKS: if you want to propagate loaded values to GUI, you should use some kind of synchronization or Invoke, because 
+        /// REMARKS: if you want to propagate loaded values to GUI, you should use some kind of synchronization or Invoke, because
         /// callbacks are called from non-ui thread.
-        /// The running load can be terminated by <see cref="ITikCommand.Cancel"/> or <see cref="ITikCommand.CancelAndJoin()"/> call. 
+        /// The running load can be terminated by <see cref="ITikCommand.Cancel"/> or <see cref="ITikCommand.CancelAndJoin()"/> call.
         /// Command is returned as result of the method.
         /// </summary>
         /// <typeparam name="TEntity">Loaded entities type.</typeparam>
@@ -124,7 +124,7 @@ namespace tik4net.Objects
         /// <param name="onExceptionCallback">Callback called when error occurs (!trap row is returned)</param>
         /// <param name="onDoneCallback">Callback called at the end of command run (!done row is returned). Usefull for cleanup operations at the end of command lifecycle. You can also use synchronous call <see cref="ITikCommand.CancelAndJoin()"/> from calling thread and do cleanup after it.</param>
         public static void LoadAsync<TEntity>(this ITikCommand command,
-                    Action<TEntity> onLoadItemCallback, 
+                    Action<TEntity> onLoadItemCallback,
                     Action<Exception> onExceptionCallback = null,
                     Action onDoneCallback = null)
                     where TEntity : new()

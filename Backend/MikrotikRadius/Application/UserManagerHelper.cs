@@ -12,13 +12,13 @@ public static class UserManagerHelper
     public static HashSet<string> CheckLimitations(this ITikConnection connection, RenewalEntity renewal)
     {
         var limitations = new HashSet<string>();
-        
+
         // Check Speed
         if (renewal.RateLimitInMeg.HasValue)
         {
             limitations.Add(connection.CheckRateLimit(renewal.RateLimitInMeg.Value));
         }
-        
+
         // Check Traffic
         if (renewal.TrafficLimit.HasValue)
         {
@@ -27,7 +27,7 @@ public static class UserManagerHelper
 
         return limitations;
     }
-    
+
     public static string CheckProfile(this ITikConnection connection, int? days, long? traffic, int? rate)
     {
         var profile_name = "profile";
@@ -154,7 +154,7 @@ public static class UserManagerHelper
             Profile = profile_name,
         });
     }
-    
+
     private static string CheckRateLimit(this ITikConnection connection, int rate)
     {
         var limitation_name = $"limit-speed-{rate}M";

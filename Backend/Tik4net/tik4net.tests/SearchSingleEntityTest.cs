@@ -27,8 +27,8 @@ namespace tik4net.tests
                 < =.id=*1
                 < =name=ether1
                 < =default-name=ether1
-                ...                 
-                < !done              
+                ...
+                < !done
             */
         }
 
@@ -46,8 +46,8 @@ namespace tik4net.tests
                 < =.id=*1
                 < =name=ether1
                 < =default-name=ether1
-                ...                 
-                < !done              
+                ...
+                < !done
             */
         }
 

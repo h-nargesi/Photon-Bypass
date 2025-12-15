@@ -31,13 +31,13 @@ namespace tik4net.Objects.User
 		public string LastLoggedIn { get; private set; }
 
 		/// <summary>
-		/// Gets or sets a value indicating whether the user is disabled. 
+		/// Gets or sets a value indicating whether the user is disabled.
 		/// </summary>
 		[TikProperty("disabled")]
 		public bool Disabled { get; set; }
 
 		/// <summary>
-		/// Gets or sets a comment associated with the user. 
+		/// Gets or sets a comment associated with the user.
 		/// </summary>
 		[TikProperty("comment")]
 		public string Comment { get; set; }

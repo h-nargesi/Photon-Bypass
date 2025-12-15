@@ -20,14 +20,14 @@ partial class MikrotikDirectService(ISshHandler handler) : IMikrotikDirectServic
         {
             throw new Exception($"Invalid server or session-id! ({session_id})");
         }
-        
+
         using var node = await handler.ConnectTo(server);
 
         var success = node.Execute($"/ppp active remove [find session-id=0x{session_id}]", out var result);
         if (!success)
         {
             Log.Warning("Closing connection on {0}: {1}", server, result);
-            throw new Exception("Closing connection was unsuccessful!");            
+            throw new Exception("Closing connection was unsuccessful!");
         }
 
         success = node.Execute($"/ppp active print where session-id=0x{session_id}", out result);
@@ -51,10 +51,10 @@ partial class MikrotikDirectService(ISshHandler handler) : IMikrotikDirectServic
                 using var node = await handler.ConnectTo(server);
 
                 var success = node.Execute($"/ppp active remove [find name={username}]", out var result);
-                if (!success) 
+                if (!success)
                 {
                     Log.Warning("Closing connection on {0}: {1}", server, result);
-                    throw new Exception("Closing connection was unsuccessful!");            
+                    throw new Exception("Closing connection was unsuccessful!");
                 }
 
                 success = node.Execute($"/ppp active print where name={username}", out result);

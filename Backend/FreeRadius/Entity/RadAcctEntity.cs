@@ -26,7 +26,7 @@ public class RadAcctEntity : IBaseEntity
     public string NasIdentifier { get; set; } = null!;
 
     public DateTime AcctStartTime { get; set; }
-        
+
     public DateTime? AcctStopTime { get; set; }
 
     public string CallingStationId { get; set; } = null!;

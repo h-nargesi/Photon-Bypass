@@ -8,7 +8,7 @@ namespace tik4net.Objects.Routing.Bgp
     public class BgpInstance
     {
         /// <summary>
-        /// .id: 
+        /// .id:
         /// </summary>
         [TikProperty(".id", IsReadOnly = true, IsMandatory = true)]
         public string Id { get; private set; }
@@ -44,7 +44,7 @@ namespace tik4net.Objects.Routing.Bgp
         public bool RedistributeStatic { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether to redistribute redistribute routes received via RIP. 
+        /// Gets or sets a value indicating whether to redistribute redistribute routes received via RIP.
         /// </summary>
         [TikProperty("redistribute-rip")]
         public bool RedistributeRip { get; set; }

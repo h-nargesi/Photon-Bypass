@@ -3,7 +3,7 @@
 public class UserConnectionBinding
 {
     public string SessionId { get; set; } = null!;
-    
+
     public string NasIpAddress { get; set; } = null!;
 
     public string Username { get; set; } = null!;

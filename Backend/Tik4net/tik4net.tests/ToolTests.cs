@@ -87,7 +87,7 @@ namespace tik4net.tests
         [TestMethod]
         public void WolWithOkIfaceWillNotFail()
         {
-            const string OK_MAC = "FF:FF:FF:FF:FF:FF"; 
+            const string OK_MAC = "FF:FF:FF:FF:FF:FF";
             const string OK_IFACE = "ether1";
 
             ToolWol.ExecuteWol(Connection, new MacAddress(OK_MAC), OK_IFACE);
@@ -126,8 +126,8 @@ namespace tik4net.tests
 
         [TestMethod]
         public void TracerouteToLocalhostWillNotFail_2()
-        {            
-            const string IP = "127.0.0.1";            
+        {
+            const string IP = "127.0.0.1";
 
             var cmd = Connection.CreateCommandAndParameters("/tool/traceroute", TikCommandParameterFormat.NameValue,
                 "address", IP,

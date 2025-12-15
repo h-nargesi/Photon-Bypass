@@ -16,7 +16,7 @@ namespace PhotonBypass.Portal.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class AccountController(
-    IAccountApplication application, IJobContext job, Lazy<IAccessService> access) : 
+    IAccountApplication application, IJobContext job, Lazy<IAccessService> access) :
     ResultHandlerController(job, access)
 {
     [HttpGet("get-user")]

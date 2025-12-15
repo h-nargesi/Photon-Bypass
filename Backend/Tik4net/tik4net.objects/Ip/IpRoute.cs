@@ -12,7 +12,7 @@ namespace tik4net.Objects.Ip
     public class IpRoute
     {
         /// <summary>
-        /// .id: 
+        /// .id:
         /// </summary>
         [TikProperty(".id", IsReadOnly = true, IsMandatory = true)]
         public string Id { get; private set; }
@@ -36,7 +36,7 @@ namespace tik4net.Objects.Ip
         public string GatewayStatus { get; private set; }
 
         /// <summary>
-        /// Gets or sets the distance of this route in hops. 
+        /// Gets or sets the distance of this route in hops.
         /// </summary>
         [TikProperty("distance")]
         public long Distance { get; set; }

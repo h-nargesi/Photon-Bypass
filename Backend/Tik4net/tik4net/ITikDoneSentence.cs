@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net
 {
     /// <summary>
-    /// Response sentence (<see cref="ITikSentence"/>) from mikrotik router with !done status. 
+    /// Response sentence (<see cref="ITikSentence"/>) from mikrotik router with !done status.
     /// It is last sentence from sucessfull operation.
     /// </summary>
     /// <seealso cref="ITikSentence"/>
@@ -17,13 +17,13 @@ namespace tik4net
         /// <summary>
         /// Gets the =ret sentence word (result). Throws exception if property with name =ret has not been returned from mikrotik router as part of done sentence.
         /// </summary>
-        /// <seealso cref="TikSpecialProperties.Ret"/>        
+        /// <seealso cref="TikSpecialProperties.Ret"/>
         string GetResponseWord();
 
         /// <summary>
-        /// Gets the =ret sentence word (result). Returns <paramref name="defaultValue"/> if property with name =ret has not been returned from mikrotik router as part of done sentence. 
+        /// Gets the =ret sentence word (result). Returns <paramref name="defaultValue"/> if property with name =ret has not been returned from mikrotik router as part of done sentence.
         /// </summary>
-        /// <seealso cref="TikSpecialProperties.Ret"/>        
+        /// <seealso cref="TikSpecialProperties.Ret"/>
         string GetResponseWordOrDefault(string defaultValue);
     }
 }

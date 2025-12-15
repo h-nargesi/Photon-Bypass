@@ -20,7 +20,7 @@
         [TikProperty("dial-on-demand", DefaultValue = "false")]
         public YesNoOptions DialOnDemand { get; set; }
 
-        [TikProperty("interface")] 
+        [TikProperty("interface")]
         public string Interface { get; set; }
 
         [TikProperty("keepalive-timeout", DefaultValue = "60")]
@@ -35,22 +35,22 @@
         [TikProperty("mrru", DefaultValue = "disabled")]
         public string Mrru { get; set; }
 
-        [TikProperty("name")] 
+        [TikProperty("name")]
         public string Name { get; set; }
 
-        [TikProperty("password")] 
+        [TikProperty("password")]
         public string Password { get; set; }
 
         [TikProperty("profile", DefaultValue = "default")]
         public string Profile { get; set; }
 
-        [TikProperty("service-name")] 
+        [TikProperty("service-name")]
         public string ServiceName { get; set; }
 
         [TikProperty("use-peer-dns", DefaultValue = "false")]
         public YesNoOptions UsePeerDns { get; set; }
 
-        [TikProperty("user")] 
+        [TikProperty("user")]
         public string User { get; set; }
 
         public enum YesNoOptions

@@ -41,14 +41,14 @@ namespace tik4net.Objects.Interface.Wireless
             None,
 
             /// <summary>
-            /// static-keys-optional - WEP mode. Support encryption and decryption, but allow also to receive and send unencrypted frames. Device will send unencrypted frames if encryption algorithm is specified as none. 
+            /// static-keys-optional - WEP mode. Support encryption and decryption, but allow also to receive and send unencrypted frames. Device will send unencrypted frames if encryption algorithm is specified as none.
             /// Station in static-keys-optional mode will not connect to an access point in static-keys-required mode.
             /// </summary>
             [TikEnum("static-keys-optional")]
             StaticKeysOptional,
 
             /// <summary>
-            /// static-keys-required - WEP mode. Do not accept and do not send unencrypted frames. 
+            /// static-keys-required - WEP mode. Do not accept and do not send unencrypted frames.
             /// </summary>
             [TikEnum("static-keys-required")]
             StaticKeysRequiered

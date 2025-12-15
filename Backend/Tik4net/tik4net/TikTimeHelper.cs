@@ -5,7 +5,7 @@ namespace tik4net
 {
     /// <summary>
     /// Functions to convert MikroTik timespans to useable formats.
-    /// Credits: D-Bullock 
+    /// Credits: D-Bullock
     /// </summary>
     public static class TikTimeHelper
     {
@@ -48,7 +48,7 @@ namespace tik4net
         /// <returns></returns>
         public static int FromTikTimeToSeconds(string time)
         {
-            // DAF: code review: What about usage of Regex to parse this format? 
+            // DAF: code review: What about usage of Regex to parse this format?
 
             if (string.IsNullOrWhiteSpace(time) || string.Equals(time, "none", StringComparison.OrdinalIgnoreCase))
                 return 0;

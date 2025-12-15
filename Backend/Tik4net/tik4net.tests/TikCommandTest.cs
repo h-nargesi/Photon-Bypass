@@ -309,7 +309,7 @@ namespace tik4net.tests
         public void ExecuteScalarWithUnexistentId_WillThrowCorrectException()
         {
             var testCommand = Connection.CreateCommandAndParameters("/ip/address/print", TikCommandParameterFormat.Filter, TikSpecialProperties.Id, "-NoID-");
-            var id = testCommand.ExecuteScalar(TikSpecialProperties.Id);            
+            var id = testCommand.ExecuteScalar(TikSpecialProperties.Id);
         }
 
         [TestMethod]

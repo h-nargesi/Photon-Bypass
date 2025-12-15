@@ -48,7 +48,7 @@ namespace tik4net.Objects.CapsMan
         public string TxRate { get; private set; }
 
         /// <summary>
-        /// tx-rate-set: 
+        /// tx-rate-set:
         /// </summary>
         [TikProperty("tx-rate-set", IsReadOnly = true)]
         public string TxRateSet { get; private set; }

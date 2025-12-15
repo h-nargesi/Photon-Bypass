@@ -10,7 +10,7 @@ public static class ProcessParser
     {
         return ParseMikrotikScript(await File.ReadAllTextAsync(filename));
     }
-    
+
     public static ProcessEntity? ParseMikrotikScript(string content)
     {
         var title_match = ScriptPatterns.ProcessParser().Match(content);

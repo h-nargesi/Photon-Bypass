@@ -30,7 +30,7 @@ namespace tik4net.Api
                 {
                     string key = match.Groups["KEY"].Value;
                     string value = match.Groups["VALUE"].Value;
-                    
+
                     if (!_words.ContainsKey(key))
                         _words.Add(key, value);
                     else

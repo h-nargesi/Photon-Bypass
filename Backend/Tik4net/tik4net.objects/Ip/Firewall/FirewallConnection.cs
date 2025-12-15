@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net.Objects.Ip.Firewall
 {
     /// <summary>
-    /// ip/firewall/connection tracking: 
+    /// ip/firewall/connection tracking:
     /// </summary>
     [TikEntity("ip/firewall/connection", IsReadOnly = true)]
     public class FirewallConnection
@@ -42,31 +42,31 @@ namespace tik4net.Objects.Ip.Firewall
         public string DstAddress { get; private set; }
 
         /// <summary>
-        /// gre-key: 
+        /// gre-key:
         /// </summary>
         [TikProperty("gre-key", IsReadOnly = true)]
         public int GreKey { get; private set; }
 
         /// <summary>
-        /// gre-version: 
+        /// gre-version:
         /// </summary>
         [TikProperty("gre-version", IsReadOnly = true)]
         public string GreVersion { get; private set; }
 
         /// <summary>
-        /// icmp-code: 
+        /// icmp-code:
         /// </summary>
         [TikProperty("icmp-code", IsReadOnly = true)]
         public string IcmpCode { get; private set; }
 
         /// <summary>
-        /// icmp-id: 
+        /// icmp-id:
         /// </summary>
         [TikProperty("icmp-id", IsReadOnly = true)]
         public string IcmpId { get; private set; }
 
         /// <summary>
-        /// icmp-type: 
+        /// icmp-type:
         /// </summary>
         [TikProperty("icmp-type", IsReadOnly = true)]
         public string IcmpType { get; private set; }
@@ -107,7 +107,7 @@ namespace tik4net.Objects.Ip.Firewall
         ///  "established"
         ///  "time-wait"
         ///  "close"
-        ///  "syn-sent" 
+        ///  "syn-sent"
         ///  "syn-received"
         /// </summary>
         [TikProperty("tcp-state", IsReadOnly = true)]

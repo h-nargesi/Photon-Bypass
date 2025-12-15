@@ -48,7 +48,7 @@ namespace tik4net.Objects.Interface.Wireless
         public string AuthenticationType { get; private set; }
 
         /// <summary>
-        /// bridge: 
+        /// bridge:
         /// </summary>
         [TikProperty("bridge", IsReadOnly = true)]
         public bool Bridge { get; private set; }
@@ -78,7 +78,7 @@ namespace tik4net.Objects.Interface.Wireless
         public bool Compression { get; private set; }
 
         /// <summary>
-        /// distance: 
+        /// distance:
         /// </summary>
         [TikProperty("distance", IsReadOnly = true)]
         public int Distance { get; private set; }
@@ -90,19 +90,19 @@ namespace tik4net.Objects.Interface.Wireless
         public string Encryption { get; private set; }
 
         /// <summary>
-        /// evm-ch0: 
+        /// evm-ch0:
         /// </summary>
         [TikProperty("evm-ch0", IsReadOnly = true)]
         public string EvmCh0 { get; private set; }
 
         /// <summary>
-        /// evm-ch1: 
+        /// evm-ch1:
         /// </summary>
         [TikProperty("evm-ch1", IsReadOnly = true)]
         public string EvmCh1 { get; private set; }
 
         /// <summary>
-        /// evm-ch2: 
+        /// evm-ch2:
         /// </summary>
         [TikProperty("evm-ch2", IsReadOnly = true)]
         public string EvmCh2 { get; private set; }
@@ -180,7 +180,7 @@ namespace tik4net.Objects.Interface.Wireless
         public string MacAddress { get; private set; }
 
         /// <summary>
-        /// management-protection: 
+        /// management-protection:
         /// </summary>
         [TikProperty("management-protection", IsReadOnly = true)]
         public bool ManagementProtection { get; private set; }
@@ -228,7 +228,7 @@ namespace tik4net.Objects.Interface.Wireless
         public string RouterosVersion { get; private set; }
 
         /// <summary>
-        /// rx-ccq: Client Connection Quality (CCQ) for receive.  Read more &gt;&gt; 
+        /// rx-ccq: Client Connection Quality (CCQ) for receive.  Read more &gt;&gt;
         /// </summary>
         [TikProperty("rx-ccq", IsReadOnly = true)]
         public string RxCcq { get; private set; }
@@ -246,25 +246,25 @@ namespace tik4net.Objects.Interface.Wireless
         public string SignalStrength { get; private set; }
 
         /// <summary>
-        /// signal-strength-ch0: 
+        /// signal-strength-ch0:
         /// </summary>
         [TikProperty("signal-strength-ch0", IsReadOnly = true)]
         public string SignalStrengthCh0 { get; private set; }
 
         /// <summary>
-        /// signal-strength-ch1: 
+        /// signal-strength-ch1:
         /// </summary>
         [TikProperty("signal-strength-ch1", IsReadOnly = true)]
         public string SignalStrengthCh1 { get; private set; }
 
         /// <summary>
-        /// signal-strength-ch2: 
+        /// signal-strength-ch2:
         /// </summary>
         [TikProperty("signal-strength-ch2", IsReadOnly = true)]
         public string SignalStrengthCh2 { get; private set; }
 
         /// <summary>
-        /// signal-to-noise: 
+        /// signal-to-noise:
         /// </summary>
         [TikProperty("signal-to-noise", IsReadOnly = true)]
         public string SignalToNoise { get; private set; }
@@ -276,13 +276,13 @@ namespace tik4net.Objects.Interface.Wireless
         public string StrengthAtRates { get; private set; }
 
         /// <summary>
-        /// tdma-retx: 
+        /// tdma-retx:
         /// </summary>
         [TikProperty("tdma-retx", IsReadOnly = true)]
         public string TdmaRetx { get; private set; }
 
         /// <summary>
-        /// tdma-rx-size: 
+        /// tdma-rx-size:
         /// </summary>
         [TikProperty("tdma-rx-size", IsReadOnly = true)]
         public string TdmaRxSize { get; private set; }
@@ -302,67 +302,67 @@ namespace tik4net.Objects.Interface.Wireless
         public int TdmaTxSize { get; private set; }
 
         /// <summary>
-        /// tdma-windfull: 
+        /// tdma-windfull:
         /// </summary>
         [TikProperty("tdma-windfull", IsReadOnly = true)]
         public string TdmaWindfull { get; private set; }
 
         /// <summary>
-        /// tx-ccq: Client Connection Quality (CCQ) for transmit.  Read more &gt;&gt; 
+        /// tx-ccq: Client Connection Quality (CCQ) for transmit.  Read more &gt;&gt;
         /// </summary>
         [TikProperty("tx-ccq", IsReadOnly = true)]
         public string TxCcq { get; private set; }
 
         /// <summary>
-        /// tx-evm-ch0: 
+        /// tx-evm-ch0:
         /// </summary>
         [TikProperty("tx-evm-ch0", IsReadOnly = true)]
         public string TxEvmCh0 { get; private set; }
 
         /// <summary>
-        /// tx-evm-ch1: 
+        /// tx-evm-ch1:
         /// </summary>
         [TikProperty("tx-evm-ch1", IsReadOnly = true)]
         public string TxEvmCh1 { get; private set; }
 
         /// <summary>
-        /// tx-evm-ch2: 
+        /// tx-evm-ch2:
         /// </summary>
         [TikProperty("tx-evm-ch2", IsReadOnly = true)]
         public string TxEvmCh2 { get; private set; }
 
         /// <summary>
-        /// tx-frames-timed-out: 
+        /// tx-frames-timed-out:
         /// </summary>
         [TikProperty("tx-frames-timed-out", IsReadOnly = true)]
         public string TxFramesTimedOut { get; private set; }
 
         /// <summary>
-        /// tx-rate: 
+        /// tx-rate:
         /// </summary>
         [TikProperty("tx-rate", IsReadOnly = true)]
         public string TxRate { get; private set; }
 
         /// <summary>
-        /// tx-signal-strength: 
+        /// tx-signal-strength:
         /// </summary>
         [TikProperty("tx-signal-strength", IsReadOnly = true)]
         public string TxSignalStrength { get; private set; }
 
         /// <summary>
-        /// tx-signal-strength-ch0: 
+        /// tx-signal-strength-ch0:
         /// </summary>
         [TikProperty("tx-signal-strength-ch0", IsReadOnly = true)]
         public string TxSignalStrengthCh0 { get; private set; }
 
         /// <summary>
-        /// tx-signal-strength-ch1: 
+        /// tx-signal-strength-ch1:
         /// </summary>
         [TikProperty("tx-signal-strength-ch1", IsReadOnly = true)]
         public string TxSignalStrengthCh1 { get; private set; }
 
         /// <summary>
-        /// tx-signal-strength-ch2: 
+        /// tx-signal-strength-ch2:
         /// </summary>
         [TikProperty("tx-signal-strength-ch2", IsReadOnly = true)]
         public string TxSignalStrengthCh2 { get; private set; }

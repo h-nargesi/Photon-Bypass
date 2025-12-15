@@ -11,7 +11,7 @@ public class UnixTimestampConverter : JsonConverter<DateTime>
         {
             throw new JsonException("Invalid Unix timestamp.");
         }
-        
+
         var timestamp = reader.GetInt64();
         return UnixTimeStampToDateTime(timestamp);
     }

@@ -7,17 +7,17 @@ namespace tik4net.Objects.Ip.DhcpServer
 {
     /// <summary>
     ///  DHCP server lease submenu is used to monitor and manage server's leases. The issued leases are showed here as dynamic entries. You can also add static leases to issue a specific IP address to a particular client (identified by MAC address) .
-    /// 
+    ///
     /// Generally, the DHCP lease it allocated as follows:
-    /// 
+    ///
     ///     an unused lease is in waiting state
     ///     if a client asks for an IP address, the server chooses one
     ///     if the client receives a statically assigned address, the lease becomes offered, and then bound with the respective lease time
     ///     if the client receives a dynamic address (taken from an IP address pool), the router sends a ping packet and waits for answer for 0.5 seconds. During this time, the lease is marked testing
     ///     in the case where the address does not respond, the lease becomes offered and then bound with the respective lease time
-    ///     in other case, the lease becomes busy for the lease time (there is a command to retest all busy addresses), and the client's request remains unanswered (the client will try again shortly) 
-    /// 
-    /// A client may free the leased address. The dynamic lease is removed, and the allocated address is returned to the address pool. But the static lease becomes busy until the client reacquires the address. 
+    ///     in other case, the lease becomes busy for the lease time (there is a command to retest all busy addresses), and the client's request remains unanswered (the client will try again shortly)
+    ///
+    /// A client may free the leased address. The dynamic lease is removed, and the allocated address is returned to the address pool. But the static lease becomes busy until the client reacquires the address.
     /// </summary>
     [TikEntity("ip/dhcp-server/lease")]
     public class DhcpServerLease
@@ -157,21 +157,21 @@ namespace tik4net.Objects.Ip.DhcpServer
         /// <summary>
         /// status
         /// Lease status:
-        ///        
+        ///
         ///               waiting - un-used static lease
-        ///               testing - testing whether this address is used or not (only for dynamic leases) by pinging it with timeout of 0.5s 
-        ///               authorizing - waiting for response from radius server 
-        ///               busy - this address is assigned statically to a client or already exists in the network, so it can not be leased 
-        ///               offered - server has offered this lease to a client, but did not receive confirmation from the client 
-        ///               bound - server has received client's confirmation that it accepts offered address, it is using it now and will free the address no later than the lease time 
-        ///        
-        ///     
+        ///               testing - testing whether this address is used or not (only for dynamic leases) by pinging it with timeout of 0.5s
+        ///               authorizing - waiting for response from radius server
+        ///               busy - this address is assigned statically to a client or already exists in the network, so it can not be leased
+        ///               offered - server has offered this lease to a client, but did not receive confirmation from the client
+        ///               bound - server has received client's confirmation that it accepts offered address, it is using it now and will free the address no later than the lease time
+        ///
+        ///
         /// </summary>
         [TikProperty("status", IsReadOnly = true)]
         public string Status { get; private set; }
 
         /// <summary>
-        /// disabled: 
+        /// disabled:
         /// </summary>
         [TikProperty("disabled")]
         public bool Disabled { get; set; }

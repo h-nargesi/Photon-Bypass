@@ -27,7 +27,7 @@ internal class AccountMonitoringService(
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
     private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
-    
+
     public async Task Execute(IJobExecutionContext context)
     {
         var plan_state_list = await PlanStateRepo.GetAll();
@@ -36,7 +36,7 @@ internal class AccountMonitoringService(
         {
             return;
         }
-        
+
         var finishing_list = plan_state_list.Where(plan => plan.IsFinishing()).ToList();
 
         await NotifSendServices(finishing_list);
@@ -54,7 +54,7 @@ internal class AccountMonitoringService(
 
         foreach (var plan in plan_state_list)
         {
-            if ((!plan.ExpirationDate.HasValue || plan.ExpirationDate > DateTime.Now) && 
+            if ((!plan.ExpirationDate.HasValue || plan.ExpirationDate > DateTime.Now) &&
                 (!plan.TrafficLeft.HasValue || plan.TrafficLeft >= StaticValues.BytesInMegDouble))
             {
                 continue;
@@ -75,7 +75,7 @@ internal class AccountMonitoringService(
             {
                 continue;
             }
-            
+
             expired_days = account.IsReachedMaxInactivityDaysToDelete(plan.LastConnectTime);
             if (expired_days > 0)
             {
@@ -83,7 +83,7 @@ internal class AccountMonitoringService(
                     "The user '{0}' was deleted from radius servers: ExpiredTime={1} days, ExpirationDate={2}, TrafficLimit={3}, TrafficUsed={4}",
                     plan.Username, expired_days, plan.ExpirationDate, plan.TrafficLimit, plan.TrafficUsed);
                 remove_list.Add(account.Username);
-                
+
                 account.IsActive = false;
                 _ = AccountRepo.Save(account);
                 continue;
@@ -194,10 +194,10 @@ internal class AccountMonitoringService(
     {
         if (time == 0) return "هیچ";
         var result = string.Empty;
-        
+
         var day = (int)time;
         if (day > 0) result += $" و {day} روز";
-        
+
         var hour = (int)((time - day) * 24);
         if (hour > 0) result += $" و {hour} ساعت";
 

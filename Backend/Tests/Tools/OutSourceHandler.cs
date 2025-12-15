@@ -57,10 +57,10 @@ public static class OutSourceHandler
             {
                 var loading_structure_files =
                     SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseStructureInitializerFilePath);
-                
+
                 var options = new LocalDapperOptionsMoq().Object;
                 await using var connection = new SqlConnection(options.Value.ConnectionString);
-                
+
                 await connection.OpenAsync();
                 var structures = await loading_structure_files;
 
@@ -69,9 +69,9 @@ public static class OutSourceHandler
 
                 foreach (var sql in structures)
                     await connection.ExecuteAsync(sql);
-                
+
                 var data = await loading_data_files;
-                
+
                 foreach (var sql in data)
                     await connection.ExecuteAsync(sql);
             }

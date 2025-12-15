@@ -89,7 +89,7 @@ partial class ProcessService(ISshHandler handler) : IProcessService
             {
                 throw new Exception($"Invalid character for inject: {replace_pair.Key}={replace_pair.Value}");
             }
-            
+
             content.Replace($"{{{replace_pair.Key}}}", replace_pair.Value);
         }
 

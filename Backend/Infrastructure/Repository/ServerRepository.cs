@@ -11,7 +11,7 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
     public async Task<ServerEntity?> GetActiveNasInfo(string ip)
     {
         await OpenAsync();
-        
+
         var result = await FindAsync(statement => statement
             .Where($"""
 {nameof(ServerEntity.IsActive)} == 1
@@ -26,13 +26,13 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
     public async Task<List<string>> GetAllActiveNasDomainInRealm(int? realm_id)
     {
         await OpenAsync();
-        
+
         var sql = $"""
                   select {nameof(ServerEntity.DomainName)}
                   from {TableName}
                   where {nameof(ServerEntity.IsActive)} == 1 and {nameof(ServerEntity.Features)} = ({nameof(ServerEntity.Features)} & @nas)
                   """;
-        
+
         if (realm_id.HasValue)
         {
             sql += $"""

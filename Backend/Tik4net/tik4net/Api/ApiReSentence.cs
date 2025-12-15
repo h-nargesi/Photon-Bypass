@@ -7,7 +7,7 @@ namespace tik4net.Api
 {
     internal class ApiReSentence : ApiSentence, ITikReSentence
     {
-        public ApiReSentence(IEnumerable<string> words) 
+        public ApiReSentence(IEnumerable<string> words)
             : base(words)
         {
         }

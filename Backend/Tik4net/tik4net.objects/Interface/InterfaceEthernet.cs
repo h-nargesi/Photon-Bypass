@@ -7,7 +7,7 @@ namespace tik4net.Objects.Interface
 {
     /// <summary>
     /// interface/ethernet
-    /// MikroTik RouterOS supports various types of Ethernet interfaces. 
+    /// MikroTik RouterOS supports various types of Ethernet interfaces.
     /// </summary>
     [TikEntity("interface/ethernet")]
     public class InterfaceEthernet
@@ -32,7 +32,7 @@ namespace tik4net.Objects.Interface
         /// <summary>
         /// auto-negotiation
         /// When enabled, the interface "advertises" its maximum capabilities to achieve the best connection possible.
-        ///  Note1: Auto-negotiation should not be disabled on one end only, otherwise Ethernet Interfaces may not work properly. 
+        ///  Note1: Auto-negotiation should not be disabled on one end only, otherwise Ethernet Interfaces may not work properly.
         ///  Note2: Gigabit link cannot work with auto-negotiation disabled.
         /// </summary>
         [TikProperty("auto-negotiation", DefaultValue = "yes")]
@@ -106,8 +106,8 @@ namespace tik4net.Objects.Interface
         public bool FullDuplex { get; set; }
 
         /// <summary>
-        /// l2mtu: Layer2 Maximum transmission unit.  Read more&gt;&gt; 
-        /// 
+        /// l2mtu: Layer2 Maximum transmission unit.  Read more&gt;&gt;
+        ///
         /// integer [0..65536]
         /// </summary>
         [TikProperty("l2mtu")]
@@ -133,7 +133,7 @@ namespace tik4net.Objects.Interface
 
         /// <summary>
         /// mtu: Layer3 Maximum transmission unit
-        /// 
+        ///
         /// integer [0..65536]
         /// </summary>
         [TikProperty("mtu", DefaultValue = "1500")]
@@ -146,14 +146,14 @@ namespace tik4net.Objects.Interface
         public string Name { get; set; }
 
         /// <summary>
-        /// orig-mac-address: 
+        /// orig-mac-address:
         /// </summary>
         [TikProperty("orig-mac-address")]
         public string/*MAC*/ OrigMacAddress { get; set; }
 
         /// <summary>
         /// poe-out: Poe Out settings.  Read more &gt;&gt;
-        /// 
+        ///
         /// auto-on | forced-on | off
         /// </summary>
         [TikProperty("poe-out", DefaultValue = "off")]
@@ -173,7 +173,7 @@ namespace tik4net.Objects.Interface
 
         /// <summary>
         /// speed: Sets the data transmission speed of an interface. By default, this value is the maximal data rate supported by the interface
-        /// 
+        ///
         /// 10Mbps | 10Gbps | 100Mbps | 1Gbps
         /// </summary>
         [TikProperty("speed")]

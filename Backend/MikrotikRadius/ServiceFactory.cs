@@ -17,7 +17,7 @@ public static class ServiceFactory
         //     client.DefaultRequestHeaders.Accept.Add(
         //         new MediaTypeWithQualityHeaderValue("application/json"));
         // });
-        
+
         builder.Services.AddLazyTransient<ISessionRadiusSyncUserManagerService, SessionRadiusSyncUserManagerService>();
         builder.Services.AddLazyTransient<IAccountRadiusSyncUserManagerService, AccountRadiusSyncUserManagerService>();
         builder.Services.AddLazyTransient<IMikrotikDirectService, MikrotikDirectService>();

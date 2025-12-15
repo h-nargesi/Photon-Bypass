@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net.Objects.Interface.Bridge
 {
     /// <summary>
-    /// interface/bridge/settings: 
+    /// interface/bridge/settings:
     /// </summary>
     [TikEntity("interface/bridge/settings", IsSingleton = true)]
     public class BridgeSettings

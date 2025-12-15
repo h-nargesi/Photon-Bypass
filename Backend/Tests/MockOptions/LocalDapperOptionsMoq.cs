@@ -8,7 +8,7 @@ internal class LocalDapperOptionsMoq : Mock<IOptions<LocalDapperOptions>>, IOutS
 {
     public const string DatabaseStructureInitializerFilePath = "../../Database/LocalDatabase/";
     public const string DatabaseDataInitializerFilePath = "Data/Sql/";
-    
+
     public LocalDapperOptionsMoq()
     {
         Setup(options => options.Value).Returns(new LocalDapperOptions

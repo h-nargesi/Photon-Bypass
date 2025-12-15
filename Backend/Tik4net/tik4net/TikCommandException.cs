@@ -134,7 +134,7 @@ namespace tik4net
         public TikAlreadyHaveSuchItemException(ITikCommand command, ITikTrapSentence trapSentence) : base(command, trapSentence)
         {
         }
-    }   
+    }
 
     /// <summary>
     /// Exception thrown if fatal  error is returned from mikrotik router call.  (!FATAL)

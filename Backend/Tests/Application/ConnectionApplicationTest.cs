@@ -16,7 +16,7 @@ public class ConnectionApplicationTest : ServiceInitializer
 
         return func.Should().ThrowAsync<UserException>();
     }
-    
+
     [Fact]
     public Task GetCurrentConnectionState_InactiveAccount()
     {
@@ -26,7 +26,7 @@ public class ConnectionApplicationTest : ServiceInitializer
 
         return func.Should().ThrowAsync<UserException>();
     }
-    
+
     [Fact]
     public Task GetCurrentConnectionState_NoPlan()
     {
@@ -36,7 +36,7 @@ public class ConnectionApplicationTest : ServiceInitializer
 
         return func.Should().ThrowAsync<UserException>();
     }
-    
+
     [Fact]
     public async Task GetCurrentConnectionState_RealmWithNoRadius()
     {
@@ -58,7 +58,7 @@ public class ConnectionApplicationTest : ServiceInitializer
         Assert.NotNull(result_list);
         Assert.Equal(2, result_list.Count);
     }
-    
+
     [Fact]
     public Task CloseConnection_InvalidAccount()
     {
@@ -68,7 +68,7 @@ public class ConnectionApplicationTest : ServiceInitializer
 
         return func.Should().ThrowAsync<UserException>();
     }
-    
+
     [Fact]
     public Task CloseConnection_InactiveAccount()
     {
@@ -78,7 +78,7 @@ public class ConnectionApplicationTest : ServiceInitializer
 
         return func.Should().ThrowAsync<UserException>();
     }
-    
+
     [Fact]
     public Task CloseConnection_NoPlan()
     {
@@ -88,7 +88,7 @@ public class ConnectionApplicationTest : ServiceInitializer
 
         return func.Should().ThrowAsync<UserException>();
     }
-    
+
     [Fact]
     public Task CloseConnection_InvalidIp()
     {
@@ -98,7 +98,7 @@ public class ConnectionApplicationTest : ServiceInitializer
 
         return func.Should().ThrowAsync<UserException>();
     }
-    
+
     [Fact]
     public Task CloseConnection_InvalidServer()
     {
@@ -108,7 +108,7 @@ public class ConnectionApplicationTest : ServiceInitializer
 
         return func.Should().ThrowAsync<UserException>();
     }
-    
+
     [Fact]
     public Task CloseConnection_NoRadius()
     {
@@ -118,7 +118,7 @@ public class ConnectionApplicationTest : ServiceInitializer
 
         return func.Should().ThrowAsync<UserException>();
     }
-    
+
     [Fact]
     public Task CloseConnection_InvalidSessionId()
     {
@@ -128,7 +128,7 @@ public class ConnectionApplicationTest : ServiceInitializer
 
         return func.Should().ThrowAsync<UserException>();
     }
-    
+
     [Fact]
     public Task CloseConnection()
     {

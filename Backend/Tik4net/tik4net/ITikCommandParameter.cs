@@ -11,7 +11,7 @@ namespace tik4net
     public interface ITikCommandParameter
     {
         /// <summary>
-        /// Parameter name. 
+        /// Parameter name.
         /// REMARKS: If starts with one of ?= character, than <see cref="ParameterFormat"/> is ignored.
         /// </summary>
         string Name { get; set; }

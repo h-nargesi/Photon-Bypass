@@ -19,7 +19,7 @@ namespace tik4net.Objects
     /// <item><see cref="LoadAsync"/></item>
     /// </list>
     /// </para>
-    /// 
+    ///
     /// <para>
     /// <list type="bullet">
     /// <listheader>Save:</listheader>
@@ -27,14 +27,14 @@ namespace tik4net.Objects
     /// <item><see cref="SaveListDifferences"/> (Insert/Update/Delete)</item>
     /// </list>
     /// </para>
-    /// 
+    ///
     /// <para>
     /// <list type="bullet">
     /// <listheader>Delete:</listheader>
     /// <item><see cref="Delete"/></item>
     /// </list>
     /// </para>
-    /// 
+    ///
     /// <para>
     /// <list type="bullet">
     /// <listheader>Move:</listheader>
@@ -213,9 +213,9 @@ namespace tik4net.Objects
         /// <summary>
         /// Calls command and starts backgroud reading thread. After that returns control to calling thread.
         /// All read rows are returned as callbacks (<paramref name="onLoadItemCallback"/>, <paramref name="onExceptionCallback"/>) from loading thread.
-        /// REMARKS: if you want to propagate loaded values to GUI, you should use some kind of synchronization or Invoke, because 
+        /// REMARKS: if you want to propagate loaded values to GUI, you should use some kind of synchronization or Invoke, because
         /// callbacks are called from non-ui thread.
-        /// The running load can be terminated by <see cref="ITikCommand.Cancel"/> or <see cref="ITikCommand.CancelAndJoin()"/> call. 
+        /// The running load can be terminated by <see cref="ITikCommand.Cancel"/> or <see cref="ITikCommand.CancelAndJoin()"/> call.
         /// Command is returned as result of the method.
         /// </summary>
         /// <typeparam name="TEntity">Loaded entities type.</typeparam>
@@ -302,7 +302,7 @@ namespace tik4net.Objects
         /// <exception cref="TikNoSuchItemException">Invalid item (bad id/name etc.). Mikrotik API message: 'no such item'.</exception>
         public static void Save<TEntity>(this ITikConnection connection, TEntity entity, IEnumerable<string> usedFieldsFilter = null)
             where TEntity:new()
-        {            
+        {
             var metadata = TikEntityMetadataCache.GetMetadata<TEntity>();
             EnsureNotReadonlyEntity(metadata);
 
@@ -355,7 +355,7 @@ namespace tik4net.Objects
                     if (property.HasDefaultValue(entity) && property.UnsetOnDefault)
                         fieldsToUnset.Add(property.FieldName);
                     else
-                        setCmd.AddParameter(property.FieldName, property.GetEntityValue(entity)); //full update (all values)                        
+                        setCmd.AddParameter(property.FieldName, property.GetEntityValue(entity)); //full update (all values)
                 }
 
                 if (fieldsToUnset.Count > 0)
@@ -566,12 +566,12 @@ namespace tik4net.Objects
         ///        new QueueTree() { Name = "Q2", Parent = "global", PacketMark = "PM2", Comment = unique }, //always update
         ///        new QueueTree() { Name = "Q3 " + unique, Parent = "global", PacketMark = "PM3" }, // always insert + delete from previous run
         ///    };
-        /// connection.CreateMerge(expected, original) //access to merge object            
+        /// connection.CreateMerge(expected, original) //access to merge object
         ///    .WithKey(queue => queue.Name) // items with the same name are the same (name is the key)
         ///    .Field(q => q.Parent)         // we are updating just Parent, PacketMark and Comment fields
         ///    .Field(q => q.PacketMark)
         ///    .Field(q => q.Comment)
-        ///    .Save();                      // modify mikrotik router QueueTree 
+        ///    .Save();                      // modify mikrotik router QueueTree
         /// </example>
         public static TikListMerge<TEntity> CreateMerge<TEntity>(this ITikConnection connection, IEnumerable<TEntity> expected, IEnumerable<TEntity> original)
             where TEntity: new()

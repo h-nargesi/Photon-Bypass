@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net.Objects.Interface.Ethernet
 {
     /// <summary>
-    /// /interface ethernet monitor: command prints out current link, rate and duplex status of an interface. 
+    /// /interface ethernet monitor: command prints out current link, rate and duplex status of an interface.
     /// </summary>
     [TikEntity("/interface/ethernet/monitor", LoadCommand = "", LoadDefaultParameneterFormat = TikCommandParameterFormat.NameValue, IncludeDetails = false, IsReadOnly = true)]
     public class EthernetMonitor
@@ -29,7 +29,7 @@ namespace tik4net.Objects.Interface.Ethernet
         /// <summary>
         /// default-cable-settings
         /// Default cable length setting (only applicable to NS DP83815/6 cards)
-        ///  short - support short cables 
+        ///  short - support short cables
         ///  standard - support standard cables
         /// </summary>
         [TikProperty("default-cable-settings")]
@@ -76,19 +76,19 @@ namespace tik4net.Objects.Interface.Ethernet
         public bool SfpModulePresent { get; set; }
 
         /// <summary>
-        /// sfp-rx-lose: 
+        /// sfp-rx-lose:
         /// </summary>
         [TikProperty("sfp-rx-lose")]
         public bool SfpRxLose { get; set; }
 
         /// <summary>
-        /// sfp-tx-fault: 
+        /// sfp-tx-fault:
         /// </summary>
         [TikProperty("sfp-tx-fault")]
         public bool SfpTxFault { get; set; }
 
         /// <summary>
-        /// sfp-connector-type: 
+        /// sfp-connector-type:
         /// </summary>
         [TikProperty("sfp-connector-type")]
         public string SfpConnectorType { get; set; }

@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net.Objects.Ppp
 {
     /// <summary>
-    /// ppp/active: This submenu allows to monitor active (connected) users. 
+    /// ppp/active: This submenu allows to monitor active (connected) users.
     /// https://wiki.mikrotik.com/wiki/Manual:PPP_AAA
     /// </summary>
     [TikEntity("ppp/active", IsReadOnly = true)]

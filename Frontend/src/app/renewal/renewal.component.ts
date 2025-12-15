@@ -100,7 +100,7 @@ export class RenewalComponent implements OnInit {
     if (!this.estimate.value || !this.estimate.simultaneousUserCount) return;
 
     const plan = this.estimate as PlanInfo;
-    
+
     plan.target =
       this.user_service.targetName ?? this.current_user.username;
 

@@ -122,7 +122,7 @@ namespace tik4net
         string ExecuteScalarOrDefault(string defaultValue, string target);
 
         /// <summary>
-        /// Executes given <see cref="CommandText"/> on router and ensures that operation returns exactly one row (1x !re and 1x !done) as result.        
+        /// Executes given <see cref="CommandText"/> on router and ensures that operation returns exactly one row (1x !re and 1x !done) as result.
         /// </summary>
         /// <returns>Content of !re sentence.</returns>
         /// <exception cref="InvalidOperationException">Connection or command text not set. Comand is already running. Connection is not opened. Invalid response from API.</exception>
@@ -201,7 +201,7 @@ namespace tik4net
 
         /// <summary>
         /// Calls given <see cref="CommandText"/> to router. Response is returned via <paramref name="oneResponseCallback"/> callback when it is read from mikrotik (for tag, which has been dynamically assigned).
-        /// REMARKS: <paramref name="oneResponseCallback"/> is called from another NON-GUI thread. If you want to show response in UI, 
+        /// REMARKS: <paramref name="oneResponseCallback"/> is called from another NON-GUI thread. If you want to show response in UI,
         /// you should use some kind of synchronization like BeginInvoke in WinForms or SynchronizationContext. You can not touch UI controls directly without it.
         /// </summary>
         /// <param name="oneResponseCallback">Callback called periodically when response sentence is read from mikrotik.</param>
@@ -209,7 +209,7 @@ namespace tik4net
         /// <param name="onDoneCallback">Callback called at the end of command run (when command is successfully finished - !done is returned). Usefull for cleanup operations at the end of command lifecycle. You can also use synchronous call <see cref="CancelAndJoin()"/> from calling thread and do cleanup after it.</param>
         /// <seealso cref="Cancel"/>
         /// <seealso cref="ITikReSentence"/>
-        void ExecuteAsync(Action<ITikReSentence> oneResponseCallback, Action<ITikTrapSentence> errorCallback=null, Action onDoneCallback = null);        
+        void ExecuteAsync(Action<ITikReSentence> oneResponseCallback, Action<ITikTrapSentence> errorCallback=null, Action onDoneCallback = null);
 
         /// <summary>
         /// Adds new instance of parameter to <see cref="Parameters"/> list. Type of parameter is resolved from parameter name or from command type.

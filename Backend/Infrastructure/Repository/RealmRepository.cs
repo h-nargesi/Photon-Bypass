@@ -18,7 +18,7 @@ class RealmRepository(LocalDbContext context) : EditableRepository<RealmEntity>(
                    """;
 
         var result = await QueryAsync<string>(sql, new { id });
-        
+
         return result.FirstOrDefault();
     }
 

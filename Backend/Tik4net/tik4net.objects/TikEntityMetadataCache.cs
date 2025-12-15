@@ -41,6 +41,6 @@ namespace tik4net.Objects
                 }
             }
             return result;
-        }        
+        }
     }
 }

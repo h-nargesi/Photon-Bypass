@@ -7,7 +7,7 @@ namespace PhotonBypass.Infra.Radius;
 public interface IAccountRadiusSyncService
 {
     Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames);
-      
+
     Task DeactivateUserExcept(ServerEntity radius, HashSet<string> usernames);
 
     Task DeactivateUser(ServerEntity radius, IEnumerable<string> usernames);

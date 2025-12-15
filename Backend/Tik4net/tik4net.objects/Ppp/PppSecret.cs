@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net.Objects.Ppp
 {
     /// <summary>
-    /// ppp/secret: PPP User Database stores PPP user access records with PPP user profile assigned to each user. 
+    /// ppp/secret: PPP User Database stores PPP user access records with PPP user profile assigned to each user.
     /// https://wiki.mikrotik.com/wiki/Manual:PPP_AAA
     /// </summary>
     [TikEntity("ppp/secret")]

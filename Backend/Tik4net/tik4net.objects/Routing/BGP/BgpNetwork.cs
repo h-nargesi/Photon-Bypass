@@ -8,7 +8,7 @@ namespace tik4net.Objects.Routing.Bgp
     public class BgpNetwork
     {
         /// <summary>
-        /// .id: 
+        /// .id:
         /// </summary>
         [TikProperty(".id", IsReadOnly = true, IsMandatory = true)]
         public string Id { get; private set; }

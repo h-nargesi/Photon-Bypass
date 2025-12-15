@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net.Objects.Ip.DhcpServer
 {
     /// <summary>
-    /// ip/dhcp-server/network : 
+    /// ip/dhcp-server/network :
     /// </summary>
     [TikEntity("ip/dhcp-server/network")]
     public class DhcpServerNetwork

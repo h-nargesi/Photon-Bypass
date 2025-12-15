@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net
 {
     /// <summary>
-    /// Response sentence (<see cref="ITikSentence"/>) from mikrotik router with !re data. 
+    /// Response sentence (<see cref="ITikSentence"/>) from mikrotik router with !re data.
     /// It is data sentence (typically when list of entities is requested).
     /// </summary>
     /// <seealso cref="ITikSentence"/>

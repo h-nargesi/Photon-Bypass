@@ -45,7 +45,7 @@ namespace tik4net
         public static void ArgumentOfType<TExpectedType>(object argumentValue, string argumentName)
         {
             if (argumentName is TExpectedType)
-                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "The provided argument {0} must of '{1}' type.", argumentName, typeof(TExpectedType)), argumentName);            
+                throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, "The provided argument {0} must of '{1}' type.", argumentName, typeof(TExpectedType)), argumentName);
         }
     }
 }

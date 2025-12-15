@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net.Objects.Ip.Firewall
 {
     /// <summary>
-    /// Allows to disable or enable connection tracking. Disabling connection tracking will cause several firewall features to stop working. 
+    /// Allows to disable or enable connection tracking. Disabling connection tracking will cause several firewall features to stop working.
     /// Features affected by connection tracking:
     /// * NAT
     /// * firewall: connection-bytes, connection-mark, connection-type, connection-state, connection-limit, connection-rate, layer7-protocol, p2p, new-connection-mark, tarpit, p2p matching in simple queues
@@ -39,49 +39,49 @@ namespace tik4net.Objects.Ip.Firewall
         public string/*time*/ TcpEstablishedTimeout { get; set; }
 
         /// <summary>
-        /// tcp-fin-wait-timeout: 
+        /// tcp-fin-wait-timeout:
         /// </summary>
         [TikProperty("tcp-fin-wait-timeout", DefaultValue = "10s")]
         public string/*time*/ TcpFinWaitTimeout { get; set; }
 
         /// <summary>
-        /// tcp-close-wait-timeout: 
+        /// tcp-close-wait-timeout:
         /// </summary>
         [TikProperty("tcp-close-wait-timeout", DefaultValue = "10s")]
         public string/*time*/ TcpCloseWaitTimeout { get; set; }
 
         /// <summary>
-        /// tcp-last-ack-timeout: 
+        /// tcp-last-ack-timeout:
         /// </summary>
         [TikProperty("tcp-last-ack-timeout", DefaultValue = "10s")]
         public string/*time*/ TcpLastAckTimeout { get; set; }
 
         /// <summary>
-        /// tcp-time-wait-timeout: 
+        /// tcp-time-wait-timeout:
         /// </summary>
         [TikProperty("tcp-time-wait-timeout", DefaultValue = "10s")]
         public string/*time*/ TcpTimeWaitTimeout { get; set; }
 
         /// <summary>
-        /// tcp-close-timeout: 
+        /// tcp-close-timeout:
         /// </summary>
         [TikProperty("tcp-close-timeout", DefaultValue = "10s")]
         public string/*time*/ TcpCloseTimeout { get; set; }
 
         /// <summary>
-        /// udp-timeout: 
+        /// udp-timeout:
         /// </summary>
         [TikProperty("udp-timeout", DefaultValue = "10s")]
         public string/*time*/ UdpTimeout { get; set; }
 
         /// <summary>
-        /// udp-stream-timeout: 
+        /// udp-stream-timeout:
         /// </summary>
         [TikProperty("udp-stream-timeout", DefaultValue = "3m")]
         public string/*time*/ UdpStreamTimeout { get; set; }
 
         /// <summary>
-        /// icmp-timeout: 
+        /// icmp-timeout:
         /// </summary>
         [TikProperty("icmp-timeout", DefaultValue = "10s")]
         public string/*time*/ IcmpTimeout { get; set; }

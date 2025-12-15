@@ -19,7 +19,7 @@ namespace tik4net.Objects.User
 		public string Name { get; set; }
 
 		/// <summary>
-		/// Gets or sets the group's policies as comma-separated list. 
+		/// Gets or sets the group's policies as comma-separated list.
 		/// </summary>
 		[TikProperty("policy")]
 		public string Policy { get; set; }

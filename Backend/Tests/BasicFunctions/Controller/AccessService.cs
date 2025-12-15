@@ -12,7 +12,7 @@ public class AccessService : ServiceInitializer
         var access = access_service.CheckAccess("user-x", "user-b");
         Assert.False(access);
     }
-    
+
     [Fact]
     public void CheckAccess_InvalidAccess_NullCache()
     {
@@ -22,7 +22,7 @@ public class AccessService : ServiceInitializer
         var access = access_service.CheckAccess("user", "user-b");
         Assert.False(access);
     }
-    
+
     [Fact]
     public void CheckAccess_InvalidAccess_EmptyCache()
     {
@@ -32,7 +32,7 @@ public class AccessService : ServiceInitializer
         var access = access_service.CheckAccess("user", "user-b");
         Assert.False(access);
     }
-    
+
     [Fact]
     public void CheckAccess_InvalidAccess_WithCache()
     {
@@ -42,7 +42,7 @@ public class AccessService : ServiceInitializer
         var access = access_service.CheckAccess("user", "subuser10");
         Assert.False(access);
     }
-    
+
     [Fact]
     public void CheckAccess_HasAccess()
     {

@@ -22,8 +22,8 @@ namespace tik4net.tests
             Connection.OnWriteRow += (sender, args) => { System.Diagnostics.Debug.WriteLine(args.Word); };
             Connection.OnReadRow += (sender, args) => { System.Diagnostics.Debug.WriteLine(args.Word); };
 
-            var cmd1 = Connection.LoadAsync<ToolTorch>(t => { System.Diagnostics.Debug.WriteLine("ether1: " + t); }, 
-                ex => { System.Diagnostics.Debug.WriteLine("ERROR: " + ex.Message);  isFailed = true; }, 
+            var cmd1 = Connection.LoadAsync<ToolTorch>(t => { System.Diagnostics.Debug.WriteLine("ether1: " + t); },
+                ex => { System.Diagnostics.Debug.WriteLine("ERROR: " + ex.Message);  isFailed = true; },
                 Connection.CreateParameter("interface", "ether1"));
             var cmd2 = Connection.LoadAsync<ToolTorch>(t => { System.Diagnostics.Debug.WriteLine("wlan1: " + t); },
                 ex => { System.Diagnostics.Debug.WriteLine("ERROR: " + ex.Message); isFailed = true; },

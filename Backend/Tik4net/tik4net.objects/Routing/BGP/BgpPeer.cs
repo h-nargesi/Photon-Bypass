@@ -9,7 +9,7 @@ namespace tik4net.Objects.Routing.Bgp
     public class BgpPeer
     {
         /// <summary>
-        /// .id: 
+        /// .id:
         /// </summary>
         [TikProperty(".id", IsReadOnly = true, IsMandatory = true)]
         public string Id { get; private set; }
@@ -129,31 +129,31 @@ namespace tik4net.Objects.Routing.Bgp
         public long PrefixCount { get; private set; }
 
         /// <summary>
-        /// Gets the number of updates that have been sent to this peer. 
+        /// Gets the number of updates that have been sent to this peer.
         /// </summary>
         [TikProperty("updates-sent", IsReadOnly = true)]
         public long UpdatesSent { get; private set; }
 
         /// <summary>
-        /// Gets the number of updates that have been received from this peer. 
+        /// Gets the number of updates that have been received from this peer.
         /// </summary>
         [TikProperty("updates-received", IsReadOnly = true)]
         public long UpdatesReceived { get; private set; }
 
         /// <summary>
-        /// Gets the number of withdrawals that have been sent to this peer. 
+        /// Gets the number of withdrawals that have been sent to this peer.
         /// </summary>
         [TikProperty("withdrawn-sent", IsReadOnly = true)]
         public long WithdrawnSent { get; private set; }
 
         /// <summary>
-        /// Gets the number of withdrawals that have been received form this peer. 
+        /// Gets the number of withdrawals that have been received form this peer.
         /// </summary>
         [TikProperty("withdrawn-received", IsReadOnly = true)]
         public long WithdrawnReceived { get; private set; }
 
         /// <summary>
-        /// remote-hold-time: 
+        /// remote-hold-time:
         /// </summary>
         [TikProperty("remote-hold-time", IsReadOnly = true)]
         public string RemoteHoldTime { get; private set; }

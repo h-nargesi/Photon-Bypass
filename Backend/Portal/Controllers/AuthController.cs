@@ -38,7 +38,7 @@ public class AuthController(
         var result = await application.CheckUserPassword(context.Username, context.Password);
 
         if (result is not { Code: < 300, Data: not null }) return SafeApiResult(result);
-        
+
         var token = GenerateToken(result.Data);
 
         AccessSrv.Value.LoginEvent(result.Data.Username, [.. result.Data.TargetArea.Keys]);

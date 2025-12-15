@@ -117,7 +117,7 @@ namespace tik4net.tests
             {
                 Address = ADDRESS,
             };
-            
+
             Connection.Save(binding);
             var loadedBinding = Connection.LoadAll<HotspotIpBinding>().SingleOrDefault(ib => ib.Address == ADDRESS);
             Assert.IsNotNull(loadedBinding);

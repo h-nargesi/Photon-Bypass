@@ -13,7 +13,7 @@ public class HistoryEntity : IBaseEntity
     public int? Issuer { get; set; }
 
     public int Target { get; init; }
-    
+
     public EventCategory Category { get; init; }
 
     public EventType Type { get; init; }

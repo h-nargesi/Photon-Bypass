@@ -18,7 +18,7 @@ public static class ServiceFactoryHandler
         builder.AddMikrotikRadiusServices();
         builder.AddOutSourceServices();
         builder.AddApplicationServices();
-        
+
         return builder;
     }
 }

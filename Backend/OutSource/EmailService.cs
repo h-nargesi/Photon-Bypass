@@ -28,7 +28,7 @@ class EmailService(IEmailHandler handler) : IEmailService
             .Replace("{left}", left);
 
         using var message = new MailMessage(from_address, to_address);
-        
+
         message.Subject = $"پایان سرویس | {username}";
         message.IsBodyHtml = false;
         message.Body = body;

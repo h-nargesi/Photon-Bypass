@@ -44,7 +44,7 @@ namespace tik4net.Mndp
             var result = new List<TikInstanceDescriptor>();
             var receiveEndpoint = new IPEndPoint(IPAddress.Any, MNDP_UDP_PORT);
 
-            using (var udpClient = new UdpClient() { EnableBroadcast = true, ExclusiveAddressUse = false, MulticastLoopback = true })            
+            using (var udpClient = new UdpClient() { EnableBroadcast = true, ExclusiveAddressUse = false, MulticastLoopback = true })
             {
                 udpClient.Client.Bind(receiveEndpoint);
                 using (var cancelSource = new CancellationTokenSource())
@@ -81,7 +81,7 @@ namespace tik4net.Mndp
                     for (int i = 0; i < timeout.TotalMilliseconds / BROADCAST_DELAY; i++)
                     {
                         SendMndpBroadcast();
-                        
+
                         Thread.Sleep(BROADCAST_DELAY);
                         if (stopWhenFirstFound && result.Count > 0)
                             break;
@@ -90,7 +90,7 @@ namespace tik4net.Mndp
                     cancelSource.Cancel();
                     receivingTask.Wait();
                 }
-            }            
+            }
 
             return result;
         }
@@ -180,7 +180,7 @@ namespace tik4net.Mndp
                     var ttl = reader.ReadByte();      // 1. byte   = TTL
                     var sequence = reader.ReadWord(); // 2-3. byte = SEQUENCE
 
-                    //Message items 
+                    //Message items
                     var messageItems = new Dictionary<UInt16, byte[]>();
                     while (reader.BaseStream.Position < data.Length)
                     {
@@ -202,7 +202,7 @@ namespace tik4net.Mndp
                     var unpack = encoding.GetString(messageItems[14]);                                               // 14 = Unpack ???
                     var IPV6 = messageItems.ContainsKey(15) ? encoding.GetString(messageItems[15]) : string.Empty;    // 15 = IPV6 (optional)
                     var interfaceName = encoding.GetString(messageItems[16]);                                        // 16 = InterfaceName
-                    var IPV4 = messageItems.ContainsKey(17) ? new IPAddress(messageItems[17]) : IPAddress.Any;       // 17 = IPV4 (optional)    
+                    var IPV4 = messageItems.ContainsKey(17) ? new IPAddress(messageItems[17]) : IPAddress.Any;       // 17 = IPV4 (optional)
 
                     routerDescriptor = new TikInstanceDescriptor(identity, version, platform, uptime, softwareId, boardName, unpack, mac, IPV6, interfaceName, IPV4);
                     return true;

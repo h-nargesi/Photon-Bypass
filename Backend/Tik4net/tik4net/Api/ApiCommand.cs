@@ -15,13 +15,13 @@ namespace tik4net.Api
         private readonly List<ITikCommandParameter> _parameters = new List<ITikCommandParameter>();
         private ApiConnection _connection;
         private string _commandText;
-        private TikCommandParameterFormat _defaultParameterFormat;      
+        private TikCommandParameterFormat _defaultParameterFormat;
 
         public ITikConnection Connection
         {
             get { return _connection; }
             set
-            {                
+            {
                 Guard.ArgumentOfType<ApiConnection>(value, "Session");
                 EnsureNotRunning();
 
@@ -60,7 +60,7 @@ namespace tik4net.Api
             _defaultParameterFormat = TikCommandParameterFormat.Default;
         }
 
-        public ApiCommand(TikCommandParameterFormat defaultParameterFormat)            
+        public ApiCommand(TikCommandParameterFormat defaultParameterFormat)
         {
             _defaultParameterFormat = defaultParameterFormat;
         }
@@ -93,7 +93,7 @@ namespace tik4net.Api
         public ApiCommand(ITikConnection connection, string commandText, params ITikCommandParameter[] parameters)
             : this(connection, commandText)
         {
-            _parameters.AddRange(parameters);            
+            _parameters.AddRange(parameters);
         }
 
         public ApiCommand(ITikConnection connection, string commandText, TikCommandParameterFormat defaultParameterFormat, params ITikCommandParameter[] parameters)
@@ -115,7 +115,7 @@ namespace tik4net.Api
         }
 
         private void EnsureCommandTextSet()
-       { 
+       {
             if (string.IsNullOrWhiteSpace(_commandText))
                 throw new InvalidOperationException("CommandText is not set.");
         }
@@ -142,7 +142,7 @@ namespace tik4net.Api
                 if (_parameters.Any(p => p.Name == additionalParameter.Name))
                     throw new ArgumentException($"Parameter {additionalParameter.Name} already defined (could not be additionalParameter / proplist / etc.).");
             }
-        
+
             string commandText = CommandText;
             if (!string.IsNullOrWhiteSpace(commandText) && !commandText.Contains("\n") && !commandText.StartsWith("/"))
                 commandText = "/" + commandText;
@@ -374,7 +374,7 @@ namespace tik4net.Api
         public ITikReSentence ExecuteSingleRowOrDefault()
         {
             var sentences = ExecuteList();
-            
+
             if (sentences.Count() > 1)
                 throw new TikCommandAmbiguousResultException(this);
             return sentences.SingleOrDefault();
@@ -405,7 +405,7 @@ namespace tik4net.Api
                 IEnumerable<ApiSentence> response = EnsureApiSentences(_connection.CallCommandSync(commandRows));
                 ThrowPossibleResponseError(response.ToArray());
 
-                EnsureReReponse(response.Take(response.Count() - 1).ToArray());   //!re  - reapeating 
+                EnsureReReponse(response.Take(response.Count() - 1).ToArray());   //!re  - reapeating
                 EnsureDoneResponse(response.Last()); //!done
 
                 return response.Take(response.Count() - 1).Cast<ITikReSentence>().ToList();
@@ -416,7 +416,7 @@ namespace tik4net.Api
             }
         }
 
-        public void ExecuteAsync(Action<ITikReSentence> oneResponseCallback, 
+        public void ExecuteAsync(Action<ITikReSentence> oneResponseCallback,
             Action<ITikTrapSentence> errorCallback = null,
             Action onDoneCallback = null)
         {
@@ -517,12 +517,12 @@ namespace tik4net.Api
             {
                 Thread.Sleep(100);
                 if (asyncExceptionMessage != null) //ended with exception
-                {                    
+                {
                     _isRuning = false;
                     wasAborted = true;
                     abortReason = asyncExceptionMessage;
                 }
-                if (!_connection.IsOpened) 
+                if (!_connection.IsOpened)
                 {
                     _isRuning = false;
                     wasAborted = true;
@@ -530,7 +530,7 @@ namespace tik4net.Api
                     return result;
                 }
                 if (!_isRuning) //already ended (cancelled froum outside?)
-                {                    
+                {
                     wasAborted = true;
                     abortReason = "Cancelled";
                     return result;
@@ -546,10 +546,10 @@ namespace tik4net.Api
         {
             if (_isRuning && _asynchronouslyRunningTag >= 0)
             {
-                 ApiCommand cancellCommand = new ApiCommand(_connection, "/cancel", 
-                     new ApiCommandParameter("tag", _asynchronouslyRunningTag.ToString(), TikCommandParameterFormat.NameValue), // tag we are cancelling: REMARKS: =tag=1234 and not =.tag=1234 
+                 ApiCommand cancellCommand = new ApiCommand(_connection, "/cancel",
+                     new ApiCommandParameter("tag", _asynchronouslyRunningTag.ToString(), TikCommandParameterFormat.NameValue), // tag we are cancelling: REMARKS: =tag=1234 and not =.tag=1234
                      new ApiCommandParameter(TikSpecialProperties.Tag, "c_"+_asynchronouslyRunningTag.ToString(), TikCommandParameterFormat.Tag) //tag of cancell command itself
-                     );                
+                     );
                  cancellCommand.ExecuteNonQuery();
                 if (joinLoadingThread)
                 {
@@ -564,7 +564,7 @@ namespace tik4net.Api
                             return true;
                         }
                     }
-                }                
+                }
             }
             return true;
         }

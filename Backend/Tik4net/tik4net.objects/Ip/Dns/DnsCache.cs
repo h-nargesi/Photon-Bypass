@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net.Objects.Ip.Dns
 {
     /// <summary>
-    /// ip/dns: This menu provides a list with all address (DNS type "A") records stored on the server 
+    /// ip/dns: This menu provides a list with all address (DNS type "A") records stored on the server
     /// </summary>
     [TikEntity("ip/dns/cache", IsReadOnly = true)]
     public class DnsCache
@@ -39,7 +39,7 @@ namespace tik4net.Objects.Ip.Dns
         public string/*read-only: time*/ Ttl { get; private set; }
 
         /// <summary>
-        /// clears internal DNS cache 
+        /// clears internal DNS cache
         /// </summary>
         public static void Flush(ITikConnection connection)
         {

@@ -11,7 +11,7 @@ public class SessionRadiusSyncRadiusDeskService(RadWebApiOptionContext web_web_a
     {
         web_web_api_context.WebApiConfig = radius.Config?.WebApiConfig ??
                                            throw new Exception($"The web-config is not set for server ({radius.Id}:{radius.Name})");
-        
+
         throw new NotImplementedException();
     }
 

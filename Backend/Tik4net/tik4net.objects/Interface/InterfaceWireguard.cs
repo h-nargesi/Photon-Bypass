@@ -37,7 +37,7 @@ namespace tik4net.Objects.Interface
 
         /// <summary>
         /// mtu: Layer3 Maximum transmission unit
-        /// 
+        ///
         /// integer [0..65536]
         /// </summary>
         [TikProperty("mtu", DefaultValue = "1420")]

@@ -8,15 +8,15 @@ namespace tik4net.Objects.Ip
     /// <summary>
     /// ip/dhcp server
     /// The DHCP (Dynamic Host Configuration Protocol) is used for the easy distribution of IP addresses in a network. The MikroTik RouterOS implementation includes both server and client parts and is compliant with RFC 2131.
-    /// 
+    ///
     /// The router supports an individual server for each Ethernet-like interface. The MikroTik RouterOS DHCP server supports the basic functions of giving each requesting client an IP address/netmask lease, default gateway, domain name, DNS-server(s) and WINS-server(s) (for Windows clients) information (set up in the DHCP networks submenu)
-    /// 
+    ///
     /// In order for the DHCP server to work, IP pools must also be configured (do not include the DHCP server's own IP address into the pool range) and the DHCP networks.
-    /// 
+    ///
     /// It is also possible to hand out leases for DHCP clients using the RADIUS server; the supported parameters for a RADIUS server is as follows:
     /// </summary>
     /// <remarks>
-    /// Note: DHCP server requires a real interface to receive raw ethernet packets. If the interface is a Bridge interface, then the Bridge must have a real interface attached as a port to that bridge which will receive the raw ethernet packets. It cannot function correctly on a dummy (empty bridge) interface. 
+    /// Note: DHCP server requires a real interface to receive raw ethernet packets. If the interface is a Bridge interface, then the Bridge must have a real interface attached as a port to that bridge which will receive the raw ethernet packets. It cannot function correctly on a dummy (empty bridge) interface.
     /// </remarks>
     [TikEntity("ip/dhcp-server")]
     public class IpDhcpServer
@@ -33,7 +33,7 @@ namespace tik4net.Objects.Ip
             [TikEnum("after-2sec-delay")]
             After2secDelay,
             /// <summary>
-            /// yes - replies to clients request for an address that is not available from this server, dhcp server will send negative acknowledgment (DHCPNAK) 
+            /// yes - replies to clients request for an address that is not available from this server, dhcp server will send negative acknowledgment (DHCPNAK)
             /// </summary>
             [TikEnum("yes")]
             Yes,
@@ -55,12 +55,12 @@ namespace tik4net.Objects.Ip
         public enum BootpSupportType
         {
             /// <summary>
-            /// static - offer only static leases to BOOTP clients 
+            /// static - offer only static leases to BOOTP clients
             /// </summary>
             [TikEnum("static")]
             Static,
             /// <summary>
-            /// none - do not respond to BOOTP requests 
+            /// none - do not respond to BOOTP requests
             /// </summary>
             [TikEnum("none")]
             None,
@@ -94,13 +94,13 @@ namespace tik4net.Objects.Ip
         /// always-broadcast: Always send replies as broadcasts.
         /// </summary>
         [TikProperty("always-broadcast", DefaultValue = "no")]
-        public bool AlwaysBroadcast { get; set; }                                    
+        public bool AlwaysBroadcast { get; set; }
 
         /// <summary>
         /// authoritative
         /// Option changes the way how server responds to DHCP requests:
-        ///  yes - replies to clients request for an address that is not available from this server, dhcp server will send negative acknowledgment (DHCPNAK) 
-        ///  no - dhcp server ignores clients requests for addresses that are not available from this server 
+        ///  yes - replies to clients request for an address that is not available from this server, dhcp server will send negative acknowledgment (DHCPNAK)
+        ///  no - dhcp server ignores clients requests for addresses that are not available from this server
         ///  after-10sec-delay - requests with "secs &lt; 10" will be processed as in "no" setting case and requests with "secs &gt;= 10" will be processed as in "yes" case.
         ///  after-2sec-delay - requests with "secs &lt; 2" will be processed as in "no" setting case and requests with "secs &gt;= 2" will be processed as in "yes" case.
         /// If all requests with "secs &lt; x" should be ignored, then delay-threshold=x setting should be used.
@@ -111,8 +111,8 @@ namespace tik4net.Objects.Ip
         /// <summary>
         /// bootp-support
         /// Support for BOOTP clients:
-        ///  none - do not respond to BOOTP requests 
-        ///  static - offer only static leases to BOOTP clients 
+        ///  none - do not respond to BOOTP requests
+        ///  static - offer only static leases to BOOTP clients
         ///  dynamic - offer static and dynamic leases for BOOTP clients
         /// </summary>
         [TikProperty("bootp-support", DefaultValue = "static")]
@@ -156,7 +156,7 @@ namespace tik4net.Objects.Ip
         /// <summary>
         /// relay
         /// The IP address of the relay this DHCP server should process requests from:
-        ///  0.0.0.0 - the DHCP server will be used only for direct requests from clients (no DHCP really allowed) 
+        ///  0.0.0.0 - the DHCP server will be used only for direct requests from clients (no DHCP really allowed)
         ///  255.255.255.255 - the DHCP server should be used for any incoming request from a DHCP relay except for those, which are processed by another DHCP server that exists in the /ip dhcp-server submenu.
         /// </summary>
         [TikProperty("relay", DefaultValue = "0.0.0.0")]

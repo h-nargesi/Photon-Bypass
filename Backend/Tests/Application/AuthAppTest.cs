@@ -115,7 +115,7 @@ public class AuthAppTest : ServiceInitializer
             Assert.True(message.To.Count > 0);
             Assert.Equal("user4@gmail.com", message.To.First().Address);
         };
-        
+
         var result = await auth_app.ResetPassword("user4@gmail.com");
 
         Assert.NotNull(result);

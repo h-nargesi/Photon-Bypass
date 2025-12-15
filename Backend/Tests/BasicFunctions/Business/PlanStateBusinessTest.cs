@@ -14,7 +14,7 @@ public class PlanStateBusinessTest
         {
             ExpirationDate = DateTime.Now.AddDays(3),
             TimeLimitInDays = 1000,
-            TrafficLeft = 3, 
+            TrafficLeft = 3,
             TrafficLimit = 1000,
         }.IsFinishing());
     }

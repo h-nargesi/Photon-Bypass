@@ -23,5 +23,3 @@ Mikrotik Setup: Server Bridge, Domain
 ## Basical Services
 Server Bridge: SSH, API
 Shared
-
-        

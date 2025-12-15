@@ -50,14 +50,14 @@ namespace tik4net.tests
             //Asserts
             var item = items.SingleOrDefault(i => i.Name == dnsItem.Name);
             Assert.IsNotNull(item);
-            Assert.AreEqual(dnsItem.Address, item.Address);            
+            Assert.AreEqual(dnsItem.Address, item.Address);
 
             //cleanup
             Connection.Delete(item);
         }
 
 
-        [TestMethod]       
+        [TestMethod]
         public void StaticDnsRecordWithRegexWillNotFail_Issue77()
         {
             //create item

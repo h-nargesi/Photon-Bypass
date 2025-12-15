@@ -26,7 +26,7 @@ class VpnApplication(
     : IVpnApplication
 {
     private const int MaxDateBefore = 30;
-    
+
     private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
     private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
     private Lazy<ITrafficDataRepository> TrafficDataRepo { get; } = traffic_data_repo;
@@ -121,7 +121,7 @@ class VpnApplication(
     {
         var min_date_time = DateTime.Now.AddDays(-MaxDateBefore);
         await ServerMngSrv.Value.UpdateTrafficData(min_date_time);
-        
+
         var account_id = await AccountRepo.Value.GetActiveAccountId(target);
         if (!account_id.HasValue)
         {

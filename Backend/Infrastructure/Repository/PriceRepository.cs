@@ -10,17 +10,17 @@ class PriceRepository(LocalDbContext context) : EditableRepository<PriceEntity>(
     {
         await OpenAsync();
 
-        var result = await FindAsync(statement => 
+        var result = await FindAsync(statement =>
             statement.Where($"{nameof(PriceEntity.State)} = 2"));
 
         return [.. result];
     }
-    
+
     public async Task<List<PriceEntity>> GetActives()
     {
         await OpenAsync();
 
-        var result = await FindAsync(statement => 
+        var result = await FindAsync(statement =>
             statement.Where($"{nameof(PriceEntity.State)} >= 1"));
 
         return [.. result];

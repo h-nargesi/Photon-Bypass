@@ -6,7 +6,7 @@ using System.Text;
 namespace tik4net.Objects.Ppp
 {
     /// <summary>
-    /// ppp/profile: PPP profiles are used to define default values for user access records stored under /ppp secret submenu. Settings in /ppp secret User Database override corresponding /ppp profile settings except that single IP addresses always take precedence over IP pools when specified as local-address or remote-address parameters. 
+    /// ppp/profile: PPP profiles are used to define default values for user access records stored under /ppp secret submenu. Settings in /ppp secret User Database override corresponding /ppp profile settings except that single IP addresses always take precedence over IP pools when specified as local-address or remote-address parameters.
     /// https://wiki.mikrotik.com/wiki/Manual:PPP_AAA
     /// </summary>
     [TikEntity("ppp/profile")]
@@ -33,15 +33,15 @@ namespace tik4net.Objects.Ppp
         /// <summary>
         /// change-tcp-mss
         /// Modifies connection MSS settings:
-        ///  yes - adjust connection MSS value 
-        ///  no - do not adjust connection MSS value 
+        ///  yes - adjust connection MSS value
+        ///  no - do not adjust connection MSS value
         ///  default - derive this value from the interface default profile; same as no if this is the interface default profile
         /// </summary>
         [TikProperty("change-tcp-mss", DefaultValue = "default")]
         public string/*yes | no | default*/ ChangeTcpMss { get; set; }
 
         /// <summary>
-        /// comment: 
+        /// comment:
         /// </summary>
         [TikProperty("comment")]
         public string Comment { get; set; }
@@ -85,8 +85,8 @@ namespace tik4net.Objects.Ppp
         /// <summary>
         /// only-one
         /// Defines whether a user is allowed to have more than one connection at a time
-        ///  yes - a user is not allowed to have more than one connection at a time 
-        ///  no - the user is allowed to have more than one connection at a time 
+        ///  yes - a user is not allowed to have more than one connection at a time
+        ///  no - the user is allowed to have more than one connection at a time
         ///  default - derive this value from the interface default profile; same as no if this is the interface default profile
         /// </summary>
         [TikProperty("only-one", DefaultValue = "default")]
@@ -125,9 +125,9 @@ namespace tik4net.Objects.Ppp
         /// <summary>
         /// use-compression
         /// Specifies whether to use data compression or not.
-        ///  yes - enable data compression 
+        ///  yes - enable data compression
         ///  no - disable data compression
-        ///  default - derive this value from the interface default profile; same as no if this is the interface default profile 
+        ///  default - derive this value from the interface default profile; same as no if this is the interface default profile
         /// This setting does not affect OVPN tunnels.
         /// </summary>
         [TikProperty("use-compression", DefaultValue = "default")]
@@ -136,9 +136,9 @@ namespace tik4net.Objects.Ppp
         /// <summary>
         /// use-encryption
         /// Specifies whether to use data encryption or not.
-        ///  yes - enable data encryption 
+        ///  yes - enable data encryption
         ///  no - disable data encryption
-        ///  default - derive this value from the interface default profile; same as no if this is the interface default profile 
+        ///  default - derive this value from the interface default profile; same as no if this is the interface default profile
         ///  require - explicitly requires encryption
         /// This setting does not work on OVPN and SSTP tunnels.
         /// </summary>
@@ -150,7 +150,7 @@ namespace tik4net.Objects.Ppp
         /// Specifies whether to allow IPv6. By default is enabled if IPv6 package is installed.
         ///  yes - enable IPv6 support
         ///  no - disable IPv6 support
-        ///  default - derive this value from the interface default profile; same as no if this is the interface default profile 
+        ///  default - derive this value from the interface default profile; same as no if this is the interface default profile
         ///  require - explicitly requires IPv6 support
         /// </summary>
         [TikProperty("use-ipv6", DefaultValue = "default")]
@@ -161,7 +161,7 @@ namespace tik4net.Objects.Ppp
         /// Specifies whether to allow MPLS over PPP.
         ///  yes - enable MPLS support
         ///  no - disable MPLS support
-        ///  default - derive this value from the interface default profile; same as no if this is the interface default profile 
+        ///  default - derive this value from the interface default profile; same as no if this is the interface default profile
         ///  require - explicitly requires MPLS support
         /// </summary>
         [TikProperty("use-mpls", DefaultValue = "default")]
@@ -171,7 +171,7 @@ namespace tik4net.Objects.Ppp
         /// use-vj-compression
         /// Specifies whether to use Van Jacobson header compression algorithm.
         ///  yes - enable Van Jacobson header compression
-        ///  no - disable Van Jacobson header compression 
+        ///  no - disable Van Jacobson header compression
         ///  default - derive this value from the interface default profile; same as no if this is the interface default profile
         /// </summary>
         [TikProperty("use-vj-compression", DefaultValue = "default")]

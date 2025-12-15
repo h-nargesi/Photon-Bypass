@@ -192,7 +192,7 @@ namespace tik4net.tests
             {
                 using (var connection = ConnectionFactory.CreateConnection(DEFAULT_CONNECTION_TYPE))
                 {
-                    connection.ReceiveTimeout = 1; //very short timeout + using async version 
+                    connection.ReceiveTimeout = 1; //very short timeout + using async version
                     await connection.OpenAsync(ConfigurationManager.AppSettings["host"], ConfigurationManager.AppSettings["user"], ConfigurationManager.AppSettings["pass"]);
                     connection.Close();
                 }
@@ -244,7 +244,7 @@ namespace tik4net.tests
         //    // read with tag formated directly in command
         //    using (var connection = OpenConnection())
         //    {
-        //        //var result = connection.CallCommandSync("/system/reboot");                
+        //        //var result = connection.CallCommandSync("/system/reboot");
         //        var command = connection.CreateCommand("/system/reboot");
         //        command.ExecuteNonQuery();
         //    }

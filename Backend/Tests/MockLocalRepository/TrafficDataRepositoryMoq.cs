@@ -66,12 +66,12 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSour
                 var last_update_time = data_list
                     .Where(traffic => !traffic.EndSession.HasValue)
                     .Min(traffic => (DateTime?)traffic.StartSession);
-                
+
                 if (last_update_time.HasValue)
                 {
                     return Task.FromResult(last_update_time);
                 }
-                
+
                 last_update_time = data_list
                     .Max(traffic => traffic.StartSession);
 

@@ -27,7 +27,7 @@ internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IOutSourceMoq
     {
         OnExecute?.Invoke(command_text, parameters);
     }
-    
+
     private ITikConnection CreateMoq(ServerEntity server)
     {
         var connection_mock = new Mock<ITikConnection>();

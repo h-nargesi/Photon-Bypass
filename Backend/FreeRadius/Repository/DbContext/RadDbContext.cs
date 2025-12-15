@@ -8,7 +8,7 @@ namespace PhotonBypass.FreeRadius.Repository.DbContext;
 class RadDbContext(IOptions<RadDapperOptions> options) : IDapperDbContext
 {
     private readonly MySqlConnection connection = new(options.Value.ConnectionString);
-    
+
     public IDbConnection Connection => connection;
 
     public Task Open()

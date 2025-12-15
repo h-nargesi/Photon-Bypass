@@ -23,8 +23,8 @@ class AccountRadiusSyncService(
     private Lazy<IServerRepository> ServerRepo { get; } = server_repo;
     private Lazy<IMikrotikDirectService> MikrotikDirectSrv { get; } = mikrotik_direct_srv;
     private Lazy<IAccountRadiusSyncUserManagerService> MikrotikRadius { get; } = mikrotik_radius;
-    private Lazy<IAccountRadiusSyncRadiusDeskService> RadiusDesk { get; } = radius_desk; 
-    
+    private Lazy<IAccountRadiusSyncRadiusDeskService> RadiusDesk { get; } = radius_desk;
+
     public async Task RemoveUsers(IEnumerable<string> usernames)
     {
         var radius_list = await ServerRepo.Value.GetAllActiveRadius();

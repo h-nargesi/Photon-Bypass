@@ -76,7 +76,7 @@ namespace tik4net.Objects
             IsReadOnly = isReadOnly;
             IsOrdered = isOrdered;
             IncludeDetails = includeDetails;
-            IsSingleton = isSingleton;            
+            IsSingleton = isSingleton;
         }
 
         /// <summary>

@@ -72,7 +72,7 @@ namespace tik4net.Objects.Ip
         public string DefaultRouteDistance { get; set; }
 
         /// <summary>
-        /// disabled: 
+        /// disabled:
         /// </summary>
         [TikProperty("disabled")]
         public bool Disabled { get; set; }
@@ -132,7 +132,7 @@ namespace tik4net.Objects.Ip
         public bool Invalid { get; private set; }
 
         /// <summary>
-        /// netmask: 
+        /// netmask:
         /// </summary>
         [TikProperty("netmask", IsReadOnly = true)]
         public string Netmask { get; private set; }
@@ -182,7 +182,7 @@ namespace tik4net.Objects.Ip
         /// </summary>
         public void Release(ITikConnection connection)
         {
-            connection.CreateCommandAndParameters("ip/dhcp-client/release", 
+            connection.CreateCommandAndParameters("ip/dhcp-client/release",
                 TikSpecialProperties.Id, Id).ExecuteNonQuery();
         }
 

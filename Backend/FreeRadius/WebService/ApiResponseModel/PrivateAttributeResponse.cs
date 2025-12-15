@@ -3,25 +3,25 @@
 namespace PhotonBypass.FreeRadius.WebService.ApiResponseModel;
 
 class PrivateAttributeResponse
-{    
-    [JsonPropertyName("id")] 
+{
+    [JsonPropertyName("id")]
     public int? Id { get; set; }
-    
-    [JsonPropertyName("type")] 
+
+    [JsonPropertyName("type")]
     public string? Type { get; set; }
-    
-    [JsonPropertyName("attribute")] 
+
+    [JsonPropertyName("attribute")]
     public string? Attribute { get; set; }
-    
-    [JsonPropertyName("op")] 
+
+    [JsonPropertyName("op")]
     public string? OP { get; set; }
-    
-    [JsonPropertyName("value")] 
+
+    [JsonPropertyName("value")]
     public object? Value { get; set; }
-    
-    [JsonPropertyName("edit")] 
+
+    [JsonPropertyName("edit")]
     public bool Edit { get; set; }
-    
-    [JsonPropertyName("delete")] 
+
+    [JsonPropertyName("delete")]
     public bool Delete { get; set; }
 }

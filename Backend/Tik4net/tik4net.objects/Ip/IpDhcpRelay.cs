@@ -8,7 +8,7 @@ namespace tik4net.Objects.Ip
     /// <summary>
     /// ip/dhcp relay
     /// DHCP Relay is just a proxy that is able to receive a DHCP request and resend it to the real DHCP server.
-    /// 
+    ///
     /// </summary>
     [TikEntity("ip/dhcp-relay")]
     public class IpDhcpRelay
@@ -62,7 +62,7 @@ namespace tik4net.Objects.Ip
         public string Name { get; set; }
 
         /// <summary>
-        /// disabled: 
+        /// disabled:
         /// </summary>
         [TikProperty("disabled")]
         public bool Disabled { get; set; }

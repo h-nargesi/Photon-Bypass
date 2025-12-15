@@ -9,7 +9,7 @@ namespace tik4net.Api
     {
         public string Message { get; private set; }
 
-        public ApiFatalSentence(IEnumerable<string> words) 
+        public ApiFatalSentence(IEnumerable<string> words)
             : base(words)
         {
             Message = string.Join("\n", words.ToArray());
