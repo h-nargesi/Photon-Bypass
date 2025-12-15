@@ -67,7 +67,7 @@ public class PlanApplicationTest : ServiceInitializer
         Assert.NotNull(plan_state.Data);
         Assert.Equal(1, plan_state.Data.SimultaneousUserCount);
         Assert.Equal(99, plan_state.Data.RemainsTrafficPercent);
-        Assert.Equal(90, plan_state.Data.RemainsTimePercent);
+        Assert.Equal(91, plan_state.Data.RemainsTimePercent);
     }
 
     [Fact]

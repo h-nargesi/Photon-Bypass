@@ -1,12 +1,12 @@
 [
-	{ "Id": 1, "Active": true, "Username": "User1", "Mobile": "+989113456789", "Email": "user1@gmail.com", "Owner": null, "Balance":  1500,
+	{ "Id": 1, "IsActive": true, "Username": "User1", "Mobile": "+989113456789", "Email": "user1@gmail.com", "Owner": null, "Balance":  1500,
       "Password": "3a81oZNherrMQXNJriBBMRLm+k6JqX6iCp7u5ktV05ohkpkqJ0/BqDa6PCOj/uu9RU1EI2Q86A4qmslPpUyknw==" },
-	{ "Id": 2, "Active": true, "Username": "User2", "Mobile": "0912", "Email": "user2@gmail.com", "Owner": 1, "Balance":  1500 },
-	{ "Id": 3, "Active": true, "Username": "User3", "Mobile": "0913", "Email": "user3@gmail.com", "Owner": 1 },
-	{ "Id": 4, "Active": true, "Username": "User4", "Mobile": "0914", "Email": "user4@gmail.com", "Owner": null, 
+	{ "Id": 2, "IsActive": true, "Username": "User2", "Mobile": "0912", "Email": "user2@gmail.com", "Owner": 1, "IsEmailValid": true, "Balance":  1500 },
+	{ "Id": 3, "IsActive": true, "Username": "User3", "Mobile": "0913", "Email": "user3@gmail.com", "Owner": 1 },
+	{ "Id": 4, "IsActive": true, "Username": "User4", "Mobile": "0914", "Email": "user4@gmail.com", "Owner": null, 
       "Password": "3a81oZNherrMQXNJriBBMRLm+k6JqX6iCp7u5ktV05ohkpkqJ0/BqDa6PCOj/uu9RU1EI2Q86A4qmslPpUyknw==" },
-	{ "Id": 5, "Active": true, "Username": "User5", "Mobile": "0915", "Email": "user5@gmail.com", "Owner": null },
-	{ "Id": 6, "Active": true, "Username": "User6", "Mobile": "0916", "Email": "user6@gmail.com", "Owner": 5 },
-    { "Id": 7, "Active": false, "Username": "InactiveUser7", "Mobile": "0916", "Email": "user7@gmail.com", "Owner": 5 },
-    { "Id": 8, "Active": true, "Username": "User8", "Mobile": "0916", "Email": null, "Owner": 5 }
+	{ "Id": 5, "IsActive": true, "Username": "User5", "Mobile": "0915", "Email": "user5@gmail.com", "Owner": null },
+	{ "Id": 6, "IsActive": true, "Username": "User6", "Mobile": "0916", "Email": "user6@gmail.com", "Owner": 5 },
+    { "Id": 7, "IsActive": false, "Username": "InactiveUser7", "Mobile": "0916", "Email": "user7@gmail.com", "Owner": 5 },
+    { "Id": 8, "IsActive": true, "Username": "User8", "Mobile": "0916", "Email": null, "Owner": 5 }
 ]
