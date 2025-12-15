@@ -101,7 +101,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
         Setup(x => x.GetActiveAccountId(It.IsAny<string>()))
             .Returns<string>(username =>
             {
-                if (!data.TryGetValue(username, out var account) || !account.Active)
+                if (!data.TryGetValue(username, out var account) || !account.IsActive)
                 {
                     account = null;
                 }

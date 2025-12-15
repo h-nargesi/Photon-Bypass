@@ -1,6 +1,6 @@
 namespace PhotonBypass.Domain.Account.Model;
 
-public enum EventCategory
+public enum EventCategory : byte
 {
     Security = 1,
     Transaction = 2,

@@ -1,0 +1,17 @@
+USE FastBypass;
+GO
+
+IF OBJECT_ID('TrafficData') IS NULL
+CREATE TABLE TrafficData (
+	Id					INT IDENTITY	NOT NULL	CONSTRAINT PK_TrafficData_Id PRIMARY KEY,
+	AccountId			INT				NOT NULL	CONSTRAINT FK_TrafficData_AccountId FOREIGN KEY REFERENCES Account (Id)
+													ON DELETE CASCADE,
+	NasId				INT					NULL	CONSTRAINT FK_TrafficData_NasId_Server FOREIGN KEY REFERENCES [Server] (Id),
+	SessionId			VARCHAR(8)		NOT NULL,
+	StartSession		DATETIME		NOT NULL,
+	EndSession			DATETIME			NULL,
+	DataIn				BIGINT			NOT NULL,
+	DataOut				BIGINT			NOT NULL,
+	Created				DATETIME		NOT NULL	CONSTRAINT DF_TrafficData_Created DEFAULT GETDATE(),
+)
+GO

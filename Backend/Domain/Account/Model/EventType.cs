@@ -1,6 +1,6 @@
 namespace PhotonBypass.Domain.Account.Model;
 
-public enum EventType
+public enum EventType : byte
 {
     Information = 1,
     Success = 2,

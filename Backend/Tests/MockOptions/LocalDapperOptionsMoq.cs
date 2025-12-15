@@ -6,7 +6,7 @@ namespace PhotonBypass.Test.MockOptions;
 
 internal class LocalDapperOptionsMoq : Mock<IOptions<LocalDapperOptions>>, IOutSourceMoq, IOptionsMoq
 {
-    public const string DatabaseStructureInitializerFilePath = "../../Database/";
+    public const string DatabaseStructureInitializerFilePath = "../../Database/LocalDatabase/";
     public const string DatabaseDataInitializerFilePath = "Data/Sql/";
     
     public LocalDapperOptionsMoq()

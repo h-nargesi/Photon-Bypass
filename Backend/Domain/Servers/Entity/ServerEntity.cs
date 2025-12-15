@@ -12,7 +12,7 @@ public class ServerEntity : IBaseEntity
 {
     [Key] public int Id { get; set; }
 
-    public bool Active { get; set; }
+    public bool IsActive { get; set; }
 
     public int RealmId { get; set; }
 

@@ -13,11 +13,11 @@ public class RenewalEntity : IRenewalEntity, IBaseEntity
 
     public int? RestrictedRealmId { get; set; }
 
-    public int SimultaneousUser { get; set; }
+    public byte SimultaneousUser { get; set; }
 
     public long? TrafficLimit { get; set; }
 
-    public int? TimeLimitInDays { get; set; }
+    public short? TimeLimitInDays { get; set; }
 
     public int? RateLimitInMeg { get; set; }
 

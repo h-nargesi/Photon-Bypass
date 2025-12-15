@@ -11,9 +11,9 @@ public interface IPlanApplication
 
     Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target);
 
-    Task<ApiResult<int>> Estimate(string target, int users, int days, int gigabytes);
+    Task<ApiResult<int>> Estimate(string target, byte users, short days, int gigabytes);
 
-    Task<ApiResult<RenewalResult>> Renewal(string target, int users, int days, int gigabytes);
+    Task<ApiResult<RenewalResult>> Renewal(string target, byte users, short days, int gigabytes);
 
     protected static bool OnRenewalDelegation(RenewalEvent arg)
     {

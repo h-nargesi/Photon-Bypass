@@ -90,7 +90,7 @@ public class AccountMonitoringServiceTest : ServiceInitializer
 
         account_repo_moq.OnSave += account =>
         {
-            if (account is { Username: "User4", Active: false })
+            if (account is { Username: "User4", IsActive: false })
             {
                 user_4_actions[3] = true;
             }

@@ -2,9 +2,9 @@ namespace PhotonBypass.Domain.Plan.Entity;
 
 public interface IRenewalEntity
 {
-    public int SimultaneousUser { get; }
+    public byte SimultaneousUser { get; }
 
     public long? TrafficLimit { get; }
 
-    public int? TimeLimitInDays { get; }
+    public short? TimeLimitInDays { get; }
 }

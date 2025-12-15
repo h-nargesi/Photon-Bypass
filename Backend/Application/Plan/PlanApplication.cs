@@ -83,7 +83,7 @@ class PlanApplication(
         });
     }
 
-    public async Task<ApiResult<int>> Estimate(string target, int users, int days, int gigabytes)
+    public async Task<ApiResult<int>> Estimate(string target, byte users, short days, int gigabytes)
     {
         var account = (await AccountRepo.Value.GetAccount(target)) ??
                       throw new UserException("کاربر مورد نظر پیدا نشد!");
@@ -92,12 +92,12 @@ class PlanApplication(
         return ApiResult<int>.Success(result);
     }
 
-    public async Task<ApiResult<RenewalResult>> Renewal(string target, int count, int days, int gigabytes)
+    public async Task<ApiResult<RenewalResult>> Renewal(string target, byte count, short days, int gigabytes)
     {
         var account = (await AccountRepo.Value.GetAccount(target)) ??
                       throw new UserException("کاربر مورد نظر پیدا نشد!");
 
-        if (!account.Active)
+        if (!account.IsActive)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }

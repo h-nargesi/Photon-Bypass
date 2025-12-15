@@ -41,7 +41,7 @@ class VpnApplication(
         var account = (await AccountRepo.Value.GetAccount(target)) ??
                       throw new UserException("کاربر پیدا نشد!", $"target not found: {target}");
 
-        if (!account.Active)
+        if (!account.IsActive)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
@@ -69,7 +69,7 @@ class VpnApplication(
         var account = (await AccountRepo.Value.GetAccount(target)) ??
                       throw new UserException("کاربر پیدا نشد!", $"target not found: {target}");
 
-        if (!account.Active)
+        if (!account.IsActive)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }

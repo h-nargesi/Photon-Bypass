@@ -1,6 +1,4 @@
-using System.Text.Json.Serialization;
 using PhotonBypass.Domain.Plan.Entity;
-using PhotonBypass.Test.MockOptions;
 
 namespace PhotonBypass.Test.MockFreeRadius.Model;
 
@@ -10,13 +8,13 @@ public class PlanStateMoqModel
 
     public string Username { get; set; } = null!;
     
-    public int SimultaneousUser { get; set; }
+    public byte SimultaneousUser { get; set; }
 
     public int? RestrictedRealmId { get; set; }
 
     public long? TrafficLimit { get; set; }
     
-    public int? TimeLimitInDays { get; set; }
+    public short? TimeLimitInDays { get; set; }
 
     public DateTime? LastConnectTime { get; set; }
 

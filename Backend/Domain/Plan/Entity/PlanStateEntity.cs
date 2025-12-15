@@ -12,13 +12,13 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
     public string Username { get; set; } = null!;
     
     // Plan Info (Latest Renewal)
-    public int SimultaneousUser { get; set; }
+    public byte SimultaneousUser { get; set; }
 
     public int? RestrictedRealmId { get; set; }
 
     public long? TrafficLimit { get; set; }
     
-    public int? TimeLimitInDays { get; set; }
+    public short? TimeLimitInDays { get; set; }
 
     // Last Usage Info
     public DateTime? LastConnectTime { get; set; }

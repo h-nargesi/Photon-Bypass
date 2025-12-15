@@ -84,7 +84,7 @@ internal class AccountMonitoringService(
                     plan.Username, expired_days, plan.ExpirationDate, plan.TrafficLimit, plan.TrafficUsed);
                 remove_list.Add(account.Username);
                 
-                account.Active = false;
+                account.IsActive = false;
                 _ = AccountRepo.Save(account);
                 continue;
             }

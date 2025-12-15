@@ -1,3 +1,5 @@
+using System.Text.RegularExpressions;
+
 namespace PhotonBypass.Test.Tools;
 
 public static class SqlFileDependencyHelper
@@ -33,22 +35,13 @@ public static class SqlFileDependencyHelper
         {
             if (Path.GetExtension(file.Name) != "sql") continue;
 
-            context.Add(new Node
-            {
-                Name = file.Name,
-                Content = await file.Content,
-            });
+            context.Add(new Node(file.Name, await file.Content));
         }
     }
 
     private static Graph BuildGraph(List<Node> records)
     {
-        var graph = new Graph
-        {
-            Nodes = records,
-            AdjList = new Dictionary<string, List<Node>>(),
-            InDegree = new Dictionary<string, int>(),
-        };
+        var graph = new Graph(records);
 
         foreach (var r in records)
         {
@@ -59,7 +52,7 @@ public static class SqlFileDependencyHelper
         foreach (var target in records)
         {
             foreach (var source in records.Where(source => source != target &&
-                                                           target.Content.Contains(source.Name)))
+                                                           source.Regex.IsMatch(target.Content)))
             {
                 graph.AdjList[source.Name].Add(target);
                 graph.InDegree[target.Name]++;
@@ -119,17 +112,19 @@ public static class SqlFileDependencyHelper
             : result;
     }
 
-    private class Graph
+    private class Graph(List<Node> nodes)
     {
-        public List<Node> Nodes { get; init; } = null!;
-        public Dictionary<string, List<Node>> AdjList { get; init; } = null!;
-        public Dictionary<string, int> InDegree { get; init; } = null!;
+        public List<Node> Nodes { get; } = nodes;
+        public Dictionary<string, List<Node>> AdjList { get; } = [];
+        public Dictionary<string, int> InDegree { get; } = [];
     }
 
-    private class Node
+    private class Node(string name, string content)
     {
-        public string Name { get; init; } = null!;
+        public string Name { get; } = name;
 
-        public string Content { get; init; } = null!;
+        public string Content { get; } = content;
+
+        public Regex Regex { get; } = new Regex($@"\b{name}\b");
     }
 }

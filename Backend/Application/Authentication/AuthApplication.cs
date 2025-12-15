@@ -29,7 +29,7 @@ class AuthApplication(
     {
         var account = await AccountRepo.GetAccount(username);
 
-        if (account is not { Active: true } || account.Password != HashHandler.HashPassword(password))
+        if (account is not { IsActive: true } || account.Password != HashHandler.HashPassword(password))
         {
             if (account == null)
             {
@@ -42,7 +42,7 @@ class AuthApplication(
 
             _ = SocialMediaSrv.InvalidPasswordAlert(account.Username);
 
-            if (account.Active)
+            if (account.IsActive)
             {
                 _ = HistoryRepo.Save(new HistoryEntity
                 {
@@ -54,7 +54,7 @@ class AuthApplication(
                 });
             }
 
-            Log.Warning("Invalid password for {0}, active={1}", account.Username, account.Active);
+            Log.Warning("Invalid password for {0}, active={1}", account.Username, account.IsActive);
 
             return new ApiResult<UserModel>
             {
@@ -131,7 +131,7 @@ class AuthApplication(
             var account = (await AccountRepo.GetAccountByEmail(email_mobile)) ??
                           throw new UserException("کاربر یافت نشد.");
 
-            if (!account.Active)
+            if (!account.IsActive)
             {
                 throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
             }

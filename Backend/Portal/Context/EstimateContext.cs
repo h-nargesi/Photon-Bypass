@@ -4,9 +4,9 @@ namespace PhotonBypass.Portal.Context;
 
 public class EstimateContext
 {
-    public int? SimultaneousUserCount { get; set; }
+    public byte? SimultaneousUserCount { get; set; }
     
-    public int? Days { get; set; }
+    public short? Days { get; set; }
     
-    public int? Gigabytes { get; set; }
+    public byte? Gigabytes { get; set; }
 }

@@ -26,7 +26,7 @@ class AccountApplication(
         var account = (await AccountRepo.GetAccount(username)) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
 
-        if (!account.Active)
+        if (!account.IsActive)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
@@ -56,7 +56,7 @@ class AccountApplication(
         var account = (await AccountRepo.GetAccount(target)) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
 
-        if (!account.Active)
+        if (!account.IsActive)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
@@ -78,7 +78,7 @@ class AccountApplication(
         var account = (await AccountRepo.GetAccount(target)) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
 
-        if (!account.Active)
+        if (!account.IsActive)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
@@ -97,11 +97,11 @@ class AccountApplication(
 
         var account = await AccountRepo.GetAccount(target);
 
-        if (account is not { Active: true } || account.Password != token)
+        if (account is not { IsActive: true } || account.Password != token)
         {
             if (account != null)
             {
-                if (account.Active)
+                if (account.IsActive)
                 {
                     _ = HistoryRepo.Value.Save(JobContext.Value.Username,new HistoryEntity
                     {
@@ -113,7 +113,7 @@ class AccountApplication(
                     });
                 }
 
-                Log.Warning("[user: {0}] Invalid password (change-pass) for {1}, active={2}", account.Username, target, account.Active);
+                Log.Warning("[user: {0}] Invalid password (change-pass) for {1}, active={2}", account.Username, target, account.IsActive);
             }
 
             throw new UserException("کلمه عبور فعلی اشتباه است!");
