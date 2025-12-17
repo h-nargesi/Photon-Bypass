@@ -44,7 +44,7 @@ class PermanentUsersRepository(RadDbContext context) : DapperRepository<Permanen
 
         var quety = $"select {Id} as Id, {Phone} as Phone, {Email} as Email from {TableName} where {Id} in (@userids)";
 
-        var data = await Connection.QueryAsync(quety, new { userids });
+        var data = await QueryAsync(quety, new { userids });
 
         foreach (var user in data)
         {

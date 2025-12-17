@@ -73,7 +73,7 @@ where {AccountDisabled} = 0 and exists (
 )
         ";
 
-        var result = await Connection.QueryAsync<UserPlanStateEntity>(query, new { percent });
+        var result = await QueryAsync<UserPlanStateEntity>(query, new { percent });
 
         return [.. result];
     }
