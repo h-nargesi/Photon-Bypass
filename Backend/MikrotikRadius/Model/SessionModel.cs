@@ -24,7 +24,7 @@ public class SessionModel
 
     [JsonPropertyName("nas-ip-address")]
     [TikProperty("nas-ip-address", IsReadOnly = true)]
-    public string? NasIpAddress { get; set; }
+    public string NasIpAddress { get; set; } = null!;
 
     [JsonPropertyName("calling-station-id")]
     [TikProperty("calling-station-id", IsReadOnly = true)]

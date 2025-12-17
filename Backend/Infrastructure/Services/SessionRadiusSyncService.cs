@@ -99,7 +99,7 @@ public class SessionRadiusSyncService(
         });
     }
 
-    public async Task<List<TrafficDataBinding>> GetTrafficData(DateTime index)
+    public async Task<List<TrafficDataBinding>> GetTrafficData(Dictionary<int, DateTime?> indexes)
     {
         var radius_list = await ServerRepo.Value.GetAllActiveRadius();
 
@@ -107,6 +107,11 @@ public class SessionRadiusSyncService(
 
         var loaded_data_list_group = await radius_list.RunJob(radius_server =>
         {
+            if (!indexes.TryGetValue(radius_server.RealmId, out var index))
+            {
+                index = null;
+            }
+
             switch (radius_server.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:

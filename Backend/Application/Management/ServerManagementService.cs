@@ -1,6 +1,4 @@
-﻿using System.Text;
-using System.Text.RegularExpressions;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.OutSource;
@@ -11,6 +9,8 @@ using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using Serilog;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Application.Management;
 
@@ -100,23 +100,31 @@ partial class ServerManagementService(
         }
     }
 
-    public async Task UpdateTrafficData(DateTime index)
+    public async Task UpdateTrafficData()
     {
-        var last_update_time = await TrafficDataRepo.LastUpdateTime();
+        var last_update_times = await TrafficDataRepo.LastUpdateTime();
 
-        if (last_update_time > index)
-            index = last_update_time.Value;
+        if (last_update_times.Count <= 0) return;
 
-        var current_traffic_task = TrafficDataRepo.Fetch(index);
+        var loaded_traffic_task = SessionRadiusSrv.Value.GetTrafficData(last_update_times);
 
-        var loaded_traffic_task = SessionRadiusSrv.Value.GetTrafficData(index);
+        var current_traffic_task = TrafficDataRepo.FetchOpen();
+
+        var realms = await RealmRepo.GetByIds(last_update_times.Keys.ToList());
 
         var traffic_data_list = await Merge(
-            await current_traffic_task,
+            await current_traffic_task, 
             await loaded_traffic_task,
-            index);
+            realms);
 
-        if (traffic_data_list.Count < 1) return;
+        var realm_changes = realms.Values.Where(r => r.HasChanged).ToList();
+
+        if (realm_changes.Count > 0)
+        {
+            await RealmRepo.BachSave(realm_changes);
+        }
+
+        if (traffic_data_list.Count <= 0) return;
 
         await TrafficDataRepo.BachSave(traffic_data_list);
     }
@@ -124,7 +132,6 @@ partial class ServerManagementService(
     private async Task<Dictionary<RealmEntity, (double Rate, long Cap)>> LoadServersCapacity()
     {
         var index = DateTime.Now.AddDays(-30);
-        await UpdateTrafficData(index);
 
         var realms = await RealmRepo.FetchAllActiveRealm();
 
@@ -178,10 +185,14 @@ partial class ServerManagementService(
         return cert;
     }
 
-    private async Task<List<TrafficDataEntity>> Merge(List<TrafficDataEntity> destination,
-        List<TrafficDataBinding> source, DateTime min_date_time)
+    private async Task<List<TrafficDataEntity>> Merge(List<TrafficDataEntity> destination, List<TrafficDataBinding> source, Dictionary<int, RealmEntity> realms)
     {
-        var destination_dictionary = destination.ToDictionary(k => k.SessionId);
+        if (source.Count <= 0) return [];
+
+        var now = DateTime.Now;
+
+        var destination_dictionary = destination.GroupBy(k => k.NasId)
+            .ToDictionary(k => k.Key, v => v.ToDictionary(x => x.SessionId));
         var new_data = new List<TrafficDataEntity>();
 
         var account_dictionary =
@@ -189,18 +200,27 @@ partial class ServerManagementService(
 
         var server_dictionary =
             await ServerRepo.Value.GetServerIdByIpAddress(
-                source.Where(traffic => traffic.NasIpAddress != null)
-                    .Select(traffic => traffic.NasIpAddress ?? string.Empty)
+                source.Select(traffic => traffic.NasIpAddress)
                     .ToHashSet());
 
         foreach (var traffic in source)
         {
-            if (traffic.StartSession < min_date_time || traffic.StartSession >= DateTime.Now)
+            if (traffic.NasIpAddress == null ||
+                !server_dictionary.TryGetValue(traffic.NasIpAddress, out var server))
             {
+                Log.Error("The incoming traffic data had invalid nas-ip: ({0}).",
+                    traffic.NasIpAddress);
                 continue;
             }
 
-            if (destination_dictionary.TryGetValue(traffic.SessionId, out var data))
+            if (realms.TryGetValue(server.ReamId, out var realm))
+            {
+                realm.LastTrafficSync = now;
+                realm.HasChanged = true;
+            }
+
+            if (destination_dictionary.TryGetValue(server.Id, out var data_pack) &&
+                data_pack.TryGetValue(traffic.NasIpAddress, out var data))
             {
                 if (data.DataIn == traffic.DataIn && data.DataOut == traffic.DataOut) continue;
 
@@ -217,18 +237,10 @@ partial class ServerManagementService(
                     continue;
                 }
 
-                if (traffic.NasIpAddress == null ||
-                    !server_dictionary.TryGetValue(traffic.NasIpAddress, out var server_id))
-                {
-                    Log.Error("The incoming traffic data had invalid nas-ip: ({0}).",
-                        traffic.NasIpAddress);
-                    continue;
-                }
-
                 new_data.Add(new TrafficDataEntity
                 {
                     AccountId = account_id,
-                    NasId = server_id,
+                    NasId = server.Id,
                     SessionId = traffic.SessionId,
                     DataIn = traffic.DataIn,
                     DataOut = traffic.DataOut,

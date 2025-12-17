@@ -40,7 +40,7 @@ public static class ServiceFactory
                 .ForJob(job_key)
                 .WithIdentity("AccountMonitoringService-trigger")
                 .WithSimpleSchedule(x => x
-                    .WithIntervalInHours(1)
+                    .WithIntervalInMinutes(AccountMonitoringService.IntervalInMinutes)
                     .RepeatForever()
                 )
             );

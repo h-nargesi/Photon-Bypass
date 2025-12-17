@@ -6,7 +6,7 @@ public class TrafficDataBinding
 
     public string Username { get; set; } = null!;
 
-    public string? NasIpAddress { get; set; }
+    public string NasIpAddress { get; set; } = null!;
 
     public string SessionId { get; set; } = null!;
 

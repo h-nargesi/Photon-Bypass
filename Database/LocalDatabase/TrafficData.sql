@@ -13,5 +13,7 @@ CREATE TABLE TrafficData (
 	DataIn				BIGINT			NOT NULL,
 	DataOut				BIGINT			NOT NULL,
 	Created				DATETIME		NOT NULL	CONSTRAINT DF_TrafficData_Created DEFAULT GETDATE(),
+
+	CONSTRAINT UK_TrafficData_NasId_SessionId UNIQUE (NasId, SessionId),
 )
 GO

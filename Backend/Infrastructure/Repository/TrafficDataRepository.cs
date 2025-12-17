@@ -1,6 +1,7 @@
-﻿using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Domain.Plan;
+﻿using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 
@@ -45,19 +46,37 @@ class TrafficDataRepository(LocalDbContext context)
             .ToDictionary(k => k.Key, v => v.ToList());
     }
 
-    public async Task<DateTime?> LastUpdateTime()
+    public async Task<List<TrafficDataEntity>> FetchOpen(int traffic_sync_data)
+    {
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(TrafficDataEntity.EndSession)} is null"));
+
+        return [.. result];
+    }
+
+    public async Task<Dictionary<int, DateTime?>> LastUpdateTime()
     {
         await OpenAsync();
 
         var sql = @$"
-select min({nameof(TrafficDataEntity.StartSession)}) from {TableName}
-where {nameof(TrafficDataEntity.EndSession)} is null";
+select r.{nameof(RealmEntity.Id)}, isnull(d.MinOpenStart, d.LastStart) as LastUpdate
+from {RealmRepository.TableName} r
+join (
+    select n.{nameof(ServerEntity.RealmId)}
+        , max({nameof(TrafficDataEntity.StartSession)}) as LastStart
+        , min(case when {nameof(TrafficDataEntity.EndSession)} is null then {nameof(TrafficDataEntity.StartSession)} else null end) as MinOpenStart
+    from {ServerRepository.TableName} as n left join {TableName} as t on n.{nameof(ServerEntity.Id)} = t.{nameof(TrafficDataEntity.NasId)}
+    where n.{(nameof(ServerEntity.IsActive))} = 1
+    group by n.{nameof(ServerEntity.RealmId)}
+) d
+where r.{nameof(RealmEntity.LastTrafficSync)} is null or
+    r.{nameof(RealmEntity.LastTrafficSync)} < dateadd(second, @limit, getdate())";
 
-        var min_active = await ExecuteScalarAsync<DateTime?>(sql);
+        var min_open_activities = await QueryAsync(sql, new { limit = -RenewalBusiness.UpdateTrafficDataTimeSecondLimit });
 
-        if (min_active.HasValue) return min_active;
-
-        sql = @$"select max({nameof(TrafficDataEntity.StartSession)}) from {TableName}";
-        return await ExecuteScalarAsync<DateTime?>(sql);
+        return min_open_activities.Select(x => (RealmId: (int)x.RealmId, LastUpdate: (DateTime?)x.LastUpdate))
+            .ToDictionary(k => k.RealmId, v => v.LastUpdate);
     }
 }

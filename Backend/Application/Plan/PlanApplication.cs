@@ -55,6 +55,8 @@ class PlanApplication(
             state.GetTrafficLeftInGig(), state.GetTrafficLimitInGig(), state.TimeLeft?.TotalDays,
             state.TimeLeft?.Hours);
 
+        _ = ServerMngSrv.Value.UpdateTrafficData();
+
         return ApiResult<UserPlanInfoModel>.Success(new UserPlanInfoModel
         {
             RemainsTitle = state.GetRemainsTitle(),
@@ -73,6 +75,8 @@ class PlanApplication(
         }
 
         var renew = await PlanRepo.Value.GetPlanState(account_id.Value);
+
+        _ = ServerMngSrv.Value.UpdateTrafficData();
 
         return ApiResult<PlanInfoModel>.Success(new PlanInfoModel
         {

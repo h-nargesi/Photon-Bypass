@@ -5,6 +5,7 @@ using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge;
 using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.ServerBridge.Tik4net;
+using tik4net;
 using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
@@ -74,13 +75,15 @@ public class SessionRadiusSyncUserManagerService(ITik4NetHandler handler) : ISes
         }
     }
 
-    public async Task<List<TrafficDataBinding>> GetTrafficData(ServerEntity radius, DateTime index)
+    public async Task<List<TrafficDataBinding>> GetTrafficData(ServerEntity radius, DateTime? index)
     {
         using var connection = await handler.ConnectTo(radius);
 
-        var data = connection.LoadList<SessionModel>(
-            TikParam.Greater<SessionModel>(nameof(SessionModel.Started), index.AddSeconds(-1).ToString("s")))
-            .ToList();
+        var parameters = new List<ITikCommandParameter>();
+        if (index.HasValue)
+            parameters.Add(TikParam.Greater<SessionModel>(nameof(SessionModel.Started), index.Value.AddSeconds(-1).ToString("s")));
+
+        var data = connection.LoadList<SessionModel>([.. parameters]).ToList();
 
         return data
             .Select(session => new TrafficDataBinding

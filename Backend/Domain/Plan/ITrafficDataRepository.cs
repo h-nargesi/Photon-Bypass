@@ -11,5 +11,7 @@ public interface ITrafficDataRepository : IEditableRepository<TrafficDataEntity>
 
     Task<Dictionary<int, List<TrafficDataEntity>>> Fetch(IEnumerable<int> nas_ids, DateTime from);
 
-    Task<DateTime?> LastUpdateTime();
+    Task<List<TrafficDataEntity>> FetchOpen();
+
+    Task<Dictionary<int, DateTime?>> LastUpdateTime();
 }

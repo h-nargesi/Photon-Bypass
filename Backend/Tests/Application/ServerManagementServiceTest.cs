@@ -80,7 +80,7 @@ public class ServerManagementServiceTest : ServiceInitializer
             Assert.Equal(12, records.Count());
         };
 
-        await manager.UpdateTrafficData(DateTime.Now.AddDays(-30));
+        await manager.UpdateTrafficData();
 
         Assert.True(saved);
     }

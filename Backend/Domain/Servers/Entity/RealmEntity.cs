@@ -13,5 +13,10 @@ public class RealmEntity : IBaseEntity
 
     public string Name { get; set; } = null!;
 
+    public DateTime? LastTrafficSync { get; set; }
+
+    [NotMapped]
+    public bool HasChanged {  get; set; }
+
     public DateTime Created { get; init; } = DateTime.Now;
 }

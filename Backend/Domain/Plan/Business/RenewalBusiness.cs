@@ -6,6 +6,8 @@ namespace PhotonBypass.Domain.Plan.Business;
 
 public static class RenewalBusiness
 {
+    public const int UpdateTrafficDataTimeSecondLimit = 300;
+
     public static string GetPlanTitle(this IRenewalEntity entity)
     {
         var result = new StringBuilder();

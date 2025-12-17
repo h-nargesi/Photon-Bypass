@@ -28,8 +28,12 @@ internal class AccountMonitoringService(
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
     private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
 
+    public const int IntervalInMinutes = 60;
+
     public async Task Execute(IJobExecutionContext context)
     {
+        await ServerMngSrv.Value.UpdateTrafficData();
+
         var plan_state_list = await PlanStateRepo.GetAll();
 
         if (plan_state_list.Count < 1)
@@ -37,13 +41,10 @@ internal class AccountMonitoringService(
             return;
         }
 
-        var finishing_list = plan_state_list.Where(plan => plan.IsFinishing()).ToList();
-
-        await NotifSendServices(finishing_list);
-
         Task.WaitAll(
+            NotifSendServices(plan_state_list),
             AccountRadiusSrv.Value.DeactivateInvalidRadiusUsers(plan_state_list),
-            InactiveAbandonedUsers(finishing_list),
+            InactiveAbandonedUsers(plan_state_list),
             ServerMngSrv.Value.CheckUserServerBalance());
     }
 
@@ -120,7 +121,7 @@ internal class AccountMonitoringService(
 
     public async Task NotifSendServices(IEnumerable<PlanStateEntity> plan_states)
     {
-        var plan_state_list = plan_states.ToArray();
+        var plan_state_list = plan_states.Where(plan => plan.IsFinishing()).ToArray();
         var account_ids = plan_state_list.Select(x => x.Id).ToList();
         var accounts = await AccountRepo.GetAccounts(account_ids);
 
@@ -201,6 +202,6 @@ internal class AccountMonitoringService(
         var hour = (int)((time - day) * 24);
         if (hour > 0) result += $" و {hour} ساعت";
 
-        return result.Remove(0, 3);
+        return result[3..];
     }
 }

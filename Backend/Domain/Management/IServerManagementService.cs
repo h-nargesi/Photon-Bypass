@@ -11,5 +11,5 @@ public interface IServerManagementService
 
     Task CheckUserServerBalance();
 
-    Task UpdateTrafficData(DateTime index);
+    Task UpdateTrafficData();
 }

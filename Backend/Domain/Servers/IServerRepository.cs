@@ -18,5 +18,5 @@ public interface IServerRepository : IEditableRepository<ServerEntity>
 
     Task<Dictionary<int, List<ServerEntity>>> GetAllActiveNasInRealm(IEnumerable<int> realm_ids);
 
-    Task<Dictionary<string, int>> GetServerIdByIpAddress(IEnumerable<string> ips);
+    Task<Dictionary<string, (int Id, int ReamId)>> GetServerIdByIpAddress(IEnumerable<string> ips);
 }

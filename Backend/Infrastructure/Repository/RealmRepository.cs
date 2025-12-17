@@ -30,4 +30,15 @@ class RealmRepository(LocalDbContext context) : EditableRepository<RealmEntity>(
 
         return [.. result];
     }
+
+    public async Task<Dictionary<int, RealmEntity>> GetByIds(List<int> ids)
+    {
+        await OpenAsync();
+
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(RealmEntity.Id)} in @ids")
+            .WithParameters(new { ids }));
+
+        return result.ToDictionary(realm => realm.Id);
+    }
 }
