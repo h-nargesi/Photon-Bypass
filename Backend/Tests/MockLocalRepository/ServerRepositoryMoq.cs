@@ -84,7 +84,7 @@ public class ServerRepositoryMoq : Mock<IServerRepository>, IOutSourceMoq
 
                 var server_ip_id = data_dictionary.SelectMany(pair => pair.Value)
                     .Where(server => hash_mask.Contains(server.IpAddress))
-                    .ToDictionary(server => server.IpAddress, server => server.Id);
+                    .ToDictionary(server => server.IpAddress, server => (server.Id, server.RealmId));
 
                 return Task.FromResult(server_ip_id);
             });

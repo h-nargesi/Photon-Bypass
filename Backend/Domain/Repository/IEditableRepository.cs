@@ -7,4 +7,6 @@ public interface IEditableRepository<TEntity> : ITransactionalRepository where T
     public Task Save(TEntity entity);
 
     public Task BachSave(IEnumerable<TEntity> entities);
+
+    Task Delete(TEntity entity);
 }

@@ -5,6 +5,7 @@ using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
 using System.Data;
 using System.Text.Json;
+using PhotonBypass.Domain.Repository;
 
 namespace PhotonBypass.Test.MockLocalRepository;
 
@@ -134,7 +135,8 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
                 return Task.CompletedTask;
             });
 
-        Setup(x => x.BeginTransactionAsync())
+        var db_context_moq = new Mock<IDbContext>();
+        db_context_moq.Setup(x => x.BeginTransactionAsync())
             .Returns(() =>
             {
                 var mock = new Mock<IDbTransaction>();
@@ -144,6 +146,8 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
 
                 return Task.FromResult(mock.Object);
             });
+        
+        Setup(x => x.DbContext).Returns(db_context_moq.Object);
     }
 
     private const string FilePath = "Data/Local/account.json";

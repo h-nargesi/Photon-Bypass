@@ -1,5 +1,4 @@
-﻿using Dapper.FastCrud;
-using PhotonBypass.FreeRadius.Entity;
+﻿using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.FreeRadius.Repository.DbContext;
 using PhotonBypass.Infra.Database;
@@ -22,7 +21,7 @@ class RealmRepository(RadDbContext context) : DapperRepository<RealmEntity>(cont
 
     public async Task<List<ServerDensityEntity>> FetchServerDensityEntity(int cloud_id)
     {
-        var result = await Connection.FindAsync<ServerDensityEntity>(statement => statement
+        var result = await FindAsync<ServerDensityEntity>(statement => statement
             .Where($"{CloudId} = @cloud_id")
             .WithParameters(new { cloud_id }));
 

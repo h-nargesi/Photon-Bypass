@@ -167,7 +167,7 @@ class PlanApplication(
             throw user_exception;
         }
 
-        var transaction = await AccountRepo.Value.BeginTransactionAsync();
+        var transaction = await AccountRepo.Value.DbContext.BeginTransactionAsync();
 
         try
         {

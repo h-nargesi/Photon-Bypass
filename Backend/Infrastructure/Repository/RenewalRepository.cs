@@ -9,8 +9,6 @@ class RenewalRepository(LocalDbContext context) : EditableRepository<RenewalEnti
 {
     public async Task<int?> GetTopRestrictedRealmId(int account_id)
     {
-        await OpenAsync();
-
         var sql = $"""
                    select {nameof(RenewalEntity.RestrictedRealmId)}
                    from {TableName}

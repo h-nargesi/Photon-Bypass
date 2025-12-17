@@ -9,15 +9,11 @@ class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEn
 {
     public async Task<List<PlanStateEntity>> GetAll()
     {
-        await OpenAsync();
-
         return [.. await FindAsync()];
     }
 
     public async Task<PlanStateEntity?> GetPlanState(int account_id)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(PlanStateEntity.Id)} = @account_id")
             .WithParameters(new { account_id }));
@@ -27,8 +23,6 @@ class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEn
 
     public async Task<(int, int?)?> GetActiveAccountRealmId(int account_id)
     {
-        await OpenAsync();
-
         var sql = $@"select {nameof(PlanStateEntity.RestrictedRealmId)} from {TableName}
 where {nameof(PlanStateEntity.Id)} = @account_id";
 

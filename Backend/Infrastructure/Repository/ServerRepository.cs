@@ -10,8 +10,6 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
 {
     public async Task<ServerEntity?> GetActiveNasInfo(string ip)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"""
 {nameof(ServerEntity.IsActive)} == 1
@@ -25,8 +23,6 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
 
     public async Task<List<string>> GetAllActiveNasDomainInRealm(int? realm_id)
     {
-        await OpenAsync();
-
         var sql = $"""
                   select {nameof(ServerEntity.DomainName)}
                   from {TableName}
@@ -47,8 +43,6 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
 
     public async Task<List<ServerEntity>> GetActiveNasInRealmOrAll(int? realm_id)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement =>
         {
             statement
@@ -72,8 +66,6 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
 
     public async Task<List<ServerEntity>> GetAllActiveRadius()
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(ServerEntity.IsActive)} == 1 and {nameof(ServerEntity.Features)} = ({nameof(ServerEntity.Features)} & @radius)")
             .WithParameters(new { radius = ServerFeature.Radius }));
@@ -83,8 +75,6 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
 
     public async Task<List<ServerEntity>> GetActiveRadiusInRealmOrAll(int? realm_id)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement =>
         {
             statement
@@ -108,8 +98,6 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
 
     public async Task<Dictionary<int, List<ServerEntity>>> GetAllActiveNasInRealm(IEnumerable<int> realm_ids)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"""
 {nameof(ServerEntity.IsActive)} == 1
@@ -124,8 +112,6 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
 
     public async Task<Dictionary<string, (int, int)>> GetServerIdByIpAddress(IEnumerable<string> ips)
     {
-        await OpenAsync();
-
         var sql = $"""
                    select {nameof(ServerEntity.Id)}, {nameof(ServerEntity.RealmId)}, {nameof(ServerEntity.IpAddress)}
                    from {TableName}
@@ -139,8 +125,6 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
 
     public async Task<Dictionary<int, ServerEntity>> GetActiveRadiusInRealm(IEnumerable<int> realm_ids)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"""
 {nameof(ServerEntity.IsActive)} == 1

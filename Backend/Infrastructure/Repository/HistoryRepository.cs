@@ -9,8 +9,6 @@ class HistoryRepository(LocalDbContext context, Lazy<IAccountRepository> account
 {
     public async Task<List<HistoryEntity>> GetHistory(string target, DateTime? from, DateTime? to)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement =>
         {
             statement.Where($"{nameof(HistoryEntity.Target)} = @target")

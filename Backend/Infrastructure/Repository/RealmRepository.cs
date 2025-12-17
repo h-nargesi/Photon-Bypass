@@ -9,8 +9,6 @@ class RealmRepository(LocalDbContext context) : EditableRepository<RealmEntity>(
 {
     public async Task<string?> GetName(int id)
     {
-        await OpenAsync();
-
         var sql = $"""
                    select {nameof(RealmEntity.Name)}
                    from {TableName}
@@ -24,8 +22,6 @@ class RealmRepository(LocalDbContext context) : EditableRepository<RealmEntity>(
 
     public async Task<List<RealmEntity>> FetchAllActiveRealm()
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement.Where($"{nameof(RealmEntity.IsActive)} = 1"));
 
         return [.. result];
@@ -33,8 +29,6 @@ class RealmRepository(LocalDbContext context) : EditableRepository<RealmEntity>(
 
     public async Task<Dictionary<int, RealmEntity>> GetByIds(List<int> ids)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(RealmEntity.Id)} in @ids")
             .WithParameters(new { ids }));

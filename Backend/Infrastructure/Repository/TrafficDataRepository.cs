@@ -12,8 +12,6 @@ class TrafficDataRepository(LocalDbContext context)
 {
     public async Task<List<TrafficDataEntity>> Fetch(DateTime from)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(TrafficDataEntity.StartSession)} >= @from")
             .WithParameters(new { from }));
@@ -23,8 +21,6 @@ class TrafficDataRepository(LocalDbContext context)
 
     public async Task<List<TrafficDataEntity>> Fetch(int account_id, DateTime from)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where(
                 $"{nameof(TrafficDataEntity.AccountId)} = account_id and {nameof(TrafficDataEntity.StartSession)} >= @from")
@@ -35,8 +31,6 @@ class TrafficDataRepository(LocalDbContext context)
 
     public async Task<Dictionary<int, List<TrafficDataEntity>>> Fetch(IEnumerable<int> nas_ids, DateTime from)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where(
                 $"{nameof(TrafficDataEntity.NasId)} in (@nas_ids) and {nameof(TrafficDataEntity.StartSession)} >= @from")
@@ -46,10 +40,8 @@ class TrafficDataRepository(LocalDbContext context)
             .ToDictionary(k => k.Key, v => v.ToList());
     }
 
-    public async Task<List<TrafficDataEntity>> FetchOpen(int traffic_sync_data)
+    public async Task<List<TrafficDataEntity>> FetchOpen()
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(TrafficDataEntity.EndSession)} is null"));
 
@@ -58,8 +50,6 @@ class TrafficDataRepository(LocalDbContext context)
 
     public async Task<Dictionary<int, DateTime?>> LastUpdateTime()
     {
-        await OpenAsync();
-
         var sql = @$"
 select r.{nameof(RealmEntity.Id)}, isnull(d.MinOpenStart, d.LastStart) as LastUpdate
 from {RealmRepository.TableName} r

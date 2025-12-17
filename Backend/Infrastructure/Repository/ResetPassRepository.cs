@@ -10,8 +10,6 @@ class ResetPassRepository(LocalDbContext context) : DapperRepository<ResetPassEn
 {
     public async Task<ResetPassEntity?> GetAccount(string hash_code)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(ResetPassEntity.HashCode)} = @hash_code")
             .WithParameters(new { hash_code }));
@@ -20,7 +18,7 @@ class ResetPassRepository(LocalDbContext context) : DapperRepository<ResetPassEn
 
         if (entity != null)
         {
-            _ = Connection.DeleteAsync(entity);
+            _ = context.Connection.DeleteAsync(entity);
         }
 
         return entity;
@@ -28,8 +26,6 @@ class ResetPassRepository(LocalDbContext context) : DapperRepository<ResetPassEn
 
     public async Task AddHashCode(ResetPassEntity hash_code)
     {
-        await OpenAsync();
-
-        await Connection.InsertAsync(hash_code);
+        await context.Connection.InsertAsync(hash_code);
     }
 }

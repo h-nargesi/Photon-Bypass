@@ -8,8 +8,6 @@ class PriceRepository(LocalDbContext context) : EditableRepository<PriceEntity>(
 {
     public async Task<List<PriceEntity>> GetVisibles()
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement =>
             statement.Where($"{nameof(PriceEntity.State)} = 2"));
 
@@ -18,8 +16,6 @@ class PriceRepository(LocalDbContext context) : EditableRepository<PriceEntity>(
 
     public async Task<List<PriceEntity>> GetActives()
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement =>
             statement.Where($"{nameof(PriceEntity.State)} >= 1"));
 

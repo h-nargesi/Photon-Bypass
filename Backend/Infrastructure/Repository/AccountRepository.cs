@@ -9,8 +9,6 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 {
     public async Task<AccountEntity?> GetAccount(int id)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Id)} = @id")
             .WithParameters(new { id }));
@@ -20,8 +18,6 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<AccountEntity?> GetAccount(string username)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Username)} = @username")
             .WithParameters(new { username }));
@@ -31,8 +27,6 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<AccountEntity?> GetAccountByMobile(string mobile)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Mobile)} = @mobile")
             .WithParameters(new { mobile }));
@@ -42,8 +36,6 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<AccountEntity?> GetAccountByEmail(string email)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Email)} = @email")
             .WithParameters(new { email }));
@@ -53,8 +45,6 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<List<AccountEntity>> GetTargetArea(int account_id)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Owner)} = @account_id")
             .WithParameters(new { account_id }));
@@ -64,8 +54,6 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<Dictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids)
     {
-        await OpenAsync();
-
         var result = await FindAsync(statement => statement
             .Where($"{nameof(AccountEntity.Id)} in (@account_ids)")
             .WithParameters(new { account_ids }));
@@ -75,8 +63,6 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<Dictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames)
     {
-        await OpenAsync();
-
         var sql = $"""
                    select {nameof(AccountEntity.Id)}, {nameof(AccountEntity.Username)}
                    from {TableName}
@@ -90,8 +76,6 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<Dictionary<int, string>> GetUsernamesByAccountId(IEnumerable<int> ids)
     {
-        await OpenAsync();
-
         var sql = $"""
                    select {nameof(AccountEntity.Id)}, {nameof(AccountEntity.Username)}
                    from {TableName}
@@ -105,8 +89,6 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<int?> GetActiveAccountId(string username)
     {
-        await OpenAsync();
-
         var result = await ExecuteScalarAsync<int>(
             $"select {nameof(AccountEntity.Id)} from {TableName} where {nameof(AccountEntity.Username)} = @username"
             , new { username });
@@ -116,8 +98,6 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<int> CheckUniqueData(string username, string? email, string? mobile)
     {
-        await OpenAsync();
-
         var sql = $"""
                   select {nameof(AccountEntity.Username)}, {nameof(AccountEntity.Email)}, {nameof(AccountEntity.Mobile)}
                   from {TableName}

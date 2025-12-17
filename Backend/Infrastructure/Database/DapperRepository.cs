@@ -1,53 +1,54 @@
-﻿using Dapper.FastCrud;
+﻿using Dapper;
+using Dapper.FastCrud;
 using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 using PhotonBypass.Domain;
 using PhotonBypass.Tools;
-using System.Data;
-using Dapper;
 
 namespace PhotonBypass.Infra.Database;
 
-public abstract class DapperRepository<TEntity>(IDapperDbContext context) : IDisposable where TEntity : class, IBaseEntity
+public abstract class DapperRepository<TEntity>(IDapperDbContext context)
+    : IDisposable where TEntity : class, IBaseEntity
 {
-    public static readonly string TableName = EntityExtensions.GetTableName<TEntity>();
-    public static readonly string Id = EntityExtensions.GetColumnName<TEntity>(x => x.Id);
+    protected static readonly string TableName = EntityExtensions.GetTableName<TEntity>();
+    protected static readonly string Id = EntityExtensions.GetColumnName<TEntity>(x => x.Id);
 
-    protected IDbConnection Connection
+    protected IDapperDbContext DapperDbContext => context;
+
+    protected async Task<IEnumerable<TEntity>> FindAsync(
+        Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>>? statement = null)
     {
-        get
-        {
-            if (context.Connection.State != ConnectionState.Open)
-            {
-                context.Connection.Open();
-            }
+        await context.OpenAsync();
 
-            return context.Connection;
-        }
+        return await context.Connection.FindAsync(statement);
     }
 
-    protected Task OpenAsync()
+    protected async Task<IEnumerable<T>> FindAsync<T>(
+        Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<T>>? statement = null)
     {
-        return context.Open();
+        await context.OpenAsync();
+
+        return await context.Connection.FindAsync(statement);
     }
 
-    protected Task<IEnumerable<TEntity>> FindAsync(Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>>? statement = null)
+    protected async Task<T?> ExecuteScalarAsync<T>(string sql, object? param = null)
     {
-        return Connection.FindAsync(statement);
+        await context.OpenAsync();
+
+        return await context.Connection.ExecuteScalarAsync<T>(sql, param);
     }
 
-    protected Task<T?> ExecuteScalarAsync<T>(string sql, object? param = null)
+    protected async Task<IEnumerable<dynamic>> QueryAsync(string sql, object? param = null)
     {
-        return Connection.ExecuteScalarAsync<T>(sql, param);
+        await context.OpenAsync();
+
+        return await context.Connection.QueryAsync(sql, param);
     }
 
-    protected Task<IEnumerable<dynamic>> QueryAsync(string sql, object? param = null)
+    protected async Task<IEnumerable<T>> QueryAsync<T>(string sql, object? param = null)
     {
-        return Connection.QueryAsync(sql, param);
-    }
+        await context.OpenAsync();
 
-    protected Task<IEnumerable<T>> QueryAsync<T>(string sql, object? param = null)
-    {
-        return Connection.QueryAsync<T>(sql, param);
+        return await context.Connection.QueryAsync<T>(sql, param);
     }
 
     public void Dispose() => GC.SuppressFinalize(this);

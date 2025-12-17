@@ -11,9 +11,15 @@ class RadDbContext(IOptions<RadDapperOptions> options) : IDapperDbContext
 
     public IDbConnection Connection => connection;
 
-    public Task Open()
+    public Task OpenAsync()
     {
         return connection.State == ConnectionState.Open ? Task.CompletedTask : connection.OpenAsync();
+    }
+
+    public async Task<IDbTransaction> BeginTransactionAsync()
+    {
+        await OpenAsync();
+        return await connection.BeginTransactionAsync();
     }
 
     public void Dispose()
