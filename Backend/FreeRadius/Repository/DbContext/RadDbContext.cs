@@ -5,11 +5,13 @@ using System.Data;
 
 namespace PhotonBypass.FreeRadius.Repository.DbContext;
 
-class RadDbContext(IOptions<RadDapperOptions> options) : IDapperDbContext
+class RadDbContext(IOptions<RadDapperOptions> options, IEntityEventService entity_event_service) : IDapperDbContext
 {
     private readonly MySqlConnection connection = new(options.Value.ConnectionString);
 
     public IDbConnection Connection => connection;
+
+    public IEntityEventService EventService => entity_event_service;
 
     public Task OpenAsync()
     {

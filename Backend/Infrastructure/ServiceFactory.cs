@@ -4,6 +4,7 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Static;
+using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository;
 using PhotonBypass.Infra.Repository.DbContext;
 using PhotonBypass.Infra.Services;
@@ -13,8 +14,10 @@ namespace PhotonBypass.Infra;
 
 public static class ServiceFactory
 {
-    public static void AddInfrastructureServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
+    public static void AddInfrastructureServices<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
     {
+        builder.Services.AddSingleton<IEntityEventService, EntityEventService>();
         builder.Services.BindValidateReturn<LocalDapperOptions>();
         builder.Services.AddScoped<LocalDbContext>();
 
@@ -30,6 +33,6 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IAccountRadiusSyncService, AccountRadiusSyncService>();
         builder.Services.AddLazyTransient<ISessionRadiusSyncService, SessionRadiusSyncService>();
 
-        builder.Services.AddLazySingleton<IPriceCalculator, PriceCalculator>();
+        builder.Services.AddSingleton<IPriceCalculator, PriceCalculator>();
     }
 }

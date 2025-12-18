@@ -8,8 +8,10 @@ public class SessionRadiusTest : ServiceInitializer
     public async Task GetTrafficData_DisableRealm()
     {
         using var scope = App.Services.CreateScope();
-        var session_radius_sync_service = scope.ServiceProvider.GetRequiredService<ISessionRadiusSyncService>();
-        var traffics = await session_radius_sync_service.GetTrafficData(DateTime.Today.AddDays(-30));
+        var traffic_data_repo = scope.ServiceProvider.GetRequiredService<ITrafficDataRepository>();
+        var session_radius_sync_srv = scope.ServiceProvider.GetRequiredService<ISessionRadiusSyncService>();
+        var last_update_times = await traffic_data_repo.LastUpdateTime();
+        var traffics = await session_radius_sync_srv.GetTrafficData(last_update_times);
 
         Assert.NotNull(traffics);
         Assert.Equal(25, traffics.Count);
@@ -19,8 +21,10 @@ public class SessionRadiusTest : ServiceInitializer
     public async Task GetTrafficData_TimeLimit()
     {
         using var scope = App.Services.CreateScope();
-        var session_radius_sync_service = scope.ServiceProvider.GetRequiredService<ISessionRadiusSyncService>();
-        var traffics = await session_radius_sync_service.GetTrafficData(DateTime.Today.AddDays(-2));
+        var traffic_data_repo = scope.ServiceProvider.GetRequiredService<ITrafficDataRepository>();
+        var session_radius_sync_srv = scope.ServiceProvider.GetRequiredService<ISessionRadiusSyncService>();
+        var last_update_times = await traffic_data_repo.LastUpdateTime();
+        var traffics = await session_radius_sync_srv.GetTrafficData(last_update_times);
 
         Assert.NotNull(traffics);
         Assert.Equal(2, traffics.Count);

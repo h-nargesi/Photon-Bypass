@@ -1,4 +1,3 @@
-using PhotonBypass.Domain.Servers.Types;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;

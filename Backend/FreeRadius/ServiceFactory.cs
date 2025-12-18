@@ -39,7 +39,7 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<ISessionRadiusSyncRadiusDeskService, SessionRadiusSyncRadiusDeskService>();
         builder.Services.AddLazyTransient<IAccountRadiusSyncRadiusDeskService, AccountRadiusSyncRadiusDeskService>();
 
-        builder.Services.AddLazySingleton<IStaticRepository, StaticRepository>();
+        builder.Services.AddSingleton<IStaticRepository, StaticRepository>();
         builder.Services.AddLazyScoped<IRadiusService, RadiusDeskService>();
     }
 }

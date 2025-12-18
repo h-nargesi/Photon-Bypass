@@ -5,11 +5,14 @@ using PhotonBypass.Infra.Database;
 
 namespace PhotonBypass.Infra.Repository.DbContext;
 
-internal class LocalDbContext(IOptions<LocalDapperOptions> options) : IDapperDbContext
+internal class LocalDbContext(IOptions<LocalDapperOptions> options, IEntityEventService entity_event_service)
+    : IDapperDbContext
 {
     private readonly SqlConnection connection = new(options.Value.ConnectionString);
 
     public IDbConnection Connection => connection;
+
+    public IEntityEventService EventService => entity_event_service;
 
     public Task OpenAsync()
     {

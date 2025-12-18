@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using PhotonBypass.ServerBridge.Api;
 using PhotonBypass.ServerBridge.Email;
 using PhotonBypass.ServerBridge.Services;
@@ -14,7 +15,7 @@ public static class ServiceFactory
     {
         builder.Services.AddLazyScoped<IApiHandler, ApiHandler>();
         builder.Services.AddLazyScoped<IEmailHandler, EmailHandler>();
-        builder.Services.AddLazySingleton<ISshHandler, SshHandler>();
-        builder.Services.AddLazySingleton<ITik4NetHandler, Tik4NetHandler>();
+        builder.Services.AddSingleton<ISshHandler, SshHandler>();
+        builder.Services.AddSingleton<ITik4NetHandler, Tik4NetHandler>();
     }
 }

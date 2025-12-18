@@ -8,12 +8,11 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context)
     : DapperRepository<TEntity>(context), IEditableRepository<TEntity>
     where TEntity : class, IBaseEntity
 {
-    private const int UpdateMaxTasksCount = 10;
+    private EntityEventHandler? eventHandler;
 
-    public IDbContext DbContext => DapperDbContext;
+    public IDbContext DbContext { get; } = context;
 
-    // TODO: make static event for all instances of same type repositories
-    public event EntityEventHandler<TEntity>? OnSaved;
+    public IEntityEvent<TEntity> Events => eventHandler ??= new EntityEventHandler(DapperDbContext.EventService);
 
     public virtual async Task Save(TEntity entity)
     {
@@ -28,32 +27,25 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context)
             await DapperDbContext.Connection.InsertAsync(entity);
         }
 
-        if (OnSaved != null)
-        {
-            await OnSaved(this, new EntityEventArgs<TEntity>(entity));
-        }
+        await DapperDbContext.EventService.CallOnSave(this, new EntityEventArgs<TEntity>(entity));
     }
 
     public virtual async Task BachSave(IEnumerable<TEntity> entities)
     {
         await DapperDbContext.OpenAsync();
-        var buffer = new Queue<Task>();
 
-        foreach (var entity in entities)
+        var entity_list = entities.ToArray();
+        var updates = entity_list.Where(entity => entity.Id > 0);
+        var inserts = entity_list.Where(entity => entity.Id <= 0);
+
+        await DapperDbContext.Connection.BulkUpdateAsync(updates);
+
+        foreach (var entity in inserts)
         {
-            if (entity.Id > 0)
-            {
-                buffer.Enqueue(DapperDbContext.Connection.UpdateAsync(entity));
-                if (buffer.Count >= UpdateMaxTasksCount)
-                    await buffer.Dequeue();
-            }
-            else
-            {
-                await DapperDbContext.Connection.InsertAsync(entity);
-            }
+            await DapperDbContext.Connection.InsertAsync(entity);
         }
 
-        Task.WaitAll([.. buffer]);
+        await DapperDbContext.EventService.CallOnSave(this, new EntityEventArgs<TEntity>(entity_list));
     }
 
     public virtual async Task Delete(TEntity entity)
@@ -61,5 +53,22 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context)
         await DapperDbContext.OpenAsync();
 
         await DapperDbContext.Connection.DeleteAsync(entity);
+
+        await DapperDbContext.EventService.CallOnDelete(this, new EntityEventArgs<TEntity>(entity));
+    }
+
+    private class EntityEventHandler(IEntityEventService entity_event_service) : IEntityEvent<TEntity>
+    {
+        public event EntityEventHandler<TEntity> OnSave
+        {
+            add => entity_event_service.RegisterOnSave(value);
+            remove => entity_event_service.UnregisterOnSave(value);
+        }
+
+        public event EntityEventHandler<TEntity> OnDelete
+        {
+            add => entity_event_service.RegisterOnDelete(value);
+            remove => entity_event_service.UnregisterOnDelete(value);
+        }
     }
 }

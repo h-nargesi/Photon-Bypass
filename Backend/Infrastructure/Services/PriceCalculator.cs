@@ -1,7 +1,7 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using System.Reflection;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using PhotonBypass.Domain.Static;
-using System.Reflection;
 
 namespace PhotonBypass.Infra.Services;
 
@@ -28,7 +28,7 @@ class PriceCalculator(Lazy<IPriceRepository> repository) : IPriceCalculator
 
     private Task<Dictionary<int, MethodInfo>> InitializeCalculators()
     {
-        repository.Value.OnSaved += async (_, _) => calculators = await FetchCalculatorCode();
+        repository.Value.Events.OnSave += async (_, _) => calculators = await FetchCalculatorCode();
         return FetchCalculatorCode();
     }
 
