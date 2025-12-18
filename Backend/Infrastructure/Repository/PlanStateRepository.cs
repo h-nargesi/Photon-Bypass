@@ -23,7 +23,8 @@ class PlanStateRepository(LocalDbContext context) : DapperRepository<PlanStateEn
 
     public async Task<(int, int?)?> GetActiveAccountRealmId(int account_id)
     {
-        var sql = $@"select {nameof(PlanStateEntity.RestrictedRealmId)} from {TableName}
+        var sql = $@"select {nameof(PlanStateEntity.RestrictedRealmId)}
+from {TableName}
 where {nameof(PlanStateEntity.Id)} = @account_id";
 
         var result = (await QueryAsync(sql, new { account_id })).ToList();

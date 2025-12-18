@@ -24,6 +24,7 @@ Implement mock of used dependencies then test the function.
 	[+] RenewalBusiness
 - Infrastructure
 	[+] PriceCalculator: Compile
+	[ ] EventService: Register, Unregister, Call
 - Controller
 	[+] AccessService
 
@@ -68,6 +69,16 @@ Implement mock of all dependencies and test mid-level services.
 Run out-sources and test out-source interfaces.
 
 - Infrastructure Repositories
+	[ ] Account
+	[ ] ResetPass
+	[ ] History
+	[ ] Price
+	[ ] Realm
+	[ ] Renewal
+	[ ] Server
+	[ ] TrafficData
+	[ ] PlanState
+
 - Mikrotik Radius
 
 ## Level 4 - Integration - Integration
