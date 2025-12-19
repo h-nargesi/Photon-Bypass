@@ -1,5 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
+using PhotonBypass.Sql;
+using PhotonBypass.Test.Mock.MockOptions;
 using PhotonBypass.Test.MockOptions;
 
 namespace PhotonBypass.Test.Tools;
@@ -62,7 +64,7 @@ public static class OutSourceHandler
                 await using var connection = new SqlConnection(options.Value.ConnectionString);
 
                 await connection.OpenAsync();
-                var structures = await loading_structure_files;
+                var structures = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_structure_files);
 
                 var loading_data_files =
                     SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseDataInitializerFilePath + key);
@@ -70,7 +72,7 @@ public static class OutSourceHandler
                 foreach (var sql in structures)
                     await connection.ExecuteAsync(sql);
 
-                var data = await loading_data_files;
+                var data = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_data_files);
 
                 foreach (var sql in data)
                     await connection.ExecuteAsync(sql);
