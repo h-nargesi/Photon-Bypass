@@ -6,7 +6,7 @@
     "RestrictedRealmId": null,
     "TrafficLimit": 1073741824,
     "TimeLimitInDays": 120,
-    "ExpirationDate": "today+111",
+    "ExpirationDate": "now+111",
     "TrafficLeft": 1073001004
   },
   {
@@ -25,7 +25,7 @@
     "TrafficLimit": 1073741824,
     "TimeLimitInDays": 120,
     "LastConnectTime": "today-7",
-    "ExpirationDate": "today-5",
+    "ExpirationDate": "now-5",
     "TrafficLeft": 0
   },
   {
@@ -36,7 +36,7 @@
     "TrafficLimit": 1073741824,
     "TimeLimitInDays": 120,
     "LastConnectTime": "today-40",
-    "ExpirationDate": "today-1",
+    "ExpirationDate": "now-1",
     "TrafficLeft": 0
   }
 ]

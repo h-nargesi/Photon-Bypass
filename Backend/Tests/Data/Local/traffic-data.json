@@ -10,7 +10,7 @@
   { "AccountId": 2, "NasId": 4, "SessionId": "2036A9", "DataIn": 12, "DataOut": 3, "StartSession": "today-12+10", "EndSession":  null },
   { "AccountId": 2, "NasId": 4, "SessionId": "2036B1", "DataIn": 95, "DataOut": 5, "StartSession": "today-13+10", "EndSession":  "today-13+12" },
   { "AccountId": 3, "NasId": 1, "SessionId": "2036B2", "DataIn": 120, "DataOut": 50, "StartSession": "today-13+11", "EndSession":  "today-13+17" },
-  { "AccountId": 3, "NasId": 3, "SessionId": "2036B3", "DataIn": 56, "DataOut": 2, "StartSession": "today-13+10", "EndSession":  null },
+  { "AccountId": 3, "NasId": 3, "SessionId": "2036B3", "DataIn": 56, "DataOut": 2, "StartSession": "today-13+9", "EndSession":  null },
   { "AccountId": 3, "NasId": 3, "SessionId": "2036B4", "DataIn": 123, "DataOut": 5, "StartSession": "today-12+10", "EndSession":  "today-12+12" },
   { "AccountId": 3, "NasId": 4, "SessionId": "2036B5", "DataIn": 45, "DataOut": 99, "StartSession": "today-11+11", "EndSession":  "today-11+17" },
   { "AccountId": 3, "NasId": 1, "SessionId": "2036B6", "DataIn": 65, "DataOut": 1, "StartSession": "today-10+10", "EndSession":  null }

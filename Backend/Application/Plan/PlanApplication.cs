@@ -18,7 +18,7 @@ namespace PhotonBypass.Application.Plan;
 class PlanApplication(
     Lazy<IRenewalRepository> renewal_repo,
     Lazy<IPlanStateRepository> plan_repo,
-    Lazy<IPriceCalculator> price_calc,
+    IPriceCalculator price_calc,
     Lazy<IAccountRepository> account_repo,
     Lazy<ISessionRadiusSyncService> session_radius_srv,
     Lazy<IAccountRadiusSyncService> account_radius_srv,
@@ -29,7 +29,7 @@ class PlanApplication(
 {
     private Lazy<IRenewalRepository> RenewalRepo { get; } = renewal_repo;
     private Lazy<IPlanStateRepository> PlanRepo { get; } = plan_repo;
-    private Lazy<IPriceCalculator> PriceCalc { get; } = price_calc;
+    private IPriceCalculator PriceCalc { get; } = price_calc;
     private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
     private Lazy<ISessionRadiusSyncService> SessionRadiusSrv { get; } = session_radius_srv;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
@@ -92,7 +92,7 @@ class PlanApplication(
         var account = (await AccountRepo.Value.GetAccount(target)) ??
                       throw new UserException("کاربر مورد نظر پیدا نشد!");
 
-        var result = PriceCalc.Value.CalculatePrice(account.CalculationMethod ?? 0, users, days, gigabytes);
+        var result = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, users, days, gigabytes);
         return ApiResult<int>.Success(result);
     }
 
@@ -106,7 +106,7 @@ class PlanApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
 
-        var estimate = PriceCalc.Value.CalculatePrice(account.CalculationMethod ?? 0, count, days, gigabytes);
+        var estimate = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count, days, gigabytes);
 
         if (account.CheckMoneyNeed(estimate, out var money_need))
         {

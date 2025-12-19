@@ -1,6 +1,6 @@
 # Test Plan
 
-- **Senario**: testing all functions integratedly with complex senarios.
+- **Scenario**: testing all functions integratedly with complex scenario.
 - **Integration**: testing all functions integratedly.
 - **Outsource**: testing functions that require external resources.
 - **Application**: mocking outsource and test all function.
@@ -69,6 +69,7 @@ Implement mock of all dependencies and test mid-level services.
 Run out-sources and test out-source interfaces.
 
 - Infrastructure Repositories
+	[ ] Transaction
 	[ ] Account
 	[ ] ResetPass
 	[ ] History

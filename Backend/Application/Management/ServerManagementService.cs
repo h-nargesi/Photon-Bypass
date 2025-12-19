@@ -205,8 +205,7 @@ partial class ServerManagementService(
 
         foreach (var traffic in source)
         {
-            if (traffic.NasIpAddress == null ||
-                !server_dictionary.TryGetValue(traffic.NasIpAddress, out var server))
+            if (!server_dictionary.TryGetValue(traffic.NasIpAddress, out var server))
             {
                 Log.Error("The incoming traffic data had invalid nas-ip: ({0}).",
                     traffic.NasIpAddress);

@@ -1,5 +1,4 @@
-﻿using PhotonBypass.Domain.Plan;
-using PhotonBypass.FreeRadius.Entity;
+﻿using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 
 namespace PhotonBypass.FreeRadius.Repository;
