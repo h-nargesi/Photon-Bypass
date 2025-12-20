@@ -7,7 +7,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockFreeRadius;
 
-internal class RealmRepositoryMoq : Mock<IRealmRepository>, IOutSourceMoq
+internal class RealmRepositoryMoq : Mock<IRealmRepository>, IUnitLevelService
 {
     public event Action<int, RealmEntity?>? OnFetch;
 

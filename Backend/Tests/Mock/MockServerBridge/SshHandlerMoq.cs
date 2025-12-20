@@ -5,7 +5,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockServerBridge;
 
-class SshHandlerMoq : Mock<ISshHandler>, IOutSourceMoq
+class SshHandlerMoq : Mock<ISshHandler>, IUnitLevelService
 {
     public SshHandlerMoq()
     {

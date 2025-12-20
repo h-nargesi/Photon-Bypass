@@ -8,7 +8,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
-public class ServerRepositoryMoq : Mock<IServerRepository>, IOutSourceMoq
+public class ServerRepositoryMoq : Mock<IServerRepository>, IUnitLevelService
 {
     public ServerRepositoryMoq() : this(FilePath)
     {

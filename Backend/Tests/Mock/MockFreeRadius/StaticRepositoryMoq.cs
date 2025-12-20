@@ -3,7 +3,7 @@ using PhotonBypass.FreeRadius.Interfaces;
 
 namespace PhotonBypass.Test.Mock.MockFreeRadius;
 
-internal class StaticRepositoryMoq : Mock<IStaticRepository>, IOutSourceMoq
+internal class StaticRepositoryMoq : Mock<IStaticRepository>, IUnitLevelService
 {
     public StaticRepositoryMoq()
     {

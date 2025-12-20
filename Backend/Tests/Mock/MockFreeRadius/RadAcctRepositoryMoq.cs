@@ -7,7 +7,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockFreeRadius;
 
-public class RadAcctRepositoryMoq : Mock<IRadAcctRepository>, IOutSourceMoq
+public class RadAcctRepositoryMoq : Mock<IRadAcctRepository>, IUnitLevelService
 {
     public RadAcctRepositoryMoq() : this(FilePath)
     {

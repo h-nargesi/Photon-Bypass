@@ -5,7 +5,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
-internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IOutSourceMoq
+internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IUnitLevelService
 {
     public event Action<string, DateTime?, DateTime?, List<HistoryEntity>>? OnGetHistory;
 

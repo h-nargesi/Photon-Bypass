@@ -7,7 +7,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
-internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IOutSourceMoq
+internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IUnitLevelService
 {
     public event Action<List<TrafficDataEntity>>? OnFetch;
 

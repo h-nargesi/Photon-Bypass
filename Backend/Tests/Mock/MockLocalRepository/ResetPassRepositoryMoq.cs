@@ -5,7 +5,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
-internal class ResetPassRepositoryMoq : Mock<IResetPassRepository>, IOutSourceMoq
+internal class ResetPassRepositoryMoq : Mock<IResetPassRepository>, IUnitLevelService
 {
     private readonly Dictionary<string, ResetPassEntity> data = [];
 

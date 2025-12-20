@@ -1,74 +1,80 @@
-using Dapper;
-using Microsoft.Data.SqlClient;
-using PhotonBypass.Sql;
-using PhotonBypass.Test.Mock.MockOptions;
-using PhotonBypass.Test.Tools;
-
 namespace PhotonBypass.Test.Initializer;
 
-public class OutSourceManager(string key)
+internal class OutSourceManager(IServiceProvider services) : IOutSourceLevelService
 {
-    private bool isInitialized;
-    private readonly SemaphoreSlim semaphore = new(0);
-    public readonly List<Exception> Exceptions = [];
+    private readonly Dictionary<string, KeyInitialManager> keys = [];
 
-    public async Task<OutSourceManager> Initialize()
+    public Task InitializeOutSource<TInitializer>(string key) where TInitializer : IOutSourceInitializer
     {
-        if (isInitialized) return this;
+        KeyInitialManager? initializer;
 
-        await semaphore.WaitAsync();
-
-        if (isInitialized) return this;
-
-        await Task.WhenAll(
-            InitializeLocalDatabase(),
-            InitializeMikrotik());
-
-        if (Exceptions.Count > 0)
+        lock (keys)
         {
-            throw new Exception("Some error happened in initialization.");
+            if (!keys.TryGetValue(key, out initializer))
+            {
+                keys.Add(key, initializer = new KeyInitialManager(services));
+            }
         }
 
-        isInitialized = true;
-        semaphore.Release(int.MaxValue);
-        return this;
+        return initializer.Initialize<TInitializer>(key);
     }
 
-    private async Task InitializeLocalDatabase()
+    private class KeyInitialManager(IServiceProvider services)
     {
-        try
+        private readonly Dictionary<Type, SynchronizationInitializeManager> initializers = [];
+
+        public Task Initialize<TInitializer>(string key) where TInitializer : IOutSourceInitializer
         {
-            var loading_structure_files =
-                SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseStructureInitializerFilePath);
-
-            var options = new LocalDapperOptionsMoq().Object;
-            await using var connection = new SqlConnection(options.Value.ConnectionString);
-
-            await connection.OpenAsync();
-            var structures = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_structure_files);
-
-            var loading_data_files =
-                SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseDataInitializerFilePath + key);
-
-            foreach (var sql in structures)
-                await connection.ExecuteAsync(sql);
-
-            var data = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_data_files);
-
-            foreach (var sql in data)
-                await connection.ExecuteAsync(sql);
-        }
-        catch (Exception exception)
-        {
-            lock (Exceptions)
+            if (initializers.TryGetValue(typeof(TInitializer), out var initializer) || initializer == null)
             {
-                Exceptions.Add(exception);
+                initializers[typeof(TInitializer)] = initializer = new SynchronizationInitializeManager(services);
+            }
+
+            return initializer.Initialize<TInitializer>(key);
+        }
+    }
+
+    private class SynchronizationInitializeManager(IServiceProvider services)
+    {
+        private bool isInitialized;
+        private Exception? exception;
+        private readonly SemaphoreSlim semaphore = new(0);
+
+        public async Task Initialize<TInitializer>(string key) where TInitializer : IOutSourceInitializer
+        {
+            if (exception != null) throw exception;
+            if (isInitialized) return;
+
+            await semaphore.WaitAsync();
+
+            if (exception != null) throw exception;
+            if (isInitialized) return;
+
+            try
+            {
+                await services.GetRequiredService<TInitializer>()
+                    .Initialize(key);
+                isInitialized = true;
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+                throw;
+            }
+            finally
+            {
+                semaphore.Release(int.MaxValue);
             }
         }
     }
 
-    private async Task InitializeMikrotik()
+    public static void CreateInstance(IServiceCollection services)
     {
-        if (key.StartsWith("DbTest")) return;
+        services.AddSingleton<OutSourceManager>();
     }
+}
+
+internal interface IOutSourceInitializer
+{
+    Task Initialize(string key);
 }

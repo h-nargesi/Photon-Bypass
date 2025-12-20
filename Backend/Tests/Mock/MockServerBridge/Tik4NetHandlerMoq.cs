@@ -8,7 +8,7 @@ using tik4net.Objects;
 
 namespace PhotonBypass.Test.Mock.MockServerBridge;
 
-internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IOutSourceMoq
+internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IUnitLevelService
 {
     public event Action<string, List<ITikCommandParameter>>? OnExecute;
 

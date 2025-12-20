@@ -7,7 +7,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
-internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IOutSourceMoq
+internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelService
 {
     public RenewalRepositoryMoq() : this(FilePath)
     {

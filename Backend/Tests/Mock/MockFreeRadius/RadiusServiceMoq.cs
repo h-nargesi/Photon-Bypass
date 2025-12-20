@@ -8,7 +8,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockFreeRadius;
 
-internal class RadiusServiceMoq : Mock<IRadiusService>, IOutSourceMoq
+internal class RadiusServiceMoq : Mock<IRadiusService>, IUnitLevelService
 {
     public event Action<int, bool, bool>? OnActivePermanentUser;
 

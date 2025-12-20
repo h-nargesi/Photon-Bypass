@@ -8,7 +8,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockFreeRadius;
 
-internal class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IOutSourceMoq
+internal class PermanentUsersRepositoryMoq : Mock<IPermanentUsersRepository>, IUnitLevelService
 {
     public Dictionary<string, PermanentUserEntity> Data { get; }
 

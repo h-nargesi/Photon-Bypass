@@ -1,5 +1,5 @@
 ﻿namespace PhotonBypass.Test;
 
-internal interface IOutSourceMoq
+internal interface IUnitLevelService
 {
 }

@@ -7,7 +7,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockFreeRadius;
 
-internal class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IOutSourceMoq
+internal class UserPlanStateRepositoryMoq : Mock<IUserPlanStateRepository>, IUnitLevelService
 {
     public Dictionary<int, UserPlanStateEntity> Data { get; }
 

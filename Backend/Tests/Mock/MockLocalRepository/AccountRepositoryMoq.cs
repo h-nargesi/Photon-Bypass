@@ -9,7 +9,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
-internal class AccountRepositoryMoq : Mock<IAccountRepository>, IOutSourceMoq
+internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelService
 {
     public event Action<int, AccountEntity?>? OnGetAccountById;
 

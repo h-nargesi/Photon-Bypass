@@ -4,7 +4,7 @@ using PhotonBypass.Infra.Repository.DbContext;
 
 namespace PhotonBypass.Test.Mock.MockOptions;
 
-internal class LocalDapperOptionsMoq : Mock<IOptions<LocalDapperOptions>>
+internal class LocalDapperOptionsMoq : Mock<IOptions<LocalDapperOptions>>, IOptionsMoq
 {
     public const string DatabaseStructureInitializerFilePath = "../../Database/LocalDatabase/";
     public const string DatabaseDataInitializerFilePath = "Data/Sql/";
@@ -13,15 +13,15 @@ internal class LocalDapperOptionsMoq : Mock<IOptions<LocalDapperOptions>>
     {
         Setup(options => options.Value).Returns(new LocalDapperOptions
         {
-            ConnectionString = $"Server={ServerName};Database={DatabaseName};User Id={Username};Password={Password};"
+            ConnectionString = $"Server=.;{(Database != null ? $"Database={Database};" : string.Empty)}User Id=sa;Password=abc.123456;"
         });
     }
 
-    public string ServerName { get; init; }
+    public string? Database { get; set; }
 
-    public string DatabaseName { get; init; }
-
-    public string Username { get; init; }
-
-    public string Password { get; init; }
+    public static void CreateInstance(IServiceCollection services)
+    {
+        services.AddScoped<LocalDapperOptionsMoq>();
+        services.AddScoped(p => p.GetRequiredService<LocalDapperOptionsMoq>().Object);
+    }
 }

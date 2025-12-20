@@ -6,7 +6,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockServerBridge;
 
-internal class EmailHandlerMoq : Mock<IEmailHandler>, IOutSourceMoq
+internal class EmailHandlerMoq : Mock<IEmailHandler>, IUnitLevelService
 {
     public event Action<MailMessage>? OnSend;
 

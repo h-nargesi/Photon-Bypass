@@ -7,7 +7,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
-public class PriceRepositoryMoq : Mock<IPriceRepository>, IOutSourceMoq
+public class PriceRepositoryMoq : Mock<IPriceRepository>, IUnitLevelService
 {
     public PriceRepositoryMoq() : this(FilePath)
     {

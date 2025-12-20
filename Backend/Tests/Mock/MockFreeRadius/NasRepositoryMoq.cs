@@ -7,7 +7,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockFreeRadius;
 
-internal class NasRepositoryMoq : Mock<INasRepository>, IOutSourceMoq
+internal class NasRepositoryMoq : Mock<INasRepository>, IUnitLevelService
 {
     public NasRepositoryMoq() : this(FilePath)
     {

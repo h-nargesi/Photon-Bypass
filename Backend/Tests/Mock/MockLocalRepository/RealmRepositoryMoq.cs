@@ -7,7 +7,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
-internal class RealmRepositoryMoq : Mock<IRealmRepository>, IOutSourceMoq
+internal class RealmRepositoryMoq : Mock<IRealmRepository>, IUnitLevelService
 {
     public RealmRepositoryMoq() : this(FilePath)
     {

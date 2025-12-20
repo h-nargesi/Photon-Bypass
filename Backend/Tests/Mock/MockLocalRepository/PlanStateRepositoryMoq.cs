@@ -7,7 +7,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
-public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IOutSourceMoq
+public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IUnitLevelService
 {
     public PlanStateRepositoryMoq() : this(FilePath)
     {
