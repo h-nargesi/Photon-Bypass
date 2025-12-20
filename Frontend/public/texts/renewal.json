@@ -4,13 +4,13 @@
         "submit": "تایید",
         "current-user": "کاربر جاری",
         "monthly": {
-            "title": "پلن ماهانه:",
-            "choise": "انتخاب پلن ماهانه",
-            "unit": "ماه"
+            "title": "زمان:",
+            "choise": "انتخاب مقدار روز",
+            "unit": "روز"
         },
         "traffic": {
-            "title": "پلن ترافیکی:",
-            "choise": "انتخاب پلن ترافیکی",
+            "title": "ترافیک:",
+            "choise": "انتخاب مقدار ترافیک",
             "unit": "GB"
         },
         "simultaneousUsers": {

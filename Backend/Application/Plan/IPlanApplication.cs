@@ -11,7 +11,7 @@ public interface IPlanApplication
 
     Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target);
 
-    Task<ApiResult<int>> Estimate(string target, byte users, short days, int gigabytes);
+    Task<ApiResult<EstimateResult>> Estimate(string target, byte users, short days, int gigabytes);
 
     Task<ApiResult<RenewalResult>> Renewal(string target, byte users, short days, int gigabytes);
 
@@ -22,4 +22,3 @@ public interface IPlanApplication
             .Select(check_on_renewal => check_on_renewal(arg)).All(result => result);
     }
 }
-

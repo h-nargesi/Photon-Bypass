@@ -13,21 +13,6 @@
             <c-card-body class="d-flex">
                 <div class="w-50">
                     <div class="m-auto p-3 px-5">
-                        <label>{{ 'renewal.labels.monthly.title' | translate }}</label>
-                        <select class="bg-info" cSelect [(ngModel)]="selectedMonthly" (change)="setMonthly()">
-                            <option [value]="0">
-                                {{ 'renewal.labels.monthly.choise' | translate }}
-                            </option>
-                            @for (month of monthlyChoises; track month; let i = $index) {
-                            <option [value]="month">
-                                {{ month }} {{ monthlyUnit }}
-                            </option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="w-50">
-                    <div class="m-auto p-3 px-5">
                         <label>{{ 'renewal.labels.traffic.title' | translate }}</label>
                         <select class="bg-warning" cSelect [(ngModel)]="selectedTraffic" (change)="setTraffic()">
                             <option [value]="0">
@@ -36,6 +21,21 @@
                             @for (traffic of trafficChoises; track traffic; let i = $index) {
                             <option [value]="traffic" class="ltr-end">
                                 {{ traffic }} {{ trafficUnit }}
+                            </option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="w-50">
+                    <div class="m-auto p-3 px-5">
+                        <label>{{ 'renewal.labels.monthly.title' | translate }}</label>
+                        <select class="bg-info" cSelect [(ngModel)]="selectedTime" (change)="setTime()">
+                            <option [value]="0">
+                                {{ 'renewal.labels.monthly.choise' | translate }}
+                            </option>
+                            @for (month of timeChoises; track month; let i = $index) {
+                            <option [value]="month">
+                                {{ month }} {{ timeUnit }}
                             </option>
                             }
                         </select>

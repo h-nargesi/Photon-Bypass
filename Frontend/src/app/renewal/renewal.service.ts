@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
-  PlanEstimate,
+  RenewalContext,
   PlanInfo,
   PriceModel,
   RenewalResult,
   ShowMessageCase,
+  EstimateResult,
 } from '../@models';
 import {
   ApiBaseService,
@@ -27,13 +28,13 @@ export class RenewalService extends ApiBaseService {
     return this.getData<PriceModel[]>(`${BASICS_API_URL}/prices`);
   }
 
-  estimate(plan: PlanEstimate): Observable<number> {
-    return this.postData<number>(`${PLAN_API_URL}/estimate`, plan, {
+  estimate(plan: RenewalContext): Observable<EstimateResult> {
+    return this.postData<EstimateResult>(`${PLAN_API_URL}/estimate`, plan, {
       show_message: ShowMessageCase.errors,
     });
   }
 
-  renewal(plan: PlanInfo): Observable<RenewalResult> {
+  renewal(plan: RenewalContext): Observable<RenewalResult> {
     return this.postData<RenewalResult>(`${PLAN_API_URL}/renewal`, plan);
   }
 }

@@ -1,28 +1,34 @@
 export interface UserPlanInfo {
-  type: PlanType;
   remainsTitle: string;
-  remainsPercent: number;
+  remainsTrafficPercent: number;
+  remainsTimePercent: number;
   simultaneousUserCount: number;
 }
 
-export interface PlanEstimate {
-  type: PlanType;
-  value: number;
-  simultaneousUserCount: number;
-}
-
-export interface PlanInfo extends PlanEstimate {
+export interface RenewalContext {
   target: string;
+  days: number;
+  gigabytes: number;
+  simultaneousUserCount: number;
 }
 
-export enum PlanType {
-  Monthly,
-  Traffic,
+export interface PlanInfo {
+  target: string;
+  days: number;
+  gigabytes: number;
+  simultaneousUserCount: number;
 }
 
 export interface RenewalResult {
   currentPrice: number;
   moneyNeeds: number;
+}
+
+export interface EstimateResult {
+  price: number;
+  days: number;
+  gigabytes: number;
+  simultaneousUserCount: number;
 }
 
 export interface PaymentInvoice {

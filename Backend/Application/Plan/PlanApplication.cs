@@ -87,13 +87,46 @@ class PlanApplication(
         });
     }
 
-    public async Task<ApiResult<int>> Estimate(string target, byte users, short days, int gigabytes)
+    public async Task<ApiResult<EstimateResult>> Estimate(string target, byte users, short days, int gigabytes)
     {
         var account = (await AccountRepo.Value.GetAccount(target)) ??
                       throw new UserException("کاربر مورد نظر پیدا نشد!");
 
+        var renew = new RenewalEntity
+        {
+            AccountId = account.Id,
+            SimultaneousUser = users,
+            TimeLimitInDays = days,
+            TrafficLimit = gigabytes * StaticValues.BytesInGigLong,
+        };
+
+        // TODO: return valid data
+        // TODO: write test
+        if (renew.RenewalValidation(account, out var user_exception))
+        {
+            return new ApiResult<EstimateResult>
+            {
+                Code = 400,
+                Data = new EstimateResult
+                {
+                    Days = renew.TimeLimitInDays,
+                    Gigabytes = renew.TrafficLimit / StaticValues.BytesInGigLong,
+                    SimultaneousUserCount = renew.SimultaneousUser,
+                    Price = 0,
+                },
+                Message = user_exception.Message,
+            };
+        }
+
         var result = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, users, days, gigabytes);
-        return ApiResult<int>.Success(result);
+
+        return ApiResult<EstimateResult>.Success(new EstimateResult
+        {
+            Days = renew.TimeLimitInDays,
+            Gigabytes = renew.TrafficLimit / StaticValues.BytesInGigLong,
+            SimultaneousUserCount = renew.SimultaneousUser,
+            Price = result,
+        });
     }
 
     public async Task<ApiResult<RenewalResult>> Renewal(string target, byte count, short days, int gigabytes)
@@ -157,7 +190,7 @@ class PlanApplication(
             renew.RestrictedRealmId = (await ServerMngSrv.Value.GetAvailableRealm()).Id;
         }
 
-        if (renew.RenewalValidation(out var user_exception))
+        if (renew.RenewalValidation(account, out var user_exception))
         {
             Log.Information(@"[user: {0}] Plan current state:
     request=(taget:{1}, count:{2}, days:{3}, gigabytes:{4})
