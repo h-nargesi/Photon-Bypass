@@ -19,10 +19,16 @@ export interface PlanInfo {
   simultaneousUserCount: number;
 }
 
-
 export interface RenewalResult {
   currentPrice: number;
   moneyNeeds: number;
+}
+
+export interface EstimateResult {
+  price: number;
+  days: number;
+  gigabytes: number;
+  simultaneousUserCount: number;
 }
 
 export interface PaymentInvoice {

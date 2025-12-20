@@ -6,6 +6,7 @@ import {
   PriceModel,
   RenewalResult,
   ShowMessageCase,
+  EstimateResult,
 } from '../@models';
 import {
   ApiBaseService,
@@ -27,8 +28,8 @@ export class RenewalService extends ApiBaseService {
     return this.getData<PriceModel[]>(`${BASICS_API_URL}/prices`);
   }
 
-  estimate(plan: RenewalContext): Observable<number> {
-    return this.postData<number>(`${PLAN_API_URL}/estimate`, plan, {
+  estimate(plan: RenewalContext): Observable<EstimateResult> {
+    return this.postData<EstimateResult>(`${PLAN_API_URL}/estimate`, plan, {
       show_message: ShowMessageCase.errors,
     });
   }

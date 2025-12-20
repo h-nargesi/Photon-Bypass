@@ -149,7 +149,8 @@ export class RenewalComponent implements OnInit {
 
     this.service.estimate(this.renewal).subscribe((cost) => {
       this.valid = cost ? true : false;
-      this.cost = printMoney(cost);
+      this.selectedMonthly = cost.days;
+      this.cost = printMoney(cost.price);
     });
   }
 
