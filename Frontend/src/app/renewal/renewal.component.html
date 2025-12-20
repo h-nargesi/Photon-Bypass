@@ -29,13 +29,13 @@
                 <div class="w-50">
                     <div class="m-auto p-3 px-5">
                         <label>{{ 'renewal.labels.monthly.title' | translate }}</label>
-                        <select class="bg-info" cSelect [(ngModel)]="selectedMonthly" (change)="setMonthly()">
+                        <select class="bg-info" cSelect [(ngModel)]="selectedTime" (change)="setTime()">
                             <option [value]="0">
                                 {{ 'renewal.labels.monthly.choise' | translate }}
                             </option>
-                            @for (month of monthlyChoises; track month; let i = $index) {
+                            @for (month of timeChoises; track month; let i = $index) {
                             <option [value]="month">
-                                {{ month }} {{ monthlyUnit }}
+                                {{ month }} {{ timeUnit }}
                             </option>
                             }
                         </select>

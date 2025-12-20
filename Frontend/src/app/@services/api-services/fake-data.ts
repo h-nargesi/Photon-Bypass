@@ -6,6 +6,7 @@ import {
   ApiResultData,
   ConnectionState,
   ConnectionStateModel,
+  EstimateResult,
   EventCategory,
   EventType,
   FullUserModel,
@@ -129,17 +130,17 @@ export class FakeDataService {
     return wait({
       code: 200,
       data: [
-        {
-          title: 'ماهانه',
-          caption:
-            'در بازه محدود (ماهانه) و تقریبا بدون محدودیت ترافیکی، از vpn استفاده کنید.',
-          description: [
-            'تک کاربره هر ماه ۱۹۰ تومن',
-            'دو کاربره هر ماه ۳۴۰ تومن',
-            'سه کاربره هر ماه ۴۶۰ تومن',
-            'کاربرهای بیشتر به ازای هر کاربر ۱۰۰ تومن اضافه می‌شود',
-          ],
-        },
+        // {
+        //   title: 'ماهانه',
+        //   caption:
+        //     'در بازه محدود (ماهانه) و تقریبا بدون محدودیت ترافیکی، از vpn استفاده کنید.',
+        //   description: [
+        //     'تک کاربره هر ماه ۱۹۰ تومن',
+        //     'دو کاربره هر ماه ۳۴۰ تومن',
+        //     'سه کاربره هر ماه ۴۶۰ تومن',
+        //     'کاربرهای بیشتر به ازای هر کاربر ۱۰۰ تومن اضافه می‌شود',
+        //   ],
+        // },
         {
           title: 'ترافیکی',
           caption:
@@ -403,7 +404,7 @@ export class FakeDataService {
     const gigabytes =
       (1 + Math.floor(Math.random() * 5)) * 25;
     const days =
-      (1 + Math.floor(Math.random() * 5)) * 120;
+      (1 + Math.floor(Math.random() * 5)) * 30;
     return wait({
       code: 200,
       data: {
@@ -415,11 +416,14 @@ export class FakeDataService {
     } as ApiResultData<PlanInfo>);
   }
 
-  private api_plan_estimate(): Observable<HttpResponse<ApiResultData<number>>> {
+  private api_plan_estimate(): Observable<HttpResponse<ApiResultData<EstimateResult>>> {
     return wait({
       code: 200,
-      data: Math.floor(Math.random() * 100),
-    } as ApiResultData<number>);
+      data: {
+        price: Math.floor(Math.random() * 100),
+        days: Math.floor(Math.random() * 6) * 30,
+      } as EstimateResult,
+    } as ApiResultData<EstimateResult>);
   }
 
   private api_plan_renewal(): Observable<

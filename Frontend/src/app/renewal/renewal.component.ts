@@ -53,14 +53,14 @@ import { RenewalService } from './renewal.service';
 })
 export class RenewalComponent implements OnInit {
   readonly maxUserCounts = [1, 2, 3, 4, 5, 6];
-  readonly monthlyChoises = [1, 2, 3, 4, 5, 6];
+  readonly timeChoises = [30, 60, 90, 120, 150, 180];
   readonly trafficChoises = [25, 50, 75, 100, 150, 200];
 
-  readonly monthlyUnit!: string;
+  readonly timeUnit!: string;
   readonly trafficUnit!: string;
 
   color: string = 'secondary';
-  selectedMonthly = 0;
+  selectedTime = 0;
   selectedTraffic = 0;
   selectedUserCount = 0;
   cost: string = '--';
@@ -77,7 +77,7 @@ export class RenewalComponent implements OnInit {
     private readonly router: Router,
     translation: TranslationService
   ) {
-    this.monthlyUnit = translation.translate('renewal.labels.monthly.unit');
+    this.timeUnit = translation.translate('renewal.labels.monthly.unit');
     this.trafficUnit = translation.translate('renewal.labels.traffic.unit');
   }
 
@@ -98,8 +98,9 @@ export class RenewalComponent implements OnInit {
     if (
       (!this.renewal.gigabytes && !this.renewal.days) ||
       !this.renewal.simultaneousUserCount
-    )
+    ) {
       return;
+    }
 
     this.renewal.target =
       this.user_service.targetName ?? this.current_user.username;
@@ -118,21 +119,24 @@ export class RenewalComponent implements OnInit {
     });
   }
 
-  setMonthly() {
-    if (this.selectedMonthly === 0) return;
+  setTime() {
+    if (this.selectedTime === 0) return;
     this.color = 'primary';
-    this.renewal.days = this.selectedMonthly;
+    if (this.renewal.days === this.selectedTime) return;
+    this.renewal.days = this.selectedTime;
     this.fetchEstimate();
   }
 
   setTraffic() {
     if (this.selectedTraffic === 0) return;
     this.color = 'primary';
+    if (this.renewal.gigabytes === this.selectedTraffic) return;
     this.renewal.gigabytes = this.selectedTraffic;
     this.fetchEstimate();
   }
 
   setUserCount() {
+    if (this.renewal.simultaneousUserCount === this.selectedUserCount) return;
     this.renewal.simultaneousUserCount = this.selectedUserCount;
     this.fetchEstimate();
   }
@@ -144,12 +148,13 @@ export class RenewalComponent implements OnInit {
     ) {
       this.cost = '--';
       this.valid = false;
+      this.color = 'secondary';
       return;
     }
 
     this.service.estimate(this.renewal).subscribe((cost) => {
       this.valid = cost ? true : false;
-      this.selectedMonthly = cost.days;
+      this.selectedTime = cost.days;
       this.cost = printMoney(cost.price);
     });
   }
@@ -164,8 +169,8 @@ export class RenewalComponent implements OnInit {
         this.selectedUserCount = plan.simultaneousUserCount;
       }
 
-      if (this.monthlyChoises.includes(plan.days)) {
-        this.selectedMonthly = plan.days;
+      if (this.timeChoises.includes(plan.days)) {
+        this.selectedTime = plan.days;
       }
 
       if (this.trafficChoises.includes(plan.gigabytes)) {
