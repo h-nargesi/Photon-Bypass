@@ -9,8 +9,11 @@
     "columns": {
         "target": "صادر کننده",
         "event-time": "زمان",
+        "category": "دسته",
         "title": "عنوان",
-        "value": "مقدار"
+        "value": "مقدار",
+        "price": "هزینه",
+        "description": "توضیحات"
     },
     "messages": {
         "not-found": "هیچ دیتایی برای '{0}' یافت نشد!",

@@ -20,7 +20,7 @@ import {
   InputGroupTextDirective,
   RowComponent,
 } from '@coreui/angular';
-import { HistoryRecord } from '../@models';
+import { EventType, HistoryRecord } from '../@models';
 import { TranslationPipe, UserService } from '../@services';
 import { HistoryService } from './history.service';
 
@@ -66,11 +66,13 @@ export class HistoryComponent implements AfterViewInit {
   readonly displayedColumns: string[] = [
     'eventTimeTitle',
     'target',
+    'category',
     'title',
     'value',
+    'price',
   ];
   dataSource!: MatTableDataSource<HistoryRecord>;
-
+  
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
 
@@ -114,4 +116,10 @@ export class HistoryComponent implements AfterViewInit {
       this.dataSource.paginator.firstPage();
     }
   }
+
+  getColor(type: EventType): string {
+    return COLORS[type];
+  }
 }
+
+const COLORS: string[] = ['info', 'info', 'success', 'warning', 'danger', 'danger'];

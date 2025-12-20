@@ -16,9 +16,7 @@ import {
   RowComponent,
 } from '@coreui/angular';
 import {
-  PlanEstimate,
-  PlanInfo,
-  PlanType,
+  RenewalContext,
   PriceModel,
   RenewalResult,
   UserModel,
@@ -56,7 +54,7 @@ import { RenewalService } from './renewal.service';
 export class RenewalComponent implements OnInit {
   readonly maxUserCounts = [1, 2, 3, 4, 5, 6];
   readonly monthlyChoises = [1, 2, 3, 4, 5, 6];
-  readonly trafficChoises = [25, 50, 75, 100, 150];
+  readonly trafficChoises = [25, 50, 75, 100, 150, 200];
 
   readonly monthlyUnit!: string;
   readonly trafficUnit!: string;
@@ -68,7 +66,7 @@ export class RenewalComponent implements OnInit {
   cost: string = '--';
   valid = false;
 
-  estimate = {} as PlanEstimate;
+  renewal = {} as RenewalContext;
   current_user!: UserModel;
   prices?: PriceModel[];
   result?: RenewalResult;
@@ -97,14 +95,16 @@ export class RenewalComponent implements OnInit {
   }
 
   submit() {
-    if (!this.estimate.value || !this.estimate.simultaneousUserCount) return;
+    if (
+      (!this.renewal.gigabytes && !this.renewal.days) ||
+      !this.renewal.simultaneousUserCount
+    )
+      return;
 
-    const plan = this.estimate as PlanInfo;
-
-    plan.target =
+    this.renewal.target =
       this.user_service.targetName ?? this.current_user.username;
 
-    this.service.renewal(plan).subscribe(async (result) => {
+    this.service.renewal(this.renewal).subscribe(async (result) => {
       this.result = result;
 
       if (result.moneyNeeds > 0) {
@@ -120,35 +120,34 @@ export class RenewalComponent implements OnInit {
 
   setMonthly() {
     if (this.selectedMonthly === 0) return;
-    this.color = 'info';
-    this.estimate.type = PlanType.Monthly;
-    this.estimate.value = this.selectedMonthly;
-    this.selectedTraffic = 0;
+    this.color = 'primary';
+    this.renewal.days = this.selectedMonthly;
     this.fetchEstimate();
   }
 
   setTraffic() {
     if (this.selectedTraffic === 0) return;
-    this.color = 'warning';
-    this.estimate.type = PlanType.Traffic;
-    this.estimate.value = this.selectedTraffic;
-    this.selectedMonthly = 0;
+    this.color = 'primary';
+    this.renewal.gigabytes = this.selectedTraffic;
     this.fetchEstimate();
   }
 
   setUserCount() {
-    this.estimate.simultaneousUserCount = this.selectedUserCount;
+    this.renewal.simultaneousUserCount = this.selectedUserCount;
     this.fetchEstimate();
   }
 
   private fetchEstimate() {
-    if (!this.estimate.value || !this.estimate.simultaneousUserCount) {
+    if (
+      (!this.renewal.gigabytes && !this.renewal.days) ||
+      !this.renewal.simultaneousUserCount
+    ) {
       this.cost = '--';
       this.valid = false;
       return;
     }
 
-    this.service.estimate(this.estimate).subscribe((cost) => {
+    this.service.estimate(this.renewal).subscribe((cost) => {
       this.valid = cost ? true : false;
       this.cost = printMoney(cost);
     });
@@ -158,24 +157,25 @@ export class RenewalComponent implements OnInit {
     this.current_user = await this.user_service.user();
     this.service.info(this.user_service.targetName).subscribe((plan) => {
       if (!plan) return;
-      this.estimate = plan;
+      this.renewal = plan;
 
       if (this.maxUserCounts.includes(plan.simultaneousUserCount)) {
         this.selectedUserCount = plan.simultaneousUserCount;
       }
 
+      if (this.monthlyChoises.includes(plan.days)) {
+        this.selectedMonthly = plan.days;
+      }
+
+      if (this.trafficChoises.includes(plan.gigabytes)) {
+        this.selectedTraffic = plan.gigabytes;
+      }
+
       if (
-        plan.type === PlanType.Monthly &&
-        this.monthlyChoises.includes(plan.value)
+        (!this.renewal.gigabytes && !this.renewal.days) ||
+        !this.renewal.simultaneousUserCount
       ) {
-        this.color = 'info';
-        this.selectedMonthly = plan.value;
-      } else if (
-        plan.type === PlanType.Traffic &&
-        this.trafficChoises.includes(plan.value)
-      ) {
-        this.color = 'warning';
-        this.selectedTraffic = plan.value;
+        this.color = 'primary';
       }
 
       this.fetchEstimate();

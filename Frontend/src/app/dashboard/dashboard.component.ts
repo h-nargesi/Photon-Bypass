@@ -26,7 +26,6 @@ import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
 import {
   ConnectionStateModel,
-  PlanType,
   ResultStatus,
   Target,
   UserModel,
@@ -152,36 +151,30 @@ export class DashboardComponent implements OnInit {
     ]);
   }
 
-  getPlanInfoColor(plan_type?: PlanType): Colors {
-    switch (plan_type) {
-      case PlanType.Monthly:
-        return 'info';
-      case PlanType.Traffic:
-        return 'warning';
-      default:
-        return 'dark';
+  getPlanInfoColor(plan_info?: UserPlanInfo): Colors {
+    if (!plan_info) return 'dark';
+    else if (plan_info.remainsTimePercent > plan_info.remainsTrafficPercent) {
+      return 'warning';
+    } else {
+      return 'info';
     }
   }
 
-  getPlanInfoIcon(plan_type?: PlanType): string[] | undefined {
-    switch (plan_type) {
-      case PlanType.Monthly:
-        return this.icons.cilAvTimer;
-      case PlanType.Traffic:
-        return this.icons.cilChartPie;
-      default:
-        return undefined;
+  getPlanInfoIcon(plan_info?: UserPlanInfo): string[] | undefined {
+    if (!plan_info) return undefined;
+    else if (plan_info.remainsTimePercent > plan_info.remainsTrafficPercent) {
+      return this.icons.cilAvTimer;
+    } else {
+      return this.icons.cilChartPie;
     }
   }
 
-  getPlanInfoTooltip(plan_type?: PlanType): string | undefined {
-    switch (plan_type) {
-      case PlanType.Monthly:
-        return this.translation.translate('dashboard.balance.monthly');
-      case PlanType.Traffic:
-        return this.translation.translate('dashboard.balance.traffic');
-      default:
-        return undefined;
+  getPlanInfoTooltip(plan_info?: UserPlanInfo): string | undefined {
+    if (!plan_info) return undefined;
+    else if (plan_info.remainsTimePercent > plan_info.remainsTrafficPercent) {
+      return this.translation.translate('dashboard.balance.monthlyRisk');
+    } else {
+      return this.translation.translate('dashboard.balance.trafficRisk');
     }
   }
 

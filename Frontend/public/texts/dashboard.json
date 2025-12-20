@@ -20,8 +20,8 @@
     },
     "balance": {
         "simultaneous": "{0} کاربره",
-        "monthly": "ماهانه",
-        "traffic": "ترافیکی",
+        "monthly-risk": "مهلت استفاده",
+        "traffic-risk": "ترافیکی",
         "title": "مقدار مانده پلن جاری",
         "renewal": "تمدید / افزایش"
     },
