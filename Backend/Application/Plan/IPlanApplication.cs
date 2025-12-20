@@ -22,4 +22,3 @@ public interface IPlanApplication
             .Select(check_on_renewal => check_on_renewal(arg)).All(result => result);
     }
 }
-

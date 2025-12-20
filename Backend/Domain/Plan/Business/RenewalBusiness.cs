@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.ErrorHandler;
 
@@ -34,22 +35,40 @@ public static class RenewalBusiness
         return entity.TrafficLimit.HasValue ? Math.Round(entity.TrafficLimit.Value / StaticValues.BytesInGigDouble, 2) : null;
     }
 
-    public static bool RenewalValidation(this RenewalEntity validation, out UserException error)
+    // TODO: write test
+    public static bool RenewalValidation(this RenewalEntity validation, AccountEntity account, out UserException error)
     {
-        if (validation.TrafficLimit is null or < 1)
+        if (account.UserType.HasFlag(UserTypes.AllowMonthly))
+        {
+            if (validation.TimeLimitInDays is null or < 1 or > 180 && validation.TrafficLimit is null or < 1 or > 300)
+            {
+                error = new UserException(
+                    "نمی‌توانید پلن بدون ترافیک و تاریخ انقضا ثبت نمایید!",
+                    $"Invalid renewal time-limit={validation.TimeLimitInDays} traffic={validation.TrafficLimit}");
+                return true;
+            }
+        }
+        else if (validation.TrafficLimit is null or < 1 or > 300)
         {
             error = new UserException(
                 "نمی‌توانید پلن بدون ترافیک ثبت نمایید!",
-                "Invalid renewal traffic=null");
+                $"Invalid renewal account-type={UserTypes.AllowMonthly} traffic={validation.TrafficLimit}");
             return true;
         }
 
-        if (validation.TrafficLimit / StaticValues.BytesInGigDouble % 25 != 0)
+        if (validation.TrafficLimit != null)
         {
-            error = new UserException(
-                "ترافیک باید ضریبی از ۲۵ باشد.",
-                $"Invalid renewal traffic={validation.TrafficLimit}, gigabytes={validation.TrafficLimit / StaticValues.BytesInGigDouble}");
-            return true;
+            if (validation.TrafficLimit / StaticValues.BytesInGigDouble % 25 != 0)
+            {
+                error = new UserException(
+                    "ترافیک باید ضریبی از ۲۵ باشد.",
+                    $"Invalid renewal traffic={validation.TrafficLimit}, gigabytes={validation.TrafficLimit / StaticValues.BytesInGigDouble}");
+                return true;
+            }
+            
+            var gigabyte_packages = validation.TrafficLimit / BytesInGigLong / 25;
+            var days_limit = 30 + 2.5 * gigabyte_packages - 0.004 * Math.Pow(gigabyte_packages, 2);
+            validation.TimeLimitInDays = days_limit / ((validation.SimultaneousUser + 1) / 2);
         }
 
         error = null!;

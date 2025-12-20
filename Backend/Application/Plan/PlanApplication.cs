@@ -92,6 +92,13 @@ class PlanApplication(
         var account = (await AccountRepo.Value.GetAccount(target)) ??
                       throw new UserException("کاربر مورد نظر پیدا نشد!");
 
+        // TODO: return valid data
+        // TODO: write test
+        if (renew.RenewalValidation(account, out var user_exception))
+        {
+            return ApiResult<int>.Success(result);
+        }
+
         var result = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, users, days, gigabytes);
         return ApiResult<int>.Success(result);
     }
@@ -157,7 +164,7 @@ class PlanApplication(
             renew.RestrictedRealmId = (await ServerMngSrv.Value.GetAvailableRealm()).Id;
         }
 
-        if (renew.RenewalValidation(out var user_exception))
+        if (renew.RenewalValidation(account, out var user_exception))
         {
             Log.Information(@"[user: {0}] Plan current state:
     request=(taget:{1}, count:{2}, days:{3}, gigabytes:{4})

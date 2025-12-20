@@ -23,7 +23,7 @@ public class HistoryModel
 
     public EventType Type { get; init; }
 
-    public object? Value { get; set; }
+    public string? Value { get; set; }
 
     public int? Price { get; init; }
 
