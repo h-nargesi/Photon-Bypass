@@ -158,7 +158,7 @@ public class PlanApplicationTest : ServiceInitializer
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
-        Assert.Equal(1500 - estimate.Data, result.Data.CurrentPrice);
+        Assert.Equal(1500 - estimate.Data?.Price, result.Data.CurrentPrice);
         Assert.Equal(0, result.Data.MoneyNeeds);
     }
 
@@ -179,6 +179,6 @@ public class PlanApplicationTest : ServiceInitializer
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
         Assert.Equal(0, result.Data.CurrentPrice);
-        Assert.Equal(estimate.Data, result.Data.MoneyNeeds);
+        Assert.Equal(estimate.Data?.Price, result.Data.MoneyNeeds);
     }
 }

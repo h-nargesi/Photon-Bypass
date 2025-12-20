@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.ErrorHandler;
 
@@ -66,9 +67,9 @@ public static class RenewalBusiness
                 return true;
             }
             
-            var gigabyte_packages = validation.TrafficLimit / BytesInGigLong / 25;
+            var gigabyte_packages = validation.TrafficLimit.Value / StaticValues.BytesInGigLong / 25;
             var days_limit = 30 + 2.5 * gigabyte_packages - 0.004 * Math.Pow(gigabyte_packages, 2);
-            validation.TimeLimitInDays = days_limit / ((validation.SimultaneousUser + 1) / 2);
+            validation.TimeLimitInDays = (short)(days_limit / ((validation.SimultaneousUser + 1) / 2));
         }
 
         error = null!;

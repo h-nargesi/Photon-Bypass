@@ -22,7 +22,7 @@ public class ApiResult
 
 public class ApiResult<TModel> : ApiResult
 {
-    public TModel? Data { get; set; }
+    public TModel? Data { get; init; }
 
     public static ApiResult<TModel> Success(TModel model)
     {
