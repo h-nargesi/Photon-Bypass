@@ -11,8 +11,7 @@ public class TransactionTest : OutSourceLevelServiceInitializer
     public async Task ShouldCreateNewTransaction()
     {
         using var scope = App.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<OutSourceManager>()
-            .InitializeOutSource<LocalDatabaseInitializer>(scope, "DbTest1");
+        await scope.InitializeOutSource<LocalDatabaseInitializer>("DbTest1");
 
         var account = new AccountEntity
         {
