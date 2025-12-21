@@ -36,7 +36,6 @@ public static class RenewalBusiness
         return entity.TrafficLimit.HasValue ? Math.Round(entity.TrafficLimit.Value / StaticValues.BytesInGigDouble, 2) : null;
     }
 
-    // TODO: write test
     public static bool RenewalValidation(this RenewalEntity validation, AccountEntity account, out UserException error)
     {
         if (account.UserType.HasFlag(UserTypes.AllowMonthly))
@@ -70,6 +69,13 @@ public static class RenewalBusiness
             var gigabyte_packages = validation.TrafficLimit.Value / StaticValues.BytesInGigLong / 25;
             var days_limit = 30 + 2.5 * gigabyte_packages - 0.004 * Math.Pow(gigabyte_packages, 2);
             validation.TimeLimitInDays = (short)(days_limit / ((validation.SimultaneousUser + 1) / 2));
+        }
+        else if (validation.TimeLimitInDays % 30 != 0)
+        {
+            error = new UserException(
+                "زمان پلن باید ضریبی از ۳۰ باشد.",
+                $"Invalid renewal time-in-day={validation.TimeLimitInDays}");
+            return true;
         }
 
         error = null!;
