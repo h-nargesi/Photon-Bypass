@@ -1,4 +1,5 @@
 ﻿using Dapper.FastCrud;
+using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Repository;
 
@@ -20,11 +21,11 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context)
 
         if (entity.Id > 0)
         {
-            await DapperDbContext.Connection.UpdateAsync(entity);
+            await DapperDbContext.Connection.UpdateAsync(entity, CheckTransaction<TEntity>());
         }
         else
         {
-            await DapperDbContext.Connection.InsertAsync(entity);
+            await DapperDbContext.Connection.InsertAsync(entity, CheckTransaction<TEntity>());
         }
 
         await DapperDbContext.EventService.CallOnSave(this, new EntityEventArgs<TEntity>(entity));
@@ -42,7 +43,7 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context)
 
         foreach (var entity in inserts)
         {
-            await DapperDbContext.Connection.InsertAsync(entity);
+            await DapperDbContext.Connection.InsertAsync(entity, CheckTransaction<TEntity>());
         }
 
         await DapperDbContext.EventService.CallOnSave(this, new EntityEventArgs<TEntity>(entity_list));
@@ -55,6 +56,36 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context)
         await DapperDbContext.Connection.DeleteAsync(entity);
 
         await DapperDbContext.EventService.CallOnDelete(this, new EntityEventArgs<TEntity>(entity));
+    }
+
+    private Action<IStandardSqlStatementOptionsBuilder<T>>? CheckTransaction<T>(
+        Action<IStandardSqlStatementOptionsBuilder<T>>? statement = null)
+    {
+        if (DapperDbContext.CurrentTransaction == null) return statement;
+        
+        var arg_statement = statement;
+        statement = st =>
+        {
+            arg_statement?.Invoke(st);
+            st.AttachToTransaction(DapperDbContext.CurrentTransaction);
+        };
+
+        return statement;
+    }
+
+    private Action<IConditionalBulkSqlStatementOptionsBuilder<T>>? CheckTransactionBulk<T>(
+        Action<IConditionalBulkSqlStatementOptionsBuilder<T>>? statement = null)
+    {
+        if (DapperDbContext.CurrentTransaction == null) return statement;
+        
+        var arg_statement = statement;
+        statement = st =>
+        {
+            arg_statement?.Invoke(st);
+            st.AttachToTransaction(DapperDbContext.CurrentTransaction);
+        };
+
+        return statement;
     }
 
     private class EntityEventHandler(IEntityEventService entity_event_service) : IEntityEvent<TEntity>

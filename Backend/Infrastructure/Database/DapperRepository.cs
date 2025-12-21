@@ -19,6 +19,8 @@ public abstract class DapperRepository<TEntity>(IDapperDbContext context)
     {
         await context.OpenAsync();
 
+        statement = CheckTransaction(statement);
+
         return await context.Connection.FindAsync(statement);
     }
 
@@ -27,6 +29,8 @@ public abstract class DapperRepository<TEntity>(IDapperDbContext context)
     {
         await context.OpenAsync();
 
+        statement = CheckTransaction(statement);
+
         return await context.Connection.FindAsync(statement);
     }
 
@@ -34,22 +38,37 @@ public abstract class DapperRepository<TEntity>(IDapperDbContext context)
     {
         await context.OpenAsync();
 
-        return await context.Connection.ExecuteScalarAsync<T>(sql, param);
+        return await context.Connection.ExecuteScalarAsync<T>(sql, param, context.CurrentTransaction);
     }
 
     protected async Task<IEnumerable<dynamic>> QueryAsync(string sql, object? param = null)
     {
         await context.OpenAsync();
 
-        return await context.Connection.QueryAsync(sql, param);
+        return await context.Connection.QueryAsync(sql, param, context.CurrentTransaction);
     }
 
     protected async Task<IEnumerable<T>> QueryAsync<T>(string sql, object? param = null)
     {
         await context.OpenAsync();
 
-        return await context.Connection.QueryAsync<T>(sql, param);
+        return await context.Connection.QueryAsync<T>(sql, param, context.CurrentTransaction);
     }
 
     public void Dispose() => GC.SuppressFinalize(this);
+
+    private Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<T>>? CheckTransaction<T>(
+        Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<T>>? statement = null)
+    {
+        if (context.CurrentTransaction == null) return statement;
+        
+        var arg_statement = statement;
+        statement = st =>
+        {
+            arg_statement?.Invoke(st);
+            st.AttachToTransaction(context.CurrentTransaction);
+        };
+
+        return statement;
+    }
 }

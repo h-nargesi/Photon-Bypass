@@ -100,8 +100,6 @@ class PlanApplication(
             TrafficLimit = gigabytes * StaticValues.BytesInGigLong,
         };
 
-        // TODO: return valid data
-        // TODO: write test
         if (renew.RenewalValidation(account, out var user_exception))
         {
             return new ApiResult<EstimateResult>
@@ -200,7 +198,7 @@ class PlanApplication(
             throw user_exception;
         }
 
-        var transaction = await AccountRepo.Value.DbContext.BeginTransactionAsync();
+        await AccountRepo.Value.DbContext.BeginTransactionAsync();
 
         try
         {
@@ -229,13 +227,13 @@ class PlanApplication(
 
             await AccountRadiusSrv.Value.SyncUserAndActive(account, renew);
 
-            transaction.Commit();
+            await AccountRepo.Value.DbContext.CommitAsync();
         }
         catch
         {
             _ = AccountRadiusSrv.Value.DeactivateUsers([account.Username]);
 
-            transaction.Rollback();
+            await AccountRepo.Value.DbContext.RollbackAsync();
 
             _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
             {

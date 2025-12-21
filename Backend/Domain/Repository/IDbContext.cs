@@ -1,8 +1,10 @@
-using System.Data;
-
 namespace PhotonBypass.Domain.Repository;
 
 public interface IDbContext
 {
-    Task<IDbTransaction> BeginTransactionAsync();
+    Task BeginTransactionAsync();
+
+    Task CommitAsync();
+
+    Task RollbackAsync();
 }

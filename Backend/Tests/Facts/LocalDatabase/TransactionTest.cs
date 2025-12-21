@@ -16,18 +16,18 @@ public class TransactionTest : OutSourceLevelServiceInitializer
         var account = new AccountEntity
         {
             Balance = 0,
-            Name = "ShouldCreateNewTransaction",
-            Surname = "ShouldCreateNewTransaction",
+            Name = "Transaction",
+            Surname = "Transaction",
             Password = HashHandler.HashPassword("password"),
-            Username = "ShouldCreateNewTransaction",
+            Username = "Transaction",
             VpnPassword = "my-password",
         };
 
         var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
 
-        var trans = await account_repo.DbContext.BeginTransactionAsync();
+        await account_repo.DbContext.BeginTransactionAsync();
         await account_repo.Save(account);
-        trans.Rollback();
+        await account_repo.DbContext.RollbackAsync();
 
         var saved = await scope.ServiceProvider.GetRequiredService<IAccountRepository>()
             .GetAccount("U0059");
