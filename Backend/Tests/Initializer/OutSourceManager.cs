@@ -1,10 +1,10 @@
 namespace PhotonBypass.Test.Initializer;
 
-internal class OutSourceManager(IServiceProvider services) : IOutSourceLevelService
+internal class OutSourceManager : IOutSourceLevelService
 {
     private readonly Dictionary<string, KeyInitialManager> keys = [];
 
-    public Task InitializeOutSource<TInitializer>(string key) where TInitializer : IOutSourceInitializer
+    public Task InitializeOutSource<TInitializer>(IServiceScope scope, string key) where TInitializer : IOutSourceInitializer
     {
         KeyInitialManager? initializer;
 
@@ -12,14 +12,14 @@ internal class OutSourceManager(IServiceProvider services) : IOutSourceLevelServ
         {
             if (!keys.TryGetValue(key, out initializer))
             {
-                keys.Add(key, initializer = new KeyInitialManager(services));
+                keys.Add(key, initializer = new KeyInitialManager(scope));
             }
         }
 
         return initializer.Initialize<TInitializer>(key);
     }
 
-    private class KeyInitialManager(IServiceProvider services)
+    private class KeyInitialManager(IServiceScope scope)
     {
         private readonly Dictionary<Type, SynchronizationInitializeManager> initializers = [];
 
@@ -27,18 +27,18 @@ internal class OutSourceManager(IServiceProvider services) : IOutSourceLevelServ
         {
             if (initializers.TryGetValue(typeof(TInitializer), out var initializer) || initializer == null)
             {
-                initializers[typeof(TInitializer)] = initializer = new SynchronizationInitializeManager(services);
+                initializers[typeof(TInitializer)] = initializer = new SynchronizationInitializeManager(scope);
             }
 
             return initializer.Initialize<TInitializer>(key);
         }
     }
 
-    private class SynchronizationInitializeManager(IServiceProvider services)
+    private class SynchronizationInitializeManager(IServiceScope scope)
     {
         private bool isInitialized;
         private Exception? exception;
-        private readonly SemaphoreSlim semaphore = new(0);
+        private readonly SemaphoreSlim semaphore = new(1);
 
         public async Task Initialize<TInitializer>(string key) where TInitializer : IOutSourceInitializer
         {
@@ -52,7 +52,7 @@ internal class OutSourceManager(IServiceProvider services) : IOutSourceLevelServ
 
             try
             {
-                await services.GetRequiredService<TInitializer>()
+                await scope.ServiceProvider.GetRequiredService<TInitializer>()
                     .Initialize(key);
                 isInitialized = true;
             }

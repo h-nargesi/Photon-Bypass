@@ -22,7 +22,8 @@ internal class LocalDbContext(IOptions<LocalDapperOptions> options, IEntityEvent
     public async Task<IDbTransaction> BeginTransactionAsync()
     {
         await OpenAsync();
-        return await connection.BeginTransactionAsync();
+        var trans = await connection.BeginTransactionAsync();
+        return trans;
     }
 
     public void Dispose()

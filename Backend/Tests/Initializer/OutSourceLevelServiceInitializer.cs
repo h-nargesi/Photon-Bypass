@@ -1,5 +1,6 @@
 namespace PhotonBypass.Test.Initializer;
 
-public class OutSourceLevelServiceInitializer() : ServiceInitializer(typeof(IOptionsMoq))
+public class OutSourceLevelServiceInitializer()
+    : ServiceInitializer(typeof(IOutSourceLevelService), typeof(IOptionsMoq))
 {
 }

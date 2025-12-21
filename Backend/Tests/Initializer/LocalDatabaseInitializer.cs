@@ -22,12 +22,13 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options) : IOutSou
         var loading_data_files =
             SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseDataInitializerFilePath + key);
 
-        foreach (var sql in structures)
-            await connection.ExecuteAsync(sql);
+        await connection.ExecuteAsync("DROP DATABASE IF EXISTS " + options.Database);
+        foreach (var script in structures.SelectMany(x => x.Split("GO")).Where(s => !string.IsNullOrWhiteSpace(s)))
+            await connection.ExecuteAsync(script);
 
         var data = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_data_files);
 
-        foreach (var sql in data)
+        foreach (var sql in data.Where(s => !string.IsNullOrWhiteSpace(s)))
             await connection.ExecuteAsync(sql);
     }
 

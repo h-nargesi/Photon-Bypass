@@ -6,14 +6,15 @@ namespace PhotonBypass.Test.Mock.MockOptions;
 
 internal class LocalDapperOptionsMoq : Mock<IOptions<LocalDapperOptions>>, IOptionsMoq
 {
-    public const string DatabaseStructureInitializerFilePath = "../../Database/LocalDatabase/";
+    public const string DatabaseStructureInitializerFilePath = "../../../../../Database/LocalDatabase/";
     public const string DatabaseDataInitializerFilePath = "Data/Sql/";
 
     public LocalDapperOptionsMoq()
     {
-        Setup(options => options.Value).Returns(new LocalDapperOptions
+        Setup(options => options.Value).Returns(() => new LocalDapperOptions
         {
-            ConnectionString = $"Server=.;{(Database != null ? $"Database={Database};" : string.Empty)}User Id=sa;Password=abc.123456;"
+            ConnectionString = $"Server=.;{(Database != null ? $" Database={Database};" : string.Empty)} " +
+                               "User Id=sa; Password=ph0t0n-X; Encrypt=False; TrustServerCertificate=True;"
         });
     }
 

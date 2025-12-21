@@ -6,14 +6,19 @@ public static class SqlFileDependencyHelper
 {
     public static async Task<List<string>> GetSortedFiles(string path)
     {
+        if (!Directory.Exists(path))
+        {
+            return [];
+        }
+
         var context = new List<Node>();
         await LoadFiles(context, path);
 
         var graph = BuildGraph(context);
 
-        if (HasCycle(graph))
+        if (HasCycle(graph, out var message))
         {
-            throw new Exception("Cycle detected");
+            throw new Exception("Cycle detected: " + message);
         }
 
         return TopologicalSort(graph);
@@ -25,18 +30,10 @@ public static class SqlFileDependencyHelper
             await LoadFiles(context, dir);
 
         var list = Directory.GetFiles(path)
-            .Select(p => new
-            {
-                Name = Path.GetFileNameWithoutExtension(p),
-                Content = File.ReadAllTextAsync(p),
-            });
+            .Where(p => Path.GetExtension(p) == ".sql")
+            .Select(p => new Node(Path.GetFileNameWithoutExtension(p), File.ReadAllText(p)));
 
-        foreach (var file in list)
-        {
-            if (Path.GetExtension(file.Name) != "sql") continue;
-
-            context.Add(new Node(file.Name, await file.Content));
-        }
+        context.AddRange(list);
     }
 
     private static Graph BuildGraph(List<Node> records)
@@ -62,14 +59,16 @@ public static class SqlFileDependencyHelper
         return graph;
     }
 
-    private static bool HasCycle(Graph graph)
+    private static bool HasCycle(Graph graph, out string? message)
     {
         var states = new Dictionary<string, int>();
 
         foreach (var node in graph.Nodes)
             states[node.Name] = 0;
 
-        return graph.Nodes.Any(node => states[node.Name] == 0 && Dfs(node.Name, graph, states));
+        var result = graph.Nodes.Any(node => states[node.Name] == 0 && Dfs(node.Name, graph, states));
+        message = states.Where(p => p.Value == 3).Select(p => p.Key).FirstOrDefault();
+        return result;
     }
 
     private static bool Dfs(string name, Graph graph, Dictionary<string, int> states)
@@ -79,6 +78,7 @@ public static class SqlFileDependencyHelper
         if (graph.AdjList[name].Any(neighbor => states[neighbor.Name] == 1 ||
                                                 states[neighbor.Name] == 0 && Dfs(neighbor.Name, graph, states)))
         {
+            states[name] = 3;
             return true;
         }
 
@@ -115,16 +115,31 @@ public static class SqlFileDependencyHelper
     private class Graph(List<Node> nodes)
     {
         public List<Node> Nodes { get; } = nodes;
-        public Dictionary<string, List<Node>> AdjList { get; } = [];
+        public Dictionary<string, HashSet<Node>> AdjList { get; } = [];
         public Dictionary<string, int> InDegree { get; } = [];
     }
 
-    private class Node(string name, string content)
+    private class Node
     {
-        public string Name { get; } = name;
+        public Node(string name, string content)
+        {
+            if (content.StartsWith("-- Object:"))
+            {
+                var end = content.IndexOf('\n');
+                name = content[10..end].Trim();
+            }
 
-        public string Content { get; } = content;
+            Name = name;
+            Content = content;
+            Regex = new Regex($@"\b{Name}\b", RegexOptions.Compiled);
+        }
 
-        public Regex Regex { get; } = new Regex($@"\b{name}\b");
+        public string Name { get; }
+
+        public string Content { get; }
+
+        public Regex Regex { get; }
+
+        public override string ToString() => Name;
     }
 }
