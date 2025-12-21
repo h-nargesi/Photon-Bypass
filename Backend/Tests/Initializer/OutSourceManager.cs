@@ -4,7 +4,8 @@ internal static class OutSourceManager
 {
     private static readonly Dictionary<string, KeyInitialManager> keys = [];
 
-    public static Task InitializeOutSource<TInitializer>(this IServiceScope scope, string key) where TInitializer : IOutSourceInitializer
+    public static Task InitializeOutSource<TInitializer>(this IServiceScope scope, string key)
+        where TInitializer : IOutSourceInitializer
     {
         KeyInitialManager? initializer;
 
@@ -19,37 +20,71 @@ internal static class OutSourceManager
         return initializer.Initialize<TInitializer>(scope, key);
     }
 
+    public static Task ClearAll()
+    {
+        Task[] tasks;
+        lock (keys)
+        {
+            tasks = keys.Select(pair => pair.Value.Clear())
+                .ToArray();
+        }
+
+        return Task.WhenAll(tasks);
+    }
+
     private class KeyInitialManager
     {
-        private readonly Dictionary<Type, SynchronizationInitializeManager> initializers = [];
+        private readonly Dictionary<Type, ISynchronizationInitializeManager> initializers = [];
 
         public Task Initialize<TInitializer>(IServiceScope scope, string key) where TInitializer : IOutSourceInitializer
         {
-            SynchronizationInitializeManager? initializer;
+            ISynchronizationInitializeManager? initializer;
 
             lock (initializers)
             {
                 if (!initializers.TryGetValue(typeof(TInitializer), out initializer))
                 {
-                    initializers.Add(typeof(TInitializer), initializer = new SynchronizationInitializeManager());
+                    initializers.Add(typeof(TInitializer),
+                        initializer = new SynchronizationInitializeManager<TInitializer>(key));
                 }
             }
 
-            return initializer.Initialize<TInitializer>(scope, key);
+            return initializer.Initialize(scope);
+        }
+
+        public Task Clear()
+        {
+            Task[] tasks;
+            lock (initializers)
+            {
+                tasks = initializers.Select(pair => pair.Value.Clear())
+                    .ToArray();
+            }
+
+            return Task.WhenAll(tasks);
         }
     }
 
-    private class SynchronizationInitializeManager()
+    private interface ISynchronizationInitializeManager
+    {
+        Task Initialize(IServiceScope scope);
+
+        Task Clear();
+    }
+
+    private class SynchronizationInitializeManager<TInitializer>(string key)
+        : ISynchronizationInitializeManager where TInitializer : IOutSourceInitializer
     {
         private bool isInitialized;
         private Exception? exception;
         private readonly SemaphoreSlim semaphore = new(1);
+        private TInitializer? initializer;
 
-        public async Task Initialize<TInitializer>(IServiceScope scope, string key) where TInitializer : IOutSourceInitializer
+        public async Task Initialize(IServiceScope scope)
         {
             if (exception != null) throw exception;
 
-            var initializer = scope.ServiceProvider.GetRequiredService<TInitializer>();
+            initializer = scope.ServiceProvider.GetRequiredService<TInitializer>();
 
             if (isInitialized)
             {
@@ -81,6 +116,11 @@ internal static class OutSourceManager
                 semaphore.Release(int.MaxValue);
             }
         }
+
+        public Task Clear()
+        {
+            return initializer?.Clear(key) ?? Task.CompletedTask;
+        }
     }
 }
 
@@ -89,4 +129,6 @@ internal interface IOutSourceInitializer
     Task Initialize(string key);
 
     Task Check(string key);
+
+    Task Clear(string key);
 }

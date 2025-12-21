@@ -8,13 +8,16 @@ namespace PhotonBypass.Test.Initializer;
 
 internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options) : IOutSourceInitializer, IOutSourceLevelService
 {
+    private readonly string rawConnectionString = options.Object.Value.ConnectionString;
+
     public async Task Initialize(string key)
     {
+        _ = Check(key);
+
         var loading_structure_files =
             SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseStructureInitializerFilePath);
 
-        await using var connection = new SqlConnection(options.Object.Value.ConnectionString);
-        _ = Check(key);
+        await using var connection = new SqlConnection(rawConnectionString);
 
         await connection.OpenAsync();
         var structures = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_structure_files);
@@ -38,6 +41,15 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options) : IOutSou
     {
         options.Database = "FastBypass_" + key;
         return Task.CompletedTask;
+    }
+
+    public async Task Clear(string key)
+    {
+        _ = Check(key);
+
+        await using var connection = new SqlConnection(rawConnectionString);
+        await connection.OpenAsync();
+        await connection.ExecuteAsync("DROP DATABASE IF EXISTS " + options.Database);
     }
 
     public static void CreateInstance(IServiceCollection services)
