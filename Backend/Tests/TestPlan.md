@@ -70,7 +70,7 @@ Run out-sources and test out-source interfaces.
 
 - Infrastructure Repositories
 	[ ] Transaction
-	[ ] Account
+	[.] Account
 	[ ] ResetPass
 	[ ] History
 	[ ] Price
