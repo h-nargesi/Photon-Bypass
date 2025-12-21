@@ -1,10 +1,10 @@
 namespace PhotonBypass.Test.Initializer;
 
-internal class OutSourceManager : IOutSourceLevelService
+internal static class OutSourceManager
 {
-    private readonly Dictionary<string, KeyInitialManager> keys = [];
+    private static readonly Dictionary<string, KeyInitialManager> keys = [];
 
-    public Task InitializeOutSource<TInitializer>(IServiceScope scope, string key) where TInitializer : IOutSourceInitializer
+    public static Task InitializeOutSource<TInitializer>(this IServiceScope scope, string key) where TInitializer : IOutSourceInitializer
     {
         KeyInitialManager? initializer;
 
@@ -12,48 +12,63 @@ internal class OutSourceManager : IOutSourceLevelService
         {
             if (!keys.TryGetValue(key, out initializer))
             {
-                keys.Add(key, initializer = new KeyInitialManager(scope));
+                keys.Add(key, initializer = new KeyInitialManager());
             }
         }
 
-        return initializer.Initialize<TInitializer>(key);
+        return initializer.Initialize<TInitializer>(scope, key);
     }
 
-    private class KeyInitialManager(IServiceScope scope)
+    private class KeyInitialManager
     {
         private readonly Dictionary<Type, SynchronizationInitializeManager> initializers = [];
 
-        public Task Initialize<TInitializer>(string key) where TInitializer : IOutSourceInitializer
+        public Task Initialize<TInitializer>(IServiceScope scope, string key) where TInitializer : IOutSourceInitializer
         {
-            if (initializers.TryGetValue(typeof(TInitializer), out var initializer) || initializer == null)
+            SynchronizationInitializeManager? initializer;
+
+            lock (initializers)
             {
-                initializers[typeof(TInitializer)] = initializer = new SynchronizationInitializeManager(scope);
+                if (!initializers.TryGetValue(typeof(TInitializer), out initializer))
+                {
+                    initializers.Add(typeof(TInitializer), initializer = new SynchronizationInitializeManager());
+                }
             }
 
-            return initializer.Initialize<TInitializer>(key);
+            return initializer.Initialize<TInitializer>(scope, key);
         }
     }
 
-    private class SynchronizationInitializeManager(IServiceScope scope)
+    private class SynchronizationInitializeManager()
     {
         private bool isInitialized;
         private Exception? exception;
         private readonly SemaphoreSlim semaphore = new(1);
 
-        public async Task Initialize<TInitializer>(string key) where TInitializer : IOutSourceInitializer
+        public async Task Initialize<TInitializer>(IServiceScope scope, string key) where TInitializer : IOutSourceInitializer
         {
             if (exception != null) throw exception;
-            if (isInitialized) return;
+
+            var initializer = scope.ServiceProvider.GetRequiredService<TInitializer>();
+
+            if (isInitialized)
+            {
+                await initializer.Check(key);
+                return;
+            }
 
             await semaphore.WaitAsync();
 
             if (exception != null) throw exception;
-            if (isInitialized) return;
+            if (isInitialized)
+            {
+                await initializer.Check(key);
+                return;
+            }
 
             try
             {
-                await scope.ServiceProvider.GetRequiredService<TInitializer>()
-                    .Initialize(key);
+                await initializer.Initialize(key);
                 isInitialized = true;
             }
             catch (Exception ex)
@@ -67,14 +82,11 @@ internal class OutSourceManager : IOutSourceLevelService
             }
         }
     }
-
-    public static void CreateInstance(IServiceCollection services)
-    {
-        services.AddSingleton<OutSourceManager>();
-    }
 }
 
 internal interface IOutSourceInitializer
 {
     Task Initialize(string key);
+
+    Task Check(string key);
 }

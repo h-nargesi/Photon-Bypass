@@ -14,7 +14,7 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options) : IOutSou
             SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseStructureInitializerFilePath);
 
         await using var connection = new SqlConnection(options.Object.Value.ConnectionString);
-        options.Database = "FastBypass_" + key;
+        _ = Check(key);
 
         await connection.OpenAsync();
         var structures = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_structure_files);
@@ -30,6 +30,14 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options) : IOutSou
 
         foreach (var sql in data.Where(s => !string.IsNullOrWhiteSpace(s)))
             await connection.ExecuteAsync(sql);
+
+        _ = Check(key);
+    }
+
+    public Task Check(string key)
+    {
+        options.Database = "FastBypass_" + key;
+        return Task.CompletedTask;
     }
 
     public static void CreateInstance(IServiceCollection services)
