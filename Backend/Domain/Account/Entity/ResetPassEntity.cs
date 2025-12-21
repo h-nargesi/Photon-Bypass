@@ -7,6 +7,7 @@ namespace PhotonBypass.Domain.Account.Entity;
 public class ResetPassEntity : IBaseEntity
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     public int AccountId { get; set; }

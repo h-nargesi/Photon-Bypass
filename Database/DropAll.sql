@@ -1,6 +1,8 @@
 USE FastBypass;
 GO
 
+DROP VIEW IF EXISTS TotalPlanState;
+DROP VIEW IF EXISTS PlanState;
 DROP TABLE IF EXISTS TrafficData;
 DROP TABLE IF EXISTS [Server];
 DROP TABLE IF EXISTS History;

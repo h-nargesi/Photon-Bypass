@@ -7,6 +7,7 @@ namespace PhotonBypass.Domain.Static;
 public class PriceEntity : IBaseEntity
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     public PriceStates State { get; set; } = PriceStates.Visible;

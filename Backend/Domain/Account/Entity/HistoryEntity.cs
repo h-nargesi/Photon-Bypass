@@ -8,6 +8,7 @@ namespace PhotonBypass.Domain.Account.Entity;
 public class HistoryEntity : IBaseEntity
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     public int? Issuer { get; set; }

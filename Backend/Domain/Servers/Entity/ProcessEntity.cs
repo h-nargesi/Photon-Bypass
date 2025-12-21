@@ -8,6 +8,7 @@ namespace PhotonBypass.Domain.Servers.Entity;
 public class ProcessEntity : IBaseEntity
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     public string Name { get; set; } = null!;

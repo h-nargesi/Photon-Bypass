@@ -9,6 +9,7 @@ namespace PhotonBypass.Domain.Account.Entity;
 public class AccountEntity : IBaseEntity
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
     public bool IsActive { get; set; }
@@ -21,7 +22,7 @@ public class AccountEntity : IBaseEntity
 
     public DateTime Created { get; init; } = DateTime.Now;
 
-    // Account Perosanl Info
+    // Account Personal Info
 
     public string? Name { get; set; }
 
@@ -45,7 +46,7 @@ public class AccountEntity : IBaseEntity
     public string? EmailAddress => IsEmailValid ? Email : null;
 
     [NotMapped]
-    public string? Picture => AccountBusiness.PicturePath + Id;
+    public string Picture => AccountBusiness.PicturePath + Id;
 
     // Profile Info
 
