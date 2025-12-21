@@ -40,19 +40,19 @@ public static class RenewalBusiness
     {
         if (account.UserType.HasFlag(UserTypes.AllowMonthly))
         {
-            if (validation.TimeLimitInDays is null or < 1 or > 180 && validation.TrafficLimit is null or < 1 or > 300)
+            if (validation.TimeLimitInDays is null or < 1 or > 180 && validation.TrafficLimit is null or < 1 or > 300 * StaticValues.BytesInGigLong)
             {
                 error = new UserException(
                     "نمی‌توانید پلن بدون ترافیک و تاریخ انقضا ثبت نمایید!",
-                    $"Invalid renewal time-limit={validation.TimeLimitInDays} traffic={validation.TrafficLimit}");
+                    $"Invalid renewal account-type={account.UserType}, time-limit={validation.TimeLimitInDays}, traffic={validation.TrafficLimit}");
                 return true;
             }
         }
-        else if (validation.TrafficLimit is null or < 1 or > 300)
+        else if (validation.TrafficLimit is null or < 1 or > 300 * StaticValues.BytesInGigLong)
         {
             error = new UserException(
                 "نمی‌توانید پلن بدون ترافیک ثبت نمایید!",
-                $"Invalid renewal account-type={UserTypes.AllowMonthly} traffic={validation.TrafficLimit}");
+                $"Invalid renewal account-type={account.UserType}, traffic={validation.TrafficLimit}");
             return true;
         }
 
@@ -67,8 +67,9 @@ public static class RenewalBusiness
             }
             
             var gigabyte_packages = validation.TrafficLimit.Value / StaticValues.BytesInGigLong / 25;
-            var days_limit = 30 + 2.5 * gigabyte_packages - 0.004 * Math.Pow(gigabyte_packages, 2);
-            validation.TimeLimitInDays = (short)(days_limit / ((validation.SimultaneousUser + 1) / 2));
+            var traffic_bonus = 60 + gigabyte_packages * 30;
+            var user_fine = 5 * UserFine(validation.SimultaneousUser);
+            validation.TimeLimitInDays = (short)(traffic_bonus - user_fine);
         }
         else if (validation.TimeLimitInDays % 30 != 0)
         {
@@ -80,5 +81,12 @@ public static class RenewalBusiness
 
         error = null!;
         return false;
+    }
+    
+    private static int UserFine(int users)
+    {
+        if (users <= 1) return 0;
+        else if (users >= 5) return users + 3;
+        else return (int)(4.5 * users - 3 - Math.Pow(users, 2) / 2);
     }
 }
