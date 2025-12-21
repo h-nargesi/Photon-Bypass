@@ -11,8 +11,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
     public async Task Insert_Update_FetchSimple()
     {
         using var scope = App.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<OutSourceManager>()
-            .InitializeOutSource<LocalDatabaseInitializer>(scope, "DbTest1");
+        await scope.InitializeOutSource<LocalDatabaseInitializer>("DbTest1");
 
         var account = new AccountEntity
         {
@@ -57,13 +56,13 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         await account_repo.Save(account);
 
-        fetch_list = new List<AccountEntity?>
-        {
+        fetch_list =
+        [
             await account_repo.GetAccount(account.Id),
             await account_repo.GetAccount(account.Username),
             await account_repo.GetAccountByEmail(account.Email),
             await account_repo.GetAccountByMobile(account.Mobile),
-        };
+        ];
 
         foreach (var saved in fetch_list)
         {
@@ -81,20 +80,21 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
     public async Task GetTargetArea()
     {
         using var scope = App.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<OutSourceManager>()
-            .InitializeOutSource<LocalDatabaseInitializer>(scope, "DbTest1");
+        await scope.InitializeOutSource<LocalDatabaseInitializer>("DbTest1");
 
         var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
 
         var account = await account_repo.GetAccount("User1");
+        Assert.NotNull(account);
+
         var targets = (await account_repo.GetTargetArea(account.Id))
             .Select(x => x.Username)
             .ToHashSet();
 
         Assert.Equal(4, targets.Count);
-        Assert.True(targets.Contains("User11"));
-        Assert.True(targets.Contains("User12"));
-        Assert.True(targets.Contains("User13"));
-        Assert.True(targets.Contains("User14"));
+        Assert.Contains("User11", targets);
+        Assert.Contains("User12", targets);
+        Assert.Contains("User13", targets);
+        Assert.Contains("User14", targets);
     }
 }
