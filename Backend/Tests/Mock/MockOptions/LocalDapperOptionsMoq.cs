@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Moq;
 using PhotonBypass.Infra.Repository.DbContext;
@@ -6,15 +7,15 @@ namespace PhotonBypass.Test.Mock.MockOptions;
 
 internal class LocalDapperOptionsMoq : Mock<IOptions<LocalDapperOptions>>, IOptionsMoq
 {
-    public const string DatabaseStructureInitializerFilePath = "../../../../../Database/LocalDatabase/";
-    public const string DatabaseDataInitializerFilePath = "Data/Sql/";
-
-    public LocalDapperOptionsMoq()
+    public LocalDapperOptionsMoq(IConfiguration configuration)
     {
+        var connection_string = configuration["LocalDatabaseOptions:ConnectionString"]
+                                ?? throw new Exception("LocalDatabaseOptions:ConnectionString was not set.");
+
         Setup(options => options.Value).Returns(() => new LocalDapperOptions
         {
-            ConnectionString = $"Server=.;{(Database != null ? $" Database={Database};" : string.Empty)} " +
-                               "User Id=test; Password=abc.123456; Encrypt=False; TrustServerCertificate=True;"
+            ConnectionString = connection_string.Replace(" {Database};",
+                Database != null ? $" Database={Database};" : string.Empty)
         });
     }
 
