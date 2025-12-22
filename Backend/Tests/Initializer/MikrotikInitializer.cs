@@ -6,12 +6,21 @@ namespace PhotonBypass.Test.Initializer;
 
 internal class MikrotikInitializer : IOutSourceInitializer, IOutSourceLevelService
 {
-    private const int TimeoutSeconds = 60;
-    
+    private const int TimeoutSeconds = 120;
+
+    private static Dictionary<string, string> HostIps = new()
+    {
+        { "Mikrotik-Base", "192.168.56.11" }
+    };
+
+    public static string GetIp(string key)
+    {
+        return HostIps[key];
+    }
+
     public async Task Initialize(string key)
     {
-        await Drop(key);
-        await Clone(key);
+        await Clear(key);
         await Start(key);
         await Check(key);
     }
@@ -24,7 +33,7 @@ internal class MikrotikInitializer : IOutSourceInitializer, IOutSourceLevelServi
         {
             try
             {
-                using var client = new SshClient("127.0.0.1", "admin", "admin");
+                using var client = new SshClient(GetIp(key), "admin", "admin");
                 await client.ConnectAsync(CancellationToken.None);
 
                 if (client.IsConnected)
@@ -44,59 +53,49 @@ internal class MikrotikInitializer : IOutSourceInitializer, IOutSourceLevelServi
     public async Task Clear(string key)
     {
         await PowerOff(key);
-        await Drop(key);
+        await RestoreSnapshot(key);
     }
 
-    private static Task Start(string key)
-    {
-        return Run($"startvm \"{key}\" --type headless");
-    }
+    private static Task<string> List() => Run($"list vms");
 
-    private static Task RestoreSnapshot(string key)
-    {
-        return Run($"snapshot \"{key}\" restore clean-test-state");
-    }
+    private static Task<string> Start(string key) => Run($"startvm \"{key}\" --type headless");
 
-    private static Task Clone(string key)
-    {
-        return Run($"clonevm Mikrotik-Base --name \"{key}\" --register");
-    }
+    private static Task<string> RestoreSnapshot(string key) => Run($"snapshot \"{key}\" restore clean-test-state");
 
-    private static Task PowerOff(string key)
-    {
-        return Run($"controlvm \"{key}\" poweroff");
-    }
+    private static Task<string> Clone(string key) => Run($"clonevm Mikrotik-Base --name \"{key}\" --register");
 
-    private static Task Drop(string key)
-    {
-        return Run($"unregistervm \"{key}\" --delete");
-    }
+    private static Task<string> PowerOff(string key) => Run($"controlvm \"{key}\" poweroff", "is not currently running");
 
-    private static Task Run(string args)
+    private static Task<string> Drop(string key) => Run($"unregistervm \"{key}\" --delete", "Could not find a registered machine named");
+
+    private static async Task<string> Run(string args, params string[] ignores)
     {
-        return Task.Run(() =>
+        var process = new Process
         {
-            var process = new Process
+            StartInfo = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "VBoxManage",
-                    Arguments = args,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-
-            process.Start();
-            process.WaitForExit();
-
-            if (process.ExitCode != 0)
-            {
-                throw new Exception(process.StandardError.ReadToEnd());
+                FileName = "VBoxManage",
+                Arguments = args,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
             }
-        });
+        };
+
+        process.Start();
+        await process.WaitForExitAsync();
+
+        if (process.ExitCode != 0)
+        {
+            var error = await process.StandardError.ReadToEndAsync();
+            if (!ignores.Any(error.Contains))
+            {
+                throw new Exception(error);
+            }
+        }
+
+        return await process.StandardOutput.ReadToEndAsync();
     }
 
     public static void CreateInstance(IServiceCollection services)

@@ -106,9 +106,4 @@
 		</None>
 	</ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Mock\" />
-      <Folder Include="Facts\" />
-    </ItemGroup>
-
 </Project>

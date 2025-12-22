@@ -69,8 +69,8 @@ Implement mock of all dependencies and test mid-level services.
 Run out-sources and test out-source interfaces.
 
 - Infrastructure Repositories
-	[ ] Transaction
-	[.] Account
+	[=] Transaction
+	[=] Account
 	[ ] ResetPass
 	[ ] History
 	[ ] Price
@@ -81,6 +81,17 @@ Run out-sources and test out-source interfaces.
 	[ ] PlanState
 
 - Mikrotik Radius
+	- AccountRadiusSyncUserManagerService
+		[ ] RemoveUsers
+		[ ] DeactivateUserExcept
+		[ ] DeactivateUser
+		[=] SyncUserAndActive
+		[ ] ChangeVpnPassword
+	- SessionRadiusSyncUserManagerService
+		[ ] GetActiveConnections
+		[ ] CloseConnectionBySessionId
+		[ ] CloseConnectionByUsername
+		[ ] GetTrafficData
 
 ## Level 4 - Integration - Integration
 
