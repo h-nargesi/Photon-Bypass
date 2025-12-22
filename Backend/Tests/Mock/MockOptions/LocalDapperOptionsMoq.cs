@@ -14,7 +14,7 @@ internal class LocalDapperOptionsMoq : Mock<IOptions<LocalDapperOptions>>, IOpti
         Setup(options => options.Value).Returns(() => new LocalDapperOptions
         {
             ConnectionString = $"Server=.;{(Database != null ? $" Database={Database};" : string.Empty)} " +
-                               "User Id=sa; Password=ph0t0n-X; Encrypt=False; TrustServerCertificate=True;"
+                               "User Id=test; Password=abc.123456; Encrypt=False; TrustServerCertificate=True;"
         });
     }
 

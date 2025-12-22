@@ -55,9 +55,8 @@ public class ServiceInitializer
     {
     }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
         App.Dispose();
-        GC.SuppressFinalize(this);
     }
 }

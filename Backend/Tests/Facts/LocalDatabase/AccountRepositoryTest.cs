@@ -1,17 +1,23 @@
+using Microsoft.Extensions.Options;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Infra.Repository.DbContext;
 using PhotonBypass.Test.Initializer;
+using PhotonBypass.Test.Initializer.OutSourceManager;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Facts.LocalDatabase;
 
 public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 {
+    private const string TestPackage1 = "DbTest1";
+    private const string TestPackage2 = "DbTest2";
+
     [Fact]
     public async Task Insert_Update_FetchSimple()
     {
         using var scope = App.Services.CreateScope();
-        await scope.InitializeOutSource<LocalDatabaseInitializer>("DbTest1");
+        await scope.Register<LocalDatabaseInitializer>(TestPackage2, this);
 
         var account = new AccountEntity
         {
@@ -25,6 +31,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
             VpnPassword = "my-password",
         };
 
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<LocalDapperOptions>>();
         var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
 
         await account_repo.Save(account);
@@ -47,7 +54,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
             Assert.Equal(account.Email, saved.Email);
             Assert.Equal(account.Password, saved.Password);
         }
-        
+
         account.Name = "Ali2";
         account.Surname = "Mor2";
         account.Password = HashHandler.HashPassword("password-x");
@@ -80,8 +87,9 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
     public async Task GetTargetArea()
     {
         using var scope = App.Services.CreateScope();
-        await scope.InitializeOutSource<LocalDatabaseInitializer>("DbTest1");
+        await scope.Register<LocalDatabaseInitializer>(TestPackage1, this);
 
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<LocalDapperOptions>>();
         var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
 
         var account = await account_repo.GetAccount("User1");

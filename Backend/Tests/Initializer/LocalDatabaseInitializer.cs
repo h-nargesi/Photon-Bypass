@@ -1,6 +1,7 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
 using PhotonBypass.Sql;
+using PhotonBypass.Test.Initializer.OutSourceManager;
 using PhotonBypass.Test.Mock.MockOptions;
 using PhotonBypass.Test.Tools;
 
@@ -33,8 +34,6 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options) : IOutSou
 
         foreach (var sql in data.Where(s => !string.IsNullOrWhiteSpace(s)))
             await connection.ExecuteAsync(sql);
-
-        _ = Check(key);
     }
 
     public Task Check(string key)

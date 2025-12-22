@@ -1,16 +1,18 @@
-using System.Diagnostics;
+using PhotonBypass.Test.Initializer.OutSourceManager;
 using Renci.SshNet;
+using System.Diagnostics;
 
 namespace PhotonBypass.Test.Initializer;
 
 internal class MikrotikInitializer : IOutSourceInitializer, IOutSourceLevelService
 {
-    private const int TimeoutSeconds = 120;
+    private const int TimeoutSeconds = 60;
     
     public async Task Initialize(string key)
     {
+        await Drop(key);
+        await Clone(key);
         await Start(key);
-        await RestoreSnapshot(key);
         await Check(key);
     }
 
@@ -39,21 +41,35 @@ internal class MikrotikInitializer : IOutSourceInitializer, IOutSourceLevelServi
         throw new TimeoutException("MikroTik did not become ready.");
     }
 
-    public Task Clear(string key) => PowerOff(key);
+    public async Task Clear(string key)
+    {
+        await PowerOff(key);
+        await Drop(key);
+    }
 
     private static Task Start(string key)
     {
-        return Run($"startvm {key} --type headless");
+        return Run($"startvm \"{key}\" --type headless");
     }
 
     private static Task RestoreSnapshot(string key)
     {
-        return Run($"snapshot {key} restore clean-test-state");
+        return Run($"snapshot \"{key}\" restore clean-test-state");
+    }
+
+    private static Task Clone(string key)
+    {
+        return Run($"clonevm Mikrotik-Base --name \"{key}\" --register");
     }
 
     private static Task PowerOff(string key)
     {
-        return Run($"controlvm {key} poweroff");
+        return Run($"controlvm \"{key}\" poweroff");
+    }
+
+    private static Task Drop(string key)
+    {
+        return Run($"unregistervm \"{key}\" --delete");
     }
 
     private static Task Run(string args)

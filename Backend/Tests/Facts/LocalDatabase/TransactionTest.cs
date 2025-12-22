@@ -1,17 +1,20 @@
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Test.Initializer;
+using PhotonBypass.Test.Initializer.OutSourceManager;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Facts.LocalDatabase;
 
 public class TransactionTest : OutSourceLevelServiceInitializer
 {
+    private const string TestPackage = "DbTest1";
+
     [Fact]
     public async Task ShouldCreateNewTransaction()
     {
         using var scope = App.Services.CreateScope();
-        await scope.InitializeOutSource<LocalDatabaseInitializer>("DbTest1");
+        await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
 
         var account = new AccountEntity
         {
