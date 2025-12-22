@@ -83,7 +83,7 @@ internal class MikrotikInitializer(IConfiguration configuration) : IOutSourceIni
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
             }
         };
 

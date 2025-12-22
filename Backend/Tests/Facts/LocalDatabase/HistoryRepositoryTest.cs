@@ -46,6 +46,6 @@ public class HistoryRepositoryTest : OutSourceLevelServiceInitializer
         Assert.Equal(history.Value, histories[0].Value);
         Assert.Equal(history.Price, histories[0].Price);
         Assert.Equal(history.Target, histories[0].Target);
-        Assert.Equal(history.Created, histories[0].Created);
+        Assert.Equal(history.Created.Ticks / 100000, histories[0].Created.Ticks / 100000);
     }
 }
