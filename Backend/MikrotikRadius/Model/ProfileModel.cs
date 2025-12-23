@@ -11,8 +11,8 @@ public class ProfileModel
     public string? Id { get; private set; }
 
     [JsonPropertyName("name")]
-    [TikProperty("name")]
-    public string? Name { get; set; }
+    [TikProperty("name", IsMandatory = true)]
+    public string Name { get; set; } = null!;
 
     [JsonPropertyName("validity")]
     [TikProperty("validity")]

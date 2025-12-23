@@ -11,7 +11,7 @@ class Tik4NetHandler : ITik4NetHandler
         var config = server.Config?.WebApiConfig ??
                      throw new Exception($"The web-api configuration is not set for server ({server.Id}:{server.Name})");
 
-        var connection = ConnectionFactory.CreateConnection(TikConnectionType.ApiSsl);
+        var connection = ConnectionFactory.CreateConnection(config.Ssl ? TikConnectionType.ApiSsl : TikConnectionType.Api);
 
         if (config.Port.HasValue)
         {

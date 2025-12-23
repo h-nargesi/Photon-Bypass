@@ -43,7 +43,7 @@ internal class MikrotikInitializer : IOutSourceInitializer, IOutSourceLevelServi
             }
             catch
             {
-                await Task.Delay(3000);
+                await Task.Delay(1000);
             }
         }
 

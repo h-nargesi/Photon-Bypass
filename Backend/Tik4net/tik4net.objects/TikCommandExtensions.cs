@@ -22,14 +22,14 @@ namespace tik4net.Objects
         /// <exception cref="TikCommandFatalException">!fatal returned from API call.</exception>
         /// <exception cref="TikCommandUnexpectedResponseException">Unexpected response from mikrotik (multiple returned rows, missing !done row etc.)</exception>
         /// <exception cref="TikNoSuchCommandException">Invalid mikrotik command (syntax error). Mikrotik API message: 'no such command'</exception>
-        public static IEnumerable<TEntity> LoadList<TEntity>(this ITikCommand command)
+        public static List<TEntity> LoadList<TEntity>(this ITikCommand command)
             where TEntity : new()
         {
             Guard.ArgumentNotNull(command, "command");
 
             var responseSentences = command.ExecuteList();
 
-            return responseSentences.Select(sentence => CreateObject<TEntity>(sentence)).ToList();
+            return [.. responseSentences.Select(CreateObject<TEntity>)];
         }
 
         /// <summary>

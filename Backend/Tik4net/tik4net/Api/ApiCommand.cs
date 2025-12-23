@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace tik4net.Api
 {
-    internal class ApiCommand: ITikCommand
+    internal class ApiCommand : ITikCommand
     {
         private volatile bool _isRuning;
         private volatile int _asynchronouslyRunningTag;
@@ -78,7 +77,7 @@ namespace tik4net.Api
         }
 
         public ApiCommand(ITikConnection connection, string commandText)
-            :this(connection)
+            : this(connection)
         {
             CommandText = commandText;
         }
@@ -115,12 +114,12 @@ namespace tik4net.Api
         }
 
         private void EnsureCommandTextSet()
-       {
+        {
             if (string.IsNullOrWhiteSpace(_commandText))
                 throw new InvalidOperationException("CommandText is not set.");
         }
 
-        private TikCommandParameterFormat ResolveParameterFormat(TikCommandParameterFormat usecaseDefaultFormat, TikCommandParameterFormat commandDefaultFormat, ITikCommandParameter parameter)
+        private static TikCommandParameterFormat ResolveParameterFormat(TikCommandParameterFormat usecaseDefaultFormat, TikCommandParameterFormat commandDefaultFormat, ITikCommandParameter parameter)
         {
             if (parameter.ParameterFormat != TikCommandParameterFormat.Default)
                 return parameter.ParameterFormat;
@@ -189,7 +188,7 @@ namespace tik4net.Api
             return code + (string.IsNullOrEmpty(value) ? key : $"{key}={value}");
         }
 
-        private IEnumerable<ApiSentence> EnsureApiSentences(IEnumerable<ITikSentence> sentences)
+        private static IEnumerable<ApiSentence> EnsureApiSentences(IEnumerable<ITikSentence> sentences)
         {
             if (sentences.Any(sentence => !(sentence is ApiSentence)))
                 throw new InvalidOperationException("ApiCommand expects ApiSentence as result from ApiConnection.");
@@ -243,8 +242,7 @@ namespace tik4net.Api
 
         private ApiDoneSentence EnsureDoneResponse(ApiSentence responseSentence)
         {
-            ApiDoneSentence doneSentence = responseSentence as ApiDoneSentence;
-            if (doneSentence == null)
+            if (responseSentence is not ApiDoneSentence doneSentence)
                 throw new TikCommandUnexpectedResponseException("!done sentence expected as result.", this, responseSentence);
 
             return doneSentence;
@@ -254,8 +252,7 @@ namespace tik4net.Api
         {
             foreach (ApiSentence responseSentence in responseSentences)
             {
-                ApiReSentence reSentence = responseSentence as ApiReSentence;
-                if (reSentence == null)
+                if (responseSentence is not ApiReSentence)
                     throw new TikCommandUnexpectedResponseException("!re sentence expected as result.", this, responseSentence);
             }
         }
@@ -375,24 +372,24 @@ namespace tik4net.Api
         {
             var sentences = ExecuteList();
 
-            if (sentences.Count() > 1)
+            if (sentences.Count > 1)
                 throw new TikCommandAmbiguousResultException(this);
             return sentences.SingleOrDefault();
         }
 
-        public IEnumerable<ITikReSentence> ExecuteList()
+        public List<ITikReSentence> ExecuteList()
         {
             return ExecuteListInternal(null);
         }
 
-        public IEnumerable<ITikReSentence> ExecuteList(params string[] proplist)
+        public List<ITikReSentence> ExecuteList(params string[] proplist)
         {
             Guard.ArgumentNotNull(proplist, nameof(proplist));
 
             return ExecuteListInternal(proplist);
         }
 
-        private IEnumerable<ITikReSentence> ExecuteListInternal(params string[] proplist)
+        private List<ITikReSentence> ExecuteListInternal(params string[] proplist)
         {
             EnsureConnectionSet();
             EnsureNotRunning();
@@ -400,15 +397,19 @@ namespace tik4net.Api
             _isRuning = true;
             try
             {
-                var proplistParameters = proplist == null ? new ITikCommandParameter[] { } : proplist.Select(p => new ApiCommandParameter(TikSpecialProperties.Proplist, p, TikCommandParameterFormat.NameValue)).ToArray();
+                var proplistParameters = proplist == null ? Array.Empty<ITikCommandParameter>() :
+                    [.. proplist.Select(p => new ApiCommandParameter(TikSpecialProperties.Proplist, p, TikCommandParameterFormat.NameValue))];
+
                 string[] commandRows = ConstructCommandText(TikCommandParameterFormat.Filter, proplistParameters);
-                IEnumerable<ApiSentence> response = EnsureApiSentences(_connection.CallCommandSync(commandRows));
-                ThrowPossibleResponseError(response.ToArray());
+                var response = EnsureApiSentences(_connection.CallCommandSync(commandRows)).ToArray();
+                ThrowPossibleResponseError(response);
 
-                EnsureReReponse(response.Take(response.Count() - 1).ToArray());   //!re  - reapeating
-                EnsureDoneResponse(response.Last()); //!done
+                EnsureDoneResponse(response.Last());
 
-                return response.Take(response.Count() - 1).Cast<ITikReSentence>().ToList();
+                response = [.. response.Take(response.Length - 1).Where(s => s.Words.Count > 0)];
+                EnsureReReponse(response);
+
+                return [.. response.Cast<ITikReSentence>()];
             }
             finally
             {
@@ -546,11 +547,11 @@ namespace tik4net.Api
         {
             if (_isRuning && _asynchronouslyRunningTag >= 0)
             {
-                 ApiCommand cancellCommand = new ApiCommand(_connection, "/cancel",
-                     new ApiCommandParameter("tag", _asynchronouslyRunningTag.ToString(), TikCommandParameterFormat.NameValue), // tag we are cancelling: REMARKS: =tag=1234 and not =.tag=1234
-                     new ApiCommandParameter(TikSpecialProperties.Tag, "c_"+_asynchronouslyRunningTag.ToString(), TikCommandParameterFormat.Tag) //tag of cancell command itself
-                     );
-                 cancellCommand.ExecuteNonQuery();
+                ApiCommand cancellCommand = new ApiCommand(_connection, "/cancel",
+                    new ApiCommandParameter("tag", _asynchronouslyRunningTag.ToString(), TikCommandParameterFormat.NameValue), // tag we are cancelling: REMARKS: =tag=1234 and not =.tag=1234
+                    new ApiCommandParameter(TikSpecialProperties.Tag, "c_" + _asynchronouslyRunningTag.ToString(), TikCommandParameterFormat.Tag) //tag of cancell command itself
+                    );
+                cancellCommand.ExecuteNonQuery();
                 if (joinLoadingThread)
                 {
                     Thread loadingThread = _asyncLoadingThread;

@@ -28,7 +28,7 @@ public static class UserManagerHelper
         return limitations;
     }
 
-    public static string CheckProfile(this ITikConnection connection, int? days, long? traffic, int? rate)
+    public static bool GetProfile(this ITikConnection connection, int? days, long? traffic, int? rate, out ProfileModel profile)
     {
         var profile_name = "profile";
 
@@ -59,12 +59,15 @@ public static class UserManagerHelper
             profile_name += $"-{rate.Value}M";
         }
 
-        var profile = connection.LoadList<ProfileModel>(
+        profile = connection.LoadList<ProfileModel>(
                 TikParam.Equal<ProfileModel>(nameof(ProfileModel.Name),
                     profile_name))?
-            .FirstOrDefault();
+            .FirstOrDefault()!;
 
-        if (profile != null) return profile_name;
+        if (profile != null)
+        {
+            return true;
+        }
 
         profile = new ProfileModel
         {
@@ -74,21 +77,27 @@ public static class UserManagerHelper
             StartsWhen = "first-auth",
         };
 
-        connection.Save(profile);
-
-        return profile_name;
+        return false;
     }
 
-    public static void CheckLimitationAssignment(this ITikConnection connection, string profile_name,
-        HashSet<string> limitations)
+    public static string CheckProfile(this ITikConnection connection, int? days, long? traffic, int? rate)
+    {
+        if (connection.GetProfile(days, traffic, rate, out var profile)) return profile.Name;
+
+        connection.Save(profile);
+
+        return profile.Name;
+    }
+
+    public static void GetLimitationAssignment(this ITikConnection connection, string profile_name, HashSet<string> limitations,
+        out List<ProfileLimitationModel> adding_list, out List<ProfileLimitationModel> removing_list)
     {
         var profile_field_filter =
             TikParam.Equal<ProfileLimitationModel>(nameof(ProfileLimitationModel.Profile), profile_name);
         var assignments_dictionary = connection.LoadList<ProfileLimitationModel>(profile_field_filter)?
-                                         .ToDictionary(x => x.Limitation) ??
-                                     new Dictionary<string, ProfileLimitationModel>();
+                                         .ToDictionary(x => x.Limitation) ?? [];
 
-        var adding_list = limitations
+        adding_list = limitations
             .Where(name => !assignments_dictionary.ContainsKey(name))
             .Select(limitation_name => new ProfileLimitationModel
             {
@@ -97,14 +106,19 @@ public static class UserManagerHelper
             })
             .ToList();
 
+        removing_list = assignments_dictionary.Where(assignment => !limitations.Contains(assignment.Key))
+            .Select(assignment => assignment.Value)
+            .ToList();
+    }
+
+    public static void CheckLimitationAssignment(this ITikConnection connection, string profile_name, HashSet<string> limitations)
+    {
+        connection.GetLimitationAssignment(profile_name, limitations, out var adding_list, out var removing_list);
+
         foreach (var add in adding_list)
         {
             connection.Save(add);
         }
-
-        var removing_list = assignments_dictionary.Where(assignment => !limitations.Contains(assignment.Key))
-            .Select(assignment => assignment.Value)
-            .ToList();
 
         foreach (var remove in removing_list)
         {
@@ -112,11 +126,11 @@ public static class UserManagerHelper
         }
     }
 
-    public static void CheckUser(this ITikConnection connection, AccountEntity account, int shared_user)
+    public static bool GetUser(this ITikConnection connection, AccountEntity account, int shared_user, out UserModel user)
     {
-        var needs_save = false;
+        var no_need_to_save = true;
         var username_filter = TikParam.Equal<UserModel>(nameof(UserModel.Name), account.Username);
-        var user = connection.LoadList<UserModel>(username_filter).FirstOrDefault();
+        user = connection.LoadList<UserModel>(username_filter).FirstOrDefault()!;
 
         if (user == null)
         {
@@ -125,22 +139,27 @@ public static class UserManagerHelper
                 Name = account.Username,
                 Password = account.VpnPassword,
             };
-            needs_save = true;
+            no_need_to_save = false;
         }
 
         if (user.Disabled)
         {
             user.Disabled = false;
-            needs_save = true;
+            no_need_to_save = false;
         }
 
         if (user.SharedUsers != shared_user)
         {
             user.SharedUsers = shared_user;
-            needs_save = true;
+            no_need_to_save = false;
         }
 
-        if (needs_save)
+        return no_need_to_save;
+    }
+
+    public static void CheckUser(this ITikConnection connection, AccountEntity account, int shared_user)
+    {
+        if (!connection.GetUser(account, shared_user, out var user))
         {
             connection.Save(user);
         }
@@ -155,15 +174,18 @@ public static class UserManagerHelper
         });
     }
 
-    private static string CheckRateLimit(this ITikConnection connection, int rate)
+    public static bool GetRateLimit(this ITikConnection connection, int rate, out LimitationModel limitation)
     {
         var limitation_name = $"limit-speed-{rate}M";
-        var limitation = connection.LoadList<LimitationModel>(
+        limitation = connection.LoadList<LimitationModel>(
                 TikParam.Equal<LimitationModel>(nameof(LimitationModel.Name),
                     limitation_name))?
-            .FirstOrDefault();
+            .FirstOrDefault()!;
 
-        if (limitation != null) return limitation_name;
+        if (limitation != null)
+        {
+            return true;
+        }
 
         limitation = new LimitationModel
         {
@@ -172,12 +194,19 @@ public static class UserManagerHelper
             RateLimitRx = "2M",
         };
 
-        connection.Save(limitation);
-
-        return limitation_name;
+        return false;
     }
 
-    private static string CheckTrafficLimit(this ITikConnection connection, long bytes)
+    private static string CheckRateLimit(this ITikConnection connection, int rate)
+    {
+        if (connection.GetRateLimit(rate, out var limitation)) return limitation.Name;
+
+        connection.Save(limitation);
+
+        return limitation.Name;
+    }
+
+    public static bool GetTrafficLimit(this ITikConnection connection, long bytes, out LimitationModel limitation)
     {
         if (bytes % StaticValues.BytesInGigLong != 0)
         {
@@ -191,12 +220,15 @@ public static class UserManagerHelper
         }
 
         var limitation_name = $"limit-traffic-{gigabytes}G";
-        var limitation = connection.LoadList<LimitationModel>(
+        limitation = connection.LoadList<LimitationModel>(
                 TikParam.Equal<LimitationModel>(nameof(LimitationModel.Name),
                     limitation_name))?
-            .FirstOrDefault();
+            .FirstOrDefault()!;
 
-        if (limitation != null) return limitation_name;
+        if (limitation != null)
+        {
+            return true;
+        }
 
         limitation = new LimitationModel
         {
@@ -204,9 +236,16 @@ public static class UserManagerHelper
             TransferLimit = bytes,
         };
 
+        return false;
+    }
+
+    private static string CheckTrafficLimit(this ITikConnection connection, long bytes)
+    {
+        if (connection.GetTrafficLimit(bytes, out var limitation)) return limitation.Name;
+
         connection.Save(limitation);
 
-        return limitation_name;
+        return limitation.Name;
     }
 
     private static string GetNameForUser(int? days, int? gigabytes, int? speed)

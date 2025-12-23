@@ -15,8 +15,8 @@ public class UserModel
     public bool Disabled { get; set; }
 
     [JsonPropertyName("name")]
-    [TikProperty("name")]
-    public string? Name { get; set; }
+    [TikProperty("name", IsMandatory = true)]
+    public string Name { get; set; } = null!;
 
     [JsonPropertyName("password")]
     [TikProperty("password")]

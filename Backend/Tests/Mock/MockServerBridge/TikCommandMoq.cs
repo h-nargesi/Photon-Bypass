@@ -65,7 +65,7 @@ internal class TikCommandMoq : Mock<ITikCommand>
             });
 
         Setup(command => command.ExecuteList())
-            .Returns(() => LoadFile($"Data/Mikrotik/{command_text.Remove(0, 1).Replace('/', '-')}.json"));
+            .Returns(() => LoadFile($"Data/Mikrotik/{command_text[1..].Replace('/', '-')}.json"));
 
         Setup(command => command.ExecuteNonQuery())
             .Callback(() => parent.Execute(command_text, parameters));
@@ -74,7 +74,7 @@ internal class TikCommandMoq : Mock<ITikCommand>
             .Callback(() => parent.Execute(command_text, parameters));
     }
 
-    private IEnumerable<ITikReSentence> LoadFile(string file_name)
+    private List<ITikReSentence> LoadFile(string file_name)
     {
         if (!File.Exists(file_name))
         {
@@ -98,13 +98,13 @@ internal class TikCommandMoq : Mock<ITikCommand>
         {
             if (param.Name.StartsWith('>'))
             {
-                var name = param.Name.Remove(0, 1);
+                var name = param.Name[1..];
                 session_list = session_list.Where(sentence => sentence.TryGetValue(name, out var value) &&
                                                               string.CompareOrdinal(value, param.Value) > 0);
             }
             else if (param.Name.StartsWith('<'))
             {
-                var name = param.Name.Remove(0, 1);
+                var name = param.Name[1..];
                 session_list = session_list.Where(sentence => sentence.TryGetValue(name, out var value) &&
                                                               string.CompareOrdinal(value, param.Value) > 0);
             }
@@ -115,7 +115,7 @@ internal class TikCommandMoq : Mock<ITikCommand>
             }
         }
 
-        return session_list;
+        return [.. session_list.Select(x => x as ITikReSentence)];
     }
 
     class TikReSentence : Dictionary<string, string>, ITikReSentence

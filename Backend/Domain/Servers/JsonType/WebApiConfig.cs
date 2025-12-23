@@ -12,6 +12,8 @@ public class WebApiConfig
 
     public string? Password { get; set; }
 
+    public bool Ssl { get; set;  }
+
     [JsonIgnore]
     public string HttpsUrl => $"https://{HostName}{(Port.HasValue ? $":{Port}" : "")}";
 }
