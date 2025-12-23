@@ -28,7 +28,7 @@ Implement mock of used dependencies then test the function.
 - Controller
 	[+] AccessService
 
-## Level 2 - Application - Integration
+## Level 2 - Application
 
 Implement mock of all dependencies and test mid-level services.
 
@@ -93,7 +93,7 @@ Run out-sources and test out-source interfaces.
 		[ ] CloseConnectionByUsername
 		[ ] GetTrafficData
 
-## Level 4 - Integration - Integration
+## Level 4 - Integration
 
 Implement mock of all outsources and test high-level services.
 
