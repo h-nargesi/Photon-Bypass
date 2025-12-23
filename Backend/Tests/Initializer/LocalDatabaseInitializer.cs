@@ -1,5 +1,6 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using PhotonBypass.Sql;
 using PhotonBypass.Test.Initializer.OutSourceManager;
 using PhotonBypass.Test.Mock.MockOptions;
@@ -7,7 +8,8 @@ using PhotonBypass.Test.Tools;
 
 namespace PhotonBypass.Test.Initializer;
 
-internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options) : IOutSourceInitializer, IOutSourceLevelService
+internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options, IConfiguration configuration)
+    : IOutSourceInitializer, IOutSourceLevelService
 {
     private readonly string rawConnectionString = options.Object.Value.ConnectionString;
 
@@ -15,8 +17,14 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options) : IOutSou
     {
         _ = Check(key);
 
+        var structure_files_path = configuration["LocalDatabaseOptions:StructureFilesPath"]
+                                   ?? throw new Exception("LocalDatabaseOptions:StructureFilesPath was not set.");
+
+        var data_files_path = configuration["LocalDatabaseOptions:DataFilesPath"]
+                              ?? throw new Exception("LocalDatabaseOptions:DataFilesPath was not set.");
+
         var loading_structure_files =
-            SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseStructureInitializerFilePath);
+            SqlFileDependencyHelper.GetSortedFiles(structure_files_path);
 
         await using var connection = new SqlConnection(rawConnectionString);
 
@@ -24,7 +32,7 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options) : IOutSou
         var structures = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_structure_files);
 
         var loading_data_files =
-            SqlFileDependencyHelper.GetSortedFiles(LocalDapperOptionsMoq.DatabaseDataInitializerFilePath + key);
+            SqlFileDependencyHelper.GetSortedFiles(data_files_path + key);
 
         await connection.ExecuteAsync("DROP DATABASE IF EXISTS " + options.Database);
         foreach (var script in structures.SelectMany(x => x.Split("GO")).Where(s => !string.IsNullOrWhiteSpace(s)))

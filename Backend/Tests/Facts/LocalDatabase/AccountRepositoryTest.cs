@@ -19,6 +19,8 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage2, this);
 
+        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+
         var account = new AccountEntity
         {
             Balance = 0,
@@ -30,9 +32,6 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
             Mobile = "+989120001234",
             VpnPassword = "my-password",
         };
-
-        var options = scope.ServiceProvider.GetRequiredService<IOptions<LocalDapperOptions>>();
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
 
         await account_repo.Save(account);
 
@@ -89,7 +88,6 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage1, this);
 
-        var options = scope.ServiceProvider.GetRequiredService<IOptions<LocalDapperOptions>>();
         var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
 
         var account = await account_repo.GetAccount("User1");
@@ -104,5 +102,19 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         Assert.Contains("User12", targets);
         Assert.Contains("User13", targets);
         Assert.Contains("User14", targets);
+    }
+
+    [Fact]
+    public async Task GetAccountId()
+    {
+        using var scope = App.Services.CreateScope();
+        await scope.Register<LocalDatabaseInitializer>(TestPackage1, this);
+
+        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+
+        var account_ids = await account_repo.GetAccountIdByUsername(["User1"]);
+        Assert.NotNull(account_ids);
+        Assert.Single(account_ids);
+        Assert.Contains("User1", account_ids.Keys);
     }
 }

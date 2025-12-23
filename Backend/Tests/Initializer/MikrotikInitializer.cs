@@ -1,14 +1,15 @@
+using System.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using PhotonBypass.Test.Initializer.OutSourceManager;
 using Renci.SshNet;
-using System.Diagnostics;
 
 namespace PhotonBypass.Test.Initializer;
 
-internal class MikrotikInitializer : IOutSourceInitializer, IOutSourceLevelService
+internal class MikrotikInitializer(IConfiguration configuration) : IOutSourceInitializer, IOutSourceLevelService
 {
     private const int TimeoutSeconds = 120;
 
-    private static Dictionary<string, string> HostIps = new()
+    private static readonly Dictionary<string, string> HostIps = new()
     {
         { "Mikrotik-Base", "192.168.56.11" }
     };
@@ -56,30 +57,33 @@ internal class MikrotikInitializer : IOutSourceInitializer, IOutSourceLevelServi
         await RestoreSnapshot(key);
     }
 
-    private static Task<string> List() => Run($"list vms");
+    private Task<string> List() => Run($"list vms");
 
-    private static Task<string> Start(string key) => Run($"startvm \"{key}\" --type headless");
+    private Task<string> Start(string key) => Run($"startvm \"{key}\" --type headless");
 
-    private static Task<string> RestoreSnapshot(string key) => Run($"snapshot \"{key}\" restore clean-test-state");
+    private Task<string> RestoreSnapshot(string key) => Run($"snapshot \"{key}\" restore clean-test-state");
 
-    private static Task<string> Clone(string key) => Run($"clonevm Mikrotik-Base --name \"{key}\" --register");
+    private Task<string> Clone(string key) => Run($"clonevm Mikrotik-Base --name \"{key}\" --register");
 
-    private static Task<string> PowerOff(string key) => Run($"controlvm \"{key}\" poweroff", "is not currently running");
+    private Task<string> PowerOff(string key) => Run($"controlvm \"{key}\" poweroff", "is not currently running");
 
-    private static Task<string> Drop(string key) => Run($"unregistervm \"{key}\" --delete", "Could not find a registered machine named");
+    private Task<string> Drop(string key) => Run($"unregistervm \"{key}\" --delete", "Could not find a registered machine named");
 
-    private static async Task<string> Run(string args, params string[] ignores)
+    private async Task<string> Run(string args, params string[] ignores)
     {
+        var vbox_manage_path = configuration["VirtualBoxOptions:AppPath"]
+            ?? throw new Exception("VirtualBoxOptions:AppPath was not set.");
+        
         var process = new Process
         {
             StartInfo = new ProcessStartInfo
             {
-                FileName = "VBoxManage",
+                FileName = vbox_manage_path,
                 Arguments = args,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
             }
         };
 

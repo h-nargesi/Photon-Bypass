@@ -69,7 +69,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
                    where {nameof(AccountEntity.Username)} in (@usernames)
                    """;
 
-        var list = await QueryAsync(sql, usernames);
+        var list = await QueryAsync(sql, new { usernames });
 
         return list.ToDictionary(pair => (string)pair.Username, pair => (int)pair.Id);
     }
@@ -79,10 +79,10 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         var sql = $"""
                    select {nameof(AccountEntity.Id)}, {nameof(AccountEntity.Username)}
                    from {TableName}
-                   where {nameof(AccountEntity.Id)} in (@usernames)
+                   where {nameof(AccountEntity.Id)} in (@ids)
                    """;
 
-        var list = await QueryAsync(sql, ids);
+        var list = await QueryAsync(sql, new { ids });
 
         return list.ToDictionary(pair => (int)pair.Id, pair => (string)pair.Username);
     }
@@ -99,19 +99,19 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
     public async Task<int> CheckUniqueData(string username, string? email, string? mobile)
     {
         var sql = $"""
-                  select {nameof(AccountEntity.Username)}, {nameof(AccountEntity.Email)}, {nameof(AccountEntity.Mobile)}
-                  from {TableName}
-                  where {nameof(AccountEntity.Username)} = @username
-                       {(email != null ? $"or {nameof(AccountEntity.Email)} = @email" : "")}
-                       {(email != null ? $"or {nameof(AccountEntity.Mobile)} = @mobile" : "")}
-                  """;
+                   select {nameof(AccountEntity.Username)}, {nameof(AccountEntity.Email)}, {nameof(AccountEntity.Mobile)}
+                   from {TableName}
+                   where {nameof(AccountEntity.Username)} = @username
+                        {(email != null ? $"or {nameof(AccountEntity.Email)} = @email" : "")}
+                        {(email != null ? $"or {nameof(AccountEntity.Mobile)} = @mobile" : "")}
+                   """;
 
         var data = (await QueryAsync(sql, new { username, email, mobile })).ToList();
 
         if (data.Count < 1) return 0;
 
         return (data.Any(d => d.Username == username) ? 1 : 0) |
-            (data.Any(d => d.Email == email) ? 2 : 0) |
-            (data.Any(d => d.Mobile == mobile) ? 4 : 0);
+               (data.Any(d => d.Email == email) ? 2 : 0) |
+               (data.Any(d => d.Mobile == mobile) ? 4 : 0);
     }
 }
