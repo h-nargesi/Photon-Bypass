@@ -7,8 +7,6 @@ namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
 internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IUnitLevelService
 {
-    public event Action<string, DateTime?, DateTime?, List<HistoryEntity>>? OnGetHistory;
-
     public HistoryRepositoryMoq() : this(FilePath)
     {
     }

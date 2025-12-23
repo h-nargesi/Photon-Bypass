@@ -42,7 +42,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
                 return;
             }
 
-            Dictionary<string, string?>? username_dictionary;
+            Dictionary<string, string>? username_dictionary;
             int index;
             switch (action_types[1])
             {

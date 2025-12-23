@@ -1,15 +1,14 @@
-﻿using PhotonBypass.Domain.Servers.JsonType;
+﻿using System.Net.Http.Json;
+using System.Web;
+using PhotonBypass.Domain.Servers.JsonType;
 using PhotonBypass.FreeRadius.Entity;
 using PhotonBypass.FreeRadius.Interfaces;
 using PhotonBypass.FreeRadius.WebService.ApiResponseModel;
-using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.Tools;
-using System.Net.Http.Json;
-using System.Web;
 
 namespace PhotonBypass.FreeRadius.WebService;
 
-class RadiusDeskService : IRadiusService, IDisposable
+class RadiusDeskService : IRadiusService
 {
     private readonly WebApiConfig options;
     private HttpClient? httpClient;
@@ -21,7 +20,7 @@ class RadiusDeskService : IRadiusService, IDisposable
     private const string NAS_IP_ADDRESS = "NAS-IP-Address";
     private const string RD_TOTAL_DATA = "Rd-Total-Data";
 
-    public RadiusDeskService(RadWebApiOptionContext options, IApiHandler call)
+    public RadiusDeskService(RadWebApiOptionContext options)
     {
         this.options = options.WebApiConfig ??
                        throw new ArgumentNullException(nameof(options));
@@ -143,7 +142,12 @@ class RadiusDeskService : IRadiusService, IDisposable
 
         var response = await PostAsync<object, dynamic>("permanent-users/add.json", data);
 
-        if (!(response?.success ?? false))
+        if (response == null)
+        {
+            return false;
+        }
+
+        if (response.Success != true)
         {
             return false;
         }
@@ -200,7 +204,6 @@ class RadiusDeskService : IRadiusService, IDisposable
             DataIn = x.DataIn,
             DataOut = x.DataOut,
             Day = func(x.TimeUnit),
-
         }).ToArray();
 
         return result ?? [];
@@ -240,15 +243,15 @@ class RadiusDeskService : IRadiusService, IDisposable
         await CheckLogin();
 
         var current = (await GetPrivateAttribute(username, RD_TOTAL_DATA)) ??
-            new PrivateAttributeResponse
-            {
-                Id = null,
-                Type = "check",
-                Attribute = RD_TOTAL_DATA,
-                OP = ":=",
-                Edit = true,
-                Delete = true,
-            };
+                      new PrivateAttributeResponse
+                      {
+                          Id = null,
+                          Type = "check",
+                          Attribute = RD_TOTAL_DATA,
+                          OP = ":=",
+                          Edit = true,
+                          Delete = true,
+                      };
 
         current.Value = total_data;
 
@@ -315,7 +318,9 @@ class RadiusDeskService : IRadiusService, IDisposable
             token,
         };
 
-        var response = await PostAsync<object, RadiusServerResponseBase<PrivateAttributeResponse>>("permanent-users/private-attr-index.json", data);
+        var response =
+            await PostAsync<object, RadiusServerResponseBase<PrivateAttributeResponse>>(
+                "permanent-users/private-attr-index.json", data);
 
         if (response?.Success ?? false)
         {
@@ -337,7 +342,8 @@ class RadiusDeskService : IRadiusService, IDisposable
             token,
         };
 
-        var response = await PostAsync<object, dynamic>($"permanent-users/private-attr-{op}.json" + QueryString(query), item);
+        var response =
+            await PostAsync<object, dynamic>($"permanent-users/private-attr-{op}.json" + QueryString(query), item);
 
         return response?.success ?? false;
     }
@@ -394,15 +400,20 @@ class RadiusDeskService : IRadiusService, IDisposable
         return response?.success == true;
     }
 
-    private Task<HttpResponseMessage> Logout()
+    private void Logout()
     {
         token = null;
 
-        return GetAsync("dashboard/branding.json");
+        _ = GetAsync("dashboard/branding.json");
     }
 
     private async Task<HttpResponseMessage> PostAsync<T>(string url, T data)
     {
+        if (httpClient == null)
+        {
+            throw new Exception("RadiusDesk is not login!");
+        }
+
         var response = await httpClient.PostAsync(url, FormContent(data));
 
         return response.EnsureSuccessStatusCode();
@@ -417,6 +428,11 @@ class RadiusDeskService : IRadiusService, IDisposable
 
     private async Task<HttpResponseMessage> GetAsync(string url)
     {
+        if (httpClient == null)
+        {
+            throw new Exception("RadiusDesk is not login!");
+        }
+
         var response = await httpClient.GetAsync(url);
 
         return response.EnsureSuccessStatusCode();
@@ -470,6 +486,6 @@ class RadiusDeskService : IRadiusService, IDisposable
 
         if (result.Count < 1) return string.Empty;
 
-        return "?" + result.ToString();
+        return "?" + result;
     }
 }

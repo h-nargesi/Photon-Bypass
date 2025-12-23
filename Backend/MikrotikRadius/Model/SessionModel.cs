@@ -16,7 +16,7 @@ public class SessionModel
 
     [JsonPropertyName("user")]
     [TikProperty("user", IsReadOnly = true)]
-    public string? Username { get; set; }
+    public string Username { get; set; } = null!;
 
     [JsonPropertyName("acct-session-id")]
     [TikProperty("acct-session-id", IsReadOnly = true)]
