@@ -24,9 +24,17 @@ public class ProfileModel
 
     [JsonPropertyName("starts-when")]
     [TikProperty("starts-when")]
-    public string? StartsWhen { get; set; }
+    public StartsWhenType StartsWhen { get; set; }
 
     [JsonPropertyName("override-shared-users")]
     [TikProperty("override-shared-users")]
     public string? OverrideSharedUsers { get; set; }
+
+    public enum StartsWhenType
+    {
+        [TikEnum("assigned")]
+        Assigned,
+        [TikEnum("first-auth")]
+        FirstAuth,
+    }
 }

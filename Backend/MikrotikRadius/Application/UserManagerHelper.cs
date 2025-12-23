@@ -74,7 +74,7 @@ public static class UserManagerHelper
             Name = profile_name,
             Validity = days.HasValue ? $"{days}d 00:00:00" : "unlimited",
             NameForUsers = GetNameForUser(days, gigabytes, rate),
-            StartsWhen = "first-auth",
+            StartsWhen = ProfileModel.StartsWhenType.Assigned,
         };
 
         return false;

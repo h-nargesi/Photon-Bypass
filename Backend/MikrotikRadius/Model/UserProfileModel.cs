@@ -11,16 +11,16 @@ public class UserProfileModel
     public string? Id { get; private set; }
 
     [JsonPropertyName("user")]
-    [TikProperty("user")]
-    public string? Username { get; set; }
+    [TikProperty("user", IsMandatory = true)]
+    public string Username { get; set; } = null!;
 
     [JsonPropertyName("profile")]
-    [TikProperty("profile")]
-    public string? Profile { get; set; }
+    [TikProperty("profile", IsMandatory = true)]
+    public string Profile { get; set; } = null!;
 
     [JsonPropertyName("end-time")]
     [TikProperty("end-time", IsReadOnly = true)]
-    public string? EndTime { get; set; }
+    public DateTime? EndTime { get; set; }
 
     [JsonPropertyName("state")]
     [TikProperty("state", IsReadOnly = true)]
