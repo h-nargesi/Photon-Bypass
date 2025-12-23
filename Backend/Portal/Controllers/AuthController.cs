@@ -15,7 +15,7 @@ using System.Text;
 namespace PhotonBypass.Portal.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("/api/[controller]")]
 public class AuthController(
     IAuthApplication application, IJobContext job, Lazy<IAccessService> access) :
     ResultHandlerController(job, access)

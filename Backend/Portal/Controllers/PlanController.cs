@@ -11,7 +11,7 @@ namespace PhotonBypass.Portal.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("/api/[controller]")]
 public class PlanController(
     IPlanApplication application, IJobContext job, Lazy<IAccessService> access) :
     ResultHandlerController(job, access)

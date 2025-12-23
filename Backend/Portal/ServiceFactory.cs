@@ -14,7 +14,6 @@ public static class ServiceFactory
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
-        //builder.Services.AddSwaggerGen();
         builder.Services.AddAuthentication("Bearer")
             .AddJwtBearer("Bearer", options =>
             {

@@ -11,7 +11,7 @@ namespace PhotonBypass.Portal.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("/api/[controller]")]
 public class ConnectionController(
     IConnectionApplication application, IJobContext job, Lazy<IAccessService> access) :
     ResultHandlerController(job, access)
@@ -27,9 +27,9 @@ public class ConnectionController(
     }
 
     [HttpPost("close-con")]
-    public async Task<ApiResult> CloseConnection([FromBody] string? target, [FromBody] CloseConnectionContext context)
+    public async Task<ApiResult> CloseConnection([FromBody] CloseConnectionContext context)
     {
-        LoadJobContext(target);
+        LoadJobContext(context.Target);
 
         if (string.IsNullOrWhiteSpace(context.Server))
         {

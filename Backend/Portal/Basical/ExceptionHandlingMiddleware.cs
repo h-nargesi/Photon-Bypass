@@ -7,7 +7,7 @@ using Serilog;
 
 namespace PhotonBypass.Portal.Basical;
 
-public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
+public class ExceptionHandlingMiddleware(RequestDelegate next)
 {
     public const string ErrorMessage = "خطای غیرمنتظره‌ای رخ داده است!";
 
@@ -19,6 +19,7 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
         }
         catch (Exception ex)
         {
+            var job = context.RequestServices.GetRequiredService<IJobContext>();
             var api_result = GetApiResult(ex, out var http_code);
             var log_message = GetMessage(ex);
 
@@ -70,8 +71,8 @@ public class ExceptionHandlingMiddleware(RequestDelegate next, IJobContext job)
     }
 }
 
-public class ExceptionHandlingMiddlewareInDevelopment(RequestDelegate next, IJobContext job)
-    : ExceptionHandlingMiddleware(next, job)
+public class ExceptionHandlingMiddlewareInDevelopment(RequestDelegate next)
+    : ExceptionHandlingMiddleware(next)
 {
     protected override ApiResult GetApiResult(Exception ex, out short http_code)
     {

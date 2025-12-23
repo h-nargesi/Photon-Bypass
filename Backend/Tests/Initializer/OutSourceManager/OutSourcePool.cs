@@ -2,16 +2,16 @@
 
 internal static class OutSourcePool
 {
-    private static readonly LauncherDict launchers = [];
+    private static readonly LauncherDict Launchers = [];
 
     public static Task Register<TInitializer>(this IServiceScope provider, string key, object service) where TInitializer : IOutSourceInitializer
     {
         OutSourceLauncherNode? node;
-        lock (launchers)
+        lock (Launchers)
         {
-            if (!launchers.TryGetValue((key, typeof(TInitializer)), out node))
+            if (!Launchers.TryGetValue((key, typeof(TInitializer)), out node))
             {
-                launchers.Add((key, typeof(TInitializer)), node = new OutSourceLauncherNode
+                Launchers.Add((key, typeof(TInitializer)), node = new OutSourceLauncherNode
                 {
                     SampleInitializer = provider.ServiceProvider.GetRequiredService<TInitializer>(),
                     Launcher = new OutSourceLauncher(key)

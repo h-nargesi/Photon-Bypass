@@ -104,6 +104,9 @@
 		<None Update="Data\Sql\DbTest1\add-data.sql">
 		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update="Data\Sql\DbScenario\init.sql">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 </Project>

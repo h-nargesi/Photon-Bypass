@@ -6,7 +6,7 @@ using PhotonBypass.Result;
 namespace PhotonBypass.Portal.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("/api/[controller]")]
 public class BasicsController(IBasicsApplication application) : ControllerBase
 {
     [HttpGet("prices")]

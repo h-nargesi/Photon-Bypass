@@ -12,7 +12,7 @@ namespace PhotonBypass.Portal.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("/api/[controller]")]
 public class VpnController(
     IVpnApplication application, IJobContext job, Lazy<IAccessService> access, Lazy<IAuthApplication> auth) :
     ResultHandlerController(job, access)

@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace PhotonBypass.Test;
+namespace PhotonBypass.Test.Initializer;
 
-public abstract class ProgramLevelInitializer : IClassFixture<WebApplicationFactory<PortalProgram>>
+public abstract class ProgramLevelInitializer(WebApplicationFactory<PortalProgram> factory)
+    : OutSourceLevelServiceInitializer, IClassFixture<WebApplicationFactory<PortalProgram>>
 {
+    protected readonly HttpClient Client = factory.CreateClient();
 }

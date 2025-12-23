@@ -14,12 +14,15 @@ public class ExceptionHandlingMiddlewareTests
 {
     private const string ErrorPr = "خطا";
     private const string ErrorEn = "Error Detail";
-    private readonly Mock<IJobContext> context;
+    private readonly Mock<IServiceProvider> serviceProvider;
 
     public ExceptionHandlingMiddlewareTests()
     {
-        context = new Mock<IJobContext>();
+        var context = new Mock<IJobContext>();
         context.Setup(x => x.Username).Returns("User");
+
+        serviceProvider = new Mock<IServiceProvider>();
+        serviceProvider.Setup(x => x.GetService(typeof(IJobContext))).Returns(context.Object);
     }
 
     [Fact]
@@ -27,7 +30,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         PrepareResponse(out var http, out var response, out _);
 
-        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        var middle_ware = new ExceptionHandlingMiddleware(Request);
         await middle_ware.Invoke(http);
 
         response.StatusCode.Should().Be(StatusCodes.Status200OK);
@@ -41,7 +44,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        var middle_ware = new ExceptionHandlingMiddleware(Request);
         await middle_ware.Invoke(http);
 
         AssertHttpResponse(response, StatusCodes.Status500InternalServerError);
@@ -60,7 +63,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        var middle_ware = new ExceptionHandlingMiddleware(Request);
         await middle_ware.Invoke(http);
 
         AssertHttpResponse(response, StatusCodes.Status500InternalServerError);
@@ -79,7 +82,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        var middle_ware = new ExceptionHandlingMiddleware(Request);
         await middle_ware.Invoke(http);
 
         AssertHttpResponse(response, StatusCodes.Status400BadRequest);
@@ -98,7 +101,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        var middle_ware = new ExceptionHandlingMiddleware(Request);
         await middle_ware.Invoke(http);
 
         AssertHttpResponse(response, StatusCodes.Status400BadRequest);
@@ -117,7 +120,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        var middle_ware = new ExceptionHandlingMiddleware(Request);
         await middle_ware.Invoke(http);
 
         AssertHttpResponse(response, StatusCodes.Status400BadRequest);
@@ -136,7 +139,7 @@ public class ExceptionHandlingMiddlewareTests
     {
         PrepareResponse(out var http, out var response, out var stream);
 
-        var middle_ware = new ExceptionHandlingMiddleware(Request, context.Object);
+        var middle_ware = new ExceptionHandlingMiddleware(Request);
         await middle_ware.Invoke(http);
 
         AssertHttpResponse(response, StatusCodes.Status403Forbidden);
@@ -147,7 +150,8 @@ public class ExceptionHandlingMiddlewareTests
         });
         return;
 
-        static Task Request(HttpContext http) => throw new UserException(ErrorPr, ErrorEn, StatusCodes.Status403Forbidden);
+        static Task Request(HttpContext http) =>
+            throw new UserException(ErrorPr, ErrorEn, StatusCodes.Status403Forbidden);
     }
 
     private static void AssertHttpResponse(HttpResponse response, int http_code)
@@ -165,16 +169,17 @@ public class ExceptionHandlingMiddlewareTests
         result_text.Should().Be(JsonSerializer.Serialize(api));
     }
 
-    private static void PrepareResponse(out HttpContext http, out HttpResponse response, out MemoryStream stream)
+    private void PrepareResponse(out HttpContext http, out HttpResponse response, out MemoryStream stream)
     {
-        var context = new DefaultHttpContext();
+        var http_context = new DefaultHttpContext();
 
-        response = context.Response;
+        response = http_context.Response;
         stream = new MemoryStream();
         response.Body = stream;
 
         var http_mock = new Mock<HttpContext>();
         http_mock.Setup(x => x.Response).Returns(response);
+        http_mock.Setup(x => x.RequestServices).Returns(serviceProvider.Object);
 
         http = http_mock.Object;
     }

@@ -133,3 +133,7 @@ Services:
 	[ ] GetAvailableRealm
 	[ ] CheckUserServerBalance
 	[ ] GetDefaultCertificate
+
+## Level 5 - Scenario
+
+[=] RegisterAndBuy

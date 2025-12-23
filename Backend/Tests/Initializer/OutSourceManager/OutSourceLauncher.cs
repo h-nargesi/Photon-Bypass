@@ -6,14 +6,12 @@ internal class OutSourceLauncher(string key)
     private Exception? exception;
     private readonly SemaphoreSlim semaphore = new(1);
 
-    public string Key { get; } = key;
-
     public async Task Initialize(IOutSourceInitializer initializer)
     {
         if (exception != null) throw exception;
         if (isInitialized)
         {
-            await initializer.Check(Key);
+            await initializer.Check(key);
             return;
         }
 
@@ -22,13 +20,13 @@ internal class OutSourceLauncher(string key)
         if (exception != null) throw exception;
         if (isInitialized)
         {
-            await initializer.Check(Key);
+            await initializer.Check(key);
             return;
         }
 
         try
         {
-            await initializer.Initialize(Key);
+            await initializer.Initialize(key);
             isInitialized = true;
         }
         catch (Exception ex)
