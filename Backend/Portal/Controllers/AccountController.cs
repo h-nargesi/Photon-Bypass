@@ -1,13 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PhotonBypass.Portal.Basical;
-using PhotonBypass.Portal.Context;
 using PhotonBypass.Application.Account;
-using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Model;
-using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Portal.Basical;
+using PhotonBypass.Portal.Context;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.Portal.Controllers;

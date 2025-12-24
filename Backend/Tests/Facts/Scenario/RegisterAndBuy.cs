@@ -1,6 +1,7 @@
-using PhotonBypass.Result;
+using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Portal.Context;
 using PhotonBypass.Test.Initializer;
-using System.Text.Json;
+using System.Net.Http.Json;
 
 namespace PhotonBypass.Test.Facts.Scenario;
 
@@ -10,16 +11,34 @@ public class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : ProgramLe
     public async Task GetPrices()
     {
         var response = await Client.GetAsync("/api/basics/prices");
+        await CheckResponse(response);
+    }
 
-        var content = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
+    [Fact]
+    public async Task Register()
+    {
+        var response = await Client.PostAsJsonAsync("/api/auth/register", new RegisterModel
         {
-            var result = JsonSerializer.Deserialize<ApiResult>(content);
-            if (result != null)
-                throw new Exception(result.Message);
-        }
+            Firstname = "fname",
+            Lastname = "lname",
+            Mobile = "+989121234567",
+            Email = "ryan@gmail.com",
+            Username = "user01",
+            Password = "Password",
+        });
+        await CheckResponse(response);
 
-        response.EnsureSuccessStatusCode();
+        response = await Client.PostAsJsonAsync("/api/auth/token", new TokenContext
+        {
+            Username = "user01",
+            Password = "Password",
+        });
+        SetToken(await CheckResponse(response));
+
+        response = await Client.GetAsync("/api/account/get-user");
+        var user = (await CheckResponse(response)).Data;
+
+        Assert.NotNull(user);
+        Assert.Equal("fname lname", user["Fullname"]);
     }
 }

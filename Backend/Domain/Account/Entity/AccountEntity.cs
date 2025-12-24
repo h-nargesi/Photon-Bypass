@@ -12,7 +12,7 @@ public class AccountEntity : IBaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
 
     public string Username { get; init; } = null!;
 

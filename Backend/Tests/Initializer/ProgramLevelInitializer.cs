@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Hosting;
+using PhotonBypass.Result;
 using PhotonBypass.Test.Initializer.OutSourceManager;
+using System.Text.Json;
 using static PhotonBypass.Test.Initializer.ProgramLevelInitializer;
 
 namespace PhotonBypass.Test.Initializer;
@@ -10,8 +12,32 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 {
     private const string TestPackageMikrotik = "Mikrotik-Scenario";
     private const string TestPackageDatabase = "DbScenario";
+    private readonly static JsonSerializerOptions options = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     protected readonly HttpClient Client = factory.CreateClient();
+
+    protected static async Task<ApiResult<Dictionary<string, object>>> CheckResponse(HttpResponseMessage response)
+    {
+        var content = await response.Content.ReadAsStringAsync();
+        var result = string.IsNullOrEmpty(content) ? null : JsonSerializer.Deserialize<ApiResult<Dictionary<string, object>>>(content, options);
+
+        if (!response.IsSuccessStatusCode && result != null)
+            throw new Exception(result.Developer ?? result.Message);
+
+        response.EnsureSuccessStatusCode();
+
+        return result ?? throw new Exception("Empty result!");
+    }
+
+    protected void SetToken(ApiResult<Dictionary<string, object>> token)
+    {
+        if (token?.Data == null)
+            throw new Exception($"Unexpected token: {token?.Data}");
+        Client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token?.Data["access_token"]}");
+    }
 
     public class Factory : WebApplicationFactory<PortalProgram>
     {

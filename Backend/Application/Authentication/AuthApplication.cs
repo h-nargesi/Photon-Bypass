@@ -187,7 +187,8 @@ class AuthApplication(
             throw new UserException("این  شماره همراه قبلا استفاده شده است!");
         }
 
-        account.VpnPassword = account.Password = HashHandler.HashPassword(model.Password ?? string.Empty);
+        account.VpnPassword = HashHandler.GenerateHashCode(10);
+        account.Password = HashHandler.HashPassword(model.Password ?? string.Empty);
 
         await AccountRepo.Save(account);
 

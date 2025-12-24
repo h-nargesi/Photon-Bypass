@@ -5,7 +5,7 @@ namespace PhotonBypass.Portal.Basical;
 public static class IdentityHelper
 {
     private static string? token_key;
-    public static string TokenKey => token_key ??= GenerateSecureKey(256);
+    public static string TokenKey => token_key ??= GenerateSecureKey(512);
 
     private static string GenerateSecureKey(int keySizeInBits = 256)
     {
