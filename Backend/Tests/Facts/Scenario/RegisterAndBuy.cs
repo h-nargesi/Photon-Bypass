@@ -40,5 +40,11 @@ public class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : ProgramLe
 
         Assert.NotNull(user);
         Assert.Equal("fname lname", user["fullname"].ToString());
+
+        response = await Client.GetAsync("/api/account/full-info");
+        user = (await CheckResponse(response)).Data;
+
+        Assert.NotNull(user);
+        Assert.Equal("user01", user["username"].ToString());
     }
 }
