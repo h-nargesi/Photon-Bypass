@@ -1,4 +1,5 @@
-﻿using Microsoft.IdentityModel.Tokens;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Portal.Basical;
@@ -14,14 +15,28 @@ public static class ServiceFactory
 
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddAuthentication("Bearer")
-            .AddJwtBearer("Bearer", options =>
+        builder.Services.AddAuthentication(options =>
             {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                var issuer_signing_key = builder.Configuration["Issuer:Code"]
+                    ?? throw new Exception("Issuer:Code is not set.");
+                IdentityHelper.Key = new SymmetricSecurityKey(Convert.FromBase64String(issuer_signing_key));
+                IdentityHelper.Issuer = builder.Configuration["Issuer:Name"];
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidIssuer = IdentityHelper.Issuer,
+                    ValidAudience = IdentityHelper.Issuer,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = IdentityHelper.Key,
+                    ClockSkew = TimeSpan.Zero,
                 };
             });
         builder.Services.AddAuthorization();

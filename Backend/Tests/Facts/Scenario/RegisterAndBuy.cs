@@ -39,6 +39,6 @@ public class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : ProgramLe
         var user = (await CheckResponse(response)).Data;
 
         Assert.NotNull(user);
-        Assert.Equal("fname lname", user["Fullname"]);
+        Assert.Equal("fname lname", user["fullname"].ToString());
     }
 }

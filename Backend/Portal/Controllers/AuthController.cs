@@ -1,16 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using PhotonBypass.Portal.Basical;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Authentication.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Portal.Basical;
 using PhotonBypass.Result;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Text;
 
 namespace PhotonBypass.Portal.Controllers;
 
@@ -91,8 +90,7 @@ public class AuthController(
 
     private static string GenerateToken(TargetModel user)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(IdentityHelper.TokenKey));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
+        var creds = new SigningCredentials(IdentityHelper.Key, SecurityAlgorithms.HmacSha512Signature);
 
         var claims = new List<Claim>
         {
@@ -101,6 +99,8 @@ public class AuthController(
         };
 
         var token = new JwtSecurityToken(
+            issuer: IdentityHelper.Issuer,
+            audience: IdentityHelper.Issuer,
             expires: DateTime.Now.AddHours(1),
             claims: claims,
             signingCredentials: creds

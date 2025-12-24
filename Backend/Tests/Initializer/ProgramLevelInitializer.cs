@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Hosting;
 using PhotonBypass.Result;
 using PhotonBypass.Test.Initializer.OutSourceManager;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using static PhotonBypass.Test.Initializer.ProgramLevelInitializer;
 
@@ -36,7 +37,9 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
     {
         if (token?.Data == null)
             throw new Exception($"Unexpected token: {token?.Data}");
-        Client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token?.Data["access_token"]}");
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            token.Data["access_token"].ToString());
     }
 
     public class Factory : WebApplicationFactory<PortalProgram>
