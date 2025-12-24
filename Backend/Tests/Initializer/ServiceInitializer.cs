@@ -21,13 +21,13 @@ public class ServiceInitializer
             .AddPortalServices()
             .AddAdminServices();
 
-        AddDefaultServices(builder, types.ToHashSet());
+        AddDefaultServices(builder.Services, types.ToHashSet());
         AddClassTestServices(builder);
 
         return builder.Build();
     }
 
-    private static void AddDefaultServices(WebApplicationBuilder builder, HashSet<Type> mock_types)
+    public static void AddDefaultServices(IServiceCollection services, HashSet<Type> mock_types)
     {
         var types = AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(a =>
@@ -47,7 +47,7 @@ public class ServiceInitializer
 
         foreach (var initializer in types.Select(type => type.GetMethod("CreateInstance")))
         {
-            initializer?.Invoke(null, [builder.Services]);
+            initializer?.Invoke(null, [services]);
         }
     }
 

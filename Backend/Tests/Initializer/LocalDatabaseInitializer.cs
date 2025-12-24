@@ -11,7 +11,7 @@ namespace PhotonBypass.Test.Initializer;
 internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options, IConfiguration configuration)
     : IOutSourceInitializer, IOutSourceLevelService
 {
-    private readonly string rawConnectionString = options.Object.Value.ConnectionString;
+    private readonly string rawConnectionString = options.RawConnectionString;
 
     public async Task Initialize(string key)
     {
