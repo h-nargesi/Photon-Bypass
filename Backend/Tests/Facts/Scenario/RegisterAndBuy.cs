@@ -46,5 +46,25 @@ public class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : ProgramLe
 
         Assert.NotNull(user);
         Assert.Equal("user01", user["username"].ToString());
+
+        user["firstname"] = "first-name";
+        user["lastname"] = "last-name";
+        response = await Client.PostAsJsonAsync($"/api/account/edit-user?target={user["username"]}", new EditUserModel
+        {
+            Email = user["email"].ToString(),
+            Firstname = user["firstname"].ToString(),
+            Lastname = user["lastname"].ToString(),
+            Mobile = user["mobile"].ToString(),
+        });
+        await CheckResponse(response);
+
+        response = await Client.GetAsync("/api/account/full-info");
+        var edition_2 = (await CheckResponse(response)).Data;
+
+        Assert.NotNull(edition_2);
+        foreach (var prop in edition_2)
+        {
+            Assert.Equal(user[prop.Key].ToString(), prop.Value.ToString());
+        }
     }
 }
