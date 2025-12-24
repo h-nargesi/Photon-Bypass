@@ -39,7 +39,8 @@ Implement mock of all dependencies and test mid-level services.
 	[+] ChangePassword
 - IAuthApplication:
 	[+] CheckUserPassword
-	[+] ResetPassword
+	[+] ForgetPassword
+	[ ] ResetPassword
 	[+] Register
 - IConnectionApplication:
 	[+] GetCurrentConnectionState
@@ -107,6 +108,7 @@ Controllers:
 	[ ] GetHistory
 - AuthController:
 	[ ] Login
+	[ ] ForgetPassword
 	[ ] ResetPassword
 	[ ] Register
 - BasicsController:

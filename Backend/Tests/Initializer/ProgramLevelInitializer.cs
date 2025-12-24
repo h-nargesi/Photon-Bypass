@@ -1,10 +1,11 @@
-﻿using Microsoft.AspNetCore.Hosting;
+﻿using System.Net.Http.Headers;
+using System.Net.Mail;
+using System.Text.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Hosting;
 using PhotonBypass.Result;
 using PhotonBypass.Test.Initializer.OutSourceManager;
-using System.Net.Http.Headers;
-using System.Text.Json;
+using PhotonBypass.Test.Mock.MockServerBridge;
 using static PhotonBypass.Test.Initializer.ProgramLevelInitializer;
 
 namespace PhotonBypass.Test.Initializer;
@@ -20,6 +21,7 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
     };
 
     protected readonly HttpClient Client = factory.CreateClient();
+    protected IServiceProvider ServiceProvider => factory.Services;
 
     protected static Task<ApiResult<object>> CheckResponse(HttpResponseMessage response)
     {
@@ -55,7 +57,7 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 
     protected void SetToken(ApiResult<Dictionary<string, object>> token)
     {
-        if (token?.Data == null)
+        if (token.Data == null)
             throw new Exception($"Unexpected token: {token?.Data}");
         Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
@@ -64,8 +66,6 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 
     public class Factory : WebApplicationFactory<PortalProgram>
     {
-        public IHost? App { get; private set; }
-
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             base.ConfigureWebHost(builder);
@@ -84,11 +84,6 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 
                 Task.WaitAll(init_mikrotik, init_database);
             });
-        }
-
-        protected override IHost CreateHost(IHostBuilder builder)
-        {
-            return App = base.CreateHost(builder);
         }
     }
 }

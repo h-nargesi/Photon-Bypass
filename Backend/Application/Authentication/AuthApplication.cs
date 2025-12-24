@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Application.Account.Model;
+﻿using PhotonBypass.Application.Account;
+using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
@@ -16,6 +17,7 @@ class AuthApplication(
     IHistoryRepository history_repo,
     Lazy<IResetPassRepository> reset_pass_repo,
     ISocialMediaService social_media_srv,
+    Lazy<IAccountApplication> account_app,
     Lazy<IEmailService> email_srv)
     : IAuthApplication
 {
@@ -23,6 +25,7 @@ class AuthApplication(
     private IHistoryRepository HistoryRepo { get; } = history_repo;
     private Lazy<IResetPassRepository> ResetPassRepo { get; } = reset_pass_repo;
     private ISocialMediaService SocialMediaSrv { get; } = social_media_srv;
+    private Lazy<IAccountApplication> AccountApp { get; } = account_app;
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
 
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
@@ -87,7 +90,7 @@ class AuthApplication(
         };
     }
 
-    public async Task<ApiResult> ResetPassword(string email_mobile)
+    public async Task<ApiResult> ForgetPassword(string email_mobile)
     {
         email_mobile = email_mobile.Trim();
 
@@ -165,6 +168,20 @@ class AuthApplication(
 
         throw new UserException("ایمیل/موبایل نا معتبر است!",
             $"Invalid Email/Mobile: {email_mobile}");
+    }
+
+    public async Task<ApiResult> ResetPassword(string code, string password)
+    {
+        var reset_pass = await ResetPassRepo.Value.GetAccount(code);
+
+        if (reset_pass == null || reset_pass.ExpireDate >= DateTime.Now)
+        {
+            throw new UserException("این کد منقضی شده است! دوباره تلاش کنید.");
+        }
+        
+        var account = await AccountRepo.GetAccount(reset_pass.AccountId);
+
+        return await account_app.Value.ChangePassword(account, code, password);
     }
 
     public async Task<ApiResult> Register(RegisterModel model)

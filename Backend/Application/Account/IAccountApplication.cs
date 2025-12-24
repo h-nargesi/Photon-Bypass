@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Application.Account.Model;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Result;
 
@@ -13,6 +14,8 @@ public interface IAccountApplication
     Task<ApiResult> EditUser(string target, EditUserModel context);
 
     Task<ApiResult> ChangePassword(string target, string token, string password);
+
+    Task<ApiResult> ChangePassword(AccountEntity? account, string token, string password);
 
     Task<ApiResult<IList<HistoryModel>>> GetHistory(string target, DateTime? from, DateTime? to);
 }

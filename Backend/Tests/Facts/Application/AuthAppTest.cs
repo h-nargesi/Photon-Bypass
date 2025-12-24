@@ -74,37 +74,37 @@ public class AuthAppTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task ResetPassword_InvalidMobileEmail()
+    public async Task ForgetPassword_InvalidMobileEmail()
     {
         using var scope = App.Services.CreateScope();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var function = () => auth_app.ResetPassword("invalid email/mobile");
+        var function = () => auth_app.ForgetPassword("invalid email/mobile");
 
         await function.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
-    public async Task ResetPassword_InvalidAccount_ViaEmail()
+    public async Task ForgetPassword_InvalidAccount_ViaEmail()
     {
         using var scope = App.Services.CreateScope();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var function = () => auth_app.ResetPassword("ali_moli@diff.com");
+        var function = () => auth_app.ForgetPassword("ali_moli@diff.com");
 
         await function.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
-    public async Task ResetPassword_InactiveAccount_ViaEmail()
+    public async Task ForgetPassword_InactiveAccount_ViaEmail()
     {
         using var scope = App.Services.CreateScope();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var function = () => auth_app.ResetPassword("user7@gmail.com");
+        var function = () => auth_app.ForgetPassword("user7@gmail.com");
 
         await function.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
-    public async Task ResetPassword_SendEmail()
+    public async Task ForgetPassword_SendEmail()
     {
         using var scope = App.Services.CreateScope();
         var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
@@ -117,7 +117,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
             Assert.Equal("user4@gmail.com", message.To.First().Address);
         };
 
-        var result = await auth_app.ResetPassword("user4@gmail.com");
+        var result = await auth_app.ForgetPassword("user4@gmail.com");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);

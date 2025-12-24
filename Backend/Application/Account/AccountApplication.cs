@@ -97,13 +97,18 @@ class AccountApplication(
 
         var account = await AccountRepo.GetAccount(target);
 
+        return await ChangePassword(account, token, password);
+    }
+
+    public async Task<ApiResult> ChangePassword(AccountEntity? account, string token, string password)
+    {
         if (account is not { IsActive: true } || account.Password != token)
         {
             if (account != null)
             {
                 if (account.IsActive)
                 {
-                    _ = HistoryRepo.Value.Save(JobContext.Value.Username,new HistoryEntity
+                    _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
                     {
                         Target = account.Id,
                         Category = EventCategory.Security,
@@ -113,7 +118,8 @@ class AccountApplication(
                     });
                 }
 
-                Log.Warning("[user: {0}] Invalid password (change-pass) for {1}, active={2}", account.Username, target, account.IsActive);
+                Log.Warning("[user: {0}] Invalid password (change-pass) for {1}, active={2}",
+                    account.Username, account.Username, account.IsActive);
             }
 
             throw new UserException("کلمه عبور فعلی اشتباه است!");
@@ -149,8 +155,9 @@ class AccountApplication(
             EventTime = history.Created,
             EventTimeTitle = history.Created.ToPersianString(),
             Id = history.Id,
-            Issuer = history.Issuer.HasValue && issuers.TryGetValue(history.Issuer.Value, out var issuer) ?
-                issuer : null,
+            Issuer = history.Issuer.HasValue && issuers.TryGetValue(history.Issuer.Value, out var issuer)
+                ? issuer
+                : null,
             Target = target,
             Title = history.Title,
             Value = history.Value,

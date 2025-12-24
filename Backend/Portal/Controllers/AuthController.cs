@@ -10,13 +10,16 @@ using PhotonBypass.Portal.Basical;
 using PhotonBypass.Result;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using PhotonBypass.Portal.Context;
 
 namespace PhotonBypass.Portal.Controllers;
 
 [ApiController]
 [Route("/api/[controller]")]
 public class AuthController(
-    IAuthApplication application, IJobContext job, Lazy<IAccessService> access) :
+    IAuthApplication application,
+    IJobContext job,
+    Lazy<IAccessService> access) :
     ResultHandlerController(job, access)
 {
     private Lazy<IAccessService> AccessSrv { get; } = access;
@@ -57,15 +60,33 @@ public class AuthController(
         };
     }
 
-    [HttpPost("reset-pass")]
-    public async Task<ApiResult> ResetPassword([FromBody] ResetPasswordContext context)
+    [HttpPost("forget-pass")]
+    public async Task<ApiResult> ForgetPassword([FromBody] ResetPasswordContext context)
     {
         if (string.IsNullOrWhiteSpace(context.EmailMobile))
         {
             return BadRequestApiResult(message: "ایمیل/موبایل خالی است!");
         }
 
-        var result = await application.ResetPassword(context.EmailMobile);
+        var result = await application.ForgetPassword(context.EmailMobile);
+
+        return SafeApiResult(result);
+    }
+
+    [HttpPost("reset-pass")]
+    public async Task<ApiResult> ResetPassword([FromBody] ChangePasswordContext context)
+    {
+        if (string.IsNullOrWhiteSpace(context.Token))
+        {
+            return BadRequestApiResult(message: "کد خالی است!");
+        }
+
+        if (string.IsNullOrWhiteSpace(context.Password))
+        {
+            return BadRequestApiResult(message: "کلمه عبور خالی است!");
+        }
+
+        var result = await application.ResetPassword(context.Token, context.Password);
 
         return SafeApiResult(result);
     }

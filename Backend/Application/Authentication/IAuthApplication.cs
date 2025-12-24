@@ -8,7 +8,9 @@ public interface IAuthApplication
 {
     Task<ApiResult<UserModel>> CheckUserPassword(string username, string password);
 
-    Task<ApiResult> ResetPassword(string email_mobile);
+    Task<ApiResult> ForgetPassword(string email_mobile);
+
+    Task<ApiResult> ResetPassword(string code, string password);
 
     Task<ApiResult> Register(RegisterModel model);
 }

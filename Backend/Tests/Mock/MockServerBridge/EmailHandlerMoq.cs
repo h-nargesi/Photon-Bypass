@@ -6,7 +6,7 @@ using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Mock.MockServerBridge;
 
-internal class EmailHandlerMoq : Mock<IEmailHandler>, IUnitLevelService
+internal class EmailHandlerMoq : Mock<IEmailHandler>, IUnitLevelService, IProgramLevelService
 {
     public event Action<MailMessage>? OnSend;
 
@@ -24,7 +24,7 @@ internal class EmailHandlerMoq : Mock<IEmailHandler>, IUnitLevelService
 
     public static void CreateInstance(IServiceCollection services)
     {
-        services.AddScoped<EmailHandlerMoq>();
-        services.AddLazyScoped(s => s.GetRequiredService<EmailHandlerMoq>().Object);
+        services.AddSingleton<EmailHandlerMoq>();
+        services.AddSingleton(s => s.GetRequiredService<EmailHandlerMoq>().Object);
     }
 }
