@@ -11,7 +11,11 @@ public class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : ProgramLe
     public async Task GetPrices()
     {
         var response = await Client.GetAsync("/api/basics/prices");
-        await CheckResponse(response);
+        var data = (await CheckResponseArray(response)).Data;
+        
+        Assert.NotNull(data);
+        Assert.Single(data);
+        Assert.Equal(3, data[0].Count);
     }
 
     [Fact]
@@ -33,16 +37,16 @@ public class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : ProgramLe
             Username = "user01",
             Password = "Password",
         });
-        SetToken(await CheckResponse(response));
+        SetToken(await CheckResponseObject(response));
 
         response = await Client.GetAsync("/api/account/get-user");
-        var user = (await CheckResponse(response)).Data;
+        var user = (await CheckResponseObject(response)).Data;
 
         Assert.NotNull(user);
         Assert.Equal("fname lname", user["fullname"].ToString());
 
         response = await Client.GetAsync("/api/account/full-info");
-        user = (await CheckResponse(response)).Data;
+        user = (await CheckResponseObject(response)).Data;
 
         Assert.NotNull(user);
         Assert.Equal("user01", user["username"].ToString());
@@ -59,7 +63,7 @@ public class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : ProgramLe
         await CheckResponse(response);
 
         response = await Client.GetAsync("/api/account/full-info");
-        var edition_2 = (await CheckResponse(response)).Data;
+        var edition_2 = (await CheckResponseObject(response)).Data;
 
         Assert.NotNull(edition_2);
         foreach (var prop in edition_2)

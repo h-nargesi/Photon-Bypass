@@ -68,7 +68,7 @@ public class AccountController(
     }
 
     [HttpGet("history")]
-    public async Task<ApiResult> GetHistory([FromQuery] string? target, [FromQuery] Context.HistoryContext context)
+    public async Task<ApiResult> GetHistory([FromQuery] string? target, [FromQuery] HistoryContext context)
     {
         LoadJobContext(target);
 

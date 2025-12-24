@@ -13,24 +13,44 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 {
     private const string TestPackageMikrotik = "Mikrotik-Scenario";
     private const string TestPackageDatabase = "DbScenario";
-    private readonly static JsonSerializerOptions options = new()
+
+    private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNameCaseInsensitive = true
     };
 
     protected readonly HttpClient Client = factory.CreateClient();
 
-    protected static async Task<ApiResult<Dictionary<string, object>>> CheckResponse(HttpResponseMessage response)
+    protected static Task<ApiResult<object>> CheckResponse(HttpResponseMessage response)
+    {
+        return CheckResponse<object>(response);
+    }
+
+    protected static Task<ApiResult<Dictionary<string, object>>> CheckResponseObject(HttpResponseMessage response)
+    {
+        return CheckResponse<Dictionary<string, object>>(response);
+    }
+
+    protected static Task<ApiResult<Dictionary<string, object>[]>> CheckResponseArray(HttpResponseMessage response)
+    {
+        return CheckResponse<Dictionary<string, object>[]>(response);
+    }
+
+    private static async Task<ApiResult<T>> CheckResponse<T>(HttpResponseMessage response)
     {
         var content = await response.Content.ReadAsStringAsync();
-        var result = string.IsNullOrEmpty(content) ? null : JsonSerializer.Deserialize<ApiResult<Dictionary<string, object>>>(content, options);
 
-        if (!response.IsSuccessStatusCode && result != null)
-            throw new Exception(result.Developer ?? result.Message);
+        var result = string.IsNullOrEmpty(content)
+            ? null
+            : JsonSerializer.Deserialize<ApiResult<T>>(content, Options);
+
+        if (result != null)
+        {
+            return response.IsSuccessStatusCode ? result : throw new Exception(result.Developer ?? result.Message);
+        }
 
         response.EnsureSuccessStatusCode();
-
-        return result ?? throw new Exception("Empty result!");
+        throw new Exception("Empty result!");
     }
 
     protected void SetToken(ApiResult<Dictionary<string, object>> token)
@@ -58,7 +78,8 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 
                 using var scope = sp.CreateScope();
 
-                var init_mikrotik = Task.CompletedTask; //scope.Register<MikrotikInitializer>(TestPackageMikrotik, this);
+                var init_mikrotik =
+                    Task.CompletedTask; //scope.Register<MikrotikInitializer>(TestPackageMikrotik, this);
                 var init_database = scope.Register<LocalDatabaseInitializer>(TestPackageDatabase, this);
 
                 Task.WaitAll(init_mikrotik, init_database);
