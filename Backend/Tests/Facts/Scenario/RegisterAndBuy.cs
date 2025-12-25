@@ -113,11 +113,17 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
 
         // /api/basics/prices
         response = await Client.GetAsync("/api/basics/prices");
-        var data = (await CheckResponseArray(response)).Data;
+        var prices = (await CheckResponseArray(response)).Data;
 
-        Assert.NotNull(data);
-        Assert.Single(data);
-        Assert.Equal(3, data[0].Count);
+        Assert.NotNull(prices);
+        Assert.Single(prices);
+        Assert.Equal(3, prices[0].Count);
+        
+        // /api/plan/plan-info
+        response = await Client.GetAsync("/api/plan/plan-info");
+        var plan_info = (await CheckResponseObject(response)).Data;
+        
+        Assert.NotNull(plan_info);
     }
 
     [GeneratedRegex(@"<div class=""code-box"">(\w+)</div>")]

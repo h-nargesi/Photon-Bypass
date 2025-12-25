@@ -6,6 +6,7 @@ CREATE OR ALTER VIEW PlanState AS
 SELECT Id
 	, IsActive
 	, Username
+    , Created
     -- Plan Info (Latest State)
     , SimultaneousUser
     , RestrictedRealmId

@@ -25,8 +25,10 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
     // Last Usage Info
     public DateTime? LastConnectTime { get; set; }
 
+    [NotMapped]
     public bool LastConnectionWasSuccessful { get; set; }
 
+    [NotMapped]
     public string? LastConnectionMessage { get; set; }
 
     public long TrafficUsed { get; set; }

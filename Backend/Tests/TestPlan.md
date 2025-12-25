@@ -139,3 +139,13 @@ Services:
 ## Level 5 - Scenario
 
 [=] RegisterAndBuy
+	- Register
+	- Login
+	- GetUser
+	- GetFullInfo
+	- EditUser
+	- ChangePassword
+	- ForgetPassword
+	- ResetPassword
+	- GetPrices
+	- GetPlanInfo

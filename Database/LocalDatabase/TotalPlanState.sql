@@ -6,6 +6,7 @@ CREATE OR ALTER VIEW TotalPlanState AS
 SELECT ac.Id
 	, ac.IsActive
 	, ac.Username
+    , pl.Created
     -- Plan Info
     , pl.RowNumber
     , pl.SimultaneousUser
@@ -22,6 +23,7 @@ FROM Account ac
 LEFT JOIN (
     SELECT rn.AccountId
         , rn.RowNumber
+        , rn.Created
         -- Plan Info
         , rn.SimultaneousUser
         , rn.RestrictedRealmId
@@ -45,6 +47,7 @@ LEFT JOIN (
             , rn.TrafficLimitRangeStart
             , rn.TrafficLimit + rn.TrafficLimitRangeStart AS TrafficLimitRangeEnd
             , rn.ExpirationDate
+            , rn.Created
         FROM (
             SELECT rn.Id
                 , rn.AccountId
@@ -56,6 +59,7 @@ LEFT JOIN (
                 , ISNULL(SUM(TrafficLimit) OVER(PARTITION BY rn.AccountId ORDER BY rn.Id 
                                                 ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS TrafficLimitRangeStart
                 , DATEADD(DAY, rn.TimeLimitInDays, rn.Created) AS ExpirationDate
+                , rn.Created
             FROM Renewal rn
         ) rn
     ) rn
