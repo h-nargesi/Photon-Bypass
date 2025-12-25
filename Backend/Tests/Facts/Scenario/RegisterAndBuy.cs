@@ -91,23 +91,23 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
             var match = CodeSelector().Match(message.Body);
             code = match.Groups[1].Value;
         };
-        response = await Client.PostAsJsonAsync("/api/auth/reset-pass", new ResetPasswordContext
+        response = await Client.PostAsJsonAsync("/api/auth/forget-pass", new ResetPasswordContext
         {
             EmailMobile = "ryan@gmail.com",
         });
         await CheckResponse(response);
         
-        response = await Client.PostAsJsonAsync("/api/account/change-pass", new ChangePasswordContext
+        response = await Client.PostAsJsonAsync("/api/auth/reset-pass", new ChangePasswordContext
         {
             Token = code,
-            Password = "new-password",
+            Password = "reset-password",
         });
         await CheckResponse(response);
 
         response = await Client.PostAsJsonAsync("/api/auth/token", new TokenContext
         {
             Username = "user01",
-            Password = "new-password",
+            Password = "reset-password",
         });
         SetToken(await CheckResponseObject(response));
 

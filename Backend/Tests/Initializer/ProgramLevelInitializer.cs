@@ -48,7 +48,9 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 
         if (result != null)
         {
-            return response.IsSuccessStatusCode ? result : throw new Exception(result.Developer ?? result.Message);
+            return response.IsSuccessStatusCode && result.Code / 100 == 2
+                ? result
+                : throw new Exception(result.Developer ?? result.Message);
         }
 
         response.EnsureSuccessStatusCode();
@@ -72,7 +74,11 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 
             builder.ConfigureServices(services =>
             {
-                ServiceInitializer.AddDefaultServices(services, [typeof(IOutSourceLevelService), typeof(IOptionsMoq)]);
+                ServiceInitializer.AddDefaultServices(services, [
+                    typeof(IProgramLevelService),
+                    typeof(IOutSourceLevelService),
+                    typeof(IOptionsMoq)
+                ]);
 
                 var sp = services.BuildServiceProvider();
 

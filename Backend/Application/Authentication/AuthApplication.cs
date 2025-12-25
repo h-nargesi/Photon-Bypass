@@ -174,12 +174,15 @@ class AuthApplication(
     {
         var reset_pass = await ResetPassRepo.Value.GetAccount(code);
 
-        if (reset_pass == null || reset_pass.ExpireDate >= DateTime.Now)
+        if (reset_pass == null || reset_pass.ExpireDate <= DateTime.Now)
         {
             throw new UserException("این کد منقضی شده است! دوباره تلاش کنید.");
         }
         
         var account = await AccountRepo.GetAccount(reset_pass.AccountId);
+
+        code = account?.Password ?? string.Empty;
+        password = HashHandler.HashPassword(password);
 
         return await account_app.Value.ChangePassword(account, code, password);
     }

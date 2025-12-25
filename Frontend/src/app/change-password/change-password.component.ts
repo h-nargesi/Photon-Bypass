@@ -116,7 +116,6 @@ export class ChangePasswordComponent {
     if (this.mode === PageMode.forgotten) {
       const token = this.route.snapshot.queryParamMap.get('token') ?? undefined;
       if (token) this.model.token = token;
-      else this.router.navigate(['']);
     }
 
     this.form = this.createForm();
@@ -171,7 +170,7 @@ export class ChangePasswordComponent {
       ],
     };
 
-    if (this.mode !== PageMode.forgotten) {
+    if (this.mode !== PageMode.forgotten || !this.model.token) {
       controls['token'] = ['', [Validators.required]];
     }
 

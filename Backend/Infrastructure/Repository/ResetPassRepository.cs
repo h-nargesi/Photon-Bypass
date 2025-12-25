@@ -18,7 +18,7 @@ class ResetPassRepository(LocalDbContext context) : DapperRepository<ResetPassEn
 
         if (entity != null)
         {
-            _ = context.Connection.DeleteAsync(entity);
+            await context.Connection.DeleteAsync(entity);
         }
 
         return entity;
