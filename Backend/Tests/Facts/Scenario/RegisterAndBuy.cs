@@ -11,7 +11,7 @@ namespace PhotonBypass.Test.Facts.Scenario;
 public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : ProgramLevelInitializer(factory)
 {
     [Fact]
-    public async Task Register()
+    public async Task Test()
     {
         // /api/auth/register
         var response = await Client.PostAsJsonAsync("/api/auth/register", new RegisterModel
@@ -124,6 +124,40 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
         var plan_info = (await CheckResponseObject(response)).Data;
         
         Assert.NotNull(plan_info);
+        Assert.Null(plan_info["days"]);
+        Assert.Null(plan_info["gigabytes"]);
+        Assert.Null(plan_info["simultaneousUserCount"]);
+        Assert.Equal(user["username"].ToString(), plan_info["target"].ToString());
+        
+        // /api/plan/estimate
+        response = await Client.PostAsJsonAsync("/api/plan/estimate", new RenewalContext
+        {
+            Target = user["username"].ToString(),
+            SimultaneousUserCount = 1,
+            Days = 120,
+            Gigabytes = 50,
+        });
+        var estimate = (await CheckResponseObject(response)).Data;
+        
+        Assert.NotNull(estimate);
+        Assert.NotNull(estimate["price"]);
+        Assert.NotNull(estimate["days"]);
+        Assert.NotNull(estimate["gigabytes"]);
+        Assert.NotNull(estimate["simultaneousUserCount"]);
+        
+        // /api/plan/renewal
+        response = await Client.PostAsJsonAsync("/api/plan/renewal", new RenewalContext
+        {
+            Target = user["username"].ToString(),
+            SimultaneousUserCount = 1,
+            Days = 120,
+            Gigabytes = 50,
+        });
+        var renewal = (await CheckResponseObject(response)).Data;
+        
+        Assert.NotNull(renewal);
+        Assert.NotNull(renewal["currentPrice"]);
+        Assert.NotNull(renewal["moneyNeeds"]);
     }
 
     [GeneratedRegex(@"<div class=""code-box"">(\w+)</div>")]
