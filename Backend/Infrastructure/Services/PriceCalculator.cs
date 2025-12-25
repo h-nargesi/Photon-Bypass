@@ -5,30 +5,23 @@ using PhotonBypass.Domain.Static;
 
 namespace PhotonBypass.Infra.Services;
 
-class PriceCalculator(Lazy<IPriceRepository> repository) : IPriceCalculator
+class PriceCalculator(PricePool pool, Lazy<IPriceRepository> repository) : IPriceCalculator
 {
-    private Dictionary<int, MethodInfo>? calculators;
-
     public int CalculatePrice(int price_id, int users, int days, int gigabytes)
     {
-        calculators ??= InitializeCalculators().Result;
-
-        if (!calculators.TryGetValue(price_id, out var method))
+        if (pool.IsNotLoaded)
         {
-            method = calculators.Values.First();
+            pool.Set(InitializeCalculators().Result);
         }
 
-        if (method == null)
-        {
-            throw new Exception($"Calculator not found for price-id: {price_id}");
-        }
+        var method = pool.Get(price_id);
 
         return (int)(method.Invoke(null, [users, days, gigabytes]) ?? 0);
     }
 
     private Task<Dictionary<int, MethodInfo>> InitializeCalculators()
     {
-        repository.Value.Events.OnSave += async (_, _) => calculators = await FetchCalculatorCode();
+        repository.Value.Events.OnSave += async (_, _) => pool.Set(await FetchCalculatorCode());
         return FetchCalculatorCode();
     }
 

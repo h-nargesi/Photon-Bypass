@@ -33,6 +33,7 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IAccountRadiusSyncService, AccountRadiusSyncService>();
         builder.Services.AddLazyTransient<ISessionRadiusSyncService, SessionRadiusSyncService>();
 
-        builder.Services.AddSingleton<IPriceCalculator, PriceCalculator>();
+        builder.Services.AddLazyTransient<IPriceCalculator, PriceCalculator>();
+        builder.Services.AddSingleton<PricePool>();
     }
 }
