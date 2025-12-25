@@ -27,7 +27,7 @@ select Id
         "Username": "admin",
         "Password": "admin",
         "Port": 8728,
-        "Ssl": false,
+        "Ssl": false
     }
 }'
 from Realm

@@ -31,7 +31,7 @@ public class ServerEntity : IBaseEntity
     public ServerFeature Features { get; set; } = 0;
 
     [Column("Config")]
-    private string? JsonConfig { get; set; }
+    public string? JsonConfig { get; set; }
 
     [NotMapped]
     public ServerConfiguration? Config

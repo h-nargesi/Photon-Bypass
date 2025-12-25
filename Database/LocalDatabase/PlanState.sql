@@ -19,4 +19,4 @@ SELECT Id
     , ExpirationDate
     , TrafficLeft
 FROM TotalPlanState
-WHERE RowNumber IS NULL OR RowNumber = 1
+WHERE ISNULL(RowNumber, 1) = 1

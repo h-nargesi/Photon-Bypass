@@ -80,4 +80,4 @@ LEFT JOIN (
     ) td
     ON td.AccountId = rn.AccountId AND td.CumulativeTrafficUsed >= rn.TrafficLimitRangeStart AND td.CumulativeTrafficUsed < rn.TrafficLimitRangeEnd
 ) pl ON pl.AccountId = ac.Id
-WHERE pl.TopTrafficData = 1
+WHERE ISNULL(pl.TopTrafficData, 1) = 1

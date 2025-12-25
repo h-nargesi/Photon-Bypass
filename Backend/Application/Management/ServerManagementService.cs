@@ -133,9 +133,10 @@ partial class ServerManagementService(
     {
         var index = DateTime.Now.AddDays(-30);
 
-        var realms = await RealmRepo.FetchAllActiveRealm();
+        var realms = (await RealmRepo.FetchAllActiveRealm())
+            .ToDictionary(k => k.Id);
 
-        var clusters = await ServerRepo.Value.GetAllActiveNasInRealm(realms.Select(r => r.Id));
+        var clusters = await ServerRepo.Value.GetAllActiveNasInRealm(realms.Keys);
         var server_ids = clusters.SelectMany(s => s.Value).Select(s => s.Id).ToList();
 
         var traffics = (await TrafficDataRepo.Fetch(server_ids, index))

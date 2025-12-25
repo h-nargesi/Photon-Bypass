@@ -1,6 +1,5 @@
 namespace PhotonBypass.Domain.Servers.JsonType;
 
-
 public class ServerConfiguration
 {
     public SshConfig? SshConfig { get; set; }
