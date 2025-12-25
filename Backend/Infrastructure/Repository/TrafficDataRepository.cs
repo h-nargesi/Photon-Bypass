@@ -57,16 +57,17 @@ join (
     select n.{nameof(ServerEntity.RealmId)}
         , max({nameof(TrafficDataEntity.StartSession)}) as LastStart
         , min(case when {nameof(TrafficDataEntity.EndSession)} is null then {nameof(TrafficDataEntity.StartSession)} else null end) as MinOpenStart
-    from {ServerRepository.TableName} as n left join {TableName} as t on n.{nameof(ServerEntity.Id)} = t.{nameof(TrafficDataEntity.NasId)}
+    from {ServerRepository.TableName} as n
+    left join {TableName} as t on n.{nameof(ServerEntity.Id)} = t.{nameof(TrafficDataEntity.NasId)}
     where n.{(nameof(ServerEntity.IsActive))} = 1
     group by n.{nameof(ServerEntity.RealmId)}
-) d
+) d on r.{nameof(RealmEntity.Id)} = d.{nameof(ServerEntity.RealmId)}
 where r.{nameof(RealmEntity.LastTrafficSync)} is null or
     r.{nameof(RealmEntity.LastTrafficSync)} < dateadd(second, @limit, getdate())";
 
         var min_open_activities = await QueryAsync(sql, new { limit = -RenewalBusiness.UpdateTrafficDataTimeSecondLimit });
 
-        return min_open_activities.Select(x => (RealmId: (int)x.RealmId, LastUpdate: (DateTime?)x.LastUpdate))
+        return min_open_activities.Select(x => (RealmId: (int)x.Id, LastUpdate: (DateTime?)x.LastUpdate))
             .ToDictionary(k => k.RealmId, v => v.LastUpdate);
     }
 }

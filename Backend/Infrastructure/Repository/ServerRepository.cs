@@ -67,7 +67,7 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
     public async Task<List<ServerEntity>> GetAllActiveRadius()
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(ServerEntity.IsActive)} == 1 and {nameof(ServerEntity.Features)} = ({nameof(ServerEntity.Features)} & @radius)")
+            .Where($"{nameof(ServerEntity.IsActive)} = 1 and {nameof(ServerEntity.Features)} = ({nameof(ServerEntity.Features)} & @radius)")
             .WithParameters(new { radius = ServerFeature.Radius }));
 
         return [..result];
