@@ -184,7 +184,7 @@ class AuthApplication(
         code = account?.Password ?? string.Empty;
         password = HashHandler.HashPassword(password);
 
-        return await account_app.Value.ChangePassword(account, code, password);
+        return await AccountApp.Value.ChangePassword(account, code, password);
     }
 
     public async Task<ApiResult> Register(RegisterModel model)
@@ -207,7 +207,7 @@ class AuthApplication(
             throw new UserException("این  شماره همراه قبلا استفاده شده است!");
         }
 
-        account.VpnPassword = HashHandler.GenerateHashCode(10);
+        account.VpnPassword = HashHandler.GenerateHashCode();
         account.Password = HashHandler.HashPassword(model.Password ?? string.Empty);
 
         await AccountRepo.Save(account);
