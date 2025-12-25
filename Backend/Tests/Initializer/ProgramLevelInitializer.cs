@@ -1,11 +1,9 @@
 ﻿using System.Net.Http.Headers;
-using System.Net.Mail;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using PhotonBypass.Result;
 using PhotonBypass.Test.Initializer.OutSourceManager;
-using PhotonBypass.Test.Mock.MockServerBridge;
 using static PhotonBypass.Test.Initializer.ProgramLevelInitializer;
 
 namespace PhotonBypass.Test.Initializer;

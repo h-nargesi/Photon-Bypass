@@ -82,18 +82,6 @@ public static partial class AccountBusiness
         account.Surname = model.Lastname;
     }
 
-    public static bool CheckMoneyNeed(this AccountEntity account, int estimate, out int money_need)
-    {
-        if (account.Balance < 0 || !account.UserType.HasFlag(UserTypes.OldUser) && account.Balance < estimate)
-        {
-            money_need = estimate - account.Balance;
-            return true;
-        }
-
-        money_need = 0;
-        return false;
-    }
-
     public static double IsReachedMaxInactivityDaysToDisable(this AccountEntity account, DateTime? last_connect_time)
     {
         var last_activity = last_connect_time ?? account.Created;

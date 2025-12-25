@@ -14,11 +14,13 @@ namespace PhotonBypass.Application.Account;
 class AccountApplication(
     IAccountRepository account_repo,
     Lazy<IHistoryRepository> history_repo,
+    Lazy<IWalletRepository> wallet_repo,
     Lazy<IJobContext> job_context)
     : IAccountApplication
 {
     private IAccountRepository AccountRepo { get; } = account_repo;
     private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
+    private Lazy<IWalletRepository> WalletRepo { get; } = wallet_repo;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
     public async Task<ApiResult<UserModel>> GetUser(string username)
@@ -39,11 +41,13 @@ class AccountApplication(
                 Email = entity.Email,
             })
             .ToDictionary(k => k.Username);
+        
+        var balance = await WalletRepo.Value.GetBalance(account.Id);
 
         return ApiResult<UserModel>.Success(new UserModel
         {
             Username = account.Username,
-            Balance = account.Balance,
+            Balance = balance,
             Email = account.Email,
             Fullname = account.Fullname,
             Picture = account.Picture,

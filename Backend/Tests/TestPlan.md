@@ -70,8 +70,9 @@ Implement mock of all dependencies and test mid-level services.
 Run out-sources and test out-source interfaces.
 
 - Infrastructure Repositories
-	[=] Transaction
+	[=] Database Global
 	[+] Account
+	[ ] Wallet
 	[ ] ResetPass
 	[+] History
 	[ ] Price

@@ -23,7 +23,6 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         var account = new AccountEntity
         {
-            Balance = 0,
             Name = "Ali",
             Surname = "Mor",
             Password = HashHandler.HashPassword("password"),

@@ -18,7 +18,6 @@ public class TransactionTest : OutSourceLevelServiceInitializer
 
         var account = new AccountEntity
         {
-            Balance = 0,
             Name = "Transaction",
             Surname = "Transaction",
             Password = HashHandler.HashPassword("password"),

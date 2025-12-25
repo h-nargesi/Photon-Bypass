@@ -90,25 +90,22 @@ public class AccountBusinessTest
     [Fact]
     public void CheckMoneyNeed_Test()
     {
-        Assert.True(new AccountEntity { Balance = -10 }.CheckMoneyNeed(10, out var money_need));
+        Assert.True(WalletBusiness.CheckMoneyNeed(new AccountEntity(), 10, 10, out var money_need));
         Assert.Equal(20, money_need);
 
-        Assert.True(new AccountEntity { Balance = -10, UserType = UserTypes.OldUser }
-            .CheckMoneyNeed(10, out money_need));
+        Assert.True(WalletBusiness.CheckMoneyNeed(new AccountEntity { UserType = UserTypes.OldUser }, -10, 10, out money_need));
         Assert.Equal(20, money_need);
 
-        Assert.True(new AccountEntity { Balance = 5 }.CheckMoneyNeed(10, out money_need));
+        Assert.True(WalletBusiness.CheckMoneyNeed(new AccountEntity(), 5, 10, out money_need));
         Assert.Equal(5, money_need);
 
-        Assert.False(new AccountEntity { Balance = 5, UserType = UserTypes.OldUser }
-            .CheckMoneyNeed(10, out money_need));
+        Assert.False(WalletBusiness.CheckMoneyNeed(new AccountEntity { UserType = UserTypes.OldUser }, 5, 10, out money_need));
         Assert.Equal(0, money_need);
 
-        Assert.False(new AccountEntity { Balance = 15 }.CheckMoneyNeed(10, out money_need));
+        Assert.False(WalletBusiness.CheckMoneyNeed(new AccountEntity(), 15, 10, out money_need));
         Assert.Equal(0, money_need);
 
-        Assert.False(new AccountEntity { Balance = 15, UserType = UserTypes.OldUser }
-            .CheckMoneyNeed(10, out money_need));
+        Assert.False(WalletBusiness.CheckMoneyNeed(new AccountEntity { UserType = UserTypes.OldUser }, 15, 10, out money_need));
         Assert.Equal(0, money_need);
     }
 

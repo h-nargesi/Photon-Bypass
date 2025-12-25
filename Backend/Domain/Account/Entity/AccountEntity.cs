@@ -50,8 +50,6 @@ public class AccountEntity : IBaseEntity
 
     // Profile Info
 
-    public int Balance { get; set; }
-
     public int? CalculationMethod { get; set; }
 
     public UserTypes UserType { get; set; }

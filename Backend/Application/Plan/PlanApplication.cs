@@ -19,6 +19,7 @@ class PlanApplication(
     Lazy<IRenewalRepository> renewal_repo,
     Lazy<IPlanStateRepository> plan_repo,
     IPriceCalculator price_calc,
+    Lazy<IWalletRepository> wallet_repo,
     Lazy<IAccountRepository> account_repo,
     Lazy<ISessionRadiusSyncService> session_radius_srv,
     Lazy<IAccountRadiusSyncService> account_radius_srv,
@@ -30,6 +31,7 @@ class PlanApplication(
     private Lazy<IRenewalRepository> RenewalRepo { get; } = renewal_repo;
     private Lazy<IPlanStateRepository> PlanRepo { get; } = plan_repo;
     private IPriceCalculator PriceCalc { get; } = price_calc;
+    private Lazy<IWalletRepository> WalletRepo { get; } = wallet_repo;
     private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
     private Lazy<ISessionRadiusSyncService> SessionRadiusSrv { get; } = session_radius_srv;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
@@ -138,20 +140,21 @@ class PlanApplication(
         }
 
         var estimate = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count, days, gigabytes);
+        var balance = await WalletRepo.Value.GetBalance(account.Id);
 
-        if (account.CheckMoneyNeed(estimate, out var money_need))
+        if (account.CheckMoneyNeed(balance, estimate, out var money_need))
         {
             Log.Information(@"
 [user: {0}] Plan renewal request:
     account=(user:{7}, balance:{6})
     request=(taget:{1}, user-count:{2}, days={3}, traffic:{4}, estimate:{5})
 ",
-                JobContext.Value.Username, target, count, days, gigabytes, account.Balance, estimate,
+                JobContext.Value.Username, target, count, days, gigabytes, balance, estimate,
                 JobContext.Value.Username);
 
             return ApiResult<RenewalResult>.Success(new RenewalResult
             {
-                CurrentPrice = account.Balance,
+                CurrentPrice = balance,
                 MoneyNeeds = money_need,
             });
         }
@@ -169,7 +172,7 @@ class PlanApplication(
             target, count, days, gigabytes,
             current_state.SimultaneousUser, current_state.TimeLeft?.TotalDays, current_state.TimeLeft?.Hours,
             current_state.GetTrafficLeftInGig(),
-            account.Balance, estimate,
+            balance, estimate,
             JobContext.Value.Username);
 
         var renew = new RenewalEntity
@@ -202,7 +205,14 @@ class PlanApplication(
 
         try
         {
-            account.Balance -= estimate;
+            await WalletRepo.Value.Save(new WalletEntity
+            {
+                AccountId = account.Id,
+                Amount = estimate,
+                Direction = BalanceDirection.Debit,
+                Status = BalanceStatus.Completed,
+                Description = renew.GetPlanTitle(),
+            });
 
             await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
             {
@@ -213,8 +223,6 @@ class PlanApplication(
                 Description = "از حساب کم شد.",
                 Price = -estimate,
             });
-
-            await AccountRepo.Value.Save(account);
 
             await RenewalRepo.Value.Save(renew);
 
@@ -275,7 +283,7 @@ class PlanApplication(
 
         return ApiResult<RenewalResult>.Success(new RenewalResult
         {
-            CurrentPrice = account.Balance,
+            CurrentPrice = balance,
             MoneyNeeds = 0,
         });
     }

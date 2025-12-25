@@ -4,6 +4,8 @@ using PhotonBypass.Test.Initializer;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using PhotonBypass.Application.Authentication.Model;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Test.Mock.MockServerBridge;
 
 namespace PhotonBypass.Test.Facts.Scenario;
@@ -96,7 +98,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
             EmailMobile = "ryan@gmail.com",
         });
         await CheckResponse(response);
-        
+
         response = await Client.PostAsJsonAsync("/api/auth/reset-pass", new ChangePasswordContext
         {
             Token = code,
@@ -118,46 +120,64 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
         Assert.NotNull(prices);
         Assert.Single(prices);
         Assert.Equal(3, prices[0].Count);
-        
+
         // /api/plan/plan-info
         response = await Client.GetAsync("/api/plan/plan-info");
         var plan_info = (await CheckResponseObject(response)).Data;
-        
+
         Assert.NotNull(plan_info);
         Assert.Null(plan_info["days"]);
         Assert.Null(plan_info["gigabytes"]);
-        Assert.Null(plan_info["simultaneousUserCount"]);
+        Assert.Equal("0", plan_info["simultaneousUserCount"].ToString());
         Assert.Equal(user["username"].ToString(), plan_info["target"].ToString());
-        
+
         // /api/plan/estimate
-        response = await Client.PostAsJsonAsync("/api/plan/estimate", new RenewalContext
+        var request = new RenewalContext
         {
             Target = user["username"].ToString(),
             SimultaneousUserCount = 1,
             Days = 120,
             Gigabytes = 50,
-        });
+        };
+        response = await Client.PostAsJsonAsync("/api/plan/estimate", request);
         var estimate = (await CheckResponseObject(response)).Data;
-        
+
         Assert.NotNull(estimate);
         Assert.NotNull(estimate["price"]);
         Assert.NotNull(estimate["days"]);
         Assert.NotNull(estimate["gigabytes"]);
         Assert.NotNull(estimate["simultaneousUserCount"]);
-        
+
+        // add money
+        await FakeAddMoney(user["username"].ToString()!, int.Parse(estimate["price"].ToString()!));
+
         // /api/plan/renewal
-        response = await Client.PostAsJsonAsync("/api/plan/renewal", new RenewalContext
-        {
-            Target = user["username"].ToString(),
-            SimultaneousUserCount = 1,
-            Days = 120,
-            Gigabytes = 50,
-        });
+        response = await Client.PostAsJsonAsync("/api/plan/renewal", request);
         var renewal = (await CheckResponseObject(response)).Data;
-        
+
         Assert.NotNull(renewal);
-        Assert.NotNull(renewal["currentPrice"]);
-        Assert.NotNull(renewal["moneyNeeds"]);
+        Assert.Equal("0", renewal["currentPrice"].ToString());
+        Assert.Equal("0", renewal["moneyNeeds"].ToString());
+    }
+
+    private async Task FakeAddMoney(string username, int value)
+    {
+        using var scope = ServiceProvider.CreateScope();
+        
+        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
+        
+        var account = await account_repo.GetAccount(username);
+        Assert.NotNull(account);
+
+        await wallet_repo.Save(new WalletEntity
+        {
+            AccountId = account.Id,
+            Amount = value,
+            Direction = BalanceDirection.Credit,
+            Status = BalanceStatus.Completed,
+            Description = "Fake Add Money",
+        });
     }
 
     [GeneratedRegex(@"<div class=""code-box"">(\w+)</div>")]

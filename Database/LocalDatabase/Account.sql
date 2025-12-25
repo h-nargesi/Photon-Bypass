@@ -15,7 +15,6 @@ CREATE TABLE Account (
 	Email				VARCHAR(320)		NULL,
 	IsMobileValid		BIT				NOT NULL	CONSTRAINT DF_Account_IsMobileValid DEFAULT 0,
 	IsEmailValid		BIT				NOT NULL	CONSTRAINT DF_Account_IsEmailValid DEFAULT 0,
-	Balance				INT				NOT NULL	CONSTRAINT DF_Account_Balance DEFAULT 0,
 	CalculationMethod	INT					NULL	CONSTRAINT FK_Account_CalculationMethod_Price FOREIGN KEY REFERENCES Price (Id),
 	UserType			INT				NOT NULL	CONSTRAINT DF_Account_UserType DEFAULT 0,
 	VpnPassword			VARCHAR(32)			NULL,
