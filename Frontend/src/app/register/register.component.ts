@@ -124,6 +124,8 @@ export class RegisterComponent implements OnInit {
   submit() {
     if (!this.onValidate()) return;
 
+    this.model = { ...this.form.value } as RegisterModel;
+
     const job =
       this.mode !== PageMode.Register
         ? this.service.edit(this.model, this.target)
@@ -166,11 +168,12 @@ export class RegisterComponent implements OnInit {
         this.model.username = username_parts[0];
       }
 
-      const model = this.model as any;
-      for (const key in this.model) {
-        this.form.controls[key]?.setValue(model[key]);
-      }
+      // const model = this.model as any;
+      // for (const key in this.model) {
+      //   this.form.controls[key]?.setValue(model[key]);
+      // }
 
+      this.form.patchValue(this.model);
       this.submitted = false;
     });
   }

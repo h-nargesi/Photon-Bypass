@@ -18,14 +18,14 @@ import { DashboardComponent } from './dashboard.component';
 @Injectable({ providedIn: DashboardComponent })
 export class DashboardService extends ApiBaseService {
   sendCertificateViaEmail(target?: string): Observable<ApiResult> {
-    return this.call(`${VPN_API_URL}/send-cert-email`, { target } as ApiParam, {
+    return this.call(`${VPN_API_URL}/send-cert-email`, target ? { target } as ApiParam : undefined, {
       show_message: ShowMessageCase.success,
     });
   }
 
   fetchCurrentConnections(target?: string): Observable<ConnectionStateModel[]> {
     const url = `${CONNECTION_API_URL}/current-con-state`;
-    return this.getData<ConnectionStateModel[]>(url, { target } as ApiParam);
+    return this.getData<ConnectionStateModel[]>(url, target ? { target } as ApiParam : undefined);
   }
 
   closeConnection(
@@ -34,11 +34,11 @@ export class DashboardService extends ApiBaseService {
     target?: string
   ): Observable<ApiResult> {
     const url = `${CONNECTION_API_URL}/close-con`;
-    return this.job(url, { server, target, sessionId });
+    return this.job(url, { server, targe: target ?? null, sessionId });
   }
 
   fetchPlanState(target?: string): Observable<UserPlanInfo> {
     const url = `${PLAN_API_URL}/plan-state`;
-    return this.getData<UserPlanInfo>(url, { target } as ApiParam);
+    return this.getData<UserPlanInfo>(url, target ? { target } as ApiParam : undefined);
   }
 }

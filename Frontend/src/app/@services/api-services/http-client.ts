@@ -27,7 +27,7 @@ export class HttpClientHandler {
   public call(url: string, params?: ApiParam): Observable<ApiResult> {
     url = this.base_path + url;
     const headers = this.getHeader();
-    return this.fake
+    return this.api
       .get<ApiResult>(url, { params, observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
@@ -36,7 +36,7 @@ export class HttpClientHandler {
   public get<M>(url: string, params?: ApiParam): Observable<ApiResultData<M>> {
     url = this.base_path + url;
     const headers = this.getHeader();
-    return this.fake
+    return this.api
       .get<ApiResultData<M>>(url, { params, observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
@@ -45,7 +45,7 @@ export class HttpClientHandler {
   public job(url: string, body: any | null): Observable<ApiResult> {
     url = this.base_path + url;
     const headers = this.getHeader();
-    return this.fake
+    return this.api
       .post<ApiResult>(url, body, { observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
@@ -54,7 +54,7 @@ export class HttpClientHandler {
   public post<M>(url: string, body: any | null): Observable<ApiResultData<M>> {
     url = this.base_path + url;
     const headers = this.getHeader();
-    return this.fake
+    return this.api
       .post<ApiResultData<M>>(url, body, { observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
@@ -62,8 +62,8 @@ export class HttpClientHandler {
 
   public authorization(url: string, body: any | null): Observable<ApiResult> {
     url = this.base_path + url;
-    return this.fake
-      .post<string>(url, body, { observe: 'response' })
+    return this.api
+      .post<ApiResultData<string>>(url, body, { observe: 'response' })
       .pipe(
         tap((response) => {
           if (response.body && response.body.data && response.body.code < 300) {
@@ -84,7 +84,7 @@ export class HttpClientHandler {
     const token = LocalStorageService.get(['user', 'bearer']);
     if (token)
       return {
-        authorization: 'Bearer ' + token,
+        Authorization: 'Bearer ' + token.access_token,
       };
 
     return undefined;

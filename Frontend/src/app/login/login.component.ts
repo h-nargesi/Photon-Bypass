@@ -73,7 +73,6 @@ export class LoginComponent {
     } else {
       auth_service.check().subscribe((result) => {
         if (result?.status() === ResultStatus.success) {
-          console.log('router', this.router);
           this.router.navigateByUrl(this.redirect);
         }
       });

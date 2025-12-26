@@ -87,6 +87,7 @@ class AuthApplication(
                 Email = account.Email,
                 TargetArea = target_area,
             },
+            Message = "وارد شدید.",
         };
     }
 
