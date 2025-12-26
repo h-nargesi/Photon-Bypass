@@ -41,7 +41,14 @@ class AccountApplication(
                 Email = entity.Email,
             })
             .ToDictionary(k => k.Username);
-        
+
+        target_area.Add(account.Username, new TargetModel
+        {
+                Username = account.Username,
+                Fullname = account.Fullname,
+                Email = account.Email,
+        });
+
         var balance = await WalletRepo.Value.GetBalance(account.Id);
 
         return ApiResult<UserModel>.Success(new UserModel

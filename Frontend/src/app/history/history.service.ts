@@ -11,7 +11,7 @@ export class HistoryService extends ApiBaseService {
     from?: number,
     to?: number
   ): Observable<HistoryRecord[]> {
-    const params = { target, from, to } as ApiParam;
+    const params = { target: target ?? null, from, to } as ApiParam;
     return this.getData<HistoryRecord[]>(`${ACCOUNT_API_URL}/history`, params);
   }
 }

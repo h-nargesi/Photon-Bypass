@@ -12,7 +12,7 @@ import { RegisterComponent } from './register.component';
 @Injectable({ providedIn: RegisterComponent })
 export class RegisterService extends ApiBaseService {
   fullInfo(target?: string): Observable<FullUserModel> {
-    const param = { target } as ApiParam;
+    const param = target ? { target } as ApiParam : undefined;
     return this.getData<FullUserModel>(`${ACCOUNT_API_URL}/full-info`, param);
   }
 

@@ -19,9 +19,7 @@ import { RenewalComponent } from './renewal.component';
 @Injectable({ providedIn: RenewalComponent })
 export class RenewalService extends ApiBaseService {
   info(target?: string): Observable<PlanInfo> {
-    return this.getData<PlanInfo>(`${PLAN_API_URL}/plan-info`, {
-      target,
-    } as ApiParam);
+    return this.getData<PlanInfo>(`${PLAN_API_URL}/plan-info`, target ? { target } as ApiParam : undefined);
   }
 
   prices(): Observable<PriceModel[]> {

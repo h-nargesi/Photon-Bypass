@@ -54,28 +54,27 @@ export class UserService extends ApiBaseService {
   }
 
   setTraget(username: string | undefined) {
-    const prv_username = this.currentTargetUser?.username;
-
     if (!this.current_user?.targetArea) {
       this.currentTargetUser = undefined;
-      username = undefined;
-    } else {
-      if (!username) username = this.current_user.username;
-
-      if (username in this.current_user.targetArea)
-        this.currentTargetUser = this.current_user.targetArea[username];
-      else throw 'target index is out of range';
+      LocalStorageService.set(['user', 'target'], undefined);
+      throw 'can not set target to null!';
     }
+
+    if (this.currentTargetUser?.username === username) {
+      return;
+    }
+
+    if (!username || !(username in this.current_user.targetArea)) {
+      username = this.current_user.username;
+    }
+
+    if (username in this.current_user.targetArea)
+      this.currentTargetUser = this.current_user.targetArea[username];
+    else throw 'target index is out of range';
 
     LocalStorageService.set(['user', 'target'], username);
 
-    if (
-      this.reload_next_call ||
-      (this.current_user?.targetArea &&
-        this.currentTargetUser?.username !== prv_username)
-    ) {
-      this.targetUserEventSubject.next(this.currentTargetUser);
-    }
+    this.targetUserEventSubject.next(this.currentTargetUser);
   }
 
   reload() {
@@ -86,7 +85,7 @@ export class UserService extends ApiBaseService {
     this.reload_next_call = false;
     this.observable_user = undefined;
     this.current_user = undefined;
-    this.setTraget(undefined);
+    LocalStorageService.set(['user', 'target'], undefined);
   }
 
   private fetchUser(): Observable<UserModel> {
