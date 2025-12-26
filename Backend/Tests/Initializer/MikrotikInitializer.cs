@@ -12,7 +12,7 @@ internal class MikrotikInitializer(IConfiguration configuration) : IOutSourceIni
     private static readonly Dictionary<string, string> HostIps = new()
     {
         { "Mikrotik-Base", "192.168.56.11" },
-        { "Mikrotik-Scenario", "192.168.56.11" }
+        { "Mikrotik-Scenario", "192.168.56.12" }
     };
 
     public static string GetIp(string key)

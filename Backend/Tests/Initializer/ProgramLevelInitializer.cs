@@ -82,8 +82,7 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 
                 using var scope = sp.CreateScope();
 
-                var init_mikrotik =
-                    Task.CompletedTask; //scope.Register<MikrotikInitializer>(TestPackageMikrotik, this);
+                var init_mikrotik = scope.Register<MikrotikInitializer>(TestPackageMikrotik, this);
                 var init_database = scope.Register<LocalDatabaseInitializer>(TestPackageDatabase, this);
 
                 Task.WaitAll(init_mikrotik, init_database);
