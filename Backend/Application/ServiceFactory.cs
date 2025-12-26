@@ -33,14 +33,14 @@ public static class ServiceFactory
         {
             quartz.UseJobFactory<MicrosoftDependencyInjectionJobFactory>();
 
-            var job_key = new JobKey("AccountMonitoringService");
-            quartz.AddJob<AccountMonitoringService>(opts => opts.WithIdentity(job_key));
+            var job_key = new JobKey("JobInterval");
+            quartz.AddJob<JobInterval>(opts => opts.WithIdentity(job_key));
 
             quartz.AddTrigger(opts => opts
                 .ForJob(job_key)
-                .WithIdentity("AccountMonitoringService-trigger")
+                .WithIdentity("JobInterval-trigger")
                 .WithSimpleSchedule(x => x
-                    .WithIntervalInMinutes(AccountMonitoringService.IntervalInMinutes)
+                    .WithIntervalInMinutes(JobInterval.IntervalInMinutes)
                     .RepeatForever()
                 )
             );

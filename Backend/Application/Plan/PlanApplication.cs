@@ -241,7 +241,7 @@ class PlanApplication(
         }
         catch
         {
-            _ = AccountRadiusSrv.Value.DeactivateUsers([account.Username]);
+            await AccountRadiusSrv.Value.DeactivateUsers([account.Username]);
 
             await AccountRepo.Value.DbContext.RollbackAsync();
 
@@ -265,10 +265,10 @@ class PlanApplication(
                             """,
                 JobContext.Value.Username, target, current_state.SimultaneousUser, count);
 
-            _ = SessionRadiusSrv.Value.CloseConnectionByUsername(renew.RestrictedRealmId, account.Username);
+            await SessionRadiusSrv.Value.CloseConnectionByUsername(renew.RestrictedRealmId, account.Username);
         }
 
-        _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
             Target = account.Id,
             Category = EventCategory.Renewal,

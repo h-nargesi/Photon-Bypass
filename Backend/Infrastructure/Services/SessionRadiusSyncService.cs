@@ -101,7 +101,7 @@ public class SessionRadiusSyncService(
 
     public async Task<List<TrafficDataBinding>> GetTrafficData(Dictionary<int, DateTime?> indexes)
     {
-        var radius_list = await ServerRepo.Value.GetAllActiveRadius();
+        var radius_list = ServerRepo.Value.GetAllActiveRadius().Result;
 
         if (radius_list.Count <= 0) return [];
 

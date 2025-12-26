@@ -13,45 +13,22 @@ using Serilog;
 namespace PhotonBypass.Application.Management;
 
 internal class AccountMonitoringService(
-    IPlanStateRepository plan_state_repo,
     IAccountRepository account_repo,
     IHistoryRepository history_repo,
     Lazy<IEmailService> email_srv,
-    Lazy<IAccountRadiusSyncService> account_radius_srv,
-    Lazy<IServerManagementService> server_mng_srv)
-    : IAccountMonitoringService, IJob
+    Lazy<IAccountRadiusSyncService> account_radius_srv)
+    : IAccountMonitoringService
 {
-    private IPlanStateRepository PlanStateRepo { get; } = plan_state_repo;
     private IAccountRepository AccountRepo { get; } = account_repo;
     private IHistoryRepository HistoryRepo { get; } = history_repo;
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
-    private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
-
-    public const int IntervalInMinutes = 60;
-
-    public async Task Execute(IJobExecutionContext context)
-    {
-        await ServerMngSrv.Value.UpdateTrafficData();
-
-        var plan_state_list = await PlanStateRepo.GetAll();
-
-        if (plan_state_list.Count < 1)
-        {
-            return;
-        }
-
-        Task.WaitAll(
-            NotifSendServices(plan_state_list),
-            AccountRadiusSrv.Value.DeactivateInvalidRadiusUsers(plan_state_list),
-            InactiveAbandonedUsers(plan_state_list),
-            ServerMngSrv.Value.CheckUserServerBalance());
-    }
 
     public async Task InactiveAbandonedUsers(IEnumerable<PlanStateEntity> plan_state_list)
     {
         var deactivate_list = new List<string>();
         var remove_list = new List<string>();
+        var history_list = new List<HistoryEntity>();
 
         foreach (var plan in plan_state_list)
         {
@@ -96,7 +73,7 @@ internal class AccountMonitoringService(
                 "The user '{0}' was disabled: ExpiredTime={1} days, ExpirationDate={2}, TrafficLimit={3}, TrafficUsed={4}",
                 plan.Username, expired_days, plan.ExpirationDate, plan.TrafficLimit, plan.TrafficUsed);
 
-            _ = HistoryRepo.Save(new HistoryEntity
+            history_list.Add(new HistoryEntity
             {
                 Target = plan.Id,
                 Category = EventCategory.Security,
@@ -104,9 +81,11 @@ internal class AccountMonitoringService(
                 Title = "غیرفعال",
                 Description =
                     "اکانت شما به علت عدم استفاده بعد از دو ماه غیرفعال شد. مقدار ترافیک یا مدت زمان باقیمانده به جای خود باقی است.",
-                Value = DayHour((int)expired_days) + " گذشته" ,
+                Value = DayHour((int)expired_days) + " گذشته",
             });
         }
+
+        var task = HistoryRepo.BachSave(history_list);
 
         if (remove_list.Count > 0)
         {
@@ -117,6 +96,8 @@ internal class AccountMonitoringService(
         {
             await AccountRadiusSrv.Value.DeactivateUsers(deactivate_list);
         }
+
+        await task;
     }
 
     public async Task NotifSendServices(IEnumerable<PlanStateEntity> plan_states)
@@ -126,6 +107,7 @@ internal class AccountMonitoringService(
         var accounts = await AccountRepo.GetAccounts(account_ids);
 
         var tasks = new List<Task>();
+        var history_list = new List<HistoryEntity>();
 
         foreach (var plan in plan_state_list)
         {
@@ -144,7 +126,7 @@ internal class AccountMonitoringService(
             Log.Information("The user '{0}' is going to finish plan (x{1}, {2})",
                 plan.Username, plan.SimultaneousUser, remains_title);
 
-            _ = HistoryRepo.Save(new HistoryEntity
+            history_list.Add(new HistoryEntity
             {
                 Target = plan.Id,
                 Category = EventCategory.Renewal,
@@ -181,6 +163,8 @@ internal class AccountMonitoringService(
                 IncreaseWarningTime(account);
             }
         }
+
+        tasks.Add(HistoryRepo.BachSave(history_list));
 
         await Task.WhenAll(tasks);
     }
