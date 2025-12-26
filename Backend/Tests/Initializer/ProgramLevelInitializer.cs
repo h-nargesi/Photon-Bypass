@@ -2,6 +2,9 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Result;
 using PhotonBypass.Test.Initializer.OutSourceManager;
 using static PhotonBypass.Test.Initializer.ProgramLevelInitializer;
@@ -62,6 +65,26 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
         Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             token.Data["access_token"].ToString());
+    }
+
+    protected async Task FakeAddMoney(string username, int value)
+    {
+        using var scope = ServiceProvider.CreateScope();
+
+        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
+
+        var account = await account_repo.GetAccount(username);
+        Assert.NotNull(account);
+
+        await wallet_repo.Save(new WalletEntity
+        {
+            AccountId = account.Id,
+            Amount = value,
+            Direction = BalanceDirection.Credit,
+            Status = BalanceStatus.Completed,
+            Description = "Fake Add Money",
+        });
     }
 
     public class Factory : WebApplicationFactory<PortalProgram>

@@ -152,3 +152,4 @@ Services:
 	- GetPlanInfo
 	- Estimate
 	- Renewal
+	- ChangeVpnPassword

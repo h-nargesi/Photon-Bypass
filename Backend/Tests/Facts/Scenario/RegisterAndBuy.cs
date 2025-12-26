@@ -1,11 +1,9 @@
-using PhotonBypass.Domain.Account.Model;
-using PhotonBypass.Portal.Context;
-using PhotonBypass.Test.Initializer;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using PhotonBypass.Application.Authentication.Model;
-using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Portal.Context;
+using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockServerBridge;
 
 namespace PhotonBypass.Test.Facts.Scenario;
@@ -177,26 +175,6 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
             Password = "change-ovp-password",
         });
         await CheckResponseObject(response);
-    }
-
-    private async Task FakeAddMoney(string username, int value)
-    {
-        using var scope = ServiceProvider.CreateScope();
-
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
-        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
-
-        var account = await account_repo.GetAccount(username);
-        Assert.NotNull(account);
-
-        await wallet_repo.Save(new WalletEntity
-        {
-            AccountId = account.Id,
-            Amount = value,
-            Direction = BalanceDirection.Credit,
-            Status = BalanceStatus.Completed,
-            Description = "Fake Add Money",
-        });
     }
 
     [GeneratedRegex(@"<div class=""code-box"">(\w+)</div>")]
