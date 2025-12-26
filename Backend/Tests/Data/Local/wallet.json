@@ -1,0 +1,4 @@
+[
+  { "id": 1, "AccountId": 1, "Amount": 1500, "Direction": 1, "Status": 1, "Description": "init" },
+  { "id": 2, "AccountId": 2, "Amount": 1500, "Direction": 1, "Status": 1, "Description": "init" }
+]

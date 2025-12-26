@@ -1,7 +1,7 @@
 [
-	{ "Id": 1, "IsActive": true, "Username": "User1", "Mobile": "+989113456789", "Email": "user1@gmail.com", "Owner": null, "Balance":  1500,
+	{ "Id": 1, "IsActive": true, "Username": "User1", "Mobile": "+989113456789", "Email": "user1@gmail.com", "Owner": null,
       "Password": "3a81oZNherrMQXNJriBBMRLm+k6JqX6iCp7u5ktV05ohkpkqJ0/BqDa6PCOj/uu9RU1EI2Q86A4qmslPpUyknw==" },
-	{ "Id": 2, "IsActive": true, "Username": "User2", "Mobile": "0912", "Email": "user2@gmail.com", "Owner": 1, "IsEmailValid": true, "Balance":  1500 },
+	{ "Id": 2, "IsActive": true, "Username": "User2", "Mobile": "0912", "Email": "user2@gmail.com", "Owner": 1, "IsEmailValid": true },
 	{ "Id": 3, "IsActive": true, "Username": "User3", "Mobile": "0913", "Email": "user3@gmail.com", "Owner": 1 },
 	{ "Id": 4, "IsActive": true, "Username": "User4", "Mobile": "0914", "Email": "user4@gmail.com", "Owner": null,
       "Password": "3a81oZNherrMQXNJriBBMRLm+k6JqX6iCp7u5ktV05ohkpkqJ0/BqDa6PCOj/uu9RU1EI2Q86A4qmslPpUyknw==" },

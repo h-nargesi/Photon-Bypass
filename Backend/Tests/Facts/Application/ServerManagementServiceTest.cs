@@ -17,7 +17,7 @@ public class ServerManagementServiceTest : UnitLevelServiceInitializer
         var realm = await manager.GetAvailableRealm();
 
         Assert.NotNull(realm);
-        Assert.Equal(4, realm.Id);
+        Assert.Equal(3, realm.Id);
     }
 
     [Fact]

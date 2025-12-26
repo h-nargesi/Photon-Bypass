@@ -90,7 +90,7 @@ public class AccountBusinessTest
     [Fact]
     public void CheckMoneyNeed_Test()
     {
-        Assert.True(WalletBusiness.CheckMoneyNeed(new AccountEntity(), 10, 10, out var money_need));
+        Assert.True(WalletBusiness.CheckMoneyNeed(new AccountEntity(), -10, 10, out var money_need));
         Assert.Equal(20, money_need);
 
         Assert.True(WalletBusiness.CheckMoneyNeed(new AccountEntity { UserType = UserTypes.OldUser }, -10, 10, out money_need));

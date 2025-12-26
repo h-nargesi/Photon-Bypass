@@ -214,6 +214,8 @@ class PlanApplication(
                 Description = renew.GetPlanTitle(),
             });
 
+            balance -= estimate;
+
             await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
             {
                 Target = account.Id,
