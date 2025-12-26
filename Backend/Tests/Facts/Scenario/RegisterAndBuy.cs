@@ -158,15 +158,34 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
         Assert.NotNull(renewal);
         Assert.Equal("0", renewal["currentPrice"].ToString());
         Assert.Equal("0", renewal["moneyNeeds"].ToString());
+
+        // /api/plan/plan-info
+        response = await Client.GetAsync("/api/plan/plan-info");
+        plan_info = (await CheckResponseObject(response)).Data;
+
+        Assert.NotNull(plan_info);
+        Assert.Equal(estimate["days"].ToString(), plan_info["days"].ToString());
+        Assert.Equal(estimate["gigabytes"].ToString(), plan_info["gigabytes"].ToString());
+        Assert.Equal(estimate["simultaneousUserCount"].ToString(), plan_info["simultaneousUserCount"].ToString());
+        Assert.Equal(user["username"].ToString(), plan_info["target"].ToString());
+
+        // /api/vpn/change-ovpn
+        response = await Client.PostAsJsonAsync("/api/vpn/change-ovpn", new ChangeOvpnContext
+        {
+            Target = user["username"].ToString(),
+            Token = "reset-password",
+            Password = "change-ovp-password",
+        });
+        await CheckResponseObject(response);
     }
 
     private async Task FakeAddMoney(string username, int value)
     {
         using var scope = ServiceProvider.CreateScope();
-        
+
         var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
         var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
-        
+
         var account = await account_repo.GetAccount(username);
         Assert.NotNull(account);
 

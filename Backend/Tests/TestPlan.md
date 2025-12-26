@@ -150,3 +150,5 @@ Services:
 	- ResetPassword
 	- GetPrices
 	- GetPlanInfo
+	- Estimate
+	- Renewal
