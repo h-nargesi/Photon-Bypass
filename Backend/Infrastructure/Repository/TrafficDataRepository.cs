@@ -23,7 +23,7 @@ class TrafficDataRepository(LocalDbContext context)
     {
         var result = await FindAsync(statement => statement
             .Where(
-                $"{nameof(TrafficDataEntity.AccountId)} = account_id and {nameof(TrafficDataEntity.StartSession)} >= @from")
+                $"{nameof(TrafficDataEntity.AccountId)} = @account_id and {nameof(TrafficDataEntity.StartSession)} >= @from")
             .WithParameters(new { account_id, from }));
 
         return [.. result];

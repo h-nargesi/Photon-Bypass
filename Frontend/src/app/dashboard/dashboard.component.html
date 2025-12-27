@@ -16,7 +16,7 @@
     </c-col>
 
     <c-col lg="6">
-        <c-widget-stat-c [title]="plan_info ? ('dashboard.balance.title' | translate) : ''"
+        <c-widget-stat-c [title]="plan_info?.remainsTitle ? ('dashboard.balance.title' | translate) : ('dashboard.balance.none' | translate)"
             [value]="plan_info?.remainsTitle" class="mb-3" [color]="getPlanInfoColor(plan_info)" inverse>
             <ng-template cTemplateId="widgetIconTemplate">
                 <span *ngIf="plan_info" class="me-1"

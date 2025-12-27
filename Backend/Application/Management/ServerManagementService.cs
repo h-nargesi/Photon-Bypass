@@ -106,15 +106,15 @@ partial class ServerManagementService(
 
         if (last_update_times.Count <= 0) return;
 
-        var loaded_traffic_task = SessionRadiusSrv.Value.GetTrafficData(last_update_times);
+        var loaded_traffic_task = await SessionRadiusSrv.Value.GetTrafficData(last_update_times);
 
-        var current_traffic_task = TrafficDataRepo.FetchOpen();
+        var current_traffic_task = await TrafficDataRepo.FetchOpen();
 
         var realms = await RealmRepo.GetByIds(last_update_times.Keys.ToList());
 
         var traffic_data_list = await Merge(
-            await current_traffic_task, 
-            await loaded_traffic_task,
+            current_traffic_task, 
+            loaded_traffic_task,
             realms);
 
         var realm_changes = realms.Values.Where(r => r.HasChanged).ToList();

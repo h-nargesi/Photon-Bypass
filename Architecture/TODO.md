@@ -1,5 +1,3 @@
-[ ] استفاده از خروجی لیست بجای Enumerable
-[ ] خارج کردن دسترسی دیتابیس لوکال در سرویس‌های ردیوس جهت استفاده از مزیت همزمانی کد
 [ ] email is required but mobile
 [ ] handle null-value / null-result for plan-info / user-plan-state in front
 [ ] check all method's parameters in radius repository and radius service to be simple (for example fetch by id not username)
@@ -9,6 +7,8 @@
 [ ] use check-mark in home-page footer
 [ ] امکان پرداخت
 ----------------------
+[ ] خارج کردن دسترسی دیتابیس لوکال در سرویس‌های ردیوس جهت استفاده از مزیت همزمانی کد
+[ ] استفاده از خروجی لیست بجای Enumerable
 [ ] warning current account is radius-inactivated in dashboard
 [ ] مدیریت گواهی‌های صادر شده بدون استفاده در میکروتیک
 [ ] بررسی صحت نام‌کاربری، ایمیل، موبایل زمان وارد کردن فیلد فرانت ثبتنام
