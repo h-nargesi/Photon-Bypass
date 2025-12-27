@@ -84,8 +84,15 @@ public class HistoryRepositoryTest : OutSourceLevelServiceInitializer
         Assert.NotNull(histories);
         AssertHistories(saving_history, histories.ToDictionary(h => h.Title));
 
-        foreach (var history in saving_history)
+        saving_history = [.. histories];
+        foreach (var history in histories)
             history.Issuer  = 1;
+
+        await history_repo.Save(saving_history);
+        histories = await history_repo.GetHistory("User1", now.AddDays(-11), null);
+
+        Assert.NotNull(histories);
+        AssertHistories(saving_history, histories.ToDictionary(h => h.Title));
     }
 
     private static void AssertHistories(HistoryEntity[] saved, Dictionary<string, HistoryEntity> loaded)
