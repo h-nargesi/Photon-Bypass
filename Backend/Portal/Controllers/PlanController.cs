@@ -43,14 +43,9 @@ public class PlanController(
     {
         LoadJobContext(context.Target);
 
-        if (!context.Days.HasValue)
+        if (!context.Days.HasValue && !context.Gigabytes.HasValue)
         {
-            return BadRequestApiResult(message: "زمان پلن مشخص نشده است!");
-        }
-
-        if (!context.Gigabytes.HasValue)
-        {
-            return BadRequestApiResult(message: "حجم درخواست پلن مشخص نشده است!");
+            return BadRequestApiResult(message: "مشخصات پلن مشخص نشده است!");
         }
 
         if (!context.SimultaneousUserCount.HasValue)
@@ -59,7 +54,7 @@ public class PlanController(
         }
 
         var result = await application.Estimate(JobContext.Target, 
-            context.SimultaneousUserCount.Value, context.Days.Value, context.Gigabytes.Value);
+            context.SimultaneousUserCount.Value, context.Days ?? 0, context.Gigabytes ?? 0);
 
         return SafeApiResult(result);
     }
@@ -70,14 +65,9 @@ public class PlanController(
         LoadJobContext(context.Target);
         context.Target = JobContext.Target;
 
-        if (!context.Days.HasValue)
+        if (!context.Days.HasValue && !context.Gigabytes.HasValue)
         {
-            return BadRequestApiResult(message: "زمان پلن مشخص نشده است!");
-        }
-
-        if (!context.Gigabytes.HasValue)
-        {
-            return BadRequestApiResult(message: "حجم درخواست پلن مشخص نشده است!");
+            return BadRequestApiResult(message: "مشخصات پلن مشخص نشده است!");
         }
 
         if (!context.SimultaneousUserCount.HasValue)
@@ -86,7 +76,7 @@ public class PlanController(
         }
 
         var result = await application.Renewal(context.Target ,
-            context.SimultaneousUserCount.Value, context.Days.Value, context.Gigabytes.Value);
+            context.SimultaneousUserCount.Value, context.Days ?? 0, context.Gigabytes ?? 0);
 
         return SafeApiResult(result);
     }

@@ -4,11 +4,36 @@ values (2, 'ترافیکی',
         '25G ترافیک تک کاربره ۱۵۰ تومن
 هر 25G ترافیک بیشتر ۸۰ تومن
 هر کاربر بیشتر ۲۰ تومن',
-        'using System; public class Calculator { public static int Compute(int users, int days, int gigabytes) { return 60 + users * 10 + (gigabytes / 25) * 50; } }')
+        'using System;
+public class Calculator
+{
+    public static int Compute(int users, int days, int gigabytes)
+    {
+        if (gigabytes <= 0) throw new Exception("Invalid gigabytes value.");
+        return 60 + users * 10 + (gigabytes / 25) * 50;
+    }
+}')
     , (1, '', 
         '', 
         '',
-       'using System; public class Calculator { public static int Compute(int users, int days, int gigabytes) { return gigabytes > 0 ? (40 + users * 10 + (gigabytes / 25) * 40) : (days / 30) * 100; } }')
+       'using System;
+public class Calculator
+{
+    public static int Compute(int users, int days, int gigabytes)
+    {
+        if (gigabytes > 0)
+        {
+            return 40 + users * 10 + (gigabytes / 25) * 40;
+        }
+
+        if (days > 0)
+        {
+            return (days / 30) * 100;
+        }
+
+        throw new Exception("Invalid gigabytes/days value.");
+    }
+}')
 
 insert into Realm (Name)
 values ('Abr01');

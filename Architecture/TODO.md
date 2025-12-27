@@ -7,6 +7,7 @@
 [ ] use check-mark in home-page footer
 [ ] امکان پرداخت
 ----------------------
+[ ] غیر فعال کردن انتخاب زمان در ورودی بغیر از کاربران مجاز
 [ ] خارج کردن دسترسی دیتابیس لوکال در سرویس‌های ردیوس جهت استفاده از مزیت همزمانی کد
 [ ] استفاده از خروجی لیست بجای Enumerable
 [ ] warning current account is radius-inactivated in dashboard

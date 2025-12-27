@@ -104,18 +104,7 @@ class PlanApplication(
 
         if (renew.RenewalValidation(account, out var user_exception))
         {
-            return new ApiResult<EstimateResult>
-            {
-                Code = 400,
-                Data = new EstimateResult
-                {
-                    Days = renew.TimeLimitInDays,
-                    Gigabytes = renew.TrafficLimit / StaticValues.BytesInGigLong,
-                    SimultaneousUserCount = renew.SimultaneousUser,
-                    Price = 0,
-                },
-                Message = user_exception.Message,
-            };
+            throw user_exception;
         }
 
         var result = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, users, days, gigabytes);

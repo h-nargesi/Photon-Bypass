@@ -64,7 +64,6 @@ export class RenewalComponent implements OnInit {
   selectedTraffic = 0;
   selectedUserCount = 0;
   cost: string = '--';
-  valid = false;
 
   renewal = {} as RenewalContext;
   current_user!: UserModel;
@@ -108,8 +107,13 @@ export class RenewalComponent implements OnInit {
     this.service.renewal(this.renewal).subscribe(async (result) => {
       this.result = result;
 
+      console.log(result);
       if (result.moneyNeeds > 0) {
-        setTimeout(() => this.router.navigate(['payment']), 1000);
+        setTimeout(() => this.router.navigate(['payment'], {
+          queryParams: {
+            invoice: "10"
+          }
+        }), 1000);
       } else {
         setTimeout(() => this.router.navigate(['dashboard']), 2000);
       }
@@ -147,13 +151,12 @@ export class RenewalComponent implements OnInit {
       !this.renewal.simultaneousUserCount
     ) {
       this.cost = '--';
-      this.valid = false;
       this.color = 'secondary';
       return;
     }
 
     this.service.estimate(this.renewal).subscribe((cost) => {
-      this.valid = cost ? true : false;
+      this.color = cost ? 'primary' : 'secondary';
       this.selectedTime = cost.days;
       this.cost = printMoney(cost.price);
     });

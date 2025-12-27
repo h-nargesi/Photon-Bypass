@@ -11,16 +11,28 @@ namespace PhotonBypass.Test.Facts.Scenario;
 public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : ProgramLevelInitializer(factory)
 {
     [Fact]
-    public async Task Test()
+    public async Task Simple()
+    {
+        await OnePerson("user01", "11");
+    }
+
+    [Fact]
+    public async Task Twice()
+    {
+        await OnePerson("user12", "12");
+        await OnePerson("user13", "13");
+    }
+
+    private async Task OnePerson(string username, string phone)
     {
         // /api/auth/register
         var response = await Client.PostAsJsonAsync("/api/auth/register", new RegisterModel
         {
             Firstname = "fname",
             Lastname = "lname",
-            Mobile = "+989121234567",
-            Email = "ryan@gmail.com",
-            Username = "user01",
+            Mobile = $"+9891212345{phone}",
+            Email = $"{username}@gmail.com",
+            Username = username,
             Password = "Password",
         });
         await CheckResponse(response);
@@ -28,7 +40,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
         // /api/auth/token
         response = await Client.PostAsJsonAsync("/api/auth/token", new TokenContext
         {
-            Username = "user01",
+            Username = username,
             Password = "Password",
         });
         SetToken(await CheckResponseObject(response));
@@ -45,7 +57,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
         user = (await CheckResponseObject(response)).Data;
 
         Assert.NotNull(user);
-        Assert.Equal("user01", user["username"].ToString());
+        Assert.Equal(username, user["username"].ToString());
 
         // /api/account/edit-user
         user["firstname"] = "first-name";
@@ -78,7 +90,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
 
         response = await Client.PostAsJsonAsync("/api/auth/token", new TokenContext
         {
-            Username = "user01",
+            Username = username,
             Password = "new-password",
         });
         SetToken(await CheckResponseObject(response));
@@ -93,7 +105,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
         };
         response = await Client.PostAsJsonAsync("/api/auth/forget-pass", new ResetPasswordContext
         {
-            EmailMobile = "ryan@gmail.com",
+            EmailMobile = $"{username}@gmail.com",
         });
         await CheckResponse(response);
 
@@ -106,7 +118,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
 
         response = await Client.PostAsJsonAsync("/api/auth/token", new TokenContext
         {
-            Username = "user01",
+            Username = username,
             Password = "reset-password",
         });
         SetToken(await CheckResponseObject(response));
