@@ -121,12 +121,12 @@ partial class ServerManagementService(
 
         if (realm_changes.Count > 0)
         {
-            await RealmRepo.BachSave(realm_changes);
+            await RealmRepo.Save(realm_changes);
         }
 
         if (traffic_data_list.Count <= 0) return;
 
-        await TrafficDataRepo.BachSave(traffic_data_list);
+        await TrafficDataRepo.Save(traffic_data_list);
     }
 
     private async Task<Dictionary<RealmEntity, (double Rate, long Cap)>> LoadServersCapacity()

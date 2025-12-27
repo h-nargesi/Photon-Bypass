@@ -15,8 +15,8 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : ProgramL
         {
             Firstname = "fname",
             Lastname = "lname",
-            Mobile = "+989121234567",
-            Email = "ryan@gmail.com",
+            Mobile = "+989121234568",
+            Email = "user02@gmail.com",
             Username = "user02",
             Password = "Password",
         });

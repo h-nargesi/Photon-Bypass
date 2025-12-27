@@ -84,7 +84,7 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IUnitLev
                 return Task.FromResult(result);
             });
 
-        Setup(x => x.BachSave(It.IsNotNull<IEnumerable<TrafficDataEntity>>()))
+        Setup(x => x.Save(It.IsNotNull<IEnumerable<TrafficDataEntity>>()))
             .Returns<IEnumerable<TrafficDataEntity>>(list =>
             {
                 OnBachSave?.Invoke(list);

@@ -2,6 +2,7 @@
 using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Repository;
+using Z.Dapper.Plus;
 
 namespace PhotonBypass.Infra.Database;
 
@@ -31,19 +32,22 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context)
         await DapperDbContext.EventService.CallOnSave(this, new EntityEventArgs<TEntity>(entity));
     }
 
-    public virtual async Task BachSave(IEnumerable<TEntity> entities)
+    public virtual async Task Save(IEnumerable<TEntity> entities)
     {
         await DapperDbContext.OpenAsync();
 
         var entity_list = entities.ToArray();
-        var updates = entity_list.Where(entity => entity.Id > 0);
-        var inserts = entity_list.Where(entity => entity.Id <= 0);
+        var updates = entity_list.Where(entity => entity.Id > 0).ToArray();
+        var inserts = entity_list.Where(entity => entity.Id <= 0).ToArray();
 
-        await DapperDbContext.Connection.BulkUpdateAsync(updates);
-
-        foreach (var entity in inserts)
+        if (updates.Length > 0)
         {
-            await DapperDbContext.Connection.InsertAsync(entity, CheckTransaction<TEntity>());
+            await DapperDbContext.Connection.BulkUpdateAsync(updates);
+        }
+
+        if (inserts.Length > 0)
+        {
+            await DapperDbContext.Connection.BulkInsertAsync(inserts.ToList());
         }
 
         await DapperDbContext.EventService.CallOnSave(this, new EntityEventArgs<TEntity>(entity_list));

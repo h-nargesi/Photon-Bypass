@@ -8,7 +8,7 @@ public interface IEditableRepository<TEntity> where TEntity : IBaseEntity
 
     public Task Save(TEntity entity);
 
-    public Task BachSave(IEnumerable<TEntity> entities);
+    public Task Save(IEnumerable<TEntity> entities);
 
     Task Delete(TEntity entity);
 }

@@ -85,7 +85,7 @@ internal class AccountMonitoringService(
             });
         }
 
-        var task = HistoryRepo.BachSave(history_list);
+        var task = HistoryRepo.Save(history_list);
 
         if (remove_list.Count > 0)
         {
@@ -164,7 +164,7 @@ internal class AccountMonitoringService(
             }
         }
 
-        tasks.Add(HistoryRepo.BachSave(history_list));
+        tasks.Add(HistoryRepo.Save(history_list));
 
         await Task.WhenAll(tasks);
     }
