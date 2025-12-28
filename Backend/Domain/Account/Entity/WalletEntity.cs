@@ -12,16 +12,23 @@ public class WalletEntity : IBaseEntity
     public int Id { get; set; }
 
     public int AccountId { get; set; }
-    
+
     public int Amount { get; set; }
-    
+
     public BalanceDirection Direction { get; set; }
-    
-    public BalanceStatus Status { get; set; }
+
+    public BalanceStatus Status { get; set; } = BalanceStatus.Pending;
 
     public string Description { get; set; } = null!;
-    
+
+    public int? InvoiceCode { get; set; }
+
     public string? ReferenceCode { get; set; }
 
+    public string? Action { get; set; }
+
     public DateTime Created { get; init; } = DateTime.Now;
+
+    [NotMapped]
+    public int RenewId { get; set; }
 }

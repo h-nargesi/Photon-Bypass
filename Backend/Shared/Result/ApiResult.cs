@@ -32,4 +32,13 @@ public class ApiResult<TModel> : ApiResult
             Data = model,
         };
     }
+
+    public static ApiResult<TModel> Failed(TModel model)
+    {
+        return new ApiResult<TModel>
+        {
+            Code = 500,
+            Data = model,
+        };
+    }
 }

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 using Moq;
-using PhotonBypass.Application.Management;
+using PhotonBypass.Application.Management.Model;
 
 namespace PhotonBypass.Test.Mock.MockOptions;
 

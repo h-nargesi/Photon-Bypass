@@ -11,6 +11,8 @@ CREATE TABLE Renewal (
 	TrafficLimit		BIGINT				NULL,
 	TimeLimitInDays		SMALLINT			NULL,
 	RateLimitInMeg		TINYINT				NULL,
+	WalletDebit			INT				NOT NULL	CONSTRAINT FK_Renewal_WalletDebit FOREIGN KEY REFERENCES Wallet (Id),
+	WalletCredit		INT					NULL	CONSTRAINT FK_Renewal_WalletCredit FOREIGN KEY REFERENCES Wallet (Id),
 	Comment				NVARCHAR(255)		NULL,
 	Created				DATETIME		NOT NULL	CONSTRAINT DF_Renewal_Created DEFAULT GETDATE(),
 )

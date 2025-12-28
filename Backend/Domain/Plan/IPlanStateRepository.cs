@@ -8,5 +8,7 @@ public interface IPlanStateRepository
 
     Task<PlanStateEntity?> GetPlanState(int account_id);
 
+    Task<int?> GetTopRestrictedRealmId(int account_id);
+
     Task<(int AccountId, int? RealmId)?> GetActiveAccountRealmId(int account_id);
 }

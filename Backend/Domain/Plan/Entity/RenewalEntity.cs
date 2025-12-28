@@ -22,6 +22,10 @@ public class RenewalEntity : IRenewalEntity, IBaseEntity
 
     public int? RateLimitInMeg { get; set; }
 
+    public int WalletDebit { get; set; }
+
+    public int? WalletCredit { get; set; }
+
     public string? Comment { get; set; }
 
     public DateTime Created { get; init; } = DateTime.Now;

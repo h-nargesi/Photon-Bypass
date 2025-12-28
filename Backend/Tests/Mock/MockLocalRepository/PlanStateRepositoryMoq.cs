@@ -36,6 +36,17 @@ public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IUnitLevelServ
                 return Task.FromResult(state);
             });
 
+        Setup(repository => repository.GetTopRestrictedRealmId(It.IsAny<int>()))
+            .Returns<int>(account_id =>
+            {
+                if (data_dictionary.TryGetValue(account_id, out var plan))
+                {
+                    plan = null;
+                }
+
+                return Task.FromResult(plan?.RestrictedRealmId);
+            });
+
         Setup(x => x.GetActiveAccountRealmId(It.IsAny<int>()))
             .Returns<int>(id =>
             {

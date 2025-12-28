@@ -1,4 +1,4 @@
-﻿namespace PhotonBypass.Application.Management;
+﻿namespace PhotonBypass.Application.Management.Model;
 
 public class ManagementOptions
 {

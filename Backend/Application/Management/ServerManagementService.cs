@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using PhotonBypass.Application.Management.Model;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.OutSource;

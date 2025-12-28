@@ -40,6 +40,6 @@ export interface PaymentInvoice {
     }
   ];
   sum: number;
-  tax: number;
+  discount: number;
   totalSum: number;
 }

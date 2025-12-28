@@ -15,6 +15,8 @@ public interface IPlanApplication
 
     Task<ApiResult<RenewalResult>> Renewal(string target, byte users, short days, int gigabytes);
 
+    Task<ApiResult<RenewalResult>> Renewal(int account_id, int payment_id, string action);
+
     protected static bool OnRenewalDelegation(RenewalEvent arg)
     {
         return OnRenewal == null || OnRenewal.GetInvocationList()

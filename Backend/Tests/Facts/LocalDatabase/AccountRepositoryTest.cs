@@ -1,7 +1,5 @@
-using Microsoft.Extensions.Options;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Infra.Repository.DbContext;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Initializer.OutSourceManager;
 using PhotonBypass.Tools;

@@ -2,8 +2,10 @@
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Basics;
+using PhotonBypass.Application.Billing;
 using PhotonBypass.Application.Connection;
 using PhotonBypass.Application.Management;
+using PhotonBypass.Application.Management.Model;
 using PhotonBypass.Application.Plan;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain.Management;
@@ -24,7 +26,7 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IBasicsApplication, BasicsApplication>();
         builder.Services.AddLazyTransient<IConnectionApplication, ConnectionApplication>();
         builder.Services.AddLazyTransient<IPlanApplication, PlanApplication>();
-        builder.Services.AddLazyTransient<IPaymentApplication, PaymentApplication>();
+        builder.Services.AddLazyTransient<IBillingApplication, BillingApplication>();
         builder.Services.AddLazyTransient<IVpnApplication, VpnApplication>();
         builder.Services.AddLazyTransient<IServerManagementService, ServerManagementService>();
         builder.Services.AddLazyTransient<IAccountMonitoringService, AccountMonitoringService>();

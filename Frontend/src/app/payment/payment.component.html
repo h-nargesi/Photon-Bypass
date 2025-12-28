@@ -23,7 +23,7 @@
                     </div>
                 </div>
                 }
-                <div class="d-flex p-4 item-record" *ngIf="invoice && invoice?.tax">
+                <div class="d-flex p-4 item-record" *ngIf="invoice && invoice.discount">
                     <div class="me-auto">
                         {{ 'payment.labels.sum' | translate }}
                     </div>
@@ -31,13 +31,13 @@
                         {{ showBalance(invoice.sum) }}
                     </div>
                 </div>
-                <div class="d-flex p-4 item-record" *ngIf="invoice && invoice?.tax">
+                <div class="d-flex p-4 item-record" *ngIf="invoice && invoice.discount">
                     <div class="me-auto">
-                        {{ 'payment.labels.tax' | translate }}
-                        <span class="digits">({{ invoice.tax * 100 }}%)</span>
+                        {{ 'payment.labels.discount' | translate }}
+                        <span class="digits">({{ invoice.discount * 100 }}%)</span>
                     </div>
                     <div class="digits">
-                        {{ showBalance(invoice.sum * invoice.tax) }}
+                        {{ showBalance(invoice.sum * invoice.discount) }}
                     </div>
                 </div>
                 <div class="d-flex p-4 item-record">

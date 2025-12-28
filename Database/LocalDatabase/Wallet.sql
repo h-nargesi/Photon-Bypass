@@ -9,7 +9,9 @@ CREATE TABLE Wallet (
     Direction           SMALLINT        NOT NULL,
     Status              TINYINT         NOT NULL    CONSTRAINT DF_Wallet_Status DEFAULT 0,
     Description         NVARCHAR(127)   NOT NULL,
+    InvoiceCode         INT                 NULL,
     ReferenceCode       VARCHAR(31)         NULL,
+    Action              VARCHAR(16)         NULL,
 	Created				DATETIME		NOT NULL	CONSTRAINT DF_Wallet_Created DEFAULT GETDATE(),
 )
 GO

@@ -18,17 +18,17 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
         var data_dictionary = JsonSerializer.Deserialize<List<RenewalEntity>>(raw_text)
-            ?.ToDictionary(k => k.AccountId) ?? [];
+            ?.GroupBy(k => k.AccountId).ToDictionary(k => k.Key, v => v.ToList()) ?? [];
 
-        Setup(repository => repository.GetTopRestrictedRealmId(It.IsAny<int>()))
+        Setup(repository => repository.GetNotPaid(It.IsAny<int>()))
             .Returns<int>(account_id =>
             {
-                if (data_dictionary.TryGetValue(account_id, out var renewal))
+                if (!data_dictionary.TryGetValue(account_id, out var renewals))
                 {
-                    renewal = null;
+                    renewals = [];
                 }
 
-                return Task.FromResult(renewal?.RestrictedRealmId);
+                return Task.FromResult(renewals);
             });
     }
 
