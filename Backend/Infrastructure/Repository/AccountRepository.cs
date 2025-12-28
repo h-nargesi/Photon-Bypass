@@ -55,7 +55,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
     public async Task<Dictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Id)} in (@account_ids)")
+            .Where($"{nameof(AccountEntity.Id)} in @account_ids")
             .WithParameters(new { account_ids }));
 
         return result.ToDictionary(k => k.Id);
@@ -66,7 +66,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         var sql = $"""
                    select {nameof(AccountEntity.Id)}, {nameof(AccountEntity.Username)}
                    from {TableName}
-                   where {nameof(AccountEntity.Username)} in (@usernames)
+                   where {nameof(AccountEntity.Username)} in @usernames
                    """;
 
         var list = await QueryAsync(sql, new { usernames });
@@ -79,7 +79,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         var sql = $"""
                    select {nameof(AccountEntity.Id)}, {nameof(AccountEntity.Username)}
                    from {TableName}
-                   where {nameof(AccountEntity.Id)} in (@ids)
+                   where {nameof(AccountEntity.Id)} in @ids
                    """;
 
         var list = await QueryAsync(sql, new { ids });
