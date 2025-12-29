@@ -6,9 +6,11 @@ public interface IEditableRepository<TEntity> where TEntity : IBaseEntity
 
     IEntityEvent<TEntity> Events { get; }
 
-    public Task Save(TEntity entity);
+    Task Save(TEntity entity);
 
-    public Task Save(IEnumerable<TEntity> entities);
+    Task Save(IEnumerable<TEntity> entities);
 
     Task Delete(TEntity entity);
+
+    Task Delete(IEnumerable<TEntity> entities);
 }

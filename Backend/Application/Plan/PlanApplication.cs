@@ -189,27 +189,36 @@ class PlanApplication(
                 JobContext.Value.Username, account.Username, count, days, gigabytes, balance, estimate,
                 JobContext.Value.Username);
 
-            var invoice_info = await BillingApp.Value.GenerateInvoiceCode(new NewInvoiceInfo
+            var renewal = new RenewalEntity
             {
-                Price = money_need,
+                TimeLimitInDays = days,
+                TrafficLimit = gigabytes * StaticValues.BytesInGigLong,
+                SimultaneousUser = count,
+            };
+
+            var invoice_code = await BillingApp.Value.GenerateInvoiceCode(new NewInvoiceInfo
+            {
+                Price = estimate,
+                Needs = money_need,
                 Action = $"{account.Username}t|{count}u|{days}d|{gigabytes}g",
+                Descripttion = renewal.GetPlanTitle(),
             });
 
-            if (invoice_info.Code / 100 != 2)
+            if (invoice_code.Code / 100 != 2)
             {
                 return new ApiResult<RenewalResult>
                 {
-                    Code = invoice_info.Code,
-                    Message = invoice_info.Message,
-                    MessageMethod = invoice_info.MessageMethod,
-                    Developer = invoice_info.Developer,
+                    Code = invoice_code.Code,
+                    Message = invoice_code.Message,
+                    MessageMethod = invoice_code.MessageMethod,
+                    Developer = invoice_code.Developer,
                 };
             }
 
             return ApiResult<RenewalResult>.Success(new RenewalResult
             {
                 CurrentPrice = balance,
-                InvocieCode = invoice_info.Data,
+                InvocieCode = invoice_code.Data,
             });
         }
 
@@ -237,7 +246,7 @@ class PlanApplication(
             RateLimitInMeg = null,
             SimultaneousUser = count,
             WalletCredit = payment_id,
-            RestrictedRealmId = await RenewalRepo.Value.GetTopRestrictedRealmId(account.Id),
+            RestrictedRealmId = await PlanRepo.Value.GetTopRestrictedRealmId(account.Id),
         };
 
         if (renew.RestrictedRealmId == null || current_state.LastConnectTime == null ||

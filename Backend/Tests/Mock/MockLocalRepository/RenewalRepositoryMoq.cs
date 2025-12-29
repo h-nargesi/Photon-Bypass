@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Moq;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Test.MockOptions;
@@ -9,11 +10,11 @@ namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
 internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelService
 {
-    public RenewalRepositoryMoq() : this(FilePath)
+    public RenewalRepositoryMoq(WalletRepositoryMoq wallet_repo) : this(wallet_repo, FilePath)
     {
     }
 
-    protected RenewalRepositoryMoq(string file_path)
+    protected RenewalRepositoryMoq(WalletRepositoryMoq waller_repo, string file_path)
     {
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
@@ -23,9 +24,16 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
         Setup(repository => repository.GetNotPaid(It.IsAny<int>()))
             .Returns<int>(account_id =>
             {
-                if (!data_dictionary.TryGetValue(account_id, out var renewals))
+                if (!data_dictionary.TryGetValue(account_id, out var renewals) ||
+                    !waller_repo.data.TryGetValue(account_id, out var wallets) || 
+                    wallets == null)
                 {
                     renewals = [];
+                }
+                else
+                {
+                    renewals = renewals.Where(i => !wallets.Any(w => w.Id == i.WalletCredit && w.Status == BalanceStatus.Completed))
+                        .ToList();
                 }
 
                 return Task.FromResult(renewals);

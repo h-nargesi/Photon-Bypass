@@ -30,13 +30,13 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
     {
         IEnumerable<WalletEntity> result;
 
-        if (code.StartsWith('w'))
+        if (code.StartsWith('W'))
         {
             result = await FindAsync(statement => statement
                 .Where($"{nameof(WalletEntity.Id)} = @id")
                 .WithParameters(new { id = code[1..] }));
         }
-        else if (code.StartsWith('i'))
+        else if (code.StartsWith('I'))
         {
             result = await FindAsync(statement => statement
                 .Where($"{nameof(WalletEntity.InvoiceCode)} = @code")

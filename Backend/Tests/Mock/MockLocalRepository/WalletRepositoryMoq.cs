@@ -1,14 +1,19 @@
-﻿using System.Text.Json;
-using Moq;
+﻿using Moq;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Domain.Repository;
 using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
+using System.Data;
+using System.Text.Json;
 
 namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
 internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
 {
+    public readonly Dictionary<int, List<WalletEntity>> data;
+
     public WalletRepositoryMoq() : this(FilePath)
     {
     }
@@ -17,7 +22,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
     {
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
-        var data = JsonSerializer.Deserialize<List<WalletEntity>>(raw_text)
+        data = JsonSerializer.Deserialize<List<WalletEntity>>(raw_text)
                        ?.GroupBy(x => x.AccountId).ToDictionary(k => k.Key, v => v.ToList())
                    ?? [];
 
@@ -40,6 +45,9 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                     list = [];
                 }
 
+                list = list.Where(i => i.Status == BalanceStatus.Pending)
+                    .ToList();
+
                 return Task.FromResult(list);
             });
 
@@ -48,13 +56,13 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
             {
                 List<WalletEntity> result;
 
-                if (code.StartsWith('w'))
+                if (code.StartsWith('W'))
                 {
                     var id = int.Parse(code[1..]);
                     result = data.Values.SelectMany(x => x.Where(r => r.Id == id))
                         .ToList();
                 }
-                else if (code.StartsWith('i'))
+                else if (code.StartsWith('I'))
                 {
                     var ic = int.Parse(code[1..]);
                     result = data.Values.SelectMany(x => x.Where(r => r.InvoiceCode == ic))
@@ -80,9 +88,9 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
             .Returns(() =>
             {
                 var result = data.Values.SelectMany(x => x.Where(r => r.InvoiceCode.HasValue))
-                     .Max(r => r.InvoiceCode);
+                     .Max(r => r.InvoiceCode)
+                     ?? 10000;
 
-                if (result == null) result = 10000;
                 result += 1;
 
                 return Task.FromResult(result);
@@ -99,6 +107,67 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
 
                 return Task.FromResult(balance);
             });
+
+        Setup(x => x.Save(It.IsAny<WalletEntity>()))
+            .Returns<WalletEntity>(wallet =>
+            {
+                Add(data, wallet);
+
+                return Task.CompletedTask;
+            });
+
+        Setup(x => x.Save(It.IsAny<IEnumerable<WalletEntity>>()))
+            .Returns<IEnumerable<WalletEntity>>(wallets =>
+            {
+                foreach (var wallet in wallets)
+                    Add(data, wallet);
+
+                return Task.CompletedTask;
+            });
+
+        var db_context_moq = new Mock<IDbContext>();
+        db_context_moq.Setup(x => x.BeginTransactionAsync())
+            .Returns(() =>
+            {
+                var mock = new Mock<IDbTransaction>();
+
+                mock.Setup(t => t.Commit());
+                mock.Setup(t => t.Rollback());
+
+                return Task.FromResult(mock.Object);
+            });
+
+        Setup(x => x.DbContext).Returns(db_context_moq.Object);
+    }
+
+    private static void Add(Dictionary<int, List<WalletEntity>> data, WalletEntity wallet)
+    {
+        if (!data.TryGetValue(wallet.AccountId, out var list))
+        {
+            data[wallet.AccountId] = list = [];
+        }
+
+        if (wallet.Id < 1)
+        {
+            wallet.Id = list.Max(i => i.Id);
+            wallet.Id++;
+            list.Add(wallet);
+        }
+        else
+        {
+            var ex = list.FirstOrDefault(w => w.Id == wallet.Id);
+            if (ex != null)
+            {
+                ex.Action = wallet.Action;
+                ex.Status = wallet.Status;
+                ex.Amount = wallet.Amount;
+                ex.Description = wallet.Description;
+                ex.Direction = wallet.Direction;
+                ex.InvoiceCode = wallet.InvoiceCode;
+                ex.ReferenceCode = wallet.ReferenceCode;
+                ex.RenewId = wallet.RenewId;
+            }
+        }
     }
 
     private const string FilePath = "Data/Local/wallet.json";

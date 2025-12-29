@@ -1,1 +1,9 @@
-[]
+[
+  { "Id": 1, "AccountId": 3, "TrafficLimit": 10, "WalletDebit": 3 },
+  { "Id": 2, "AccountId": 4, "TrafficLimit": 10, "WalletDebit": 15 },
+  { "Id": 3, "AccountId": 5, "TrafficLimit": 10, "WalletDebit": 16 },
+  { "Id": 4, "AccountId": 6, "TrafficLimit": 10, "WalletDebit": 8 },
+  { "Id": 5, "AccountId": 6, "TrafficLimit": 10, "WalletDebit": 9 },
+  { "Id": 6, "AccountId": 8, "TrafficLimit": 10, "WalletDebit": 11, "WalletCredit": 13 },
+  { "Id": 7, "AccountId": 9, "TrafficLimit": 10, "WalletDebit": 12, "WalletCredit": 14 }
+]

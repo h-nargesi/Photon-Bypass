@@ -53,6 +53,17 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context)
         await DapperDbContext.EventService.CallOnSave(this, new EntityEventArgs<TEntity>(entity_list));
     }
 
+    public virtual async Task Delete(IEnumerable<TEntity> entities)
+    {
+        await DapperDbContext.OpenAsync();
+
+        var entity_list = entities.ToArray();
+
+        await DapperDbContext.Connection.BulkDeleteAsync(entity_list);
+
+        await DapperDbContext.EventService.CallOnDelete(this, new EntityEventArgs<TEntity>(entity_list));
+    }
+
     public virtual async Task Delete(TEntity entity)
     {
         await DapperDbContext.OpenAsync();

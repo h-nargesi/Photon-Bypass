@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Application.Billing.Model;
+﻿using Microsoft.OpenApi.Validations;
+using PhotonBypass.Application.Billing.Model;
 using PhotonBypass.Application.Plan;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
@@ -17,7 +18,7 @@ class BillingApplication(
     Lazy<IRenewalRepository> renewal_repo,
     Lazy<IHistoryRepository> history_repo,
     Lazy<IPlanApplication> plan_app,
-    Lazy<IJobContext> job_context) 
+    Lazy<IJobContext> job_context)
     : IBillingApplication
 {
     private IWalletRepository WalletRepo { get; } = wallet_repo;
@@ -35,7 +36,7 @@ class BillingApplication(
             return ApiResult<string?>.Success(null);
         }
 
-        return ApiResult<string?>.Success($"I{invoice.Value.Code}");
+        return ApiResult<string?>.Success(invoice.Value.Code);
     }
 
     public async Task<ApiResult<InvoiceModel?>> GetInvoice(string? code)
@@ -118,23 +119,18 @@ class BillingApplication(
 
         var account_id = JobContext.Value.AccountId.Value;
 
-        var current_balance = await WalletRepo.GetBalance(account_id);
-
-        if (current_balance < 0)
-        {
-            return null;
-        }
-
-        var payments = await WalletRepo.GetNotPaid(account_id);
+        var wallet_list = await WalletRepo.GetNotPaid(account_id);
 
         var not_paid_renewal = await RenewalRepo.Value.GetNotPaid(account_id);
 
         var not_paid_renewal_values = await WalletRepo.GetWalletsAmount(not_paid_renewal.Select(r => r.WalletDebit));
 
-        if (payments.Count < 0 && not_paid_renewal.Count < 1 && new_info == null)
+        if (wallet_list.Count < 0 && not_paid_renewal.Count < 1 && new_info == null)
         {
             return null;
         }
+
+        var wallet_dict = wallet_list.ToDictionary(p => p.Id);
 
         int invocie_code;
         await WalletRepo.DbContext.BeginTransactionAsync();
@@ -144,27 +140,42 @@ class BillingApplication(
             if (not_paid_renewal.Count > 0)
             {
                 var saving_wallet = not_paid_renewal
-                    .Select(not_paid => new WalletEntity
+                    .Select(not_paid =>
                     {
-                        AccountId = account_id,
-                        Amount = not_paid_renewal_values[not_paid.WalletDebit],
-                        Description = not_paid.GetPlanTitle(),
-                        Direction = BalanceDirection.Credit,
-                        RenewId = not_paid.Id,
+                        if (!not_paid.WalletCredit.HasValue ||
+                            !wallet_dict.TryGetValue(not_paid.WalletCredit.Value, out var wallet))
+                        {
+                            wallet = new WalletEntity
+                            {
+                                AccountId = account_id,
+                                Amount = not_paid_renewal_values[not_paid.WalletDebit],
+                                Description = not_paid.GetPlanTitle(),
+                                Direction = BalanceDirection.Credit,
+                                RenewId = not_paid.Id,
+                            };
+                        }
+                        else
+                        {
+                            wallet_dict.Remove(not_paid.WalletCredit.Value);
+                        }
+
+                        return wallet;
                     })
                     .ToList();
 
-                if (saving_wallet.Count > 0)
-                {
-                    await WalletRepo.Save(saving_wallet);
+                await WalletRepo.Delete(wallet_dict.Values);
 
-                    payments.AddRange(saving_wallet);
-                }
+                wallet_list = saving_wallet;
+            }
+            else if (wallet_list.Count > 0)
+            {
+                await WalletRepo.Delete(wallet_list);
+                wallet_list = [];
             }
 
             if (new_info != null)
             {
-                payments.Add(new WalletEntity
+                wallet_list.Add(new WalletEntity
                 {
                     AccountId = account_id,
                     Amount = new_info.Price,
@@ -174,22 +185,28 @@ class BillingApplication(
                 });
             }
 
-            invocie_code = payments
+            if (wallet_list.Count < 1)
+            {
+                return null;
+            }
+
+            invocie_code = wallet_list
                 .Where(c => c.InvoiceCode.HasValue)
                 .Select(i => i.InvoiceCode)
+                .OrderBy(i => i)
                 .FirstOrDefault() ??
                 await WalletRepo.GenerateNewInvoiceCode();
 
-            payments.Where(p => p.InvoiceCode != invocie_code)
+            wallet_list.Where(p => p.InvoiceCode != invocie_code)
                 .Foreach(p => p.InvoiceCode = invocie_code);
-            
-            await WalletRepo.Save(payments);
 
-            foreach (var item in payments)
+            await WalletRepo.Save(wallet_list);
+
+            foreach (var item in wallet_list)
             {
                 Log.Information(@"Generate Invoice: Id={Id}, Amount={Amount}, Direction={Direction}, InvoiceCode={InvoiceCode}, Status={Status},
     Description={Description},
-    Action={Action}", 
+    Action={Action}",
                     item);
             }
 
@@ -197,7 +214,7 @@ class BillingApplication(
             {
                 var renewals = not_paid_renewal.ToDictionary(i => i.Id);
 
-                var saving_renewals = payments.Where(p => p.RenewId > 0)
+                var saving_renewals = wallet_list.Where(p => p.RenewId > 0)
                      .Select(p =>
                      {
                          var renewal = renewals[p.RenewId];
@@ -218,7 +235,7 @@ class BillingApplication(
                 Type = EventType.Information,
                 Title = "مالی",
                 Description = "فاکتور صادر شد.",
-                Price = payments.Sum(p => p.Amount),
+                Price = wallet_list.Sum(p => p.Amount),
             });
         }
         catch
@@ -227,6 +244,6 @@ class BillingApplication(
             throw;
         }
 
-        return ($"I{invocie_code}", payments);
+        return ($"I{invocie_code}", wallet_list);
     }
 }
