@@ -12,7 +12,7 @@ namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
 internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
 {
-    public readonly Dictionary<int, List<WalletEntity>> data;
+    public readonly Dictionary<int, List<WalletEntity>> Data;
 
     public WalletRepositoryMoq() : this(FilePath)
     {
@@ -22,14 +22,14 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
     {
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
-        data = JsonSerializer.Deserialize<List<WalletEntity>>(raw_text)
+        Data = JsonSerializer.Deserialize<List<WalletEntity>>(raw_text)
                        ?.GroupBy(x => x.AccountId).ToDictionary(k => k.Key, v => v.ToList())
                    ?? [];
 
         Setup(x => x.GetTransactions(It.IsAny<int>()))
             .Returns<int>(account_id =>
             {
-                if (!data.TryGetValue(account_id, out var list))
+                if (!Data.TryGetValue(account_id, out var list))
                 {
                     list = [];
                 }
@@ -40,7 +40,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
         Setup(x => x.GetNotPaid(It.IsAny<int>()))
             .Returns<int>(account_id =>
             {
-                if (!data.TryGetValue(account_id, out var list))
+                if (!Data.TryGetValue(account_id, out var list))
                 {
                     list = [];
                 }
@@ -59,13 +59,13 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 if (code.StartsWith('W'))
                 {
                     var id = int.Parse(code[1..]);
-                    result = data.Values.SelectMany(x => x.Where(r => r.Id == id))
+                    result = Data.Values.SelectMany(x => x.Where(r => r.Id == id))
                         .ToList();
                 }
                 else if (code.StartsWith('I'))
                 {
                     var ic = int.Parse(code[1..]);
-                    result = data.Values.SelectMany(x => x.Where(r => r.InvoiceCode == ic))
+                    result = Data.Values.SelectMany(x => x.Where(r => r.InvoiceCode == ic))
                         .ToList();
                 }
                 else throw new Exception($"Invalid invoice-code={code}");
@@ -78,7 +78,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
             {
                 var mask_id = ids.ToHashSet();
 
-                var result = data.Values.SelectMany(x => x.Where(r => mask_id.Contains(r.Id)))
+                var result = Data.Values.SelectMany(x => x.Where(r => mask_id.Contains(r.Id)))
                      .ToDictionary(k => k.Id, v => v.Amount);
 
                 return Task.FromResult(result);
@@ -87,7 +87,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
         Setup(x => x.GenerateNewInvoiceCode())
             .Returns(() =>
             {
-                var result = data.Values.SelectMany(x => x.Where(r => r.InvoiceCode.HasValue))
+                var result = Data.Values.SelectMany(x => x.Where(r => r.InvoiceCode.HasValue))
                      .Max(r => r.InvoiceCode)
                      ?? 10000;
 
@@ -100,9 +100,10 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
             .Returns<int>(account_id =>
             {
                 var balance = 0;
-                if (data.TryGetValue(account_id, out var list))
+                if (Data.TryGetValue(account_id, out var list))
                 {
-                    balance = list.Sum(x => x.Amount * (int)x.Direction);
+                    balance = list.Where(w => w.Status == BalanceStatus.Completed)
+                        .Sum(x => x.Amount * (int)x.Direction);
                 }
 
                 return Task.FromResult(balance);
@@ -111,7 +112,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
         Setup(x => x.Save(It.IsAny<WalletEntity>()))
             .Returns<WalletEntity>(wallet =>
             {
-                Add(data, wallet);
+                Add(Data, wallet);
 
                 return Task.CompletedTask;
             });
@@ -120,7 +121,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
             .Returns<IEnumerable<WalletEntity>>(wallets =>
             {
                 foreach (var wallet in wallets)
-                    Add(data, wallet);
+                    Add(Data, wallet);
 
                 return Task.CompletedTask;
             });

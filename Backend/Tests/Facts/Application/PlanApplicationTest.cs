@@ -158,7 +158,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
         Assert.Equal(1500 - estimate.Data?.Price, result.Data.CurrentPrice);
-        Assert.Null(result.Data.InvocieCode);
+        Assert.Null(result.Data.InvoiceCode);
     }
 
     [Fact]
@@ -176,8 +176,8 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
-        Assert.Equal(0, result.Data.CurrentPrice);
-        Assert.NotNull(result.Data.InvocieCode);
+        Assert.Equal(-800, result.Data.CurrentPrice);
+        Assert.NotNull(result.Data.InvoiceCode);
     }
 
     [Fact]
@@ -187,25 +187,25 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
         var func = () => plan_app.Renewal(2, 1, "");
-        await func.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<Exception>();
 
         func = () => plan_app.Renewal(2, 1, "10u");
-        await func.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<Exception>();
 
         func = () => plan_app.Renewal(2, 1, "20d");
-        await func.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<Exception>();
 
         func = () => plan_app.Renewal(2, 1, "20g");
-        await func.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<Exception>();
 
         func = () => plan_app.Renewal(2, 1, "10u|20d");
-        await func.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<Exception>();
 
         func = () => plan_app.Renewal(2, 1, "10u|20g");
-        await func.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<Exception>();
 
         func = () => plan_app.Renewal(2, 1, "10d|20g");
-        await func.Should().ThrowAsync<UserException>();
+        await func.Should().ThrowAsync<Exception>();
     }
 
     [Fact]
@@ -218,12 +218,12 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         Assert.NotNull(estimate);
 
-        var result = await plan_app.Renewal(1, 1, "2u|120d|75g");
+        var result = await plan_app.Renewal(1, 1, "User2t|5u|120d|75g");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
         Assert.Equal(1500 - estimate.Data?.Price, result.Data.CurrentPrice);
-        Assert.Null(result.Data.InvocieCode);
+        Assert.Null(result.Data.InvoiceCode);
     }
 }

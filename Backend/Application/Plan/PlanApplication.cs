@@ -169,7 +169,7 @@ class PlanApplication(
         return await Renewal(target, payment_id, count.Value, days.Value, gigabytes.Value);
     }
 
-    public async Task<ApiResult<RenewalResult>> Renewal(AccountEntity account, int? payment_id, byte count, short days, int gigabytes)
+    private async Task<ApiResult<RenewalResult>> Renewal(AccountEntity account, int? payment_id, byte count, short days, int gigabytes)
     {
         if (!account.IsActive)
         {
@@ -218,7 +218,7 @@ class PlanApplication(
             return ApiResult<RenewalResult>.Success(new RenewalResult
             {
                 CurrentPrice = balance,
-                InvocieCode = invoice_code.Data,
+                InvoiceCode = invoice_code.Data,
             });
         }
 
@@ -355,5 +355,4 @@ class PlanApplication(
             CurrentPrice = balance,
         });
     }
-
 }

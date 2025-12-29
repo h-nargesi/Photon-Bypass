@@ -25,8 +25,7 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
             .Returns<int>(account_id =>
             {
                 if (!data_dictionary.TryGetValue(account_id, out var renewals) ||
-                    !waller_repo.data.TryGetValue(account_id, out var wallets) || 
-                    wallets == null)
+                    !waller_repo.Data.TryGetValue(account_id, out var wallets))
                 {
                     renewals = [];
                 }

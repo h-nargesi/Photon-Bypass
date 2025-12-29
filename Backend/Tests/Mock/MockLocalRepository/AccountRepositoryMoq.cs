@@ -91,6 +91,15 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
                 return Task.FromResult(result);
             });
 
+        Setup(x => x.GetUsernamesByAccountId(It.IsAny<IEnumerable<int>>()))
+            .Returns<IEnumerable<int>>(account_ids =>
+            {
+                var account_mask = account_ids.ToHashSet();
+                var result = data.Where(pair => account_mask.Contains(pair.Value.Id))
+                    .ToDictionary(k => k.Value.Id, v => v.Key);
+                return Task.FromResult(result);
+            });
+
         Setup(x => x.GetTargetArea(It.IsAny<int>()))
             .Returns<int>(id =>
             {

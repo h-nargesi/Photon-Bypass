@@ -1,7 +1,7 @@
 [
   { "Id": 1, "AccountId": 1, "Amount": 1500, "Direction": 1, "Status": 1, "Description": "init" },
   { "Id": 2, "AccountId": 2, "Amount": 1500, "Direction": 1, "Status": 1, "Description": "init" },
-  { "Id": 17, "AccountId": 2, "Amount": 1500, "Direction": -1, "Status": 0, "Description": "init" },
+  { "Id": 18, "AccountId": 2, "Amount": 1500, "Direction": 1, "Status": 0, "Description": "init" },
   { "Id": 3, "AccountId": 3, "Amount": 800, "Direction": -1, "Status": 1, "Description": "init" },
   { "Id": 15, "AccountId": 4, "Amount": 800, "Direction": -1, "Status": 1, "Description": "init" },
   { "Id": 4, "AccountId": 4, "Amount": 800, "Direction": 1, "Status": 0, "InvoiceCode": 100002, "Description": "first" },

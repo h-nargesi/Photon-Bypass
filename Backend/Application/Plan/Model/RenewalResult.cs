@@ -4,5 +4,5 @@ public class RenewalResult
 {
     public int CurrentPrice { get; set; }
 
-    public string? InvocieCode { get; set; }
+    public string? InvoiceCode { get; set; }
 }
