@@ -13,7 +13,7 @@ public static class PlanStateBusiness
                entity.TrafficLeftPercent < AccountFinishingStatePercent;
     }
 
-    public static string GetRemainsTitle(this PlanStateEntity entity)
+    public static string? GetRemainsTitle(this PlanStateEntity entity)
     {
         var result = new StringBuilder();
 
@@ -38,9 +38,7 @@ public static class PlanStateBusiness
             }
         }
 
-        if (result.Length > 0) result.Remove(0, 3);
-
-        return result.ToString();
+        return result.Length > 0 ? result.Remove(0, 3).ToString() : null;
     }
 
     public static double? GetTrafficLimitInGig(this PlanStateEntity entity)

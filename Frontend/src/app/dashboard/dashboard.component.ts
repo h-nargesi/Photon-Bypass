@@ -29,7 +29,7 @@ import {
   ResultStatus,
   Target,
   UserModel,
-  UserPlanInfo,
+  PlanState,
 } from '../@models';
 import { TranslationPipe, TranslationService, UserService } from '../@services';
 import { DashboardService } from './dashboard.service';
@@ -74,7 +74,7 @@ export class DashboardComponent implements OnInit {
   connections?: ConnectionStateModel[];
   connection_count = '0';
 
-  plan_info?: UserPlanInfo;
+  plan_info?: PlanState;
   readonly icons = ICON_SUBSET;
 
   constructor(
@@ -151,7 +151,7 @@ export class DashboardComponent implements OnInit {
     ]);
   }
 
-  getPlanInfoColor(plan_info?: UserPlanInfo): Colors {
+  getPlanInfoColor(plan_info?: PlanState): Colors {
     if (!plan_info) return 'dark';
     else if (plan_info.remainsTimePercent > plan_info.remainsTrafficPercent) {
       return 'warning';
@@ -160,7 +160,7 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  getPlanInfoIcon(plan_info?: UserPlanInfo): string[] | undefined {
+  getPlanInfoIcon(plan_info?: PlanState): string[] | undefined {
     if (!plan_info) return undefined;
     else if (plan_info.remainsTimePercent > plan_info.remainsTrafficPercent) {
       return this.icons.cilAvTimer;
@@ -169,7 +169,7 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  getPlanInfoTooltip(plan_info?: UserPlanInfo): string | undefined {
+  getPlanInfoTooltip(plan_info?: PlanState): string | undefined {
     if (!plan_info) return undefined;
     else if (plan_info.remainsTimePercent > plan_info.remainsTrafficPercent) {
       return this.translation.translate('dashboard.balance.monthlyRisk');

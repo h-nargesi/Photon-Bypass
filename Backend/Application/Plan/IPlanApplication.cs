@@ -7,7 +7,7 @@ public interface IPlanApplication
 {
     static event Func<RenewalEvent, bool>? OnRenewal;
 
-    Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target);
+    Task<ApiResult<PlanStateModel>> GetPlanState(string target);
 
     Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target);
 

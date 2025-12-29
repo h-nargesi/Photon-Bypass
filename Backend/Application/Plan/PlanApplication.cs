@@ -44,7 +44,7 @@ class PlanApplication(
     private Lazy<IBillingApplication> BillingApp { get; } = billing_app;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
-    public async Task<ApiResult<UserPlanInfoModel>> GetPlanState(string target)
+    public async Task<ApiResult<PlanStateModel>> GetPlanState(string target)
     {
         var account_id = await AccountRepo.Value.GetActiveAccountId(target);
         if (!account_id.HasValue)
@@ -52,24 +52,22 @@ class PlanApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
         }
 
-        var state = (await PlanRepo.Value.GetPlanState(account_id.Value)) ??
-                    throw new UserException("هیچ پلنی برای این کاربر فعال نیست!",
-                        $"The plan-state not found for target={target}, account-id={account_id.Value}");
+        var state = await PlanRepo.Value.GetPlanState(account_id.Value);
 
         Log.Information(
             "[user: {0}] session state: (target:{1}, user-count:{2}, data-left:{3}, total-data:{4}, time-left:{5}-{6})",
-            JobContext.Value.Username, target, state.SimultaneousUser,
-            state.GetTrafficLeftInGig(), state.GetTrafficLimitInGig(), state.TimeLeft?.TotalDays,
-            state.TimeLeft?.Hours);
+            JobContext.Value.Username, target, state?.SimultaneousUser,
+            state?.GetTrafficLeftInGig(), state?.GetTrafficLimitInGig(), state?.TimeLeft?.TotalDays,
+            state?.TimeLeft?.Hours);
 
         _ = ServerMngSrv.Value.UpdateTrafficData();
 
-        return ApiResult<UserPlanInfoModel>.Success(new UserPlanInfoModel
+        return ApiResult<PlanStateModel>.Success(new PlanStateModel
         {
-            RemainsTitle = state.GetRemainsTitle(),
-            SimultaneousUserCount = state.SimultaneousUser,
-            RemainsTimePercent = (int?)state.TimeLeftPercent,
-            RemainsTrafficPercent = (int?)state.TrafficLeftPercent,
+            RemainsTitle = state?.GetRemainsTitle(),
+            SimultaneousUserCount = state?.SimultaneousUser,
+            RemainsTimePercent = (int?)state?.TimeLeftPercent,
+            RemainsTrafficPercent = (int?)state?.TrafficLeftPercent,
         });
     }
 

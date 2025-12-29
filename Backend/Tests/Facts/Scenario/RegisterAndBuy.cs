@@ -131,6 +131,16 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
         Assert.Single(prices);
         Assert.Equal(3, prices[0].Count);
 
+        // /api/plan/plan-state
+        response = await Client.GetAsync("/api/plan/plan-state");
+        var plan_state = (await CheckResponseObject(response)).Data;
+
+        Assert.NotNull(plan_state);
+        Assert.Null(plan_state["remainsTitle"]);
+        Assert.Null(plan_state["remainsTrafficPercent"]);
+        Assert.Null(plan_state["remainsTimePercent"]);
+        Assert.Null(plan_state["simultaneousUserCount"]);
+
         // /api/plan/plan-info
         response = await Client.GetAsync("/api/plan/plan-info");
         var plan_info = (await CheckResponseObject(response)).Data;
@@ -187,6 +197,8 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
             Password = "change-ovp-password",
         });
         await CheckResponseObject(response);
+        
+        // /api/account/history
     }
 
     [GeneratedRegex(@"<div class=""code-box"">(\w+)</div>")]

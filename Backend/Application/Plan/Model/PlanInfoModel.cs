@@ -2,11 +2,11 @@
 
 public class PlanInfoModel
 {
-    public string Target { get; set; } = null!;
+    public string Target { get; init; } = null!;
 
-    public int? Days { get; set; }
+    public int? Days { get; init; }
 
-    public double? Gigabytes { get; set; }
+    public double? Gigabytes { get; init; }
 
-    public int? SimultaneousUserCount { get; set; }
+    public int? SimultaneousUserCount { get; init; }
 }

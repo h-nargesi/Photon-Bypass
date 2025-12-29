@@ -4,7 +4,7 @@ import {
   ApiResult,
   ConnectionStateModel,
   ShowMessageCase,
-  UserPlanInfo,
+  PlanState,
 } from '../@models';
 import {
   ApiBaseService,
@@ -37,8 +37,8 @@ export class DashboardService extends ApiBaseService {
     return this.job(url, { server, targe: target ?? null, sessionId });
   }
 
-  fetchPlanState(target?: string): Observable<UserPlanInfo> {
+  fetchPlanState(target?: string): Observable<PlanState> {
     const url = `${PLAN_API_URL}/plan-state`;
-    return this.getData<UserPlanInfo>(url, target ? { target } as ApiParam : undefined);
+    return this.getData<PlanState>(url, target ? { target } as ApiParam : undefined);
   }
 }

@@ -19,7 +19,7 @@ import {
   TrafficData,
   TrafficDataModel,
   UserModel,
-  UserPlanInfo,
+  PlanState,
 } from '../../@models';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 
@@ -386,7 +386,7 @@ export class FakeDataService {
   }
 
   private api_plan_state(): Observable<
-    HttpResponse<ApiResultData<UserPlanInfo>>
+    HttpResponse<ApiResultData<PlanState>>
   > {
     const value = 1 + Math.floor(Math.random() * 100);
     return wait({
@@ -397,7 +397,7 @@ export class FakeDataService {
         remainsTrafficPercent: value,
         simultaneousUserCount: 1 + Math.floor(Math.random() * 5),
       },
-    } as ApiResultData<UserPlanInfo>);
+    } as ApiResultData<PlanState>);
   }
 
   private api_plan_info(): Observable<HttpResponse<ApiResultData<PlanInfo>>> {

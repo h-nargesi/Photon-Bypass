@@ -84,6 +84,6 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : ProgramL
         Assert.Equal(estimate["simultaneousUserCount"].ToString(), plan_info["simultaneousUserCount"].ToString());
         Assert.Equal(user["username"].ToString(), plan_info["target"].ToString());
 
-        
+        // /api/plan/plan-info
     }
 }

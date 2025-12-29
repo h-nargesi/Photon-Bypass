@@ -49,6 +49,10 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetPlanState
 	[+] GetPlanInfo
 	[+] Renewal
+- IBillingApplication
+  	[+] GenerateInvoiceCode
+	[+] GetInvoice
+	[-] PaymentCallback
 - IVpnApplication:
 	[+] ChangeVpnPassword
 	[+] SendCertEmail
@@ -149,6 +153,7 @@ Services:
 	- ForgetPassword
 	- ResetPassword
 	- GetPrices
+	- GetPlanState
 	- GetPlanInfo
 	- Estimate
 	- Renewal

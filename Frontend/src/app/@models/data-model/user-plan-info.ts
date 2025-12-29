@@ -1,4 +1,4 @@
-export interface UserPlanInfo {
+export interface PlanState {
   remainsTitle: string;
   remainsTrafficPercent: number;
   remainsTimePercent: number;

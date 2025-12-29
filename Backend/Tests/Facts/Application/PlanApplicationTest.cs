@@ -35,9 +35,15 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var func = () => plan_app.GetPlanState("User6");
+        var plan_state = await plan_app.GetPlanState("User6");
 
-        await func.Should().ThrowAsync<UserException>();
+        Assert.NotNull(plan_state);
+        Assert.Equal(2, plan_state.Code / 100);
+        Assert.NotNull(plan_state.Data);
+        Assert.Null(plan_state.Data.SimultaneousUserCount);
+        Assert.Null(plan_state.Data.RemainsTitle);
+        Assert.Null(plan_state.Data.RemainsTimePercent);
+        Assert.Null(plan_state.Data.RemainsTrafficPercent);
     }
 
     [Fact]
@@ -51,6 +57,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         Assert.Equal(2, plan_state.Code / 100);
         Assert.NotNull(plan_state.Data);
         Assert.Equal(1, plan_state.Data.SimultaneousUserCount);
+        Assert.Null(plan_state.Data.RemainsTitle);
         Assert.Null(plan_state.Data.RemainsTrafficPercent);
         Assert.Null(plan_state.Data.RemainsTimePercent);
     }
