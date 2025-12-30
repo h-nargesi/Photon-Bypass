@@ -1,7 +1,7 @@
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers.Entity;
-using PhotonBypass.Infra.Radius.UserManager;
+using PhotonBypass.Infra.Radius;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge;
 using PhotonBypass.ServerBridge.Services;
@@ -10,7 +10,7 @@ using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
 
-public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler) : IAccountRadiusSyncUserManagerService
+public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler) : IInfraAccountRadiusSyncService
 {
     public async Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames)
     {

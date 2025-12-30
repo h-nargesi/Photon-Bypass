@@ -1,11 +1,11 @@
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.FreeRadius.WebService;
-using PhotonBypass.Infra.Radius.RadiusDesk;
+using PhotonBypass.Infra.Radius;
 
 namespace PhotonBypass.FreeRadius.Application;
 
-public class SessionRadiusSyncRadiusDeskService(RadWebApiOptionContext web_web_api_context) : ISessionRadiusSyncRadiusDeskService
+public class SessionRadiusSyncRadiusDeskService(RadWebApiOptionContext web_web_api_context) : IInfraSessionRadiusSyncService
 {
     public Task<List<UserConnectionBinding>> GetActiveConnections(ServerEntity radius, string username)
     {

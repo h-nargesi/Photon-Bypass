@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using PhotonBypass.Infra.Nas;
-using PhotonBypass.Infra.Radius.UserManager;
+using PhotonBypass.Infra.Radius;
 using PhotonBypass.Mikrotik.Radius.Application;
 using PhotonBypass.Tools;
 
@@ -18,8 +18,8 @@ public static class ServiceFactory
         //         new MediaTypeWithQualityHeaderValue("application/json"));
         // });
 
-        builder.Services.AddLazyTransient<ISessionRadiusSyncUserManagerService, SessionRadiusSyncUserManagerService>();
-        builder.Services.AddLazyTransient<IAccountRadiusSyncUserManagerService, AccountRadiusSyncUserManagerService>();
+        builder.Services.AddLazyKeyedTransient<IInfraSessionRadiusSyncService, SessionRadiusSyncUserManagerService>(RadiusType.UserManager);
+        builder.Services.AddLazyKeyedTransient<IInfraAccountRadiusSyncService, AccountRadiusSyncUserManagerService>(RadiusType.UserManager);
         builder.Services.AddLazyTransient<IMikrotikDirectService, MikrotikDirectService>();
     }
 }

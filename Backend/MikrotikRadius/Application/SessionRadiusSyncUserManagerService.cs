@@ -1,6 +1,6 @@
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers.Entity;
-using PhotonBypass.Infra.Radius.UserManager;
+using PhotonBypass.Infra.Radius;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge;
 using PhotonBypass.ServerBridge.Services;
@@ -10,7 +10,7 @@ using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
 
-public class SessionRadiusSyncUserManagerService(ITik4NetHandler handler) : ISessionRadiusSyncUserManagerService
+public class SessionRadiusSyncUserManagerService(ITik4NetHandler handler) : IInfraSessionRadiusSyncService
 {
     public async Task<List<UserConnectionBinding>> GetActiveConnections(ServerEntity radius, string username)
     {

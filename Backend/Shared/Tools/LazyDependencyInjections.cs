@@ -37,6 +37,14 @@ public static class LazyDependencyInjections
         services.AddTransient(provider => new Lazy<TService>(provider.GetRequiredService<TService>));
     }
 
+    public static void AddLazyKeyedTransient<TService, TImplementation>(this IServiceCollection services, string key)
+        where TService : class
+        where TImplementation : class, TService
+    {
+        services.AddKeyedTransient<TService, TImplementation>(key);
+        services.AddKeyedTransient(key, (provider, key) => new Lazy<TService>(() => provider.GetRequiredKeyedService<TService>(key)));
+    }
+
     public static void BindValidateReturn<TOptions>(this IServiceCollection services) where TOptions : class
     {
         services.AddOptions<TOptions>()

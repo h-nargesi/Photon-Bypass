@@ -3,7 +3,7 @@ using PhotonBypass.Domain.Servers.Entity;
 
 namespace PhotonBypass.Infra.Radius;
 
-public interface ISessionRadiusSyncService
+public interface IInfraSessionRadiusSyncService
 {
     Task<List<UserConnectionBinding>> GetActiveConnections(ServerEntity radius, string username);
 

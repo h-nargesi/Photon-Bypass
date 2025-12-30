@@ -3,7 +3,7 @@ using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.JsonType;
-using PhotonBypass.Infra.Radius.UserManager;
+using PhotonBypass.Infra.Radius;
 using PhotonBypass.Mikrotik.Radius.Application;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge.Services;
@@ -54,7 +54,7 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
             TimeLimitInDays = 10,
         };
 
-        var service = scope.ServiceProvider.GetRequiredService<IAccountRadiusSyncUserManagerService>();
+        var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.UserManager);
         var handler = scope.ServiceProvider.GetRequiredService<ITik4NetHandler>();
         await service.SyncUserAndActive(server, account, renewal);
 
@@ -143,7 +143,7 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
             TimeLimitInDays = 10,
         };
 
-        var service = scope.ServiceProvider.GetRequiredService<IAccountRadiusSyncUserManagerService>();
+        var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.UserManager);
         var handler = scope.ServiceProvider.GetRequiredService<ITik4NetHandler>();
         await service.SyncUserAndActive(server, account, renewal);
 
@@ -232,7 +232,7 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
             TimeLimitInDays = 10,
         };
 
-        var service = scope.ServiceProvider.GetRequiredService<IAccountRadiusSyncUserManagerService>();
+        var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.UserManager);
         var func = () => service.SyncUserAndActive(server, account, renewal);
 
         await func.Should().ThrowAsync<Exception>("Traffic limit must be a multiple of 25 gigabytes.");

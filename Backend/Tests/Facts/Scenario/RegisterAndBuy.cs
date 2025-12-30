@@ -139,7 +139,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
         Assert.Null(plan_state["remainsTitle"]);
         Assert.Null(plan_state["remainsTrafficPercent"]);
         Assert.Null(plan_state["remainsTimePercent"]);
-        Assert.Null(plan_state["simultaneousUserCount"]);
+        Assert.Equal("0", plan_state["simultaneousUserCount"].ToString());
 
         // /api/plan/plan-info
         response = await Client.GetAsync("/api/plan/plan-info");
@@ -177,7 +177,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
 
         Assert.NotNull(renewal);
         Assert.Equal("0", renewal["currentPrice"].ToString());
-        Assert.Equal("0", renewal["moneyNeeds"].ToString());
+        Assert.Null(renewal["invoiceCode"]);
 
         // /api/plan/plan-info
         response = await Client.GetAsync("/api/plan/plan-info");

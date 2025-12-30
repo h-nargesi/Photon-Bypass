@@ -4,7 +4,7 @@ using PhotonBypass.Domain.Servers.Entity;
 
 namespace PhotonBypass.Infra.Radius;
 
-public interface IAccountRadiusSyncService
+public interface IInfraAccountRadiusSyncService
 {
     Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames);
 

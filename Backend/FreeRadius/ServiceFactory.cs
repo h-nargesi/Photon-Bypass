@@ -7,7 +7,7 @@ using PhotonBypass.FreeRadius.WebService;
 using PhotonBypass.Tools;
 using System.Net.Http.Headers;
 using PhotonBypass.FreeRadius.Application;
-using PhotonBypass.Infra.Radius.RadiusDesk;
+using PhotonBypass.Infra.Radius;
 
 namespace PhotonBypass.FreeRadius;
 
@@ -36,8 +36,8 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<ITopUpRepository, TopUpRepository>();
         builder.Services.AddLazyTransient<IUserPlanStateRepository, UserPlanStateRepository>();
 
-        builder.Services.AddLazyTransient<ISessionRadiusSyncRadiusDeskService, SessionRadiusSyncRadiusDeskService>();
-        builder.Services.AddLazyTransient<IAccountRadiusSyncRadiusDeskService, AccountRadiusSyncRadiusDeskService>();
+        builder.Services.AddLazyKeyedTransient<IInfraSessionRadiusSyncService, SessionRadiusSyncRadiusDeskService>(RadiusType.RadiusDesk);
+        builder.Services.AddLazyKeyedTransient<IInfraAccountRadiusSyncService, AccountRadiusSyncRadiusDeskService>(RadiusType.RadiusDesk);
 
         builder.Services.AddSingleton<IStaticRepository, StaticRepository>();
         builder.Services.AddLazyScoped<IRadiusService, RadiusDeskService>();

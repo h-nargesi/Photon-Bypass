@@ -72,7 +72,7 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : ProgramL
 
         Assert.NotNull(renewal);
         Assert.Equal("0", renewal["currentPrice"].ToString());
-        Assert.Equal("0", renewal["moneyNeeds"].ToString());
+        Assert.Null(renewal["invoiceCode"]);
 
         // /api/plan/plan-info
         response = await Client.GetAsync("/api/plan/plan-info");

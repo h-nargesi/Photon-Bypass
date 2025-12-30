@@ -1,23 +1,23 @@
+using Microsoft.Extensions.DependencyInjection;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
-using PhotonBypass.Infra.Radius.RadiusDesk;
-using PhotonBypass.Infra.Radius.UserManager;
+using PhotonBypass.Infra.Radius;
 using Serilog;
 
 namespace PhotonBypass.Infra.Services;
 
 public class SessionRadiusSyncService(
     Lazy<IServerRepository> server_repo,
-    Lazy<ISessionRadiusSyncUserManagerService> mikrotik_radius,
-    Lazy<ISessionRadiusSyncRadiusDeskService> radius_desk)
+    [FromKeyedServices(RadiusType.UserManager)] Lazy<IInfraSessionRadiusSyncService> mikrotik_radius,
+    [FromKeyedServices(RadiusType.RadiusDesk)] Lazy<IInfraSessionRadiusSyncService> radius_desk)
     : ISessionRadiusSyncService
 {
     private Lazy<IServerRepository> ServerRepo { get; } = server_repo;
-    private Lazy<ISessionRadiusSyncUserManagerService> MikrotikRadius { get; } = mikrotik_radius;
-    private Lazy<ISessionRadiusSyncRadiusDeskService> RadiusDesk { get; } = radius_desk;
+    private Lazy<IInfraSessionRadiusSyncService> MikrotikRadius { get; } = mikrotik_radius;
+    private Lazy<IInfraSessionRadiusSyncService> RadiusDesk { get; } = radius_desk;
 
     public async Task<List<UserConnectionBinding>> GetActiveConnections(int? realm_id, string username)
     {
