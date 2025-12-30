@@ -17,29 +17,28 @@ namespace PhotonBypass.Test.Facts.Mikrotik;
 public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
 {
     private const string TestPackage1 = "Mikrotik-Base";
+    private static readonly ServerEntity server = new()
+    {
+        IpAddress = MikrotikInitializer.GetIp(TestPackage1),
+        OsType = Domain.Servers.Types.OperatingSystem.Mikrotik,
+        Config = new ServerConfiguration
+        {
+            WebApiConfig = new WebApiConfig
+            {
+                HostName = MikrotikInitializer.GetIp(TestPackage1),
+                Username = "admin",
+                Password = "admin",
+                Port = 8728,
+                Ssl = false,
+            }
+        }
+    };
 
     [Fact]
     public async Task SimpleTest_SameStep_1()
     {
         using var scope = App.Services.CreateScope();
         await scope.Register<MikrotikInitializer>(TestPackage1, this);
-
-        var server = new ServerEntity
-        {
-            IpAddress = MikrotikInitializer.GetIp(TestPackage1),
-            OsType = Domain.Servers.Types.OperatingSystem.Mikrotik,
-            Config = new ServerConfiguration
-            {
-                WebApiConfig = new WebApiConfig
-                {
-                    HostName = MikrotikInitializer.GetIp(TestPackage1),
-                    Username = "admin",
-                    Password = "admin",
-                    Port = 8728,
-                    Ssl = false,
-                }
-            }
-        };
 
         var account = new AccountEntity
         {
@@ -113,23 +112,6 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<MikrotikInitializer>(TestPackage1, this);
 
-        var server = new ServerEntity
-        {
-            IpAddress = MikrotikInitializer.GetIp(TestPackage1),
-            OsType = Domain.Servers.Types.OperatingSystem.Mikrotik,
-            Config = new ServerConfiguration
-            {
-                WebApiConfig = new WebApiConfig
-                {
-                    HostName = MikrotikInitializer.GetIp(TestPackage1),
-                    Username = "admin",
-                    Password = "admin",
-                    Port = 8728,
-                    Ssl = false,
-                }
-            }
-        };
-
         var account = new AccountEntity
         {
             Username = "User01",
@@ -201,23 +183,6 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         await scope.Register<MikrotikInitializer>(TestPackage1, this);
-
-        var server = new ServerEntity
-        {
-            IpAddress = MikrotikInitializer.GetIp(TestPackage1),
-            OsType = Domain.Servers.Types.OperatingSystem.Mikrotik,
-            Config = new ServerConfiguration
-            {
-                WebApiConfig = new WebApiConfig
-                {
-                    HostName = MikrotikInitializer.GetIp(TestPackage1),
-                    Username = "admin",
-                    Password = "admin",
-                    Port = 8728,
-                    Ssl = false,
-                }
-            }
-        };
 
         var account = new AccountEntity
         {
