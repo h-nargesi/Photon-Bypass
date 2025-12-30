@@ -4,7 +4,7 @@ using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Plan;
 using Quartz;
 
-namespace PhotonBypass.Application.Management.Model;
+namespace PhotonBypass.Application.Management;
 
 public class JobInterval(IServiceProvider service_provider) : IJob
 {

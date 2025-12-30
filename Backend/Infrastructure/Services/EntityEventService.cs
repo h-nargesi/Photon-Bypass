@@ -78,7 +78,7 @@ public class EntityEventService : IEntityEventService
         }
     }
 
-    public Task Call<TEntity>(Dictionary<Type, HashSet<object>> events, object? sender,
+    private Task Call<TEntity>(Dictionary<Type, HashSet<object>> events, object? sender,
         EntityEventArgs<TEntity> event_args) where TEntity : IBaseEntity
     {
         Task[] tasks;

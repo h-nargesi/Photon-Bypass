@@ -20,11 +20,12 @@ Implement mock of used dependencies then test the function.
 	[+] PersianHandlerTest: MonthToDays
 - Business
 	[+] AccountBusiness
+    [+] WalletBusiness
 	[+] PlanStateBusiness
 	[+] RenewalBusiness
 - Infrastructure
 	[+] PriceCalculator: Compile
-	[ ] EventService: Register, Unregister, Call
+	[+] EventService: Register, Unregister, Call
 - Controller
 	[+] AccessService
 
@@ -37,6 +38,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetFullInfo
 	[+] EditUser
 	[+] ChangePassword
+	[ ] GetHistory
 - IAuthApplication:
 	[+] CheckUserPassword
 	[+] ForgetPassword
@@ -49,6 +51,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetPlanState
 	[+] GetPlanInfo
 	[+] Renewal
+	[ ] OnRenewalDelegation
 - IBillingApplication
   	[+] GenerateInvoiceCode
 	[+] GetInvoice
@@ -65,7 +68,7 @@ Implement mock of all dependencies and test mid-level services.
 	[-] CheckUserServerBalance
 	[+] GetDefaultCertificate
 	[+] UpdateTrafficData (Merge, FindFirstEmptyDate, ConvertToModel)
-- Radius
+- RadiusSyncService
 	[+] GetTrafficData
 	[+] SyncUserAndActive
 
@@ -74,7 +77,7 @@ Implement mock of all dependencies and test mid-level services.
 Run out-sources and test out-source interfaces.
 
 - Infrastructure Repositories
-	[=] Database Global
+	[+] Database Global
 	[+] Account
 	[ ] Wallet
 	[ ] ResetPass
