@@ -14,10 +14,11 @@ using tik4net.Objects;
 
 namespace PhotonBypass.Test.Facts.Mikrotik;
 
-public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
+public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
 {
     private const string TestPackage1 = "Mikrotik-Base";
-    private static readonly ServerEntity server = new()
+
+    private static readonly ServerEntity Server = new()
     {
         IpAddress = MikrotikInitializer.GetIp(TestPackage1),
         OsType = Domain.Servers.Types.OperatingSystem.Mikrotik,
@@ -53,11 +54,12 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
             TimeLimitInDays = 10,
         };
 
-        var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.UserManager);
+        var service = scope.ServiceProvider
+            .GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.UserManager);
         var handler = scope.ServiceProvider.GetRequiredService<ITik4NetHandler>();
-        await service.SyncUserAndActive(server, account, renewal);
+        await service.SyncUserAndActive(Server, account, renewal);
 
-        using var connection = await handler.ConnectTo(server);
+        using var connection = await handler.ConnectTo(Server);
 
         bool result;
         var limitation_names = new HashSet<string>();
@@ -82,7 +84,8 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
             limitation_names.Add(limitation.Name);
         }
 
-        result = connection.GetProfile(renewal.TimeLimitInDays, renewal.TrafficLimit, renewal.RateLimitInMeg, out var profile);
+        result = connection.GetProfile(renewal.TimeLimitInDays, renewal.TrafficLimit, renewal.RateLimitInMeg,
+            out var profile);
         Assert.True(result);
         Assert.NotNull(profile);
 
@@ -118,6 +121,12 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
             VpnPassword = "User01",
         };
 
+        var second = new AccountEntity
+        {
+            Username = "User02",
+            VpnPassword = "User02",
+        };
+
         var renewal = new RenewalEntity
         {
             SimultaneousUser = 1,
@@ -125,11 +134,13 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
             TimeLimitInDays = 10,
         };
 
-        var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.UserManager);
+        var service = scope.ServiceProvider
+            .GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.UserManager);
         var handler = scope.ServiceProvider.GetRequiredService<ITik4NetHandler>();
-        await service.SyncUserAndActive(server, account, renewal);
+        await service.SyncUserAndActive(Server, account, renewal);
+        await service.SyncUserAndActive(Server, second, renewal);
 
-        using var connection = await handler.ConnectTo(server);
+        using var connection = await handler.ConnectTo(Server);
 
         bool result;
         var limitation_names = new HashSet<string>();
@@ -154,7 +165,8 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
             limitation_names.Add(limitation.Name);
         }
 
-        result = connection.GetProfile(renewal.TimeLimitInDays, renewal.TrafficLimit, renewal.RateLimitInMeg, out var profile);
+        result = connection.GetProfile(renewal.TimeLimitInDays, renewal.TrafficLimit, renewal.RateLimitInMeg,
+            out var profile);
         Assert.True(result);
         Assert.NotNull(profile);
 
@@ -163,9 +175,15 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
         Assert.Empty(removing_list);
 
         // check user
-        result = connection.GetUser(account, renewal.SimultaneousUser, out var user);
-        Assert.True(result);
+        _ = connection.GetUser(second, renewal.SimultaneousUser, out var user);
         Assert.NotNull(user);
+        Assert.Equal(second.Username, user.Name);
+        Assert.False(user.Disabled);
+
+        _ = connection.GetUser(account, renewal.SimultaneousUser, out user);
+        Assert.NotNull(user);
+        Assert.Equal(account.Username, user.Name);
+        Assert.False(user.Disabled);
 
         // assign user to profile
         var assign = connection.LoadList<UserProfileModel>(
@@ -176,6 +194,56 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
         var data = connection.LoadList<UserProfileModel>(
             TikParam.Greater<UserProfileModel>(nameof(UserProfileModel.EndTime), DateTime.Now.ToString("s"))).ToList();
         Assert.NotNull(data);
+
+        // inactive
+        await service.DeactivateUser(Server, [account.Username, second.Username]);
+        
+        _ = connection.GetUser(second, renewal.SimultaneousUser, out user);
+        Assert.NotNull(user);
+        Assert.Equal(second.Username, user.Name);
+        Assert.True(user.Disabled);
+
+        _ = connection.GetUser(account, renewal.SimultaneousUser, out user);
+        Assert.NotNull(user);
+        Assert.Equal(account.Username, user.Name);
+        Assert.True(user.Disabled);
+
+        // inactive exception
+        await service.SyncUserAndActive(Server, account, renewal);
+        await service.SyncUserAndActive(Server, second, renewal);
+        
+        _ = connection.GetUser(second, renewal.SimultaneousUser, out user);
+        Assert.NotNull(user);
+        Assert.Equal(second.Username, user.Name);
+        Assert.False(user.Disabled);
+
+        _ = connection.GetUser(account, renewal.SimultaneousUser, out user);
+        Assert.NotNull(user);
+        Assert.Equal(account.Username, user.Name);
+        Assert.False(user.Disabled);
+        
+        await service.DeactivateUserExcept(Server, [account.Username]);
+        
+        _ = connection.GetUser(second, renewal.SimultaneousUser, out user);
+        Assert.NotNull(user);
+        Assert.Equal(second.Username, user.Name);
+        Assert.True(user.Disabled);
+
+        _ = connection.GetUser(account, renewal.SimultaneousUser, out user);
+        Assert.NotNull(user);
+        Assert.Equal(account.Username, user.Name);
+        Assert.False(user.Disabled);
+
+        // remove
+        await service.RemoveUsers(Server, [account.Username]);
+        
+        _ = connection.GetUser(second, renewal.SimultaneousUser, out user);
+        Assert.NotNull(user);
+        Assert.Equal(second.Username, user.Name);
+        Assert.True(user.Disabled);
+
+        _ = connection.GetUser(account, renewal.SimultaneousUser, out user);
+        Assert.Null(user);
     }
 
     [Fact]
@@ -197,8 +265,9 @@ public class SyncUserAndActiveTest : OutSourceLevelServiceInitializer
             TimeLimitInDays = 10,
         };
 
-        var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.UserManager);
-        var func = () => service.SyncUserAndActive(server, account, renewal);
+        var service =
+            scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.UserManager);
+        var func = () => service.SyncUserAndActive(Server, account, renewal);
 
         await func.Should().ThrowAsync<Exception>("Traffic limit must be a multiple of 25 gigabytes.");
     }

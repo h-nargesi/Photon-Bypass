@@ -28,7 +28,8 @@ public static class UserManagerHelper
         return limitations;
     }
 
-    public static bool GetProfile(this ITikConnection connection, int? days, long? traffic, int? rate, out ProfileModel profile)
+    public static bool GetProfile(this ITikConnection connection, int? days, long? traffic, int? rate,
+        out ProfileModel profile)
     {
         var profile_name = "profile";
 
@@ -89,13 +90,14 @@ public static class UserManagerHelper
         return profile.Name;
     }
 
-    public static void GetLimitationAssignment(this ITikConnection connection, string profile_name, HashSet<string> limitations,
+    public static void GetLimitationAssignment(this ITikConnection connection, string profile_name,
+        HashSet<string> limitations,
         out List<ProfileLimitationModel> adding_list, out List<ProfileLimitationModel> removing_list)
     {
         var profile_field_filter =
             TikParam.Equal<ProfileLimitationModel>(nameof(ProfileLimitationModel.Profile), profile_name);
         var assignments_dictionary = connection.LoadList<ProfileLimitationModel>(profile_field_filter)?
-                                         .ToDictionary(x => x.Limitation) ?? [];
+            .ToDictionary(x => x.Limitation) ?? [];
 
         adding_list = limitations
             .Where(name => !assignments_dictionary.ContainsKey(name))
@@ -111,7 +113,8 @@ public static class UserManagerHelper
             .ToList();
     }
 
-    public static void CheckLimitationAssignment(this ITikConnection connection, string profile_name, HashSet<string> limitations)
+    public static void CheckLimitationAssignment(this ITikConnection connection, string profile_name,
+        HashSet<string> limitations)
     {
         connection.GetLimitationAssignment(profile_name, limitations, out var adding_list, out var removing_list);
 
@@ -126,19 +129,20 @@ public static class UserManagerHelper
         }
     }
 
-    public static bool GetUser(this ITikConnection connection, AccountEntity account, int shared_user, out UserModel user)
+    public static bool GetUser(this ITikConnection connection, AccountEntity account, int shared_user,
+        out UserModel user)
     {
         var no_need_to_save = true;
         var username_filter = TikParam.Equal<UserModel>(nameof(UserModel.Name), account.Username);
-        user = connection.LoadList<UserModel>(username_filter).FirstOrDefault()!;
+        user = connection.LoadList<UserModel>(username_filter).FirstOrDefault()
+               ?? new UserModel
+               {
+                   Name = account.Username,
+                   Password = account.VpnPassword,
+               };
 
-        if (user == null)
+        if (user.Id == null)
         {
-            user = new UserModel
-            {
-                Name = account.Username,
-                Password = account.VpnPassword,
-            };
             no_need_to_save = false;
         }
 

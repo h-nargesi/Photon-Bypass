@@ -84,6 +84,8 @@ public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler) : IInf
                 continue;
             }
 
+            user.Disabled = true;
+
             connection.Save(user, [field_name]);
         }
     }

@@ -91,9 +91,9 @@ Run out-sources and test out-source interfaces.
 
 - Mikrotik Radius
 	- AccountRadiusSyncUserManagerService
-		[ ] RemoveUsers
-		[ ] DeactivateUserExcept
-		[ ] DeactivateUser
+		[+] RemoveUsers
+		[+] DeactivateUserExcept
+		[+] DeactivateUser
 		[+] SyncUserAndActive
 		[ ] ChangeVpnPassword
 	- SessionRadiusSyncUserManagerService
