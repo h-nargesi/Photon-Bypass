@@ -95,7 +95,7 @@ Run out-sources and test out-source interfaces.
 		[+] DeactivateUserExcept
 		[+] DeactivateUser
 		[+] SyncUserAndActive
-		[ ] ChangeVpnPassword
+		[+] ChangeVpnPassword
 	- SessionRadiusSyncUserManagerService
 		[ ] GetActiveConnections
 		[ ] CloseConnectionBySessionId

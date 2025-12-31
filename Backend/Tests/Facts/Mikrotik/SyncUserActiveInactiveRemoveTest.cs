@@ -106,6 +106,14 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
         var data = connection.LoadList<UserProfileModel>(
             TikParam.Greater<UserProfileModel>(nameof(UserProfileModel.EndTime), DateTime.Now.ToString("s"))).ToList();
         Assert.NotNull(data);
+
+        // change password
+        Assert.Equal(account.VpnPassword, user.Password);
+        await service.ChangeVpnPassword(Server, account.Username, "new-password");
+        user = connection.GetUser(account.Username);
+        Assert.NotNull(user);
+        Assert.Equal(account.Username, user.Name);
+        Assert.Equal("new-password", user.Password);
     }
 
     [Fact]
