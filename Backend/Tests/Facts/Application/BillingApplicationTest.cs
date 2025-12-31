@@ -45,7 +45,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         var invoice = (await billing_repo.GetInvoice(invoice_code.Data)).Data;
 
         Assert.NotNull(invoice);
-        Assert.Equal("I100004", invoice.Code);
+        Assert.Equal(100004, invoice.Code);
         Assert.Equal(300, invoice.TotalSum);
         Assert.Equal(BalanceStatus.Pending, invoice.Status);
         Assert.Single(invoice.InvoiceItems);
@@ -79,7 +79,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         var invoice = (await billing_repo.GetInvoice(invoice_code)).Data;
 
         Assert.NotNull(invoice);
-        Assert.Equal("I100004", invoice.Code);
+        Assert.Equal(100004, invoice.Code);
         Assert.Equal(800, invoice.TotalSum);
         Assert.Equal(BalanceStatus.Pending, invoice.Status);
         Assert.Single(invoice.InvoiceItems);
@@ -99,7 +99,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         var invoice = (await billing_repo.GetInvoice(invoice_code)).Data;
 
         Assert.NotNull(invoice);
-        Assert.Equal("I100004", invoice.Code);
+        Assert.Equal(100004, invoice.Code);
         Assert.Equal(800, invoice.TotalSum);
         Assert.Equal(BalanceStatus.Pending, invoice.Status);
         Assert.Single(invoice.InvoiceItems);
@@ -124,7 +124,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         var invoice = (await billing_repo.GetInvoice(invoice_code.Data)).Data;
 
         Assert.NotNull(invoice);
-        Assert.Equal("I100004", invoice.Code);
+        Assert.Equal(100004, invoice.Code);
         Assert.Equal(700, invoice.TotalSum);
         Assert.Equal(BalanceStatus.Pending, invoice.Status);
         Assert.Equal(2, invoice.InvoiceItems.Length);
@@ -150,7 +150,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         var invoice = (await billing_repo.GetInvoice(invoice_code.Data)).Data;
 
         Assert.NotNull(invoice);
-        Assert.Equal("I100004", invoice.Code);
+        Assert.Equal(100004, invoice.Code);
         Assert.Equal(2300, invoice.TotalSum);
         Assert.Equal(BalanceStatus.Pending, invoice.Status);
         Assert.Equal(2, invoice.InvoiceItems.Length);
@@ -176,7 +176,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         var invoice = (await billing_repo.GetInvoice(invoice_code.Data)).Data;
 
         Assert.NotNull(invoice);
-        Assert.Equal("I100004", invoice.Code);
+        Assert.Equal(100004, invoice.Code);
         Assert.Equal(1900, invoice.TotalSum);
         Assert.Equal(BalanceStatus.Pending, invoice.Status);
         Assert.Equal(3, invoice.InvoiceItems.Length);

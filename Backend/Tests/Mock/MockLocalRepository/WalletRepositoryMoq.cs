@@ -14,11 +14,11 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
 {
     public readonly Dictionary<int, List<WalletEntity>> Data;
 
-    public WalletRepositoryMoq() : this(FilePath)
+    public WalletRepositoryMoq(AccountRepositoryMoq account_moq) : this(account_moq, FilePath)
     {
     }
 
-    protected WalletRepositoryMoq(string file_path)
+    protected WalletRepositoryMoq(AccountRepositoryMoq account_moq, string file_path)
     {
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
@@ -51,24 +51,30 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 return Task.FromResult(list);
             });
 
-        Setup(x => x.GetInvoice(It.IsAny<string>()))
-            .Returns<string>(code =>
+        Setup(x => x.GetInvoice(It.IsAny<int>()))
+            .Returns<int>(code =>
             {
-                List<WalletEntity> result;
+                var result = Data.Values.SelectMany(x => x.Where(r => r.InvoiceCode == code))
+                    .ToList();
 
-                if (code.StartsWith('W'))
+                return Task.FromResult(result);
+            });
+
+        Setup(x => x.GetInvoice(It.IsAny<string>(), It.IsAny<int>()))
+            .Returns<string, int>((user, code) =>
+            {
+                if (!account_moq.Data.TryGetValue(user, out var account))
                 {
-                    var id = int.Parse(code[1..]);
-                    result = Data.Values.SelectMany(x => x.Where(r => r.Id == id))
-                        .ToList();
+                    return Task.FromResult(new List<WalletEntity>());
                 }
-                else if (code.StartsWith('I'))
+
+                if (!Data.TryGetValue(account.Id, out var wallets))
                 {
-                    var ic = int.Parse(code[1..]);
-                    result = Data.Values.SelectMany(x => x.Where(r => r.InvoiceCode == ic))
-                        .ToList();
+                    return Task.FromResult(new List<WalletEntity>());
                 }
-                else throw new Exception($"Invalid invoice-code={code}");
+
+                var result = wallets.Where(r => r.InvoiceCode == code)
+                    .ToList();
 
                 return Task.FromResult(result);
             });

@@ -197,7 +197,6 @@ class PlanApplication(
             var invoice_code = await BillingApp.Value.GenerateInvoiceCode(new NewInvoiceInfo
             {
                 Price = estimate,
-                Needs = money_need,
                 Action = $"{account.Username}t|{count}u|{days}d|{gigabytes}g",
                 Descripttion = renewal.GetPlanTitle(),
             });

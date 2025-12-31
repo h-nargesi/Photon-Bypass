@@ -6,9 +6,11 @@ namespace PhotonBypass.Application.Billing;
 
 public interface IBillingApplication
 {
-    Task<ApiResult<string?>> GenerateInvoiceCode(NewInvoiceInfo? new_info = null);
+    Task<ApiResult<int?>> GenerateInvoiceCode(int value);
 
-    Task<ApiResult<InvoiceModel?>> GetInvoice(string? code);
+    Task<ApiResult<int?>> GenerateInvoiceCode(NewInvoiceInfo? new_info = null);
+
+    Task<ApiResult<InvoiceModel?>> GetInvoice(int? code);
 
     Task<ApiResult<BalanceStatus>> PaymentCallback(string token);
 }

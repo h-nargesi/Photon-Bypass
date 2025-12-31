@@ -9,7 +9,9 @@ public interface IWalletRepository : IEditableRepository<WalletEntity>
 
     Task<List<WalletEntity>> GetNotPaid(int account_id);
 
-    Task<List<WalletEntity>> GetInvoice(string code);
+    Task<List<WalletEntity>> GetInvoice(int code);
+
+    Task<List<WalletEntity>> GetInvoice(string target, int code);
 
     Task<Dictionary<int, int>> GetWalletsAmount(IEnumerable<int> ids);
 

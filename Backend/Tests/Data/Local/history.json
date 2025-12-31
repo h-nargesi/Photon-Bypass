@@ -1,13 +1,3 @@
 [
-  {
-    "Id": 1,
-    "Issuer": "user1",
-    "Target": "user1",
-    "EventTime": "2025-04-01",
-    "Title": "title",
-    "Color": null,
-    "Value": null,
-    "Unit": null,
-    "Description": null
-  }
+  { "Id": 1, "Issuer": "user1", "Target": "user1", "EventTime": "2025-04-01", "Title": "title", "Color": null, "Value": null, "Unit": null, "Description": null }
 ]

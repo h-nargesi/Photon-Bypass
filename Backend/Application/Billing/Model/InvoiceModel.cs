@@ -4,7 +4,7 @@ namespace PhotonBypass.Application.Billing.Model;
 
 public class InvoiceModel
 {
-    public string Code { get; set; } = null!;
+    public int Code { get; set; }
 
     public BalanceStatus Status { get; set; }
 

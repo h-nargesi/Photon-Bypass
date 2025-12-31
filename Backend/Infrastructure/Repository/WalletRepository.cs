@@ -26,25 +26,28 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
         return [.. result];
     }
 
-    public async Task<List<WalletEntity>> GetInvoice(string code)
+    public async Task<List<WalletEntity>> GetInvoice(int code)
     {
-        IEnumerable<WalletEntity> result;
-
-        if (code.StartsWith('W'))
-        {
-            result = await FindAsync(statement => statement
-                .Where($"{nameof(WalletEntity.Id)} = @id")
-                .WithParameters(new { id = code[1..] }));
-        }
-        else if (code.StartsWith('I'))
-        {
-            result = await FindAsync(statement => statement
-                .Where($"{nameof(WalletEntity.InvoiceCode)} = @code")
-                .WithParameters(new { code = code[1..] }));
-        }
-        else throw new Exception($"Invalid invoice-code={code}");
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(WalletEntity.InvoiceCode)} = @code")
+            .WithParameters(new { code }));
 
         return [.. result];
+    }
+
+    public async Task<List<WalletEntity>> GetInvoice(string target, int code)
+    {
+        var sql = $"""
+                   select w.*
+                   from {TableName} w
+                   join {AccountRepository.TableName} a on w.{nameof(WalletEntity.Id)} = a.{nameof(AccountEntity.Id)}
+                   where w.{nameof(WalletEntity.InvoiceCode)} = @code
+                     and a.{nameof(AccountEntity.Username)} = @target
+                   """;
+
+        var result = await QueryAsync<WalletEntity>(sql, new { target, code });
+
+        return [..result];
     }
 
     public async Task<Dictionary<int, int>> GetWalletsAmount(IEnumerable<int> ids)

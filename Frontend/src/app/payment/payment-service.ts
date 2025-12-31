@@ -6,16 +6,16 @@ import { PaymentComponent } from './payment.component';
 
 @Injectable({ providedIn: PaymentComponent })
 export class PaymentService extends ApiBaseService {
-  getInvlice(code: string): Observable<PaymentInvoice> {
+  getInvlice(code: number): Observable<PaymentInvoice> {
     return this.getData<PaymentInvoice>(`${PLAN_API_URL}/get-invoice`, {
       code,
     });
   }
 
-  pay(code: string): Observable<string> {
-    return this.postData<string>(
+  pay(value: number): Observable<number> {
+    return this.postData<number>(
       `${PLAN_API_URL}/pay`,
-      { code },
+      { value },
       { show_message: ShowMessageCase.silence }
     );
   }

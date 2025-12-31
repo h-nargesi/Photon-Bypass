@@ -1,5 +1,4 @@
-﻿using Microsoft.OpenApi.Validations;
-using PhotonBypass.Application.Billing.Model;
+﻿using PhotonBypass.Application.Billing.Model;
 using PhotonBypass.Application.Plan;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
@@ -27,19 +26,35 @@ class BillingApplication(
     private Lazy<IPlanApplication> PlanApp { get; } = plan_app;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
-    public async Task<ApiResult<string?>> GenerateInvoiceCode(NewInvoiceInfo? new_info)
+    public async Task<ApiResult<int?>> GenerateInvoiceCode(int value)
+    {
+        var invoice = await GenerateInvoice(new NewInvoiceInfo
+        {
+            Price = value,
+            Descripttion = "افزایش موجودی",
+        });
+
+        if (invoice == null)
+        {
+            return ApiResult<int?>.Success(null);
+        }
+
+        return ApiResult<int?>.Success(invoice.Value.Code);
+    }
+
+    public async Task<ApiResult<int?>> GenerateInvoiceCode(NewInvoiceInfo? new_info)
     {
         var invoice = await GenerateInvoice(new_info);
 
         if (invoice == null)
         {
-            return ApiResult<string?>.Success(null);
+            return ApiResult<int?>.Success(null);
         }
 
-        return ApiResult<string?>.Success(invoice.Value.Code);
+        return ApiResult<int?>.Success(invoice.Value.Code);
     }
 
-    public async Task<ApiResult<InvoiceModel?>> GetInvoice(string? code)
+    public async Task<ApiResult<InvoiceModel?>> GetInvoice(int? code)
     {
         List<WalletEntity>? items;
 
@@ -55,7 +70,7 @@ class BillingApplication(
         }
         else
         {
-            items = await WalletRepo.GetInvoice(code);
+            items = await WalletRepo.GetInvoice(JobContext.Value.Target, code.Value);
         }
 
         if (code == null || items == null || items.Count < 1)
@@ -65,7 +80,7 @@ class BillingApplication(
 
         var result = new InvoiceModel
         {
-            Code = code,
+            Code = code.Value,
             Status = items.First().Status,
             InvoiceItems = items
                 .Select(i => new InvoiceItemModel
@@ -81,7 +96,7 @@ class BillingApplication(
 
     public async Task<ApiResult<BalanceStatus>> PaymentCallback(string token)
     {
-        var invoice_items = await WalletRepo.GetInvoice(token);
+        var invoice_items = await WalletRepo.GetInvoice(int.Parse(token));
 
         if (invoice_items.Count < 1)
         {
@@ -110,7 +125,7 @@ class BillingApplication(
         return ApiResult<BalanceStatus>.Success(BalanceStatus.Completed);
     }
 
-    private async Task<(string Code, List<WalletEntity> Items)?> GenerateInvoice(NewInvoiceInfo? new_info)
+    private async Task<(int Code, List<WalletEntity> Items)?> GenerateInvoice(NewInvoiceInfo? new_info)
     {
         if (JobContext.Value.AccountId == null)
         {
@@ -190,15 +205,7 @@ class BillingApplication(
                 return null;
             }
 
-            invocie_code = wallet_list
-                .Where(c => c.InvoiceCode.HasValue)
-                .Select(i => i.InvoiceCode)
-                .OrderBy(i => i)
-                .FirstOrDefault() ??
-                await WalletRepo.GenerateNewInvoiceCode();
-
-            wallet_list.Where(p => p.InvoiceCode != invocie_code)
-                .Foreach(p => p.InvoiceCode = invocie_code);
+            invocie_code = await GetInvocieCode(wallet_list);
 
             await WalletRepo.Save(wallet_list);
 
@@ -244,6 +251,21 @@ class BillingApplication(
             throw;
         }
 
-        return ($"I{invocie_code}", wallet_list);
+        return (invocie_code, wallet_list);
+    }
+
+    private async Task<int> GetInvocieCode(List<WalletEntity> wallets)
+    {
+        int invocie_code = wallets
+            .Where(c => c.InvoiceCode.HasValue)
+            .Select(i => i.InvoiceCode)
+            .OrderBy(i => i)
+            .FirstOrDefault() ??
+            await WalletRepo.GenerateNewInvoiceCode();
+
+        wallets.Where(p => p.InvoiceCode != invocie_code)
+            .Foreach(p => p.InvoiceCode = invocie_code);
+
+        return invocie_code;
     }
 }

@@ -23,6 +23,8 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
 
     public event Action<AccountEntity>? OnSave;
 
+    public Dictionary<string, AccountEntity> Data;
+
     public AccountRepositoryMoq() : this(FilePath)
     {
     }
@@ -31,14 +33,14 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
     {
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
-        var data = JsonSerializer.Deserialize<List<AccountEntity>>(raw_text)
+        Data = JsonSerializer.Deserialize<List<AccountEntity>>(raw_text)
                        ?.ToDictionary(x => x.Username)
                    ?? [];
 
         Setup(x => x.GetAccount(It.IsNotNull<int>()))
             .Returns<int>(id =>
             {
-                var account = data.Values.FirstOrDefault(account => account.Id == id);
+                var account = Data.Values.FirstOrDefault(account => account.Id == id);
 
                 OnGetAccountById?.Invoke(id, account);
 
@@ -48,7 +50,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
         Setup(x => x.GetAccount(It.IsNotNull<string>()))
             .Returns<string>(username =>
             {
-                if (!data.TryGetValue(username, out var account))
+                if (!Data.TryGetValue(username, out var account))
                 {
                     account = null;
                 }
@@ -62,7 +64,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
             .Returns<IEnumerable<int>>(ids =>
             {
                 var mask_hash = ids.ToHashSet();
-                var list = data.Values.Where(account => mask_hash.Contains(account.Id)).ToList();
+                var list = Data.Values.Where(account => mask_hash.Contains(account.Id)).ToList();
 
                 return Task.FromResult(list.ToDictionary(account => account.Id));
             });
@@ -70,7 +72,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
         Setup(x => x.GetAccountByMobile(It.IsNotNull<string>()))
             .Returns<string>(mobile =>
             {
-                var result = data.Values.FirstOrDefault(x => x.Mobile == mobile);
+                var result = Data.Values.FirstOrDefault(x => x.Mobile == mobile);
                 OnGetAccountByMobile?.Invoke(mobile, result);
                 return Task.FromResult(result);
             });
@@ -78,7 +80,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
         Setup(x => x.GetAccountByEmail(It.IsNotNull<string>()))
             .Returns<string>(email =>
             {
-                var result = data.Values.FirstOrDefault(x => x.Email == email);
+                var result = Data.Values.FirstOrDefault(x => x.Email == email);
                 OnGetAccountByEmail?.Invoke(email, result);
                 return Task.FromResult(result);
             });
@@ -86,7 +88,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
         Setup(x => x.GetAccountIdByUsername(It.IsNotNull<HashSet<string>>()))
             .Returns<HashSet<string>>(names =>
             {
-                var result = data.Where(pair => names.Contains(pair.Key))
+                var result = Data.Where(pair => names.Contains(pair.Key))
                     .ToDictionary(k => k.Key, v => v.Value.Id);
                 return Task.FromResult(result);
             });
@@ -95,7 +97,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
             .Returns<IEnumerable<int>>(account_ids =>
             {
                 var account_mask = account_ids.ToHashSet();
-                var result = data.Where(pair => account_mask.Contains(pair.Value.Id))
+                var result = Data.Where(pair => account_mask.Contains(pair.Value.Id))
                     .ToDictionary(k => k.Value.Id, v => v.Key);
                 return Task.FromResult(result);
             });
@@ -103,7 +105,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
         Setup(x => x.GetTargetArea(It.IsAny<int>()))
             .Returns<int>(id =>
             {
-                var result = data.Values.Where(x => x.Owner == id).ToList();
+                var result = Data.Values.Where(x => x.Owner == id).ToList();
                 OnGetTargetArea?.Invoke(id, result);
                 return Task.FromResult(result);
             });
@@ -111,7 +113,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
         Setup(x => x.GetActiveAccountId(It.IsAny<string>()))
             .Returns<string>(username =>
             {
-                if (!data.TryGetValue(username, out var account) || !account.IsActive)
+                if (!Data.TryGetValue(username, out var account) || !account.IsActive)
                 {
                     account = null;
                 }
@@ -122,7 +124,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
         Setup(x => x.CheckUniqueData(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns<string, string, string>((username, email, mobile) =>
             {
-                var result = data.Values
+                var result = Data.Values
                     .Where(x => x.Username == username || mobile != null && x.Mobile == mobile ||
                                 email != null && x.Email == email)
                     .ToList();

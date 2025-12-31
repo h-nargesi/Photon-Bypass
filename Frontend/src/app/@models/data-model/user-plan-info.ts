@@ -32,7 +32,7 @@ export interface EstimateResult {
 }
 
 export interface PaymentInvoice {
-  code: string;
+  code: number;
   items: [
     {
       title: string;

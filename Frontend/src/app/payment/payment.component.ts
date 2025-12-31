@@ -15,6 +15,7 @@ import {
 import { PaymentInvoice } from '../@models';
 import { printMoney, TranslationPipe } from '../@services';
 import { PaymentService } from './payment-service';
+import { isNumber } from 'lodash-es';
 
 @Component({
   selector: 'app-payment',
@@ -47,13 +48,13 @@ export class PaymentComponent implements OnInit {
   ngOnInit() {
     const code = this.route.snapshot.queryParamMap.get('invoice');
 
-    if (!code) {
+    if (!code || !isNumber(code)) {
       this.router.navigate(['dashboard']);
       return;
     }
 
     this.service
-      .getInvlice(code ?? '')
+      .getInvlice(+code)
       .subscribe((result) => (this.invoice = result));
   }
 
@@ -61,7 +62,7 @@ export class PaymentComponent implements OnInit {
     if (!this.invoice) return;
     this.service
       .pay(this.invoice.code)
-      .subscribe((url) => (window.location.href = url));
+      .subscribe((url) => (window.location.href = url.toString()));
   }
 
   showBalance(value?: number): string {
