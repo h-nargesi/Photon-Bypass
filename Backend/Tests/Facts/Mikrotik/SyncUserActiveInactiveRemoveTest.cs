@@ -94,8 +94,7 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
         Assert.Empty(removing_list);
 
         // check user
-        result = connection.GetUser(account, renewal.SimultaneousUser, out var user);
-        Assert.True(result);
+        var user = connection.GetUser(account.Username);
         Assert.NotNull(user);
 
         // assign user to profile
@@ -175,12 +174,12 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
         Assert.Empty(removing_list);
 
         // check user
-        _ = connection.GetUser(second, renewal.SimultaneousUser, out var user);
+        var user = connection.GetUser(second.Username);
         Assert.NotNull(user);
         Assert.Equal(second.Username, user.Name);
         Assert.False(user.Disabled);
 
-        _ = connection.GetUser(account, renewal.SimultaneousUser, out user);
+        user = connection.GetUser(account.Username);
         Assert.NotNull(user);
         Assert.Equal(account.Username, user.Name);
         Assert.False(user.Disabled);
@@ -198,12 +197,12 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
         // inactive
         await service.DeactivateUser(Server, [account.Username, second.Username]);
         
-        _ = connection.GetUser(second, renewal.SimultaneousUser, out user);
+        user = connection.GetUser(second.Username);
         Assert.NotNull(user);
         Assert.Equal(second.Username, user.Name);
         Assert.True(user.Disabled);
 
-        _ = connection.GetUser(account, renewal.SimultaneousUser, out user);
+        user = connection.GetUser(account.Username);
         Assert.NotNull(user);
         Assert.Equal(account.Username, user.Name);
         Assert.True(user.Disabled);
@@ -212,24 +211,24 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
         await service.SyncUserAndActive(Server, account, renewal);
         await service.SyncUserAndActive(Server, second, renewal);
         
-        _ = connection.GetUser(second, renewal.SimultaneousUser, out user);
+        user = connection.GetUser(second.Username);
         Assert.NotNull(user);
         Assert.Equal(second.Username, user.Name);
         Assert.False(user.Disabled);
 
-        _ = connection.GetUser(account, renewal.SimultaneousUser, out user);
+        user = connection.GetUser(account.Username);
         Assert.NotNull(user);
         Assert.Equal(account.Username, user.Name);
         Assert.False(user.Disabled);
         
         await service.DeactivateUserExcept(Server, [account.Username]);
         
-        _ = connection.GetUser(second, renewal.SimultaneousUser, out user);
+        user = connection.GetUser(second.Username);
         Assert.NotNull(user);
         Assert.Equal(second.Username, user.Name);
         Assert.True(user.Disabled);
 
-        _ = connection.GetUser(account, renewal.SimultaneousUser, out user);
+        user = connection.GetUser(account.Username);
         Assert.NotNull(user);
         Assert.Equal(account.Username, user.Name);
         Assert.False(user.Disabled);
@@ -237,12 +236,12 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
         // remove
         await service.RemoveUsers(Server, [account.Username]);
         
-        _ = connection.GetUser(second, renewal.SimultaneousUser, out user);
+        user = connection.GetUser(second.Username);
         Assert.NotNull(user);
         Assert.Equal(second.Username, user.Name);
         Assert.True(user.Disabled);
 
-        _ = connection.GetUser(account, renewal.SimultaneousUser, out user);
+        user = connection.GetUser(account.Username);
         Assert.Null(user);
     }
 

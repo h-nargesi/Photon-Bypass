@@ -133,8 +133,7 @@ public static class UserManagerHelper
         out UserModel user)
     {
         var no_need_to_save = true;
-        var username_filter = TikParam.Equal<UserModel>(nameof(UserModel.Name), account.Username);
-        user = connection.LoadList<UserModel>(username_filter).FirstOrDefault()
+        user = connection.GetUser(account.Username)
                ?? new UserModel
                {
                    Name = account.Username,
@@ -167,6 +166,12 @@ public static class UserManagerHelper
         {
             connection.Save(user);
         }
+    }
+
+    public static UserModel? GetUser(this ITikConnection connection, string username)
+    {
+        var username_filter = TikParam.Equal<UserModel>(nameof(UserModel.Name), username);
+        return connection.LoadList<UserModel>(username_filter).FirstOrDefault();
     }
 
     public static void AssignUserProfile(this ITikConnection connection, string username, string profile_name)

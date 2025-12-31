@@ -30,6 +30,7 @@ internal class MikrotikInitializer(IConfiguration configuration) : IOutSourceIni
     public async Task Check(string key)
     {
         var start = DateTime.UtcNow;
+        await Task.Delay(5000);
 
         while ((DateTime.UtcNow - start).TotalSeconds < TimeoutSeconds)
         {
