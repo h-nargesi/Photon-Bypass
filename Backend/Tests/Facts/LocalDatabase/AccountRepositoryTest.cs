@@ -34,7 +34,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         var fetch_list = new List<AccountEntity?>
         {
-            await account_repo.GetAccount(account.Id),
+            await account_repo.GetActiveAccount(account.Id),
             await account_repo.GetAccount(account.Username),
             await account_repo.GetAccountByEmail(account.Email),
             await account_repo.GetAccountByMobile(account.Mobile),
@@ -61,7 +61,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         fetch_list =
         [
-            await account_repo.GetAccount(account.Id),
+            await account_repo.GetActiveAccount(account.Id),
             await account_repo.GetAccount(account.Username),
             await account_repo.GetAccountByEmail(account.Email),
             await account_repo.GetAccountByMobile(account.Mobile),
@@ -87,10 +87,10 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
 
-        var account = await account_repo.GetAccount("User1");
+        var account = await account_repo.GetAccount("User99");
         Assert.NotNull(account);
 
-        var targets = (await account_repo.GetTargetArea(account.Id))
+        var targets = (await account_repo.GetActiveTargetArea(account.Id))
             .Select(x => x.Username)
             .ToHashSet();
 
@@ -109,9 +109,9 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
 
-        var account_ids = await account_repo.GetAccountIdByUsername(["User1"]);
+        var account_ids = await account_repo.GetAccountIdByUsername(["User99"]);
         Assert.NotNull(account_ids);
         Assert.Single(account_ids);
-        Assert.Contains("User1", account_ids.Keys);
+        Assert.Contains("User99", account_ids.Keys);
     }
 }

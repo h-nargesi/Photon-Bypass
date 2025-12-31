@@ -7,10 +7,18 @@ namespace PhotonBypass.Infra.Repository;
 
 class AccountRepository(LocalDbContext context) : EditableRepository<AccountEntity>(context), IAccountRepository
 {
-    public async Task<AccountEntity?> GetAccount(int id)
+    public async Task<List<AccountEntity>> GetAllActive()
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Id)} = @id")
+            .Where($"{nameof(AccountEntity.IsActive)} = 1"));
+
+        return [.. result];
+    }
+
+    public async Task<AccountEntity?> GetActiveAccount(int id)
+    {
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(AccountEntity.Id)} = @id and {nameof(AccountEntity.IsActive)} = 1")
             .WithParameters(new { id }));
 
         return result.FirstOrDefault();
@@ -43,19 +51,19 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return result.FirstOrDefault();
     }
 
-    public async Task<List<AccountEntity>> GetTargetArea(int account_id)
+    public async Task<List<AccountEntity>> GetActiveTargetArea(int account_id)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Owner)} = @account_id")
+            .Where($"{nameof(AccountEntity.Owner)} = @account_id and {nameof(AccountEntity.IsActive)} = 1")
             .WithParameters(new { account_id }));
 
         return [.. result];
     }
 
-    public async Task<Dictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids)
+    public async Task<Dictionary<int, AccountEntity>> GetActiveAccounts(IEnumerable<int> account_ids)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Id)} in @account_ids")
+            .Where($"{nameof(AccountEntity.Id)} in @account_ids and {nameof(AccountEntity.IsActive)} = 1")
             .WithParameters(new { account_ids }));
 
         return result.ToDictionary(k => k.Id);
@@ -90,7 +98,11 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
     public async Task<int?> GetActiveAccountId(string username)
     {
         var result = await ExecuteScalarAsync<int>(
-            $"select {nameof(AccountEntity.Id)} from {TableName} where {nameof(AccountEntity.Username)} = @username"
+            $"""
+            select {nameof(AccountEntity.Id)} 
+            from {TableName}
+            where {nameof(AccountEntity.Username)} = @username and {nameof(AccountEntity.IsActive)} = 1
+            """
             , new { username });
 
         return result;

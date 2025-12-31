@@ -24,22 +24,24 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
     protected readonly HttpClient Client = factory.CreateClient();
     protected IServiceProvider ServiceProvider => factory.Services;
 
-    protected static Task<ApiResult<object>> CheckResponse(HttpResponseMessage response)
+    protected static Task<ApiResult<object>> CheckResponse(HttpResponseMessage response, int state = 2)
     {
-        return CheckResponse<object>(response);
+        return CheckResponse<object>(response, state);
     }
 
-    protected static Task<ApiResult<Dictionary<string, object>>> CheckResponseObject(HttpResponseMessage response)
+    protected static async Task<Dictionary<string, string>> CheckResponseObject(HttpResponseMessage response, int state = 2)
     {
-        return CheckResponse<Dictionary<string, object>>(response);
+        var result = await CheckResponse<Dictionary<string, object>>(response, state);
+        return result.Data?.ToDictionary(k => k.Key, v => v.ToString()) ?? [];
     }
 
-    protected static Task<ApiResult<Dictionary<string, object>[]>> CheckResponseArray(HttpResponseMessage response)
+    protected static async Task<Dictionary<string, string>[]> CheckResponseArray(HttpResponseMessage response, int state = 2)
     {
-        return CheckResponse<Dictionary<string, object>[]>(response);
+        var result = await CheckResponse<Dictionary<string, object>[]>(response, state);
+        return result.Data?.Select(record => record.ToDictionary(k => k.Key, v => v.ToString())).ToArray() ?? [];
     }
 
-    private static async Task<ApiResult<T>> CheckResponse<T>(HttpResponseMessage response)
+    private static async Task<ApiResult<T>> CheckResponse<T>(HttpResponseMessage response, int state)
     {
         var content = await response.Content.ReadAsStringAsync();
 
@@ -47,24 +49,26 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
             ? null
             : JsonSerializer.Deserialize<ApiResult<T>>(content, Options);
 
-        if (result != null)
+        var code = result?.Code ?? (int)response.StatusCode;
+
+        if (state != code)
         {
-            return response.IsSuccessStatusCode && result.Code / 100 == 2
-                ? result
-                : throw new Exception(result.Developer ?? result.Message);
+            var message = result?.Developer ?? result?.Message ?? response.RequestMessage?.ToString();
+            throw new Exception($"Code: {code}\n" + message);
         }
 
-        response.EnsureSuccessStatusCode();
-        throw new Exception("Empty result!");
+        Assert.NotNull(result);
+
+        return result;
     }
 
-    protected void SetToken(ApiResult<Dictionary<string, object>> token)
+    protected void SetToken(Dictionary<string, string> token)
     {
-        if (token.Data == null)
-            throw new Exception($"Unexpected token: {token?.Data}");
+        if (token == null)
+            throw new Exception($"Unexpected token: {token}");
         Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
-            token.Data["access_token"].ToString());
+            token["access_token"].ToString());
     }
 
     protected async Task FakeAddMoney(string username, int value)

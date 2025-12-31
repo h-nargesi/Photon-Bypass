@@ -60,7 +60,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         };
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User1", new_password);
+            .ChangeVpnPassword("User99", new_password);
 
         Assert.True(is_saved);
         Assert.Equal(2, data.Code / 100);
@@ -134,7 +134,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .TrafficData("User1");
+            .TrafficData("User99");
 
         Assert.NotNull(data.Data);
         Assert.Equal(30, data.Data.Labels.Length);

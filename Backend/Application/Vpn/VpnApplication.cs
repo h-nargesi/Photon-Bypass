@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Application.Vpn.Model;
+﻿using PhotonBypass.Application.Account;
+using PhotonBypass.Application.Vpn.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
@@ -21,6 +22,7 @@ class VpnApplication(
     Lazy<IPlanStateRepository> plan_state_repo,
     Lazy<IAccountRadiusSyncService> account_radius_srv,
     Lazy<IServerManagementService> server_mng_srv,
+    Lazy<IAccountApplication> account_app,
     Lazy<IEmailService> email_srv,
     Lazy<IJobContext> job_context)
     : IVpnApplication
@@ -33,18 +35,13 @@ class VpnApplication(
     private Lazy<IPlanStateRepository> PlanStateRepo { get; } = plan_state_repo;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
     private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
+    private Lazy<IAccountApplication> AccountApp { get; } = account_app;
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
     public async Task<ApiResult> ChangeVpnPassword(string target, string password)
     {
-        var account = (await AccountRepo.Value.GetAccount(target)) ??
-                      throw new UserException("کاربر پیدا نشد!", $"target not found: {target}");
-
-        if (!account.IsActive)
-        {
-            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
-        }
+        var account = await AccountApp.Value.GetActiveUser(target);
 
         var plan = (await PlanStateRepo.Value.GetPlanState(account.Id)) ??
                    throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
@@ -66,13 +63,7 @@ class VpnApplication(
 
     public async Task<ApiResult> SendCertEmail(string target)
     {
-        var account = (await AccountRepo.Value.GetAccount(target)) ??
-                      throw new UserException("کاربر پیدا نشد!", $"target not found: {target}");
-
-        if (!account.IsActive)
-        {
-            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
-        }
+        var account = await AccountApp.Value.GetActiveUser(target);
 
         if (account.EmailAddress == null)
         {

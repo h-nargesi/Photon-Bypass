@@ -124,7 +124,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("192.168.125.11", "User1", "invalid session");
+        var func = () => connection_app.CloseConnection("192.168.125.11", "User99", "invalid session");
 
         return func.Should().ThrowAsync<UserException>();
     }
@@ -134,7 +134,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("192.168.125.11", "User1", "0F52A7");
+        var func = () => connection_app.CloseConnection("192.168.125.11", "User99", "0F52A7");
 
         return func.Should().ThrowAsync<UserException>();
     }

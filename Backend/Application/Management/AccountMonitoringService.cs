@@ -38,7 +38,7 @@ internal class AccountMonitoringService(
                 continue;
             }
 
-            var account = await AccountRepo.GetAccount(plan.Id);
+            var account = await AccountRepo.GetActiveAccount(plan.Id);
 
             if (account == null)
             {
@@ -104,7 +104,7 @@ internal class AccountMonitoringService(
     {
         var plan_state_list = plan_states.Where(plan => plan.IsFinishing()).ToArray();
         var account_ids = plan_state_list.Select(x => x.Id).ToList();
-        var accounts = await AccountRepo.GetAccounts(account_ids);
+        var accounts = await AccountRepo.GetActiveAccounts(account_ids);
 
         var tasks = new List<Task>();
         var history_list = new List<HistoryEntity>();

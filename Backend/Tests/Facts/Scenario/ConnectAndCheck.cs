@@ -32,13 +32,13 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : ProgramL
 
         // /api/account/full-info
         response = await Client.GetAsync("/api/account/full-info");
-        var user = (await CheckResponseObject(response)).Data;
+        var user = await CheckResponseObject(response);
 
         Assert.NotNull(user);
         Assert.Equal("user02", user["username"].ToString());
 
         response = await Client.GetAsync("/api/account/full-info");
-        var edition_2 = (await CheckResponseObject(response)).Data;
+        var edition_2 = await CheckResponseObject(response);
 
         Assert.NotNull(edition_2);
         foreach (var prop in edition_2)
@@ -55,7 +55,7 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : ProgramL
             Gigabytes = 50,
         };
         response = await Client.PostAsJsonAsync("/api/plan/estimate", request);
-        var estimate = (await CheckResponseObject(response)).Data;
+        var estimate = await CheckResponseObject(response);
 
         Assert.NotNull(estimate);
         Assert.NotNull(estimate["price"]);
@@ -68,7 +68,7 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : ProgramL
 
         // /api/plan/renewal
         response = await Client.PostAsJsonAsync("/api/plan/renewal", request);
-        var renewal = (await CheckResponseObject(response)).Data;
+        var renewal = await CheckResponseObject(response);
 
         Assert.NotNull(renewal);
         Assert.Equal("0", renewal["currentPrice"].ToString());
@@ -76,7 +76,7 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : ProgramL
 
         // /api/plan/plan-info
         response = await Client.GetAsync("/api/plan/plan-info");
-        var plan_info = (await CheckResponseObject(response)).Data;
+        var plan_info = await CheckResponseObject(response);
 
         Assert.NotNull(plan_info);
         Assert.Equal(estimate["days"].ToString(), plan_info["days"].ToString());

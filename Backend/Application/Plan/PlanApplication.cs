@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Application.Billing;
+﻿using PhotonBypass.Application.Account;
+using PhotonBypass.Application.Billing;
 using PhotonBypass.Application.Billing.Model;
 using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Domain;
@@ -28,6 +29,7 @@ class PlanApplication(
     Lazy<ISessionRadiusSyncService> session_radius_srv,
     Lazy<IAccountRadiusSyncService> account_radius_srv,
     Lazy<IServerManagementService> server_mng_srv,
+    Lazy<IAccountApplication> account_app,
     Lazy<IBillingApplication> billing_app,
     Lazy<IJobContext> job_context)
     : IPlanApplication
@@ -42,6 +44,7 @@ class PlanApplication(
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
     private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
     private Lazy<IBillingApplication> BillingApp { get; } = billing_app;
+    private Lazy<IAccountApplication> AccountApp { get; } = account_app;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
     public async Task<ApiResult<PlanStateModel>> GetPlanState(string target)
@@ -94,8 +97,7 @@ class PlanApplication(
 
     public async Task<ApiResult<EstimateResult>> Estimate(string target, byte users, short days, int gigabytes)
     {
-        var account = (await AccountRepo.Value.GetAccount(target)) ??
-                      throw new UserException("کاربر مورد نظر پیدا نشد!");
+        var account = await AccountApp.Value.GetActiveUser(target);
 
         var renew = new RenewalEntity
         {
@@ -123,8 +125,7 @@ class PlanApplication(
 
     public async Task<ApiResult<RenewalResult>> Renewal(string target, byte count, short days, int gigabytes)
     {
-        var account = (await AccountRepo.Value.GetAccount(target)) ??
-                      throw new UserException("کاربر مورد نظر پیدا نشد!");
+        var account = await AccountApp.Value.GetActiveUser(target);
 
         JobContext.Value.InjectJobContext(account.Id);
 
@@ -159,8 +160,7 @@ class PlanApplication(
             throw new UserException("کاربر مورد نظر پیدا نشد!");
         }
 
-        var target = (await AccountRepo.Value.GetAccount(target_name)) ??
-                      throw new UserException("کاربر مورد نظر پیدا نشد!");
+        var target = await AccountApp.Value.GetActiveUser(target_name);
 
         JobContext.Value.InjectJobContext(account_id, account[account_id], target_name);
 

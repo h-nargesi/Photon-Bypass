@@ -57,7 +57,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
 
         Assert.True(account.Id > 0);
 
-        var saved = await account_repo.GetAccount(account.Id);
+        var saved = await account_repo.GetActiveAccount(account.Id);
 
         Assert.NotNull(saved);
         Assert.Equal(account.Username, saved.Username);
@@ -98,7 +98,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
             Assert.True(account.Id > 0);
         }
 
-        var saveds = await account_repo.GetAccounts(accounts.Select(a => a.Id));
+        var saveds = await account_repo.GetActiveAccounts(accounts.Select(a => a.Id));
 
         foreach (var account in accounts)
         {

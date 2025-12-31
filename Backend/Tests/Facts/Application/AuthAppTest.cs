@@ -37,7 +37,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var result = await auth_app.CheckUserPassword("User1", "invalid password");
+        var result = await auth_app.CheckUserPassword("User99", "invalid password");
 
         Assert.NotNull(result);
         Assert.Equal(401, result.Code);
@@ -48,12 +48,12 @@ public class AuthAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var result = await auth_app.CheckUserPassword("User1", "abc");
+        var result = await auth_app.CheckUserPassword("User99", "abc");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
-        Assert.Equal("User1", result.Data.Username);
+        Assert.Equal("User99", result.Data.Username);
         Assert.NotNull(result.Data.TargetArea);
         Assert.Equal(2, result.Data.TargetArea.Count);
     }
@@ -204,7 +204,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
         var function = () => auth_app.Register(new RegisterModel
         {
-            Username = "User1",
+            Username = "User99",
             Email = null,
             Mobile = "09123456789",
         });

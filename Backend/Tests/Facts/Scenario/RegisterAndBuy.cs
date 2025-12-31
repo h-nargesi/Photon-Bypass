@@ -47,14 +47,14 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
 
         // /api/account/get-user
         response = await Client.GetAsync("/api/account/get-user");
-        var user = (await CheckResponseObject(response)).Data;
+        var user = await CheckResponseObject(response);
 
         Assert.NotNull(user);
         Assert.Equal("fname lname", user["fullname"].ToString());
 
         // /api/account/full-info
         response = await Client.GetAsync("/api/account/full-info");
-        user = (await CheckResponseObject(response)).Data;
+        user = await CheckResponseObject(response);
 
         Assert.NotNull(user);
         Assert.Equal(username, user["username"].ToString());
@@ -72,7 +72,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
         await CheckResponse(response);
 
         response = await Client.GetAsync("/api/account/full-info");
-        var edition_2 = (await CheckResponseObject(response)).Data;
+        var edition_2 = await CheckResponseObject(response);
 
         Assert.NotNull(edition_2);
         foreach (var prop in edition_2)
@@ -125,7 +125,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
 
         // /api/basics/prices
         response = await Client.GetAsync("/api/basics/prices");
-        var prices = (await CheckResponseArray(response)).Data;
+        var prices = await CheckResponseArray(response);
 
         Assert.NotNull(prices);
         Assert.Single(prices);
@@ -133,7 +133,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
 
         // /api/plan/plan-state
         response = await Client.GetAsync("/api/plan/plan-state");
-        var plan_state = (await CheckResponseObject(response)).Data;
+        var plan_state = await CheckResponseObject(response);
 
         Assert.NotNull(plan_state);
         Assert.Null(plan_state["remainsTitle"]);
@@ -143,7 +143,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
 
         // /api/plan/plan-info
         response = await Client.GetAsync("/api/plan/plan-info");
-        var plan_info = (await CheckResponseObject(response)).Data;
+        var plan_info = await CheckResponseObject(response);
 
         Assert.NotNull(plan_info);
         Assert.Null(plan_info["days"]);
@@ -160,7 +160,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
             Gigabytes = 50,
         };
         response = await Client.PostAsJsonAsync("/api/plan/estimate", request);
-        var estimate = (await CheckResponseObject(response)).Data;
+        var estimate = await CheckResponseObject(response);
 
         Assert.NotNull(estimate);
         Assert.NotNull(estimate["price"]);
@@ -173,7 +173,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
 
         // /api/plan/renewal
         response = await Client.PostAsJsonAsync("/api/plan/renewal", request);
-        var renewal = (await CheckResponseObject(response)).Data;
+        var renewal = await CheckResponseObject(response);
 
         Assert.NotNull(renewal);
         Assert.Equal("0", renewal["currentPrice"].ToString());
@@ -181,7 +181,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : P
 
         // /api/plan/plan-info
         response = await Client.GetAsync("/api/plan/plan-info");
-        plan_info = (await CheckResponseObject(response)).Data;
+        plan_info = await CheckResponseObject(response);
 
         Assert.NotNull(plan_info);
         Assert.Equal(estimate["days"].ToString(), plan_info["days"].ToString());

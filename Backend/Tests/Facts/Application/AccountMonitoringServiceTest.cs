@@ -128,7 +128,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var plan_state_list = await plan_state_repo.GetAll();
         var finishing_list = plan_state_list.Where(plan => plan.IsFinishing()).ToList();
 
-        var emails = new HashSet<string> { "User1@gmail.com", "User4@gmail.com" };
+        var emails = new HashSet<string> { "User99@gmail.com", "User4@gmail.com" };
         email_service_moq.OnSend += mail =>
         {
             Assert.Single(mail.To);

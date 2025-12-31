@@ -34,7 +34,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
         var billing_repo = scope.ServiceProvider.GetRequiredService<IBillingApplication>();
 
-        job_context.InjectJobContext(1, "User1", "User1");
+        job_context.InjectJobContext(99, "User99", "User99");
 
         var invoice_code = await billing_repo.GenerateInvoiceCode(new NewInvoiceInfo
         {

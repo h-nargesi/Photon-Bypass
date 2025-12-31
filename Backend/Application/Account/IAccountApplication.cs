@@ -7,6 +7,8 @@ namespace PhotonBypass.Application.Account;
 
 public interface IAccountApplication
 {
+    Task<AccountEntity> GetActiveUser(string username);
+
     Task<ApiResult<UserModel>> GetUser(string username);
 
     Task<ApiResult<FullUserModel>> GetFullInfo(string target);

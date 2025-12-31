@@ -5,7 +5,9 @@ namespace PhotonBypass.Domain.Account;
 
 public interface IAccountRepository : IEditableRepository<AccountEntity>
 {
-    Task<AccountEntity?> GetAccount(int id);
+    Task<List<AccountEntity>> GetAllActive();
+
+    Task<AccountEntity?> GetActiveAccount(int id);
 
     Task<AccountEntity?> GetAccount(string username);
 
@@ -13,9 +15,9 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
 
     Task<AccountEntity?> GetAccountByEmail(string email);
 
-    Task<List<AccountEntity>> GetTargetArea(int account_id);
+    Task<List<AccountEntity>> GetActiveTargetArea(int account_id);
 
-    Task<Dictionary<int, AccountEntity>> GetAccounts(IEnumerable<int> account_ids);
+    Task<Dictionary<int, AccountEntity>> GetActiveAccounts(IEnumerable<int> account_ids);
 
     Task<Dictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames);
 

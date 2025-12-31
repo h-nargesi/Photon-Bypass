@@ -156,7 +156,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
 
         if (wallet.Id < 1)
         {
-            wallet.Id = list.Max(i => i.Id);
+            wallet.Id = list.Count > 0 ? list.Max(i => i.Id) : 0;
             wallet.Id++;
             list.Add(wallet);
         }

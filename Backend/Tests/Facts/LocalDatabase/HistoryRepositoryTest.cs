@@ -19,7 +19,7 @@ public class HistoryRepositoryTest : OutSourceLevelServiceInitializer
 
         var history_repo = scope.ServiceProvider.GetRequiredService<IHistoryRepository>();
         var accountId = await scope.ServiceProvider.GetRequiredService<IAccountRepository>()
-            .GetAccountIdByUsername(["User1"]);
+            .GetAccountIdByUsername(["User99"]);
 
         var now = new DateTime(10000 * (DateTime.Now.Ticks / 10000));
 
@@ -31,12 +31,12 @@ public class HistoryRepositoryTest : OutSourceLevelServiceInitializer
             Type = EventType.Success,
             Value = "Value",
             Price = 1200,
-            Target = accountId["User1"],
+            Target = accountId["User99"],
             Created = now.AddDays(-10),
         };
 
         await history_repo.Save(history);
-        var histories = await history_repo.GetHistory("User1", now.AddDays(-11), null);
+        var histories = await history_repo.GetHistory("User99", now.AddDays(-11), null);
 
         Assert.NotNull(histories);
         AssertHistories([history], histories.ToDictionary(h => h.Title));
@@ -50,7 +50,7 @@ public class HistoryRepositoryTest : OutSourceLevelServiceInitializer
 
         var history_repo = scope.ServiceProvider.GetRequiredService<IHistoryRepository>();
         var accountId = await scope.ServiceProvider.GetRequiredService<IAccountRepository>()
-            .GetAccountIdByUsername(["User1"]);
+            .GetAccountIdByUsername(["User99"]);
 
         var now = new DateTime(10000 * (DateTime.Now.Ticks / 10000));
 
@@ -63,7 +63,7 @@ public class HistoryRepositoryTest : OutSourceLevelServiceInitializer
                 Type = EventType.Success,
                 Value = "Value",
                 Price = 1200,
-                Target = accountId["User1"],
+                Target = accountId["User99"],
                 Created = now.AddDays(-10),
             },
             new() {
@@ -73,13 +73,13 @@ public class HistoryRepositoryTest : OutSourceLevelServiceInitializer
                 Type = EventType.Success,
                 Value = "Value2",
                 Price = 1100,
-                Target = accountId["User1"],
+                Target = accountId["User99"],
                 Created = now.AddDays(-9),
             }
         };
 
         await history_repo.Save(saving_history);
-        var histories = await history_repo.GetHistory("User1", now.AddDays(-11), null);
+        var histories = await history_repo.GetHistory("User99", now.AddDays(-11), null);
 
         Assert.NotNull(histories);
         AssertHistories(saving_history, histories.ToDictionary(h => h.Title));
@@ -89,7 +89,7 @@ public class HistoryRepositoryTest : OutSourceLevelServiceInitializer
             history.Issuer  = 1;
 
         await history_repo.Save(saving_history);
-        histories = await history_repo.GetHistory("User1", now.AddDays(-11), null);
+        histories = await history_repo.GetHistory("User99", now.AddDays(-11), null);
 
         Assert.NotNull(histories);
         AssertHistories(saving_history, histories.ToDictionary(h => h.Title));

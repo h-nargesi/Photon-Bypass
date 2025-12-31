@@ -13,12 +13,12 @@ public class AccountAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
-        var result = await account_app.GetUser("User1");
+        var result = await account_app.GetUser("User99");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
-        Assert.Equal("User1", result.Data.Username);
+        Assert.Equal("User99", result.Data.Username);
     }
 
     [Fact]
@@ -37,12 +37,12 @@ public class AccountAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
-        var result = await account_app.GetFullInfo("User1");
+        var result = await account_app.GetFullInfo("User99");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
-        Assert.Equal("User1", result.Data.Username);
+        Assert.Equal("User99", result.Data.Username);
     }
 
     [Fact]
@@ -61,7 +61,7 @@ public class AccountAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
-        var result = await account_app.EditUser("User1", new EditUserModel
+        var result = await account_app.EditUser("User99", new EditUserModel
         {
             Firstname = nameof(EditUserModel.Firstname),
             Lastname = nameof(EditUserModel.Lastname),
@@ -128,7 +128,7 @@ public class AccountAppTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var func = () => account_app.ChangePassword("User1", "xyz", "new-password");
+        var func = () => account_app.ChangePassword("User99", "xyz", "new-password");
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -139,7 +139,7 @@ public class AccountAppTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var result = await account_app.ChangePassword("User1", "abc", "new-password");
+        var result = await account_app.ChangePassword("User99", "abc", "new-password");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);

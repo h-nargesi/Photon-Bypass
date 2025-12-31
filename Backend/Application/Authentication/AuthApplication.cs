@@ -66,7 +66,11 @@ class AuthApplication(
             };
         }
 
-        var target_area = (await AccountRepo.GetTargetArea(account.Id))
+        var target_list = account.Id == 1 ?
+            await AccountRepo.GetAllActive() :
+            await AccountRepo.GetActiveTargetArea(account.Id);
+
+        var target_area = target_list
             .Select(user => new TargetModel
             {
                 Username = user.Username,
@@ -180,7 +184,7 @@ class AuthApplication(
             throw new UserException("این کد منقضی شده است! دوباره تلاش کنید.");
         }
         
-        var account = await AccountRepo.GetAccount(reset_pass.AccountId);
+        var account = await AccountRepo.GetActiveAccount(reset_pass.AccountId);
 
         code = account?.Password ?? string.Empty;
         password = HashHandler.HashPassword(password);

@@ -23,7 +23,7 @@ class AccountApplication(
     private Lazy<IWalletRepository> WalletRepo { get; } = wallet_repo;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
-    public async Task<ApiResult<UserModel>> GetUser(string username)
+    public async Task<AccountEntity> GetActiveUser(string username)
     {
         var account = (await AccountRepo.GetAccount(username)) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
@@ -33,7 +33,14 @@ class AccountApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
 
-        var target_area = (await AccountRepo.GetTargetArea(account.Id))
+        return account;
+    }
+
+    public async Task<ApiResult<UserModel>> GetUser(string username)
+    {
+        var account = await GetActiveUser(username);
+
+        var target_area = (await AccountRepo.GetActiveTargetArea(account.Id))
             .Select(entity => new TargetModel
             {
                 Username = entity.Username,
@@ -64,13 +71,7 @@ class AccountApplication(
 
     public async Task<ApiResult<FullUserModel>> GetFullInfo(string target)
     {
-        var account = (await AccountRepo.GetAccount(target)) ??
-                      throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
-
-        if (!account.IsActive)
-        {
-            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
-        }
+        var account = await GetActiveUser(target);
 
         return ApiResult<FullUserModel>.Success(new FullUserModel
         {
@@ -86,13 +87,7 @@ class AccountApplication(
 
     public async Task<ApiResult> EditUser(string target, EditUserModel model)
     {
-        var account = (await AccountRepo.GetAccount(target)) ??
-                      throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
-
-        if (!account.IsActive)
-        {
-            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
-        }
+        var account = await GetActiveUser(target);
 
         account.SetFromModel(model);
 

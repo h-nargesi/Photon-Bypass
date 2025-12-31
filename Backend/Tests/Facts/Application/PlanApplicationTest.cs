@@ -67,7 +67,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
-        var plan_state = await plan_app.GetPlanState("User1");
+        var plan_state = await plan_app.GetPlanState("User99");
 
         Assert.NotNull(plan_state);
         Assert.Equal(2, plan_state.Code / 100);
@@ -121,7 +121,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
-        var plan_state = await plan_app.GetPlanInfo("User1");
+        var plan_state = await plan_app.GetPlanInfo("User99");
 
         Assert.NotNull(plan_state);
         Assert.Equal(2, plan_state.Code / 100);
@@ -225,7 +225,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         Assert.NotNull(estimate);
 
-        var result = await plan_app.Renewal(1, 1, "User2t|5u|120d|75g");
+        var result = await plan_app.Renewal(99, 1, "User2t|5u|120d|75g");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);

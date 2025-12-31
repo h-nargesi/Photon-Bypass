@@ -37,7 +37,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
                        ?.ToDictionary(x => x.Username)
                    ?? [];
 
-        Setup(x => x.GetAccount(It.IsNotNull<int>()))
+        Setup(x => x.GetActiveAccount(It.IsNotNull<int>()))
             .Returns<int>(id =>
             {
                 var account = Data.Values.FirstOrDefault(account => account.Id == id);
@@ -60,7 +60,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
                 return Task.FromResult(account);
             });
 
-        Setup(x => x.GetAccounts(It.IsNotNull<IEnumerable<int>>()))
+        Setup(x => x.GetActiveAccounts(It.IsNotNull<IEnumerable<int>>()))
             .Returns<IEnumerable<int>>(ids =>
             {
                 var mask_hash = ids.ToHashSet();
@@ -102,7 +102,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
                 return Task.FromResult(result);
             });
 
-        Setup(x => x.GetTargetArea(It.IsAny<int>()))
+        Setup(x => x.GetActiveTargetArea(It.IsAny<int>()))
             .Returns<int>(id =>
             {
                 var result = Data.Values.Where(x => x.Owner == id).ToList();
