@@ -67,11 +67,10 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 
     protected void SetToken(Dictionary<string, string> token)
     {
-        if (token == null)
+        if (token == null || token.TryGetValue("access_token", out var access_token))
             throw new Exception($"Unexpected token: {token}");
-        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
-            "Bearer",
-            token["access_token"].ToString());
+        
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access_token);
     }
 
     public class Factory : WebApplicationFactory<PortalProgram>
