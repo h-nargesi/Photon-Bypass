@@ -8,7 +8,7 @@ using PhotonBypass.Test.Mock.MockServerBridge;
 
 namespace PhotonBypass.Test.Facts.Scenario;
 
-public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : ProgramLevelInitializer(factory)
+public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : HttpHandler(factory)
 {
     [Fact]
     public async Task Simple()

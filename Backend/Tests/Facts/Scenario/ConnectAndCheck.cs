@@ -5,7 +5,7 @@ using PhotonBypass.Test.Initializer;
 
 namespace PhotonBypass.Test.Facts.Scenario;
 
-public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : ProgramLevelInitializer(factory)
+public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : HttpHandler(factory)
 {
     [Fact]
     public async Task Test()

@@ -8,5 +8,5 @@ public class RenewalContext
 
     public short? Days { get; set; }
 
-    public byte? Gigabytes { get; set; }
+    public short? Gigabytes { get; set; }
 }

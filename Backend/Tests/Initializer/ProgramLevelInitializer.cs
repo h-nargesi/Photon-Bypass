@@ -50,8 +50,11 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
             : JsonSerializer.Deserialize<ApiResult<T>>(content, Options);
 
         var code = result?.Code ?? (int)response.StatusCode;
+        var exp = state < 10 ? code / 100
+            : state < 100 ? code / 10
+            : code;
 
-        if (state != code)
+        if (state != exp)
         {
             var message = result?.Developer ?? result?.Message ?? response.RequestMessage?.ToString();
             throw new Exception($"Code: {code}\n" + message);
@@ -69,26 +72,6 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
         Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
             "Bearer",
             token["access_token"].ToString());
-    }
-
-    protected async Task FakeAddMoney(string username, int value)
-    {
-        using var scope = ServiceProvider.CreateScope();
-
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
-        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
-
-        var account = await account_repo.GetAccount(username);
-        Assert.NotNull(account);
-
-        await wallet_repo.Save(new WalletEntity
-        {
-            AccountId = account.Id,
-            Amount = value,
-            Direction = BalanceDirection.Credit,
-            Status = BalanceStatus.Completed,
-            Description = "Fake Add Money",
-        });
     }
 
     public class Factory : WebApplicationFactory<PortalProgram>

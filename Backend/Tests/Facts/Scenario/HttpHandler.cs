@@ -1,6 +1,10 @@
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Portal.Context;
 using PhotonBypass.Test.Initializer;
+using PhotonBypass.Test.Mock.MockServerBridge;
+using PhotonBypass.Application.Authentication.Model;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 
@@ -8,7 +12,7 @@ namespace PhotonBypass.Test.Facts.Scenario;
 
 public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : ProgramLevelInitializer(factory)
 {
-    protected async Task Register(string username, string phone)
+    protected async Task Register(string username, string phone, string password, int status = 2)
     {
         var response = await Client.PostAsJsonAsync("/api/auth/register", new RegisterModel
         {
@@ -17,31 +21,31 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
             Mobile = $"+9891212345{phone}",
             Email = $"{username}@gmail.com",
             Username = username,
-            Password = "Password",
+            Password = password,
         });
-        await CheckResponse(response);
+        await CheckResponse(response, status);
     }
 
-    protected async Task Login(string username, string password)
+    protected async Task Login(string username, string password, int status = 2)
     {
         var response = await Client.PostAsJsonAsync("/api/auth/token", new TokenContext
         {
             Username = username,
             Password = password,
         });
-        SetToken(await CheckResponseObject(response));
+        SetToken(await CheckResponseObject(response, status));
     }
 
-    protected async Task<Dictionary<string, string>> GetUser()
+    protected async Task<Dictionary<string, string>> GetUser(int status = 2)
     {
         var response = await Client.GetAsync("/api/account/get-user");
-        return await CheckResponseObject(response);
+        return await CheckResponseObject(response, status);
     }
 
-    protected async Task<Dictionary<string, string>> FullInfo()
+    protected async Task<Dictionary<string, string>> FullInfo(int status = 2)
     {
         var response = await Client.GetAsync("/api/account/full-info");
-        return await CheckResponseObject(response);
+        return await CheckResponseObject(response, status);
     }
 
     protected async Task<Dictionary<string, string>> FullInfo(string taget, int status = 2)
@@ -50,7 +54,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         return await CheckResponseObject(response, status);
     }
 
-    protected async Task EditUser(string username, Dictionary<string, string> user)
+    protected async Task EditUser(string username, Dictionary<string, string> user, int status = 2)
     {
         // /api/account/edit-user
         user["firstname"] = "first-name";
@@ -62,134 +66,123 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
             Lastname = user["lastname"].ToString(),
             Mobile = user["mobile"].ToString(),
         });
-        await CheckResponse(response);
+        await CheckResponse(response, status);
     }
 
-    protected async Task ChangePass(string token, string password)
+    protected async Task ChangePass(string token, string password, int status = 2)
     {
         var response = await Client.PostAsJsonAsync("/api/account/change-pass", new ChangePasswordContext
         {
             Token = token,
             Password = password,
         });
-        await CheckResponse(response);
+        await CheckResponse(response, status);
     }
 
-    protected async Task ResetPass(string token, string password)
+    protected async Task<string> ForgetPass(string username, int status = 2)
     {
-        var response = await Client.PostAsJsonAsync("/api/account/change-pass", new ChangePasswordContext
+       var code = string.Empty;
+        var email_srv = ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        email_srv.OnSend += message =>
         {
-            Token = token,
-            Password = password,
+            var match = CodeSelector().Match(message.Body);
+            Assert.True(match.Success);
+            code = match.Groups[1].Value;
+        };
+
+        var response = await Client.PostAsJsonAsync("/api/account/forget-pass", new ResetPasswordContext
+        {
+            EmailMobile = $"{username}@gmail.com",
         });
-        await CheckResponse(response);
+        await CheckResponse(response, status);
+
+        return code;
     }
 
-    //protected async Task OnePerson(string username, EditUserModel model)
-    //{
-    //    // reset-password
-    //    var code = string.Empty;
-    //    var email_srv = ServiceProvider.GetRequiredService<EmailHandlerMoq>();
-    //    email_srv.OnSend += message =>
-    //    {
-    //        var match = CodeSelector().Match(message.Body);
-    //        code = match.Groups[1].Value;
-    //    };
-    //    response = await Client.PostAsJsonAsync("/api/auth/forget-pass", new ResetPasswordContext
-    //    {
-    //        EmailMobile = $"{username}@gmail.com",
-    //    });
-    //    await CheckResponse(response);
+    protected async Task ResetPass(string code, string password, int status = 2)
+    {
+       var response = await Client.PostAsJsonAsync("/api/auth/reset-pass", new ChangePasswordContext
+       {
+           Token = code,
+           Password = password,
+       });
+       await CheckResponse(response, status);
+    }
 
-    //    response = await Client.PostAsJsonAsync("/api/auth/reset-pass", new ChangePasswordContext
-    //    {
-    //        Token = code,
-    //        Password = "reset-password",
-    //    });
-    //    await CheckResponse(response);
+    protected async Task<Dictionary<string, string>[]> Prices(int status = 2)
+    {
+       var response = await Client.GetAsync("/api/basics/prices");
+       return await CheckResponseArray(response, status);
+    }
 
-    //    response = await Client.PostAsJsonAsync("/api/auth/token", new TokenContext
-    //    {
-    //        Username = username,
-    //        Password = "reset-password",
-    //    });
-    //    SetTokenawait CheckResponseObject(response);
+    protected async Task<Dictionary<string, string>> PlanState(int status = 2)
+    {
+       var response = await Client.GetAsync("/api/plan/plan-state");
+       return await CheckResponseObject(response, status);
+    }
 
-    //    // /api/basics/prices
-    //    response = await Client.GetAsync("/api/basics/prices");
-    //    var prices = (await CheckResponseArray(response));
+    protected async Task<Dictionary<string, string>> PlanInfo(int status = 2)
+    {
+       var response = await Client.GetAsync("/api/plan/plan-info");
+       return await CheckResponseObject(response, status);
+    }
 
-    //    Assert.NotNull(prices);
-    //    Assert.Single(prices);
-    //    Assert.Equal(3, prices[0].Count);
+    protected async Task<Dictionary<string, string>> Estimate(string username, byte users, short? days, short? gigs, int status = 2)
+    {
+       var request = new RenewalContext
+       {
+           Target = username,
+           SimultaneousUserCount = users,
+           Days = days,
+           Gigabytes = gigs,
+       };
+       var response = await Client.PostAsJsonAsync("/api/plan/estimate", request);
+       return await CheckResponseObject(response, status);
+    }
 
-    //    // /api/plan/plan-state
-    //    response = await Client.GetAsync("/api/plan/plan-state");
-    //    var plan_state = await CheckResponseObject(response);
+    protected async Task<Dictionary<string, string>> Renewal(string username, byte users, short? days, short? gigs, int status = 2)
+    {
+       var request = new RenewalContext
+       {
+           Target = username,
+           SimultaneousUserCount = users,
+           Days = days,
+           Gigabytes = gigs,
+       };
+       var response = await Client.PostAsJsonAsync("/api/plan/renewal", request);
+       return await CheckResponseObject(response, status);
+    }
 
-    //    Assert.NotNull(plan_state);
-    //    Assert.Null(plan_state["remainsTitle"]);
-    //    Assert.Null(plan_state["remainsTrafficPercent"]);
-    //    Assert.Null(plan_state["remainsTimePercent"]);
-    //    Assert.Equal("0", plan_state["simultaneousUserCount"].ToString());
+    protected async Task Estimate(string username, string token, string password, int status = 2)
+    {
+       var response = await Client.PostAsJsonAsync("/api/vpn/change-ovpn", new ChangeOvpnContext
+       {
+           Target = username,
+           Token = token,
+           Password = password,
+       });
+       await CheckResponseObject(response, status);
+    }
 
-    //    // /api/plan/plan-info
-    //    response = await Client.GetAsync("/api/plan/plan-info");
-    //    var plan_info = await CheckResponseObject(response);
+    protected async Task FakeAddMoney(string username, int value)
+    {
+        using var scope = ServiceProvider.CreateScope();
 
-    //    Assert.NotNull(plan_info);
-    //    Assert.Null(plan_info["days"]);
-    //    Assert.Null(plan_info["gigabytes"]);
-    //    Assert.Equal("0", plan_info["simultaneousUserCount"].ToString());
-    //    Assert.Equal(user["username"].ToString(), plan_info["target"].ToString());
+        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
 
-    //    // /api/plan/estimate
-    //    var request = new RenewalContext
-    //    {
-    //        Target = user["username"].ToString(),
-    //        SimultaneousUserCount = 1,
-    //        Days = 120,
-    //        Gigabytes = 50,
-    //    };
-    //    response = await Client.PostAsJsonAsync("/api/plan/estimate", request);
-    //    var estimate = await CheckResponseObject(response);
+        var account = await account_repo.GetAccount(username);
+        Assert.NotNull(account);
 
-    //    Assert.NotNull(estimate);
-    //    Assert.NotNull(estimate["price"]);
-    //    Assert.NotNull(estimate["days"]);
-    //    Assert.NotNull(estimate["gigabytes"]);
-    //    Assert.NotNull(estimate["simultaneousUserCount"]);
-
-    //    // add money
-    //    await FakeAddMoney(user["username"].ToString()!, int.Parse(estimate["price"].ToString()!));
-
-    //    // /api/plan/renewal
-    //    response = await Client.PostAsJsonAsync("/api/plan/renewal", request);
-    //    var renewal = await CheckResponseObject(response);
-
-    //    Assert.NotNull(renewal);
-    //    Assert.Equal("0", renewal["currentPrice"].ToString());
-    //    Assert.Null(renewal["invoiceCode"]);
-
-    //    // /api/plan/plan-info
-    //    response = await Client.GetAsync("/api/plan/plan-info");
-    //    plan_info = await CheckResponseObject(response);
-
-    //    Assert.NotNull(plan_info);
-    //    Assert.Equal(estimate["days"].ToString(), plan_info["days"].ToString());
-    //    Assert.Equal(estimate["gigabytes"].ToString(), plan_info["gigabytes"].ToString());
-    //    Assert.Equal(estimate["simultaneousUserCount"].ToString(), plan_info["simultaneousUserCount"].ToString());
-    //    Assert.Equal(user["username"].ToString(), plan_info["target"].ToString());
-
-    //    // /api/vpn/change-ovpn
-    //    response = await Client.PostAsJsonAsync("/api/vpn/change-ovpn", new ChangeOvpnContext
-    //    {
-    //        Target = user["username"].ToString(),
-    //        Token = "reset-password",
-    //        Password = "change-ovp-password",
-    //    });
-    //    await CheckResponseObject(response);
-    //}
+        await wallet_repo.Save(new WalletEntity
+        {
+            AccountId = account.Id,
+            Amount = value,
+            Direction = BalanceDirection.Credit,
+            Status = BalanceStatus.Completed,
+            Description = "Fake Add Money",
+        });
+    }
 
     [GeneratedRegex(@"<div class=""code-box"">(\w+)</div>")]
     private static partial Regex CodeSelector();
