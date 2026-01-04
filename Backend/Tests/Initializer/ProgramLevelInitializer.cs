@@ -21,7 +21,7 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
     protected readonly HttpClient Client = factory.CreateClient();
     protected IServiceProvider ServiceProvider => factory.Services;
 
-    protected static Task<ApiResult<object>> CheckResponse(HttpResponseMessage response, int state = 2)
+    protected static Task<ApiResult<object>?> CheckResponse(HttpResponseMessage response, int state = 2)
     {
         return CheckResponse<object>(response, state);
     }
@@ -29,16 +29,16 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
     protected static async Task<Dictionary<string, string?>> CheckResponseObject(HttpResponseMessage response, int state = 2)
     {
         var result = await CheckResponse<Dictionary<string, object>>(response, state);
-        return result.Data?.ToDictionary(k => k.Key, v => v.Value?.ToString()) ?? [];
+        return result?.Data?.ToDictionary(k => k.Key, v => v.Value?.ToString()) ?? [];
     }
 
     protected static async Task<Dictionary<string, string?>[]> CheckResponseArray(HttpResponseMessage response, int state = 2)
     {
         var result = await CheckResponse<Dictionary<string, object>[]>(response, state);
-        return result.Data?.Select(record => record.ToDictionary(k => k.Key, v => v.Value?.ToString())).ToArray() ?? [];
+        return result?.Data?.Select(record => record.ToDictionary(k => k.Key, v => v.Value?.ToString())).ToArray() ?? [];
     }
 
-    private static async Task<ApiResult<T>> CheckResponse<T>(HttpResponseMessage response, int state)
+    private static async Task<ApiResult<T>?> CheckResponse<T>(HttpResponseMessage response, int state)
     {
         var content = await response.Content.ReadAsStringAsync();
 
@@ -57,7 +57,10 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
             throw new Exception($"Code: {code}\n" + message);
         }
 
-        Assert.NotNull(result);
+        if (state == 2)
+        {
+            Assert.NotNull(result);
+        }
 
         return result;
     }

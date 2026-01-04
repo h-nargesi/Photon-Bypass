@@ -20,7 +20,7 @@ public class CheckAccess(ProgramLevelInitializer.Factory factory) : HttpHandler(
         await Register("user_a_02", "22", "Password");
 
         await Login("user_a_01", "Password");
-        await FullInfo("user_a_01", 403);
+        await FullInfo("user_a_02", 403);
     }
 
     [Fact]

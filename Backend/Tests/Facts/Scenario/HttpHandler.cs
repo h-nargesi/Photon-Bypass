@@ -34,7 +34,8 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
             Username = username,
             Password = password,
         });
-        SetToken(await CheckResponseObject(response, status));
+        var token = await CheckResponseObject(response, status);
+        if (status == 2) SetToken(token);
     }
 
     protected async Task<Dictionary<string, string?>> GetUser(int status = 2)
@@ -51,7 +52,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
 
     protected async Task<Dictionary<string, string?>> FullInfo(string taget, int status = 2)
     {
-        var response = await Client.GetAsync($"/api/account/full-info?taget={taget}");
+        var response = await Client.GetAsync($"/api/account/full-info?target={taget}");
         return await CheckResponseObject(response, status);
     }
 
