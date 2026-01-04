@@ -17,5 +17,6 @@ public static class ServiceFactory
         builder.Services.AddLazyScoped<IEmailHandler, EmailHandler>();
         builder.Services.AddSingleton<ISshHandler, SshHandler>();
         builder.Services.AddSingleton<ITik4NetHandler, Tik4NetHandler>();
+        builder.Services.AddSingleton<ResourceSynchronization>();
     }
 }

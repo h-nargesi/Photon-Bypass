@@ -106,6 +106,9 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         // session for user-4 does not exist, so it should be false
         user_4_actions[2] = !user_4_actions[2];
 
+        // do not remove user-profile anymore
+        user_4_actions[1] = !user_4_actions[1];
+
         foreach (var is_done in user_4_actions)
             Assert.True(is_done);
 

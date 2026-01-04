@@ -10,30 +10,32 @@ using tik4net.Objects;
 
 namespace PhotonBypass.Mikrotik.Radius.Application;
 
-public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler) : IInfraAccountRadiusSyncService
+public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler, ResourceSynchronization synchronization) : IInfraAccountRadiusSyncService
 {
     public async Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames)
     {
+        using var token = await synchronization.GetToken(radius.Name);
+
         using var connection = await handler.ConnectTo(radius);
 
         foreach (var username in usernames)
         {
             if (string.IsNullOrEmpty(username) || !InjectionRegex.Username().Match(username).Success)
             {
-                throw new Exception("Username is not valid");
+                continue;
             }
 
-            var session_list = connection.LoadList<SessionModel>(
-                TikParam.Equal<SessionModel>(nameof(SessionModel.Username), username));
+            //var session_list = connection.LoadList<SessionModel>(
+            //    TikParam.Equal<SessionModel>(nameof(SessionModel.Username), username));
 
-            foreach (var session in session_list)
-                connection.Delete(session);
+            //foreach (var session in session_list)
+            //    connection.Delete(session);
 
-            var user_profiles = connection.LoadList<UserProfileModel>(
-                TikParam.Equal<UserProfileModel>(nameof(UserProfileModel.Username), username));
+            //var user_profiles = connection.LoadList<UserProfileModel>(
+            //    TikParam.Equal<UserProfileModel>(nameof(UserProfileModel.Username), username));
 
-            foreach (var profile in user_profiles)
-                connection.Delete(profile);
+            //foreach (var profile in user_profiles)
+            //    connection.Delete(profile);
 
             var users = connection.LoadList<UserModel>(
                 TikParam.Equal<UserModel>(nameof(UserModel.Name), username));
@@ -63,17 +65,16 @@ public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler) : IInf
         var field_name = TikParam.GetFieldName<UserModel>(nameof(UserModel.Disabled)) ??
                          throw new Exception("The 'Disabled' TikProperty not found in 'UserModel'.");
 
+        using var token = await synchronization.GetToken(radius.Name);
+
         using var connection = await handler.ConnectTo(radius);
 
         foreach (var username in usernames)
         {
             if (string.IsNullOrEmpty(username) || !InjectionRegex.Username().Match(username).Success)
             {
-                throw new Exception("Username is not valid");
-            }
-
-            if (!InjectionRegex.Username().Match(username).Success)
                 continue;
+            }
 
             var user = connection.LoadList<UserModel>(
                     TikParam.Equal<UserModel>(nameof(UserModel.Name), username))?
@@ -92,6 +93,8 @@ public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler) : IInf
 
     public async Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
     {
+        using var token = await synchronization.GetToken(radius.Name);
+
         using var connection = await handler.ConnectTo(radius);
 
         // check limitation (just by name)

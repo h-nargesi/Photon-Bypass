@@ -20,6 +20,7 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
 
     private static readonly ServerEntity Server = new()
     {
+        Name = "TestServer",
         IpAddress = MikrotikInitializer.GetIp(TestPackage1),
         OsType = Domain.Servers.Types.OperatingSystem.Mikrotik,
         Config = new ServerConfiguration
