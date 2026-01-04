@@ -11,8 +11,6 @@ public static class ServiceFactory
 {
     public static TBuilder AddPortalServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
-        LogConfiguration.InitializeLogService(builder.Configuration);
-
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddAuthentication(options =>

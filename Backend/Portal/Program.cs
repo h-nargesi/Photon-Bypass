@@ -3,6 +3,7 @@ using PhotonBypass.Portal;
 using PhotonBypass.Portal.Basical;
 
 var app = WebApplication.CreateBuilder(args)
+    .AddLogService()
     .AddAppServices()
     .AddPortalServices()
     .Build();

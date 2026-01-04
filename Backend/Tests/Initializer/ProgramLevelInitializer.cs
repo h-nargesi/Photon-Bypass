@@ -1,12 +1,9 @@
-﻿using System.Net.Http.Headers;
-using System.Text.Json;
-using Microsoft.AspNetCore.Hosting;
+﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Result;
 using PhotonBypass.Test.Initializer.OutSourceManager;
+using System.Net.Http.Headers;
+using System.Text.Json;
 using static PhotonBypass.Test.Initializer.ProgramLevelInitializer;
 
 namespace PhotonBypass.Test.Initializer;
@@ -29,16 +26,16 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
         return CheckResponse<object>(response, state);
     }
 
-    protected static async Task<Dictionary<string, string>> CheckResponseObject(HttpResponseMessage response, int state = 2)
+    protected static async Task<Dictionary<string, string?>> CheckResponseObject(HttpResponseMessage response, int state = 2)
     {
         var result = await CheckResponse<Dictionary<string, object>>(response, state);
-        return result.Data?.ToDictionary(k => k.Key, v => v.ToString()) ?? [];
+        return result.Data?.ToDictionary(k => k.Key, v => v.Value?.ToString()) ?? [];
     }
 
-    protected static async Task<Dictionary<string, string>[]> CheckResponseArray(HttpResponseMessage response, int state = 2)
+    protected static async Task<Dictionary<string, string?>[]> CheckResponseArray(HttpResponseMessage response, int state = 2)
     {
         var result = await CheckResponse<Dictionary<string, object>[]>(response, state);
-        return result.Data?.Select(record => record.ToDictionary(k => k.Key, v => v.ToString())).ToArray() ?? [];
+        return result.Data?.Select(record => record.ToDictionary(k => k.Key, v => v.Value?.ToString())).ToArray() ?? [];
     }
 
     private static async Task<ApiResult<T>> CheckResponse<T>(HttpResponseMessage response, int state)
@@ -65,10 +62,10 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
         return result;
     }
 
-    protected void SetToken(Dictionary<string, string> token)
+    protected void SetToken(Dictionary<string, string?> token)
     {
-        if (token == null || token.TryGetValue("access_token", out var access_token))
-            throw new Exception($"Unexpected token: {token}");
+        if (token == null || !token.TryGetValue("access_token", out var access_token))
+            throw new Exception($"Unexpected token: {JsonSerializer.Serialize(token)}");
         
         Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access_token);
     }

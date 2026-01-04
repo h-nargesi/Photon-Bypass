@@ -1,10 +1,10 @@
+using PhotonBypass.Application.Authentication.Model;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Portal.Context;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockServerBridge;
-using PhotonBypass.Application.Authentication.Model;
-using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Account.Entity;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 
@@ -12,12 +12,13 @@ namespace PhotonBypass.Test.Facts.Scenario;
 
 public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : ProgramLevelInitializer(factory)
 {
-    protected async Task Register(string username, string phone, string password, int status = 2)
+    protected async Task Register(string username, string phone, 
+        string password = "Password", string firstname = "fname", string lastname = "lname", int status = 2)
     {
         var response = await Client.PostAsJsonAsync("/api/auth/register", new RegisterModel
         {
-            Firstname = "fname",
-            Lastname = "lname",
+            Firstname = firstname,
+            Lastname = lastname,
             Mobile = $"+9891212345{phone}",
             Email = $"{username}@gmail.com",
             Username = username,
@@ -36,35 +37,35 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         SetToken(await CheckResponseObject(response, status));
     }
 
-    protected async Task<Dictionary<string, string>> GetUser(int status = 2)
+    protected async Task<Dictionary<string, string?>> GetUser(int status = 2)
     {
         var response = await Client.GetAsync("/api/account/get-user");
         return await CheckResponseObject(response, status);
     }
 
-    protected async Task<Dictionary<string, string>> FullInfo(int status = 2)
+    protected async Task<Dictionary<string, string?>> FullInfo(int status = 2)
     {
         var response = await Client.GetAsync("/api/account/full-info");
         return await CheckResponseObject(response, status);
     }
 
-    protected async Task<Dictionary<string, string>> FullInfo(string taget, int status = 2)
+    protected async Task<Dictionary<string, string?>> FullInfo(string taget, int status = 2)
     {
         var response = await Client.GetAsync($"/api/account/full-info?taget={taget}");
         return await CheckResponseObject(response, status);
     }
 
-    protected async Task EditUser(string username, Dictionary<string, string> user, int status = 2)
+    protected async Task EditUser(string username, Dictionary<string, string?> user, int status = 2)
     {
         // /api/account/edit-user
         user["firstname"] = "first-name";
         user["lastname"] = "last-name";
         var response = await Client.PostAsJsonAsync($"/api/account/edit-user?target={username}", new EditUserModel
         {
-            Email = user["email"].ToString(),
-            Firstname = user["firstname"].ToString(),
-            Lastname = user["lastname"].ToString(),
-            Mobile = user["mobile"].ToString(),
+            Email = user["email"],
+            Firstname = user["firstname"],
+            Lastname = user["lastname"],
+            Mobile = user["mobile"],
         });
         await CheckResponse(response, status);
     }
@@ -90,7 +91,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
             code = match.Groups[1].Value;
         };
 
-        var response = await Client.PostAsJsonAsync("/api/account/forget-pass", new ResetPasswordContext
+        var response = await Client.PostAsJsonAsync("/api/auth/forget-pass", new ResetPasswordContext
         {
             EmailMobile = $"{username}@gmail.com",
         });
@@ -109,25 +110,25 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
        await CheckResponse(response, status);
     }
 
-    protected async Task<Dictionary<string, string>[]> Prices(int status = 2)
+    protected async Task<Dictionary<string, string?>[]> Prices(int status = 2)
     {
        var response = await Client.GetAsync("/api/basics/prices");
        return await CheckResponseArray(response, status);
     }
 
-    protected async Task<Dictionary<string, string>> PlanState(int status = 2)
+    protected async Task<Dictionary<string, string?>> PlanState(int status = 2)
     {
        var response = await Client.GetAsync("/api/plan/plan-state");
        return await CheckResponseObject(response, status);
     }
 
-    protected async Task<Dictionary<string, string>> PlanInfo(int status = 2)
+    protected async Task<Dictionary<string, string?>> PlanInfo(int status = 2)
     {
        var response = await Client.GetAsync("/api/plan/plan-info");
        return await CheckResponseObject(response, status);
     }
 
-    protected async Task<Dictionary<string, string>> Estimate(string username, byte users, short? days, short? gigs, int status = 2)
+    protected async Task<Dictionary<string, string?>> Estimate(string username, byte users, short? days, short? gigs, int status = 2)
     {
        var request = new RenewalContext
        {
@@ -140,7 +141,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
        return await CheckResponseObject(response, status);
     }
 
-    protected async Task<Dictionary<string, string>> Renewal(string username, byte users, short? days, short? gigs, int status = 2)
+    protected async Task<Dictionary<string, string?>> Renewal(string username, byte users, short? days, short? gigs, int status = 2)
     {
        var request = new RenewalContext
        {
@@ -162,6 +163,18 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
            Password = password,
        });
        await CheckResponseObject(response, status);
+    }
+
+    protected async Task ChangeOVpn(string username, string token, string password, int status = 2)
+    {
+        var request = new ChangeOvpnContext
+        {
+            Target = username,
+            Token = token,
+            Password = password,
+        };
+        var response = await Client.PostAsJsonAsync("/api/vpn/change-ovpn", request);
+        await CheckResponseObject(response, status);
     }
 
     protected async Task FakeAddMoney(string username, int value)

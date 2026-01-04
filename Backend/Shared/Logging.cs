@@ -1,16 +1,21 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Builder;
 using Serilog;
 
 namespace PhotonBypass;
 
 public static class LogConfiguration
 {
-    public static void InitializeLogService(IConfiguration configuration)
+    public static WebApplicationBuilder AddLogService(this WebApplicationBuilder builder)
     {
-        Log.Logger = new LoggerConfiguration()
-            .ReadFrom.Configuration(configuration)
-            .CreateLogger();
+        builder.Host.UseSerilog((context, services, configuration) =>
+        {
+            configuration
+                .ReadFrom.Configuration(context.Configuration)
+                .ReadFrom.Services(services);
 
-        Log.Information("Starting up ...");
+            Log.Information("Starting up ...");
+        });
+
+        return builder;
     }
 }
