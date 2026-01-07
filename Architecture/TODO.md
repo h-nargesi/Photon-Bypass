@@ -1,5 +1,5 @@
 [+] استفاده از لاک برای استفاده از یک سرور برای ساختن آیتم‌های مشترک مانند پروفایل یا لیمیت
-[ ] email is required but mobile
+[+] email is required but mobile
 [ ] handle null-value / null-result for plan-info / user-plan-state in front
 [ ] logo/link in email bodies
 [ ] Check email send limit

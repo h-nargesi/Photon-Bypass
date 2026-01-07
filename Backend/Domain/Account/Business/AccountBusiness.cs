@@ -36,6 +36,11 @@ public static partial class AccountBusiness
 
     public static void SetFromModel(this AccountEntity account, EditUserModel model)
     {
+        if (string.IsNullOrWhiteSpace(model.Email))
+        {
+            throw new UserException("وارد کردن ایمیل ضروریست!");
+        }
+
         if (string.IsNullOrWhiteSpace(model.Email) && string.IsNullOrWhiteSpace(model.Mobile))
         {
             throw new UserException("حداقل یکی از دو فیلد موبایل یا ایمیل باید پر باشد!");
