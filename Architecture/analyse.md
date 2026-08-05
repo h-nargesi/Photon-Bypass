@@ -1,3 +1,11 @@
+# Photon Bypass Analyse (legacy note)
+
+> **English summary**: This is the original Persian page-by-page analysis of external resource usage (local db / rad db / rad api / mikrotik ssh / whatsapp / email), written during design. The current REST API surface and end-to-end flows are documented in [`docs/08-portal-api.md`](../docs/08-portal-api.md) (authoritative endpoint table) and [`docs/11-business-flows.md`](../docs/11-business-flows.md). Read this file for the original design rationale; note that some endpoints (e.g. `/auth/logout`) were dropped and others (`/billing/*`) were added since — the deltas are listed in `docs/08`.
+
+> **خلاصه**: این تحلیل قدیمی و صفحه‌به‌صفحه‌ی منابع خارجی است که در زمان طراحی نوشته شده است. سطح REST API و جریان‌های end-to-end در [`docs/08-portal-api.md`](../docs/08-portal-api.md) و [`docs/11-business-flows.md`](../docs/11-business-flows.md) به‌روزرسانی شده‌اند. برخی endpointها از آن زمان حذف/اضافه شده‌اند — تفاوت‌ها در `docs/08` فهرست شده است.
+
+---
+
 # Photon Bypass Analyse
 
 بعضی نکات:
