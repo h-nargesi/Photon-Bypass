@@ -91,6 +91,8 @@
 
 ## Security TODOs (یادآوری امنیتی)
 
+> فهرست کامل‌تر و اولویت‌بندی‌شده‌ی نقاط ضعف امنیتی/پرفورمنسی که در TODO نیستند: [docs/14-defects-audit.md](14-defects-audit.md).
+
 - **کلید JWT و connection stringها** در `Backend/Portal/appsettings.json` کامیت شده‌اند (`Issuer:Code`، `LocalDatabaseOptions:ConnectionString`، `RadiusServiceOptions`، `RadDapperOptions`). باید به secret manager / env منتقل شوند. در مستندات فقط با نام کلید ارجاع داده می‌شوند.
 - **ادمین پیش‌فرض seed** در `Database/LocalDatabase/Account.sql:24` با یوزرنیم `admin` و هش ثابت — در تولید باید عوض/حذف شود.
 - **اعتبارسنجی توکن کال‌بک پرداخت**: در `BillingApplication.PaymentCallback` علامت `// TODO: check token` وجود دارد (`BillingApplication.cs:108`) — امضای کال‌بک درگاه هنوز اعتبارسنجی نمی‌شود.

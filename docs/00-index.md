@@ -22,6 +22,7 @@
 | 11 | [docs/11-business-flows.md](11-business-flows.md) | سناریوهای end-to-end (ثبت‌نام، تمدید، ترافیک و …). |
 | 12 | [docs/12-current-state.md](12-current-state.md) | پیاده‌سازی‌شده در برابر نیمه‌کاره + نقطه‌های شروع. |
 | 13 | [docs/13-xray-integration.md](13-xray-integration.md) | ادغام با Simorgh/x-ui: adapter جدید، منبع حقیقت، مدل ترافیک. |
+| 14 | [docs/14-defects-audit.md](14-defects-audit.md) | ممیزی نواقص/امنیت/پرفورمنس خارج از TODO با اولویت‌بندی P0–P5. |
 
 ## Read this file when…
 
@@ -40,6 +41,7 @@
 | Trace a real user journey (register → renew → warn) | [11-business-flows](11-business-flows.md) |
 | Find a stub to implement | [12-current-state](12-current-state.md) |
 | Understand the Xray/x-ui integration plan (Simorgh reuse) | [13-xray-integration](13-xray-integration.md) |
+| Find/prioritize a defect, security, or performance issue | [14-defects-audit](14-defects-audit.md) |
 
 ## Related legacy docs
 
