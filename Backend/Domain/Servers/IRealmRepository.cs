@@ -10,4 +10,6 @@ public interface IRealmRepository : IEditableRepository<RealmEntity>
     Task<List<RealmEntity>> FetchAllActiveRealm();
 
     Task<Dictionary<int, RealmEntity>> GetByIds(List<int> ids);
+
+    Task<List<int>> TryLockTrafficSync(IEnumerable<int> ids);
 }

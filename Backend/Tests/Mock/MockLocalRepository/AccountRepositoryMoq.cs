@@ -23,6 +23,8 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
 
     public event Action<AccountEntity>? OnSave;
 
+    public event Action<IEnumerable<AccountEntity>>? OnBatchSave;
+
     public Dictionary<string, AccountEntity> Data;
 
     public AccountRepositoryMoq() : this(FilePath)
@@ -143,6 +145,18 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
             {
                 account.Id = 10000000;
                 OnSave?.Invoke(account);
+                return Task.CompletedTask;
+            });
+
+        Setup(x => x.Save(It.IsAny<IEnumerable<AccountEntity>>()))
+            .Returns<IEnumerable<AccountEntity>>(accounts =>
+            {
+                foreach (var account in accounts.Where(account => account.Id < 1))
+                {
+                    account.Id = 10000000;
+                }
+
+                OnBatchSave?.Invoke(accounts);
                 return Task.CompletedTask;
             });
 

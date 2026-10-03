@@ -63,8 +63,6 @@ class PlanApplication(
             state?.GetTrafficLeftInGig(), state?.GetTrafficLimitInGig(), state?.TimeLeft?.TotalDays,
             state?.TimeLeft?.Hours);
 
-        _ = ServerMngSrv.Value.UpdateTrafficData();
-
         return ApiResult<PlanStateModel>.Success(new PlanStateModel
         {
             RemainsTitle = state?.GetRemainsTitle(),
@@ -83,8 +81,6 @@ class PlanApplication(
         }
 
         var renew = await PlanRepo.Value.GetPlanState(account_id.Value);
-
-        _ = ServerMngSrv.Value.UpdateTrafficData();
 
         return ApiResult<PlanInfoModel>.Success(new PlanInfoModel
         {
@@ -377,7 +373,7 @@ class PlanApplication(
             Value = renew.GetPlanTitle(),
         });
 
-        _ = ServerMngSrv.Value.CheckUserServerBalance();
+        await ServerMngSrv.Value.CheckUserServerBalance();
 
         Log.Information("[user: {0}] Plan renewal finished: ({1}, {2}, {3}, {4})",
             JobContext.Value.Username, account.Username, count, days, gigabytes);

@@ -17,10 +17,10 @@
 
 ## CRITICAL
 
-### [ ] C1. کلید اشتباه در Merge ترافیک → درج تکراری در هر سیکل sync
+### [x] C1. کلید اشتباه در Merge ترافیک → درج تکراری در هر سیکل sync
 - **مکان**: `Backend/Application/Management/ServerManagementService.cs:196-197` (کلید `SessionId`) در برابر `:223-224` (lookup با `traffic.NasIpAddress`).
 - **شرح**: دیکشنری مقصد با `SessionId` کلید می‌خورد ولی جستجو با `NasIpAddress` انجام می‌شود؛ چون هیچ‌وقت برابر نیستند، session های باز هرگز آپدیت نمی‌شوند و در هر سیکل `TrafficDataEntity` جدید درج می‌شود → دوبل‌شمارش ترافیک (اتمام زودهنگام پلن‌ها)، نقض `UK_TrafficData_NasId_SessionId`، رشد بی‌نهایت `FetchOpen`.
-- **اصلاح**: `data_pack.TryGetValue(traffic.SessionId, ...)`.
+- **اصلاح (P1)**: lookup با `traffic.SessionId`؛ مقصد Merge از `FetchOpen` به `Fetch(ازِ ایندکس سینک - 1s)` تغییر کرد تا session های بسته‌شده هم match شوند (وگرنه هر سیکل دوباره درج می‌شدند و با unique index جدید job کرش می‌کرد)؛ در مسیر آپدیت `EndSession` هم stamp می‌شود و build دیکشنری مقصد در برابر ردیف‌های تکراری تاریخی defensive است (نگه‌داشتن max Id). اسکریپت پاکسازی: `Database/LocalDatabase/TrafficDataDedup.sql` (dedup-only، اجرای دستی).
 
 ### [x] C2. Bulk Save/Delete از تراکنش DB عبور نمی‌کند — تراکنش صورتحساب بی‌اثر است
 - **مکان**: `Backend/Infrastructure/Database/EditableRepository.cs:43-51,62`؛ متد کمکی `CheckTransactionBulk` در `:91-104` تعریف شده ولی **هرگز صدا زده نمی‌شود**.
@@ -106,21 +106,24 @@
 
 ## HIGH — پرفورمنس
 
-### [ ] H16. 2N round-trip روتر در ساعت در DeactivateInvalidRadiusUsers
+### [x] H16. 2N round-trip روتر در ساعت در DeactivateInvalidRadiusUsers
 `Backend/MikrotikRadius/Application/AccountRadiusSyncUserManagerService.cs:48-61,72-91` — برای هر stale user دو فراخوانی MikroTik (LoadList + Save)؛ کاربران disabled-but-not-removed در مجموعه می‌مانند و هزینه هر ساعت تکرار می‌شود؛ با رشد کاربران job ساعتی از ۶۰ دقیقه فراتر می‌رود (تشدید H3).
+**اصلاح (P1)**: `DeactivateUserExcept` خودش `LoadAll` یک‌بار می‌زند (تحت token قفل per-server موجود) و همان entity ها را save می‌کند؛ کاربرانِ از قبل disabled و نام‌های invalid skip می‌شوند. در `DeactivateUser` هم save فقط برای `Disabled != true` انجام می‌شود (idempotent).
 
-### [ ] H17. N+1 دیتابیسی در InactiveAbandonedUsers
+### [x] H17. N+1 دیتابیسی در InactiveAbandonedUsers
 `Backend/Application/Management/AccountMonitoringService.cs:41` — یک query به‌ازای هر plan تمام‌شده در هر run؛ bulk (`GetActiveAccounts(ids)`) موجود است و در `NotifSendServices:107` درست استفاده شده.
+**اصلاح (P1)**: جمع‌آوری id های abandoned → یک فراخوانی `GetActiveAccounts(ids)` → دیکشنری.
 
-### [ ] H18. sync کامل ترافیک از HTTP endpoint ها تریگر می‌شود + race در گیت ۵ دقیقه‌ای
+### [x] H18. sync کامل ترافیک از HTTP endpoint ها تریگر می‌شود + race در گیت ۵ دقیقه‌ای
 - `Backend/Application/Vpn/VpnApplication.cs:111-113` — `TrafficData()` کاربر، sync کامل همه سرورها را inline await می‌کند.
 - `Backend/Application/Plan/PlanApplication.cs:66,87,345` — `_ = UpdateTrafficData()` fire-and-forget با منابع scoped (خطر `ObjectDisposedException`).
 - `Backend/Infrastructure/Repository/TrafficDataRepository.cs:65-66` — `LastTrafficSync` قبل از write خوانده می‌شود → فراخوان‌های هم‌زمان همه از گیت رد می‌شوند (تشدید C1)؛ تقویت‌کننده DoS.
+**اصلاح (P1)**: گیت atomic شد — `IRealmRepository.TryLockTrafficSync` با `UPDATE ... OUTPUT ... WHERE LastTrafficSync < @limit` قبل از fetch از Radius claim می‌کند (برنده‌ی رقابت ادامه می‌دهد)؛ sync از `VpnApplication.TrafficData` و `GetPlanState`/`GetPlanInfo` حذف شد (HTTP فقط از دیتای موجود می‌خواند؛ sync با job ساعتی است)؛ الگوی `_ =` در هر سه نقطه حذف شد (`CheckUserServerBalance` بعد از تمدید await می‌شود).
 
 ### [ ] H19. PriceCalculator (Roslyn): بلوکه شدن، race، نشت assembly، capture شدن scoped repo توسط singleton
 `Backend/Infrastructure/Services/PriceCalculator.cs:12-26,72` — `InitializeCalculators().Result` در اولین محاسبه؛ check-then-act بدون قفل (کامپایل تکراری)؛ `Assembly.Load` بدون `CollectibleAssemblyLoadContext` (نشت هر ویرایش قیمت)؛ event handler ثبت‌شده روی singleton `EntityEventService` که `Lazy<IPriceRepository>` scoped اولین request را نگه می‌دارد و در race هندلر تکراری می‌سازد.
 
-### [ ] H20. ایندکس‌های غایب (مقایسه schema با query های واقعی)
+### [x] H20. ایندکس‌های غایب (مقایسه schema با query های واقعی)
 | جدول | ایندکس پیشنهادی | مصرف‌کننده |
 |---|---|---|
 | `TrafficData` | `(AccountId, StartSession)` + پوشش `WHERE EndSession IS NULL` | `Fetch`/`FetchOpen` (هر سیکل sync و هر ویوی چارت) |
@@ -129,6 +132,8 @@
 | `History` | `(Target, Created)` | `GetHistory` |
 | `Wallet` | `(AccountId)`، `(InvoiceCode)` شامل unique | `GetBalance`، `MAX(InvoiceCode)` (فعلاً full-scan) |
 | `Account` | `(Owner)` | `GetActiveTargetArea` در هر login غیرادمین |
+
+**اصلاح (P1)**: اسکریپت idempotent `Database/LocalDatabase/Indexes.sql` (اجرای دستی روی production). `UK_TrafficData_NasId_SessionId` بازسازی/ایجاد می‌شود (پشتیبان C1)، ایندکس‌های TrafficData روی edition های مجاز با `ONLINE = ON` (بررسی `SERVERPROPERTY('EngineEdition')`). **انحراف عمدی از پیشنهاد**: ایندکس `Wallet(InvoiceCode)` unique **نیست** — یک فاکتور چند ردیف wallet دارد (debit/credit، الگوی seed تست P0)؛ یکتایی کد فاکتور در زمان تولید توسط `InvoiceSequence` (C4/P0) تضمین می‌شود.
 
 ---
 
@@ -140,7 +145,7 @@
 | [ ] | M2 | در catch تمدید: compensation قبل از rollback | `PlanApplication.cs:306-322` | اگر Radius قطع باشد `DeactivateUsers` می‌اندازد → rollback اجرا نمی‌شود و خطای اصلی mask می‌شود |
 | [ ] | M3 | Radius sync داخل تراکنش DB | `PlanApplication.cs:302-304` | شکست commit → user در Radius می‌ماند (dual-write بدون compensation مطمئن) |
 | [ ] | M4 | `GetAvailableRealm` با `.First()` | `ServerManagementService.cs:40-44` | پر بودن همه realm ها = `InvalidOperationException` خام (500)؛ بدون reservation → overbooking هم‌زمان |
-| [ ] | M5 | dictionary indexer بدون گارد در DeactivateInvalidRadiusUsers | `Infrastructure/Services/AccountRadiusSyncService.cs:56-80` | realm بدون plan state = `KeyNotFoundException` → کل job ساعتی abort |
+| [x] | M5 | dictionary indexer بدون گارد در DeactivateInvalidRadiusUsers | `Infrastructure/Services/AccountRadiusSyncService.cs:56-80` | realm بدون plan state = `KeyNotFoundException` → کل job ساعتی abort. **اصلاح (P1)**: `TryGetValue` + لیست خالی (غیرفعال‌سازی همه کاربران آن radius) |
 | [ ] | M6 | CheckUniqueData: شرط mobile به email گره خورده + مقایسه case-sensitive | `Infrastructure/Repository/AccountRepository.cs:113-127` | ثبت‌نام با موبایل بدون ایمیل، یکتایی موبایل را چک نمی‌کند؛ `d.Email == email` ordinal است ولی DB case-insensitive |
 | [ ] | M7 | throw روی یک اکانت گمشده، کل batch هشدار را می‌کشد | `AccountMonitoringService.cs:114-117` | باید `continue` + log باشد |
 | [ ] | M8 | آستانه «در حال اتمام» 0.1% به‌جای 10% | `Domain/Plan/Business/PlanStateBusiness.cs:8-13` | مقیاس percent ها 0–100 است؛ هشدار فقط وقتی 99.9% مصرف شده |
@@ -163,7 +168,7 @@
 
 | چک | # | عنوان | مکان | شرح |
 |---|---|---|---|---|
-| [ ] | M18 | UPDATE تک‌ردیفی fire-and-forget به‌جای bulk موجود | `AccountMonitoringService.cs:66,172-176` | N round-trip + N task بی‌ناظر در هر cycle هشدار |
+| [x] | M18 | UPDATE تک‌ردیفی fire-and-forget به‌جای bulk موجود | `AccountMonitoringService.cs:66,172-176` | N round-trip + N task بی‌ناظر در هر cycle هشدار. **اصلاح (P1)**: جمع‌آوری entity های تغییر یافته → یک `await Save(entities)` قبل از فراخوانی‌های radius/history |
 | [ ] | M19 | `GetAllActiveRadius` بدون cache، ۳-۴ بار در هر job و در هر API call | `SessionRadiusSyncService.cs:24,52,78,104`، `AccountRadiusSyncService.cs:30,55,90,115,155,167` | جدول کوچک؛ cache کوتاه-TTL با `IMemoryCache` (ثبت شده) کافی است |
 | [ ] | M20 | await های متوالی مستقل در UpdateTrafficData | `ServerManagementService.cs:110-114` | شبکه (روترها) قبل از شروع MSSQL/Realm تمام می‌شود؛ latency جمعی |
 | [ ] | M21 | SSH/tik4net: connection per-op، بدون timeout/keepalive/retry | `ServerBridge/Ssh/SshHandler.cs:15-17`، `ServerBridge/Tik4net/Tik4NetHandler.cs:14-23`، `SshConnection.cs:17` (sync `RunCommand`) | full handshake هر بار؛ روتر hang = توقف job بدون cancellation |
@@ -215,6 +220,12 @@
 
 > **نکته دیپلوی P0**: اسکریپت جدید `Database/LocalDatabase/InvoiceSequence.sql` (کد فاکتور اتمیک، C4) باید قبل از release به‌صورت دستی روی دیتابیس production (`FastBypass`) اجرا شود — فریم‌ورک migration وجود ندارد. اسکریپت idempotent است و مقدار شروع را از `MAX(InvoiceCode)` موجود محاسبه می‌کند. همچنین عملیات bulk از `Z.Dapper.Plus` (لایسنس trial منقضی‌شده) به set-operations تک‌ردیفی `Dapper.FastCrud` منتقل شد (`EditableRepository`).
 | **P1** | داده ترافیک و job ها | C1 → H18 → M5 → H16 → H17 → M18 + ایندکس‌های H20 (به‌صورت migration) | اجرای JobInterval دوبار پشت‌سرهم بدون درج تکراری `TrafficData` و بدون نشت connection |
+
+> **نکته دیپلوی P1**: دو اسکریپت جدید باید قبل از release به‌صورت دستی روی production (`FastBypass`) اجرا شوند (ترتیب مهم است):
+> 1. `Database/LocalDatabase/TrafficDataDedup.sql` — حذف ردیف‌های تکراری `(NasId, SessionId)` ساخته‌شده توسط باگ C1 (نگه‌داشتن جدیدترین ردیف؛ dedup-only بدون تجمیع مصرف تاریخی — تجمیع پس‌رونده روی `TotalPlanState` غیرقابل بازگشت است). تعداد ردیف‌های حذف‌شده را گزارش می‌دهد. اجرای آن فقط با تأیید صاحب محصول.
+> 2. `Database/LocalDatabase/Indexes.sql` — ایندکس‌های H20؛ unique index روی `TrafficData` تا dedup اجرا نشود fail می‌شود. ایندکس‌های `TrafficData` روی edition های مجاز با `ONLINE = ON` ساخته می‌شوند؛ در غیر این صورت خارج از ساعات پیک اجرا شود.
+>
+> تست‌های جدید: `ServerManagementServiceTest.UpdateTrafficData_SecondCycleWithSameSessions_DoesNotInsertDuplicates` (دو سیکل پشت‌سرهم → بدون درج تکراری) و `AccountRadiusTest.DeactivateInvalidRadiusUsers_UnknownRealm_ShouldNotThrow` (realm ناموجود → بدون کرش + غیرفعال‌سازی همه).
 | **P2** | پرداخت فرانتند | C3 → M25 (نیازمند تعیین قرارداد API واقعی: مسیرها/body/redirect) | `yarn build` سبز + مسیر پرداخت با invoice واقعی |
 | **P3** | احراز هویت و امنیت | C6 → H1 → H12 → H5 → H6 → H7 → M13 → M14 | تست تغییر پسورد/reset/lockout؛ لاگ بدون secret |
 | **P4** | زیرساخت job و I/O | H2 → H3 → H4 → M17 → M19 → M20 → M21 → M22 | job بدون هم‌پوشانی؛ بدون `.Result`/`WaitAll` |

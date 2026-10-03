@@ -48,6 +48,17 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IUnitLevelService
 
                 return Task.FromResult(result);
             });
+
+        Setup(repository => repository.TryLockTrafficSync(It.IsAny<IEnumerable<int>>()))
+            .Returns<IEnumerable<int>>(ids =>
+            {
+                var mask = ids.ToHashSet();
+                var result = data_dictionary.Values.Where(realm => mask.Contains(realm.Id))
+                    .Select(realm => realm.Id)
+                    .ToList();
+
+                return Task.FromResult(result);
+            });
     }
 
     private const string FilePath = "Data/Local/realms.json";

@@ -3,16 +3,16 @@
 > فهرست کامل با ارجاع `file:line`، شدت و مسیر اصلاح: [docs/14-defects-audit.md](../docs/14-defects-audit.md) (۶۴ مورد: C/H/M/L با فازهای اجرایی P0–P5). چک‌باکس‌ها آنجا پیگیری می‌شوند؛ اینجا فقط بحرانی‌ها و ترتیب فازها ثبت شده است.
 
 ## بحرانی‌ها (P0/P1 — پول و داده)
-[ ] C1: کلید اشتباه Merge ترافیک → درج تکراری در هر سیکل sync (ServerManagementService.cs:223)
-[ ] C2: Bulk Save/Delete از تراکنش عبور نمی‌کند → rollback صورتحساب بی‌اثر (EditableRepository.cs:43)
+[x] C1: کلید اشتباه Merge ترافیک → درج تکراری در هر سیکل sync (ServerManagementService.cs:223)
+[x] C2: Bulk Save/Delete از تراکنش عبور نمی‌کند → rollback صورتحساب بی‌اثر (EditableRepository.cs:43)
 [ ] C3: جریان پرداخت فرانتند خراب — endpoint های غلط + isNumber روی string + invoice hard-code "10"
-[ ] C4: کد فاکتور MAX+1 → تداخل بین کاربران و عبور callback بین اکانت‌ها (WalletRepository.cs:66)
-[ ] C5: PaymentCallback غیر idempotent + پرداخت قبل از validation تمدید → پرداخت بدون تحویل پلن
+[x] C4: کد فاکتور MAX+1 → تداخل بین کاربران و عبور callback بین اکانت‌ها (WalletRepository.cs:66)
+[x] C5: PaymentCallback غیر idempotent + پرداخت قبل از validation تمدید → پرداخت بدون تحویل پلن
 [ ] C6: هش پسورد پرتال بدون salt با SHA-512 (HashHandler.cs:12)
 
 ## ترتیب فازهای اجرایی
-1. P0 درستی جریان پول: C2, C4, C5, H8, H9, M15
-2. P1 داده ترافیک و job ها: C1, H18, M5, H16, H17, M18 + ایندکس‌های غایب (H20)
+1. [x] P0 درستی جریان پول: C2, C4, C5, H8, H9, M15
+2. [x] P1 داده ترافیک و job ها: C1, H18, M5, H16, H17, M18 + ایندکس‌های غایب (H20) — دیپلوی دستی: `TrafficDataDedup.sql` سپس `Indexes.sql` (جزئیات در docs/14)
 3. P2 پرداخت فرانتند: C3, M25 (نیازمند تعیین قرارداد API درگاه)
 4. P3 احراز هویت و امنیت: C6, H1, H12, H5, H6, H7, M13, M14
 5. P4 زیرساخت job و I/O: H2, H3, H4, M17, M19, M20, M21, M22

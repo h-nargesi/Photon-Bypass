@@ -110,8 +110,6 @@ class VpnApplication(
 
     public async Task<ApiResult<TrafficDataModel>> TrafficData(string target)
     {
-        await ServerMngSrv.Value.UpdateTrafficData();
-
         var account_id = await AccountRepo.Value.GetActiveAccountId(target);
         if (!account_id.HasValue)
         {

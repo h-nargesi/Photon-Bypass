@@ -89,16 +89,17 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
             }
         };
 
-        account_repo_moq.OnSave += account =>
+        account_repo_moq.OnBatchSave += accounts =>
         {
-            if (account is { Username: "User4", IsActive: false })
-            {
-                user_4_actions[3] = true;
-            }
-            else
+            var saved_list = accounts.ToList();
+
+            if (saved_list.Count != 1 || saved_list[0] is not { Username: "User4", IsActive: false })
             {
                 other = true;
+                return;
             }
+
+            user_4_actions[3] = true;
         };
 
         await monitoring.InactiveAbandonedUsers(plan_state_list);
@@ -138,11 +139,14 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
             Assert.Contains(mail.To.First().Address, emails);
         };
 
-        account_repo_moq.OnSave += account =>
+        account_repo_moq.OnBatchSave += accounts =>
         {
-            Assert.NotNull(account.LastWarningTime);
-            var running_time_delay = (account.LastWarningTime.Value - DateTime.Now).TotalSeconds;
-            Assert.True(running_time_delay < 1);
+            foreach (var account in accounts)
+            {
+                Assert.NotNull(account.LastWarningTime);
+                var running_time_delay = (account.LastWarningTime.Value - DateTime.Now).TotalSeconds;
+                Assert.True(running_time_delay < 1);
+            }
         };
 
         await monitoring.NotifSendServices(finishing_list);

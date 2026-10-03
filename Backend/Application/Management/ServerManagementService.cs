@@ -107,23 +107,25 @@ partial class ServerManagementService(
 
         if (last_update_times.Count <= 0) return;
 
-        var loaded_traffic_task = await SessionRadiusSrv.Value.GetTrafficData(last_update_times);
+        var locked_realms = (await RealmRepo.TryLockTrafficSync(last_update_times.Keys)).ToHashSet();
 
-        var current_traffic_task = await TrafficDataRepo.FetchOpen();
+        if (locked_realms.Count <= 0) return;
 
-        var realms = await RealmRepo.GetByIds(last_update_times.Keys.ToList());
+        var sync_times = last_update_times.Where(pair => locked_realms.Contains(pair.Key))
+            .ToDictionary();
 
-        var traffic_data_list = await Merge(
-            current_traffic_task, 
-            loaded_traffic_task,
-            realms);
+        var loaded_traffic = await SessionRadiusSrv.Value.GetTrafficData(sync_times);
 
-        var realm_changes = realms.Values.Where(r => r.HasChanged).ToList();
+        var from = sync_times.Values.Where(time => time.HasValue)
+            .Select(time => time!.Value)
+            .DefaultIfEmpty(DateTime.MinValue)
+            .Min();
 
-        if (realm_changes.Count > 0)
-        {
-            await RealmRepo.Save(realm_changes);
-        }
+        if (from > DateTime.MinValue) from = from.AddSeconds(-1);
+
+        var current_traffic = await TrafficDataRepo.Fetch(from);
+
+        var traffic_data_list = await Merge(current_traffic, loaded_traffic);
 
         if (traffic_data_list.Count <= 0) return;
 
@@ -187,14 +189,13 @@ partial class ServerManagementService(
         return cert;
     }
 
-    private async Task<List<TrafficDataEntity>> Merge(List<TrafficDataEntity> destination, List<TrafficDataBinding> source, Dictionary<int, RealmEntity> realms)
+    private async Task<List<TrafficDataEntity>> Merge(List<TrafficDataEntity> destination, List<TrafficDataBinding> source)
     {
         if (source.Count <= 0) return [];
 
-        var now = DateTime.Now;
-
         var destination_dictionary = destination.GroupBy(k => k.NasId)
-            .ToDictionary(k => k.Key, v => v.ToDictionary(x => x.SessionId));
+            .ToDictionary(k => k.Key, v => v.GroupBy(x => x.SessionId)
+                .ToDictionary(g => g.Key, g => g.MaxBy(x => x.Id)!));
         var new_data = new List<TrafficDataEntity>();
 
         var account_dictionary =
@@ -214,19 +215,15 @@ partial class ServerManagementService(
                 continue;
             }
 
-            if (realms.TryGetValue(server.ReamId, out var realm))
-            {
-                realm.LastTrafficSync = now;
-                realm.HasChanged = true;
-            }
-
             if (destination_dictionary.TryGetValue(server.Id, out var data_pack) &&
-                data_pack.TryGetValue(traffic.NasIpAddress, out var data))
+                data_pack.TryGetValue(traffic.SessionId, out var data))
             {
-                if (data.DataIn == traffic.DataIn && data.DataOut == traffic.DataOut) continue;
+                if (data.DataIn == traffic.DataIn && data.DataOut == traffic.DataOut &&
+                    data.EndSession == traffic.EndSession) continue;
 
                 data.DataOut = traffic.DataOut;
                 data.DataIn = traffic.DataIn;
+                data.EndSession = traffic.EndSession;
                 new_data.Add(data);
             }
             else

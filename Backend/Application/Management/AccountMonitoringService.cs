@@ -26,21 +26,25 @@ internal class AccountMonitoringService(
 
     public async Task InactiveAbandonedUsers(IEnumerable<PlanStateEntity> plan_state_list)
     {
+        var now = DateTime.Now;
+
+        var abandoned_list = plan_state_list
+            .Where(plan => (plan.ExpirationDate.HasValue && plan.ExpirationDate <= now) ||
+                           (plan.TrafficLeft.HasValue && plan.TrafficLeft < StaticValues.BytesInMegDouble))
+            .ToList();
+
+        if (abandoned_list.Count < 1) return;
+
+        var accounts = await AccountRepo.GetActiveAccounts(abandoned_list.Select(plan => plan.Id));
+
         var deactivate_list = new List<string>();
         var remove_list = new List<string>();
         var history_list = new List<HistoryEntity>();
+        var changed_accounts = new List<AccountEntity>();
 
-        foreach (var plan in plan_state_list)
+        foreach (var plan in abandoned_list)
         {
-            if ((!plan.ExpirationDate.HasValue || plan.ExpirationDate > DateTime.Now) &&
-                (!plan.TrafficLeft.HasValue || plan.TrafficLeft >= StaticValues.BytesInMegDouble))
-            {
-                continue;
-            }
-
-            var account = await AccountRepo.GetActiveAccount(plan.Id);
-
-            if (account == null)
+            if (!accounts.TryGetValue(plan.Id, out var account))
             {
                 Log.Fatal(
                     "The account '{0}' is in 'SessionStateRepository.GetAccountFinishingState' but not found in 'AccountRepository'. account-id: {1}",
@@ -63,7 +67,7 @@ internal class AccountMonitoringService(
                 remove_list.Add(account.Username);
 
                 account.IsActive = false;
-                _ = AccountRepo.Save(account);
+                changed_accounts.Add(account);
                 continue;
             }
 
@@ -83,6 +87,11 @@ internal class AccountMonitoringService(
                     "اکانت شما به علت عدم استفاده بعد از دو ماه غیرفعال شد. مقدار ترافیک یا مدت زمان باقیمانده به جای خود باقی است.",
                 Value = DayHour((int)expired_days) + " گذشته",
             });
+        }
+
+        if (changed_accounts.Count > 0)
+        {
+            await AccountRepo.Save(changed_accounts);
         }
 
         var task = HistoryRepo.Save(history_list);
@@ -108,6 +117,7 @@ internal class AccountMonitoringService(
 
         var tasks = new List<Task>();
         var history_list = new List<HistoryEntity>();
+        var changed_accounts = new List<AccountEntity>();
 
         foreach (var plan in plan_state_list)
         {
@@ -148,7 +158,7 @@ internal class AccountMonitoringService(
 
                 if (account != null)
                 {
-                    IncreaseWarningTime(account);
+                    IncreaseWarningTime(account, changed_accounts);
                 }
 
                 continue;
@@ -160,8 +170,13 @@ internal class AccountMonitoringService(
                 tasks.Add(EmailSrv.Value.FinishServiceAlert(
                     account.Fullname, plan.Username, account.EmailAddress, plan.GetPlanTitle(), remains_title));
 
-                IncreaseWarningTime(account);
+                IncreaseWarningTime(account, changed_accounts);
             }
+        }
+
+        if (changed_accounts.Count > 0)
+        {
+            await AccountRepo.Save(changed_accounts);
         }
 
         tasks.Add(HistoryRepo.Save(history_list));
@@ -169,10 +184,10 @@ internal class AccountMonitoringService(
         await Task.WhenAll(tasks);
     }
 
-    private void IncreaseWarningTime(AccountEntity account)
+    private static void IncreaseWarningTime(AccountEntity account, List<AccountEntity> changed_accounts)
     {
         account.UpdateWarningTime();
-        _ = AccountRepo.Save(account);
+        changed_accounts.Add(account);
     }
 
     private static string DayHour(double time)

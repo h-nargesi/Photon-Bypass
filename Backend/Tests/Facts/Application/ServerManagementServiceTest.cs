@@ -72,12 +72,52 @@ public class ServerManagementServiceTest : UnitLevelServiceInitializer
         {
             saved = true;
             Assert.NotNull(records);
-            Assert.Equal(21, records.Count());
+            // 6 sessions unknown to the database + 9 rows updated in place
+            // (EndSession/Data stamps); the equal rows are skipped entirely.
+            Assert.Equal(15, records.Count());
         };
 
         await manager.UpdateTrafficData();
 
         Assert.True(saved);
+    }
+
+    [Fact]
+    public async Task UpdateTrafficData_SecondCycleWithSameSessions_DoesNotInsertDuplicates()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+        var traffic_repo_mock = scope.ServiceProvider.GetRequiredService<TrafficDataRepositoryMoq>();
+
+        var original_ids = traffic_repo_mock.Data.Select(traffic => traffic.Id).ToHashSet();
+
+        var first_cycle = true;
+        var second_cycle_save_count = 0;
+
+        traffic_repo_mock.OnBachSave += records =>
+        {
+            if (!first_cycle) second_cycle_save_count += records.Count();
+        };
+
+        await manager.UpdateTrafficData();
+
+        first_cycle = false;
+
+        var row_count_after_first_cycle = traffic_repo_mock.Data.Count;
+
+        await manager.UpdateTrafficData();
+
+        // no new rows in the second cycle: every fetched session matched its row
+        Assert.Equal(row_count_after_first_cycle, traffic_repo_mock.Data.Count);
+        Assert.Equal(0, second_cycle_save_count);
+
+        // existing rows were updated in place, not replaced by new inserts
+        Assert.True(original_ids.IsSubsetOf(traffic_repo_mock.Data.Select(traffic => traffic.Id)));
+
+        // (NasId, SessionId) is unique after two consecutive sync cycles
+        Assert.All(
+            traffic_repo_mock.Data.GroupBy(traffic => (traffic.NasId, traffic.SessionId)),
+            group => Assert.Equal(1, group.Count()));
     }
 
     [Fact(Skip = "Not implemented")]

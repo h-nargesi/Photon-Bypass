@@ -47,16 +47,26 @@ public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler, Resour
 
     public async Task DeactivateUserExcept(ServerEntity radius, HashSet<string> usernames)
     {
+        var field_name = TikParam.GetFieldName<UserModel>(nameof(UserModel.Disabled)) ??
+                         throw new Exception("The 'Disabled' TikProperty not found in 'UserModel'.");
+
+        using var token = await synchronization.GetToken(radius.Name);
+
         using var connection = await handler.ConnectTo(radius);
 
-        var all_users = connection.LoadAll<UserModel>()?
-            .Select(u => u.Name ?? string.Empty)
-            .Where(u => !usernames.Contains(u))
-            .ToList();
-
-        if (all_users?.Count > 0)
+        foreach (var user in connection.LoadAll<UserModel>() ?? [])
         {
-            await DeactivateUser(radius, all_users);
+            if (user.Name is not { Length: > 0 } name ||
+                !InjectionRegex.Username().Match(name).Success ||
+                usernames.Contains(name) ||
+                user.Disabled)
+            {
+                continue;
+            }
+
+            user.Disabled = true;
+
+            connection.Save(user, [field_name]);
         }
     }
 
@@ -80,7 +90,7 @@ public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler, Resour
                     TikParam.Equal<UserModel>(nameof(UserModel.Name), username))?
                 .FirstOrDefault();
 
-            if (user == null)
+            if (user == null || user.Disabled)
             {
                 continue;
             }

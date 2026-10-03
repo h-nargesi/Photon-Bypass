@@ -66,12 +66,15 @@ class AccountRadiusSyncService(
 
         await radius_list.RunJob(radius =>
         {
+            realm_user_dictionary.TryGetValue(radius.RealmId, out var realm_users);
+            var valid_users = (realm_users ?? []).ToHashSet();
+
             switch (radius.Features & ServerFeature.Radius)
             {
                 case ServerFeature.UserManager:
-                    return MikrotikRadius.Value.DeactivateUserExcept(radius, realm_user_dictionary[radius.RealmId].ToHashSet());
+                    return MikrotikRadius.Value.DeactivateUserExcept(radius, valid_users);
                 case ServerFeature.RadiusDesk:
-                    return RadiusDesk.Value.DeactivateUserExcept(radius, realm_user_dictionary[radius.RealmId].ToHashSet());
+                    return RadiusDesk.Value.DeactivateUserExcept(radius, valid_users);
                 default:
                     Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
                         radius.RealmId, radius.Id, radius.Features);

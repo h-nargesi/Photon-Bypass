@@ -13,6 +13,10 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IUnitLev
 
     public event Action<IEnumerable<TrafficDataEntity>>? OnBachSave;
 
+    private readonly List<TrafficDataEntity> data_list;
+
+    public IReadOnlyList<TrafficDataEntity> Data => data_list;
+
     public TrafficDataRepositoryMoq() : this(FilePath)
     {
     }
@@ -21,8 +25,13 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IUnitLev
     {
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
-        var data_list = JsonSerializer.Deserialize<List<TrafficDataEntity>>(raw_text)
-                        ?? [];
+        data_list = JsonSerializer.Deserialize<List<TrafficDataEntity>>(raw_text)
+                    ?? [];
+
+        for (var i = 0; i < data_list.Count; i++)
+        {
+            if (data_list[i].Id < 1) data_list[i].Id = i + 1;
+        }
 
         Setup(x => x.Fetch(It.IsAny<DateTime>()))
             .Returns<DateTime>(from =>
@@ -87,6 +96,16 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IUnitLev
         Setup(x => x.Save(It.IsNotNull<IEnumerable<TrafficDataEntity>>()))
             .Returns<IEnumerable<TrafficDataEntity>>(list =>
             {
+                var known_ids = data_list.Select(traffic => traffic.Id).ToHashSet();
+
+                var next_id = known_ids.Count > 0 ? known_ids.Max() : 0;
+
+                foreach (var record in list.Where(record => record.Id < 1))
+                {
+                    record.Id = ++next_id;
+                    data_list.Add(record);
+                }
+
                 OnBachSave?.Invoke(list);
                 return Task.CompletedTask;
             });
