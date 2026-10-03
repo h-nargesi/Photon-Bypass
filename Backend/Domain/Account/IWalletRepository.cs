@@ -17,5 +17,7 @@ public interface IWalletRepository : IEditableRepository<WalletEntity>
 
     Task<int> GenerateNewInvoiceCode();
 
+    Task<int> CompleteInvoice(int code);
+
     Task<int> GetBalance(int account_id);
 }

@@ -142,9 +142,27 @@ class PlanApplication(
                 switch (x.Last())
                 {
                     case 't': target_name = x[..^1]; break;
-                    case 'u': count = byte.Parse(x[..^1]); break;
-                    case 'd': days = short.Parse(x[..^1]); break;
-                    case 'g': gigabytes = int.Parse(x[..^1]); break;
+                    case 'u':
+                        if (!byte.TryParse(x[..^1], out var parsed_count))
+                        {
+                            throw new UserException("درخواست تمدید نامعتبر است!", $"Invalid renewal action user-count: {x}");
+                        }
+                        count = parsed_count;
+                        break;
+                    case 'd':
+                        if (!short.TryParse(x[..^1], out var parsed_days))
+                        {
+                            throw new UserException("درخواست تمدید نامعتبر است!", $"Invalid renewal action days: {x}");
+                        }
+                        days = parsed_days;
+                        break;
+                    case 'g':
+                        if (!int.TryParse(x[..^1], out var parsed_gigabytes))
+                        {
+                            throw new UserException("درخواست تمدید نامعتبر است!", $"Invalid renewal action gigabytes: {x}");
+                        }
+                        gigabytes = parsed_gigabytes;
+                        break;
                 }
             });
 
@@ -186,6 +204,23 @@ class PlanApplication(
 ",
                 JobContext.Value.Username, account.Username, count, days, gigabytes, balance, estimate,
                 JobContext.Value.Username);
+
+            var validation_probe = new RenewalEntity
+            {
+                TimeLimitInDays = days,
+                TrafficLimit = gigabytes * StaticValues.BytesInGigLong,
+                SimultaneousUser = count,
+            };
+
+            if (validation_probe.RenewalValidation(account, out var validation_exception))
+            {
+                Log.Information(@"[user: {0}] Plan renewal request rejected before invoice:
+    request=(taget:{1}, count:{2}, days={3}, gigabytes:{4})
+    message={5}",
+                    JobContext.Value.Username, account.Username, count, days, gigabytes, validation_exception.Message);
+
+                throw validation_exception;
+            }
 
             var renewal = new RenewalEntity
             {

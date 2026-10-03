@@ -22,7 +22,7 @@
 - **شرح**: دیکشنری مقصد با `SessionId` کلید می‌خورد ولی جستجو با `NasIpAddress` انجام می‌شود؛ چون هیچ‌وقت برابر نیستند، session های باز هرگز آپدیت نمی‌شوند و در هر سیکل `TrafficDataEntity` جدید درج می‌شود → دوبل‌شمارش ترافیک (اتمام زودهنگام پلن‌ها)، نقض `UK_TrafficData_NasId_SessionId`، رشد بی‌نهایت `FetchOpen`.
 - **اصلاح**: `data_pack.TryGetValue(traffic.SessionId, ...)`.
 
-### [ ] C2. Bulk Save/Delete از تراکنش DB عبور نمی‌کند — تراکنش صورتحساب بی‌اثر است
+### [x] C2. Bulk Save/Delete از تراکنش DB عبور نمی‌کند — تراکنش صورتحساب بی‌اثر است
 - **مکان**: `Backend/Infrastructure/Database/EditableRepository.cs:43-51,62`؛ متد کمکی `CheckTransactionBulk` در `:91-104` تعریف شده ولی **هرگز صدا زده نمی‌شود**.
 - **شرح**: `BulkUpdateAsync/BulkInsertAsync/BulkDeleteAsync` بدون `AttachToTransaction` اجرا می‌شوند؛ در نتیجه `BillingApplication.GenerateInvoice` (`Backend/Application/Billing/BillingApplication.cs:151-250`) که wallet/renewal را داخل `BeginTransaction/Commit` می‌نویسد عملاً auto-commit می‌نویسد و rollback هیچ‌چیز را برنمی‌گرداند → ردیف‌های نیمه‌کاله wallet/renewal در صورت خطای وسط flow.
 - **اصلاح**: فراخوانی `CheckTransactionBulk` در overload های collection (هم save هم delete).
@@ -35,12 +35,12 @@
   - `Backend/Portal/Controllers/BillingController.cs:21` — `Pay([FromBody] int value)` ولی فرانت `POST {value}` (object) می‌فرستد؛ `payment.component.ts:65` خروجی عددی pay را به‌عنوان URL به `window.location.href` می‌دهد.
 - **اصلاح**: تعریف قرارداد API پرداخت (route/body/response)، اصلاح سرویس‌های فرانتند، استفاده از `result.invoiceCode`، و پیاده‌سازی redirect واقعی درگاه.
 
-### [ ] C4. کد فاکتور MAX+1 → تداخل بین کاربران؛ callback بین اکانت‌ها عبور می‌کند
+### [x] C4. کد فاکتور MAX+1 → تداخل بین کاربران؛ callback بین اکانت‌ها عبور می‌کند
 - **مکان**: `Backend/Infrastructure/Repository/WalletRepository.cs:66-76` (تولید کد) و `:29-36` (`GetInvoice(int)` بدون فیلتر account/status)؛ مصرف در `BillingApplication.cs:99-123`.
 - **شرح**: `select max(InvoiceCode)... return max+1` بدون قفل/unique؛ دو درخواست هم‌زمان کد یکسان می‌گیرند. `GetInvoice(code)` فقط با code فیلتر می‌کند → `PaymentCallback` می‌تواند wallet های کاربر دیگر را Complete و Renewal او را اجرا کند.
 - **اصلاح**: ستون identity/sequence یا unique + retry، و فیلتر account در lookup فاکتور.
 
-### [ ] C5. ترتیب و idempotency های PaymentCallback → «پرداخت بدون تحویل پلن»
+### [x] C5. ترتیب و idempotency های PaymentCallback → «پرداخت بدون تحویل پلن»
 - **مکان**: `Backend/Application/Billing/BillingApplication.cs:110-123`؛ `Backend/Application/Plan/PlanApplication.cs:180-215` (مسیر بدون validation) در برابر `:255-263` (validation فقط در retry).
 - **شرح**: اول `Status=Completed` ذخیره می‌شود بعد `Renewal` اجرا می‌شود؛ مسیر «موجودی ناکافی» فاکتور را **بدون** `RenewalValidation` صادر می‌کند → ورودی نامعتبر (مثل `days=37`) از estimate تا پرداخت عبور می‌کند و بعد از کسر پول exception می‌گیرد؛ بدون مسیر refund. callback تکراری (webhook retry) آیتم‌های Completed را دوباره اجرا می‌کند؛ `int.Parse(token)` در `:99` بدون گارد → 500.
 - **اصلاح**: اجرای validation قبل از صدور فاکتور، atomic check-and-set روی status (فقط Pending→Completed)، گارد parse، و مسیر compensation.
@@ -75,10 +75,10 @@
 ### [ ] H7. تغییر پسورد VPN در DB ذخیره نمی‌شود → desync با Radius
 `Backend/Application/Vpn/VpnApplication.cs:42-62` — `ChangeVpnPassword` فقط Radius را صدا می‌زند؛ `AccountEntity.VpnPassword` آپدیت نمی‌شود → `SendCertEmail` (`:91`) پسورد کهنه ایمیل می‌کند و `UserManagerHelper.GetUser` (`MikrotikRadius/Application/UserManagerHelper.cs:136-141`) در sync بعدی user را با پسورد قدیمی بازمی‌سازد.
 
-### [ ] H8. join غلط در GetInvoice(target, code) → ردیف‌های غلط/بیگانه
+### [x] H8. join غلط در GetInvoice(target, code) → ردیف‌های غلط/بیگانه
 `Backend/Infrastructure/Repository/WalletRepository.cs:43` — `join Account a on w.Id = a.Id` به‌جای `w.AccountId = a.Id`؛ هر جا wallet-id با account-id تفاوت داشته باشد نتیجه غلط است (افشا + خرابی `get-invoice`).
 
-### [ ] H9. GetWalletsAmount با «= @ids» → SQL نامعتبر
+### [x] H9. GetWalletsAmount با «= @ids» → SQL نامعتبر
 `Backend/Infrastructure/Repository/WalletRepository.cs:53-64` — `where Id = @ids` با پارامتر لیستی؛ Dapper آن را به `Id = (@p1,@p2,...)` گسترش می‌دهد → با بیش از یک renewal معوق، صدور فاکتور همیشه 500 می‌شود. **اصلاح**: `where Id in @ids`.
 
 ### [ ] H10. احراز هویت فرانتند: token در localStorage، بدون refresh/guard، logout مرده
@@ -155,7 +155,7 @@
 | [ ] | M12 | credentials روتر/RadiusDesk به‌صورت plaintext JSON در جدول Server | `Domain/Servers/Entity/ServerEntity.cs:33-41` + `JsonType/SshConfig.cs:7` و غیره | خواندن DB = مالکیت همه روترها؛ بدون encryption-at-rest |
 | [ ] | M13 | passphrase گواهی OVPN در لاگ Serilog | `ServerBridge/Ssh/SshConnection.cs:15` + `MikrotikDirectService.cs:146-148` | `Log.Information` شامل command کامل با export-passphrase |
 | [ ] | M14 | anchor ضعیف regex تزریق (`$` قبل از `\n` تطبیق می‌شود) + `\w` یونیکدی | `ServerBridge/InjectionRegex.cs:7-11`، `ServerBridge/Ssh/ProcessService.cs:129-130` | `\n` انتهایی از `^[0-9a-fA-F]+$` رد می‌شود و به CLI روتر تزریق |
-| [ ] | M15 | مبلغ پرداخت از client بدون هیچ bound | `Portal/Controllers/BillingController.cs:21-27` → `BillingApplication.cs:29-43` | مقدار منفی/سرریز وارد math موجودی می‌شود |
+| [x] | M15 | مبلغ پرداخت از client بدون هیچ bound | `Portal/Controllers/BillingController.cs:21-27` → `BillingApplication.cs:29-43` | مقدار منفی/سرریز وارد math موجودی می‌شود |
 | [ ] | M16 | token ادمین RadiusDesk در URL query | `FreeRadius/WebService/RadiusDeskService.cs:441-490` | افشا در proxy/access log |
 | [ ] | M17 | sync-over-async در مسیرهای request/job | `Infrastructure/Services/SessionRadiusSyncService.cs:104` (`.Result`)، `AuthApplication.cs:169` (`Task.WaitAll`)، `Infrastructure/Services/ServerEntityExtension.cs:14` | blocking + ریسک deadlock |
 
@@ -212,6 +212,8 @@
 | فاز | موضوع | آیتم‌ها | خروجی قابل قبول |
 |---|---|---|---|
 | **P0** | درستی جریان پول | C2 → C4 → C5 → H8 → H9 → M15 | یک PR روی Billing + تست integration (صدور فاکتور → callback دوبار → تطابق ردیف‌ها) |
+
+> **نکته دیپلوی P0**: اسکریپت جدید `Database/LocalDatabase/InvoiceSequence.sql` (کد فاکتور اتمیک، C4) باید قبل از release به‌صورت دستی روی دیتابیس production (`FastBypass`) اجرا شود — فریم‌ورک migration وجود ندارد. اسکریپت idempotent است و مقدار شروع را از `MAX(InvoiceCode)` موجود محاسبه می‌کند. همچنین عملیات bulk از `Z.Dapper.Plus` (لایسنس trial منقضی‌شده) به set-operations تک‌ردیفی `Dapper.FastCrud` منتقل شد (`EditableRepository`).
 | **P1** | داده ترافیک و job ها | C1 → H18 → M5 → H16 → H17 → M18 + ایندکس‌های H20 (به‌صورت migration) | اجرای JobInterval دوبار پشت‌سرهم بدون درج تکراری `TrafficData` و بدون نشت connection |
 | **P2** | پرداخت فرانتند | C3 → M25 (نیازمند تعیین قرارداد API واقعی: مسیرها/body/redirect) | `yarn build` سبز + مسیر پرداخت با invoice واقعی |
 | **P3** | احراز هویت و امنیت | C6 → H1 → H12 → H5 → H6 → H7 → M13 → M14 | تست تغییر پسورد/reset/lockout؛ لاگ بدون secret |

@@ -6,6 +6,7 @@ using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Business;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
 using Serilog;
@@ -28,6 +29,11 @@ class BillingApplication(
 
     public async Task<ApiResult<int?>> GenerateInvoiceCode(int value)
     {
+        if (value is < 1 or > 100_000)
+        {
+            throw new UserException("مبلغ وارد شده معتبر نیست!", $"Invalid pay amount: {value}");
+        }
+
         var invoice = await GenerateInvoice(new NewInvoiceInfo
         {
             Price = value,
@@ -96,7 +102,16 @@ class BillingApplication(
 
     public async Task<ApiResult<BalanceStatus>> PaymentCallback(string token)
     {
-        var invoice_items = await WalletRepo.GetInvoice(int.Parse(token));
+        if (!int.TryParse(token, out var code))
+        {
+            Log.Warning("PaymentCallback with invalid token: token={0}", token);
+
+            return new ApiResult<BalanceStatus> { Code = 400, Data = BalanceStatus.Failed };
+        }
+
+        _ = await WalletRepo.CompleteInvoice(code);
+
+        var invoice_items = await WalletRepo.GetInvoice(code);
 
         if (invoice_items.Count < 1)
         {
@@ -107,19 +122,39 @@ class BillingApplication(
 
         // TODO: check token
 
-        invoice_items.ForEach(i => i.Status = BalanceStatus.Completed);
-        await WalletRepo.Save(invoice_items);
-
-        var actions = invoice_items.Where(i => i.Action != null)
+        var actions = invoice_items.Where(i => !string.IsNullOrEmpty(i.Action))
              .Select(i => (i.AccountId, i.Id, i.Action));
 
         foreach (var action in actions)
         {
-            if (string.IsNullOrEmpty(action.Action)) continue;
+            if (await RenewalRepo.Value.GetByWalletCredit(action.Id) != null)
+            {
+                Log.Information(@"Skip already executed Renewal: account-id={AccountId}, wallet-id={Id}, action={Action}", action);
+
+                continue;
+            }
 
             Log.Information(@"Save Renewal: account-id={AccountId}, wallet-id={Id}, action={Action}", action);
 
-            await PlanApp.Value.Renewal(action.AccountId, action.Id, action.Action);
+            try
+            {
+                var renewal_result = await PlanApp.Value.Renewal(action.AccountId, action.Id, action.Action);
+
+                if (renewal_result.Code / 100 != 2)
+                {
+                    Log.Error(@"Save Renewal was unsuccessful: account-id={AccountId}, wallet-id={Id}, action={Action}, result-code={Code}",
+                        action.AccountId, action.Id, action.Action, renewal_result.Code);
+
+                    return ApiResult<BalanceStatus>.Failed(BalanceStatus.Failed);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, @"Save Renewal failed: account-id={AccountId}, wallet-id={Id}, action={Action}",
+                    action.AccountId, action.Id, action.Action);
+
+                return ApiResult<BalanceStatus>.Failed(BalanceStatus.Failed);
+            }
         }
 
         return ApiResult<BalanceStatus>.Success(BalanceStatus.Completed);

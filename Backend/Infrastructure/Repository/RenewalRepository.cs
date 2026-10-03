@@ -15,4 +15,13 @@ class RenewalRepository(LocalDbContext context) : EditableRepository<RenewalEnti
 
         return [.. renewals];
     }
+
+    public async Task<RenewalEntity?> GetByWalletCredit(int wallet_id)
+    {
+        var renewals = await FindAsync(statement => statement
+            .Where($"{nameof(RenewalEntity.WalletCredit)} = @wallet_id")
+            .WithParameters(new { wallet_id }));
+
+        return renewals.FirstOrDefault();
+    }
 }

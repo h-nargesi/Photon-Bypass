@@ -1,7 +1,11 @@
 ﻿using PhotonBypass.Application.Billing;
 using PhotonBypass.Application.Billing.Model;
+using PhotonBypass.Application.Plan;
 using PhotonBypass.Domain;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Domain.Plan;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Test.Initializer;
 
 namespace PhotonBypass.Test.Facts.Application;
@@ -185,12 +189,132 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         Assert.Equal(300, invoice.InvoiceItems[2].Value);
     }
 
-    [Fact(Skip = "NotImplementedException")]
+    [Fact]
     public async Task PaymentCallback()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var billing_repo = scope.ServiceProvider.GetRequiredService<IBillingApplication>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
+        var renewal_repo = scope.ServiceProvider.GetRequiredService<IRenewalRepository>();
+
+        job_context.InjectJobContext(99, "User99", "User99");
+
+        var estimate = (await plan_app.Estimate("User99", 2, 120, 50)).Data?.Price ?? 0;
+
+        var invoice_code = await billing_repo.GenerateInvoiceCode(new NewInvoiceInfo
+        {
+            Action = "User99t|2u|120d|50g",
+            Price = 300,
+            Descripttion = "",
+        });
+
+        Assert.NotNull(invoice_code.Data);
+        Assert.Equal(2, invoice_code.Code / 100);
+
+        var result = await billing_repo.PaymentCallback(invoice_code.Data.Value.ToString());
+
+        Assert.Equal(2, result.Code / 100);
+        Assert.Equal(BalanceStatus.Completed, result.Data);
+
+        var invoice_items = await wallet_repo.GetInvoice(invoice_code.Data.Value);
+        Assert.All(invoice_items, i => Assert.Equal(BalanceStatus.Completed, i.Status));
+
+        var credit = invoice_items.Single(i => !string.IsNullOrEmpty(i.Action));
+
+        Assert.NotNull(await renewal_repo.GetByWalletCredit(credit.Id));
+
+        Assert.Equal(300 - estimate, await wallet_repo.GetBalance(99));
+    }
+
+    [Fact]
+    public async Task PaymentCallback_Twice_RenewalOnlyOnce()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var billing_repo = scope.ServiceProvider.GetRequiredService<IBillingApplication>();
+        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
+        var renewal_repo = scope.ServiceProvider.GetRequiredService<IRenewalRepository>();
+
+        job_context.InjectJobContext(99, "User99", "User99");
+
+        var invoice_code = await billing_repo.GenerateInvoiceCode(new NewInvoiceInfo
+        {
+            Action = "User99t|2u|120d|50g",
+            Price = 300,
+            Descripttion = "",
+        });
+
+        Assert.NotNull(invoice_code.Data);
+
+        var first = await billing_repo.PaymentCallback(invoice_code.Data.Value.ToString());
+        Assert.Equal(2, first.Code / 100);
+
+        var balance_after_first = await wallet_repo.GetBalance(99);
+        var transactions_after_first = await wallet_repo.GetTransactions(99);
+        var debits_after_first = transactions_after_first
+            .Where(w => w.Direction == BalanceDirection.Debit && w.Status == BalanceStatus.Completed)
+            .ToList();
+
+        Assert.Single(debits_after_first);
+
+        var second = await billing_repo.PaymentCallback(invoice_code.Data.Value.ToString());
+
+        Assert.Equal(2, second.Code / 100);
+        Assert.Equal(BalanceStatus.Completed, second.Data);
+
+        Assert.Equal(balance_after_first, await wallet_repo.GetBalance(99));
+
+        var transactions_after_second = await wallet_repo.GetTransactions(99);
+        var debits_after_second = transactions_after_second
+            .Where(w => w.Direction == BalanceDirection.Debit && w.Status == BalanceStatus.Completed)
+            .ToList();
+
+        Assert.Single(debits_after_second);
+        Assert.Equal(debits_after_first[0].Id, debits_after_second[0].Id);
+    }
+
+    [Fact]
+    public async Task PaymentCallback_InvalidToken()
     {
         using var scope = App.Services.CreateScope();
         var billing_repo = scope.ServiceProvider.GetRequiredService<IBillingApplication>();
 
-        throw new NotImplementedException();
+        var result = await billing_repo.PaymentCallback("not-a-number");
+
+        Assert.Equal(400, result.Code);
+        Assert.Equal(BalanceStatus.Failed, result.Data);
+    }
+
+    [Fact]
+    public async Task GenerateInvoiceCode_ValueBounds()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var billing_repo = scope.ServiceProvider.GetRequiredService<IBillingApplication>();
+
+        job_context.InjectJobContext(99, "User99", "User99");
+
+        await Assert.ThrowsAsync<UserException>(() => billing_repo.GenerateInvoiceCode(0));
+        await Assert.ThrowsAsync<UserException>(() => billing_repo.GenerateInvoiceCode(-5));
+        await Assert.ThrowsAsync<UserException>(() => billing_repo.GenerateInvoiceCode(100001));
+
+        var result = await billing_repo.GenerateInvoiceCode(500);
+
+        Assert.Equal(2, result.Code / 100);
+        Assert.Equal(100004, result.Data);
+    }
+
+    [Fact]
+    public async Task Renewal_InvalidInput_NoPendingWallet()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
+
+        await Assert.ThrowsAsync<UserException>(() => plan_app.Renewal("User3", 2, 120, 1));
+
+        Assert.Empty(await wallet_repo.GetNotPaid(3));
     }
 }

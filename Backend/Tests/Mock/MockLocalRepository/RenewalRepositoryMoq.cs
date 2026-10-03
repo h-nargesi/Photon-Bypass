@@ -10,6 +10,8 @@ namespace PhotonBypass.Test.Mock.MockLocalRepository;
 
 internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelService
 {
+    public readonly List<RenewalEntity> Data;
+
     public RenewalRepositoryMoq(WalletRepositoryMoq wallet_repo) : this(wallet_repo, FilePath)
     {
     }
@@ -18,24 +20,49 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
     {
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
-        var data_dictionary = JsonSerializer.Deserialize<List<RenewalEntity>>(raw_text)
-            ?.GroupBy(k => k.AccountId).ToDictionary(k => k.Key, v => v.ToList()) ?? [];
+        Data = JsonSerializer.Deserialize<List<RenewalEntity>>(raw_text) ?? [];
 
         Setup(repository => repository.GetNotPaid(It.IsAny<int>()))
             .Returns<int>(account_id =>
             {
-                if (!data_dictionary.TryGetValue(account_id, out var renewals) ||
+                var account_renewals = Data.Where(i => i.AccountId == account_id).ToList();
+
+                List<RenewalEntity> renewals;
+
+                if (account_renewals.Count < 1 ||
                     !waller_repo.Data.TryGetValue(account_id, out var wallets))
                 {
                     renewals = [];
                 }
                 else
                 {
-                    renewals = renewals.Where(i => !wallets.Any(w => w.Id == i.WalletCredit && w.Status == BalanceStatus.Completed))
+                    renewals = account_renewals.Where(i => !wallets.Any(w => w.Id == i.WalletCredit && w.Status == BalanceStatus.Completed))
                         .ToList();
                 }
 
                 return Task.FromResult(renewals);
+            });
+
+        Setup(repository => repository.GetByWalletCredit(It.IsAny<int>()))
+            .Returns<int>(wallet_id => Task.FromResult(Data.FirstOrDefault(r => r.WalletCredit == wallet_id)));
+
+        Setup(repository => repository.Save(It.IsAny<RenewalEntity>()))
+            .Returns<RenewalEntity>(renewal =>
+            {
+                var existed = Data.FirstOrDefault(r => r.Id == renewal.Id);
+
+                if (existed == null)
+                {
+                    renewal.Id = Data.Count > 0 ? Data.Max(r => r.Id) + 1 : 1;
+                    Data.Add(renewal);
+                }
+                else
+                {
+                    Data.Remove(existed);
+                    Data.Add(renewal);
+                }
+
+                return Task.CompletedTask;
             });
     }
 
@@ -46,5 +73,4 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
         services.AddScoped<RenewalRepositoryMoq>();
         services.AddLazyTransient(provider => provider.GetRequiredService<RenewalRepositoryMoq>().Object);
     }
-
 }

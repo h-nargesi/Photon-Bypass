@@ -40,7 +40,7 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
         var sql = $"""
                    select w.*
                    from {TableName} w
-                   join {AccountRepository.TableName} a on w.{nameof(WalletEntity.Id)} = a.{nameof(AccountEntity.Id)}
+                   join {AccountRepository.TableName} a on w.{nameof(WalletEntity.AccountId)} = a.{nameof(AccountEntity.Id)}
                    where w.{nameof(WalletEntity.InvoiceCode)} = @code
                      and a.{nameof(AccountEntity.Username)} = @target
                    """;
@@ -52,27 +52,39 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
 
     public async Task<Dictionary<int, int>> GetWalletsAmount(IEnumerable<int> ids)
     {
+        var id_list = ids.ToArray();
+
+        if (id_list.Length < 1)
+        {
+            return [];
+        }
+
         var sql = $"""
                    select {nameof(WalletEntity.Id)}, {nameof(WalletEntity.Amount)} * {nameof(WalletEntity.Direction)} as Amount
                    from {TableName}
-                   where {nameof(WalletEntity.Id)} = @ids
+                   where {nameof(WalletEntity.Id)} in @ids
                    """;
 
-        var result = await QueryAsync(sql, new { ids });
+        var result = await QueryAsync(sql, new { ids = id_list });
 
         return result.ToDictionary(k => (int)k.Id, v => (int)v.Amount);
     }
 
-    public async Task<int> GenerateNewInvoiceCode()
+    public Task<int> GenerateNewInvoiceCode()
+    {
+        return ExecuteScalarAsync<int>("select next value for InvoiceSequence");
+    }
+
+    public Task<int> CompleteInvoice(int code)
     {
         var sql = $"""
-                   select max({nameof(WalletEntity.InvoiceCode)})
-                   from {TableName}
-                   where {nameof(WalletEntity.InvoiceCode)} is not null
+                   update {TableName}
+                   set {nameof(WalletEntity.Status)} = @completed
+                   where {nameof(WalletEntity.InvoiceCode)} = @code
+                     and {nameof(WalletEntity.Status)} = @pending
                    """;
 
-        var max = (await ExecuteScalarAsync<int?>(sql)) ?? 10000;
-        return max + 1;
+        return ExecuteAsync(sql, new { code, completed = BalanceStatus.Completed, pending = BalanceStatus.Pending });
     }
 
     public Task<int> GetBalance(int account_id)

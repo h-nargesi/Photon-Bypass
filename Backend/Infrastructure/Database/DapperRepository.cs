@@ -47,6 +47,13 @@ public abstract class DapperRepository<TEntity>(IDapperDbContext context)
         return await context.Connection.ExecuteScalarAsync<T>(sql, param, context.CurrentTransaction);
     }
 
+    protected async Task<int> ExecuteAsync(string sql, object? param = null)
+    {
+        await context.OpenAsync();
+
+        return await context.Connection.ExecuteAsync(sql, param, context.CurrentTransaction);
+    }
+
     protected async Task<IEnumerable<dynamic>> QueryAsync(string sql, object? param = null)
     {
         await context.OpenAsync();

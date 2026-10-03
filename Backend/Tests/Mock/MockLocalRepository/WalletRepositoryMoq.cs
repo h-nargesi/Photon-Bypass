@@ -102,6 +102,17 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 return Task.FromResult(result);
             });
 
+        Setup(x => x.CompleteInvoice(It.IsAny<int>()))
+            .Returns<int>(code =>
+            {
+                var updated = Data.Values.SelectMany(x => x.Where(r => r.InvoiceCode == code && r.Status == BalanceStatus.Pending))
+                    .ToList();
+
+                updated.Foreach(r => r.Status = BalanceStatus.Completed);
+
+                return Task.FromResult(updated.Count);
+            });
+
         Setup(x => x.GetBalance(It.IsAny<int>()))
             .Returns<int>(account_id =>
             {
