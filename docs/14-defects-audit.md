@@ -226,14 +226,14 @@
 > 2. `Database/LocalDatabase/Indexes.sql` — ایندکس‌های H20؛ unique index روی `TrafficData` تا dedup اجرا نشود fail می‌شود. ایندکس‌های `TrafficData` روی edition های مجاز با `ONLINE = ON` ساخته می‌شوند؛ در غیر این صورت خارج از ساعات پیک اجرا شود.
 >
 > تست‌های جدید: `ServerManagementServiceTest.UpdateTrafficData_SecondCycleWithSameSessions_DoesNotInsertDuplicates` (دو سیکل پشت‌سرهم → بدون درج تکراری) و `AccountRadiusTest.DeactivateInvalidRadiusUsers_UnknownRealm_ShouldNotThrow` (realm ناموجود → بدون کرش + غیرفعال‌سازی همه).
-| **P2** | پرداخت فرانتند | C3 → M25 (نیازمند تعیین قرارداد API واقعی: مسیرها/body/redirect) | `yarn build` سبز + مسیر پرداخت با invoice واقعی |
+| **P2** | پرداخت کارت‌به‌کارت و کیف پول (طراحی جدید صاحب محصول) | C3 → M25، به‌علاوه بازطراحی جریان پرداخت طبق [docs/15-payment-p2.md](15-payment-p2.md) و `Architecture/peyment-P2.md`: فاکتور همیشه + خالص‌سازی کیف پول، ثبت رسید (تصویر XOR متن) → وضعیت `Verifying` با اعتبار فوری، تسویه کیف پول، حذف `payment-callback`، قاعده آستانه کیف پول (بک‌اند)، جدول جدید `Invoice` | `yarn build` سبز + سناریوها: شارژ با رسید، تمدید ناکافی با رسید → پلن فعال، تمدید کافی با تایید کیف پول |
 | **P3** | احراز هویت و امنیت | C6 → H1 → H12 → H5 → H6 → H7 → M13 → M14 | تست تغییر پسورد/reset/lockout؛ لاگ بدون secret |
 | **P4** | زیرساخت job و I/O | H2 → H3 → H4 → M17 → M19 → M20 → M21 → M22 | job بدون هم‌پوشانی؛ بدون `.Result`/`WaitAll` |
 | **P5** | باقی موارد | همه M/L باقی‌مانده (M1-M12, M16, M23, M24, M26, M27, L1-L11) | quick-win های جداگانه |
 
 ## سوالات باز (پیش از شروع فاز مربوطه تعیین شود)
 
-- **P2**: آیا مسیر `payment-request`/redirect درگاه از قبل طراحی شده یا قرارداد API پرداخت از نو تعریف شود؟
+- ~~**P2**: آیا مسیر `payment-request`/redirect درگاه از قبل طراحی شده یا قرارداد API پرداخت از نو تعریف شود؟~~ **حل شد (۱۴۰۵/۰۷)**: درگاه وجود ندارد؛ پرداخت فقط کارت‌به‌کارت با ثبت رسید است. طراحی کامل: [docs/15-payment-p2.md](15-payment-p2.md) و `Architecture/peyment-P2.md`.
 - **P3**: برای پسورد پرتال (C6) سیاست rollout مهاجرت هش (force-reset در login بعدی یا dual-hash) چیست؟
 
 ## طرح راستی‌آزمایی عمومی (پس از هر فاز)

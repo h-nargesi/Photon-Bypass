@@ -163,6 +163,7 @@ Full reading order and per-file purpose is in [docs/00-index.md](docs/00-index.m
 - [docs/12-current-state.md](docs/12-current-state.md) — implemented vs stub, starting points
 - [docs/13-xray-integration.md](docs/13-xray-integration.md) — Simorgh / x-ui integration plan (adapter replacement, traffic model)
 - [docs/14-defects-audit.md](docs/14-defects-audit.md) — prioritized defect/security/performance audit of issues **not** in `Architecture/TODO.md` (fix tracking lives there)
+- [docs/15-payment-p2.md](docs/15-payment-p2.md) — P2 payment design: card-to-card + receipt + wallet (decisions, data model, API contract)
 
 ---
 

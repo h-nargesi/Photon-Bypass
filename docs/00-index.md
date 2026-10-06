@@ -23,6 +23,7 @@
 | 12 | [docs/12-current-state.md](12-current-state.md) | پیاده‌سازی‌شده در برابر نیمه‌کاره + نقطه‌های شروع. |
 | 13 | [docs/13-xray-integration.md](13-xray-integration.md) | ادغام با Simorgh/x-ui: adapter جدید، منبع حقیقت، مدل ترافیک. |
 | 14 | [docs/14-defects-audit.md](14-defects-audit.md) | ممیزی نواقص/امنیت/پرفورمنس خارج از TODO با اولویت‌بندی P0–P5. |
+| 15 | [docs/15-payment-p2.md](15-payment-p2.md) | طراحی فاز P2: پرداخت کارت‌به‌کارت + رسید + کیف پول (تصمیمات، مدل داده، قرارداد API). |
 
 ## Read this file when…
 
@@ -42,6 +43,7 @@
 | Find a stub to implement | [12-current-state](12-current-state.md) |
 | Understand the Xray/x-ui integration plan (Simorgh reuse) | [13-xray-integration](13-xray-integration.md) |
 | Find/prioritize a defect, security, or performance issue | [14-defects-audit](14-defects-audit.md) |
+| Implement/verify the P2 payment flow (card-to-card, receipt, wallet) | [15-payment-p2](15-payment-p2.md) |
 
 ## Related legacy docs
 
