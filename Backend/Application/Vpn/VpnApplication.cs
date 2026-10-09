@@ -49,6 +49,9 @@ class VpnApplication(
 
         await AccountRadiusSrv.Value.ChangeVpnPassword(plan.RestrictedRealmId, account.Username, password);
 
+        account.VpnPassword = password;
+        await AccountRepo.Value.Save(account);
+
         _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
             Target = account.Id,

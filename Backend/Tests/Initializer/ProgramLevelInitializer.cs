@@ -79,6 +79,9 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
         {
             base.ConfigureWebHost(builder);
 
+            builder.UseSetting("RateLimitOptions:PermitLimit", "100000");
+            builder.UseSetting("RateLimitOptions:WindowSeconds", "60");
+
             builder.ConfigureServices(services =>
             {
                 ServiceInitializer.AddDefaultServices(services, [

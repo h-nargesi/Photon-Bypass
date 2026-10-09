@@ -81,6 +81,14 @@ class ConnectionApplication(
                 $"Closing connection ip is invalid: ({ip}, {target}, {session_id}, user-realm-id={target_realm_id})");
         }
 
+        var own_sessions = await SessionRadiusSrv.GetActiveConnections(target_realm_id.Value.RealmId, target);
+
+        if (own_sessions.All(session => session.SessionId != session_id))
+        {
+            throw new UserException("دسترسی غیرمجاز!",
+                $"Closing connection session does not belong to target: ({ip}, {target}, {session_id})");
+        }
+
         try
         {
             await SessionRadiusSrv.CloseConnectionBySessionId(server, session_id);

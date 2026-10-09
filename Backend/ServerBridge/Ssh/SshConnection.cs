@@ -12,12 +12,13 @@ class SshConnection(SshClient node, ServerEntity server) : ISshConnection
 
     public bool Execute(string command, out string result)
     {
-        Log.Information("Execute command on server: {0}\n{1}", node.ConnectionInfo.Host, command);
+        Log.Information("Execute command on server: {0}\n{1}", node.ConnectionInfo.Host, CommandScrubber.Scrub(command));
 
         var execution = node.RunCommand(command);
         result = execution.Result;
 
-        Log.Debug("Result command on server: {0}\n{1}", node.ConnectionInfo.Host, result);
+        Log.Debug("Result command on server: {0} (length: {1})",
+            node.ConnectionInfo.Host, (result ?? string.Empty).Length);
 
         if (string.IsNullOrEmpty(execution.Error)) return true;
 

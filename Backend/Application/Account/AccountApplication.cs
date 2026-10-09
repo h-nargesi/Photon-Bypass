@@ -98,9 +98,6 @@ class AccountApplication(
 
     public async Task<ApiResult> ChangePassword(string target, string token, string password)
     {
-        token = HashHandler.HashPassword(token);
-        password = HashHandler.HashPassword(password);
-
         var account = await AccountRepo.GetAccount(target);
 
         return await ChangePassword(account, token, password);
@@ -108,7 +105,7 @@ class AccountApplication(
 
     public async Task<ApiResult> ChangePassword(AccountEntity? account, string token, string password)
     {
-        if (account is not { IsActive: true } || account.Password != token)
+        if (account is not { IsActive: true } || !PasswordHasher.Verify(token, account.Password))
         {
             if (account != null)
             {
@@ -131,7 +128,23 @@ class AccountApplication(
             throw new UserException("کلمه عبور فعلی اشتباه است!");
         }
 
-        account.Password = password;
+        return await SetPassword(account, password);
+    }
+
+    public async Task<ApiResult> ChangePassword(AccountEntity? account, string password)
+    {
+        if (account is not { IsActive: true })
+        {
+            throw new UserException("کاربر یافت نشد یا غیرفعال است!",
+                $"Cannot change password, account is null or inactive.");
+        }
+
+        return await SetPassword(account, password);
+    }
+
+    private async Task<ApiResult> SetPassword(AccountEntity account, string password)
+    {
+        account.Password = PasswordHasher.Hash(password);
 
         await AccountRepo.Save(account);
 

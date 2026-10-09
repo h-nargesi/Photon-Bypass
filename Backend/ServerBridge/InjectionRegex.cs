@@ -4,9 +4,9 @@ namespace PhotonBypass.ServerBridge;
 
 public static partial class InjectionRegex
 {
-    [GeneratedRegex("^[0-9a-fA-F]+$", RegexOptions.Singleline)]
+    [GeneratedRegex(@"\A[0-9a-fA-F]+\z")]
     public static partial Regex SessionId();
 
-    [GeneratedRegex(@"^[\d\w\-\.]+$", RegexOptions.Singleline)]
+    [GeneratedRegex(@"\A[0-9A-Za-z_.\-]+\z")]
     public static partial Regex Username();
 }

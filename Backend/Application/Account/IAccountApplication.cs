@@ -19,5 +19,7 @@ public interface IAccountApplication
 
     Task<ApiResult> ChangePassword(AccountEntity? account, string token, string password);
 
+    Task<ApiResult> ChangePassword(AccountEntity? account, string password);
+
     Task<ApiResult<IList<HistoryModel>>> GetHistory(string target, DateTime? from, DateTime? to);
 }

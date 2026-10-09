@@ -36,6 +36,10 @@ internal class Tik4NetHandlerMoq : Mock<ITik4NetHandler>, IUnitLevelService
             .Returns<string, TikCommandParameterFormat, ITikCommandParameter[]>((command_text, _, parameters) =>
                 new TikCommandMoq(this, server, command_text, parameters).Object);
 
+        connection_mock.Setup(connection => connection.CreateCommand(It.IsAny<string>(), It.IsAny<ITikCommandParameter[]>()))
+            .Returns<string, ITikCommandParameter[]>((command_text, parameters) =>
+                new TikCommandMoq(this, server, command_text, parameters).Object);
+
         connection_mock.Setup(connection => connection.CreateCommandAndParameters(It.IsAny<string>(), It.IsAny<TikCommandParameterFormat>(), It.IsAny<string[]>()))
             .Returns<string, TikCommandParameterFormat, string[]>((command_text, format, parameters) =>
                 new TikCommandMoq(this, server, command_text, format, parameters).Object);

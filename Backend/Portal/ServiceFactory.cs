@@ -1,18 +1,38 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Portal.Basical;
 using PhotonBypass.Tools;
+using System.Threading.RateLimiting;
 
 namespace PhotonBypass.Portal;
 
 public static class ServiceFactory
 {
+    public const string AuthRateLimitPolicy = "auth";
+
     public static TBuilder AddPortalServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.Services.AddControllers();
         builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            var permit_limit = builder.Configuration.GetValue("RateLimitOptions:PermitLimit", 10);
+            var window = TimeSpan.FromSeconds(builder.Configuration.GetValue("RateLimitOptions:WindowSeconds", 60));
+            options.AddPolicy(AuthRateLimitPolicy, context =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                    _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = permit_limit,
+                        Window = window,
+                        QueueLimit = 0,
+                    }));
+        });
         builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

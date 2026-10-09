@@ -14,7 +14,11 @@ internal class AccessService(IMemoryCache cache) : IAccessService
 
     public void LoginEvent(string username, HashSet<string> area)
     {
-        cache.Set($"TargetArea|{username}", area);
+        cache.Set($"TargetArea|{username}", area, new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(2),
+            Size = 1,
+        });
     }
 
     public void LogoutEvent(string username)

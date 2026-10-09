@@ -1,7 +1,9 @@
 ﻿using FluentAssertions;
 using PhotonBypass.Application.Vpn;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Test.Initializer;
+using PhotonBypass.Test.Mock.MockLocalRepository;
 using PhotonBypass.Test.Mock.MockServerBridge;
 using PhotonBypass.Tools;
 
@@ -59,11 +61,18 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
             Assert.Equal(new_password, parameters.Where(p => p.Name == "password").Select(p => p.Value).FirstOrDefault());
         };
 
+        AccountEntity? saved_account = null;
+        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        account_moq.OnSave += account => saved_account = account;
+
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
             .ChangeVpnPassword("User99", new_password);
 
         Assert.True(is_saved);
         Assert.Equal(2, data.Code / 100);
+        Assert.NotNull(saved_account);
+        Assert.Equal("User99", saved_account.Username);
+        Assert.Equal(new_password, saved_account.VpnPassword);
     }
 
     [Fact]

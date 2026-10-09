@@ -87,20 +87,34 @@ public class AuthAppTest : UnitLevelServiceInitializer
     public async Task ForgetPassword_InvalidAccount_ViaEmail()
     {
         using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var function = () => auth_app.ForgetPassword("ali_moli@diff.com");
 
-        await function.Should().ThrowAsync<UserException>();
+        var is_sent = false;
+        email_handler_moq.OnSend += _ => is_sent = true;
+
+        var result = await auth_app.ForgetPassword("ali_moli@diff.com");
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+        Assert.False(is_sent);
     }
 
     [Fact]
     public async Task ForgetPassword_InactiveAccount_ViaEmail()
     {
         using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var function = () => auth_app.ForgetPassword("user7@gmail.com");
 
-        await function.Should().ThrowAsync<UserException>();
+        var is_sent = false;
+        email_handler_moq.OnSend += _ => is_sent = true;
+
+        var result = await auth_app.ForgetPassword("user7@gmail.com");
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+        Assert.False(is_sent);
     }
 
     [Fact]

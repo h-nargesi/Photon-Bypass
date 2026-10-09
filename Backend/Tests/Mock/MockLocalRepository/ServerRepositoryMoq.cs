@@ -77,6 +77,16 @@ public class ServerRepositoryMoq : Mock<IServerRepository>, IUnitLevelService
                 return Task.FromResult(domain_name_list);
             });
 
+        Setup(repository => repository.GetActiveNasInfo(It.IsAny<string>()))
+            .Returns<string>(ip =>
+            {
+                var server = data_dictionary.SelectMany(pair => pair.Value)
+                    .FirstOrDefault(server => server.IpAddress == ip &&
+                                               (server.Features & ServerFeature.Nas) != 0);
+
+                return Task.FromResult(server);
+            });
+
         Setup(repository => repository.GetServerIdByIpAddress(It.IsAny<IEnumerable<string>>()))
             .Returns<IEnumerable<string>>(ips =>
             {

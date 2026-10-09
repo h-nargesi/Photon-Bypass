@@ -23,7 +23,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         {
             Name = "Ali",
             Surname = "Mor",
-            Password = HashHandler.HashPassword("password"),
+            Password = PasswordHasher.Hash("password"),
             Username = "U0059",
             Email = "account@mail.com",
             Mobile = "+989120001234",
@@ -53,7 +53,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         account.Name = "Ali2";
         account.Surname = "Mor2";
-        account.Password = HashHandler.HashPassword("password-x");
+        account.Password = PasswordHasher.Hash("password-x");
         account.Email = "account@mail.com";
         account.Mobile = "+989120001234";
 

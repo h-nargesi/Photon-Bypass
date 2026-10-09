@@ -32,10 +32,12 @@ class AuthApplication(
     {
         var account = await AccountRepo.GetAccount(username);
 
-        if (account is not { IsActive: true } || account.Password != HashHandler.HashPassword(password))
+        if (account is not { IsActive: true } || !PasswordHasher.Verify(password, account.Password))
         {
             if (account == null)
             {
+                _ = PasswordHasher.Hash(password);
+
                 return new ApiResult<UserModel>
                 {
                     Code = 401,
@@ -108,67 +110,68 @@ class AuthApplication(
                 Message = "موبایل هنوز پشتیبانی نشده است!"
             };
 #else
-            var account = (await AccountRepo.GetAccountByMobile(email_mobile)) ??
-                throw new UserException("کاربر یافت نشد.");
+            var account = await AccountRepo.GetAccountByMobile(email_mobile);
 
-            if (!account.Active)
+            if (account is { IsActive: true })
             {
-                throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
+                var hash_code = HashHandler.GenerateHashCode(56);
+
+                await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
+                {
+                    AccountId = account.Id,
+                    ExpireDate = DateTime.Now.AddDays(1),
+                    HashCode = hash_code,
+                });
+
+                await SocialMediaSrv.SendResetPasswordLink(email_mobile, hash_code);
+
+                _ = HistoryRepo.Save(new HistoryEntity
+                {
+                    Target = account.Id,
+                    Category = EventCategory.Security,
+                    Type = EventType.Information,
+                    Title = "امنیت",
+                    Description = "درخواست تغییر کلمه عبور (موبایل)",
+                });
+
+                Log.Verbose("Reset-Password message has been sent: {0}", email_mobile);
             }
 
-            var hash_code = HashHandler.GenerateHashCode(56);
-
-            await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
-            {
-                AccountId = account.Id,
-                ExpireDate = DateTime.Now.AddDays(1),
-                HashCode = hash_code,
-            });
-
-            await SocialMediaSrv.Value.SendResetPasswordLink(email_mobile, hash_code);
-
-            // TODO: History record
-
-            Log.Verbose("Reset-Password message has been sent: {0}", email_mobile);
-
-            return ApiResult.Success("پیام به واتساپ ارسال شد.");
+            return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
 #endif
         }
         else if (AccountBusiness.EmailPattern().IsMatch(email_mobile))
         {
-            var account = (await AccountRepo.GetAccountByEmail(email_mobile)) ??
-                          throw new UserException("کاربر یافت نشد.");
+            var account = await AccountRepo.GetAccountByEmail(email_mobile);
 
-            if (!account.IsActive)
+            if (account is { IsActive: true })
             {
-                throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
+                var hash_code = HashHandler.GenerateHashCode(56, true);
+
+                var insert_task = ResetPassRepo.Value.AddHashCode(new ResetPassEntity
+                {
+                    AccountId = account.Id,
+                    ExpireDate = DateTime.Now.AddDays(1),
+                    HashCode = hash_code,
+                });
+
+                var email_task = EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
+
+                _ = HistoryRepo.Save(new HistoryEntity
+                {
+                    Target = account.Id,
+                    Category = EventCategory.Security,
+                    Type = EventType.Information,
+                    Title = "امنیت",
+                    Description = "درخواست تغییر کلمه عبور (ایمیل)",
+                });
+
+                Log.Verbose("Reset-Password email has been sent: {0}", email_mobile);
+
+                Task.WaitAll(insert_task, email_task);
             }
 
-            var hash_code = HashHandler.GenerateHashCode(56, true);
-
-            var insert_task = ResetPassRepo.Value.AddHashCode(new ResetPassEntity
-            {
-                AccountId = account.Id,
-                ExpireDate = DateTime.Now.AddDays(1),
-                HashCode = hash_code,
-            });
-
-            var email_task = EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
-
-            _ = HistoryRepo.Save(new HistoryEntity
-            {
-                Target = account.Id,
-                Category = EventCategory.Security,
-                Type = EventType.Information,
-                Title = "امنیت",
-                Description = "درخواست تغییر کلمه عبور (ایمیل)",
-            });
-
-            Log.Verbose("Reset-Password email has been sent: {0}", email_mobile);
-
-            Task.WaitAll(insert_task, email_task);
-
-            return ApiResult.Success("ایمیل ارسال شد.");
+            return ApiResult.Success("اگر این حساب ثبت شده باشد، ایمیل بازیابی ارسال شد.");
         }
 
         throw new UserException("ایمیل/موبایل نا معتبر است!",
@@ -186,10 +189,7 @@ class AuthApplication(
         
         var account = await AccountRepo.GetActiveAccount(reset_pass.AccountId);
 
-        code = account?.Password ?? string.Empty;
-        password = HashHandler.HashPassword(password);
-
-        return await AccountApp.Value.ChangePassword(account, code, password);
+        return await AccountApp.Value.ChangePassword(account, password);
     }
 
     public async Task<ApiResult> Register(RegisterModel model)
@@ -213,7 +213,7 @@ class AuthApplication(
         }
 
         account.VpnPassword = HashHandler.GenerateHashCode();
-        account.Password = HashHandler.HashPassword(model.Password ?? string.Empty);
+        account.Password = PasswordHasher.Hash(model.Password ?? string.Empty);
 
         await AccountRepo.Save(account);
 

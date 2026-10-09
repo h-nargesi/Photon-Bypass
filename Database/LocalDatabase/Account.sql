@@ -6,7 +6,7 @@ IF OBJECT_ID('Account') IS NULL BEGIN
 		Id					INT IDENTITY	NOT NULL	CONSTRAINT PK_Account_Id PRIMARY KEY,
 		IsActive			BIT				NOT NULL	CONSTRAINT DF_Account_IsActive DEFAULT 1,
 		Username			VARCHAR(255)	NOT NULL	CONSTRAINT UK_Account_Username UNIQUE,
-		Password			VARCHAR(88)		NOT NULL,
+		Password			VARCHAR(200)	NOT NULL,
 		Owner				INT					NULL	CONSTRAINT FK_Account_Owner_Account FOREIGN KEY REFERENCES Account (Id),
 		Created				DATETIME		NOT NULL	CONSTRAINT DF_Account_Created DEFAULT GETDATE(),
 		Name				NVARCHAR(15)		NULL,
@@ -21,7 +21,8 @@ IF OBJECT_ID('Account') IS NULL BEGIN
 		LastWarningTime		DATETIME			NULL,
 		SendWarning			BIT				NOT NULL	CONSTRAINT DF_Account_SendWarning DEFAULT 1
 	)
-	INSERT INTO Account (Username, Password) VALUES ('admin', 'x61Ey612Kl2gpFL56FT9weDnpSo4AV8j8+qx2AuTHdRyY036xxzTTrw10Wq3+4qQyB+XURPWx1ONxp3Y3pB37A==')
+	-- default admin password: admin
+	INSERT INTO Account (Username, Password) VALUES ('admin', '$PBKDF2$v1$210000$o5kj88mA9pISrUSyKVsJqQ==$Ve055Dx3OaviuxbhfnsnGj/hHb3UFWFYTOrIHbYyN88=')
 END
 GO
 

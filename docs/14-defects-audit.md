@@ -45,17 +45,17 @@
 - **شرح**: اول `Status=Completed` ذخیره می‌شود بعد `Renewal` اجرا می‌شود؛ مسیر «موجودی ناکافی» فاکتور را **بدون** `RenewalValidation` صادر می‌کند → ورودی نامعتبر (مثل `days=37`) از estimate تا پرداخت عبور می‌کند و بعد از کسر پول exception می‌گیرد؛ بدون مسیر refund. callback تکراری (webhook retry) آیتم‌های Completed را دوباره اجرا می‌کند؛ `int.Parse(token)` در `:99` بدون گارد → 500.
 - **اصلاح**: اجرای validation قبل از صدور فاکتور، atomic check-and-set روی status (فقط Pending→Completed)، گارد parse، و مسیر compensation.
 
-### [ ] C6. هش پسورد بدون salt و بدون KDF
+### [x] C6. هش پسورد بدون salt و بدون KDF
 - **مکان**: `Backend/Shared/Tools/HashHandler.cs:12-15`؛ استفاده در `AuthApplication.cs:35,190,216` و `AccountApplication.cs:101-102`.
 - **شرح**: `SHA512.HashData` خالص؛ پسوردهای یکسان = هش یکسان؛ brute-force آفلاین بدیهی. (پسورد VPN به‌دلیل PAP باید قابل بازیابی بماند؛ پسورد پرتال نباید.)
-- **اصلاح**: PBKDF2/bcrypt/Argon2 با salt per-user + سیاست مهاجرت کاربران موجود (force-reset یا dual-hash).
+- **اصلاح (P3)**: `PasswordHasher` جدید (`Backend/Shared/Tools/PasswordHasher.cs`) با PBKDF2-HMACSHA256 (salt تصادفی ۱۶ بایتی، ۲۱۰k iteration، فرمت versioned `$PBKDF2$v1$...`) و `Verify` با `FixedTimeEquals` + null-safe. همه فراخوانی‌ها مهاجرت کردند؛ در login برای username ناموجود هم Hash اجرا می‌شود (برابرسازی زمان). `Account.sql`: ستون `VARCHAR(200)` + هش seed جدید (پیش‌فرض: admin). سیستم راه‌اندازی نشده → بدون مهاجرت.
 
 ---
 
 ## HIGH — درستی و امنیت
 
-### [ ] H1. توکن‌های امنیتی با System.Random غیررمزی
-`Backend/Shared/Tools/HashHandler.cs:8,17-26` — نمونه static مشترک `Random` (نه thread-safe، نه CSPRNG) برای کد reset پسورد (`AuthApplication.cs:119,147`)، `VpnPassword` اولیه (`:215`) و passphrase گواهی OVPN (`MikrotikRadius/Application/MikrotikDirectService.cs:115`). **اصلاح**: `RandomNumberGenerator.GetItems`.
+### [x] H1. توکن‌های امنیتی با System.Random غیررمزی
+`Backend/Shared/Tools/HashHandler.cs:8,17-26` — نمونه static مشترک `Random` (نه thread-safe، نه CSPRNG) برای کد reset پسورد (`AuthApplication.cs:119,147`)، `VpnPassword` اولیه (`:215`) و passphrase گواهی OVPN (`MikrotikRadius/Application/MikrotikDirectService.cs:115`). **اصلاح (P3)**: `RandomNumberGenerator.GetItems<char>`؛ `HashPassword` حذف شد (جایگزین: `PasswordHasher`).
 
 ### [ ] H2. رقابت job های موازی روی همان ردیف‌های Account → احیای اکانت غیرفعال‌شده
 `Backend/Application/Management/JobInterval.cs:38-42` — `NotifSendServices` و `InactiveAbandonedUsers` هم‌زمان روی همان `plan_state_list`؛ هر دو کل ردیف Account را با entity های stale ذخیره می‌کنند (`AccountMonitoringService.cs:65-66` و `:174-175`) → last-writer-wins می‌تواند `IsActive=false` را بازنویسی کند. **اصلاح**: concurrency token یا به‌روزرسانی ستون-محور.
@@ -66,14 +66,14 @@
 ### [ ] H4. Fire-and-forget روی scoped connection مشترک
 الگوی `_ = repo.Save(...)` که با کارهای awaited روی **یک** `SqlConnection` scoped موازی می‌شود: `AccountMonitoringService.cs:66,88-100,167-176`، `PlanApplication.cs:66,87,312,345`، `AuthApplication.cs:46,50,158`، `AccountApplication.cs:117,138`، `VpnApplication.cs:52,99`، `ConnectionApplication.cs:93` → خطاهای intermittent "MARS/parallel operations" و استثناهای unobserved. **اصلاح**: حذف الگو؛ await کامل یا صف پس‌زمینه با scope مستقل.
 
-### [ ] H5. کش AccessService بدون انقضا → دسترسی باقی می‌ماند پس از revocation
-`Backend/Portal/Basical/AccessService.cs:15-18` — `cache.Set($"TargetArea|{username}")` بدون TTL/Size؛ فقط در login پر می‌شود؛ غیرفعال/حذف/انتقال sub-account تا logout والد اعمال نمی‌شود؛ رشد بی‌نهایت.
+### [x] H5. کش AccessService بدون انقضا → دسترسی باقی می‌ماند پس از revocation
+`Backend/Portal/Basical/AccessService.cs:15-18` — `cache.Set($"TargetArea|{username}")` بدون TTL/Size؛ فقط در login پر می‌شود؛ غیرفعال/حذف/انتقال sub-account تا logout والد اعمال نمی‌شود؛ رشد بی‌نهایت. **اصلاح (P3)**: `AbsoluteExpirationRelativeToNow = 2h` (بیش از عمر JWT یک‌ساعته؛ چون `CheckAccess` فقط در درخواست‌های cross-target صدا زده می‌شود sliding باعث 403 وسط توکن می‌شد) + `Size = 1`.
 
-### [ ] H6. CloseConnection مالکیت session را چک نمی‌کند (IDOR درون-realm)
-`Backend/Application/Connection/ConnectionApplication.cs:59-91` — realm سرور با realm target تطبیق داده می‌شود (`:78-82`) اما هرگز بررسی نمی‌شود که session_id متعلق به target باشد → هر کاربر احراز هویت‌شده می‌تواند session کاربر دیگری در همان realm را ببندد. **اصلاح**: تطبیق session با username/account هدف قبل از بستن.
+### [x] H6. CloseConnection مالکیت session را چک نمی‌کند (IDOR درون-realm)
+`Backend/Application/Connection/ConnectionApplication.cs:59-91` — realm سرور با realm target تطبیق داده می‌شود (`:78-82`) اما هرگز بررسی نمی‌شود که session_id متعلق به target باشد → هر کاربر احراز هویت‌شده می‌تواند session کاربر دیگری در همان realm را ببندد. **اصلاح (P3)**: قبل از بستن، `GetActiveConnections(realm, target)` گرفته می‌شود و session_id باید در لیست session های فعال خودِ target باشد؛ وگرنه «دسترسی غیرمجاز».
 
-### [ ] H7. تغییر پسورد VPN در DB ذخیره نمی‌شود → desync با Radius
-`Backend/Application/Vpn/VpnApplication.cs:42-62` — `ChangeVpnPassword` فقط Radius را صدا می‌زند؛ `AccountEntity.VpnPassword` آپدیت نمی‌شود → `SendCertEmail` (`:91`) پسورد کهنه ایمیل می‌کند و `UserManagerHelper.GetUser` (`MikrotikRadius/Application/UserManagerHelper.cs:136-141`) در sync بعدی user را با پسورد قدیمی بازمی‌سازد.
+### [x] H7. تغییر پسورد VPN در DB ذخیره نمی‌شود → desync با Radius
+`Backend/Application/Vpn/VpnApplication.cs:42-62` — `ChangeVpnPassword` فقط Radius را صدا می‌زند؛ `AccountEntity.VpnPassword` آپدیت نمی‌شود → `SendCertEmail` (`:91`) پسورد کهنه ایمیل می‌کند و `UserManagerHelper.GetUser` (`MikrotikRadius/Application/UserManagerHelper.cs:136-141`) در sync بعدی user را با پسورد قدیمی بازمی‌سازد. **اصلاح (P3)**: بعد از موفقیت Radius، `account.VpnPassword` ذخیره می‌شود.
 
 ### [x] H8. join غلط در GetInvoice(target, code) → ردیف‌های غلط/بیگانه
 `Backend/Infrastructure/Repository/WalletRepository.cs:43` — `join Account a on w.Id = a.Id` به‌جای `w.AccountId = a.Id`؛ هر جا wallet-id با account-id تفاوت داشته باشد نتیجه غلط است (افشا + خرابی `get-invoice`).
@@ -89,9 +89,10 @@
 ### [ ] H11. latch «is_logout» هرگز reset نمی‌شود
 `Frontend/src/app/@services/api-services/api-base-service.ts:20,191-192` — بعد از اولین 401، redirect برای 401 های بعدی (حتی پس از login مجدد) خاموش می‌ماند.
 
-### [ ] H12. Enumeration اکانت + صفر rate-limiting
+### [x] H12. Enumeration اکانت + صفر rate-limiting
 - `Backend/Application/Authentication/AuthApplication.cs:139-144` — پیام‌های متمایز «کاربر یافت نشد»/«کاربر غیرفعال است»؛ `Register` (`:200-212`) هم وجود username/email/mobile را افشا می‌کند.
 - در کل `Backend/` هیچ `AddRateLimiter`/lockout/HSTS/size-limit وجود ندارد (`Portal/Program.cs:11-26`) → brute-force بی‌محدودیت روی token/forget-pass/reset-pass.
+- **اصلاح (P3)**: `ForgetPassword` پاسخ generic یکسان می‌دهد و فقط برای اکانتِ فعالِ موجود ارسال می‌کند (پیام‌های duplicate در Register عمداً حفظ شد — UX، محافظت با limiter). Rate limiter دات‌نت ۸ در `AddPortalServices` با policy پارتیشن‌بندی IP (fixed window، پیش‌فرض ۱۰/دقیقه، قابل تنظیم با `RateLimitOptions` در appsettings) + `[EnableRateLimiting]` روی `AuthController` + `app.UseRateLimiter()`.
 
 ### [ ] H13. فیلتر تاریخ History از هر دو طرف خراب است
 فرانت `Date` object را به‌عنوان query param می‌فرستد (`Frontend/src/app/history/history.component.ts:79-104`؛ serialize با `toString()`) و بک‌اند `[JsonConverter]` روی `[FromQuery]` اثری ندارد (`Backend/Portal/Controllers/AccountController.cs:70-77` + `Portal/Context/HistoryContext.cs:8-12`) → هر بار استفاده از فیلتر = 400.
@@ -158,8 +159,8 @@
 | چک | # | عنوان | مکان | شرح |
 |---|---|---|---|---|
 | [ ] | M12 | credentials روتر/RadiusDesk به‌صورت plaintext JSON در جدول Server | `Domain/Servers/Entity/ServerEntity.cs:33-41` + `JsonType/SshConfig.cs:7` و غیره | خواندن DB = مالکیت همه روترها؛ بدون encryption-at-rest |
-| [ ] | M13 | passphrase گواهی OVPN در لاگ Serilog | `ServerBridge/Ssh/SshConnection.cs:15` + `MikrotikDirectService.cs:146-148` | `Log.Information` شامل command کامل با export-passphrase |
-| [ ] | M14 | anchor ضعیف regex تزریق (`$` قبل از `\n` تطبیق می‌شود) + `\w` یونیکدی | `ServerBridge/InjectionRegex.cs:7-11`، `ServerBridge/Ssh/ProcessService.cs:129-130` | `\n` انتهایی از `^[0-9a-fA-F]+$` رد می‌شود و به CLI روتر تزریق |
+| [x] | M13 | passphrase گواهی OVPN در لاگ Serilog | `ServerBridge/Ssh/SshConnection.cs:15` + `MikrotikDirectService.cs:146-148` | `Log.Information` شامل command کامل با export-passphrase. **اصلاح (P3)**: `CommandScrubber` مقادیر `password="..."`/`export-passphrase="..."` را با `***` جایگزین می‌کند؛ لاگ نتیجه command فقط طول را می‌نویسد (محتوای key خصوصی حذف شد). |
+| [x] | M14 | anchor ضعیف regex تزریق (`$` قبل از `\n` تطبیق می‌شود) + `\w` یونیکدی | `ServerBridge/InjectionRegex.cs:7-11`، `ServerBridge/Ssh/ProcessService.cs:129-130` | `\n` انتهایی از `^[0-9a-fA-F]+$` رد می‌شود و به CLI روتر تزریق. **اصلاح (P3)**: anchor های `\A...\z` + کلاس‌های ASCII صریح؛ حذف `RegexOptions.Singleline`. |
 | [x] | M15 | مبلغ پرداخت از client بدون هیچ bound | `Portal/Controllers/BillingController.cs:21-27` → `BillingApplication.cs:29-43` | مقدار منفی/سرریز وارد math موجودی می‌شود |
 | [ ] | M16 | token ادمین RadiusDesk در URL query | `FreeRadius/WebService/RadiusDeskService.cs:441-490` | افشا در proxy/access log |
 | [ ] | M17 | sync-over-async در مسیرهای request/job | `Infrastructure/Services/SessionRadiusSyncService.cs:104` (`.Result`)، `AuthApplication.cs:169` (`Task.WaitAll`)، `Infrastructure/Services/ServerEntityExtension.cs:14` | blocking + ریسک deadlock |
@@ -227,14 +228,14 @@
 >
 > تست‌های جدید: `ServerManagementServiceTest.UpdateTrafficData_SecondCycleWithSameSessions_DoesNotInsertDuplicates` (دو سیکل پشت‌سرهم → بدون درج تکراری) و `AccountRadiusTest.DeactivateInvalidRadiusUsers_UnknownRealm_ShouldNotThrow` (realm ناموجود → بدون کرش + غیرفعال‌سازی همه).
 | **P2** ✅ | پرداخت کارت‌به‌کارت و کیف پول (طراحی جدید صاحب محصول) — **انجام شد (۱۴۰۵/۰۷)**: C3 + M25 حل؛ `BillingApplication` بازنویسی (`IssueTopUp`/`IssuePlanInvoice`/`GetInvoice`/`RegisterReceipt`/`SettleWallet`)، `payment-callback` حذف، جدول `Invoice` (`PaymentP2.sql`)، `BalanceStatus.Verifying`، `GetBalance` شامل Verifying، قاعده آستانه کیف پول (`WalletThresholdService`)، `ActivateUsers` روی همه Radius ها، فرانتند صفحه فاکتور/رسید/تسویه + `BILLING_API_URL` | `yarn build` سبز + تست‌های `BillingApplicationTest`/`BillingP2Test`/`WalletThresholdServiceTest` + سناریوها (شارژ با رسید، تمدید ناکافی با رسید → پلن فعال، تمدید کافی با تایید کیف پول) |
-| **P3** | احراز هویت و امنیت | C6 → H1 → H12 → H5 → H6 → H7 → M13 → M14 | تست تغییر پسورد/reset/lockout؛ لاگ بدون secret |
+| **P3** ✅ | احراز هویت و امنیت — **انجام شد (۱۴۰۵/۰۷)**: C6 + H1 + H12 + H5 + H6 + H7 + M13 + M14؛ `PasswordHasher` (PBKDF2) + برابرسازی زمان پاسخ login، CSPRNG، پاسخ generic در forget-pass + rate limiter قابل تنظیم (`RateLimitOptions`)، TTL کش دسترسی، چک مالکیت session، ذخیره VpnPassword، پاک‌سازی secret از لاگ SSH، anchor های `\A...\z` | تست‌های جدید `PasswordHasherTest`/`HashHandlerTest`/`InjectionRegexTest`/`CommandScrubberTest` + H6/H7 در تست‌های Application؛ `Account.sql` با ستون `VARCHAR(200)` و seed جدید |
 | **P4** | زیرساخت job و I/O | H2 → H3 → H4 → M17 → M19 → M20 → M21 → M22 | job بدون هم‌پوشانی؛ بدون `.Result`/`WaitAll` |
 | **P5** | باقی موارد | همه M/L باقی‌مانده (M1-M12, M16, M23, M24, M26, M27, L1-L11) | quick-win های جداگانه |
 
 ## سوالات باز (پیش از شروع فاز مربوطه تعیین شود)
 
 - ~~**P2**: آیا مسیر `payment-request`/redirect درگاه از قبل طراحی شده یا قرارداد API پرداخت از نو تعریف شود؟~~ **حل شد (۱۴۰۵/۰۷)**: درگاه وجود ندارد؛ پرداخت فقط کارت‌به‌کارت با ثبت رسید است. طراحی کامل: [docs/15-payment-p2.md](15-payment-p2.md) و `Architecture/peyment-P2.md`.
-- **P3**: برای پسورد پرتال (C6) سیاست rollout مهاجرت هش (force-reset در login بعدی یا dual-hash) چیست؟
+- ~~**P3**: برای پسورد پرتال (C6) سیاست rollout مهاجرت هش (force-reset در login بعدی یا dual-hash) چیست؟~~ **حل شد (۱۴۰۵/۰۷)**: سیستم هنوز راه‌اندازی نشده — مهاجرت لازم نیست؛ PBKDF2 مستقیماً جایگزین شد و اسکریپت `Account.sql` (ستون + seed) به‌روزرسانی شد.
 
 ## طرح راستی‌آزمایی عمومی (پس از هر فاز)
 

@@ -126,7 +126,7 @@ partial class ProcessService(ISshHandler handler) : IProcessService
         }
     }
 
-    [GeneratedRegex(@"^[ \-\.\w\d]+$", RegexOptions.Singleline)]
+    [GeneratedRegex(@"\A[ \-.0-9A-Za-z]+\z")]
     private static partial Regex ValidCharacters();
 }
 

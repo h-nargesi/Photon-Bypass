@@ -2,6 +2,7 @@
 using PhotonBypass.Application.Connection;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Test.Initializer;
+using PhotonBypass.Test.Mock.MockServerBridge;
 
 namespace PhotonBypass.Test.Facts.Application;
 
@@ -127,6 +128,40 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
         var func = () => connection_app.CloseConnection("192.168.125.11", "User99", "invalid session");
 
         return func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task CloseConnection_ForeignSession()
+    {
+        using var scope = App.Services.CreateScope();
+        var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
+
+        var func = () => connection_app.CloseConnection("192.168.125.31", "User3", "2036A2");
+
+        (await func.Should().ThrowAsync<UserException>())
+            .Where(ex => ex.UserMessage == "دسترسی غیرمجاز!");
+    }
+
+    [Fact]
+    public async Task CloseConnection_OwnActiveSession()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var is_closed = false;
+        var tik4_moq = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
+        tik4_moq.OnExecute += (command_text, _) =>
+        {
+            if (command_text == "close-session")
+            {
+                is_closed = true;
+            }
+        };
+
+        var result = await scope.ServiceProvider.GetRequiredService<IConnectionApplication>()
+            .CloseConnection("192.168.125.31", "User3", "2037B3");
+
+        Assert.Equal(2, result.Code / 100);
+        Assert.True(is_closed);
     }
 
     [Fact]

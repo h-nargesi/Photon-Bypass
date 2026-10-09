@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Authentication;
@@ -15,6 +16,7 @@ using PhotonBypass.Portal.Context;
 namespace PhotonBypass.Portal.Controllers;
 
 [ApiController]
+[EnableRateLimiting(ServiceFactory.AuthRateLimitPolicy)]
 [Route("/api/[controller]")]
 public class AuthController(
     IAuthApplication application,

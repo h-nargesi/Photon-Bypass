@@ -20,7 +20,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
         {
             Name = "Transaction",
             Surname = "Transaction",
-            Password = HashHandler.HashPassword("password"),
+            Password = PasswordHasher.Hash("password"),
             Username = "Transaction",
             VpnPassword = "my-password",
         };
@@ -46,7 +46,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
         {
             Name = "SetNewId",
             Surname = "SetNewId",
-            Password = HashHandler.HashPassword("password"),
+            Password = PasswordHasher.Hash("password"),
             Username = "SetNewId",
             VpnPassword = "my-password",
         };
@@ -75,7 +75,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
             {
                 Name = "SetNewId",
                 Surname = "SetNewIdBulk1",
-                Password = HashHandler.HashPassword("password"),
+                Password = PasswordHasher.Hash("password"),
                 Username = "SetNewIdBulk1",
                 VpnPassword = "my-password",
             },
@@ -83,7 +83,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
             {
                 Name = "SetNewId",
                 Surname = "SetNewId",
-                Password = HashHandler.HashPassword("password"),
+                Password = PasswordHasher.Hash("password"),
                 Username = "SetNewIdBulk2",
                 VpnPassword = "my-password",
             }
