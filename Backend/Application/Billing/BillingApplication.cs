@@ -22,6 +22,7 @@ class BillingApplication(
     Lazy<IHistoryRepository> history_repo,
     Lazy<IPlanApplication> plan_app,
     Lazy<IWalletThresholdService> wallet_threshold_srv,
+    IAccountSettlementGate settlement_gate,
     IOptions<ManagementOptions> options,
     Lazy<IJobContext> job_context)
     : IBillingApplication
@@ -38,6 +39,7 @@ class BillingApplication(
     private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
     private Lazy<IPlanApplication> PlanApp { get; } = plan_app;
     private Lazy<IWalletThresholdService> WalletThresholdSrv { get; } = wallet_threshold_srv;
+    private IAccountSettlementGate SettlementGate { get; } = settlement_gate;
     private IOptions<ManagementOptions> Options { get; } = options;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
@@ -236,7 +238,7 @@ class BillingApplication(
 
         if (invoice.Kind == InvoiceKind.Plan)
         {
-            await RunRenewalAfterReceipt(invoice, credit);
+            await SettlementGate.RunExclusively(invoice.AccountId, () => RunRenewalAfterReceipt(invoice, credit));
         }
 
         await WalletThresholdSrv.Value.CheckAndApply();
@@ -265,6 +267,11 @@ class BillingApplication(
                 $"Invoice is not settle-able by wallet: code={code}, kind={invoice.Kind}, status={invoice.Status}");
         }
 
+        return await SettlementGate.RunExclusively(invoice.AccountId, () => SettleWalletCore(invoice, code));
+    }
+
+    private async Task<ApiResult> SettleWalletCore(InvoiceEntity invoice, int code)
+    {
         var balance = await WalletRepo.GetBalance(invoice.AccountId);
 
         if (balance < invoice.TotalPrice)

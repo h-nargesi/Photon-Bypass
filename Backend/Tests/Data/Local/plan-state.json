@@ -38,5 +38,13 @@
     "LastConnectTime": "today-40",
     "ExpirationDate": "now-1",
     "TrafficLeft": 0
+  },
+  {
+    "Id": 10,
+    "Username": "User10",
+    "SimultaneousUser": 1,
+    "RestrictedRealmId": 2,
+    "TrafficLimit": 1073741824,
+    "TimeLimitInDays": 120
   }
 ]

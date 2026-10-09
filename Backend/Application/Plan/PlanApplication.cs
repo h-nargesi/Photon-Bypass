@@ -107,7 +107,8 @@ class PlanApplication(
             throw user_exception;
         }
 
-        var result = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, users, days, gigabytes);
+        var result = await PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, users,
+            renew.TimeLimitInDays ?? days, gigabytes);
 
         return ApiResult<EstimateResult>.Success(new EstimateResult
         {
@@ -124,17 +125,6 @@ class PlanApplication(
 
         JobContext.Value.InjectJobContext(account.Id);
 
-        var estimate = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count, days, gigabytes);
-        var balance = await WalletRepo.Value.GetBalance(account.Id);
-
-        Log.Information(@"
-[user: {0}] Plan renewal request:
-    account=(user:{6}, balance:{5})
-    request=(taget:{1}, user-count:{2}, days={3}, traffic:{4}, estimate:{7})
-",
-            JobContext.Value.Username, account.Username, count, days, gigabytes, balance,
-            JobContext.Value.Username, estimate);
-
         var renewal = new RenewalEntity
         {
             TimeLimitInDays = days,
@@ -145,12 +135,24 @@ class PlanApplication(
         if (renewal.RenewalValidation(account, out var validation_exception))
         {
             Log.Information(@"[user: {0}] Plan renewal request rejected before invoice:
-    request=(taget:{1}, count:{2}, days={3}, gigabytes={4})
+    request=(taget:{1}, count:{2}, days={3}, gigabytes:{4})
     message={5}",
                 JobContext.Value.Username, account.Username, count, days, gigabytes, validation_exception.Message);
 
             throw validation_exception;
         }
+
+        var estimate = await PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count,
+            renewal.TimeLimitInDays ?? days, gigabytes);
+        var balance = await WalletRepo.Value.GetBalance(account.Id);
+
+        Log.Information(@"
+[user: {0}] Plan renewal request:
+    account=(user:{6}, balance:{5})
+    request=(taget:{1}, user-count:{2}, days={3}, traffic:{4}, estimate:{7})
+",
+            JobContext.Value.Username, account.Username, count, days, gigabytes, balance,
+            JobContext.Value.Username, estimate);
 
         var invoice_code = await BillingApp.Value.IssuePlanInvoice(estimate,
             $"{account.Username}t|{count}u|{days}d|{gigabytes}g", renewal.GetPlanTitle());
@@ -233,30 +235,8 @@ class PlanApplication(
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
 
-        var estimate = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count, days, gigabytes);
-        var balance = await WalletRepo.Value.GetBalance(account.Id);
-
-        if (account.CheckMoneyNeed(balance, estimate, out _))
-        {
-            throw new UserException("موجودی کیف پول برای اجرای این تمدید کافی نیست!",
-                $"Settlement renewal with money-need: target={account.Username}, balance={balance}, estimate={estimate}");
-        }
-
         var current_state = (await PlanRepo.Value.GetPlanState(account.Id)) ??
                             throw new Exception($"Plan state not found for target: {account.Username}");
-
-        Log.Information(@"
-[user: {0}] Plan current state:
-    account=(user:{11}, balance:{9})
-    request=(taget:{1}, count:{2}, days:{3}, gigabytes:{4}, estimate:{10})
-    current=(count:{5}, left-days:{6}, left-hours:{7}, left-gigabytes:{8})
-",
-            JobContext.Value.Username,
-            account.Username, count, days, gigabytes,
-            current_state.SimultaneousUser, current_state.TimeLeft?.TotalDays, current_state.TimeLeft?.Hours,
-            current_state.GetTrafficLeftInGig(),
-            balance, estimate,
-            JobContext.Value.Username);
 
         var renew = new RenewalEntity
         {
@@ -278,12 +258,35 @@ class PlanApplication(
         if (renew.RenewalValidation(account, out var user_exception))
         {
             Log.Information(@"[user: {0}] Plan current state:
-    request=(taget:{1}, count:{2}, days:{3}, gigabytes:{4})
+    request=(taget:{1}, count:{2}, days={3}, gigabytes:{4})
     message={5}",
                 JobContext.Value.Username, account.Username, count, days, gigabytes, user_exception.Message);
 
             throw user_exception;
         }
+
+        var estimate = await PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count,
+            renew.TimeLimitInDays ?? days, gigabytes);
+        var balance = await WalletRepo.Value.GetBalance(account.Id);
+
+        if (account.CheckMoneyNeed(balance, estimate, out _))
+        {
+            throw new UserException("موجودی کیف پول برای اجرای این تمدید کافی نیست!",
+                $"Settlement renewal with money-need: target={account.Username}, balance={balance}, estimate={estimate}");
+        }
+
+        Log.Information(@"
+[user: {0}] Plan current state:
+    account=(user:{11}, balance:{9})
+    request=(taget:{1}, count:{2}, days:{3}, gigabytes:{4}, estimate:{10})
+    current=(count:{5}, left-days:{6}, left-hours:{7}, left-gigabytes:{8})
+",
+            JobContext.Value.Username,
+            account.Username, count, days, gigabytes,
+            current_state.SimultaneousUser, current_state.TimeLeft?.TotalDays, current_state.TimeLeft?.Hours,
+            current_state.GetTrafficLeftInGig(),
+            balance, estimate,
+            JobContext.Value.Username);
 
         await AccountRepo.Value.DbContext.BeginTransactionAsync();
 
@@ -329,18 +332,41 @@ class PlanApplication(
         }
         catch
         {
-            await AccountRadiusSrv.Value.DeactivateUsers([account.Username]);
-
-            await AccountRepo.Value.DbContext.RollbackAsync();
-
-            _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+            try
             {
-                Target = account.Id,
-                Category = EventCategory.Renewal,
-                Type = EventType.Error,
-                Title = "تمدید",
-                Description = "خطا در تمدید پلن!",
-            });
+                await AccountRepo.Value.DbContext.RollbackAsync();
+            }
+            catch (Exception rollback_error)
+            {
+                Log.Error(rollback_error, "Renewal rollback failed: target={0}", account.Username);
+            }
+
+            try
+            {
+                await AccountRadiusSrv.Value.DeactivateUsers([account.Username]);
+            }
+            catch (Exception compensation_error)
+            {
+                Log.Error(compensation_error,
+                    "RADIUS-COMPENSATION-FAILED: radius deactivation after renewal rollback failed: target={0}",
+                    account.Username);
+            }
+
+            try
+            {
+                await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+                {
+                    Target = account.Id,
+                    Category = EventCategory.Renewal,
+                    Type = EventType.Error,
+                    Title = "تمدید",
+                    Description = "خطا در تمدید پلن!",
+                });
+            }
+            catch (Exception history_error)
+            {
+                Log.Error(history_error, "Saving renewal failure history failed: target={0}", account.Username);
+            }
 
             throw;
         }

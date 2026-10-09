@@ -29,6 +29,14 @@ public static class LazyDependencyInjections
         services.AddTransient(provider => new Lazy<TService>(provider.GetRequiredService<TService>));
     }
 
+    public static void AddLazySingleton<TService, TImplementation>(this IServiceCollection services)
+        where TService : class
+        where TImplementation : class, TService
+    {
+        services.AddSingleton<TService, TImplementation>();
+        services.AddSingleton(provider => new Lazy<TService>(provider.GetRequiredService<TService>));
+    }
+
     public static void AddLazyTransient<TService>(this IServiceCollection services,
         Func<IServiceProvider, TService> provider_func)
         where TService : class

@@ -12,11 +12,13 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
 {
     public readonly List<RenewalEntity> Data;
 
-    public RenewalRepositoryMoq(WalletRepositoryMoq wallet_repo) : this(wallet_repo, FilePath)
+    public RenewalRepositoryMoq(TransactionalMockDbContext db_context, WalletRepositoryMoq wallet_repo)
+        : this(db_context, wallet_repo, FilePath)
     {
     }
 
-    protected RenewalRepositoryMoq(WalletRepositoryMoq waller_repo, string file_path)
+    protected RenewalRepositoryMoq(TransactionalMockDbContext db_context, WalletRepositoryMoq waller_repo,
+        string file_path)
     {
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
@@ -34,15 +36,23 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
                 {
                     renewal.Id = Data.Count > 0 ? Data.Max(r => r.Id) + 1 : 1;
                     Data.Add(renewal);
+                    db_context.RegisterUndo(() => Data.Remove(renewal));
                 }
                 else
                 {
                     Data.Remove(existed);
                     Data.Add(renewal);
+                    db_context.RegisterUndo(() =>
+                    {
+                        Data.Remove(renewal);
+                        Data.Add(existed);
+                    });
                 }
 
                 return Task.CompletedTask;
             });
+
+        Setup(repository => repository.DbContext).Returns(db_context);
     }
 
     private const string FilePath = "Data/Local/renewal.json";

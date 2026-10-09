@@ -14,11 +14,13 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
 {
     public readonly Dictionary<int, List<WalletEntity>> Data;
 
-    public WalletRepositoryMoq(AccountRepositoryMoq account_moq) : this(account_moq, FilePath)
+    public WalletRepositoryMoq(TransactionalMockDbContext db_context, AccountRepositoryMoq account_moq)
+        : this(db_context, account_moq, FilePath)
     {
     }
 
-    protected WalletRepositoryMoq(AccountRepositoryMoq account_moq, string file_path)
+    protected WalletRepositoryMoq(TransactionalMockDbContext db_context, AccountRepositoryMoq account_moq,
+        string file_path)
     {
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
@@ -96,7 +98,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
         Setup(x => x.Save(It.IsAny<WalletEntity>()))
             .Returns<WalletEntity>(wallet =>
             {
-                Add(Data, wallet);
+                Add(db_context, Data, wallet);
 
                 return Task.CompletedTask;
             });
@@ -105,27 +107,16 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
             .Returns<IEnumerable<WalletEntity>>(wallets =>
             {
                 foreach (var wallet in wallets)
-                    Add(Data, wallet);
+                    Add(db_context, Data, wallet);
 
                 return Task.CompletedTask;
             });
 
-        var db_context_moq = new Mock<IDbContext>();
-        db_context_moq.Setup(x => x.BeginTransactionAsync())
-            .Returns(() =>
-            {
-                var mock = new Mock<IDbTransaction>();
-
-                mock.Setup(t => t.Commit());
-                mock.Setup(t => t.Rollback());
-
-                return Task.FromResult(mock.Object);
-            });
-
-        Setup(x => x.DbContext).Returns(db_context_moq.Object);
+        Setup(x => x.DbContext).Returns(db_context);
     }
 
-    private static void Add(Dictionary<int, List<WalletEntity>> data, WalletEntity wallet)
+    private static void Add(TransactionalMockDbContext db_context, Dictionary<int, List<WalletEntity>> data,
+        WalletEntity wallet)
     {
         if (!data.TryGetValue(wallet.AccountId, out var list))
         {
@@ -136,12 +127,38 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
         {
             wallet.Id = data.Values.SelectMany(x => x).Select(i => i.Id).DefaultIfEmpty(0).Max() + 1;
             list.Add(wallet);
+            db_context.RegisterUndo(() => list.Remove(wallet));
         }
         else
         {
             var ex = list.FirstOrDefault(w => w.Id == wallet.Id);
             if (ex != null)
             {
+                var snapshot = new WalletEntity
+                {
+                    Id = ex.Id,
+                    AccountId = ex.AccountId,
+                    Action = ex.Action,
+                    Status = ex.Status,
+                    Amount = ex.Amount,
+                    Description = ex.Description,
+                    Direction = ex.Direction,
+                    InvoiceCode = ex.InvoiceCode,
+                    ReferenceCode = ex.ReferenceCode,
+                    RenewId = ex.RenewId,
+                };
+                db_context.RegisterUndo(() =>
+                {
+                    ex.Action = snapshot.Action;
+                    ex.Status = snapshot.Status;
+                    ex.Amount = snapshot.Amount;
+                    ex.Description = snapshot.Description;
+                    ex.Direction = snapshot.Direction;
+                    ex.InvoiceCode = snapshot.InvoiceCode;
+                    ex.ReferenceCode = snapshot.ReferenceCode;
+                    ex.RenewId = snapshot.RenewId;
+                });
+
                 ex.Action = wallet.Action;
                 ex.Status = wallet.Status;
                 ex.Amount = wallet.Amount;

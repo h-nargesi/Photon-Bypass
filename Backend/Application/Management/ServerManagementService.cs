@@ -9,6 +9,7 @@ using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.ErrorHandler;
 using Serilog;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -37,11 +38,14 @@ partial class ServerManagementService(
     {
         var server_capacities = await LoadServersCapacity();
 
-        return server_capacities
+        var realm = server_capacities
             .Where(realm => realm.Value.Rate > -1)
             .OrderBy(s => s.Value.Rate)
-            .First()
-            .Key;
+            .Select(s => s.Key)
+            .FirstOrDefault();
+
+        return realm ?? throw new UserException("ظرفیت سرورها تکمیل است؛ لطفاً بعداً تلاش کنید!",
+            "No realm with free capacity is available.");
     }
 
     public async Task<CertContext> GetDefaultCertificate(int? realm_id)

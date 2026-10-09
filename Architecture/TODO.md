@@ -5,7 +5,7 @@
 ## بحرانی‌ها (P0/P1 — پول و داده)
 [x] C1: کلید اشتباه Merge ترافیک → درج تکراری در هر سیکل sync (ServerManagementService.cs:223)
 [x] C2: Bulk Save/Delete از تراکنش عبور نمی‌کند → rollback صورتحساب بی‌اثر (EditableRepository.cs:43)
-[ ] C3: جریان پرداخت فرانتند خراب — endpoint های غلط + isNumber روی string + invoice hard-code "10"
+[x] C3: جریان پرداخت فرانتند خراب — endpoint های غلط + isNumber روی string + invoice hard-code "10" (حل شد در فاز P2)
 [x] C4: کد فاکتور MAX+1 → تداخل بین کاربران و عبور callback بین اکانت‌ها (WalletRepository.cs:66)
 [x] C5: PaymentCallback غیر idempotent + پرداخت قبل از validation تمدید → پرداخت بدون تحویل پلن
 [x] C6: هش پسورد پرتال بدون salt با SHA-512 (HashHandler.cs:12) — حل در P3: PBKDF2 با `PasswordHasher`
@@ -13,7 +13,8 @@
 ## ترتیب فازهای اجرایی
 1. [x] P0 درستی جریان پول: C2, C4, C5, H8, H9, M15
 2. [x] P1 داده ترافیک و job ها: C1, H18, M5, H16, H17, M18 + ایندکس‌های غایب (H20) — دیپلوی دستی: `TrafficDataDedup.sql` سپس `Indexes.sql` (جزئیات در docs/14)
-3. P2 پرداخت (بازطراحی، نه فقط اصلاح فرانتند): C3, M25 + کارت‌به‌کارت با ثبت رسید، خالص‌سازی کیف پول، وضعیت Verifying، قاعده آستانه (بک‌اند) — طراحی قطعی: [docs/15-payment-p2.md](../docs/15-payment-p2.md) + [peyment-P2.md](peyment-P2.md)
+3. [x] P2 پرداخت (بازطراحی، نه فقط اصلاح فرانتند): C3, M25 + کارت‌به‌کارت با ثبت رسید، خالص‌سازی کیف پول، وضعیت Verifying، قاعده آستانه (بک‌اند) — طراحی قطعی: [docs/15-payment-p2.md](../docs/15-payment-p2.md) + [peyment-P2.md](peyment-P2.md)
+   - [x] چرخه اصلاح مسیر پول (۱۴۰۵/۰۷): M1 (قیمت بر روزهای مؤثر — تصمیم صاحب محصول)، M2, M3, M4, H19, M24, L1 + رفع race برداشت موازی تسویه (M28 در docs/14)
 4. [x] P3 احراز هویت و امنیت: C6, H1, H12, H5, H6, H7, M13, M14 — جزئیات اصلاحات در docs/14
 5. P4 زیرساخت job و I/O: H2, H3, H4, M17, M19, M20, M21, M22
 6. P5 باقی موارد متوسط/جزئی (خود فهرست docs/14)

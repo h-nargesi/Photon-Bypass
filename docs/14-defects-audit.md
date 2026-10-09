@@ -8,10 +8,10 @@
 |---|---|
 | Critical | 6 |
 | High | 20 |
-| Medium | 27 |
+| Medium | 28 |
 | Low | 11 |
 
-مجموع: **۶۴ مورد**.
+مجموع: **۶۵ مورد**.
 
 ---
 
@@ -121,8 +121,9 @@
 - `Backend/Infrastructure/Repository/TrafficDataRepository.cs:65-66` — `LastTrafficSync` قبل از write خوانده می‌شود → فراخوان‌های هم‌زمان همه از گیت رد می‌شوند (تشدید C1)؛ تقویت‌کننده DoS.
 **اصلاح (P1)**: گیت atomic شد — `IRealmRepository.TryLockTrafficSync` با `UPDATE ... OUTPUT ... WHERE LastTrafficSync < @limit` قبل از fetch از Radius claim می‌کند (برنده‌ی رقابت ادامه می‌دهد)؛ sync از `VpnApplication.TrafficData` و `GetPlanState`/`GetPlanInfo` حذف شد (HTTP فقط از دیتای موجود می‌خواند؛ sync با job ساعتی است)؛ الگوی `_ =` در هر سه نقطه حذف شد (`CheckUserServerBalance` بعد از تمدید await می‌شود).
 
-### [ ] H19. PriceCalculator (Roslyn): بلوکه شدن، race، نشت assembly، capture شدن scoped repo توسط singleton
+### [x] H19. PriceCalculator (Roslyn): بلوکه شدن، race، نشت assembly، capture شدن scoped repo توسط singleton
 `Backend/Infrastructure/Services/PriceCalculator.cs:12-26,72` — `InitializeCalculators().Result` در اولین محاسبه؛ check-then-act بدون قفل (کامپایل تکراری)؛ `Assembly.Load` بدون `CollectibleAssemblyLoadContext` (نشت هر ویرایش قیمت)؛ event handler ثبت‌شده روی singleton `EntityEventService` که `Lazy<IPriceRepository>` scoped اولین request را نگه می‌دارد و در race هندلر تکراری می‌سازد.
+**اصلاح**: `IPriceCalculator.CalculatePrice` async شد؛ init یک‌بارَه با `SemaphoreSlim` + double-check؛ `PriceCalculator` singleton با `IServiceScopeFactory` (resolve per-fetch، بدون captive)؛ هر نسل calculator در `CollectibleAssemblyLoadContext` خودش (`PricePool.CalculatorGeneration`) و نسل قبلی بعد از swap با `Unload()` آزاد می‌شود؛ هندلر refresh روی `IEntityEventService` singleton فقط یک‌بار ثبت و fail-safe است.
 
 ### [x] H20. ایندکس‌های غایب (مقایسه schema با query های واقعی)
 | جدول | ایندکس پیشنهادی | مصرف‌کننده |
@@ -142,10 +143,10 @@
 
 | چک | # | عنوان | مکان | شرح |
 |---|---|---|---|---|
-| [ ] | M1 | قیمت با days خام، اعطا با روزهای بازنویسی‌شده | `PlanApplication.cs:115,177` vs `Domain/Plan/Business/RenewalBusiness.cs:72` | چیزی که قیمت می‌شود همان چیزی نیست که اعطا می‌شود (`days=0`+gigabytes → اعطای ۶۰+ روز) |
-| [ ] | M2 | در catch تمدید: compensation قبل از rollback | `PlanApplication.cs:306-322` | اگر Radius قطع باشد `DeactivateUsers` می‌اندازد → rollback اجرا نمی‌شود و خطای اصلی mask می‌شود |
-| [ ] | M3 | Radius sync داخل تراکنش DB | `PlanApplication.cs:302-304` | شکست commit → user در Radius می‌ماند (dual-write بدون compensation مطمئن) |
-| [ ] | M4 | `GetAvailableRealm` با `.First()` | `ServerManagementService.cs:40-44` | پر بودن همه realm ها = `InvalidOperationException` خام (500)؛ بدون reservation → overbooking هم‌زمان |
+| [x] | M1 | قیمت با days خام، اعطا با روزهای بازنویسی‌شده | `PlanApplication.cs:115,177` vs `Domain/Plan/Business/RenewalBusiness.cs:72` | چیزی که قیمت می‌شود همان چیزی نیست که اعطا می‌شود (`days=0`+gigabytes → اعطای ۶۰+ روز). **اصلاح**: قیمت‌گذاری بر **روزهای مؤثر** پس از بازنویسی در هر سه نقطه (`Estimate`، `Renewal` عمومی، `Renewal` settlement) — تصمیم صاحب محصول ۱۴۰۵/۰۷؛ دبیت settlement حالا با `TotalPrice` فاکتور برابر است. کدهای Roslyn در DB باید با ورودی روز-مؤثر بازبینی شوند (یادداشت انتشار). |
+| [x] | M2 | در catch تمدید: compensation قبل از rollback | `PlanApplication.cs:306-322` | اگر Radius قطع باشد `DeactivateUsers` می‌اندازد → rollback اجرا نمی‌شود و خطای اصلی mask می‌شود. **اصلاح**: rollback اول، هر سه قدم (rollback/compensation/history) در try/catch مستقل با لاگ؛ اصل خطای اولیه حفظ می‌شود. |
+| [x] | M3 | Radius sync داخل تراکنش DB | `PlanApplication.cs:302-304` | شکست commit → user در Radius می‌ماند (dual-write بدون compensation مطمئن). **اصلاح (نرم)**: با ترتیب M2، شکستِ خودِ `DeactivateUsers` با لاگ نشانگر `RADIUS-COMPENSATION-FAILED` پیگیری عملیاتی می‌شود؛ residual risk ثبت شد. |
+| [x] | M4 | `GetAvailableRealm` با `.First()` | `ServerManagementService.cs:40-44` | پر بودن همه realm ها = `InvalidOperationException` خام (500)؛ بدون reservation → overbooking هم‌زمان. **اصلاح**: لیست خالی → `UserException` دوستانه («ظرفیت سرورها تکمیل است...») قبل از تراکنش/دبیت. |
 | [x] | M5 | dictionary indexer بدون گارد در DeactivateInvalidRadiusUsers | `Infrastructure/Services/AccountRadiusSyncService.cs:56-80` | realm بدون plan state = `KeyNotFoundException` → کل job ساعتی abort. **اصلاح (P1)**: `TryGetValue` + لیست خالی (غیرفعال‌سازی همه کاربران آن radius) |
 | [ ] | M6 | CheckUniqueData: شرط mobile به email گره خورده + مقایسه case-sensitive | `Infrastructure/Repository/AccountRepository.cs:113-127` | ثبت‌نام با موبایل بدون ایمیل، یکتایی موبایل را چک نمی‌کند؛ `d.Email == email` ordinal است ولی DB case-insensitive |
 | [ ] | M7 | throw روی یک اکانت گمشده، کل batch هشدار را می‌کشد | `AccountMonitoringService.cs:114-117` | باید `continue` + log باشد |
@@ -153,6 +154,7 @@
 | [ ] | M9 | predicate مرده: `Created IS NULL` ولی `DEFAULT GETDATE()` | `Infrastructure/Repository/RenewalRepository.cs:13` + `Database/LocalDatabase/Renewal.sql:17` | `GetNotPaid` همیشه خالی؛ شاخه unpaid در GenerateInvoice هرگز اجرا نمی‌شود |
 | [ ] | M10 | کد reset روی اکانت غیرفعال burn می‌شود + TOCTOU دوبار مصرف | `AuthApplication.cs:178-193`، `Infrastructure/Repository/ResetPassRepository.cs:19-22` | کد خوانده/حذف می‌شود ولی عملیات fail؛ دو درخواست هم‌زمان هر دو می‌خوانند |
 | [ ] | M11 | سری سوم چارت ترافیک به‌اشتباه «Download» | `VpnApplication.cs:181-185` | دو سری هم‌نام (یکی Total) |
+| [x] | M28 | race برداشت موازی تسویه (کشف پس از P2؛ خارج از ممیزی اولیه) | `BillingApplication.cs` + `Application/Billing/AccountSettlementGate.cs` | خواندن `GetBalance` بیرون از تراکنش/قفل + CAS فقط روی وضعیت فاکتور → دو تسویه/رسید موازی روی یک اکانت هر دو دبیت می‌زدند و موجودی منفی می‌شد. **اصلاح**: گیت per-account (`AccountSettlementGate`، singleton، `SemaphoreSlim`) دور `SettleWallet` و renewal-پس-از-رسید؛ درون-پردازشی — برای دیپلوی multi-instance جایگزین: قفل DB-level (`UPDLOCK` روی خواندن موجودی داخل تراکنش دبیت). |
 
 ## MEDIUM — امنیت و زیرساخت
 
@@ -180,7 +182,7 @@
 
 | چک | # | عنوان | مکان | شرح |
 |---|---|---|---|---|
-| [ ] | M24 | پاسخ‌های out-of-order در estimate (بدون switchMap) | `Frontend/src/app/renewal/renewal.component.ts:126-163` | قیمت/زمان نمایش‌داده‌شده ممکن است از درخواست stale باشد؛ کاربر علیه قیمت اشتباه تمدید می‌کند |
+| [x] | M24 | پاسخ‌های out-of-order در estimate (بدون switchMap) — **حل شد**: استریم `estimate$` با `switchMap` + `catchError(EMPTY)` | `Frontend/src/app/renewal/renewal.component.ts:126-163` | ~~قیمت/زمان نمایش‌داده‌شده ممکن است از درخواست stale باشد~~ |
 | [x] | M25 | double-submit روی renewal/pay/register/login — **حل شد در P2** (دکمه‌ها هنگام درخواست disable می‌شوند) | `renewal.component.html`، `payment.component.ts`، `payment-modal.component.html`، `register.component.html`، `login.component.ts` | ~~دکمه‌ها در حین درخواست فعال می‌مانند~~ |
 | [ ] | M26 | نشت subscription (هیچ unsubscribe/takeUntil در کل src نیست) | `dashboard.component.ts:210`، `history.component.ts:89`، `traffic-chart.component.ts:66`، `register.component.ts:121` | component های destroyed به root-singleton گوش می‌دهند و HTTP ghost fire می‌کنند |
 | [ ] | M27 | translate pipe به‌صورت `pure:false` + متدها در template، بدون OnPush | `Frontend/src/app/@services/translation/translation-pipe.ts:4-7`، `dashboard.component.html` | ترجمه و توابع در هر CD cycle اجرا می‌شوند |
@@ -191,7 +193,7 @@
 
 | چک | # | عنوان | مکان |
 |---|---|---|---|
-| [ ] | L1 | `printMoney` ضرب دستی با `+',000'` (خرابی اعشار/صفر/منفی) | `Frontend/src/app/@services/message-handler/money-printer.ts:14` |
+| [x] | L1 | `printMoney` ضرب دستی با `+',000'` — **حل شد**: `Intl.NumberFormat('fa-IR')` با ضرب ×1000 و گارد `Number.isFinite` (پوشش صفر/منفی/اعشار/NaN) | `Frontend/src/app/@services/message-handler/money-printer.ts:14` |
 | [ ] | L2 | static event `OnRenewal` با null-check race، بدون هیچ subscriber | `Backend/Application/Plan/IPlanApplication.cs:8,20-25` |
 | [ ] | L3 | شرط‌های مرده: `Count < 0`؛ شاخه غیرقابل دسترس email/mobile | `Backend/Application/Billing/BillingApplication.cs:143`، `Domain/Account/Business/AccountBusiness.cs:44-47` |
 | [ ] | L4 | `console.log(result)` باقی‌مانده | `Frontend/src/app/renewal/renewal.component.ts:110` |

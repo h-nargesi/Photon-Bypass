@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, catchError, EMPTY, switchMap } from 'rxjs';
 import {
   BorderDirective,
   ButtonDirective,
@@ -71,6 +72,8 @@ export class RenewalComponent implements OnInit {
   result?: RenewalResult;
   submitting = false;
 
+  private readonly estimate$ = new Subject<RenewalContext>();
+
   constructor(
     private readonly service: RenewalService,
     private readonly user_service: UserService,
@@ -92,6 +95,18 @@ export class RenewalComponent implements OnInit {
   ngOnInit() {
     this.loadLastPlan();
     this.loadPrcies();
+
+    this.estimate$
+      .pipe(
+        switchMap((plan) =>
+          this.service.estimate(plan).pipe(catchError(() => EMPTY)),
+        ),
+      )
+      .subscribe((cost) => {
+        this.color = cost ? 'primary' : 'secondary';
+        this.selectedTime = cost.days;
+        this.cost = printMoney(cost.price);
+      });
   }
 
   submit() {
@@ -168,11 +183,7 @@ export class RenewalComponent implements OnInit {
       return;
     }
 
-    this.service.estimate(this.renewal).subscribe((cost) => {
-      this.color = cost ? 'primary' : 'secondary';
-      this.selectedTime = cost.days;
-      this.cost = printMoney(cost.price);
-    });
+    this.estimate$.next(this.renewal);
   }
 
   private async loadLastPlan() {

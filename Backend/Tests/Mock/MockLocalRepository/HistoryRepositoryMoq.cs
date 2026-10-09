@@ -9,7 +9,7 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IUnitLevelServic
 {
     public readonly List<HistoryEntity> Data = [];
 
-    public HistoryRepositoryMoq()
+    public HistoryRepositoryMoq(TransactionalMockDbContext db_context)
     {
         Setup(x => x.GetHistory(It.IsNotNull<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>()))
             .Returns<string, DateTime?, DateTime?>((target, from, to) =>
@@ -46,6 +46,7 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IUnitLevelServic
             {
                 entity.Id = Data.Count > 0 ? Data.Max(h => h.Id) + 1 : 1;
                 Data.Add(entity);
+                db_context.RegisterUndo(() => Data.Remove(entity));
 
                 return Task.CompletedTask;
             });
@@ -55,9 +56,12 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IUnitLevelServic
             {
                 entity.Id = Data.Count > 0 ? Data.Max(h => h.Id) + 1 : 1;
                 Data.Add(entity);
+                db_context.RegisterUndo(() => Data.Remove(entity));
 
                 return Task.CompletedTask;
             });
+
+        Setup(x => x.DbContext).Returns(db_context);
     }
 
     public static void CreateInstance(IServiceCollection services)

@@ -33,6 +33,7 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IConnectionApplication, ConnectionApplication>();
         builder.Services.AddLazyTransient<IPlanApplication, PlanApplication>();
         builder.Services.AddLazyTransient<IBillingApplication, BillingApplication>();
+        builder.Services.AddLazySingleton<IAccountSettlementGate, AccountSettlementGate>();
         builder.Services.AddLazyTransient<IVpnApplication, VpnApplication>();
         builder.Services.AddLazyTransient<IServerManagementService, ServerManagementService>();
         builder.Services.AddLazyTransient<IAccountMonitoringService, AccountMonitoringService>();

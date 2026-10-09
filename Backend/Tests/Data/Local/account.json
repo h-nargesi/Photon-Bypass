@@ -9,5 +9,6 @@
 	{ "Id": 6, "IsActive": true, "Username": "User6", "Mobile": "0916", "Email": "user6@gmail.com", "Owner": 5 },
   { "Id": 7, "IsActive": false, "Username": "InactiveUser7", "Mobile": "0916", "Email": "user7@gmail.com", "Owner": 1 },
   { "Id": 8, "IsActive": true, "Username": "User8", "Mobile": "0916", "Email": null, "Owner": 5 },
-  { "Id": 9, "IsActive": true, "Username": "User9", "Mobile": "09166", "Email": null, "Owner": 5 }
+  { "Id": 9, "IsActive": true, "Username": "User9", "Mobile": "09166", "Email": null, "Owner": 5 },
+  { "Id": 10, "IsActive": true, "Username": "User10", "Mobile": "0910", "Email": "user10@gmail.com", "Owner": null, "CalculationMethod": 3 }
 ]

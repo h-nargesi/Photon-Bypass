@@ -14,7 +14,7 @@ internal class InvoiceRepositoryMoq : Mock<IInvoiceRepository>, IUnitLevelServic
 
     public readonly List<InvoiceEntity> Data = [];
 
-    public InvoiceRepositoryMoq(AccountRepositoryMoq account_moq)
+    public InvoiceRepositoryMoq(TransactionalMockDbContext db_context, AccountRepositoryMoq account_moq)
     {
         Setup(x => x.GenerateNewInvoiceCode())
             .Returns(() =>
@@ -28,6 +28,7 @@ internal class InvoiceRepositoryMoq : Mock<IInvoiceRepository>, IUnitLevelServic
             .Returns<InvoiceEntity>(invoice =>
             {
                 Data.Add(invoice);
+                db_context.RegisterUndo(() => Data.Remove(invoice));
 
                 return Task.FromResult(1);
             });
@@ -60,9 +61,12 @@ internal class InvoiceRepositoryMoq : Mock<IInvoiceRepository>, IUnitLevelServic
             {
                 var updated = 0;
 
-                foreach (var invoice in Data.Where(i => i.AccountId == account_id && i.Status == BalanceStatus.Pending))
+                var pending = Data.Where(i => i.AccountId == account_id && i.Status == BalanceStatus.Pending).ToList();
+
+                foreach (var invoice in pending)
                 {
                     invoice.Status = BalanceStatus.Canceled;
+                    db_context.RegisterUndo(() => invoice.Status = BalanceStatus.Pending);
                     updated++;
                 }
 
@@ -80,6 +84,7 @@ internal class InvoiceRepositoryMoq : Mock<IInvoiceRepository>, IUnitLevelServic
                 }
 
                 invoice.Status = to;
+                db_context.RegisterUndo(() => invoice.Status = from);
 
                 return Task.FromResult(1);
             });
@@ -95,27 +100,27 @@ internal class InvoiceRepositoryMoq : Mock<IInvoiceRepository>, IUnitLevelServic
                     return Task.FromResult(0);
                 }
 
+                var previous_status = invoice.Status;
+                var previous_image = invoice.ReceiptImage;
+                var previous_text = invoice.ReceiptText;
+
                 invoice.Status = BalanceStatus.Verifying;
                 invoice.ReceiptImage = image;
                 invoice.ReceiptText = text;
                 invoice.ReceiptAt = DateTime.Now;
 
+                db_context.RegisterUndo(() =>
+                {
+                    invoice.Status = previous_status;
+                    invoice.ReceiptImage = previous_image;
+                    invoice.ReceiptText = previous_text;
+                    invoice.ReceiptAt = null;
+                });
+
                 return Task.FromResult(1);
             });
 
-        var db_context_moq = new Mock<IDbContext>();
-        db_context_moq.Setup(x => x.BeginTransactionAsync())
-            .Returns(() =>
-            {
-                var mock = new Mock<IDbTransaction>();
-
-                mock.Setup(t => t.Commit());
-                mock.Setup(t => t.Rollback());
-
-                return Task.FromResult(mock.Object);
-            });
-
-        Setup(x => x.DbContext).Returns(db_context_moq.Object);
+        Setup(x => x.DbContext).Returns(db_context);
     }
 
     public static void CreateInstance(IServiceCollection services)

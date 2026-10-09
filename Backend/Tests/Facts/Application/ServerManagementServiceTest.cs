@@ -1,6 +1,9 @@
 ﻿using System.Text;
+using Moq;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Servers;
+using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
 
@@ -18,6 +21,20 @@ public class ServerManagementServiceTest : UnitLevelServiceInitializer
 
         Assert.NotNull(realm);
         Assert.Equal(3, realm.Id);
+    }
+
+    [Fact]
+    public async Task GetAvailableRealm_AllRealmsFull_ThrowsUserException()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+
+        server_moq
+            .Setup(x => x.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new Dictionary<int, List<ServerEntity>>());
+
+        await Assert.ThrowsAsync<UserException>(() => manager.GetAvailableRealm());
     }
 
     [Fact]

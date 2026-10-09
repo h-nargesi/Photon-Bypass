@@ -1,17 +1,27 @@
 ﻿using System.Reflection;
+using System.Runtime.Loader;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.DependencyInjection;
+using PhotonBypass.Domain.Repository;
 using PhotonBypass.Domain.Static;
+using PhotonBypass.Infra.Database;
+using Serilog;
 
 namespace PhotonBypass.Infra.Services;
 
-class PriceCalculator(PricePool pool, Lazy<IPriceRepository> repository) : IPriceCalculator
+class PriceCalculator(PricePool pool, IEntityEventService event_service, IServiceScopeFactory scope_factory)
+    : IPriceCalculator
 {
-    public int CalculatePrice(int price_id, int users, int days, int gigabytes)
+    private readonly SemaphoreSlim initialize_lock = new(1, 1);
+
+    private volatile bool initialized;
+
+    public async Task<int> CalculatePrice(int price_id, int users, int days, int gigabytes)
     {
-        if (pool.IsNotLoaded)
+        if (!initialized)
         {
-            pool.Set(InitializeCalculators().Result);
+            await InitializeCalculators();
         }
 
         var method = pool.Get(price_id);
@@ -19,31 +29,77 @@ class PriceCalculator(PricePool pool, Lazy<IPriceRepository> repository) : IPric
         return (int)(method.Invoke(null, [users, days, gigabytes]) ?? 0);
     }
 
-    private Task<Dictionary<int, MethodInfo>> InitializeCalculators()
+    private async Task InitializeCalculators()
     {
-        repository.Value.Events.OnSave += async (_, _) => pool.Set(await FetchCalculatorCode());
-        return FetchCalculatorCode();
+        if (initialized) return;
+
+        await initialize_lock.WaitAsync();
+
+        try
+        {
+            if (initialized) return;
+
+            event_service.RegisterOnSave<PriceEntity>(OnPriceSaved);
+
+            SwapPool(await FetchCalculatorCode());
+
+            initialized = true;
+        }
+        finally
+        {
+            initialize_lock.Release();
+        }
     }
 
-    private async Task<Dictionary<int, MethodInfo>> FetchCalculatorCode()
+    private async Task OnPriceSaved(object? sender, EntityEventArgs<PriceEntity> event_args)
     {
-        var list = (await repository.Value.GetActives())
+        try
+        {
+            SwapPool(await FetchCalculatorCode());
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "Price calculators refresh after price save failed.");
+        }
+    }
+
+    private void SwapPool(PricePool.CalculatorGeneration generation)
+    {
+        var previous = pool.Set(generation);
+
+        if (previous != null)
+        {
+            previous.Context.Unload();
+        }
+    }
+
+    private async Task<PricePool.CalculatorGeneration> FetchCalculatorCode()
+    {
+        using var scope = scope_factory.CreateScope();
+
+        var repository = scope.ServiceProvider.GetRequiredService<IPriceRepository>();
+
+        var load_context = new CollectibleAssemblyLoadContext();
+
+        var list = (await repository.GetActives())
             .OrderByDescending(c => c.IsDefault)
             .ThenBy(c => c.Id)
-            .Select(c => (c.Id, Method: Compile(c.CalculatorCode)))
+            .Select(c => (c.Id, Method: Compile(load_context, c.CalculatorCode)))
             .ToList();
 
-        if (list.Count < 1)
+        var methods = new Dictionary<int, MethodInfo>();
+
+        if (list.Count > 0)
         {
-            return [];
+            methods = list.ToDictionary(k => k.Id, v => v.Method);
+
+            methods.Add(0, list[0].Method);
         }
 
-        list.Add((0, list[0].Method));
-
-        return list.ToDictionary(k => k.Id, v => v.Method);
+        return new PricePool.CalculatorGeneration(load_context, methods);
     }
 
-    private static MethodInfo Compile(string code)
+    private static MethodInfo Compile(CollectibleAssemblyLoadContext load_context, string code)
     {
         var syntax_tree = CSharpSyntaxTree.ParseText(code);
 
@@ -65,11 +121,12 @@ class PriceCalculator(PricePool pool, Lazy<IPriceRepository> repository) : IPric
 
         if (!result.Success)
         {
+            load_context.Unload();
             throw new Exception("Price Calculator Error:\n" + string.Join('\n', result.Diagnostics));
         }
 
         ms.Seek(0, SeekOrigin.Begin);
-        var assembly = Assembly.Load(ms.ToArray());
+        var assembly = load_context.LoadFromStream(ms);
 
         var type = assembly.GetType("Calculator") ??
                    throw new Exception("Price Calculator Error: The 'Calculator' class not found.");

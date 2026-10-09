@@ -355,6 +355,71 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public async Task SettleWallet_ParallelOnSameAccount_OnlyOneSucceeds()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var billing_app = scope.ServiceProvider.GetRequiredService<IBillingApplication>();
+        var wallet_moq = scope.ServiceProvider.GetRequiredService<WalletRepositoryMoq>();
+        var invoice_moq = scope.ServiceProvider.GetRequiredService<InvoiceRepositoryMoq>();
+        var invoice_repo = scope.ServiceProvider.GetRequiredService<IInvoiceRepository>();
+        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
+
+        job_context.InjectJobContext(2, "User2", "User2");
+
+        // balance covers only one of the two settlements (2 x 230 debit vs 400 credit)
+        wallet_moq.Data[2] =
+        [
+            new WalletEntity
+            {
+                Id = 901,
+                AccountId = 2,
+                Amount = 400,
+                Direction = BalanceDirection.Credit,
+                Status = BalanceStatus.Completed,
+                Description = "seed",
+            },
+        ];
+
+        var first = (await billing_app.IssuePlanInvoice(230, "User2t|2u|120d|75g", "پلن تست")).Data!.Value;
+        var second = (await billing_app.IssuePlanInvoice(230, "User2t|2u|120d|75g", "پلن تست")).Data!.Value;
+
+        // issuing the second invoice canceled the first one; bring it back to Pending
+        await invoice_repo.TransitionStatus(first, BalanceStatus.Canceled, BalanceStatus.Pending);
+
+        var successes = 0;
+        var failures = 0;
+
+        var tasks = new[] { first, second }.Select(async code =>
+        {
+            try
+            {
+                var result = await billing_app.SettleWallet(code);
+
+                if (result.Code / 100 == 2)
+                {
+                    Interlocked.Increment(ref successes);
+                }
+            }
+            catch (UserException)
+            {
+                Interlocked.Increment(ref failures);
+            }
+        });
+
+        await Task.WhenAll(tasks);
+
+        Assert.Equal(1, successes);
+        Assert.Equal(1, failures);
+        Assert.Equal(170, await wallet_repo.GetBalance(2));
+
+        var codes = new[] { first, second }.ToHashSet();
+
+        Assert.Single(invoice_moq.Data.Where(i => codes.Contains(i.Code) && i.Status == BalanceStatus.Canceled));
+        Assert.Single(invoice_moq.Data.Where(i => codes.Contains(i.Code) && i.Status == BalanceStatus.Pending));
+    }
+
+    [Fact]
     public async Task GetInvoice_NotFound()
     {
         using var scope = App.Services.CreateScope();

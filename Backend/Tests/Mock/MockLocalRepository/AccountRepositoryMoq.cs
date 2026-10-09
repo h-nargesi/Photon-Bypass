@@ -27,11 +27,11 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
 
     public Dictionary<string, AccountEntity> Data;
 
-    public AccountRepositoryMoq() : this(FilePath)
+    public AccountRepositoryMoq(TransactionalMockDbContext db_context) : this(db_context, FilePath)
     {
     }
 
-    protected AccountRepositoryMoq(string file_path)
+    protected AccountRepositoryMoq(TransactionalMockDbContext db_context, string file_path)
     {
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
@@ -160,19 +160,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
                 return Task.CompletedTask;
             });
 
-        var db_context_moq = new Mock<IDbContext>();
-        db_context_moq.Setup(x => x.BeginTransactionAsync())
-            .Returns(() =>
-            {
-                var mock = new Mock<IDbTransaction>();
-
-                mock.Setup(t => t.Commit());
-                mock.Setup(t => t.Rollback());
-
-                return Task.FromResult(mock.Object);
-            });
-        
-        Setup(x => x.DbContext).Returns(db_context_moq.Object);
+        Setup(x => x.DbContext).Returns(db_context);
     }
 
     private const string FilePath = "Data/Local/account.json";

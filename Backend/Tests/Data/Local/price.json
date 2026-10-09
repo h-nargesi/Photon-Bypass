@@ -6,5 +6,9 @@
   {
     "Id": 2,
     "CalculatorCode": "using System; public class Calculator { public static int Compute(int users, int days, int gigabytes) { return 40 + users * 10 + (gigabytes / 25) * 40; } }"
+  },
+  {
+    "Id": 3,
+    "CalculatorCode": "using System; public class Calculator { public static int Compute(int users, int days, int gigabytes) { return 30 + users * 5 + days * 2 + (gigabytes / 25) * 10; } }"
   }
 ]
