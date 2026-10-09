@@ -13,10 +13,11 @@
 |---|---|---|---|
 | `Database.sql` | (db creation) | — | ساخت دیتابیس `FastBypass`. |
 | `Account.sql` | `Account` | `PK Id`, `UK_Account_Username`, `UK_Account_Email` (filtered `WHERE Email IS NOT NULL`), `UK_Account_Mobile` (filtered), `FK_Owner→Account`, `FK_CalculationMethod→Price` | اکانت + زیرمجموعه (`Owner`) + `VpnPassword` جدا. |
-| `Wallet.sql` | `Wallet` | `PK Id` | کیف پول + `InvoiceCode`. |
+| `Wallet.sql` | `Wallet` | `PK Id` | کیف پول + `InvoiceCode`. موجودی = `sum(Amount*Direction)` روی `Status in (Completed, Verifying)`. |
 | `History.sql` | `History` | `PK Id` | لاگ رویداد روی `Target`. |
 | `ResetPassword.sql` | `ResetPassword` | — | توکن بازنشانی. |
 | `Renewal.sql` | `Renewal` | `PK Id`, `FK AccountId→Account`, `WalletDebit/WalletCredit` | یک تمدید. |
+| `PaymentP2.sql` | `Invoice` | `PK Code` (از `InvoiceSequence`، بدون identity), `FK AccountId→Account`, `IX (AccountId, Status)`, `CK` XOR رسید | والد فاکتور: `Kind (1=TopUp,2=Plan)`, `Title`, `TotalPrice`, `WalletDeduction`, `Payable`, `Action nvarchar(400)`, `Status` (هم‌ارزش `BalanceStatus`), `ReceiptImage/ReceiptText/ReceiptAt`. |
 | `PlanState.sql` | `PlanState` | — | **view** mapping (نه جدول پر-شده؛ از `TotalPlanState` خوانده می‌شود). |
 | `TrafficData.sql` | `TrafficData` | `PK Id` | رکورد ترافیک دوره‌ای. |
 | `Server.sql` | `Server` | `PK Id`, `FK RealmId→Realm` | سرور با `Features` (Flags) و `OsType`. |
@@ -70,9 +71,11 @@ flowchart TB
 erDiagram
     Account ||--o{ Renewal : has
     Account ||--o{ Wallet : owns
+    Account ||--o{ Invoice : billed
     Account ||--o{ History : logged
     Account ||--o{ TrafficData : recorded
     Renewal ||--|| Wallet : debit_credit
+    Invoice ||--o{ Wallet : "credit/debit rows by InvoiceCode"
     Realm ||--o{ Server : contains
     Server }o--|| Process : runs
     Price ||--o{ Account : "CalculationMethod"

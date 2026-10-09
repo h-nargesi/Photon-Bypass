@@ -61,7 +61,7 @@
                 <div class="me-auto">
                     {{ 'renewal.labels.cost-caption' | translate : [cost] }}
                 </div>
-                <button cButton class="px-4" [color]="color" [disabled]="color === 'secondary'" type="button"
+                <button cButton class="px-4" [color]="color" [disabled]="submitting || color === 'secondary'" type="button"
                     (click)="submit()">
                     {{ "renewal.labels.submit" | translate }}
                 </button>

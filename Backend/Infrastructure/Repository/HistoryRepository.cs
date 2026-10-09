@@ -30,6 +30,23 @@ class HistoryRepository(LocalDbContext context, Lazy<IAccountRepository> account
         return [.. result];
     }
 
+    public async Task<Dictionary<int, HistoryEntity>> GetLastByTitle(string title)
+    {
+        var sql = $"""
+                   select h.*
+                   from {TableName} h
+                   join (select {nameof(HistoryEntity.Target)} as AccountId, max({nameof(HistoryEntity.Id)}) as LastId
+                         from {TableName}
+                         where {nameof(HistoryEntity.Title)} = @title
+                         group by {nameof(HistoryEntity.Target)}) last
+                        on h.{nameof(HistoryEntity.Id)} = last.LastId
+                   """;
+
+        var result = await QueryAsync<HistoryEntity>(sql, new { title });
+
+        return result.ToDictionary(h => h.Target);
+    }
+
     public async Task Save(string issuer_name, HistoryEntity entity)
     {
         entity.Issuer = await account_repo.Value.GetActiveAccountId(issuer_name);

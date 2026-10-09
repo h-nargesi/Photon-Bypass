@@ -27,13 +27,13 @@
 - **شرح**: `BulkUpdateAsync/BulkInsertAsync/BulkDeleteAsync` بدون `AttachToTransaction` اجرا می‌شوند؛ در نتیجه `BillingApplication.GenerateInvoice` (`Backend/Application/Billing/BillingApplication.cs:151-250`) که wallet/renewal را داخل `BeginTransaction/Commit` می‌نویسد عملاً auto-commit می‌نویسد و rollback هیچ‌چیز را برنمی‌گرداند → ردیف‌های نیمه‌کاله wallet/renewal در صورت خطای وسط flow.
 - **اصلاح**: فراخوانی `CheckTransactionBulk` در overload های collection (هم save هم delete).
 
-### [ ] C3. جریان پرداخت فرانتند کاملاً خراب است (۴ ایراد مستقل)
+### [x] C3. جریان پرداخت فرانتند کاملاً خراب است (۴ ایراد مستقل) — **حل شد در P2**
 - **مکان‌ها**:
   - `Frontend/src/app/payment/payment-service.ts:10,16` و `Frontend/src/app/default-layout/payment-modal/payment-modal.service.ts:10` — فراخوانی `PLAN_API_URL/get-invoice|pay|payment-request` در حالی که بک‌اند در `BillingController` (route `/api/billing/...`) سرو می‌کند؛ `payment-request` اصلاً در بک‌اند وجود ندارد.
   - `Frontend/src/app/payment/payment.component.ts:51` — `isNumber(code)` روی string (خروجی `queryParamMap.get`) همیشه false → صفحه payment همیشه به dashboard redirect می‌شود.
   - `Frontend/src/app/renewal/renewal.component.ts:114` — navigate با invoice hard-code `"10"` به‌جای `result.invoiceCode`؛ فیلد `InvoiceCode` در اینترفیس فرانتند (`@models/data-model/user-plan-info.ts:22-25`) مدل نشده.
   - `Backend/Portal/Controllers/BillingController.cs:21` — `Pay([FromBody] int value)` ولی فرانت `POST {value}` (object) می‌فرستد؛ `payment.component.ts:65` خروجی عددی pay را به‌عنوان URL به `window.location.href` می‌دهد.
-- **اصلاح**: تعریف قرارداد API پرداخت (route/body/response)، اصلاح سرویس‌های فرانتند، استفاده از `result.invoiceCode`، و پیاده‌سازی redirect واقعی درگاه.
+- **اصلاح (انجام‌شده در P2)**: `BILLING_API_URL` جدید، بدنه‌ی `PayRequest {Value, Target?}`، صفحه فاکتور بازنویسی‌شده (اقلام/کسر کیف پول/قابل پرداخت/کارت‌ها/رسید)، navigate با `result.invoiceCode` واقعی، حذف `isNumber`/`window.location.href`/قالب درگاه؛ مدل `PaymentInvoice` جدید منطبق با بک‌اند.
 
 ### [x] C4. کد فاکتور MAX+1 → تداخل بین کاربران؛ callback بین اکانت‌ها عبور می‌کند
 - **مکان**: `Backend/Infrastructure/Repository/WalletRepository.cs:66-76` (تولید کد) و `:29-36` (`GetInvoice(int)` بدون فیلتر account/status)؛ مصرف در `BillingApplication.cs:99-123`.
@@ -180,7 +180,7 @@
 | چک | # | عنوان | مکان | شرح |
 |---|---|---|---|---|
 | [ ] | M24 | پاسخ‌های out-of-order در estimate (بدون switchMap) | `Frontend/src/app/renewal/renewal.component.ts:126-163` | قیمت/زمان نمایش‌داده‌شده ممکن است از درخواست stale باشد؛ کاربر علیه قیمت اشتباه تمدید می‌کند |
-| [ ] | M25 | double-submit روی renewal/pay/register/login | `renewal.component.html:64`، `payment.component.html:68`، `register.component.html:175`، `login.component.ts:82-93` | دکمه‌ها در حین درخواست فعال می‌مانند (تشدیدکننده C4/C5) |
+| [x] | M25 | double-submit روی renewal/pay/register/login — **حل شد در P2** (دکمه‌ها هنگام درخواست disable می‌شوند) | `renewal.component.html`، `payment.component.ts`، `payment-modal.component.html`، `register.component.html`، `login.component.ts` | ~~دکمه‌ها در حین درخواست فعال می‌مانند~~ |
 | [ ] | M26 | نشت subscription (هیچ unsubscribe/takeUntil در کل src نیست) | `dashboard.component.ts:210`، `history.component.ts:89`، `traffic-chart.component.ts:66`، `register.component.ts:121` | component های destroyed به root-singleton گوش می‌دهند و HTTP ghost fire می‌کنند |
 | [ ] | M27 | translate pipe به‌صورت `pure:false` + متدها در template، بدون OnPush | `Frontend/src/app/@services/translation/translation-pipe.ts:4-7`، `dashboard.component.html` | ترجمه و توابع در هر CD cycle اجرا می‌شوند |
 
@@ -226,7 +226,7 @@
 > 2. `Database/LocalDatabase/Indexes.sql` — ایندکس‌های H20؛ unique index روی `TrafficData` تا dedup اجرا نشود fail می‌شود. ایندکس‌های `TrafficData` روی edition های مجاز با `ONLINE = ON` ساخته می‌شوند؛ در غیر این صورت خارج از ساعات پیک اجرا شود.
 >
 > تست‌های جدید: `ServerManagementServiceTest.UpdateTrafficData_SecondCycleWithSameSessions_DoesNotInsertDuplicates` (دو سیکل پشت‌سرهم → بدون درج تکراری) و `AccountRadiusTest.DeactivateInvalidRadiusUsers_UnknownRealm_ShouldNotThrow` (realm ناموجود → بدون کرش + غیرفعال‌سازی همه).
-| **P2** | پرداخت کارت‌به‌کارت و کیف پول (طراحی جدید صاحب محصول) | C3 → M25، به‌علاوه بازطراحی جریان پرداخت طبق [docs/15-payment-p2.md](15-payment-p2.md) و `Architecture/peyment-P2.md`: فاکتور همیشه + خالص‌سازی کیف پول، ثبت رسید (تصویر XOR متن) → وضعیت `Verifying` با اعتبار فوری، تسویه کیف پول، حذف `payment-callback`، قاعده آستانه کیف پول (بک‌اند)، جدول جدید `Invoice` | `yarn build` سبز + سناریوها: شارژ با رسید، تمدید ناکافی با رسید → پلن فعال، تمدید کافی با تایید کیف پول |
+| **P2** ✅ | پرداخت کارت‌به‌کارت و کیف پول (طراحی جدید صاحب محصول) — **انجام شد (۱۴۰۵/۰۷)**: C3 + M25 حل؛ `BillingApplication` بازنویسی (`IssueTopUp`/`IssuePlanInvoice`/`GetInvoice`/`RegisterReceipt`/`SettleWallet`)، `payment-callback` حذف، جدول `Invoice` (`PaymentP2.sql`)، `BalanceStatus.Verifying`، `GetBalance` شامل Verifying، قاعده آستانه کیف پول (`WalletThresholdService`)، `ActivateUsers` روی همه Radius ها، فرانتند صفحه فاکتور/رسید/تسویه + `BILLING_API_URL` | `yarn build` سبز + تست‌های `BillingApplicationTest`/`BillingP2Test`/`WalletThresholdServiceTest` + سناریوها (شارژ با رسید، تمدید ناکافی با رسید → پلن فعال، تمدید کافی با تایید کیف پول) |
 | **P3** | احراز هویت و امنیت | C6 → H1 → H12 → H5 → H6 → H7 → M13 → M14 | تست تغییر پسورد/reset/lockout؛ لاگ بدون secret |
 | **P4** | زیرساخت job و I/O | H2 → H3 → H4 → M17 → M19 → M20 → M21 → M22 | job بدون هم‌پوشانی؛ بدون `.Result`/`WaitAll` |
 | **P5** | باقی موارد | همه M/L باقی‌مانده (M1-M12, M16, M23, M24, M26, M27, L1-L11) | quick-win های جداگانه |

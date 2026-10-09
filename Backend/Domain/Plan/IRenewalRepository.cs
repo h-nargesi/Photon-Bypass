@@ -5,7 +5,5 @@ namespace PhotonBypass.Domain.Plan;
 
 public interface IRenewalRepository : IEditableRepository<RenewalEntity>
 {
-    Task<List<RenewalEntity>> GetNotPaid(int account_id);
-
     Task<RenewalEntity?> GetByWalletCredit(int wallet_id);
 }

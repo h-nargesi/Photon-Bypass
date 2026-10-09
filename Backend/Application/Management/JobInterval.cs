@@ -23,6 +23,7 @@ public class JobInterval(IServiceProvider service_provider) : IJob
 
         if (plan_state_list.Count < 1)
         {
+            await RunWalletThresholdRule(scope_main);
             return;
         }
 
@@ -40,6 +41,16 @@ public class JobInterval(IServiceProvider service_provider) : IJob
             account_radius_srv.DeactivateInvalidRadiusUsers(plan_state_list),
             account_mng_srv_2.InactiveAbandonedUsers(plan_state_list),
             server_mng_srv.CheckUserServerBalance());
+
+        await RunWalletThresholdRule(scope_main);
+    }
+
+    private static async Task RunWalletThresholdRule(IServiceScope scope_main)
+    {
+        var wallet_threshold_srv = scope_main.ServiceProvider
+            .GetRequiredService<IWalletThresholdService>();
+
+        await wallet_threshold_srv.CheckAndApply();
     }
 
 }

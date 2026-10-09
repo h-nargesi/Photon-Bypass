@@ -155,6 +155,18 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
        return await CheckResponseObject(response, status);
     }
 
+    protected async Task<Dictionary<string, string?>> GetInvoice(int code, int status = 2)
+    {
+        var response = await Client.GetAsync($"/api/billing/get-invoice?code={code}");
+        return await CheckResponseObject(response, status);
+    }
+
+    protected async Task SettleWallet(int code, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/billing/settle-wallet", new { code });
+        await CheckResponse(response, status);
+    }
+
     protected async Task Estimate(string username, string token, string password, int status = 2)
     {
        var response = await Client.PostAsJsonAsync("/api/vpn/change-ovpn", new ChangeOvpnContext

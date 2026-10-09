@@ -172,7 +172,7 @@
 
               <!-- BUTTONS -->
               <div class="d-grid">
-                <button cButton color="primary" type="submit">
+                <button cButton color="primary" type="submit" [disabled]="submitted">
                   {{ (isEdit ? "register.labels.edit-account" : "register.labels.create-account") | translate }}
                   <c-spinner size="sm" *ngIf="submitted" />
                 </button>

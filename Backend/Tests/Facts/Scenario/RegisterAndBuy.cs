@@ -95,8 +95,18 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
         // /api/plan/renewal
         var renewal = await Renewal(username, 1, 120, 50);
         Assert.NotNull(renewal);
-        Assert.Equal("0", renewal["currentPrice"]);
-        Assert.Null(renewal["invoiceCode"]);
+        Assert.Equal(estimate["price"], renewal["currentPrice"]);
+        Assert.NotNull(renewal["invoiceCode"]);
+
+        // /api/billing/get-invoice
+        var invoice = await GetInvoice(int.Parse(renewal["invoiceCode"]!));
+        Assert.NotNull(invoice);
+        Assert.Equal("2", invoice["kind"]);
+        Assert.Equal(estimate["price"], invoice["totalPrice"]);
+        Assert.Equal("True", invoice["allowWallet"]);
+
+        // /api/billing/settle-wallet
+        await SettleWallet(int.Parse(renewal["invoiceCode"]!));
 
         // /api/plan/plan-info
         plan_info = await PlanInfo();

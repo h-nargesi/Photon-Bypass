@@ -50,6 +50,26 @@ class AccountRadiusSyncService(
         return DeactivateUsers(usernames, []);
     }
 
+    public async Task ActivateUsers(IEnumerable<string> usernames)
+    {
+        var radius_list = await ServerRepo.Value.GetAllActiveRadius();
+
+        await radius_list.RunJob(radius =>
+        {
+            switch (radius.Features & ServerFeature.Radius)
+            {
+                case ServerFeature.UserManager:
+                    return MikrotikRadius.Value.ActivateUser(radius, usernames);
+                case ServerFeature.RadiusDesk:
+                    return RadiusDesk.Value.ActivateUser(radius, usernames);
+                default:
+                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
+                        radius.RealmId, radius.Id, radius.Features);
+                    return Task.CompletedTask;
+            }
+        });
+    }
+
     public async Task DeactivateInvalidRadiusUsers(IEnumerable<PlanStateEntity> plan_state_list)
     {
         var radius_list = await ServerRepo.Value.GetAllActiveRadius();

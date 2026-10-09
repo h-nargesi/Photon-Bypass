@@ -2,22 +2,41 @@
     "labels": {
         "title": "جزئیات پرداخت",
         "input": "مقدار پرداخت",
-        "discount": "تخفیف",
         "sum": "جمع",
-        "total-sum": "جمع نهایی",
+        "total-sum": "قیمت پلن",
+        "total-price": "قیمت کامل",
+        "payable": "مبلغ قابل پرداخت",
+        "wallet-balance": "موجودی کیف پول",
+        "status": "وضعیت فاکتور",
         "submit": "پرداخت"
     },
     "methods": {
         "title": "روش پرداخت",
-        "bank": "درگاه بانکی",
-        "transfer": "انتقال کارت به کارت"
+        "wallet": "پرداخت از کیف پول",
+        "card-to-card": "کارت به کارت"
+    },
+    "statuses": {
+        "pending": "در انتظار پرداخت",
+        "completed": "تایید شده",
+        "failed": "رد شده",
+        "canceled": "تسویه شده",
+        "verifying": "در انتظار تایید رسید"
+    },
+    "cards": {
+        "bank": "بانک / صاحب حساب",
+        "card-number": "شماره کارت"
+    },
+    "receipt": {
+        "title": "ثبت رسید کارت به کارت",
+        "file": "تصویر رسید",
+        "text": "متن رسید",
+        "text-placeholder": "شماره کارت، مبلغ و کد رهگیری را وارد کنید...",
+        "submit": "ثبت رسید",
+        "verifying-message": "رسید شما ثبت شده و در انتظار تایید است."
     },
     "columns": {
         "title": "عنوان",
         "price": "قیمت"
-    },
-    "bank-methods": {
-        "zarin-pal": "زرین پال"
     },
     "request": {
         "title": "افزایش موجودی",

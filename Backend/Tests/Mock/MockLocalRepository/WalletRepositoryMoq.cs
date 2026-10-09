@@ -37,29 +37,6 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 return Task.FromResult(list);
             });
 
-        Setup(x => x.GetNotPaid(It.IsAny<int>()))
-            .Returns<int>(account_id =>
-            {
-                if (!Data.TryGetValue(account_id, out var list))
-                {
-                    list = [];
-                }
-
-                list = list.Where(i => i.Status == BalanceStatus.Pending)
-                    .ToList();
-
-                return Task.FromResult(list);
-            });
-
-        Setup(x => x.GetInvoice(It.IsAny<int>()))
-            .Returns<int>(code =>
-            {
-                var result = Data.Values.SelectMany(x => x.Where(r => r.InvoiceCode == code))
-                    .ToList();
-
-                return Task.FromResult(result);
-            });
-
         Setup(x => x.GetInvoice(It.IsAny<string>(), It.IsAny<int>()))
             .Returns<string, int>((user, code) =>
             {
@@ -90,27 +67,17 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 return Task.FromResult(result);
             });
 
-        Setup(x => x.GenerateNewInvoiceCode())
-            .Returns(() =>
+        Setup(x => x.GetAccountIdsBelowThreshold(It.IsAny<int>()))
+            .Returns<int>(threshold =>
             {
-                var result = Data.Values.SelectMany(x => x.Where(r => r.InvoiceCode.HasValue))
-                     .Max(r => r.InvoiceCode)
-                     ?? 10000;
-
-                result += 1;
-
-                return Task.FromResult(result);
-            });
-
-        Setup(x => x.CompleteInvoice(It.IsAny<int>()))
-            .Returns<int>(code =>
-            {
-                var updated = Data.Values.SelectMany(x => x.Where(r => r.InvoiceCode == code && r.Status == BalanceStatus.Pending))
+                var result = Data
+                    .Where(p => p.Value
+                        .Where(w => w.Status is BalanceStatus.Completed or BalanceStatus.Verifying)
+                        .Sum(w => w.Amount * (int)w.Direction) < threshold)
+                    .Select(p => p.Key)
                     .ToList();
 
-                updated.Foreach(r => r.Status = BalanceStatus.Completed);
-
-                return Task.FromResult(updated.Count);
+                return Task.FromResult(result);
             });
 
         Setup(x => x.GetBalance(It.IsAny<int>()))
@@ -119,7 +86,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 var balance = 0;
                 if (Data.TryGetValue(account_id, out var list))
                 {
-                    balance = list.Where(w => w.Status == BalanceStatus.Completed)
+                    balance = list.Where(w => w.Status is BalanceStatus.Completed or BalanceStatus.Verifying)
                         .Sum(x => x.Amount * (int)x.Direction);
                 }
 
@@ -167,8 +134,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
 
         if (wallet.Id < 1)
         {
-            wallet.Id = list.Count > 0 ? list.Max(i => i.Id) : 0;
-            wallet.Id++;
+            wallet.Id = data.Values.SelectMany(x => x).Select(i => i.Id).DefaultIfEmpty(0).Max() + 1;
             list.Add(wallet);
         }
         else

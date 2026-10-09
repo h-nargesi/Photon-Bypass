@@ -50,12 +50,13 @@
 | GET | `/api/plan/plan-state` | `?target` | `PlanController.GetPlanState` | Y | وضعیت پلن (از `TotalPlanState`). |
 | GET | `/api/plan/plan-info` | `?target` | `PlanController.GetPlanInfo` | Y | اطلاعات پلن جاری. |
 | POST | `/api/plan/estimate` | body `RenewalContext` | `PlanController.Estimate` | Y | برآورد قیمت تمدید. |
-| POST | `/api/plan/renewal` | body `RenewalContext` | `PlanController.Renewal` | Y | تمدید (یا صدور فاکتور اگر موجودی کم باشد). |
-| POST | `/api/billing/pay` | body `int value` | `BillingController.Pay` | Y | صدور کد فاکتور برای افزایش موجودی. |
-| GET | `/api/billing/get-invoice` | `?code` (int) | `BillingController.GetInvoice` | Y | دریافت فاکتور. |
-| GET | `/api/billing/payment-callback` | `?code` (string) | `BillingController.PaymentCallback` | N | کال‌بک درگاه؛ pending renewals را اجرا می‌کند. |
+| POST | `/api/plan/renewal` | body `RenewalContext` | `PlanController.Renewal` | Y | همیشه صدور فاکتور تمدید (خالص‌سازی با کیف پول)؛ اجرای پلن فقط از مسیر تسویه انجام می‌شود. |
+| POST | `/api/billing/pay` | body `PayRequest {Value, Target?}` | `BillingController.Pay` | Y | صدور فاکتور TopUp (کد فاکتور برمی‌گرداند؛ bounds ۱..۱۰۰٬۰۰۰). |
+| GET | `/api/billing/get-invoice` | `?code` (int) `&target?` | `BillingController.GetInvoice` | Y | مدل کامل فاکتور: `code, kind, status, totalPrice, walletDeduction, payable, walletBalance, allowWallet, hasReceipt, items[], cardInfo[]`. |
+| POST | `/api/billing/register-receipt` | multipart: `code, target?, file XOR text` | `BillingController.RegisterReceipt` | Y | ثبت رسید (تصویر یا متن) → `Verifying`؛ برای فاکتور Plan، اجرای Renewal. اولین endpoint مولتی‌پارت (سقف درخواست ۳MB؛ فرمت‌های jpg/jpeg/png/webp). |
+| POST | `/api/billing/settle-wallet` | body `SettleWalletRequest {Code, Target?}` | `BillingController.SettleWallet` | Y | تسویه فاکتور Plan از کیف پول (فقط با موجودی کافی؛ انتقال اتمیک `Pending→Canceled`). |
 
-> توجه: `BillingController` در سطح کلاس `[ApiController]`/`Route` دارد ولی `[Authorize]` فقط روی `Pay` و `GetInvoice` است؛ `PaymentCallback` عمومی است چون درگاه آن را فراخوانی می‌کند.
+> توجه: همه‌ی endpoint های `BillingController` دارای `[Authorize]` هستند و `LoadJobContext(target)` را صدا می‌زنند (چنداکانتی). `payment-callback` در فاز P2 حذف شد (درگاه پرداخت وجود ندارد).
 
 ## Request DTOs (Context)
 
@@ -84,7 +85,7 @@
 | `/auth/logout` | GET موجود بود | حذف شده؛ فرانت با پاک کردن توکن لاگ‌اوت می‌کند (مسیر `logout` به `LoginComponent` می‌رود). |
 | `/auth/forget-pass` request | `{ emailMobile }` | body `ResetPasswordContext` با فیلد `EmailMobile` (یکسان). |
 | `/connection/close-con` | بدون فیلد سرور | اکنون `Server` + `SessionId` (`CloseConnectionContext`). |
-| `/billing/*` | در analyse نبود | اضافه شده: `pay`, `get-invoice`, `payment-callback`. |
+| `/billing/*` | در analyse نبود | اضافه شده: `pay`, `get-invoice`, `register-receipt`, `settle-wallet` (`payment-callback` حذف شد). |
 | `/plan/renewal` request | شامل `type`/`value` | اکنون `Days`/`Gigabytes`/`SimultaneousUserCount` (`RenewalContext`). |
 
 ## Request topology

@@ -10,6 +10,8 @@ public interface IAccountRadiusSyncService
 
     Task DeactivateUsers(IEnumerable<string> usernames);
 
+    Task ActivateUsers(IEnumerable<string> usernames);
+
     Task DeactivateInvalidRadiusUsers(IEnumerable<PlanStateEntity> plan_state_list);
 
     Task SyncUserAndActive(AccountEntity account, RenewalEntity renewal);

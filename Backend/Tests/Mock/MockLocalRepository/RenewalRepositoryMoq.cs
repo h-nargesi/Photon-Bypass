@@ -22,27 +22,6 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
             .PrepareAllDateTimes();
         Data = JsonSerializer.Deserialize<List<RenewalEntity>>(raw_text) ?? [];
 
-        Setup(repository => repository.GetNotPaid(It.IsAny<int>()))
-            .Returns<int>(account_id =>
-            {
-                var account_renewals = Data.Where(i => i.AccountId == account_id).ToList();
-
-                List<RenewalEntity> renewals;
-
-                if (account_renewals.Count < 1 ||
-                    !waller_repo.Data.TryGetValue(account_id, out var wallets))
-                {
-                    renewals = [];
-                }
-                else
-                {
-                    renewals = account_renewals.Where(i => !wallets.Any(w => w.Id == i.WalletCredit && w.Status == BalanceStatus.Completed))
-                        .ToList();
-                }
-
-                return Task.FromResult(renewals);
-            });
-
         Setup(repository => repository.GetByWalletCredit(It.IsAny<int>()))
             .Returns<int>(wallet_id => Task.FromResult(Data.FirstOrDefault(r => r.WalletCredit == wallet_id)));
 

@@ -22,6 +22,11 @@ public class AccountRadiusSyncRadiusDeskService : IInfraAccountRadiusSyncService
         throw new NotImplementedException();
     }
 
+    public Task ActivateUser(ServerEntity radius, IEnumerable<string> usernames)
+    {
+        throw new NotImplementedException();
+    }
+
     public Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
     {
         throw new NotImplementedException();

@@ -7,5 +7,7 @@ public interface IHistoryRepository : IEditableRepository<HistoryEntity>
 {
     Task<List<HistoryEntity>> GetHistory(string target, DateTime? from, DateTime? to);
 
+    Task<Dictionary<int, HistoryEntity>> GetLastByTitle(string title);
+
     Task Save(string issuer_name, HistoryEntity entity);
 }

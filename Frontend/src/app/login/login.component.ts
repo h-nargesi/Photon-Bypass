@@ -56,6 +56,7 @@ export class LoginComponent {
   readonly icons = ICON_SUBSET;
   readonly redirect: string;
   isValidated = false;
+  busy = false;
   username?: string;
   password?: string;
   result?: ApiResult;
@@ -82,10 +83,13 @@ export class LoginComponent {
   login() {
     this.isValidated = true;
 
-    if (!this.username || !this.password) return;
+    if (!this.username || !this.password || this.busy) return;
+
+    this.busy = true;
 
     this.service.login(this.username, this.password).subscribe((result) => {
       this.result = result;
+      this.busy = false;
 
       if (result.status() === ResultStatus.success) {
         setTimeout(() => this.router.navigateByUrl(this.redirect), 1000);

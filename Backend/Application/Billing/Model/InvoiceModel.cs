@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Domain.Account.Model;
+﻿using PhotonBypass.Application.Management.Model;
+using PhotonBypass.Domain.Account.Model;
 
 namespace PhotonBypass.Application.Billing.Model;
 
@@ -6,13 +7,23 @@ public class InvoiceModel
 {
     public int Code { get; set; }
 
+    public InvoiceKind Kind { get; set; }
+
     public BalanceStatus Status { get; set; }
 
-    public InvoiceItemModel[] InvoiceItems { get; set; } = null!;
+    public int TotalPrice { get; set; }
 
-    public int Sum => InvoiceItems.Sum(i => i.Value);
+    public int WalletDeduction { get; set; }
 
-    public float Discount { get; set; }
+    public int Payable { get; set; }
 
-    public int TotalSum => (int)(Sum * (1 - Discount));
+    public int WalletBalance { get; set; }
+
+    public bool AllowWallet { get; set; }
+
+    public bool HasReceipt { get; set; }
+
+    public InvoiceItemModel[] Items { get; set; } = [];
+
+    public PaymentCard[] CardInfo { get; set; } = [];
 }

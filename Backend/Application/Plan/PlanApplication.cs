@@ -1,6 +1,5 @@
 ﻿using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Billing;
-using PhotonBypass.Application.Billing.Model;
 using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
@@ -125,10 +124,56 @@ class PlanApplication(
 
         JobContext.Value.InjectJobContext(account.Id);
 
-        return await Renewal(account, null, count, days, gigabytes);
+        var estimate = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count, days, gigabytes);
+        var balance = await WalletRepo.Value.GetBalance(account.Id);
+
+        Log.Information(@"
+[user: {0}] Plan renewal request:
+    account=(user:{6}, balance:{5})
+    request=(taget:{1}, user-count:{2}, days={3}, traffic:{4}, estimate:{7})
+",
+            JobContext.Value.Username, account.Username, count, days, gigabytes, balance,
+            JobContext.Value.Username, estimate);
+
+        var renewal = new RenewalEntity
+        {
+            TimeLimitInDays = days,
+            TrafficLimit = gigabytes * StaticValues.BytesInGigLong,
+            SimultaneousUser = count,
+        };
+
+        if (renewal.RenewalValidation(account, out var validation_exception))
+        {
+            Log.Information(@"[user: {0}] Plan renewal request rejected before invoice:
+    request=(taget:{1}, count:{2}, days={3}, gigabytes={4})
+    message={5}",
+                JobContext.Value.Username, account.Username, count, days, gigabytes, validation_exception.Message);
+
+            throw validation_exception;
+        }
+
+        var invoice_code = await BillingApp.Value.IssuePlanInvoice(estimate,
+            $"{account.Username}t|{count}u|{days}d|{gigabytes}g", renewal.GetPlanTitle());
+
+        if (invoice_code.Code / 100 != 2)
+        {
+            return new ApiResult<RenewalResult>
+            {
+                Code = invoice_code.Code,
+                Message = invoice_code.Message,
+                MessageMethod = invoice_code.MessageMethod,
+                Developer = invoice_code.Developer,
+            };
+        }
+
+        return ApiResult<RenewalResult>.Success(new RenewalResult
+        {
+            CurrentPrice = balance,
+            InvoiceCode = invoice_code.Data,
+        });
     }
 
-    public async Task<ApiResult<RenewalResult>> Renewal(int account_id, int payment_id, string action)
+    public async Task<ApiResult<RenewalResult>> Renewal(int account_id, int? payment_id, string action, int? invoice_code = null)
     {
         string? target_name = null; byte? count = null; short? days = null; int? gigabytes = null;
         action.Split('|')
@@ -178,10 +223,10 @@ class PlanApplication(
 
         JobContext.Value.InjectJobContext(account_id, account[account_id], target_name);
 
-        return await Renewal(target, payment_id, count.Value, days.Value, gigabytes.Value);
+        return await Renewal(target, payment_id, count.Value, days.Value, gigabytes.Value, invoice_code);
     }
 
-    private async Task<ApiResult<RenewalResult>> Renewal(AccountEntity account, int? payment_id, byte count, short days, int gigabytes)
+    private async Task<ApiResult<RenewalResult>> Renewal(AccountEntity account, int? payment_id, byte count, short days, int gigabytes, int? invoice_code)
     {
         if (!account.IsActive)
         {
@@ -191,63 +236,10 @@ class PlanApplication(
         var estimate = PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count, days, gigabytes);
         var balance = await WalletRepo.Value.GetBalance(account.Id);
 
-        if (account.CheckMoneyNeed(balance, estimate, out var money_need))
+        if (account.CheckMoneyNeed(balance, estimate, out _))
         {
-            Log.Information(@"
-[user: {0}] Plan renewal request:
-    account=(user:{7}, balance:{6})
-    request=(taget:{1}, user-count:{2}, days={3}, traffic:{4}, estimate:{5})
-",
-                JobContext.Value.Username, account.Username, count, days, gigabytes, balance, estimate,
-                JobContext.Value.Username);
-
-            var validation_probe = new RenewalEntity
-            {
-                TimeLimitInDays = days,
-                TrafficLimit = gigabytes * StaticValues.BytesInGigLong,
-                SimultaneousUser = count,
-            };
-
-            if (validation_probe.RenewalValidation(account, out var validation_exception))
-            {
-                Log.Information(@"[user: {0}] Plan renewal request rejected before invoice:
-    request=(taget:{1}, count:{2}, days={3}, gigabytes:{4})
-    message={5}",
-                    JobContext.Value.Username, account.Username, count, days, gigabytes, validation_exception.Message);
-
-                throw validation_exception;
-            }
-
-            var renewal = new RenewalEntity
-            {
-                TimeLimitInDays = days,
-                TrafficLimit = gigabytes * StaticValues.BytesInGigLong,
-                SimultaneousUser = count,
-            };
-
-            var invoice_code = await BillingApp.Value.GenerateInvoiceCode(new NewInvoiceInfo
-            {
-                Price = estimate,
-                Action = $"{account.Username}t|{count}u|{days}d|{gigabytes}g",
-                Descripttion = renewal.GetPlanTitle(),
-            });
-
-            if (invoice_code.Code / 100 != 2)
-            {
-                return new ApiResult<RenewalResult>
-                {
-                    Code = invoice_code.Code,
-                    Message = invoice_code.Message,
-                    MessageMethod = invoice_code.MessageMethod,
-                    Developer = invoice_code.Developer,
-                };
-            }
-
-            return ApiResult<RenewalResult>.Success(new RenewalResult
-            {
-                CurrentPrice = balance,
-                InvoiceCode = invoice_code.Data,
-            });
+            throw new UserException("موجودی کیف پول برای اجرای این تمدید کافی نیست!",
+                $"Settlement renewal with money-need: target={account.Username}, balance={balance}, estimate={estimate}");
         }
 
         var current_state = (await PlanRepo.Value.GetPlanState(account.Id)) ??
@@ -303,6 +295,7 @@ class PlanApplication(
                 Amount = estimate,
                 Direction = BalanceDirection.Debit,
                 Status = BalanceStatus.Completed,
+                InvoiceCode = invoice_code,
                 Description = renew.GetPlanTitle(),
             };
             await WalletRepo.Value.Save(wallet_debit);

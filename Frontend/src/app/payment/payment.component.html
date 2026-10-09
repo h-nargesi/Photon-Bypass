@@ -23,51 +23,104 @@
                     </div>
                 </div>
                 }
-                <div class="d-flex p-4 item-record" *ngIf="invoice && invoice.discount">
+                <div class="d-flex p-4 item-record">
                     <div class="me-auto">
-                        {{ 'payment.labels.sum' | translate }}
+                        {{ 'payment.labels.wallet-balance' | translate }}
                     </div>
                     <div class="digits">
-                        {{ showBalance(invoice.sum) }}
-                    </div>
-                </div>
-                <div class="d-flex p-4 item-record" *ngIf="invoice && invoice.discount">
-                    <div class="me-auto">
-                        {{ 'payment.labels.discount' | translate }}
-                        <span class="digits">({{ invoice.discount * 100 }}%)</span>
-                    </div>
-                    <div class="digits">
-                        {{ showBalance(invoice.sum * invoice.discount) }}
+                        {{ showBalance(invoice?.walletBalance) }}
                     </div>
                 </div>
                 <div class="d-flex p-4 item-record">
                     <div class="me-auto">
-                        {{ 'payment.methods.title' | translate }}
+                        {{ 'payment.labels.status' | translate }}
                     </div>
                     <div class="digits">
-                        {{ 'payment.methods.bank' | translate }}
+                        {{ statusTitle() }}
                     </div>
                 </div>
+                @if (invoice?.hasReceipt) {
+                <div class="d-flex p-4 item-record text-success">
+                    <div class="me-auto">
+                        {{ 'payment.receipt.verifying-message' | translate }}
+                    </div>
+                </div>
+                }
                 <div class="d-flex p-4 bold">
                     <div class="me-auto">
-                        {{ 'payment.labels.total-sum' | translate }}
+                        {{ 'payment.labels.payable' | translate }}
                     </div>
                     <div class="digits">
-                        {{ showBalance(invoice?.totalSum ?? 0) }}
+                        {{ showBalance(invoice?.payable) }}
                     </div>
                 </div>
             </c-card-body>
-            <c-card-body class="d-flex">
-                <div class="w-50">
-                    <div class="m-auto p-5 pt-2">
-                        <label>{{ 'payment.bank-methods.zarin-pal' | translate }}</label>
+            @if (invoice && invoice.status === status.Pending && invoice.payable > 0) {
+            <c-card-body>
+                <h6>{{ 'payment.methods.card-to-card' | translate }}</h6>
+                <div class="d-flex p-4 item-record col-header">
+                    <div class="me-auto">
+                        {{ 'payment.cards.bank' | translate }}
+                    </div>
+                    <div class="digits">
+                        {{ 'payment.cards.card-number' | translate }}
                     </div>
                 </div>
+                @for(card of invoice.cardInfo; track card) {
+                <div class="d-flex p-4 item-record ltr">
+                    <div class="me-auto">
+                        {{ card.bankName }} — {{ card.holderName }}
+                    </div>
+                    <div class="digits">
+                        {{ card.cardNumber }}
+                    </div>
+                </div>
+                }
             </c-card-body>
+            }
+            @if (invoice && invoice.status === status.Pending) {
+            <c-card-body>
+                <h6>{{ 'payment.methods.title' | translate }}</h6>
+                <div class="d-grid gap-2">
+                    @if (invoice.allowWallet) {
+                    <button cButton color="primary" type="button" [disabled]="busy" (click)="settleWallet()">
+                        {{ 'payment.methods.wallet' | translate }}
+                    </button>
+                    }
+                    @if (invoice.payable > 0) {
+                    <div class="p-3 border rounded">
+                        <h6>{{ 'payment.receipt.title' | translate }}</h6>
+                        <div class="btn-group mb-3" role="group">
+                            <button cButton [color]="receipt_mode === receipt_modes.File ? 'primary' : 'secondary'" type="button"
+                                (click)="receipt_mode = receipt_modes.File">
+                                {{ 'payment.receipt.file' | translate }}
+                            </button>
+                            <button cButton [color]="receipt_mode === receipt_modes.Text ? 'primary' : 'secondary'" type="button"
+                                (click)="receipt_mode = receipt_modes.Text">
+                                {{ 'payment.receipt.text' | translate }}
+                            </button>
+                        </div>
+                        @if (receipt_mode === receipt_modes.File) {
+                        <input cFormControl type="file" accept=".jpg,.jpeg,.png,.webp" (change)="onFileChange($event)"
+                            [disabled]="busy" />
+                        } @else {
+                        <textarea cFormControl rows="3" [(ngModel)]="receipt_text" [disabled]="busy"
+                            [placeholder]="'payment.receipt.text-placeholder' | translate"></textarea>
+                        }
+                        <button cButton class="mt-3" color="success" type="button" [disabled]="busy"
+                            (click)="registerReceipt()">
+                            {{ 'payment.receipt.submit' | translate }}
+                        </button>
+                    </div>
+                    }
+                </div>
+            </c-card-body>
+            }
             <c-card-footer>
-                <button cButton class="px-4" type="button" (click)="submit()">
-                    {{ "payment.labels.submit" | translate }}
-                </button>
+                <span class="digits p-2">
+                    {{ 'payment.labels.total-sum' | translate }}:
+                    {{ showBalance(invoice?.totalPrice) }}
+                </span>
             </c-card-footer>
         </c-card>
     </c-col>

@@ -6,4 +6,5 @@ public enum BalanceStatus : byte
     Completed,
     Failed,
     Canceled,
+    Verifying,
 }

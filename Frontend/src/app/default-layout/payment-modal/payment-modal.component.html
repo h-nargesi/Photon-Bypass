@@ -7,7 +7,7 @@
         <input cFormControl [placeholder]='"payment.request.amount" | translate' [(ngModel)]="value" />
         <div class="mt-3">
             <button cButton color="primary" class="float-left" type="submit" [cModalToggle]="paymentModal.id"
-                (click)="submit()">
+                [disabled]="busy" (click)="submit()">
                 {{ "payment.labels.submit" | translate }}
             </button>
         </div>

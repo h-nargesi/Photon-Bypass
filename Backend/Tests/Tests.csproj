@@ -104,7 +104,10 @@
 		<None Update="Data\Sql\DbTest1\add-data.sql">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
-		<None Update="Data\Sql\BillingP0\add-data.sql">
+        <None Update="Data\Sql\BillingP0\add-data.sql">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+        <None Update="Data\Sql\BillingP2\add-data.sql">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Update="Data\Sql\DbScenario\init.sql">

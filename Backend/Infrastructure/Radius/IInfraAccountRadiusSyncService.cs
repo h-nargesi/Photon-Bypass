@@ -12,6 +12,8 @@ public interface IInfraAccountRadiusSyncService
 
     Task DeactivateUser(ServerEntity radius, IEnumerable<string> usernames);
 
+    Task ActivateUser(ServerEntity radius, IEnumerable<string> usernames);
+
     Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal);
 
     Task ChangeVpnPassword(ServerEntity radius, string username, string password);

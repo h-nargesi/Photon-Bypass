@@ -8,29 +8,14 @@ namespace PhotonBypass.Infra.Repository;
 
 class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity>(context), IWalletRepository
 {
+    private static readonly string CountedInBalanceStatusSql =
+        $"{(sbyte)BalanceStatus.Completed}, {(sbyte)BalanceStatus.Verifying}";
+
     public async Task<List<WalletEntity>> GetTransactions(int account_id)
     {
         var result = await FindAsync(statement => statement
             .Where($"{nameof(WalletEntity.AccountId)} = @account_id")
             .WithParameters(new { account_id }));
-
-        return [.. result];
-    }
-
-    public async Task<List<WalletEntity>> GetNotPaid(int account_id)
-    {
-        var result = await FindAsync(statement => statement
-            .Where($"{nameof(WalletEntity.AccountId)} = @account_id and {nameof(WalletEntity.Status)} = @status")
-            .WithParameters(new { account_id, status = BalanceStatus.Pending }));
-
-        return [.. result];
-    }
-
-    public async Task<List<WalletEntity>> GetInvoice(int code)
-    {
-        var result = await FindAsync(statement => statement
-            .Where($"{nameof(WalletEntity.InvoiceCode)} = @code")
-            .WithParameters(new { code }));
 
         return [.. result];
     }
@@ -70,21 +55,19 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
         return result.ToDictionary(k => (int)k.Id, v => (int)v.Amount);
     }
 
-    public Task<int> GenerateNewInvoiceCode()
-    {
-        return ExecuteScalarAsync<int>("select next value for InvoiceSequence");
-    }
-
-    public Task<int> CompleteInvoice(int code)
+    public async Task<List<int>> GetAccountIdsBelowThreshold(int threshold)
     {
         var sql = $"""
-                   update {TableName}
-                   set {nameof(WalletEntity.Status)} = @completed
-                   where {nameof(WalletEntity.InvoiceCode)} = @code
-                     and {nameof(WalletEntity.Status)} = @pending
+                   select {nameof(WalletEntity.AccountId)}
+                   from {TableName}
+                   where {nameof(WalletEntity.Status)} in ({CountedInBalanceStatusSql})
+                   group by {nameof(WalletEntity.AccountId)}
+                   having sum({nameof(WalletEntity.Amount)} * {nameof(WalletEntity.Direction)}) < @threshold
                    """;
 
-        return ExecuteAsync(sql, new { code, completed = BalanceStatus.Completed, pending = BalanceStatus.Pending });
+        var result = await QueryAsync<int>(sql, new { threshold });
+
+        return [.. result];
     }
 
     public Task<int> GetBalance(int account_id)
@@ -93,7 +76,7 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
                    select sum({nameof(WalletEntity.Amount)} * {nameof(WalletEntity.Direction)}) as Balance
                    from {TableName}
                    where {nameof(WalletEntity.AccountId)} = @account_id
-                     and {nameof(WalletEntity.Status)} = {(sbyte)BalanceStatus.Completed}
+                     and {nameof(WalletEntity.Status)} in ({CountedInBalanceStatusSql})
                    """;
 
         return ExecuteScalarAsync<int>(sql, new { account_id });

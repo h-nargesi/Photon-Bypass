@@ -101,6 +101,37 @@ public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler, Resour
         }
     }
 
+    public async Task ActivateUser(ServerEntity radius, IEnumerable<string> usernames)
+    {
+        var field_name = TikParam.GetFieldName<UserModel>(nameof(UserModel.Disabled)) ??
+                         throw new Exception("The 'Disabled' TikProperty not found in 'UserModel'.");
+
+        using var token = await synchronization.GetToken(radius.Name);
+
+        using var connection = await handler.ConnectTo(radius);
+
+        foreach (var username in usernames)
+        {
+            if (string.IsNullOrEmpty(username) || !InjectionRegex.Username().Match(username).Success)
+            {
+                continue;
+            }
+
+            var user = connection.LoadList<UserModel>(
+                    TikParam.Equal<UserModel>(nameof(UserModel.Name), username))?
+                .FirstOrDefault();
+
+            if (user == null || !user.Disabled)
+            {
+                continue;
+            }
+
+            user.Disabled = false;
+
+            connection.Save(user, [field_name]);
+        }
+    }
+
     public async Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
     {
         using var token = await synchronization.GetToken(radius.Name);

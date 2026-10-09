@@ -43,6 +43,7 @@ export class PaymentModalComponent {
 
   visible: boolean = false;
   value: number = 100000;
+  busy: boolean = false;
 
   constructor(
     private readonly router: Router,
@@ -53,6 +54,8 @@ export class PaymentModalComponent {
   ) {}
 
   submit() {
+    if (this.busy) return;
+
     if (!(this.value > 10000)) {
       this.message.messageHandler(
         ResultStatus.error,
@@ -62,7 +65,11 @@ export class PaymentModalComponent {
       return;
     }
 
+    this.busy = true;
+
     this.service.paymentRequest(this.value).subscribe((result) => {
+      this.busy = false;
+
       if (!result) {
         this.message.messageHandler(
           ResultStatus.error,
@@ -70,8 +77,10 @@ export class PaymentModalComponent {
           this.translation.translate('global.messages.error')
         );
       } else {
-        this.user.invoice = result;
-        this.router.navigate(['payment'], { queryParams: { invoice: result } });
+        this.user.invoice = result.toString();
+        this.router.navigate(['payment'], {
+          queryParams: { invoice: result },
+        });
       }
     });
   }

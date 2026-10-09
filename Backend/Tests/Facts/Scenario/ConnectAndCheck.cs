@@ -71,8 +71,22 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : HttpHand
         var renewal = await CheckResponseObject(response);
 
         Assert.NotNull(renewal);
-        Assert.Equal("0", renewal["currentPrice"].ToString());
-        Assert.Null(renewal["invoiceCode"]);
+        Assert.Equal(estimate["price"].ToString(), renewal["currentPrice"].ToString());
+        Assert.NotNull(renewal["invoiceCode"]);
+
+        // /api/billing/get-invoice
+        response = await Client.GetAsync($"/api/billing/get-invoice?code={renewal["invoiceCode"]}");
+        var invoice = await CheckResponseObject(response);
+
+        Assert.NotNull(invoice);
+        Assert.Equal("2", invoice["kind"].ToString());
+        Assert.Equal(estimate["price"].ToString(), invoice["totalPrice"].ToString());
+        Assert.Equal("True", invoice["allowWallet"].ToString());
+
+        // /api/billing/settle-wallet
+        response = await Client.PostAsJsonAsync("/api/billing/settle-wallet",
+            new { code = int.Parse(renewal["invoiceCode"]!) });
+        await CheckResponse(response);
 
         // /api/plan/plan-info
         response = await Client.GetAsync("/api/plan/plan-info");

@@ -101,8 +101,8 @@ public class BillingP0Test : OutSourceLevelServiceInitializer
         using var scope_b = App.Services.CreateScope();
         await scope_b.Register<LocalDatabaseInitializer>(TestPackage, this);
 
-        var repo_a = scope_a.ServiceProvider.GetRequiredService<IWalletRepository>();
-        var repo_b = scope_b.ServiceProvider.GetRequiredService<IWalletRepository>();
+        var repo_a = scope_a.ServiceProvider.GetRequiredService<IInvoiceRepository>();
+        var repo_b = scope_b.ServiceProvider.GetRequiredService<IInvoiceRepository>();
 
         var first = repo_a.GenerateNewInvoiceCode();
         var second = repo_b.GenerateNewInvoiceCode();
@@ -158,25 +158,5 @@ public class BillingP0Test : OutSourceLevelServiceInitializer
         var beta_wallet = Assert.Single(beta_invoice);
         Assert.Equal(account_ids["Beta"], beta_wallet.AccountId);
         Assert.Equal("T4-beta", beta_wallet.Description);
-    }
-
-    [Fact]
-    public async Task CompleteInvoice_PendingToCompletedOnce()
-    {
-        using var scope = App.Services.CreateScope();
-        await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
-
-        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
-
-        var updated = await wallet_repo.CompleteInvoice(5001);
-
-        Assert.Equal(3, updated);
-
-        updated = await wallet_repo.CompleteInvoice(5001);
-
-        Assert.Equal(0, updated);
-
-        var invoice_items = await wallet_repo.GetInvoice(5001);
-        Assert.All(invoice_items, i => Assert.Equal(BalanceStatus.Completed, i.Status));
     }
 }

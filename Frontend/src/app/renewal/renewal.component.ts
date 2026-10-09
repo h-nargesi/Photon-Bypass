@@ -69,6 +69,7 @@ export class RenewalComponent implements OnInit {
   current_user!: UserModel;
   prices?: PriceModel[];
   result?: RenewalResult;
+  submitting = false;
 
   constructor(
     private readonly service: RenewalService,
@@ -95,31 +96,43 @@ export class RenewalComponent implements OnInit {
 
   submit() {
     if (
+      this.submitting ||
       (!this.renewal.gigabytes && !this.renewal.days) ||
       !this.renewal.simultaneousUserCount
     ) {
       return;
     }
 
+    this.submitting = true;
+
     this.renewal.target =
       this.user_service.targetName ?? this.current_user.username;
 
-    this.service.renewal(this.renewal).subscribe(async (result) => {
-      this.result = result;
+    this.service.renewal(this.renewal).subscribe({
+      next: async (result) => {
+        this.result = result;
 
-      console.log(result);
-      if (result.moneyNeeds > 0) {
-        setTimeout(() => this.router.navigate(['payment'], {
-          queryParams: {
-            invoice: "10"
-          }
-        }), 1000);
-      } else {
-        setTimeout(() => this.router.navigate(['dashboard']), 2000);
-      }
+        const current_user = await this.user_service.user();
+        current_user.balance = result.currentPrice;
+        this.user_service.reload();
 
-      const current_user = await this.user_service.user();
-      current_user.balance = result.currentPrice;
+        if (result.invoiceCode) {
+          const target =
+            this.renewal.target !== current_user.username
+              ? this.renewal.target
+              : undefined;
+
+          this.router.navigate(['payment'], {
+            queryParams: {
+              invoice: result.invoiceCode,
+              ...(target ? { target } : {}),
+            },
+          });
+        }
+
+        this.submitting = false;
+      },
+      error: () => (this.submitting = false),
     });
   }
 

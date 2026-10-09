@@ -108,12 +108,15 @@ export class FakeDataService {
         return this.api_plan_estimate() as Observable<HttpResponse<M>>;
       case 'api/plan/renewal':
         return this.api_plan_renewal() as Observable<HttpResponse<M>>;
-      case 'api/plan/payment-request':
-        return this.api_plan_payment_request() as Observable<HttpResponse<M>>;
-      case 'api/plan/get-invoice':
-        return this.api_plan_get_invoice() as Observable<HttpResponse<M>>;
-      case 'api/plan/pay':
-        return this.api_plan_pay() as Observable<HttpResponse<M>>;
+      // BILLING
+      case 'api/billing/pay':
+        return this.api_billing_pay() as Observable<HttpResponse<M>>;
+      case 'api/billing/get-invoice':
+        return this.api_billing_get_invoice() as Observable<HttpResponse<M>>;
+      case 'api/billing/settle-wallet':
+        return this.api_billing_settle_wallet() as Observable<HttpResponse<M>>;
+      case 'api/billing/register-receipt':
+        return this.api_billing_register_receipt() as Observable<HttpResponse<M>>;
       // VPN
       case 'api/vpn/traffic-data':
         return this.api_vpn_traffic_data() as Observable<HttpResponse<M>>;
@@ -429,61 +432,77 @@ export class FakeDataService {
   private api_plan_renewal(): Observable<
     HttpResponse<ApiResultData<RenewalResult>>
   > {
-    if (Math.random() > 0.5) {
-      return wait({
-        code: 200,
-        message: 'پلن شما با موفقیت تمدید شد.',
-        data: {
-          currentPrice: Math.floor(150 + Math.random() * 300),
-          moneyNeeds: 0,
-        },
-      } as ApiResultData<RenewalResult>);
-    } else {
-      return wait({
-        code: 307,
-        data: {
-          currentPrice: Math.floor(150 + Math.random() * 300),
-          moneyNeeds: Math.floor(400 + Math.random() * 300),
-        },
-      } as ApiResultData<RenewalResult>);
-    }
+    return wait({
+      code: 200,
+      message: 'فاکتور تمدید صادر شد.',
+      data: {
+        currentPrice: Math.floor(150 + Math.random() * 300),
+        invoiceCode: 10001,
+      },
+    } as ApiResultData<RenewalResult>);
   }
 
-  private api_plan_payment_request(): Observable<
-    HttpResponse<ApiResultData<string>>
+  private api_billing_pay(): Observable<
+    HttpResponse<ApiResultData<number>>
   > {
     return wait({
       code: 200,
-      data: 'AD3FA234',
-    } as ApiResultData<string>);
+      data: 10002,
+    } as ApiResultData<number>);
   }
 
-  private api_plan_get_invoice(): Observable<
+  private api_billing_get_invoice(): Observable<
     HttpResponse<ApiResultData<PaymentInvoice>>
   > {
+    const invoice: PaymentInvoice = {
+      code: 10002,
+      kind: 2,
+      status: 0,
+      totalPrice: 2540,
+      walletDeduction: 540,
+      payable: 2000,
+      walletBalance: 540,
+      allowWallet: false,
+      hasReceipt: false,
+      items: [
+        {
+          title: 'پلن ۵۰ گیگی و ۱۲۰ روزه و ۲ کاربره',
+          value: 2540,
+        },
+        {
+          title: 'کسر کیف پول',
+          value: -540,
+        },
+      ],
+      cardInfo: [
+        {
+          bankName: 'بانک نمونه',
+          cardNumber: '0000-0000-0000-0000',
+          holderName: 'شرکت نمونه',
+        },
+      ],
+    };
+
     return wait({
       code: 200,
-      data: {
-        code: 'AD3FA234',
-        items: [
-          {
-            title: 'افزایش ترافیک اکانت به مقدار ۲۵ گیگ',
-            value: 2540,
-          },
-        ],
-        sum: 2540,
-        tax: 0.1,
-        totalSum: 2794,
-      },
+      data: invoice,
     } as ApiResultData<PaymentInvoice>);
   }
 
-  private api_plan_pay(): Observable<HttpResponse<ApiResultData<string>>>
-  {
+  private api_billing_settle_wallet(): Observable<HttpResponse<ApiResult>> {
     return wait({
       code: 200,
-      data: 'http://google.com',
-    } as ApiResultData<string>);
+      message: 'فاکتور از کیف پول تسویه شد.',
+    } as ApiResult);
+  }
+
+  private api_billing_register_receipt(): Observable<
+    HttpResponse<ApiResult>
+  > {
+    return wait({
+      code: 200,
+      message: 'رسید ثبت شد و در انتظار تایید است.',
+    } as ApiResult);
   }
 }
 

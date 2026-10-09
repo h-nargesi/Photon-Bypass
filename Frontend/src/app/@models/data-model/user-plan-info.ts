@@ -21,7 +21,7 @@ export interface PlanInfo {
 
 export interface RenewalResult {
   currentPrice: number;
-  moneyNeeds: number;
+  invoiceCode?: number;
 }
 
 export interface EstimateResult {
@@ -31,15 +31,27 @@ export interface EstimateResult {
   simultaneousUserCount: number;
 }
 
+export interface PaymentInvoiceItem {
+  title: string;
+  value: number;
+}
+
+export interface PaymentCard {
+  bankName?: string;
+  cardNumber?: string;
+  holderName?: string;
+}
+
 export interface PaymentInvoice {
   code: number;
-  items: [
-    {
-      title: string;
-      value: number;
-    }
-  ];
-  sum: number;
-  discount: number;
-  totalSum: number;
+  kind: number;
+  status: number;
+  totalPrice: number;
+  walletDeduction: number;
+  payable: number;
+  walletBalance: number;
+  allowWallet: boolean;
+  hasReceipt: boolean;
+  items: PaymentInvoiceItem[];
+  cardInfo: PaymentCard[];
 }

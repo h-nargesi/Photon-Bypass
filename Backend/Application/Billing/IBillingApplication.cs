@@ -1,16 +1,17 @@
 ﻿using PhotonBypass.Application.Billing.Model;
-using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Billing;
 
 public interface IBillingApplication
 {
-    Task<ApiResult<int?>> GenerateInvoiceCode(int value);
+    Task<ApiResult<int?>> IssueTopUp(int value);
 
-    Task<ApiResult<int?>> GenerateInvoiceCode(NewInvoiceInfo? new_info = null);
+    Task<ApiResult<int?>> IssuePlanInvoice(int estimate, string action, string title);
 
-    Task<ApiResult<InvoiceModel?>> GetInvoice(int? code);
+    Task<ApiResult<InvoiceModel?>> GetInvoice(int code);
 
-    Task<ApiResult<BalanceStatus>> PaymentCallback(string token);
+    Task<ApiResult> RegisterReceipt(int code, byte[]? image, string? file_name, string? content_type, string? text);
+
+    Task<ApiResult> SettleWallet(int code);
 }

@@ -164,8 +164,8 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
-        Assert.Equal(1500 - estimate.Data?.Price, result.Data.CurrentPrice);
-        Assert.Null(result.Data.InvoiceCode);
+        Assert.Equal(1500, result.Data.CurrentPrice);
+        Assert.NotNull(result.Data.InvoiceCode);
     }
 
     [Fact]
@@ -232,5 +232,16 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         Assert.NotNull(result.Data);
         Assert.Equal(1500 - estimate.Data?.Price, result.Data.CurrentPrice);
         Assert.Null(result.Data.InvoiceCode);
+    }
+
+    [Fact]
+    public async Task Renewal_Action_InsufficientBalance()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+
+        var func = () => plan_app.Renewal(99, 1, "User3t|2u|120d|50g");
+
+        await func.Should().ThrowAsync<UserException>();
     }
 }

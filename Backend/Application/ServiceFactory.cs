@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Basics;
@@ -21,6 +22,11 @@ public static class ServiceFactory
     {
         builder.Services.BindValidateReturn<ManagementOptions>();
 
+        builder.Services.AddOptions<ManagementOptions>()
+            .Validate(o => o.WalletDeactivationThreshold is null or <= 0,
+                "WalletDeactivationThreshold must be null (rule off) or a negative-or-zero amount.")
+            .ValidateOnStart();
+
         builder.Services.AddLazyTransient<IAccountApplication, AccountApplication>();
         builder.Services.AddLazyTransient<IAuthApplication, AuthApplication>();
         builder.Services.AddLazyTransient<IBasicsApplication, BasicsApplication>();
@@ -30,6 +36,7 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IVpnApplication, VpnApplication>();
         builder.Services.AddLazyTransient<IServerManagementService, ServerManagementService>();
         builder.Services.AddLazyTransient<IAccountMonitoringService, AccountMonitoringService>();
+        builder.Services.AddLazyScoped<IWalletThresholdService, WalletThresholdService>();
 
         builder.Services.AddQuartz(quartz =>
         {

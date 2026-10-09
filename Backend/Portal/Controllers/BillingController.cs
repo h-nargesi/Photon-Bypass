@@ -1,12 +1,28 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PhotonBypass.Application.Billing;
+using PhotonBypass.Application.Management.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Portal.Basical;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.Portal.Controllers;
+
+public class PayRequest
+{
+    public int Value { get; set; }
+
+    public string? Target { get; set; }
+}
+
+public class SettleWalletRequest
+{
+    public int Code { get; set; }
+
+    public string? Target { get; set; }
+}
 
 [ApiController]
 [Route("/api/[controller]")]
@@ -18,32 +34,68 @@ public class BillingController(
 
     [Authorize]
     [HttpPost("pay")]
-    public async Task<ApiResult> Pay([FromBody] int value)
+    public async Task<ApiResult> Pay([FromBody] PayRequest request)
     {
-        LoadJobContext();
+        LoadJobContext(request.Target);
 
-        var result = await application.GenerateInvoiceCode(value);
+        var result = await application.IssueTopUp(request.Value);
 
         return SafeApiResult(result);
     }
 
     [Authorize]
     [HttpGet("get-invoice")]
-    public async Task<ApiResult> GetInvoice([FromQuery] int code)
+    public async Task<ApiResult> GetInvoice([FromQuery] int code, [FromQuery] string? target)
     {
-        LoadJobContext();
+        LoadJobContext(target);
 
         var result = await application.GetInvoice(code);
 
         return SafeApiResult(result);
     }
 
-    [HttpGet("payment-callback")]
-    public async Task<ApiResult> PaymentCallback([FromQuery] string code)
+    [Authorize]
+    [HttpPost("register-receipt")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(3_145_728)]
+    public async Task<ApiResult> RegisterReceipt([FromForm] int code, [FromForm] string? target, IFormFile? file, [FromForm] string? text)
     {
-        LoadJobContext();
+        LoadJobContext(target);
 
-        var result = await application.PaymentCallback(code);
+        byte[]? image = null;
+        string? file_name = null;
+        string? content_type = null;
+
+        if (file is { Length: > 0 })
+        {
+            if (file.Length > 2_097_152)
+            {
+                throw new UserException("حجم تصویر رسید بیش از حد مجاز است!",
+                    $"Receipt file too large: {file.Length}");
+            }
+
+            using var stream = file.OpenReadStream();
+
+            using var reader = new MemoryStream();
+            await stream.CopyToAsync(reader);
+
+            image = reader.ToArray();
+            file_name = file.FileName;
+            content_type = file.ContentType;
+        }
+
+        var result = await application.RegisterReceipt(code, image, file_name, content_type, text);
+
+        return SafeApiResult(result);
+    }
+
+    [Authorize]
+    [HttpPost("settle-wallet")]
+    public async Task<ApiResult> SettleWallet([FromBody] SettleWalletRequest request)
+    {
+        LoadJobContext(request.Target);
+
+        var result = await application.SettleWallet(request.Code);
 
         return SafeApiResult(result);
     }

@@ -144,3 +144,35 @@ Canceled  → تسویه از کیف پول (پول بیرونی وارد نشد
 - تا قبل از فاز ادمین، رسید جعلی اعتبار دائمی دارد (مدل اعتمادِ طرح صاحب محصول؛ قاعده آستانه پادزهر عملیاتی آن است).
 - OldUser های با مانده منفی، به‌محض فعال‌شدن تنظیم آستانه، غیرفعال می‌شوند — تنظیم باید آگاهانه روشن شود.
 - `docs/08-portal-api.md` و `docs/09-database.md` بعد از پیاده‌سازی این فاز باید به‌روز شوند.
+
+## ثبت پیاده‌سازی (۱۴۰۵/۰۷)
+
+فاز P2 پیاده‌سازی و تست شد. تصمیم‌های قطعی جلسه که بر این سند حاکم شدند + انحراف‌های کوچک:
+
+1. **خالص‌سازی تأیید شد**: `WalletDeduction = max(min(B, E), 0)`، `Payable = E − B` (با B>E منفی می‌شود؛ با B منفی از E بیشتر). پس از تسویه ناکافی (رسید)، موجودی = 0.
+2. **صدور فاکتور جدید، فاکتورهای `Pending` قبلی همان اکانت را `Canceled` می‌کند** (رفتار قبلی سیستم حفظ شد)؛ wallet rows وابسته به آن فاکتورها هم Canceled می‌شوند. فاکتورهای `Verifying` هرگز Canceled نمی‌شوند.
+3. **`Action` به `Invoice.Action nvarchar(400)` منتقل شد**؛ نوشتن `Wallet.Action` (ستون `VARCHAR(16)`) متوقف شد (رفع باگ truncation نام‌های بلند).
+4. **شاخه مرده M9** (`RenewalRepository.GetNotPaid`) و منطق consolidation قدیمی `GenerateInvoice` حذف شدند. `GetByWalletCredit` به‌عنوان idempotency check در مسیر رسید حفظ شد.
+5. **بدون migration/backfill** — سیستم اجرایی نیست؛ اسکریپت `PaymentP2.sql` idempotent است و تست‌ها آن را خودکار اجرا می‌کنند.
+6. **آستانه کیف پول**: `WalletDeactivationThreshold: int?` — `null` = خاموش (پیش‌فرض)؛ اگر تنظیم شود باید **≤ 0** باشد (validation در startup، fail-fast). غیرفعال‌سازی/فعال‌سازی مجدد فقط کانفیگ‌ها در همه سرورهای Radius (`DeactivateUsers`/`ActivateUsers` جدید)؛ `Account.IsActive` دست نمی‌خورد. state قبلی قاعده از History خوانده می‌شود (`Title = «آستانه کیف پول»`، آخرین رخداد per-account). فراخوانی: انتهای `JobInterval.Execute` + بعد از هر settlement موفق (await، بدون fire-and-forget).
+7. **مسیر عمومی `Renewal` همیشه فاکتور صادر می‌کند** (شاخه اجرای فوری موجودی-کافی حذف شد)؛ اجرای تمدید فقط از settlement (رسید یا تسویه کیف پول) انجام می‌شود و اگر در زمان اجرا money-need>0 داشت `UserException` می‌دهد (نه صدور فاکتور جدید). `RenewalResult {CurrentPrice, InvoiceCode}` — `MoneyNeeds` اضافه نشد.
+8. **دبیت تمدید `InvoiceCode` می‌گیرد** (پارامتر جدید `invoice_code` روی `Renewal(int, int?, string, int?)`) تا trace فاکتور→دبیت حفظ شود.
+9. **شکست renewal پس از ثبت رسید**: status revert نمی‌شود؛ پیام دوستانه به کاربر؛ اعتبار Verifying می‌ماند و مسیر بازیابی، صدور فاکتور جدید است (خالص‌سازی شامل همان اعتبار). فقط `settle-wallet` در صورت شکست renewal به `Pending` برمی‌گردد (پول بیرونی درگیر نیست).
+10. **`allowWallet` لحظه‌ای محاسبه می‌شود**: `Kind==Plan && Status==Pending && walletBalance >= TotalPrice` (Payable لحظه‌ای ملاک نیست).
+
+### انحراف‌های کوچک از سند
+
+- جدول `Invoice` ستون **`Title NVARCHAR(127)** دارد (سند ستون Description نداشت)؛ برای رندر items[] و توضیح wallet rows استفاده می‌شود.
+- Whitelist تصویر رسید: پسوند `jpg/jpeg/png/webp` + content-type `image/jpeg|png|webp` + سقف `ReceiptMaxBytes` (پیش‌فرض 2MB؛ سقف درخواست endpoint مولتی‌پارت 3MB برای سربار فرم).
+- `GetInvoice` برای کد ناموجود/بدون مالکیت `UserException` می‌دهد (به‌جای `null`)؛ ملکیت با join روی `JobContext.Target` چک می‌شود.
+- `GetBalance` به `Status IN (Completed, Verifying)` تغییر کرد و `GetAccountIdsBelowThreshold` + `GenerateNewInvoiceCode` + CAS های `Invoice` در `IInvoiceRepository` (repo جدید) قرار گرفتند؛ اعضای مرده (`GetNotPaid`، `CompleteInvoice`، `GetInvoice(int)` روی wallet) حذف شدند.
+- فرانتند: بودجه‌ی bundle در `angular.json` از 1MB به 3MB (هشدار 2MB) اصلاح شد — باندل 1.88MB از قبل عبور می‌کرد و خطای budget پیش‌گیرانه بود.
+
+### فایل‌های کلیدی پیاده‌سازی
+
+- DB: `Database/LocalDatabase/PaymentP2.sql`؛ تست: `Backend/Tests/Data/Sql/BillingP2/add-data.sql`
+- Domain: `BalanceStatus` (+Verifying)، `InvoiceKind`، `InvoiceEntity`، `IInvoiceRepository`، `IWalletRepository`، `IAccountRadiusSyncService.ActivateUsers`
+- Infra: `InvoiceRepository`، `WalletThresholdService` (Application/Management)، `AccountRadiusSyncUserManagerService.ActivateUser`
+- App: `BillingApplication` (بازنویسی کامل)، `PlanApplication` (بازآرایی)، `ManagementOptions` (+PaymentCards/WalletDeactivationThreshold/ReceiptMaxBytes)
+- Portal: `BillingController` (`pay`، `get-invoice`، `register-receipt` مولتی‌پارت، `settle-wallet`)
+- Frontend: `app-api-url.ts`، `payment.component.*`، `payment-service.ts`، `payment-modal.*`، `renewal.component.*`، `user-plan-info.ts`، `texts/payment.json`
