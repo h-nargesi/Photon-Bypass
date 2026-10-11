@@ -25,6 +25,10 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
 
     public event Action<IEnumerable<AccountEntity>>? OnBatchSave;
 
+    public event Action<IEnumerable<int>>? OnUpdateWarningTimes;
+
+    public event Action<IEnumerable<int>>? OnSetInactive;
+
     public Dictionary<string, AccountEntity> Data;
 
     public AccountRepositoryMoq(TransactionalMockDbContext db_context) : this(db_context, FilePath)
@@ -157,6 +161,34 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
                 }
 
                 OnBatchSave?.Invoke(accounts);
+                return Task.CompletedTask;
+            });
+
+        Setup(x => x.UpdateWarningTimes(It.IsNotNull<IEnumerable<int>>()))
+            .Returns<IEnumerable<int>>(account_ids =>
+            {
+                var id_mask = account_ids.ToHashSet();
+
+                foreach (var account in Data.Values.Where(account => id_mask.Contains(account.Id)))
+                {
+                    account.LastWarningTime = DateTime.Now;
+                }
+
+                OnUpdateWarningTimes?.Invoke(account_ids);
+                return Task.CompletedTask;
+            });
+
+        Setup(x => x.SetInactive(It.IsNotNull<IEnumerable<int>>()))
+            .Returns<IEnumerable<int>>(account_ids =>
+            {
+                var id_mask = account_ids.ToHashSet();
+
+                foreach (var account in Data.Values.Where(account => id_mask.Contains(account.Id)))
+                {
+                    account.IsActive = false;
+                }
+
+                OnSetInactive?.Invoke(account_ids);
                 return Task.CompletedTask;
             });
 

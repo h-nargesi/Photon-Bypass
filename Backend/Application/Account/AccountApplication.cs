@@ -111,7 +111,7 @@ class AccountApplication(
             {
                 if (account.IsActive)
                 {
-                    _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+                    await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
                     {
                         Target = account.Id,
                         Category = EventCategory.Security,
@@ -148,7 +148,7 @@ class AccountApplication(
 
         await AccountRepo.Save(account);
 
-        _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
             Target = account.Id,
             Category = EventCategory.Security,

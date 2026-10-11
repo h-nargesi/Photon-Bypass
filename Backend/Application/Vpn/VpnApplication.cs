@@ -52,7 +52,7 @@ class VpnApplication(
         account.VpnPassword = password;
         await AccountRepo.Value.Save(account);
 
-        _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
             Target = account.Id,
             Category = EventCategory.Security,
@@ -99,7 +99,7 @@ class VpnApplication(
 
         await EmailSrv.Value.SendCertEmail(account.Fullname, account.EmailAddress, email_context);
 
-        _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
             Target = account.Id,
             Category = EventCategory.Security,

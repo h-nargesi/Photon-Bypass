@@ -19,6 +19,7 @@ public static class ServiceFactory
     {
         builder.Services.AddSingleton<IEntityEventService, EntityEventService>();
         builder.Services.BindValidateReturn<LocalDapperOptions>();
+        builder.Services.AddMemoryCache();
         builder.Services.AddScoped<LocalDbContext>();
 
         builder.Services.AddLazyTransient<IAccountRepository, AccountRepository>();

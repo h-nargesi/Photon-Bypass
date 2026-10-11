@@ -13,6 +13,9 @@ public static class ServiceFactory
 {
     public static void AddServerBridgeServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
+        builder.Services.BindValidateReturn<ServerBridgeOptions>();
+        builder.Services.BindValidateReturn<Email.EmailOptions>();
+
         builder.Services.AddLazyScoped<IApiHandler, ApiHandler>();
         builder.Services.AddLazyScoped<IEmailHandler, EmailHandler>();
         builder.Services.AddSingleton<ISshHandler, SshHandler>();

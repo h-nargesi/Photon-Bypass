@@ -89,11 +89,11 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
             }
         };
 
-        account_repo_moq.OnBatchSave += accounts =>
+        account_repo_moq.OnSetInactive += account_ids =>
         {
-            var saved_list = accounts.ToList();
+            var saved_list = account_ids.ToList();
 
-            if (saved_list.Count != 1 || saved_list[0] is not { Username: "User4", IsActive: false })
+            if (saved_list.Count != 1 || saved_list[0] != account_repo_moq.Data["User4"].Id)
             {
                 other = true;
                 return;
@@ -139,16 +139,55 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
             Assert.Contains(mail.To.First().Address, emails);
         };
 
-        account_repo_moq.OnBatchSave += accounts =>
+        account_repo_moq.OnUpdateWarningTimes += account_ids =>
         {
-            foreach (var account in accounts)
-            {
-                Assert.NotNull(account.LastWarningTime);
-                var running_time_delay = (account.LastWarningTime.Value - DateTime.Now).TotalSeconds;
-                Assert.True(running_time_delay < 1);
-            }
+            var expected_ids = new HashSet<int>(
+                finishing_list
+                    .Select(plan => account_repo_moq.Data.GetValueOrDefault(plan.Username))
+                    .Where(account => account is { IsEmailValid: true })
+                    .Select(account => account!.Id));
+
+            Assert.NotEmpty(account_ids);
+            Assert.Subset(expected_ids, account_ids.ToHashSet());
         };
 
         await monitoring.NotifSendServices(finishing_list);
+    }
+
+    [Fact]
+    public async Task ParallelMonitoring_WarningTimeAndInactiveBothApplied()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+
+        var plan_state_list = await plan_state_repo.GetAll();
+
+        // User4 finishes its plan and hits the delete-inactivity threshold at the
+        // same time: NotifSendServices stamps LastWarningTime while
+        // InactiveAbandonedUsers clears IsActive.
+        account_repo_moq.Data["User4"].IsEmailValid = true;
+
+        var user4_id = account_repo_moq.Data["User4"].Id;
+
+        var warned_ids = new HashSet<int>();
+        var inactive_ids = new HashSet<int>();
+
+        account_repo_moq.OnUpdateWarningTimes += ids => warned_ids.UnionWith(ids);
+        account_repo_moq.OnSetInactive += ids => inactive_ids.UnionWith(ids);
+
+        await Task.WhenAll(
+            monitoring.NotifSendServices(plan_state_list),
+            monitoring.InactiveAbandonedUsers(plan_state_list));
+
+        // H2: the two parallel jobs write different columns, so both land
+        // instead of a last-writer-wins full-entity overwrite.
+        Assert.Contains(user4_id, warned_ids);
+        Assert.Contains(user4_id, inactive_ids);
+
+        Assert.NotNull(account_repo_moq.Data["User4"].LastWarningTime);
+        Assert.False(account_repo_moq.Data["User4"].IsActive);
     }
 }

@@ -9,7 +9,7 @@ class EmailHandler(IOptions<EmailOptions> options) : IEmailHandler
 {
     public EmailOptions Options => options.Value;
 
-    public Task Send(MailMessage message)
+    public async Task Send(MailMessage message)
     {
         if (string.IsNullOrWhiteSpace(options.Value.Address))
         {
@@ -21,16 +21,25 @@ class EmailHandler(IOptions<EmailOptions> options) : IEmailHandler
             throw new Exception("Email Address is not set in config");
         }
 
-        var smtp = new SmtpClient
+        using var smtp = new SmtpClient
         {
-            Host = "smtp.gmail.com",
-            Port = 587,
-            EnableSsl = true,
+            Host = options.Value.Host,
+            Port = options.Value.Port,
+            EnableSsl = options.Value.EnableSsl,
             DeliveryMethod = SmtpDeliveryMethod.Network,
             UseDefaultCredentials = false,
             Credentials = new NetworkCredential(options.Value.Address, options.Value.Password)
         };
 
-        return smtp.SendMailAsync(message);
+        using var send_cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(options.Value.SendTimeoutSeconds));
+
+        try
+        {
+            await smtp.SendMailAsync(message, send_cancellation.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            throw new Exception($"Email send timed out after {options.Value.SendTimeoutSeconds}s.");
+        }
     }
 }

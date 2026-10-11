@@ -118,7 +118,11 @@ partial class ServerManagementService(
         var sync_times = last_update_times.Where(pair => locked_realms.Contains(pair.Key))
             .ToDictionary();
 
-        var loaded_traffic = await SessionRadiusSrv.Value.GetTrafficData(sync_times);
+        // Load the radius-server list before the parallel section: repositories in
+        // this scope share one SqlConnection, so the database reads must all finish
+        // before the router fetch and the local traffic fetch start running in
+        // parallel. The short-lived cache (ServerRepository) keeps this cheap.
+        var radius_list = await ServerRepo.Value.GetAllActiveRadius();
 
         var from = sync_times.Values.Where(time => time.HasValue)
             .Select(time => time!.Value)
@@ -127,7 +131,11 @@ partial class ServerManagementService(
 
         if (from > DateTime.MinValue) from = from.AddSeconds(-1);
 
-        var current_traffic = await TrafficDataRepo.Fetch(from);
+        var loaded_traffic_task = SessionRadiusSrv.Value.GetTrafficData(radius_list, sync_times);
+        var current_traffic_task = TrafficDataRepo.Fetch(from);
+
+        var loaded_traffic = await loaded_traffic_task;
+        var current_traffic = await current_traffic_task;
 
         var traffic_data_list = await Merge(current_traffic, loaded_traffic);
 

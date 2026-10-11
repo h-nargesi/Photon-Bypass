@@ -69,6 +69,28 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return result.ToDictionary(k => k.Id);
     }
 
+    public Task UpdateWarningTimes(IEnumerable<int> account_ids)
+    {
+        var sql = $"""
+                   update {TableName}
+                   set {nameof(AccountEntity.LastWarningTime)} = @now
+                   where {nameof(AccountEntity.Id)} in @account_ids
+                   """;
+
+        return ExecuteAsync(sql, new { account_ids, now = DateTime.Now });
+    }
+
+    public Task SetInactive(IEnumerable<int> account_ids)
+    {
+        var sql = $"""
+                   update {TableName}
+                   set {nameof(AccountEntity.IsActive)} = 0
+                   where {nameof(AccountEntity.Id)} in @account_ids
+                   """;
+
+        return ExecuteAsync(sql, new { account_ids });
+    }
+
     public async Task<Dictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames)
     {
         var sql = $"""
@@ -97,12 +119,12 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
     public async Task<int?> GetActiveAccountId(string username)
     {
-        var result = await ExecuteScalarAsync<int>(
+        var result = await ExecuteScalarAsync<int?>(
             $"""
-            select {nameof(AccountEntity.Id)} 
-            from {TableName}
-            where {nameof(AccountEntity.Username)} = @username and {nameof(AccountEntity.IsActive)} = 1
-            """
+             select {nameof(AccountEntity.Id)} 
+             from {TableName}
+             where {nameof(AccountEntity.Username)} = @username and {nameof(AccountEntity.IsActive)} = 1
+             """
             , new { username });
 
         return result;

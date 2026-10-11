@@ -1,12 +1,20 @@
 ﻿using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.ServerBridge.Services;
+using System.Collections.Concurrent;
 using System.Net.Mail;
 
 namespace PhotonBypass.OutSource;
 
 class EmailService(IEmailHandler handler) : IEmailService
 {
+    private static readonly ConcurrentDictionary<string, Task<string>> TemplateCache = new();
+
+    private static Task<string> LoadTemplateAsync(string file_name)
+    {
+        return TemplateCache.GetOrAdd(file_name, path => File.ReadAllTextAsync(path));
+    }
+
     public async Task FinishServiceAlert(string fullname, string username, string email, string type, string left)
     {
         if (string.IsNullOrWhiteSpace(handler.Options.Address))
@@ -22,7 +30,7 @@ class EmailService(IEmailHandler handler) : IEmailService
         var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
         var to_address = new MailAddress(email, fullname);
 
-        var body = await File.ReadAllTextAsync("EmailTemplates/FinishServiceAlert.html");
+        var body = await LoadTemplateAsync("EmailTemplates/FinishServiceAlert.html");
         body = body.Replace("{fullname}", fullname)
             .Replace("{type}", type)
             .Replace("{left}", left);
@@ -46,7 +54,7 @@ class EmailService(IEmailHandler handler) : IEmailService
         var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
         var to_address = new MailAddress(email, fullname);
 
-        var body = await File.ReadAllTextAsync("EmailTemplates/CertEmail.html");
+        var body = await LoadTemplateAsync("EmailTemplates/CertEmail.html");
         body = body.Replace("{username}", context.Username)
             .Replace("{server}", context.Realm)
             .Replace("{password}", context.Password)
@@ -74,7 +82,7 @@ class EmailService(IEmailHandler handler) : IEmailService
         var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
         var to_address = new MailAddress(email, fullname);
 
-        var body = await File.ReadAllTextAsync("EmailTemplates/ResetPassword.html");
+        var body = await LoadTemplateAsync("EmailTemplates/ResetPassword.html");
         body = body.Replace("{code}", hash_code);
 
         using var message = new MailMessage(from_address, to_address);

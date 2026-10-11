@@ -52,6 +52,7 @@ public static class ServiceFactory
                 .WithSimpleSchedule(x => x
                     .WithIntervalInMinutes(JobInterval.IntervalInMinutes)
                     .RepeatForever()
+                    .WithMisfireHandlingInstructionFireNow()
                 )
             );
         });

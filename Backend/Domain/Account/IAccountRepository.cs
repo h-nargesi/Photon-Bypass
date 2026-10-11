@@ -19,6 +19,10 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
 
     Task<Dictionary<int, AccountEntity>> GetActiveAccounts(IEnumerable<int> account_ids);
 
+    Task UpdateWarningTimes(IEnumerable<int> account_ids);
+
+    Task SetInactive(IEnumerable<int> account_ids);
+
     Task<Dictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames);
 
     Task<Dictionary<int, string>> GetUsernamesByAccountId(IEnumerable<int> ids);

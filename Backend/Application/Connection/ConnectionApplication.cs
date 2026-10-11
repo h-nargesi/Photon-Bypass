@@ -98,7 +98,7 @@ class ConnectionApplication(
             throw new UserException("بستن کانکشن با خطا مواجه شد!", ex);
         }
 
-        _ = HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
             Target = account_id.Value,
             Category = EventCategory.Action,

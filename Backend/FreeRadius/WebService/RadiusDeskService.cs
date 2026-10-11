@@ -403,8 +403,6 @@ class RadiusDeskService : IRadiusService
     private void Logout()
     {
         token = null;
-
-        _ = GetAsync("dashboard/branding.json");
     }
 
     private async Task<HttpResponseMessage> PostAsync<T>(string url, T data)

@@ -6,19 +6,20 @@ using Quartz;
 
 namespace PhotonBypass.Application.Management;
 
+[DisallowConcurrentExecution]
 public class JobInterval(IServiceProvider service_provider) : IJob
 {
     public const int IntervalInMinutes = 60;
 
     public async Task Execute(IJobExecutionContext context)
     {
-        var scope_main = service_provider.CreateScope();
+        using var scope_main = service_provider.CreateScope();
         var server_mng_srv = scope_main.ServiceProvider.GetRequiredService<IServerManagementService>();
-        
+
         await server_mng_srv.UpdateTrafficData();
 
         var plan_state_repo = scope_main.ServiceProvider.GetRequiredService<IPlanStateRepository>();
-        
+
         var plan_state_list = await plan_state_repo.GetAll();
 
         if (plan_state_list.Count < 1)
@@ -27,16 +28,18 @@ public class JobInterval(IServiceProvider service_provider) : IJob
             return;
         }
 
-        var account_mng_srv_1 = service_provider.CreateScope()
-            .ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        // The three parallel services must keep separate scopes: repositories are
+        // scoped and share one SqlConnection per scope, so a shared scope would
+        // make their parallel database calls collide on the same connection.
+        using var scope_notif = service_provider.CreateScope();
+        using var scope_abandoned = service_provider.CreateScope();
+        using var scope_radius = service_provider.CreateScope();
 
-        var account_mng_srv_2 = service_provider.CreateScope()
-            .ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var account_mng_srv_1 = scope_notif.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var account_mng_srv_2 = scope_abandoned.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var account_radius_srv = scope_radius.ServiceProvider.GetRequiredService<IAccountRadiusSyncService>();
 
-        var account_radius_srv = service_provider.CreateScope()
-            .ServiceProvider.GetRequiredService<IAccountRadiusSyncService>();
-
-        Task.WaitAll(
+        await Task.WhenAll(
             account_mng_srv_1.NotifSendServices(plan_state_list),
             account_radius_srv.DeactivateInvalidRadiusUsers(plan_state_list),
             account_mng_srv_2.InactiveAbandonedUsers(plan_state_list),

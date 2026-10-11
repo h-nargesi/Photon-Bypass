@@ -12,4 +12,7 @@ public interface ISessionRadiusSyncService
     Task CloseConnectionByUsername(int? realm_id, string username);
 
     Task<List<TrafficDataBinding>> GetTrafficData(Dictionary<int, DateTime?> indexes);
+
+    Task<List<TrafficDataBinding>> GetTrafficData(IReadOnlyCollection<ServerEntity> radius_list,
+        Dictionary<int, DateTime?> indexes);
 }

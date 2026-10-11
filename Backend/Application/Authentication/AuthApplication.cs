@@ -45,11 +45,11 @@ class AuthApplication(
                 };
             }
 
-            _ = SocialMediaSrv.InvalidPasswordAlert(account.Username);
+            await SocialMediaSrv.InvalidPasswordAlert(account.Username);
 
             if (account.IsActive)
             {
-                _ = HistoryRepo.Save(new HistoryEntity
+                await HistoryRepo.Save(new HistoryEntity
                 {
                     Target = account.Id,
                     Category = EventCategory.Security,
@@ -125,7 +125,7 @@ class AuthApplication(
 
                 await SocialMediaSrv.SendResetPasswordLink(email_mobile, hash_code);
 
-                _ = HistoryRepo.Save(new HistoryEntity
+                await HistoryRepo.Save(new HistoryEntity
                 {
                     Target = account.Id,
                     Category = EventCategory.Security,
@@ -148,16 +148,19 @@ class AuthApplication(
             {
                 var hash_code = HashHandler.GenerateHashCode(56, true);
 
-                var insert_task = ResetPassRepo.Value.AddHashCode(new ResetPassEntity
+                // The email send has no local-database work, so it can overlap the
+                // two inserts below; the inserts themselves share the scoped
+                // SqlConnection and must run one after the other.
+                var email_task = EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
+
+                await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
                 {
                     AccountId = account.Id,
                     ExpireDate = DateTime.Now.AddDays(1),
                     HashCode = hash_code,
                 });
 
-                var email_task = EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
-
-                _ = HistoryRepo.Save(new HistoryEntity
+                await HistoryRepo.Save(new HistoryEntity
                 {
                     Target = account.Id,
                     Category = EventCategory.Security,
@@ -168,7 +171,7 @@ class AuthApplication(
 
                 Log.Verbose("Reset-Password email has been sent: {0}", email_mobile);
 
-                Task.WaitAll(insert_task, email_task);
+                await email_task;
             }
 
             return ApiResult.Success("اگر این حساب ثبت شده باشد، ایمیل بازیابی ارسال شد.");
@@ -217,7 +220,7 @@ class AuthApplication(
 
         await AccountRepo.Save(account);
 
-        _ = SocialMediaSrv.NewUserRegistrationAlert(account);
+        await SocialMediaSrv.NewUserRegistrationAlert(account);
 
         Log.Information("New User Registered: ({0}, {1})", account.Username, account.Email);
 

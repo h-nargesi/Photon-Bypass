@@ -7,10 +7,17 @@ class StaticRepository(
     Lazy<ICloudRepository> CloudRepo,
     Lazy<IProfileRepository> ProfileRepo) : IStaticRepository
 {
-    private int? webCloudId;
-    private ProfileEntity? defaultProfile;
+    private Task<int>? web_cloud_id;
+    private Task<ProfileEntity>? default_profile;
 
-    public int WebCloudId => webCloudId ??= CloudRepo.Value.FindWebCloud().Result;
+    public Task<int> WebCloudId => web_cloud_id ??= CloudRepo.Value.FindWebCloud();
 
-    public ProfileEntity DefaultProfile => defaultProfile ??= ProfileRepo.Value.FindDefaultProfile(WebCloudId).Result;
+    public Task<ProfileEntity> DefaultProfile => default_profile ??= LoadDefaultProfile();
+
+    private async Task<ProfileEntity> LoadDefaultProfile()
+    {
+        var cloud_id = await WebCloudId;
+
+        return await ProfileRepo.Value.FindDefaultProfile(cloud_id);
+    }
 }

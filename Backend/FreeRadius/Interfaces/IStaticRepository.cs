@@ -4,7 +4,7 @@ namespace PhotonBypass.FreeRadius.Interfaces;
 
 public interface IStaticRepository
 {
-    int WebCloudId { get; }
+    Task<int> WebCloudId { get; }
 
-    ProfileEntity DefaultProfile { get; }
+    Task<ProfileEntity> DefaultProfile { get; }
 }

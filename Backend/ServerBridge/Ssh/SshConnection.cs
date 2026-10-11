@@ -6,7 +6,7 @@ using Serilog;
 
 namespace PhotonBypass.ServerBridge.Ssh;
 
-class SshConnection(SshClient node, ServerEntity server) : ISshConnection
+class SshConnection(SshClient node, ServerEntity server, TimeSpan command_timeout) : ISshConnection
 {
     public ServerEntity Server => server;
 
@@ -14,8 +14,18 @@ class SshConnection(SshClient node, ServerEntity server) : ISshConnection
     {
         Log.Information("Execute command on server: {0}\n{1}", node.ConnectionInfo.Host, CommandScrubber.Scrub(command));
 
-        var execution = node.RunCommand(command);
-        result = execution.Result;
+        var execution = node.CreateCommand(command);
+
+        var operation = execution.BeginExecute();
+
+        if (!operation.AsyncWaitHandle.WaitOne(command_timeout))
+        {
+            execution.CancelAsync();
+            throw new UserException("خطای اجرای دستور در سرور!",
+                $"Command timed out after {command_timeout.TotalSeconds:N0}s on server: {node.ConnectionInfo.Host}");
+        }
+
+        result = execution.EndExecute(operation);
 
         Log.Debug("Result command on server: {0} (length: {1})",
             node.ConnectionInfo.Host, (result ?? string.Empty).Length);

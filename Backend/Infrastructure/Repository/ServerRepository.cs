@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
@@ -6,8 +7,9 @@ using PhotonBypass.Infra.Repository.DbContext;
 
 namespace PhotonBypass.Infra.Repository;
 
-class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity>(context), IServerRepository
+class ServerRepository(LocalDbContext context, IMemoryCache cache) : EditableRepository<ServerEntity>(context), IServerRepository
 {
+    private static readonly TimeSpan RadiusCacheDuration = TimeSpan.FromSeconds(30);
     public async Task<ServerEntity?> GetActiveNasInfo(string ip)
     {
         var result = await FindAsync(statement => statement
@@ -63,7 +65,27 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
             .ToList();
     }
 
-    public async Task<List<ServerEntity>> GetAllActiveRadius()
+    public Task<List<ServerEntity>> GetAllActiveRadius()
+    {
+        return cache.GetOrCreateAsync(nameof(GetAllActiveRadius), async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = RadiusCacheDuration;
+
+            return await LoadAllActiveRadius();
+        });
+    }
+
+    public Task<List<ServerEntity>> GetActiveRadiusInRealmOrAll(int? realm_id)
+    {
+        return cache.GetOrCreateAsync($"{nameof(GetActiveRadiusInRealmOrAll)}:{realm_id}", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = RadiusCacheDuration;
+
+            return await LoadActiveRadiusInRealmOrAll(realm_id);
+        });
+    }
+
+    private async Task<List<ServerEntity>> LoadAllActiveRadius()
     {
         var result = await FindAsync(statement => statement
             .Where($"{nameof(ServerEntity.IsActive)} = 1 and ({nameof(ServerEntity.Features)} & @radius) > 0")
@@ -72,7 +94,7 @@ class ServerRepository(LocalDbContext context) : EditableRepository<ServerEntity
         return [..result];
     }
 
-    public async Task<List<ServerEntity>> GetActiveRadiusInRealmOrAll(int? realm_id)
+    private async Task<List<ServerEntity>> LoadActiveRadiusInRealmOrAll(int? realm_id)
     {
         var result = await FindAsync(statement =>
         {

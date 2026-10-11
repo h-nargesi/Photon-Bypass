@@ -7,9 +7,9 @@ internal class StaticRepositoryMoq : Mock<IStaticRepository>, IUnitLevelService
 {
     public StaticRepositoryMoq()
     {
-        Setup(x => x.WebCloudId);
+        Setup(x => x.WebCloudId).Returns(Task.FromResult(0));
 
-        Setup(x => x.DefaultProfile);
+        Setup(x => x.DefaultProfile).Returns(Task.FromResult(new PhotonBypass.FreeRadius.Entity.ProfileEntity()));
     }
 
     public static void CreateInstance(IServiceCollection services)

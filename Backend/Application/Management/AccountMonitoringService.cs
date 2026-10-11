@@ -40,7 +40,7 @@ internal class AccountMonitoringService(
         var deactivate_list = new List<string>();
         var remove_list = new List<string>();
         var history_list = new List<HistoryEntity>();
-        var changed_accounts = new List<AccountEntity>();
+        var remove_account_ids = new List<int>();
 
         foreach (var plan in abandoned_list)
         {
@@ -66,8 +66,7 @@ internal class AccountMonitoringService(
                     plan.Username, expired_days, plan.ExpirationDate, plan.TrafficLimit, plan.TrafficUsed);
                 remove_list.Add(account.Username);
 
-                account.IsActive = false;
-                changed_accounts.Add(account);
+                remove_account_ids.Add(account.Id);
                 continue;
             }
 
@@ -89,9 +88,9 @@ internal class AccountMonitoringService(
             });
         }
 
-        if (changed_accounts.Count > 0)
+        if (remove_account_ids.Count > 0)
         {
-            await AccountRepo.Save(changed_accounts);
+            await AccountRepo.SetInactive(remove_account_ids);
         }
 
         var task = HistoryRepo.Save(history_list);
@@ -117,7 +116,7 @@ internal class AccountMonitoringService(
 
         var tasks = new List<Task>();
         var history_list = new List<HistoryEntity>();
-        var changed_accounts = new List<AccountEntity>();
+        var warned_account_ids = new List<int>();
 
         foreach (var plan in plan_state_list)
         {
@@ -158,7 +157,7 @@ internal class AccountMonitoringService(
 
                 if (account != null)
                 {
-                    IncreaseWarningTime(account, changed_accounts);
+                    IncreaseWarningTime(account, warned_account_ids);
                 }
 
                 continue;
@@ -170,13 +169,13 @@ internal class AccountMonitoringService(
                 tasks.Add(EmailSrv.Value.FinishServiceAlert(
                     account.Fullname, plan.Username, account.EmailAddress, plan.GetPlanTitle(), remains_title));
 
-                IncreaseWarningTime(account, changed_accounts);
+                IncreaseWarningTime(account, warned_account_ids);
             }
         }
 
-        if (changed_accounts.Count > 0)
+        if (warned_account_ids.Count > 0)
         {
-            await AccountRepo.Save(changed_accounts);
+            await AccountRepo.UpdateWarningTimes(warned_account_ids);
         }
 
         tasks.Add(HistoryRepo.Save(history_list));
@@ -184,10 +183,9 @@ internal class AccountMonitoringService(
         await Task.WhenAll(tasks);
     }
 
-    private static void IncreaseWarningTime(AccountEntity account, List<AccountEntity> changed_accounts)
+    private static void IncreaseWarningTime(AccountEntity account, List<int> warned_account_ids)
     {
-        account.UpdateWarningTime();
-        changed_accounts.Add(account);
+        warned_account_ids.Add(account.Id);
     }
 
     private static string DayHour(double time)
