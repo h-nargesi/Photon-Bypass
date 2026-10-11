@@ -3,7 +3,6 @@ using Dapper.FastCrud;
 using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 using PhotonBypass.Domain;
 using PhotonBypass.Tools;
-using Z.Dapper.Plus;
 
 namespace PhotonBypass.Infra.Database;
 
@@ -12,11 +11,6 @@ public abstract class DapperRepository<TEntity>(IDapperDbContext context)
 {
     protected static readonly string TableName = EntityExtensions.GetTableName<TEntity>();
     protected static readonly string Id = EntityExtensions.GetColumnName<TEntity>(x => x.Id);
-
-    static DapperRepository()
-    {
-        DapperPlusManager.Entity<TEntity>().Table(TableName).Identity(x => x.Id, true);
-    }
 
     protected IDapperDbContext DapperDbContext => context;
 

@@ -64,7 +64,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
     }
 
     [Fact]
-    public async Task SetNewIdOnBulkInsert()
+    public async Task SetNewIdOnSaveRange()
     {
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage, this);

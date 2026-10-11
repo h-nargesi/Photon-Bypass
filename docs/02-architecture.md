@@ -66,7 +66,7 @@ flowchart TB
 
 - `Domain` ← هیچ‌چیز (فقط اینترفیس و مدل‌ها).
 - `Application` → `Domain`.
-- `Infrastructure` → `Domain` (+ `Dapper.FastCrud`, `Z.Dapper.Plus`, `Microsoft.Data.SqlClient`, `Microsoft.CodeAnalysis.CSharp`).
+- `Infrastructure` → `Domain` (+ `Dapper.FastCrud`, `Microsoft.Data.SqlClient`, `Microsoft.CodeAnalysis.CSharp`).
 - `FreeRadius` / `MikrotikRadius` → `Infrastructure` (برای `IInfra*RadiusSyncService`) و `ServerBridge` و `Domain`.
 - `ServerBridge` → `Domain` (+ `Renci.SshNet`).
 - `Portal`/`Admin` → `Application` (+ `Shared` برای لایه‌ی host).

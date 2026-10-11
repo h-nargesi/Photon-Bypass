@@ -47,7 +47,7 @@ flowchart LR
 
 ## Stack
 
-**Backend** (.NET 8): ASP.NET Core minimal hosting, Dapper (`Dapper.FastCrud` + `Z.Dapper.Plus` bulk), Serilog, Quartz.NET, JWT (`System.IdentityModel.Tokens.Jwt` + `JwtBearer`), Roslyn (`Microsoft.CodeAnalysis.CSharp`) for dynamic pricing, `tik4net` (Mikrotik API), `Renci.SshNet` (SSH), `MySql.Data` (Radius MySQL), `Microsoft.Data.SqlClient` (local MSSQL), `SkiaSharp` (image/cert handling).
+**Backend** (.NET 8): ASP.NET Core minimal hosting, Dapper (`Dapper.FastCrud`), Serilog, Quartz.NET, JWT (`System.IdentityModel.Tokens.Jwt` + `JwtBearer`), Roslyn (`Microsoft.CodeAnalysis.CSharp`) for dynamic pricing, `tik4net` (Mikrotik API), `Renci.SshNet` (SSH), `MySql.Data` (Radius MySQL), `Microsoft.Data.SqlClient` (local MSSQL), `SkiaSharp` (image/cert handling).
 
 **Frontend**: Angular 19 (standalone components), CoreUI 5 layout, Angular Material, Chart.js (`@coreui/angular-chartjs`), `lodash-es`.
 

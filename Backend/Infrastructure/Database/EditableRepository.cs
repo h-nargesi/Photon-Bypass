@@ -70,7 +70,7 @@ public abstract class EditableRepository<TEntity>(IDapperDbContext context)
     {
         await DapperDbContext.OpenAsync();
 
-        await DapperDbContext.Connection.DeleteAsync(entity);
+        await DapperDbContext.Connection.DeleteAsync(entity, CheckTransaction<TEntity>());
 
         await DapperDbContext.EventService.CallOnDelete(this, new EntityEventArgs<TEntity>(entity));
     }

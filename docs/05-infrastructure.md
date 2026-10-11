@@ -9,7 +9,7 @@
 - `DapperRepository<TEntity>(IDapperDbContext)` — خواندن‌های پایه با Dapper.FastCrud.
 - `EditableRepository<TEntity>` (`EditableRepository.cs:9`) — `Save`/`Save(IEnumerable)`/`Delete` را اضافه می‌کند و:
   - روی `Id > 0` عمل `Update` و در غیر این صورت `Insert` انجام می‌دهد.
-  - برای مجموعه‌ها از **bulk** `Z.Dapper.Plus` (`BulkUpdateAsync`/`BulkInsertAsync`/`BulkDeleteAsync`) استفاده می‌کند.
+  - برای مجموعه‌ها حلقه‌ی عملیات تک‌ردیفی `Update`/`Insert`/`Delete` در `Dapper.FastCrud` را اجرا می‌کند و هر ردیف با `CheckTransaction` به `CurrentTransaction` متصل می‌شود.
   - هر نوشتن/حذف را به `IEntityEventService.CallOnSave/OnDelete` گوش می‌سپارد.
   - `DbContext` (از نوع `IDbContext`) را به‌عنوان ویژگی عمومی暴露 می‌کند تا Application بتواند تراکنش باز/commit/rollback کند.
   - اگر تراکنشی باز باشد، statementها با `AttachToTransaction` به آن متصل می‌شوند (`CheckTransaction`).
