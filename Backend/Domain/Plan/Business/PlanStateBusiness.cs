@@ -5,7 +5,7 @@ namespace PhotonBypass.Domain.Plan.Business;
 
 public static class PlanStateBusiness
 {
-    private const float AccountFinishingStatePercent = 0.1f;
+    private const float AccountFinishingStatePercent = 10f;
 
     public static bool IsFinishing(this PlanStateEntity entity)
     {

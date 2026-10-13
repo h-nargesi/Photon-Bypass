@@ -72,7 +72,7 @@ public class AccountController(
     {
         LoadJobContext(target);
 
-        var result = await application.GetHistory(JobContext.Target, context.From, context.To);
+        var result = await application.GetHistory(JobContext.Target, context.FromDateTime, context.ToDateTime);
 
         return SafeApiResult(result);
     }

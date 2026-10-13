@@ -17,7 +17,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export abstract class ApiBaseService extends ApiMessageHandlerService {
-  private is_logout: boolean = false;
+  protected static is_logout: boolean = false;
 
   constructor(
     protected readonly api: HttpClientHandler,
@@ -37,12 +37,19 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
       .call(url, params)
       .pipe(
         map((result) => {
-          const context: ApiResultContext = (options ?? {}) as ApiResultContext;
-          context.title ??= TranslationService.translate('api.call');
-          context.show_message ??= ShowMessageCase.silence;
+          const context: ApiResultContext = (options ??
+            {}) as ApiResultContext;
+          context.show_message ??= ShowMessageCase.success;
           context.result = result;
           context.service = service;
           return context;
+        })
+      )
+      .pipe(
+        tap((context) => {
+          if (context.result.code < 300) {
+            ApiBaseService.is_logout = false;
+          }
         })
       )
       .pipe(map(this.resultHandler));
@@ -188,8 +195,8 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
         throw 'Invalid service in `ApiResultContext`. (ApiBaseService)';
       }
 
-      if (service.is_logout) return;
-      service.is_logout = true;
+      if (ApiBaseService.is_logout) return;
+      ApiBaseService.is_logout = true;
 
       if (!service.router) {
         throw 'The router service is not set. (ApiBaseService)';

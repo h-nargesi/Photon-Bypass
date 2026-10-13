@@ -1,13 +1,16 @@
-﻿using System.Text.Json.Serialization;
-using PhotonBypass.Tools;
-
-namespace PhotonBypass.Portal.Context;
+﻿namespace PhotonBypass.Portal.Context;
 
 public class HistoryContext
 {
-    [JsonConverter(typeof(UnixTimestampConverter))]
-    public DateTime? From { get; set; }
+    public long? From { get; set; }
 
-    [JsonConverter(typeof(UnixTimestampConverter))]
-    public DateTime? To { get; set; }
+    public long? To { get; set; }
+
+    public DateTime? FromDateTime => From != null
+        ? DateTimeOffset.FromUnixTimeMilliseconds(From.Value).LocalDateTime
+        : null;
+
+    public DateTime? ToDateTime => To != null
+        ? DateTimeOffset.FromUnixTimeMilliseconds(To.Value).LocalDateTime
+        : null;
 }

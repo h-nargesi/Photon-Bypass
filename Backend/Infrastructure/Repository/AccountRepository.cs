@@ -1,5 +1,7 @@
-﻿using PhotonBypass.Domain.Account;
+﻿using Microsoft.Data.SqlClient;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
 
@@ -7,6 +9,19 @@ namespace PhotonBypass.Infra.Repository;
 
 class AccountRepository(LocalDbContext context) : EditableRepository<AccountEntity>(context), IAccountRepository
 {
+    public override async Task Save(AccountEntity entity)
+    {
+        try
+        {
+            await base.Save(entity);
+        }
+        catch (SqlException ex) when (ex.Number is 2601 or 2627)
+        {
+            throw new UserException(
+                "این نام کاربری، ایمیل یا شماره همراه قبلا استفاده شده است!",
+                $"Duplicate account data rejected by unique index: {ex.Message} (username={entity.Username})", 409);
+        }
+    }
     public async Task<List<AccountEntity>> GetAllActive()
     {
         var result = await FindAsync(statement => statement
@@ -137,15 +152,15 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
                    from {TableName}
                    where {nameof(AccountEntity.Username)} = @username
                         {(email != null ? $"or {nameof(AccountEntity.Email)} = @email" : "")}
-                        {(email != null ? $"or {nameof(AccountEntity.Mobile)} = @mobile" : "")}
+                        {(mobile != null ? $"or {nameof(AccountEntity.Mobile)} = @mobile" : "")}
                    """;
 
         var data = (await QueryAsync(sql, new { username, email, mobile })).ToList();
 
         if (data.Count < 1) return 0;
 
-        return (data.Any(d => d.Username == username) ? 1 : 0) |
-               (data.Any(d => d.Email == email) ? 2 : 0) |
-               (data.Any(d => d.Mobile == mobile) ? 4 : 0);
+        return (data.Any(d => string.Equals(d.Username, username, StringComparison.OrdinalIgnoreCase)) ? 1 : 0) |
+               (data.Any(d => string.Equals(d.Email, email, StringComparison.OrdinalIgnoreCase)) ? 2 : 0) |
+               (data.Any(d => string.Equals(d.Mobile, mobile, StringComparison.OrdinalIgnoreCase)) ? 4 : 0);
     }
 }

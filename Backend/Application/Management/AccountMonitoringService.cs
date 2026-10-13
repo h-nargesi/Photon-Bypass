@@ -122,7 +122,8 @@ internal class AccountMonitoringService(
         {
             if (!accounts.TryGetValue(plan.Id, out var account))
             {
-                throw new Exception($"The id ({plan.Id}) not found in accounts.");
+                Log.Warning("The id ({0}) not found in accounts; skipped warning for this plan.", plan.Id);
+                continue;
             }
 
             if (account.OverWarningTime())

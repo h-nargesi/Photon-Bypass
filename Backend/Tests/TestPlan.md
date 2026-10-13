@@ -42,7 +42,7 @@ Implement mock of all dependencies and test mid-level services.
 - IAuthApplication:
 	[+] CheckUserPassword
 	[+] ForgetPassword
-	[ ] ResetPassword
+	[+] ResetPassword (P5: UnknownCode/ExpiredCode/ValidCode_ChangesPassword)
 	[+] Register
 - IConnectionApplication:
 	[+] GetCurrentConnectionState
@@ -51,7 +51,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] GetPlanState
 	[+] GetPlanInfo
 	[+] Renewal
-	[ ] OnRenewalDelegation
+	[-] OnRenewalDelegation
 - IBillingApplication
   	[+] GenerateInvoiceCode
 	[+] GetInvoice
@@ -62,7 +62,7 @@ Implement mock of all dependencies and test mid-level services.
 	[+] TrafficData
 - AccountMonitoringService:
 	[+] InactiveAbandonedUsers
-	[+] NotifSendServices
+	[+] NotifSendServices (P5: MissingAccount_SkipsWithoutThrow)
 - ServerManagementService:
 	[+] GetAvailableRealm
 	[-] CheckUserServerBalance

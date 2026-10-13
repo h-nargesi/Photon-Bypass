@@ -1,6 +1,7 @@
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.ServerBridge.Services;
 using Renci.SshNet;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -96,26 +97,29 @@ partial class ProcessService(ISshHandler handler) : IProcessService
         return content.ToString();
     }
 
+    private static readonly ConcurrentDictionary<string, ScriptPattern[]> PatternCache = new();
+
     private static void ReadScriptResult(string result, string output_pattern, ProcessContext context)
     {
-        var patterns = ScriptPatterns.OutputPatternParse()
-            .Split(output_pattern)
-            .Select(pattern => pattern.Trim())
-            .Where(pattern => pattern.Length > 0)
-            .Select(pattern => pattern.Split('#'))
-            .Where(pattern_info => pattern_info.Length > 1)
-            .Select(pattern_info => new
-            {
-                Regex = new Regex(pattern_info[0].Trim(), RegexOptions.Compiled),
-                Names = pattern_info.Skip(1)
-                    .Where(replacement => replacement.Length > 0)
-                    .Select(replacement => replacement.Split(':').Select(v => v.Trim()).ToArray())
-                    .Where(replacement_info => replacement_info.Length == 2)
-                    .Select(replacement_info => (Index: int.Parse(replacement_info[0]), Name: replacement_info[1]))
-                    .GroupBy(k => k.Index)
-                    .ToDictionary(k => k.Key, v=> v.Last().Name),
-            })
-            .ToArray();
+        var patterns = PatternCache.GetOrAdd(output_pattern, static pattern =>
+            ScriptPatterns.OutputPatternParse()
+                .Split(pattern)
+                .Select(part => part.Trim())
+                .Where(part => part.Length > 0)
+                .Select(part => part.Split('#'))
+                .Where(pattern_info => pattern_info.Length > 1)
+                .Select(pattern_info => new ScriptPattern
+                {
+                    Regex = new Regex(pattern_info[0].Trim(), RegexOptions.Compiled),
+                    Names = pattern_info.Skip(1)
+                        .Where(replacement => replacement.Length > 0)
+                        .Select(replacement => replacement.Split(':').Select(v => v.Trim()).ToArray())
+                        .Where(replacement_info => replacement_info.Length == 2)
+                        .Select(replacement_info => (Index: int.Parse(replacement_info[0]), Name: replacement_info[1]))
+                        .GroupBy(k => k.Index)
+                        .ToDictionary(k => k.Key, v => v.Last().Name),
+                })
+                .ToArray());
 
         foreach (var pattern in patterns)
         {
@@ -124,6 +128,13 @@ partial class ProcessService(ISshHandler handler) : IProcessService
             foreach (var replacement_pair in pattern.Names.Where(replace_pair => match.Groups.Count > replace_pair.Key))
                 context[replacement_pair.Value] = match.Groups[replacement_pair.Key].Value;
         }
+    }
+
+    private sealed class ScriptPattern
+    {
+        public required Regex Regex { get; init; }
+
+        public required Dictionary<int, string> Names { get; init; }
     }
 
     [GeneratedRegex(@"\A[ \-.0-9A-Za-z]+\z")]

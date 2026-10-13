@@ -91,10 +91,15 @@ export class HttpClientHandler {
   }
 
   protected errorHandler(error: any): Observable<ApiResult> {
+    const transport_failure =
+      error?.status === 0 || (error?.status == null && !error?.error);
     const error_object: ApiResult = HttpClientHandler.setStatusFunction({
       code: error?.error?.code ?? error.status ?? 600,
       message:
-        error?.error?.message ?? TranslationService.translate('api.error'),
+        error?.error?.message ??
+        TranslationService.translate(
+          transport_failure ? 'api.error-transport' : 'api.error'
+        ),
       developer: error,
       method: MessageMethod.toaster,
     } as ApiResult);

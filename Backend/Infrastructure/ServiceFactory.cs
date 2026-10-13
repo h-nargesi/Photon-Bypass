@@ -22,6 +22,8 @@ public static class ServiceFactory
         builder.Services.AddMemoryCache();
         builder.Services.AddScoped<LocalDbContext>();
 
+        builder.Services.WireServerConfigProtection();
+
         builder.Services.AddLazyTransient<IAccountRepository, AccountRepository>();
         builder.Services.AddLazyTransient<IHistoryRepository, HistoryRepository>();
         builder.Services.AddLazyTransient<IResetPassRepository, ResetPassRepository>();

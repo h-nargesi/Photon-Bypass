@@ -319,13 +319,6 @@ class PlanApplication(
 
             await RenewalRepo.Value.Save(renew);
 
-            var check_on_renewal = IPlanApplication.OnRenewalDelegation(new RenewalEvent());
-
-            if (!check_on_renewal)
-            {
-                throw new Exception($"On renewal delegation was unsuccessful! (target={account.Username})");
-            }
-
             await AccountRadiusSrv.Value.SyncUserAndActive(account, renew);
 
             await AccountRepo.Value.DbContext.CommitAsync();

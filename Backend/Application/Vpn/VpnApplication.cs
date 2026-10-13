@@ -181,7 +181,7 @@ class VpnApplication(
                 },
                 new TrafficRecordModel
                 {
-                    Title = "Download",
+                    Title = "مجموع",
                     Data = [.. total],
                 }
             ],

@@ -1,5 +1,6 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import {
   ButtonDirective,
@@ -82,6 +83,8 @@ export class DashboardComponent implements OnInit {
     private readonly service: DashboardService,
     private readonly translation: TranslationService
   ) {}
+
+  private readonly destroy_ref = inject(DestroyRef);
 
   get targetName(): string | undefined {
     return this.user_service.targetName;
@@ -207,10 +210,12 @@ export class DashboardComponent implements OnInit {
   }
 
   private detectTargetChanges() {
-    this.user_service.onTargetChanged.subscribe((newTarget) => {
-      this.clearData();
-      this.loadData();
-    });
+    this.user_service.onTargetChanged
+      .pipe(takeUntilDestroyed(this.destroy_ref))
+      .subscribe((newTarget) => {
+        this.clearData();
+        this.loadData();
+      });
   }
 
   private clearData() {

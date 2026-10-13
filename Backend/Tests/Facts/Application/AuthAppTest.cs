@@ -1,10 +1,13 @@
 ﻿using FluentAssertions;
 using PhotonBypass.Application.Authentication;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
 using PhotonBypass.Test.Mock.MockServerBridge;
+using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Facts.Application;
 
@@ -274,5 +277,60 @@ public class AuthAppTest : UnitLevelServiceInitializer
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
+    }
+
+    [Fact]
+    public async Task ResetPassword_UnknownCode_Throws()
+    {
+        using var scope = App.Services.CreateScope();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        var function = () => auth_app.ResetPassword("unknown-code", "NewPassword1");
+
+        await function.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task ResetPassword_ExpiredCode_Throws()
+    {
+        using var scope = App.Services.CreateScope();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var reset_repo = scope.ServiceProvider.GetRequiredService<IResetPassRepository>();
+
+        await reset_repo.AddHashCode(new ResetPassEntity
+        {
+            AccountId = 1,
+            HashCode = "expired-code",
+            ExpireDate = DateTime.Now.AddDays(-1),
+        });
+
+        var function = () => auth_app.ResetPassword("expired-code", "NewPassword1");
+
+        await function.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task ResetPassword_ValidCode_ChangesPassword()
+    {
+        using var scope = App.Services.CreateScope();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var reset_repo = scope.ServiceProvider.GetRequiredService<IResetPassRepository>();
+
+        var account_id = account_repo_moq.Data["User99"].Id;
+
+        await reset_repo.AddHashCode(new ResetPassEntity
+        {
+            AccountId = account_id,
+            HashCode = "valid-code",
+            ExpireDate = DateTime.Now.AddMinutes(10),
+        });
+
+        var result = await auth_app.ResetPassword("valid-code", "NewPassword1");
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+        PasswordHasher.Verify("NewPassword1", account_repo_moq.Data["User99"].Password)
+            .Should().BeTrue();
     }
 }

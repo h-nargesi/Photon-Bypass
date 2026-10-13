@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  DestroyRef,
+  ViewChild,
+  inject,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -76,19 +83,23 @@ export class HistoryComponent implements AfterViewInit {
   @ViewChild(MatPaginator) paginator?: MatPaginator;
   @ViewChild(MatSort) sort?: MatSort;
 
-  fromDate?: number;
-  toDate?: number;
+  fromDate?: Date;
+  toDate?: Date;
 
   constructor(
     private readonly service: HistoryService,
     private readonly user_service: UserService
   ) {}
 
+  private readonly destroy_ref = inject(DestroyRef);
+
   ngOnInit() {
     this.loadWithFilter();
-    this.user_service.onTargetChanged.subscribe(() => {
-      this.loadWithFilter();
-    });
+    this.user_service.onTargetChanged
+      .pipe(takeUntilDestroyed(this.destroy_ref))
+      .subscribe(() => {
+        this.loadWithFilter();
+      });
   }
 
   ngAfterViewInit() {
@@ -99,8 +110,13 @@ export class HistoryComponent implements AfterViewInit {
   }
 
   loadWithFilter() {
+    const from = this.fromDate ? this.fromDate.getTime() : undefined;
+    const to = this.toDate
+      ? new Date(this.toDate).setHours(23, 59, 59, 999)
+      : undefined;
+
     this.service
-      .load(this.user_service.targetName, this.fromDate, this.toDate)
+      .load(this.user_service.targetName, from, to)
       .subscribe((result) => {
         this.dataSource = new MatTableDataSource(result);
         if (this.paginator) this.dataSource.paginator = this.paginator;

@@ -7,6 +7,7 @@ using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Result;
+using Serilog;
 
 namespace PhotonBypass.Portal.Controllers;
 
@@ -36,8 +37,9 @@ public class VpnController(
 
         if (user.Code == 401)
         {
+            Log.Debug("Wrong login password while changing VPN password (user={0}).", JobContext.Username);
             user.Code = 400;
-            user.Message = "کلمه عبور اکانت جاری اشتباه وارده شده!";
+            user.Message = "عملیات ناموفق بود!";
             return user;
         }
 

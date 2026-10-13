@@ -3,7 +3,6 @@ import { TranslationService } from './translation-service';
 
 @Pipe({
   name: 'translate',
-  pure: false,
 })
 export class TranslationPipe implements PipeTransform {
   constructor(private readonly translation: TranslationService) {}

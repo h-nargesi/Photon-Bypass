@@ -34,7 +34,7 @@ export class DashboardService extends ApiBaseService {
     target?: string
   ): Observable<ApiResult> {
     const url = `${CONNECTION_API_URL}/close-con`;
-    return this.job(url, { server, targe: target ?? null, sessionId });
+    return this.job(url, { server, target: target ?? null, sessionId });
   }
 
   fetchPlanState(target?: string): Observable<PlanState> {

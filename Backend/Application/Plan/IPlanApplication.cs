@@ -5,8 +5,6 @@ namespace PhotonBypass.Application.Plan;
 
 public interface IPlanApplication
 {
-    static event Func<RenewalEvent, bool>? OnRenewal;
-
     Task<ApiResult<PlanStateModel>> GetPlanState(string target);
 
     Task<ApiResult<PlanInfoModel>> GetPlanInfo(string target);
@@ -16,11 +14,4 @@ public interface IPlanApplication
     Task<ApiResult<RenewalResult>> Renewal(string target, byte users, short days, int gigabytes);
 
     Task<ApiResult<RenewalResult>> Renewal(int account_id, int? payment_id, string action, int? invoice_code = null);
-
-    protected static bool OnRenewalDelegation(RenewalEvent arg)
-    {
-        return OnRenewal == null || OnRenewal.GetInvocationList()
-            .Cast<Func<RenewalEvent, bool>>()
-            .Select(check_on_renewal => check_on_renewal(arg)).All(result => result);
-    }
 }

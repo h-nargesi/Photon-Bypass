@@ -1,6 +1,8 @@
-﻿using PhotonBypass.Domain.Management;
+﻿using FluentAssertions;
+using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Business;
+using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
@@ -189,5 +191,29 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
 
         Assert.NotNull(account_repo_moq.Data["User4"].LastWarningTime);
         Assert.False(account_repo_moq.Data["User4"].IsActive);
+    }
+
+    [Fact]
+    public async Task NotifSendServices_MissingAccount_SkipsWithoutThrow()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+
+        var missing_id = account_repo_moq.Data.Values.Max(account => account.Id) + 1000;
+
+        var ghost_plan = new PlanStateEntity
+        {
+            Id = missing_id,
+            Username = "GhostUser",
+            SimultaneousUser = 1,
+            TrafficLeft = 1,
+            TrafficLimit = 1000,
+        };
+
+        var function = () => monitoring.NotifSendServices([ghost_plan]);
+
+        await function.Should().NotThrowAsync();
     }
 }

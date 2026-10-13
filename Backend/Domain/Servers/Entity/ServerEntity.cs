@@ -36,8 +36,17 @@ public class ServerEntity : IBaseEntity
     [NotMapped]
     public ServerConfiguration? Config
     {
-        get => JsonConfig != null ? JsonSerializer.Deserialize<ServerConfiguration>(JsonConfig) : null;
-        set => JsonConfig = value != null ? JsonSerializer.Serialize(value) : null;
+        get
+        {
+            if (JsonConfig == null) return null;
+
+            var json = ServerConfigProtection.Unprotect(JsonConfig);
+
+            return json != null ? JsonSerializer.Deserialize<ServerConfiguration>(json) : null;
+        }
+        set => JsonConfig = value != null
+            ? ServerConfigProtection.Protect(JsonSerializer.Serialize(value))
+            : null;
     }
 
     public DateTime Created { get; init; } = DateTime.Now;

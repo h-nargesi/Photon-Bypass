@@ -1,5 +1,11 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  inject,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
 import {
   ButtonDirective,
@@ -62,10 +68,13 @@ export class TrafficChartComponent implements OnInit {
     this.initOptions();
   }
 
+  private readonly destroy_ref = inject(DestroyRef);
+
   ngOnInit() {
-    this.user_service.onTargetChanged.subscribe(() => {
-      if (this.data) this.loadTrafficData();
-    });
+    this.loadTrafficData();
+    this.user_service.onTargetChanged
+      .pipe(takeUntilDestroyed(this.destroy_ref))
+      .subscribe(() => this.loadTrafficData());
   }
 
   loadTrafficData() {

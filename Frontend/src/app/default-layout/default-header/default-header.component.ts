@@ -56,9 +56,9 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
   readonly colorMode = this.#colorModeService.colorMode;
 
   readonly colorModes = [
-    { name: 'light', text: 'Light', icon: this.icons.cilSun },
-    { name: 'dark', text: 'Dark', icon: this.icons.cilMoon },
-    { name: 'auto', text: 'Auto', icon: this.icons.cilContrast },
+    { name: 'light', text: 'روشن', icon: this.icons.cilSun },
+    { name: 'dark', text: 'تیره', icon: this.icons.cilMoon },
+    { name: 'auto', text: 'خودکار', icon: this.icons.cilContrast },
   ];
 
   current_user?: UserModel;

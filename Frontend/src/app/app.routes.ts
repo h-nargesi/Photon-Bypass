@@ -9,6 +9,7 @@ import { LoginComponent } from './login/login.component';
 import { PaymentComponent } from './payment/payment.component';
 import { RegisterComponent } from './register/register.component';
 import { RenewalComponent } from './renewal/renewal.component';
+import { authGuard } from './@services/auth-services/auth-guard';
 
 export const routes: Routes = [
   {
@@ -31,6 +32,7 @@ export const routes: Routes = [
   {
     path: '',
     component: DefaultLayoutComponent,
+    canActivate: [authGuard],
     children: [
       {
         path: 'dashboard',

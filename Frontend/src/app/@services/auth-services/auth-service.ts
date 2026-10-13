@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiResult, ShowMessageCase } from '../../@models';
+import { ApiResult } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
 import { HttpClientHandler } from '../api-services/http-client';
 import {
@@ -30,11 +30,9 @@ export class AuthService extends ApiBaseService {
     return super.check(`${ACCOUNT_API_URL}/get-user`);
   }
 
-  public logout(): Observable<ApiResult> {
+  public logout(): void {
     this.user_service.clear();
     LocalStorageService.set(['user', 'bearer'], undefined);
-    return this.call(`${AUTH_API_URL}/logout`, undefined, {
-      show_message: ShowMessageCase.silence,
-    });
+    ApiBaseService.is_logout = false;
   }
 }

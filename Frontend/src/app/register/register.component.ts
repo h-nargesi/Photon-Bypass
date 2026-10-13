@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
   FormGroup,
@@ -109,6 +110,8 @@ export class RegisterComponent implements OnInit {
     this.form = this.createForm();
   }
 
+  private readonly destroy_ref = inject(DestroyRef);
+
   get isEdit(): boolean {
     return this.mode !== PageMode.Register;
   }
@@ -118,7 +121,9 @@ export class RegisterComponent implements OnInit {
     this.loadUserFullData();
 
     if (this.mode !== PageMode.EditSub) return;
-    this.user_service.onTargetChanged.subscribe(() => this.loadUserFullData());
+    this.user_service.onTargetChanged
+      .pipe(takeUntilDestroyed(this.destroy_ref))
+      .subscribe(() => this.loadUserFullData());
   }
 
   submit() {

@@ -84,27 +84,32 @@
 ### [x] H9. GetWalletsAmount با «= @ids» → SQL نامعتبر
 `Backend/Infrastructure/Repository/WalletRepository.cs:53-64` — `where Id = @ids` با پارامتر لیستی؛ Dapper آن را به `Id = (@p1,@p2,...)` گسترش می‌دهد → با بیش از یک renewal معوق، صدور فاکتور همیشه 500 می‌شود. **اصلاح**: `where Id in @ids`.
 
-### [ ] H10. احراز هویت فرانتند: token در localStorage، بدون refresh/guard، logout مرده
+### [x] H10. احراز هویت فرانتند: token در localStorage، بدون refresh/guard، logout مرده
 - `Frontend/src/app/@services/api-services/http-client.ts:72,84-88` — JWT در localStorage؛ `expires_in` ذخیره ولی هرگز خوانده نمی‌شود؛ بدون interceptor و refresh.
 - `Frontend/src/app/app.routes.ts:31-67` — هیچ route guard روی صفحات احراز هویت‌شده.
 - `Frontend/src/app/login/login.component.ts:71-72` + `auth-service.ts:33-39` — Observable مربوط به logout هرگز subscribe نمی‌شود و localStorage قبل از ساخت درخواست پاک می‌شود؛ `AccessService.LogoutEvent` بک‌اند هم صفر caller دارد (هیچ endpoint خروجی معتبر وجود ندارد).
+- **اصلاح (P5)**: `authGuard` (functional `canActivate`) روی مسیر `DefaultLayout` (همه صفحات احراز هویت‌شده) با redirect به `/login?redirect=…`؛ `AuthService.logout` صرفاً client-side شد (پاک‌سازی storage + reset لچ — endpoint خروج در بک‌اند وجود ندارد). **تصمیم**: توکن در localStorage ماند (انتقال به httpOnly cookie نیازمند تغییر بک‌اند — خارج از P5)؛ انقضای توکن با مسیر موجود 401→redirect پوشش داده می‌شود.
 
-### [ ] H11. latch «is_logout» هرگز reset نمی‌شود
+### [x] H11. latch «is_logout» هرگز reset نمی‌شود
 `Frontend/src/app/@services/api-services/api-base-service.ts:20,191-192` — بعد از اولین 401، redirect برای 401 های بعدی (حتی پس از login مجدد) خاموش می‌ماند.
+**اصلاح (P5)**: لچ به `protected static` تبدیل شد (یک redirect سراسری به‌جای لچ per-instance) و در login موفق (`authorization` با code<300) و در `logout` بازست می‌شود.
 
 ### [x] H12. Enumeration اکانت + صفر rate-limiting
 - `Backend/Application/Authentication/AuthApplication.cs:139-144` — پیام‌های متمایز «کاربر یافت نشد»/«کاربر غیرفعال است»؛ `Register` (`:200-212`) هم وجود username/email/mobile را افشا می‌کند.
 - در کل `Backend/` هیچ `AddRateLimiter`/lockout/HSTS/size-limit وجود ندارد (`Portal/Program.cs:11-26`) → brute-force بی‌محدودیت روی token/forget-pass/reset-pass.
 - **اصلاح (P3)**: `ForgetPassword` پاسخ generic یکسان می‌دهد و فقط برای اکانتِ فعالِ موجود ارسال می‌کند (پیام‌های duplicate در Register عمداً حفظ شد — UX، محافظت با limiter). Rate limiter دات‌نت ۸ در `AddPortalServices` با policy پارتیشن‌بندی IP (fixed window، پیش‌فرض ۱۰/دقیقه، قابل تنظیم با `RateLimitOptions` در appsettings) + `[EnableRateLimiting]` روی `AuthController` + `app.UseRateLimiter()`.
 
-### [ ] H13. فیلتر تاریخ History از هر دو طرف خراب است
+### [x] H13. فیلتر تاریخ History از هر دو طرف خراب است
 فرانت `Date` object را به‌عنوان query param می‌فرستد (`Frontend/src/app/history/history.component.ts:79-104`؛ serialize با `toString()`) و بک‌اند `[JsonConverter]` روی `[FromQuery]` اثری ندارد (`Backend/Portal/Controllers/AccountController.cs:70-77` + `Portal/Context/HistoryContext.cs:8-12`) → هر بار استفاده از فیلتر = 400.
+**اصلاح (P5)**: قرارداد عددی — `HistoryContext` به `long? From/To` (unix-ms) با پراپرتی های `FromDateTime/ToDateTime` تغییر کرد؛ فرانت `Date` می‌گیرد و `from.getTime()` و `to` را با پایان روز (23:59:59.999، چون کوئری `<=` است) می‌فرستد.
 
-### [ ] H14. typo «targe» → close-connection روی target اشتباه
+### [x] H14. typo «targe» → close-connection روی target اشتباه
 `Frontend/src/app/dashboard/dashboard.service.ts:37` — body به‌جای `target` با `targe` فرستاده می‌شود؛ `ConnectionController` مقدار null می‌بیند و روی اکانت login شده عمل می‌کند.
+**اصلاح (P5)**: `targe` → `target`.
 
-### [ ] H15. چارت ترافیک در اولین بازدید لود نمی‌شود
+### [x] H15. چارت ترافیک در اولین بازدید لود نمی‌شود
 `Frontend/src/app/dashboard/traffic-chart/traffic-chart.component.ts:65-69` — reload مشروط به `this.data` است که ابتدا undefined است؛ هیچ فراخوانی اولیه وجود ندارد.
+**اصلاح (P5)**: `loadTrafficData()` در `ngOnInit` صدا زده می‌شود؛ reload روی تغییر target حفظ شد.
 
 ---
 
@@ -151,23 +156,23 @@
 | [x] | M3 | Radius sync داخل تراکنش DB | `PlanApplication.cs:302-304` | شکست commit → user در Radius می‌ماند (dual-write بدون compensation مطمئن). **اصلاح (نرم)**: با ترتیب M2، شکستِ خودِ `DeactivateUsers` با لاگ نشانگر `RADIUS-COMPENSATION-FAILED` پیگیری عملیاتی می‌شود؛ residual risk ثبت شد. |
 | [x] | M4 | `GetAvailableRealm` با `.First()` | `ServerManagementService.cs:40-44` | پر بودن همه realm ها = `InvalidOperationException` خام (500)؛ بدون reservation → overbooking هم‌زمان. **اصلاح**: لیست خالی → `UserException` دوستانه («ظرفیت سرورها تکمیل است...») قبل از تراکنش/دبیت. |
 | [x] | M5 | dictionary indexer بدون گارد در DeactivateInvalidRadiusUsers | `Infrastructure/Services/AccountRadiusSyncService.cs:56-80` | realm بدون plan state = `KeyNotFoundException` → کل job ساعتی abort. **اصلاح (P1)**: `TryGetValue` + لیست خالی (غیرفعال‌سازی همه کاربران آن radius) |
-| [ ] | M6 | CheckUniqueData: شرط mobile به email گره خورده + مقایسه case-sensitive | `Infrastructure/Repository/AccountRepository.cs:113-127` | ثبت‌نام با موبایل بدون ایمیل، یکتایی موبایل را چک نمی‌کند؛ `d.Email == email` ordinal است ولی DB case-insensitive |
-| [ ] | M7 | throw روی یک اکانت گمشده، کل batch هشدار را می‌کشد | `AccountMonitoringService.cs:114-117` | باید `continue` + log باشد |
-| [ ] | M8 | آستانه «در حال اتمام» 0.1% به‌جای 10% | `Domain/Plan/Business/PlanStateBusiness.cs:8-13` | مقیاس percent ها 0–100 است؛ هشدار فقط وقتی 99.9% مصرف شده |
-| [ ] | M9 | predicate مرده: `Created IS NULL` ولی `DEFAULT GETDATE()` | `Infrastructure/Repository/RenewalRepository.cs:13` + `Database/LocalDatabase/Renewal.sql:17` | `GetNotPaid` همیشه خالی؛ شاخه unpaid در GenerateInvoice هرگز اجرا نمی‌شود |
-| [ ] | M10 | کد reset روی اکانت غیرفعال burn می‌شود + TOCTOU دوبار مصرف | `AuthApplication.cs:178-193`، `Infrastructure/Repository/ResetPassRepository.cs:19-22` | کد خوانده/حذف می‌شود ولی عملیات fail؛ دو درخواست هم‌زمان هر دو می‌خوانند |
-| [ ] | M11 | سری سوم چارت ترافیک به‌اشتباه «Download» | `VpnApplication.cs:181-185` | دو سری هم‌نام (یکی Total) |
+| [x] | M6 | CheckUniqueData: شرط mobile به email گره خورده + مقایسه case-sensitive | `Infrastructure/Repository/AccountRepository.cs:113-127` | ثبت‌نام با موبایل بدون ایمیل، یکتایی موبایل را چک نمی‌کند؛ `d.Email == email` ordinal است ولی DB case-insensitive. **اصلاح (P5)**: شرط موبایل مستقل شد و مقایسه ها `OrdinalIgnoreCase`؛ به‌علاوه قاعده «ایمیل **یا** موبایل» در `AccountBusiness.SetFromModel` فعال شد (ایمیل اجباری نبودن — ریشه دو تست شکسته `Register_Success`/`ShouldNotBeEmpty` که با همین تغییر سبز شدند) |
+| [x] | M7 | throw روی یک اکانت گمشده، کل batch هشدار را می‌کشد | `AccountMonitoringService.cs:114-117` | **اصلاح (P5)**: `continue` + `Log.Warning` |
+| [x] | M8 | آستانه «در حال اتمام» 0.1% به‌جای 10% | `Domain/Plan/Business/PlanStateBusiness.cs:8-13` | مقیاس percent ها 0–100 است؛ هشدار فقط وقتی 99.9% مصرف شده. **اصلاح (P5)**: `10f`؛ تست `PlanStateBusinessTest` برای آستانه جدید بازنویسی شد |
+| [x] | M9 | predicate مرده: `Created IS NULL` ولی `DEFAULT GETDATE()` | `Infrastructure/Repository/RenewalRepository.cs:13` + `Database/LocalDatabase/Renewal.sql:17` | ~~GetNotPaid همیشه خالی؛ شاخه unpaid در GenerateInvoice هرگز اجرا نمی‌شود~~ — **منسوخ**: با بازنویسی P2 BillingApplication متد و predicate حذف شدند (تأیید با grep) |
+| [x] | M10 | کد reset روی اکانت غیرفعال burn می‌شود + TOCTOU دوبار مصرف | `AuthApplication.cs:178-193`، `Infrastructure/Repository/ResetPassRepository.cs:19-22` | کد خوانده/حذف می‌شود ولی عملیات fail؛ دو درخواست هم‌زمان هر دو می‌خوانند. **اصلاح (P5)**: مصرف atomic با یک statement واحد `DELETE ... OUTPUT deleted.*` — فقط برنده رقابت ردیف را می‌گیرد (کد در صورت شکست عملیات سوخته می‌ماند — کاربر کد جدید می‌گیرد) |
+| [x] | M11 | سری سوم چارت ترافیک به‌اشتباه «Download» | `VpnApplication.cs:181-185` | دو سری هم‌نام (یکی Total). **اصلاح (P5)**: عنوان سری سوم → «مجموع» |
 | [x] | M28 | race برداشت موازی تسویه (کشف پس از P2؛ خارج از ممیزی اولیه) | `BillingApplication.cs` + `Application/Billing/AccountSettlementGate.cs` | خواندن `GetBalance` بیرون از تراکنش/قفل + CAS فقط روی وضعیت فاکتور → دو تسویه/رسید موازی روی یک اکانت هر دو دبیت می‌زدند و موجودی منفی می‌شد. **اصلاح**: گیت per-account (`AccountSettlementGate`، singleton، `SemaphoreSlim`) دور `SettleWallet` و renewal-پس-از-رسید؛ درون-پردازشی — برای دیپلوی multi-instance جایگزین: قفل DB-level (`UPDLOCK` روی خواندن موجودی داخل تراکنش دبیت). |
 
 ## MEDIUM — امنیت و زیرساخت
 
 | چک | # | عنوان | مکان | شرح |
 |---|---|---|---|---|
-| [ ] | M12 | credentials روتر/RadiusDesk به‌صورت plaintext JSON در جدول Server | `Domain/Servers/Entity/ServerEntity.cs:33-41` + `JsonType/SshConfig.cs:7` و غیره | خواندن DB = مالکیت همه روترها؛ بدون encryption-at-rest |
+| [x] | M12 | credentials روتر/RadiusDesk به‌صورت plaintext JSON در جدول Server | `Domain/Servers/Entity/ServerEntity.cs:33-41` + `JsonType/SshConfig.cs:7` و غیره | خواندن DB = مالکیت همه روترها؛ بدون encryption-at-rest. **اصلاح (P5)**: `ServerConfigProtection` (Domain، marker `protected:`) + wiring با ASP.NET Data Protection در `AddInfrastructureServices` (کلیدها در `{app}/data-protection-keys` — **بکاپ این پوشه الزامی است**؛ گم‌شدن = ورود دوباره کانفیگ سرورها). ردیف های plaintext قدیمی خوانده می‌شوند و در اولین save رمز می‌شوند (lazy). ستون `Server.Config` به `VARCHAR(4000)` (Server.sql + ALTER idempotent) |
 | [x] | M13 | passphrase گواهی OVPN در لاگ Serilog | `ServerBridge/Ssh/SshConnection.cs:15` + `MikrotikDirectService.cs:146-148` | `Log.Information` شامل command کامل با export-passphrase. **اصلاح (P3)**: `CommandScrubber` مقادیر `password="..."`/`export-passphrase="..."` را با `***` جایگزین می‌کند؛ لاگ نتیجه command فقط طول را می‌نویسد (محتوای key خصوصی حذف شد). |
-| [x] | M14 | anchor ضعیف regex تزریق (`$` قبل از `\n` تطبیق می‌شود) + `\w` یونیکدی | `ServerBridge/InjectionRegex.cs:7-11`، `ServerBridge/Ssh/ProcessService.cs:129-130` | `\n` انتهایی از `^[0-9a-fA-F]+$` رد می‌شود و به CLI روتر تزریق. **اصلاح (P3)**: anchor های `\A...\z` + کلاس‌های ASCII صریح؛ حذف `RegexOptions.Singleline`. |
+| [x] | M14 | anchor ضعیف regex تزریق (`$` قبل از `\n` تطبیق می‌شود) + `\w` یونیکدی | `ServerBridge/InjectionRegex.cs:7-11`، `ServerBridge/Ssh/ProcessService.cs:129-130` | **اصلاح (P3)**: anchor های `\A...\z` + کلاس‌های ASCII صریح؛ حذف `RegexOptions.Singleline`. |
 | [x] | M15 | مبلغ پرداخت از client بدون هیچ bound | `Portal/Controllers/BillingController.cs:21-27` → `BillingApplication.cs:29-43` | مقدار منفی/سرریز وارد math موجودی می‌شود |
-| [ ] | M16 | token ادمین RadiusDesk در URL query | `FreeRadius/WebService/RadiusDeskService.cs:441-490` | افشا در proxy/access log |
+| [x] | M16 | token ادمین RadiusDesk در URL query | `FreeRadius/WebService/RadiusDeskService.cs:441-490` | ~~افشا در proxy/access log~~ — **بررسی (P5)**: token در query قرارداد خودِ API RadiusDesk (cake4) است و header پشتیبانی نمی‌شود؛ کد ما URL ها را لاگ نمی‌کند (بدون `AddHttpClient` logging). **ریسک پذیرفته‌شده** — کاهنده ها: HTTPS بین دو سرور، محدود کردن دسترسی به access log میزبان RadiusDesk |
 | [x] | M17 | sync-over-async در مسیرهای request/job — **اصلاح (P4)**: `SessionRadiusSyncService.GetTrafficData` → `await`؛ `Task.WaitAll` در `AuthApplication.ForgetPassword` حذف و دو INSERT روی connection مشترک ترتیبی شد (ایمیل موازی)؛ خواندن `t.Result` بعد از `Task.WhenAll` در `ServerEntityExtension:14` مطابق تصمیم فاز بدون تغییر ماند | `Infrastructure/Services/SessionRadiusSyncService.cs:104`، `AuthApplication.cs:169`، `Infrastructure/Services/ServerEntityExtension.cs:14` | blocking + ریسک deadlock |
 
 ## MEDIUM — پرفورمنس
@@ -179,7 +184,7 @@
 | [x] | M20 | await های متوالی مستقل در UpdateTrafficData — **اصلاح (P4)**: فاز شبکه (روترها) و فاز MSSQL (`Fetch(from)`) با شروع هم‌زمان دو task موازی شدند؛ لیست سرورهای radius از قبل (cache شده) با overload جدید `GetTrafficData(radius_list, indexes)` پاس می‌شود تا در فاز موازی هیچ خواندن DB روی connection scoped مشترک انجام نشود | `ServerManagementService.cs:110-114` | شبکه (روترها) قبل از شروع MSSQL/Realm تمام می‌شود؛ latency جمعی |
 | [x] | M21 | SSH/tik4net: connection per-op، بدون timeout/keepalive/retry — **اصلاح (P4)**: `SshHandler` با CTS اتصال (پیش‌فرض ۱۵s) + `KeepAliveInterval`؛ `Tik4NetHandler.OpenAsync` با timeout (WhenAny + Dispose)؛ `SshConnection.Execute` با timeout فرمان (پیش‌فرض ۳۰s، APM). مقادیر از `ServerBridgeOptions` جدید (بخش `ServerBridgeOptions` در appsettings؛ به‌دلیل لایه‌بندی در ServerBridge تعریف شد نه ManagementOptions — Application به ServerBridge ارجاع دارد، نه برعکس). بدون retry (idempotent نیستند). pooling اتصال به TODO بعدی | `ServerBridge/Ssh/SshHandler.cs:15-17`، `ServerBridge/Tik4net/Tik4NetHandler.cs:14-23`، `SshConnection.cs:17` (sync `RunCommand`) | full handshake هر بار؛ روتر hang = توقف job بدون cancellation |
 | [x] | M22 | `SmtpClient` بدون dispose + خواندن template از disk در هر ارسال — **اصلاح (P4)**: `using var smtp` + timeout ارسال با CTS؛ `Host/Port/EnableSsl/SendTimeoutSeconds` به `EmailOptions` (ServerBridge) اضافه شدند و `BindValidateReturn` شدند (default ها رفتار فعلی gmail را حفظ می‌کنند)؛ template ها با `ConcurrentDictionary<string,Task<string>>` استاتیک فقط یک‌بار load می‌شوند. تست: `EmailServiceTest.SendResetPasswordLink_TemplateCachedAcrossInstances` | `ServerBridge/Email/EmailHandler.cs:24-34`، `OutSource/EmailService.cs:25,49,77` | نشت connection؛ template ثابت است |
-| [ ] | M23 | `RegexOptions.Compiled` در هر اجرای script | `ServerBridge/Ssh/ProcessService.cs:109` | کامپایل مجدد الگو در هر CheckOn/ActivateOn |
+| [x] | M23 | `RegexOptions.Compiled` در هر اجرای script | `ServerBridge/Ssh/ProcessService.cs:109` | کامپایل مجدد الگو در هر CheckOn/ActivateOn. **اصلاح (P5)**: کش static الگوهای parsed با `ConcurrentDictionary` keyed by `output_pattern` |
 
 ## MEDIUM — فرانتند
 
@@ -187,8 +192,8 @@
 |---|---|---|---|---|
 | [x] | M24 | پاسخ‌های out-of-order در estimate (بدون switchMap) — **حل شد**: استریم `estimate$` با `switchMap` + `catchError(EMPTY)` | `Frontend/src/app/renewal/renewal.component.ts:126-163` | ~~قیمت/زمان نمایش‌داده‌شده ممکن است از درخواست stale باشد~~ |
 | [x] | M25 | double-submit روی renewal/pay/register/login — **حل شد در P2** (دکمه‌ها هنگام درخواست disable می‌شوند) | `renewal.component.html`، `payment.component.ts`، `payment-modal.component.html`، `register.component.html`، `login.component.ts` | ~~دکمه‌ها در حین درخواست فعال می‌مانند~~ |
-| [ ] | M26 | نشت subscription (هیچ unsubscribe/takeUntil در کل src نیست) | `dashboard.component.ts:210`، `history.component.ts:89`، `traffic-chart.component.ts:66`، `register.component.ts:121` | component های destroyed به root-singleton گوش می‌دهند و HTTP ghost fire می‌کنند |
-| [ ] | M27 | translate pipe به‌صورت `pure:false` + متدها در template، بدون OnPush | `Frontend/src/app/@services/translation/translation-pipe.ts:4-7`، `dashboard.component.html` | ترجمه و توابع در هر CD cycle اجرا می‌شوند |
+| [x] | M26 | نشت subscription (هیچ unsubscribe/takeUntil در کل src نیست) | `dashboard.component.ts:210`، `history.component.ts:89`، `traffic-chart.component.ts:66`، `register.component.ts:121` | component های destroyed به root-singleton گوش می‌دهند و HTTP ghost fire می‌کنند. **اصلاح (P5)**: `takeUntilDestroyed(destroyRef)` روی هر چهار subscription روی `UserService.onTargetChanged` |
+| [x] | M27 | translate pipe به‌صورت `pure:false` + متدها در template، بدون OnPush | `Frontend/src/app/@services/translation/translation-pipe.ts:4-7`، `dashboard.component.html` | ترجمه و توابع در هر CD cycle اجرا می‌شوند. **اصلاح (P5)**: pipe شد pure — متن ها static و build-time اند (بدون سوییچ زبان در runtime) پس pure رفتار یکسان با هزینه کمتر دارد |
 
 ---
 
@@ -197,16 +202,16 @@
 | چک | # | عنوان | مکان |
 |---|---|---|---|
 | [x] | L1 | `printMoney` ضرب دستی با `+',000'` — **حل شد**: `Intl.NumberFormat('fa-IR')` با ضرب ×1000 و گارد `Number.isFinite` (پوشش صفر/منفی/اعشار/NaN) | `Frontend/src/app/@services/message-handler/money-printer.ts:14` |
-| [ ] | L2 | static event `OnRenewal` با null-check race، بدون هیچ subscriber | `Backend/Application/Plan/IPlanApplication.cs:8,20-25` |
-| [ ] | L3 | شرط‌های مرده: `Count < 0`؛ شاخه غیرقابل دسترس email/mobile | `Backend/Application/Billing/BillingApplication.cs:143`، `Domain/Account/Business/AccountBusiness.cs:44-47` |
-| [ ] | L4 | `console.log(result)` باقی‌مانده | `Frontend/src/app/renewal/renewal.component.ts:110` |
-| [ ] | L5 | CoreUI CSS از CDN (jsdelivr) — برای محصول ایران‌محور نقطه شکست | `Frontend/src/index.html:11-13` |
-| [ ] | L6 | errorHandler خطاهای transport را دفن می‌کند؛ HTML خطای 4xx/5xx ناخوانا | `Frontend/src/app/@services/api-services/http-client.ts:93-104` |
-| [ ] | L7 | `DateTime.Now` در همه‌جا + `ToLocalTime()` در converter | `Backend/Portal/Context/UnixTimestampConverter.cs:28` و موارد متعدد؛ جابه‌جایی TZ/DST = اعوجاج انقضا |
-| [ ] | L8 | correlated `EXISTS ... order by limit 1` در MySQL (مسیر dormant RadiusDesk) | `Backend/FreeRadius/Repository/UserPlanStateRepository.cs:59-79` |
-| [ ] | L9 | login بدون lockout + مقایسه non-constant-time؛ `VpnController` پیام «wrong login password» برای تایید OVPN | `Backend/Application/Authentication/AuthApplication.cs:35`، `Backend/Portal/Controllers/VpnController.cs:35-42` |
-| [ ] | L10 | منوی تم انگلیسی «Light/Dark/Auto» در UI فارسی | `Frontend/src/app/default-layout/default-header/default-header.component.html:58-61` |
-| [ ] | L11 | در `CheckUniqueData` پنجره TOCTOU بین check و insert بدون unique-constraint fallback | `Backend/Application/Authentication/AuthApplication.cs:198-218` |
+| [x] | L2 | static event `OnRenewal` با null-check race، بدون هیچ subscriber — **اصلاح (P5)**: event + `OnRenewalDelegation` + کلاس `RenewalEvent` حذف شدند (صفر subscriber؛ `TestPlan.md` به‌روزرسانی) | `Backend/Application/Plan/IPlanApplication.cs:8,20-25` |
+| [x] | L3 | شرط‌های مرده: `Count < 0`؛ شاخه غیرقابل دسترس email/mobile — **اصلاح (P5)**: `Count < 0` پیش‌تر حذف شده بود (عارضه P0-P4)؛ شاخه email/mobile با فعال‌شدن قاعده «ایمیل یا موبایل» زنده و معتبر شد | `Backend/Application/Billing/BillingApplication.cs:143`، `Domain/Account/Business/AccountBusiness.cs:44-47` |
+| [x] | L4 | `console.log(result)` باقی‌مانده — **منسوخ**: با بازنویسی P2 حذف شده بود | `Frontend/src/app/renewal/renewal.component.ts:110` |
+| [x] | L5 | CoreUI CSS از CDN (jsdelivr) — برای محصول ایران‌محور نقطه شکست. **اصلاح (P5)**: لینک CDN حذف شد — `styles.scss` از قبل کل CoreUI (RTL) را self-host کامپایل می‌کرد؛ لینک فقط نسخه دوگانه از CDN بود. fallback کوچک boot-spinner در `index.html` | `Frontend/src/index.html:11-13` |
+| [x] | L6 | errorHandler خطاهای transport را دفن می‌کند؛ HTML خطای 4xx/5xx ناخوانا. **اصلاح (P5)**: پیام اختصاصی «ارتباط با سرور برقرار نشد…» (`api.error-transport`) برای خطاهای بدون response body (status 0/null) | `Frontend/src/app/@services/api-services/http-client.ts:93-104` |
+| [x] | L7 | `DateTime.Now` در همه‌جا + `ToLocalTime()` در converter. **بررسی (P5)**: هیچ مخلوط `UtcNow`/`Now` در مسیرهای production نیست (تنها `UtcNow` یک stopwatch در تست است) و converter با قرارداد local-همه‌جا سازگار است؛ ایران از ۲۰۲۲ DST ندارد. مهاجرت کامل UTC به‌عنوان تصمیم معماری ثبت شد و از P5 خارج است | `Backend/Portal/Context/UnixTimestampConverter.cs:28` و موارد متعدد؛ جابه‌جایی TZ/DST = اعوجاج انقضا |
+| [ ] | L8 | correlated `EXISTS ... order by limit 1` در MySQL (مسیر dormant RadiusDesk) — **defer**: تا فعال‌سازی مسیر RadiusDesk اقدام نشود | `Backend/FreeRadius/Repository/UserPlanStateRepository.cs:59-79` |
+| [x] | L9 | login بدون lockout + مقایسه non-constant-time؛ `VpnController` پیام «wrong login password» برای تایید OVPN. **اصلاح (P5)**: پیام generic «عملیات ناموفق بود!» + لاگ Debug تفکیکی (lockout/brute-force با rate limiter P3 پوشش داده شده) | `Backend/Application/Authentication/AuthApplication.cs:35`، `Backend/Portal/Controllers/VpnController.cs:35-42` |
+| [x] | L10 | منوی تم انگلیسی «Light/Dark/Auto» در UI فارسی. **اصلاح (P5)**: روشن/تیره/خودکار | `Frontend/src/app/default-layout/default-header/default-header.component.html:58-61` |
+| [x] | L11 | در `CheckUniqueData` پنجره TOCTOU بین check و insert بدون unique-constraint fallback. **اصلاح (P5)**: اسکریپت idempotent `Database/LocalDatabase/AccountUniqueIndexes.sql` (ایندکس های unique فیلتردار روی Username/Email/Mobile + pre-check گزارش duplicates) + catch خطای 2601/2627 در `AccountRepository.Save` → `UserException` دوستانه 409. **دیپلوی**: اسکریپت را قبل از release دستی اجرا شود | `Backend/Application/Authentication/AuthApplication.cs:198-218` |
 
 ---
 
@@ -235,7 +240,7 @@
 | **P2** ✅ | پرداخت کارت‌به‌کارت و کیف پول (طراحی جدید صاحب محصول) — **انجام شد (۱۴۰۵/۰۷)**: C3 + M25 حل؛ `BillingApplication` بازنویسی (`IssueTopUp`/`IssuePlanInvoice`/`GetInvoice`/`RegisterReceipt`/`SettleWallet`)، `payment-callback` حذف، جدول `Invoice` (`PaymentP2.sql`)، `BalanceStatus.Verifying`، `GetBalance` شامل Verifying، قاعده آستانه کیف پول (`WalletThresholdService`)، `ActivateUsers` روی همه Radius ها، فرانتند صفحه فاکتور/رسید/تسویه + `BILLING_API_URL` | `yarn build` سبز + تست‌های `BillingApplicationTest`/`BillingP2Test`/`WalletThresholdServiceTest` + سناریوها (شارژ با رسید، تمدید ناکافی با رسید → پلن فعال، تمدید کافی با تایید کیف پول) |
 | **P3** ✅ | احراز هویت و امنیت — **انجام شد (۱۴۰۵/۰۷)**: C6 + H1 + H12 + H5 + H6 + H7 + M13 + M14؛ `PasswordHasher` (PBKDF2) + برابرسازی زمان پاسخ login، CSPRNG، پاسخ generic در forget-pass + rate limiter قابل تنظیم (`RateLimitOptions`)، TTL کش دسترسی، چک مالکیت session، ذخیره VpnPassword، پاک‌سازی secret از لاگ SSH، anchor های `\A...\z` | تست‌های جدید `PasswordHasherTest`/`HashHandlerTest`/`InjectionRegexTest`/`CommandScrubberTest` + H6/H7 در تست‌های Application؛ `Account.sql` با ستون `VARCHAR(200)` و seed جدید |
 | **P4** ✅ | زیرساخت job و I/O — **انجام شد (۱۴۰۵/۰۷)**: H2 + H3 + H4 + M17 + M19 + M20 + M21 + M22؛ به‌روزرسانی ستون‌محور Account در job های موازی، dispose کامل scope ها + `DisallowConcurrentExecution` + misfire، حذف کامل `_ =`/`.Result`/`WaitAll` از مسیرهای prod (+ دو باگ خاموش MARS و FK-Issuer که آشکار و اصلاح شدند)، cache ۳۰s لیست سرورهای radius، موازی‌سازی فاز شبکه/MSSQL سینک ترافیک، timeout/keepalive روی SSH/tik4net (`ServerBridgeOptions`، بدون تغییر دیتابیس)، dispose/timeout ایمیل + کش template | job بدون هم‌پوشانی؛ بدون `.Result`/`WaitAll` در prod (تنها استثناها: برابرسازی زمان `AuthApplication:39` و `ServerEntityExtension:14`)؛ تست‌های جدید `ParallelMonitoring_WarningTimeAndInactiveBothApplied` و `SendResetPasswordLink_TemplateCachedAcrossInstances` |
-| **P5** | باقی موارد | همه M/L باقی‌مانده (M1-M12, M16, M23, M24, M26, M27, L1-L11) | quick-win های جداگانه |
+| **P5** ✅ | باقی موارد — **انجام شد (۱۴۰۵/۰۷)**: H10-H15 (بجز H12 از P3) + M6 + M7 + M8 + M10 + M11 + M12 + M16(ریسک پذیرفته‌شده) + M23 + M26 + M27 + L2 + L3 + L5 + L6 + L7(بررسی/تعیین دامنه) + L9 + L10 + L11؛ منسوخ‌های M9/L4 شناسایی و علامت خوردند؛ L8 defer تا فعال‌سازی RadiusDesk. بونوس: قاعده «ایمیل **یا** موبایل» فعال شد و دو تست شکسته از قبل (`Register_Success`, `ShouldNotBeEmpty`) سبز شدند | تست های جدید P5: `ServerConfigProtectionTest` (M12 — plaintext fallback، marker، round-trip، legacy read)، `HistoryContextTest` (H13 — تبدیل unix-ms)، `AuthAppTest.ResetPassword_*` (M10 — کد ناشناخته/منقضی/موفق)، `AccountMonitoringServiceTest.NotifSendServices_MissingAccount_SkipsWithoutThrow` (M7) + بازنویسی `PlanStateBusinessTest` برای آستانه M8. `Tests.csproj` سبز (۲۴۸ passed / 1 skipped) + `yarn build` سبز. **دیپلوی دستی**: `AccountUniqueIndexes.sql` (L11) و `Server.sql` (بخش ALTER ستون Config، M12) قبل از release؛ پوشه `data-protection-keys` در بکاپ گیرد |
 
 ## سوالات باز (پیش از شروع فاز مربوطه تعیین شود)
 
