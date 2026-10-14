@@ -24,6 +24,7 @@
 | 13 | [docs/13-xray-integration.md](13-xray-integration.md) | ادغام با Simorgh/x-ui: adapter جدید، منبع حقیقت، مدل ترافیک. |
 | 14 | [docs/14-defects-audit.md](14-defects-audit.md) | ممیزی نواقص/امنیت/پرفورمنس خارج از TODO با اولویت‌بندی P0–P5. |
 | 15 | [docs/15-payment-p2.md](15-payment-p2.md) | طراحی فاز P2: پرداخت کارت‌به‌کارت + رسید + کیف پول (تصمیمات، مدل داده، قرارداد API). |
+| 16 | [docs/16-multi-server-panel.md](16-multi-server-panel.md) | ثبت تصمیمات پنل چند-سرور: رنیم FreeRadius→RadiusDesk، الگوی dispatch کلید سوم x-ui، نگاشت هویت، چرخش UUID؛ بازها و probe. |
 
 ## Read this file when…
 
@@ -44,6 +45,7 @@
 | Understand the Xray/x-ui integration plan (Simorgh reuse) | [13-xray-integration](13-xray-integration.md) |
 | Find/prioritize a defect, security, or performance issue | [14-defects-audit](14-defects-audit.md) |
 | Implement/verify the P2 payment flow (card-to-card, receipt, wallet) | [15-payment-p2](15-payment-p2.md) |
+| Continue the multi-server panel / x-ui adapter work (D1-D4 decisions, open T1-T5) | [16-multi-server-panel](16-multi-server-panel.md) |
 
 ## Related legacy docs
 
