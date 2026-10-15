@@ -14,6 +14,8 @@
 
 زیرساخت مقصد (Simorgh): سرور داخل vm01.ir.arvan با x-ui (alireza0) v1.12.0 و Xray-core؛ یک inbound کاربر на 443 (VLESS + XHTTP + REALITY)؛ هر کاربر یک client UUID در همان inbound؛ پنل x-ui فقط روی loopback پشت nftables قابل دسترسی است.
 
+> **به‌روزرسانی ناوگان ۱۴۰۵/۰۷/۲۴ (۲۰۲۶-۱۰-۱۵):** vm01 اجرایی نیست. ناوگان زنده: **vm06.ir.parssafe** و **vm08.ir.parssafe** (ادامه‌ی state(vm07))، هر دو x-ui **v1.14.0**. قرارداد adapter (`XuiApiService`) دوباره از سورس v1.14.0 کد-تأیید شد — مسیرها و رفتار همه‌ی endpoint های مصرفی با v1.12.0 یکسان است (جزئیات: docs/17 §4). هدف probe و ثبت سرور: vm06/vm08.
+
 نگاشت مفاهیم برای adapter جدید:
 
 | مفهوم Radius (فعلی) | معادل x-ui (مقصد) |

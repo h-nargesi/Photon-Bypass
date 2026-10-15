@@ -11,7 +11,7 @@ namespace PhotonBypass.Test.Facts.Xui;
 
 /// <summary>
 /// Transport-level tests for <see cref="XuiApiService"/> against the
-/// alireza0/x-ui v1.12.0 contract: real paths, methods, headers, envelope
+/// alireza0/x-ui v1.12.0/v1.14.0 contract: real paths, methods, headers, envelope
 /// fields (success/msg/obj) and the two-layer inbound settings parse.
 /// </summary>
 public class XuiApiTransportTest

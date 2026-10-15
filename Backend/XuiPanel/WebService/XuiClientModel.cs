@@ -4,8 +4,9 @@ namespace PhotonBypass.Xui.WebService;
 
 /// <summary>
 /// x-ui client payload as carried inside the inbound `settings` JSON string.
-/// Contract code-verified from alireza0/x-ui v1.12.0 source
-/// (web/controller/inbound.go, database/model/model.go): `totalGB` is bytes
+/// Contract code-verified from the alireza0/x-ui source at tags v1.12.0 AND
+/// v1.14.0 (identical for every endpoint this panel uses — web/controller/api.go,
+/// web/controller/inbound.go, database/model/model.go): `totalGB` is bytes
 /// with 0 = unlimited, `expiryTime` is a unix-ms epoch with 0 = never
 /// (negative = start on first use), `id` is the client UUID. Statistics are
 /// keyed by email and survive UUID changes.
@@ -44,7 +45,8 @@ public class XuiClientTrafficModel
 
 /// <summary>
 /// One entry of `POST xui/API/inbounds/onlines`: the client email plus its
-/// online IPs mapped to the last-seen unix-ms timestamp.
+/// online IPs mapped to the last-seen unix timestamp (seconds per the
+/// v1.14.0 OpenAPI; the value is not interpreted by this panel).
 /// </summary>
 public class XuiOnlineClientModel
 {
