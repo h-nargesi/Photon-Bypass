@@ -38,7 +38,7 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
         return result?.Data?.Select(record => record.ToDictionary(k => k.Key, v => v.Value?.ToString())).ToArray() ?? [];
     }
 
-    private static async Task<ApiResult<T>?> CheckResponse<T>(HttpResponseMessage response, int state)
+    protected static async Task<ApiResult<T>?> CheckResponse<T>(HttpResponseMessage response, int state)
     {
         var content = await response.Content.ReadAsStringAsync();
 

@@ -7,9 +7,8 @@ import {
   ApiParam,
   AUTH_API_URL,
 } from '../@services';
-import { RegisterComponent } from './register.component';
 
-@Injectable({ providedIn: RegisterComponent })
+@Injectable({ providedIn: 'root' })
 export class RegisterService extends ApiBaseService {
   fullInfo(target?: string): Observable<FullUserModel> {
     const param = target ? { target } as ApiParam : undefined;

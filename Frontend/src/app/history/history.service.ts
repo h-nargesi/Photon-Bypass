@@ -2,9 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HistoryRecord } from '../@models';
 import { ACCOUNT_API_URL, ApiBaseService, ApiParam } from '../@services';
-import { HistoryComponent } from './history.component';
 
-@Injectable({ providedIn: HistoryComponent })
+@Injectable({ providedIn: 'root' })
 export class HistoryService extends ApiBaseService {
   load(
     target?: string,

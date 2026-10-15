@@ -13,9 +13,8 @@ import {
   PLAN_API_URL,
   VPN_API_URL,
 } from '../@services';
-import { DashboardComponent } from './dashboard.component';
 
-@Injectable({ providedIn: DashboardComponent })
+@Injectable({ providedIn: 'root' })
 export class DashboardService extends ApiBaseService {
   sendCertificateViaEmail(target?: string): Observable<ApiResult> {
     return this.call(`${VPN_API_URL}/send-cert-email`, target ? { target } as ApiParam : undefined, {

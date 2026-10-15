@@ -76,7 +76,6 @@ export class HistoryComponent implements AfterViewInit {
     'category',
     'title',
     'value',
-    'price',
   ];
   dataSource!: MatTableDataSource<HistoryRecord>;
   

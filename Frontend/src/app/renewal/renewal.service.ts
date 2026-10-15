@@ -14,9 +14,8 @@ import {
   BASICS_API_URL,
   PLAN_API_URL,
 } from '../@services';
-import { RenewalComponent } from './renewal.component';
 
-@Injectable({ providedIn: RenewalComponent })
+@Injectable({ providedIn: 'root' })
 export class RenewalService extends ApiBaseService {
   info(target?: string): Observable<PlanInfo> {
     return this.getData<PlanInfo>(`${PLAN_API_URL}/plan-info`, target ? { target } as ApiParam : undefined);

@@ -3,6 +3,7 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Portal.Context;
+using PhotonBypass.Result;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockServerBridge;
 using System.Net.Http.Json;
@@ -159,6 +160,34 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
     {
         var response = await Client.GetAsync($"/api/billing/get-invoice?code={code}");
         return await CheckResponseObject(response, status);
+    }
+
+    protected async Task<ApiResult> RegisterReceipt(
+        int code,
+        byte[]? file = null,
+        string? file_name = null,
+        string? content_type = null,
+        string? text = null,
+        string? target = null,
+        int status = 2)
+    {
+        using var form = new MultipartFormDataContent();
+
+        form.Add(new StringContent(code.ToString()), "code");
+
+        if (target != null) form.Add(new StringContent(target), "target");
+        if (text != null) form.Add(new StringContent(text), "text");
+
+        if (file is { Length: > 0 })
+        {
+            var file_content = new ByteArrayContent(file);
+            file_content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(
+                content_type ?? "application/octet-stream");
+            form.Add(file_content, "file", file_name ?? "receipt.jpg");
+        }
+
+        var response = await Client.PostAsync("/api/billing/register-receipt", form);
+        return (await CheckResponse<object>(response, status))!;
     }
 
     protected async Task SettleWallet(int code, int status = 2)

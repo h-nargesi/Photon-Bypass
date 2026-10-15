@@ -124,6 +124,8 @@ export class ChangePasswordComponent {
   submit() {
     if (!this.onValidate()) return;
 
+    this.model = { ...this.model, ...this.form.value } as PasswordToken;
+
     if (this.mode === PageMode.ovpn) {
       (this.model as OvpnPasswordToken).target = this.user_service.targetName;
     }

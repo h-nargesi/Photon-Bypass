@@ -2,9 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { PaymentInvoice, ShowMessageCase } from '../@models';
 import { ApiBaseService, BILLING_API_URL } from '../@services';
-import { PaymentComponent } from './payment.component';
 
-@Injectable({ providedIn: PaymentComponent })
+@Injectable({ providedIn: 'root' })
 export class PaymentService extends ApiBaseService {
   getInvoice(code: number, target?: string): Observable<PaymentInvoice | null> {
     return this.getData<PaymentInvoice>(`${BILLING_API_URL}/get-invoice`, {

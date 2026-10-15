@@ -17,4 +17,8 @@
 		<ProjectReference Include="..\Tik4net\tik4net.objects\tik4net.objects.csproj" />
     </ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Tests" />
+	</ItemGroup>
+
 </Project>

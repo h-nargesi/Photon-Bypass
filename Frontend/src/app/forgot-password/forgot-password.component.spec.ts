@@ -1,23 +1,98 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { Router, provideRouter } from '@angular/router';
+import { ResultStatus } from '../@models';
+import { API_BASE_URL } from '../@services/api-services/models/app-base-path';
 import { ForgotPasswordComponent } from './forgot-password.component';
 
-describe('ForgetPasswordComponent', () => {
+@Component({ template: '' })
+class DummyComponent {}
+
+describe('ForgotPasswordComponent', () => {
+  let http: HttpTestingController;
+  let router: Router;
   let component: ForgotPasswordComponent;
-  let fixture: ComponentFixture<ForgotPasswordComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ForgotPasswordComponent]
-    })
-    .compileComponents();
-
-    fixture = TestBed.createComponent(ForgotPasswordComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        provideRouter([
+          { path: 'forgot-password', component: ForgotPasswordComponent },
+          { path: 'login', component: DummyComponent },
+        ]),
+        { provide: API_BASE_URL, useValue: '/api' },
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+    router = TestBed.inject(Router);
+    component = TestBed.createComponent(ForgotPasswordComponent).componentInstance;
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  afterEach(() => {
+    http.verify();
+    localStorage.clear();
   });
+
+  it('requires a valid email before sending anything', () => {
+    component.submit();
+
+    expect(component.submitted).toBeTrue();
+    http.expectNone(
+      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
+    );
+
+    component.getEmailMobile().setValue('not-an-email');
+    component.submit();
+
+    http.expectNone(
+      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
+    );
+  });
+
+  it('sends the address to the reset endpoint and navigates to login', fakeAsync(() => {
+    component.getEmailMobile().setValue('user@test.local');
+
+    component.submit();
+
+    const request = http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
+    );
+    expect(request.request.body).toEqual({ emailMobile: 'user@test.local' });
+
+    request.flush(
+      { code: 200, message: 'ایمیل بازیابی ارسال شد' },
+      { status: 200, statusText: 'OK' },
+    );
+
+    expect(component.result?.status()).toBe(ResultStatus.success);
+
+    tick(1000);
+    expect(router.url).toBe('/login');
+  }));
+
+  it('an unknown address shows the server message and stays', fakeAsync(() => {
+    component.getEmailMobile().setValue('ghost@test.local');
+
+    component.submit();
+
+    http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
+    ).flush(
+      { code: 400, message: 'کاربری با این ایمیل یافت نشد!' },
+      { status: 200, statusText: 'OK' },
+    );
+
+    expect(component.result?.status()).toBe(ResultStatus.error);
+    expect(component.result?.message).toBe('کاربری با این ایمیل یافت نشد!');
+
+    tick(1000);
+    expect(router.url).not.toBe('/login');
+  }));
 });
