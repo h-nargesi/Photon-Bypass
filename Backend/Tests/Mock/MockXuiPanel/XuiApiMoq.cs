@@ -11,6 +11,8 @@ internal class XuiApiMoq : Mock<IXuiApi>, IUnitLevelService
 {
     public List<XuiClientModel> Clients { get; } = [];
 
+    public List<XuiOnlineClientModel> OnlineClients { get; } = [];
+
     public Dictionary<string, (long Up, long Down)> Counters { get; } = [];
 
     public List<string> Calls { get; } = [];
@@ -28,6 +30,9 @@ internal class XuiApiMoq : Mock<IXuiApi>, IUnitLevelService
                 Down = pair.Value.Down,
             }).ToList()));
 
+        Setup(api => api.ListOnlineClients(It.IsAny<ServerEntity>()))
+            .Returns<ServerEntity>(_ => Task.FromResult(OnlineClients.Select(Clone).ToList()));
+
         Setup(api => api.GetClient(It.IsAny<ServerEntity>(), It.IsAny<string>()))
             .Returns<ServerEntity, string>((_, email) => Task.FromResult(
                 Clients.FirstOrDefault(client => client.Email == email) is { } found ? Clone(found) : null));
@@ -41,12 +46,12 @@ internal class XuiApiMoq : Mock<IXuiApi>, IUnitLevelService
             })
             .Returns(Task.CompletedTask);
 
-        Setup(api => api.UpdateClient(It.IsAny<ServerEntity>(), It.IsAny<XuiClientModel>()))
-            .Callback<ServerEntity, XuiClientModel>((_, client) =>
+        Setup(api => api.UpdateClient(It.IsAny<ServerEntity>(), It.IsAny<string>(), It.IsAny<XuiClientModel>()))
+            .Callback<ServerEntity, string, XuiClientModel>((_, currentUuid, client) =>
             {
                 Calls.Add($"update:{client.Email}");
 
-                var index = Clients.FindIndex(existing => existing.Email == client.Email);
+                var index = Clients.FindIndex(existing => existing.Uuid == currentUuid);
 
                 if (index >= 0)
                 {
@@ -56,10 +61,14 @@ internal class XuiApiMoq : Mock<IXuiApi>, IUnitLevelService
             .Returns(Task.CompletedTask);
 
         Setup(api => api.RemoveClient(It.IsAny<ServerEntity>(), It.IsAny<string>()))
-            .Callback<ServerEntity, string>((_, email) =>
+            .Callback<ServerEntity, string>((_, uuid) =>
             {
+                var email = Clients.FirstOrDefault(client => client.Uuid == uuid)?.Email;
+
+                if (email == null) return;
+
                 Calls.Add($"remove:{email}");
-                Clients.RemoveAll(client => client.Email == email);
+                Clients.RemoveAll(client => client.Uuid == uuid);
                 Counters.Remove(email);
             })
             .Returns(Task.CompletedTask);
@@ -90,6 +99,11 @@ internal class XuiApiMoq : Mock<IXuiApi>, IUnitLevelService
             ExpiryTime = client.ExpiryTime,
             LimitIp = client.LimitIp,
         };
+    }
+
+    private static XuiOnlineClientModel Clone(XuiOnlineClientModel client)
+    {
+        return new XuiOnlineClientModel { Email = client.Email, Ips = new Dictionary<string, long>(client.Ips) };
     }
 
     public static void CreateInstance(IServiceCollection services)

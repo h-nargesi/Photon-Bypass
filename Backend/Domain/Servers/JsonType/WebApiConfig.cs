@@ -14,6 +14,10 @@ public class WebApiConfig
 
     public bool Ssl { get; set;  }
 
+    public string? BasePath { get; set; }
+
+    public int? InboundId { get; set; }
+
     [JsonIgnore]
     public string HttpsUrl => $"https://{HostName}{(Port.HasValue ? $":{Port}" : "")}";
 }

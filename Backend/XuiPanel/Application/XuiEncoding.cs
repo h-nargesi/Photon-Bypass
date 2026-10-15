@@ -5,8 +5,10 @@ namespace PhotonBypass.Xui.Application;
 
 /// <summary>
 /// Field encodings for the x-ui client payload (docs/16 D13, docs/17):
-/// per-renewal enforcement pushes a full new quota with a counter reset,
-/// expiry is "now + days" and null means "never" (encoding pending the vm01 probe).
+/// per-renewal enforcement pushes a full new quota with a counter reset.
+/// Contract code-verified from alireza0/x-ui v1.12.0 source: `totalGB` is
+/// bytes (0 = unlimited), `expiryTime` is a unix-ms epoch where 0 = never,
+/// `limitIp` maps SimultaneousUser.
 /// </summary>
 public static class XuiEncoding
 {
@@ -17,16 +19,16 @@ public static class XuiEncoding
             Email = email,
             Uuid = uuid,
             Enable = true,
-            TotalTrafficBytes = renewal.TrafficLimit,
+            TotalTrafficBytes = renewal.TrafficLimit ?? 0,
             ExpiryTime = ToExpiryTime(renewal.TimeLimitInDays),
             LimitIp = renewal.SimultaneousUser,
         };
     }
 
-    public static long? ToExpiryTime(short? time_limit_in_days)
+    public static long ToExpiryTime(short? time_limit_in_days)
     {
         return time_limit_in_days.HasValue
             ? new DateTimeOffset(DateTime.Now.AddDays(time_limit_in_days.Value)).ToUnixTimeMilliseconds()
-            : null;
+            : 0;
     }
 }

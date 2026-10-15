@@ -1,6 +1,6 @@
 # docs/17-xui-traffic.md — مدل ترافیک و گزارش x-ui: تصمیمات جلسات ۲۰۲۶-۱۰-۱۵
 
-> **English summary**: Decision record closing **T1 (x-ui traffic data model)** and **T2 (quota/expiry enforcement)** from docs/16, through two owner dialogues on 2026-10-15. Decided: **D5** delta-row traffic model (per-day rows in `TrafficData`, view computes period totals); **D6 (revised)** the counter anchor lives on `Renewal` as nullable columns (`LastSeenCounter`, `LastPollTime`) — no separate table; **D7** zero rows as liveness proof; **D8** multi-day gap distribution (weights = historical daily average, else uniform; epoch during gap = no fabricated history); **D9** reuse the existing renewal transaction pattern; **D10** manual x-ui edits destroy cumulative truth — epoch alarm is the detector; **D11** period total exact, daily split approximate (amended by D14); **D12** reset-at-renewal is part of the enforcement protocol; **D13 — T2 CLOSED** enforcement is **server-side** (x-ui `total`/`expiry`/`limitIp` pushed per renewal, panel does warnings + reconciliation only, **no watchdog in the collector** — this explicitly overrides docs/16 §3's "panel-only" default); **D14** `Renewal.TrafficUsed` (accumulating, sole-writer-disciplined) is the decision source of truth for x-ui realms, `TrafficData` stays display/audit. Implemented this session: schema (`RenewalTrafficState.sql` incl. `SessionId` widening to `VARCHAR(64)`), `TotalPlanState` zero-row `LastConnectTime` patch, the `XuiPanel` project skeleton with central Features→key dispatch (D2), the mocked-contract `IXuiApi`/`XuiApiService`, the `XuiTrafficCollector` Quartz job, and the per-dataplane `IPlanUsageReader` decision reads. Probe on vm01 (docs/16 §4, matrix below) still gates the real API contract.
+> **English summary**: Decision record closing **T1 (x-ui traffic data model)** and **T2 (quota/expiry enforcement)** from docs/16, through two owner dialogues on 2026-10-15. Decided: **D5** delta-row traffic model (per-day rows in `TrafficData`, view computes period totals); **D6 (revised)** the counter anchor lives on `Renewal` as nullable columns (`LastSeenCounter`, `LastPollTime`) — no separate table; **D7** zero rows as liveness proof; **D8** multi-day gap distribution (weights = historical daily average, else uniform; epoch during gap = no fabricated history); **D9** reuse the existing renewal transaction pattern; **D10** manual x-ui edits destroy cumulative truth — epoch alarm is the detector; **D11** period total exact, daily split approximate (amended by D14); **D12** reset-at-renewal is part of the enforcement protocol; **D13 — T2 CLOSED** enforcement is **server-side** (x-ui `total`/`expiry`/`limitIp` pushed per renewal, panel does warnings + reconciliation only, **no watchdog in the collector** — this explicitly overrides docs/16 §3's "panel-only" default); **D14** `Renewal.TrafficUsed` (accumulating, sole-writer-disciplined) is the decision source of truth for x-ui realms, `TrafficData` stays display/audit. Implemented in the first session: schema (`RenewalTrafficState.sql` incl. `SessionId` widening to `VARCHAR(64)`), `TotalPlanState` zero-row `LastConnectTime` patch, the `XuiPanel` project skeleton with central Features→key dispatch (D2), the `XuiTrafficCollector` Quartz job, and the per-dataplane `IPlanUsageReader` decision reads. In a follow-up session (2026-10-15) `XuiApiService`/`IXuiApi`/`XuiClientModel` were **rewritten against the alireza0/x-ui v1.12.0 contract as code-verified from the official source** (`xui/API/inbounds/...` paths, uuid-keyed update/del, `msg`/`obj` envelope, two-layer `settings`, explicit `WebApiConfig.InboundId`, `onlines`, 401→re-login retry); a live vm01 probe (fetch `xui/API/openapi.json`, matrix below) still gates activation.
 
 ادامه‌ی مستقیم [docs/16](16-multi-server-panel.md) (جلسه‌ی ۱۴۰۵/۰۷/۲۲ + مکمل ۲۰۲۶-۱۰-۱۴). این سند T1 و T2 را می‌بندد و قواعد بهره‌برداری پیرامون آن‌ها را ثبت می‌کند.
 
@@ -88,26 +88,28 @@ reset در تمدید = بخشی از پروتکل enforcement (D13)، نه به
 - **کلاینت ناشناس** در پنل x-ui → skip + لاگ (سیگنال آشتی‌دهی)؛ حذف/غیرفعال‌سازی فقط کلاینت‌های «شبه‌نام‌کاربری پنل» را لمس می‌کند (`AccountBusiness.UsernamePattern`) تا کلاینت‌های دستی دیگران روی پنل اختصاصی دست نخورند.
 - **`ChangeVpnPassword` برای x-ui فعلاً `NotImplementedException`** می‌اندازد: چرخش UUID (D4) تا پیش از تغییر قرارداد «بازگرداندن credential مؤثر» (تا `VpnApplication` مقدار بازگشتی را در `VpnPassword` ذخیره کند) نباید روشن شود؛ وگرنه mapping می‌شکند.
 
-## ۴. ماتریس probe روی vm01 (بلوکر قرارداد واقعی API)
+## ۴. ماتریس probe روی vm01 (تأیید نهایی قرارداد پیش از ثبت سرور)
 
-| عملیات | سؤال دقیق | حدس فعلی (کد شده در `XuiApiService`، همه منوط به probe) |
+قرارداد زیر از سورس رسمی `alireza0/x-ui` tag **v1.12.0** کد-تأیید شده و در `XuiApiService` پیاده شده است (جلسه‌ی ۲۰۲۶-۱۰-۱۵، دومی). probe زنده‌ی vm01 فقط تطبیق نسخه‌ی نصب‌شده را قفل می‌کند: fetch `xui/API/openapi.json` + تست کلاینت تستی، پیش از ثبت سرور.
+
+| عملیات | سؤال دقیق | پاسخ کد-تأییدشده از سورس v1.12.0 |
 | --- | --- | --- |
-| login/session | endpoint، کوکی نشست، TTL، 401 | `POST /login`؛ Set-Cookie؛ خطای session → re-login |
-| listInbounds + آمار | فیلدهای per-client up/down/total؛ ساختار settings/clientStats | `POST /panel/api/inbounds/list`؛ پارس `clientStats` |
-| addClient | بدنه، inbound مقصد (اولین inbound؟) | `POST /panel/api/inbounds/addClient` |
-| updateClient + **رفتار شمارنده هنگام تغییر UUID** | آیا `updateClient` شمارنده‌ها را نگه می‌دارد؟ (پاسخ = کلید شاخه‌ی چرخش D13) | `POST /panel/api/inbounds/updateClient/{email}` |
-| delClient | مسیر، رفتار آمار | `POST /panel/api/inbounds/{id}/delClient/{email}` |
-| resetClientTraffic per-client | همان دکمه‌ی reset؟ Xray را ری‌استارت می‌کند؟ | `POST /panel/api/inbounds/{id}/resetClientTraffic/{email}` |
-| counter-SET | آیا API برای *ستکردن* شمارنده هست؟ (وگرنه fallback کوچک‌سازی total) | — |
-| وضعیت آنلاین | قابل دریافت است؟ (الان `GetActiveConnections` → `[]`) | — |
-| `total` | بایت؟ 0=نامحدود؟ رفتار اتمام (قطع دقیق؟ disable یا delete؟) | bytes؛ NULL=نامحدود در مدل |
-| `expiry` | timestamp یا روز؟ 0=هرگز؟ | ms-epoch؛ NULL=هرگز |
+| login/session | endpoint، کوکی نشست، TTL، 401 | `POST {webBasePath}login` با JSON `{username,password}`؛ پاسخ **همیشه HTTP 200** با `{success,msg,obj}` — موفقیت فقط از `success`؛ کوکی نشست نام `x-ui` با `Path=basePath`؛ انقضای سشن فقط با هدر `X-Requested-With: XMLHttpRequest` → **401 JSON**، وگرنه 307 redirect به HTML لاگین؛ کلاینت: 401 → پاک‌کردن کوکی → یک re-login + retry |
+| listInbounds + آمار | فیلدهای per-client up/down/total؛ ساختار settings/clientStats | **`GET xui/API/inbounds/`** (نه POST list)؛ `id` عددی int؛ کلاینت‌ها داخل فیلد `settings` که خودش **JSON string** است (parse دوطبقه: `settings→clients[]`)؛ آمار در `clientStats[]` با `email, up, down, total, expiryTime, enable, reset, inboundId` |
+| addClient | بدنه، inbound مقصد | `POST xui/API/inbounds/addClient` بدنه `{id, settings}`؛ `id` **فقط صریح از کانفیگ** (`WebApiConfig.InboundId`) — «اولین inbound» روی سرور چند-inbound (کاربران 443 + carrier 8443) اشتباه است |
+| updateClient + **رفتار شمارنده هنگام تغییر UUID** | آیا `updateClient` شمارنده‌ها را نگه می‌دارد؟ | `POST xui/API/inbounds/updateClient/{uuid-فعلی}`؛ شمارنده‌ها **keyed-by-email** هستند ⇒ تغییر UUID شمارنده‌ها را حفظ می‌کند — پایه‌ی drift-safe بودن کلید UUID و شاخه‌ی چرخش D13 (رویداد غیرترافیکی) |
+| delClient | مسیر، رفتار آمار | `POST xui/API/inbounds/{id}/delClient/{uuid}` — کلید **UUID** است |
+| resetClientTraffic per-client | همان دکمه‌ی reset؟ | `POST xui/API/inbounds/{id}/resetClientTraffic/{email}` — تنها عملیات کلیدخورده با **email** |
+| counter-SET | آیا API برای *ستکردن* شمارنده هست؟ | نیست — reset-at-renewal (D12/D13) همان reset per-client است |
+| وضعیت آنلاین | قابل دریافت است؟ | بله: `POST xui/API/inbounds/onlines` → `obj: [{email, ips: {ip: lastSeenMs}}]`؛ متصل شد به `GetActiveConnections` (نگاشت IP→`UserConnectionBinding`) |
+| `total` | بایت؟ 0=نامحدود؟ | فیلد `totalGB` = **بایت** (با وجود نام)؛ **0 = نامحدود**؛ «نامحدود» باید صریح 0 سریالایز شود |
+| `expiry` | timestamp یا روز؟ 0=هرگز؟ | فیلد `expiryTime` = **ms-epoch**؛ **0 = هرگز**؛ **منفی = فعال‌شدن از اولین مصرف** |
 | `limitIp` | نگاشت `SimultaneousUser` | مستقیم |
-| rate-limit | وجود دارد؟ (انتظار: **نه** — شکاف قابلیت نسبت به Radius) | — |
-| flush آمار | فاصله‌ی flush شمارنده‌ها (پارامتر کرانس کلکتور) | — |
-| restart-on-update | آیا add/update کلاینت Xray را ری‌استارت می‌کند؟ (throttle در D4) | — |
+| rate-limit | وجود دارد؟ | **نه** (شکاف قابلیت نسبت به Radius) |
+| flush آمار | فاصله‌ی flush شمارنده‌ها | شمارنده‌های panel DB هر ~۱۰s flush می‌شوند؛ کرانس ۵دقیقه‌ای کلکتور امن است (بدون تغییر) |
+| restart-on-update | آیا add/update کلاینت Xray را ری‌استارت می‌کند؟ | باقی‌مانده برای probe زنده (مربوط به throttle در D4) |
 
-نتایج → فایل method در Simorgh `docs/methods/` و تعویض قرارداد mock در `XuiApiService` (task 7).
+نتایج probe زنده → فایل method در Simorgh `docs/methods/` (طبق قواعد آن repo، فقط بعد از اجرا).
 
 ## ۵. ثبت مسائل باز
 
@@ -132,10 +134,11 @@ reset در تمدید = بخشی از پروتکل enforcement (D13)، نه به
 | batch repoها | `IRenewalRepository.GetLatestByAccountIds`، `ITrafficDataRepository.{Fetch(nas,sessionIds), GetLastNasId}`، `IRealmRepository.TryLockTrafficSync(ids, threshold)` |
 | خوانش تصمیم per-dataplane (D14) | `IPlanUsageReader`/`PlanUsageReader` + بازسیم‌کشی `VpnApplication.SendCertEmail`، `AccountMonitoringService.InactiveAbandonedUsers`، `PlanApplication.Renewal` |
 | تست‌ها | `Tests/Facts/Xui/{XuiTrafficAccountingTest, XuiAccountSyncTest, XuiTrafficSyncTest, PlanUsageReaderTest}` + mockهای `XuiApiMoq`، `RenewalRepositoryMoq.GetLatestByAccountIds`، `TrafficDataRepositoryMoq` (با undo تراکنشی)، `RealmRepositoryMoq` |
+| **جلسه‌ی دوم ۲۰۲۶-۱۰-۱۵: بازنویسی قرارداد API طبق سورس v1.12.0** | `WebApiConfig.{BasePath,InboundId}`؛ `XuiClientModel` (کدگذاری `totalGB`/`expiryTime` با 0)، `XuiOnlineClientModel`؛ `IXuiApi` (update/del با UUID فعلی، `ListOnlineClients`)؛ `XuiApiService` (مسیرهای `xui/API/...`، پاکت `msg/obj`، parse دوطبقه، هدر AJAX، 401→re-login یک‌باره)؛ syncها uuid-keyed + `GetActiveConnections` از onlines؛ `XuiEncoding.ToExpiryTime→long`؛ تست‌های `XuiApiTransportTest` + `XuiSessionSyncTest` |
 
 ## ۷. ترتیب باقی‌مانده
 
-1. **Probe روی vm01** (§۴) — نتایج قرارداد واقعی را قفل می‌کند؛ سپس تعویض `XuiApiService` mock.
+1. **تأیید زنده‌ی vm01** (§۴) — قرارداد از سورس v1.12.0 کد-تأیید و در `XuiApiService` پیاده شد؛ probe (fetch `xui/API/openapi.json` + تست کلاینت تستی) فقط تطبیق نسخه‌ی نصب‌شده را قفل می‌کند و پیش‌نیاز ثبت سرور vm01 است.
 2. D1 رنیم `FreeRadius`→`RadiusDesk` (مکانیکی، هر زمان).
 3. T3/T4 + شاخه‌های فرانت (نمایش kind دیتاپلین؛ مخفی‌کردن دکمه‌ی پسورد برای x-ui تا D4 کامل شود).
 4. D4 کامل: تغییر قرارداد بازگرداندن credential مؤثر + چرخش UUID + throttle.

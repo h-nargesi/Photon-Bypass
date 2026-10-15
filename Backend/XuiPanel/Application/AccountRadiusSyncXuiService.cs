@@ -17,9 +17,15 @@ public class AccountRadiusSyncXuiService(
 
     public async Task RemoveUsers(ServerEntity radius, IEnumerable<string> usernames)
     {
-        foreach (var username in usernames.Where(IsManagedClient))
+        var target_set = usernames.Where(IsManagedClient).ToHashSet();
+
+        if (target_set.Count == 0) return;
+
+        var clients = await Api.Value.ListClients(radius);
+
+        foreach (var client in clients.Where(client => target_set.Contains(client.Email)))
         {
-            await Api.Value.RemoveClient(radius, username);
+            await Api.Value.RemoveClient(radius, client.Uuid);
         }
     }
 
@@ -33,7 +39,7 @@ public class AccountRadiusSyncXuiService(
         {
             client.Enable = false;
 
-            await Api.Value.UpdateClient(radius, client);
+            await Api.Value.UpdateClient(radius, client.Uuid, client);
         }
     }
 
@@ -50,7 +56,7 @@ public class AccountRadiusSyncXuiService(
 
             client.Enable = false;
 
-            await Api.Value.UpdateClient(radius, client);
+            await Api.Value.UpdateClient(radius, client.Uuid, client);
         }
     }
 
@@ -67,7 +73,7 @@ public class AccountRadiusSyncXuiService(
 
             client.Enable = true;
 
-            await Api.Value.UpdateClient(radius, client);
+            await Api.Value.UpdateClient(radius, client.Uuid, client);
         }
     }
 
@@ -85,7 +91,10 @@ public class AccountRadiusSyncXuiService(
         }
         else
         {
-            await Api.Value.UpdateClient(radius, XuiEncoding.BuildClient(account.Username, uuid, renewal));
+            // Key by the UUID currently live in the panel: statistics are keyed
+            // by email, so the update preserves up/down counters even when the
+            // UUID drifts from the database (docs/17 D13 UUID-rotation branch).
+            await Api.Value.UpdateClient(radius, client.Uuid, XuiEncoding.BuildClient(account.Username, uuid, renewal));
         }
 
         await Api.Value.ResetClientTraffic(radius, account.Username);

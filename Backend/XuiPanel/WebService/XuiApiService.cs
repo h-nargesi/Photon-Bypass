@@ -1,8 +1,8 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.JsonType;
 
@@ -10,24 +10,30 @@ namespace PhotonBypass.Xui.WebService;
 
 class XuiApiService(IHttpClientFactory factory) : IXuiApi
 {
+    private const string AjaxHeader = "XMLHttpRequest";
+
+    private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
+
     private readonly Dictionary<int, string> session_cookies = [];
 
     public async Task<List<XuiClientModel>> ListClients(ServerEntity server)
     {
-        var inbounds = await ListInbounds(server);
+        var inbound = await GetManagedInbound(server);
 
-        return inbounds.SelectMany(inbound => inbound.Clients ?? [])
-            .Select(client => client.ToModel())
-            .ToList();
+        return ParseClients(inbound, server);
     }
 
     public async Task<List<XuiClientTrafficModel>> ListClientTraffic(ServerEntity server)
     {
-        var inbounds = await ListInbounds(server);
+        var inbound = await GetManagedInbound(server);
 
-        return inbounds.SelectMany(inbound => inbound.ClientStats ?? [])
-            .Select(stats => stats.ToModel())
-            .ToList();
+        return [.. (inbound.ClientStats ?? []).Select(stats => stats.ToModel())];
+    }
+
+    public async Task<List<XuiOnlineClientModel>> ListOnlineClients(ServerEntity server)
+    {
+        return await PostAsync<List<XuiOnlineClientModel>>(server, "xui/API/inbounds/onlines", null)
+               ?? [];
     }
 
     public async Task<XuiClientModel?> GetClient(ServerEntity server, string email)
@@ -39,106 +45,130 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
 
     public async Task AddClient(ServerEntity server, XuiClientModel client)
     {
-        var inbound_id = await GetManagedInboundId(server);
+        await PostAsync(server, "xui/API/inbounds/addClient", BuildClientBody(server, client));
+    }
 
-        await PostAsync(server, "panel/api/inbounds/addClient", new
+    public async Task UpdateClient(ServerEntity server, string currentUuid, XuiClientModel client)
+    {
+        await PostAsync(server, $"xui/API/inbounds/updateClient/{currentUuid}", BuildClientBody(server, client));
+    }
+
+    public async Task RemoveClient(ServerEntity server, string uuid)
+    {
+        var inbound_id = GetConfiguredInboundId(server);
+
+        await PostAsync(server, $"xui/API/inbounds/{inbound_id}/delClient/{uuid}", null);
+    }
+
+    public async Task ResetClientTraffic(ServerEntity server, string email)
+    {
+        var inbound_id = GetConfiguredInboundId(server);
+
+        await PostAsync(server, $"xui/API/inbounds/{inbound_id}/resetClientTraffic/{email}", null);
+    }
+
+    private static object BuildClientBody(ServerEntity server, XuiClientModel client)
+    {
+        return new
         {
-            id = inbound_id,
-            settings = SerializeSettings(client),
-        });
+            id = GetConfiguredInboundId(server),
+            settings = JsonSerializer.Serialize(new XuiSettingsBody { Clients = [client] }, WebJson),
+        };
     }
 
-    public async Task UpdateClient(ServerEntity server, XuiClientModel client)
+    private static int GetConfiguredInboundId(ServerEntity server)
     {
-        var inbound_id = await GetManagedInboundId(server);
+        var config = GetWebApiConfig(server);
 
-        await PostAsync(server, $"panel/api/inbounds/updateClient/{client.Email}", new
-        {
-            id = inbound_id,
-            settings = SerializeSettings(client),
-        });
+        return config.InboundId ?? throw new Exception(
+            $"The x-ui inbound id is not configured for server ({server.Id}:{server.Name}); " +
+            "WebApiConfig.InboundId must point at the inbound that owns the managed clients.");
     }
 
-    public Task RemoveClient(ServerEntity server, string email)
+    private async Task<XuiInboundBody> GetManagedInbound(ServerEntity server)
     {
-        return PostWithManagedInboundAsync(server,
-            inbound_id => $"panel/api/inbounds/{inbound_id}/delClient/{email}");
-    }
+        var inbound_id = GetConfiguredInboundId(server);
 
-    public Task ResetClientTraffic(ServerEntity server, string email)
-    {
-        return PostWithManagedInboundAsync(server,
-            inbound_id => $"panel/api/inbounds/{inbound_id}/resetClientTraffic/{email}");
-    }
-
-    private static string SerializeSettings(XuiClientModel client)
-    {
-        return JsonSerializer.Serialize(new XuiSettingsBody { Clients = [XuiClientBody.FromModel(client)] });
-    }
-
-    private async Task PostWithManagedInboundAsync(ServerEntity server, Func<string, string> build_path)
-    {
-        var inbound_id = await GetManagedInboundId(server);
-
-        await PostAsync(server, build_path(inbound_id), null);
-    }
-
-    private async Task<string> GetManagedInboundId(ServerEntity server)
-    {
         var inbounds = await ListInbounds(server);
 
-        return inbounds.FirstOrDefault()?.Id ??
-               throw new Exception($"No x-ui inbound is configured on server ({server.Id}:{server.Name}).");
+        return inbounds.FirstOrDefault(inbound => inbound.Id == inbound_id)
+               ?? throw new Exception(
+                   $"The configured x-ui inbound ({inbound_id}) does not exist on server " +
+                   $"({server.Id}:{server.Name}); available inbound ids: " +
+                   $"[{string.Join(", ", inbounds.Select(inbound => inbound.Id))}].");
     }
 
-    private async Task<List<XuiInboundResponse>> ListInbounds(ServerEntity server)
+    private static List<XuiClientModel> ParseClients(XuiInboundBody inbound, ServerEntity server)
     {
-        var payload = await PostAsync<XuiInboundResponse[]>(server, "panel/api/inbounds/list", null);
+        if (string.IsNullOrWhiteSpace(inbound.Settings))
+        {
+            return [];
+        }
+
+        XuiSettingsBody? settings;
+
+        try
+        {
+            settings = JsonSerializer.Deserialize<XuiSettingsBody>(inbound.Settings, WebJson);
+        }
+        catch (JsonException error)
+        {
+            throw new Exception(
+                $"The x-ui inbound settings could not be parsed: (server={server.Name}, inbound-id={inbound.Id})",
+                error);
+        }
+
+        return [.. settings?.Clients ?? []];
+    }
+
+    private async Task<List<XuiInboundBody>> ListInbounds(ServerEntity server)
+    {
+        var payload = await GetAsync<XuiInboundBody[]>(server, "xui/API/inbounds/");
 
         return [.. payload ?? []];
     }
 
+    private async Task<T?> GetAsync<T>(ServerEntity server, string path)
+    {
+        using var response = await SendAsync(server, HttpMethod.Get, path, null);
+
+        return await ReadEnvelopeAsync<T>(response, server, path);
+    }
+
+    private async Task PostAsync(ServerEntity server, string path, object? body)
+    {
+        using var response = await SendAsync(server, HttpMethod.Post, path, body);
+
+        await ReadEnvelopeAsync<object>(response, server, path);
+    }
+
     private async Task<T?> PostAsync<T>(ServerEntity server, string path, object? body)
     {
-        var response = await SendAsync(server, path, body);
+        using var response = await SendAsync(server, HttpMethod.Post, path, body);
 
+        return await ReadEnvelopeAsync<T>(response, server, path);
+    }
+
+    private static async Task<T?> ReadEnvelopeAsync<T>(HttpResponseMessage response, ServerEntity server, string path)
+    {
         var envelope = await response.Content.ReadFromJsonAsync<XuiResponseEnvelope<T>>()
                        ?? throw new Exception($"The x-ui response could not be parsed: (server={server.Name}, path={path})");
 
         if (!envelope.Success)
         {
-            throw new Exception($"The x-ui request failed: (server={server.Name}, path={path}, message={envelope.Message})");
+            throw new Exception($"The x-ui request failed: (server={server.Name}, path={path}, message={envelope.Msg})");
         }
 
         return envelope.Object;
     }
 
-    private async Task PostAsync(ServerEntity server, string path, object? body)
-    {
-        var response = await SendAsync(server, path, body);
-
-        var envelope = await response.Content.ReadFromJsonAsync<XuiResponseEnvelope<object>>()
-                       ?? throw new Exception($"The x-ui response could not be parsed: (server={server.Name}, path={path})");
-
-        if (!envelope.Success)
-        {
-            throw new Exception($"The x-ui request failed: (server={server.Name}, path={path}, message={envelope.Message})");
-        }
-    }
-
-    private async Task<HttpResponseMessage> SendAsync(ServerEntity server, string path, object? body)
+    private async Task<HttpResponseMessage> SendAsync(ServerEntity server, HttpMethod method, string path, object? body,
+        bool allow_relogin = true)
     {
         var config = GetWebApiConfig(server);
         var base_url = BuildBaseUrl(config);
 
         var http = factory.CreateClient(ServiceFactory.HttpClientKeyName);
-
-        using var request = new HttpRequestMessage(HttpMethod.Post, base_url + path);
-
-        if (body != null)
-        {
-            request.Content = JsonContent.Create(body);
-        }
 
         if (!session_cookies.TryGetValue(server.Id, out var cookie))
         {
@@ -146,15 +176,29 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
             session_cookies[server.Id] = cookie;
         }
 
+        using var request = new HttpRequestMessage(method, base_url + path);
+
+        request.Headers.TryAddWithoutValidation("X-Requested-With", AjaxHeader);
         request.Headers.TryAddWithoutValidation("Cookie", cookie);
+
+        if (body != null)
+        {
+            request.Content = JsonContent.Create(body);
+        }
 
         var response = await http.SendAsync(request);
 
-        if (response.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
+            response.Dispose();
             session_cookies.Remove(server.Id);
 
-            throw new Exception($"The x-ui session was rejected: (server={server.Name})");
+            if (!allow_relogin)
+            {
+                throw new Exception($"The x-ui session was rejected after a re-login: (server={server.Name})");
+            }
+
+            return await SendAsync(server, method, path, body, allow_relogin: false);
         }
 
         response.EnsureSuccessStatusCode();
@@ -184,9 +228,17 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
                 Encoding.UTF8, "application/json"),
         };
 
-        var response = await http.SendAsync(request);
+        using var response = await http.SendAsync(request);
 
         response.EnsureSuccessStatusCode();
+
+        var envelope = await response.Content.ReadFromJsonAsync<XuiResponseEnvelope<object>>();
+
+        if (envelope is not { Success: true })
+        {
+            throw new Exception(
+                $"The x-ui login failed: (host={config.HostName}, message={envelope?.Msg ?? "unparseable response"})");
+        }
 
         if (!response.Headers.TryGetValues("Set-Cookie", out var cookies))
         {
@@ -200,70 +252,44 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
     {
         var scheme = config.Ssl ? "https" : "http";
         var port = config.Port.HasValue ? $":{config.Port}" : "";
+        var base_path = NormalizeBasePath(config.BasePath);
 
-        return $"{scheme}://{config.HostName}{port}/";
+        return $"{scheme}://{config.HostName}{port}{base_path}";
+    }
+
+    private static string NormalizeBasePath(string? base_path)
+    {
+        var path = string.IsNullOrEmpty(base_path) ? "/" : base_path.Trim();
+
+        if (!path.StartsWith('/')) path = "/" + path;
+        if (!path.EndsWith('/')) path += "/";
+
+        return path;
     }
 
     private sealed class XuiResponseEnvelope<T>
     {
+        [JsonPropertyName("success")]
         public bool Success { get; set; }
 
-        public string? Message { get; set; }
+        [JsonPropertyName("msg")]
+        public string? Msg { get; set; }
 
+        [JsonPropertyName("obj")]
         public T? Object { get; set; }
     }
 
     private sealed class XuiSettingsBody
     {
-        public List<XuiClientBody> Clients { get; set; } = [];
+        [JsonPropertyName("clients")]
+        public List<XuiClientModel>? Clients { get; set; }
     }
 
-    private sealed class XuiClientBody
+    private sealed class XuiInboundBody
     {
-        public string Email { get; set; } = null!;
+        public int Id { get; set; }
 
-        public string Id { get; set; } = null!;
-
-        public bool Enable { get; set; }
-
-        public long? TotalTrafficBytes { get; set; }
-
-        public long? ExpiryTime { get; set; }
-
-        public int LimitIp { get; set; }
-
-        public XuiClientModel ToModel()
-        {
-            return new XuiClientModel
-            {
-                Email = Email,
-                Uuid = Id,
-                Enable = Enable,
-                TotalTrafficBytes = TotalTrafficBytes,
-                ExpiryTime = ExpiryTime,
-                LimitIp = LimitIp,
-            };
-        }
-
-        public static XuiClientBody FromModel(XuiClientModel model)
-        {
-            return new XuiClientBody
-            {
-                Email = model.Email,
-                Id = model.Uuid,
-                Enable = model.Enable,
-                TotalTrafficBytes = model.TotalTrafficBytes,
-                ExpiryTime = model.ExpiryTime,
-                LimitIp = model.LimitIp,
-            };
-        }
-    }
-
-    private sealed class XuiInboundResponse
-    {
-        public string Id { get; set; } = null!;
-
-        public List<XuiClientBody>? Clients { get; set; }
+        public string? Settings { get; set; }
 
         public List<XuiClientStatsBody>? ClientStats { get; set; }
     }

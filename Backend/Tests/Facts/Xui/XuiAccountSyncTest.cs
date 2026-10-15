@@ -67,7 +67,7 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
         pushed.Enable.Should().BeTrue();
         pushed.TotalTrafficBytes.Should().Be(renewal.TrafficLimit);
         pushed.LimitIp.Should().Be(2);
-        pushed.ExpiryTime.Should().NotBeNull();
+        pushed.ExpiryTime.Should().BeGreaterThan(0);
 
         renewal.LastSeenCounter.Should().BeNull();
         renewal.LastPollTime.Should().BeNull();
@@ -109,7 +109,7 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
 
         var added = api_moq.Clients.Single();
         added.Uuid.Should().NotBeNullOrEmpty();
-        added.ExpiryTime.Should().BeNull("a traffic-only renewal must encode 'never'");
+        added.ExpiryTime.Should().Be(0, "a traffic-only renewal must encode 'never' as 0");
         added.TotalTrafficBytes.Should().Be(renewal.TrafficLimit);
     }
 
