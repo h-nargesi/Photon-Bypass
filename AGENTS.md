@@ -130,6 +130,19 @@ Critical cross-cutting conventions:
 
 ---
 
+## Quality bar (mandatory)
+
+Every change — analysis, design, and code — must meet a fully professional standard:
+
+- **Professional process**: analyze and design before coding. Understand the existing architecture, follow it, and never bypass the layered DDD boundaries described above.
+- **Design patterns & clean code**: apply well-known design patterns appropriately (do not reinvent or over-engineer), and keep code clean — meaningful naming, small focused units, no duplication, no dead code, no magic values.
+- **Performance & scalability**: consider performance and scalability implications of every change (query cost, N+1, allocation in hot paths, caching, async I/O, job scheduling). Prefer solutions that scale with more users, accounts, and servers.
+- **Maintainability at minimal cost**: build so future maintenance and extension are easy and defect-free — modular, loosely coupled, testable, and consistent with existing conventions. Refactor nearby code when touching it leaves it worse than you found it.
+
+**استاندارد کیفیت (الزامی)**: تحلیل، طراحی و کدنویسی باید کاملاً حرفه‌ای انجام شود؛ اصول design pattern و clean code به‌درستی رعایت شوند؛ به نکات پرفورمنسی و مقیاس‌پذیری دقت شود؛ و پروژه طوری پیش برود که نگهداری و توسعه‌ی بعدی بدون اشکال و با کمترین هزینه ممکن باشد.
+
+---
+
 ## Conventions for safe edits
 
 | If you want to… | Do this |
