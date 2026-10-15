@@ -1,4 +1,3 @@
-using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Infra.Database;
@@ -37,10 +36,10 @@ class RealmRepository(LocalDbContext context) : EditableRepository<RealmEntity>(
         return result.ToDictionary(realm => realm.Id);
     }
 
-    public async Task<List<int>> TryLockTrafficSync(IEnumerable<int> ids)
+    public async Task<List<int>> TryLockTrafficSync(IEnumerable<int> ids, int threshold_seconds)
     {
         var now = DateTime.Now;
-        var limit = now.AddSeconds(-RenewalBusiness.UpdateTrafficDataTimeSecondLimit);
+        var limit = now.AddSeconds(-threshold_seconds);
 
         var sql = $"""
                    update {TableName}

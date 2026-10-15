@@ -29,6 +29,20 @@ class TrafficDataRepository(LocalDbContext context)
         return [.. result];
     }
 
+    public async Task<List<TrafficDataEntity>> Fetch(int nas_id, IEnumerable<string> session_ids)
+    {
+        var id_list = session_ids.ToList();
+
+        if (id_list.Count == 0) return [];
+
+        var result = await FindAsync(statement => statement
+            .Where(
+                $"{nameof(TrafficDataEntity.NasId)} = @nas_id and {nameof(TrafficDataEntity.SessionId)} in (@session_ids)")
+            .WithParameters(new { nas_id, session_ids = id_list }));
+
+        return [.. result];
+    }
+
     public async Task<Dictionary<int, List<TrafficDataEntity>>> Fetch(IEnumerable<int> nas_ids, DateTime from)
     {
         var result = await FindAsync(statement => statement
@@ -69,5 +83,30 @@ where r.{nameof(RealmEntity.LastTrafficSync)} is null or
 
         return min_open_activities.Select(x => (RealmId: (int)x.Id, LastUpdate: (DateTime?)x.LastUpdate))
             .ToDictionary(k => k.RealmId, v => v.LastUpdate);
+    }
+
+    public async Task<Dictionary<int, int>> GetLastNasId(IEnumerable<int> account_ids, string session_prefix)
+    {
+        var id_list = account_ids.ToList();
+
+        if (id_list.Count == 0) return [];
+
+        var sql = $@"
+select ranked.{nameof(TrafficDataEntity.AccountId)} as AccountId
+    , ranked.{nameof(TrafficDataEntity.NasId)} as NasId
+from (
+    select {nameof(TrafficDataEntity.AccountId)}
+        , {nameof(TrafficDataEntity.NasId)}
+        , ROW_NUMBER() over (partition by {nameof(TrafficDataEntity.AccountId)}
+                              order by {nameof(TrafficDataEntity.Id)} desc) as RowNumber
+    from {TableName}
+    where {nameof(TrafficDataEntity.AccountId)} in (@account_ids)
+      and {nameof(TrafficDataEntity.SessionId)} like @session_prefix
+) ranked
+where ranked.RowNumber = 1";
+
+        var result = await QueryAsync<(int AccountId, int NasId)>(sql, new { account_ids = id_list, session_prefix });
+
+        return result.ToDictionary(row => row.AccountId, row => row.NasId);
     }
 }

@@ -6,4 +6,6 @@ namespace PhotonBypass.Domain.Plan;
 public interface IRenewalRepository : IEditableRepository<RenewalEntity>
 {
     Task<RenewalEntity?> GetByWalletCredit(int wallet_id);
+
+    Task<Dictionary<int, RenewalEntity>> GetLatestByAccountIds(IEnumerable<int> account_ids);
 }

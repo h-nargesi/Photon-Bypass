@@ -5,6 +5,7 @@ using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers;
@@ -111,7 +112,8 @@ partial class ServerManagementService(
 
         if (last_update_times.Count <= 0) return;
 
-        var locked_realms = (await RealmRepo.TryLockTrafficSync(last_update_times.Keys)).ToHashSet();
+        var locked_realms = (await RealmRepo.TryLockTrafficSync(last_update_times.Keys,
+            RenewalBusiness.UpdateTrafficDataTimeSecondLimit)).ToHashSet();
 
         if (locked_realms.Count <= 0) return;
 

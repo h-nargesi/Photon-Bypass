@@ -14,16 +14,28 @@ using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 namespace PhotonBypass.Infra.Services;
 
 class AccountRadiusSyncService(
+    IServiceProvider provider,
     Lazy<IServerRepository> server_repo,
-    Lazy<IMikrotikDirectService> mikrotik_direct_srv,
-    [FromKeyedServices(RadiusType.UserManager)] Lazy<IInfraAccountRadiusSyncService> mikrotik_radius,
-    [FromKeyedServices(RadiusType.RadiusDesk)] Lazy<IInfraAccountRadiusSyncService> radius_desk)
+    Lazy<IMikrotikDirectService> mikrotik_direct_srv)
     : IAccountRadiusSyncService
 {
+    private IServiceProvider Provider { get; } = provider;
     private Lazy<IServerRepository> ServerRepo { get; } = server_repo;
     private Lazy<IMikrotikDirectService> MikrotikDirectSrv { get; } = mikrotik_direct_srv;
-    private Lazy<IInfraAccountRadiusSyncService> MikrotikRadius { get; } = mikrotik_radius;
-    private Lazy<IInfraAccountRadiusSyncService> RadiusDesk { get; } = radius_desk;
+
+    private Lazy<IInfraAccountRadiusSyncService>? ResolveSync(ServerEntity radius)
+    {
+        var key = radius.GetSyncKey();
+
+        if (key == null)
+        {
+            Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
+                radius.RealmId, radius.Id, radius.Features);
+            return null;
+        }
+
+        return Provider.GetRequiredKeyedService<Lazy<IInfraAccountRadiusSyncService>>(key);
+    }
 
     public async Task RemoveUsers(IEnumerable<string> usernames)
     {
@@ -31,17 +43,8 @@ class AccountRadiusSyncService(
 
         await radius_list.RunJob(radius =>
         {
-            switch (radius.Features & ServerFeature.Radius)
-            {
-                case ServerFeature.UserManager:
-                    return MikrotikRadius.Value.RemoveUsers(radius, usernames);
-                case ServerFeature.RadiusDesk:
-                    return RadiusDesk.Value.RemoveUsers(radius, usernames);
-                default:
-                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
-                        radius.RealmId, radius.Id, radius.Features);
-                    return Task.CompletedTask;
-            }
+            var sync = ResolveSync(radius);
+            return sync == null ? Task.CompletedTask : sync.Value.RemoveUsers(radius, usernames);
         });
     }
 
@@ -56,17 +59,8 @@ class AccountRadiusSyncService(
 
         await radius_list.RunJob(radius =>
         {
-            switch (radius.Features & ServerFeature.Radius)
-            {
-                case ServerFeature.UserManager:
-                    return MikrotikRadius.Value.ActivateUser(radius, usernames);
-                case ServerFeature.RadiusDesk:
-                    return RadiusDesk.Value.ActivateUser(radius, usernames);
-                default:
-                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
-                        radius.RealmId, radius.Id, radius.Features);
-                    return Task.CompletedTask;
-            }
+            var sync = ResolveSync(radius);
+            return sync == null ? Task.CompletedTask : sync.Value.ActivateUser(radius, usernames);
         });
     }
 
@@ -89,17 +83,8 @@ class AccountRadiusSyncService(
             realm_user_dictionary.TryGetValue(radius.RealmId, out var realm_users);
             var valid_users = (realm_users ?? []).ToHashSet();
 
-            switch (radius.Features & ServerFeature.Radius)
-            {
-                case ServerFeature.UserManager:
-                    return MikrotikRadius.Value.DeactivateUserExcept(radius, valid_users);
-                case ServerFeature.RadiusDesk:
-                    return RadiusDesk.Value.DeactivateUserExcept(radius, valid_users);
-                default:
-                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
-                        radius.RealmId, radius.Id, radius.Features);
-                    return Task.CompletedTask;
-            }
+            var sync = ResolveSync(radius);
+            return sync == null ? Task.CompletedTask : sync.Value.DeactivateUserExcept(radius, valid_users);
         });
     }
 
@@ -119,17 +104,8 @@ class AccountRadiusSyncService(
 
         await radius_list.RunJob(radius =>
         {
-            switch (radius.Features & ServerFeature.Radius)
-            {
-                case ServerFeature.UserManager:
-                    return MikrotikRadius.Value.SyncUserAndActive(radius, account, renewal);
-                case ServerFeature.RadiusDesk:
-                    return RadiusDesk.Value.SyncUserAndActive(radius, account, renewal);
-                default:
-                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
-                        radius.RealmId, radius.Id, radius.Features);
-                    return Task.CompletedTask;
-            }
+            var sync = ResolveSync(radius);
+            return sync == null ? Task.CompletedTask : sync.Value.SyncUserAndActive(radius, account, renewal);
         });
     }
 
@@ -182,7 +158,11 @@ class AccountRadiusSyncService(
             throw new Exception($"No radius server found for realm-id: ({realm_id})");
         }
 
-        await ChangeVpnPassword(radius_list, username, password);
+        await radius_list.RunJob(radius =>
+        {
+            var sync = ResolveSync(radius);
+            return sync == null ? Task.CompletedTask : sync.Value.ChangeVpnPassword(radius, username, password);
+        });
     }
 
     private async Task DeactivateUsers(IEnumerable<string> usernames, HashSet<int> realm_exceptions)
@@ -196,35 +176,8 @@ class AccountRadiusSyncService(
                 return Task.CompletedTask;
             }
 
-            switch (radius.Features & ServerFeature.Radius)
-            {
-                case ServerFeature.UserManager:
-                    return MikrotikRadius.Value.DeactivateUser(radius, usernames);
-                case ServerFeature.RadiusDesk:
-                    return RadiusDesk.Value.DeactivateUser(radius, usernames);
-                default:
-                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
-                        radius.RealmId, radius.Id, radius.Features);
-                    return Task.CompletedTask;
-            }
-        });
-    }
-
-    private async Task ChangeVpnPassword(IEnumerable<ServerEntity> radius_list, string username, string password)
-    {
-        await radius_list.RunJob(radius =>
-        {
-            switch (radius.Features & ServerFeature.Radius)
-            {
-                case ServerFeature.UserManager:
-                    return MikrotikRadius.Value.ChangeVpnPassword(radius, username, password);
-                case ServerFeature.RadiusDesk:
-                    return RadiusDesk.Value.ChangeVpnPassword(radius, username, password);
-                default:
-                    Log.Error("Unknown radius-server: (realm-id={0}, radius-id={1}, feature={2})",
-                        radius.RealmId, radius.Id, radius.Features);
-                    return Task.CompletedTask;
-            }
+            var sync = ResolveSync(radius);
+            return sync == null ? Task.CompletedTask : sync.Value.DeactivateUser(radius, usernames);
         });
     }
 }

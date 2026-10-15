@@ -49,8 +49,8 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IUnitLevelService
                 return Task.FromResult(result);
             });
 
-        Setup(repository => repository.TryLockTrafficSync(It.IsAny<IEnumerable<int>>()))
-            .Returns<IEnumerable<int>>(ids =>
+        Setup(repository => repository.TryLockTrafficSync(It.IsAny<IEnumerable<int>>(), It.IsAny<int>()))
+            .Returns<IEnumerable<int>, int>((ids, threshold_seconds) =>
             {
                 var mask = ids.ToHashSet();
                 var result = data_dictionary.Values.Where(realm => mask.Contains(realm.Id))

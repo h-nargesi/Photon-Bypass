@@ -28,5 +28,13 @@ public class RenewalEntity : IRenewalEntity, IBaseEntity
 
     public string? Comment { get; set; }
 
+    public long? LastSeenCounter { get; set; }
+
+    public DateTime? LastPollTime { get; set; }
+
+    public long TrafficUsed { get; set; }
+
+    public DateTime? LastActiveTime { get; set; }
+
     public DateTime Created { get; init; } = DateTime.Now;
 }

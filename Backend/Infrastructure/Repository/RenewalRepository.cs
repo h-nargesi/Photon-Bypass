@@ -15,4 +15,18 @@ class RenewalRepository(LocalDbContext context) : EditableRepository<RenewalEnti
 
         return renewals.FirstOrDefault();
     }
+
+    public async Task<Dictionary<int, RenewalEntity>> GetLatestByAccountIds(IEnumerable<int> account_ids)
+    {
+        var id_list = account_ids.ToList();
+
+        if (id_list.Count == 0) return [];
+
+        var renewals = await FindAsync(statement => statement
+            .Where($"{nameof(RenewalEntity.AccountId)} in (@account_ids)")
+            .WithParameters(new { account_ids = id_list }));
+
+        return renewals.GroupBy(renewal => renewal.AccountId)
+            .ToDictionary(group => group.Key, group => group.MaxBy(renewal => renewal.Id)!);
+    }
 }

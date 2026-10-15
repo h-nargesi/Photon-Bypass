@@ -1,6 +1,6 @@
 # docs/16-multi-server-panel.md — پنل چند-سرور: ثبت تصمیمات جلسه ۱۴۰۵/۰۷/۲۲
 
-> **English summary**: Decision record for the multi-server admin panel (session 2026-10-14). Requirement: one panel managing heterogeneous VPN servers and reporting — Mikrotik UserManager (implemented), RadiusDesk (implemented, unlikely to be used), raw FreeRADIUS (explicitly deferred), and an x-ui panel adapter (next up, per `docs/13`). Decided: **D1** rename the misleadingly-named `FreeRadius` project to `RadiusDesk` (approved, not yet executed); **D2** x-ui joins the existing keyed-DI sync dispatch via one central Features→key mapping (interface names unchanged, `Xui = 0x4` inside the `ServerFeature.Radius` mask); **D3** identity mapping = client email `= username`, client UUID stored in the existing `AccountEntity.VpnPassword` column (no schema change); **D4** for x-ui accounts `ChangeVpnPassword` becomes an **automatic UUID rotation** (not user input), with contract/UX/throttle conditions. Open for next session: traffic data model (T1), quota enforcement (T2), capability gating, realm capacity, project name. Includes the probe checklist that blocks adapter implementation.
+> **English summary**: Decision record for the multi-server admin panel (session 2026-10-14). Requirement: one panel managing heterogeneous VPN servers and reporting — Mikrotik UserManager (implemented), RadiusDesk (implemented, unlikely to be used), raw FreeRADIUS (explicitly deferred), and an x-ui panel adapter (next up, per `docs/13`). Decided: **D1** rename the misleadingly-named `FreeRadius` project to `RadiusDesk` (approved, not yet executed); **D2** x-ui joins the existing keyed-DI sync dispatch via one central Features→key mapping (interface names unchanged, `Xui = 0x4` inside the `ServerFeature.Radius` mask); **D3** identity mapping = client email `= username`, client UUID stored in the existing `AccountEntity.VpnPassword` column (no schema change); **D4** for x-ui accounts `ChangeVpnPassword` becomes an **automatic UUID rotation** (not user input), with contract/UX/throttle conditions. Open for next session: traffic data model (T1), quota enforcement (T2), capability gating, realm capacity, project name. Includes the probe checklist that blocks adapter implementation. **2026-10-15 update:** T1 and T2 are now closed in [docs/17](17-xui-traffic.md) (D5–D14); T2's closure **overrides** the "panel-only" default recorded in §3 below.
 
 ## ۱. نیازمندی و زمینه
 
@@ -59,7 +59,9 @@
 
 ## ۳. تصمیم‌های باز (شروع جلسه‌ی بعد از این‌جا)
 
-### T1 — مدل داده‌ی ترافیک x-ui (پرسیده شد؛ بی‌پاسخ ماند — **اولین سؤال جلسه‌ی بعد**)
+> **2026-10-15:** T1 و T2 در جلسه‌ی ۲۰۲۶-۱۰-۱۵ **بسته شدند** — تصمیمات D5–D14 در [docs/17](17-xui-traffic.md). بستنِ T2 صریحاً پیش‌فرض «فقط پنل» زیر را **نقض می‌کند** (enforcement سمت سرور است). T3/T4/T5 همچنان پیشنهاد ثبت‌شده هستند (T5 این جلسه به‌صورت اسکلت `XuiPanel` اجرا شد — §۶ docs/17).
+
+### T1 — مدل داده‌ی ترافیک x-ui — ✅ بسته شد (D5–D8، D14 در docs/17)
 
 گزینه‌های روی میز:
 
@@ -69,10 +71,10 @@
 
 ملاحظات فنی که در هر حال لازم است: تشخیص **epoch-change** (کاهش شمارنده = لنگر مجدد baseline، نه مصرف منفی)؛ reset نکردن شمارنده‌ی x-ui به‌عنوان مبنای محاسبه؛ «آخرین اتصال» از شمارنده نمی‌آید (online-status نسخه یا تقریب تغییر شمارنده).
 
-### T2 — Enforcement سهمیه/انقضا (پرسیده شد؛ بی‌پاسخ ماند)
+### T2 — Enforcement سهمیه/انقضا — ✅ بسته شد (D13 در docs/17: سمت سرور)
 
 گزینه‌ها: فقط پنل (default مطابق `docs/13`: baseline در پنل + job غیرفعال‌سازی؛ گپ تا poll بعدی) / پنل + پوش expiry و total-GB به x-ui (مشروط به probe و تداخلش با baseline) / پنل الان، سرور بعد از probe.
-**پیش‌فرض تا تصمیم بعدی: فقط پنل.**
+**پیش‌فرض تا تصمیم بعدی: فقط پنل.** — ~~این پیش‌فرض با D13 نقض شد: enforcement سمت سرور است (پوش per-renewal سهمیه/انقضا + بدون watchdog در کلکتور).~~
 
 ### T3 — سازوکار شاخه‌بندی قابلیت‌ها (بحث نشد)
 
@@ -85,6 +87,7 @@
 ### T5 — نام و ساختار پروژه‌ی x-ui (بحث نشد)
 
 پیشنهاد: `XuiPanel`، قرینه‌ی ساختار `MikrotikRadius` — `WebService/XuiService` (HttpClient)، `Application/` (دو کلاس sync)، `ServiceFactory.AddXuiServices` با ثبت keyed روی `RadiusType.Xui`. کانفیگ سرور در `ServerConfiguration` (احتمالاً reuse `WebApiConfig` + فیلد اختصاصی).
+**2026-10-15:** اجرا شد — `Backend/XuiPanel/` با `WebService/XuiApiService` (قرارداد mock تا probe) + کلکتور؛ جزئیات در [docs/17 §6](17-xui-traffic.md).
 
 ## ۴. پیش‌نیازهای probe روی سرور زنده (بلوکرِ adapter — از `docs/13` + این جلسه)
 
@@ -111,10 +114,13 @@
 | تغییر credential | ✅ پسورد | ✅ پسورد | ✅ پسورد | ✅ **چرخش UUID (D4)** |
 | گواهی OVPN | ✅ SSH | ❌ | ❌ | ❌ → subscription link |
 | لیست/بستن سشن آنلاین | ✅ | ✅ | ✅ radacct | ⚠️ probe |
-| منبع ترافیک | سشن | سشن | سشن | شمارنده + snapshot (T1) |
+| منبع ترافیک | سشن | سشن | سشن | شمارنده + ردیف دلتای روزانه (D5/D14) |
+| Enforcement سهمیه/انقضا | ✅ سمت سرور | ✅ سمت سرور | ✅ سمت سرور | ✅ **سمت سرور** (D13: پوش per-renewal سهمیه/انقضا؛ پنل فقط هشدار/آشتی) |
+| Rate-limit | ✅ | ✅ | ✅ | ❌ شکاف قابلیت (انتظار: نبود — probe) |
 
 ## ۷. ارجاع‌ها
 
+- **ادامه‌ی این سند (جلسات ۲۰۲۶-۱۰-۱۵، D5–D14): [docs/17-xui-traffic.md](17-xui-traffic.md)** — بستن T1/T2 + ماتریس probe + ثبت مسائل باز
 - طرح کلی x-ui: [docs/13-xray-integration.md](13-xray-integration.md)
 - الگوی dispatch فعلی: [docs/06-radius-integration.md](06-radius-integration.md)
 - وضعیت پیاده‌سازی/شروع‌ها: [docs/12-current-state.md](12-current-state.md)

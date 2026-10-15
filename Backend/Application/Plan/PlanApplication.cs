@@ -21,6 +21,7 @@ namespace PhotonBypass.Application.Plan;
 class PlanApplication(
     Lazy<IRenewalRepository> renewal_repo,
     Lazy<IPlanStateRepository> plan_repo,
+    Lazy<IPlanUsageReader> plan_usage_reader,
     IPriceCalculator price_calc,
     Lazy<IWalletRepository> wallet_repo,
     Lazy<IAccountRepository> account_repo,
@@ -35,6 +36,7 @@ class PlanApplication(
 {
     private Lazy<IRenewalRepository> RenewalRepo { get; } = renewal_repo;
     private Lazy<IPlanStateRepository> PlanRepo { get; } = plan_repo;
+    private Lazy<IPlanUsageReader> PlanUsageReader { get; } = plan_usage_reader;
     private IPriceCalculator PriceCalc { get; } = price_calc;
     private Lazy<IWalletRepository> WalletRepo { get; } = wallet_repo;
     private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
@@ -249,8 +251,11 @@ class PlanApplication(
             RestrictedRealmId = await PlanRepo.Value.GetTopRestrictedRealmId(account.Id),
         };
 
-        if (renew.RestrictedRealmId == null || current_state.LastConnectTime == null ||
-            current_state.LastConnectTime.Value < DateTime.Now.AddDays(-7))
+        var current_usage = await PlanUsageReader.Value.GetUsage(account.Id);
+        var last_activity = current_usage?.LastActiveTime ?? current_state.LastConnectTime;
+
+        if (renew.RestrictedRealmId == null || last_activity == null ||
+            last_activity < DateTime.Now.AddDays(-7))
         {
             renew.RestrictedRealmId = (await ServerMngSrv.Value.GetAvailableRealm()).Id;
         }

@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Domain.Account;
+﻿using PhotonBypass.Application.Plan;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
@@ -15,12 +16,14 @@ namespace PhotonBypass.Application.Management;
 internal class AccountMonitoringService(
     IAccountRepository account_repo,
     IHistoryRepository history_repo,
+    Lazy<IPlanUsageReader> plan_usage_reader,
     Lazy<IEmailService> email_srv,
     Lazy<IAccountRadiusSyncService> account_radius_srv)
     : IAccountMonitoringService
 {
     private IAccountRepository AccountRepo { get; } = account_repo;
     private IHistoryRepository HistoryRepo { get; } = history_repo;
+    private Lazy<IPlanUsageReader> PlanUsageReader { get; } = plan_usage_reader;
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
 
@@ -28,9 +31,18 @@ internal class AccountMonitoringService(
     {
         var now = DateTime.Now;
 
+        var usage_dictionary = await PlanUsageReader.Value.GetUsage(plan_state_list.Select(plan => plan.Id));
+
         var abandoned_list = plan_state_list
-            .Where(plan => (plan.ExpirationDate.HasValue && plan.ExpirationDate <= now) ||
-                           (plan.TrafficLeft.HasValue && plan.TrafficLeft < StaticValues.BytesInMegDouble))
+            .Where(plan =>
+            {
+                var usage = usage_dictionary.GetValueOrDefault(plan.Id);
+                var expiration = usage?.ExpirationDate ?? plan.ExpirationDate;
+                var traffic_left = usage?.TrafficLeft ?? plan.TrafficLeft;
+
+                return (expiration.HasValue && expiration.Value <= now) ||
+                       (traffic_left.HasValue && traffic_left.Value < StaticValues.BytesInMegDouble);
+            })
             .ToList();
 
         if (abandoned_list.Count < 1) return;
@@ -52,13 +64,15 @@ internal class AccountMonitoringService(
                 continue;
             }
 
-            var expired_days = account.IsReachedMaxInactivityDaysToDisable(plan.LastConnectTime);
+            var last_activity = usage_dictionary.GetValueOrDefault(plan.Id)?.LastActiveTime ?? plan.LastConnectTime;
+
+            var expired_days = account.IsReachedMaxInactivityDaysToDisable(last_activity);
             if (expired_days <= 0)
             {
                 continue;
             }
 
-            expired_days = account.IsReachedMaxInactivityDaysToDelete(plan.LastConnectTime);
+            expired_days = account.IsReachedMaxInactivityDaysToDelete(last_activity);
             if (expired_days > 0)
             {
                 Log.Information(

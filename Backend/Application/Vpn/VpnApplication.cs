@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Application.Account;
+using PhotonBypass.Application.Plan;
 using PhotonBypass.Application.Vpn.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
@@ -20,6 +21,7 @@ class VpnApplication(
     Lazy<IHistoryRepository> history_repo,
     Lazy<ITrafficDataRepository> traffic_data_repo,
     Lazy<IPlanStateRepository> plan_state_repo,
+    Lazy<IPlanUsageReader> plan_usage_reader,
     Lazy<IAccountRadiusSyncService> account_radius_srv,
     Lazy<IServerManagementService> server_mng_srv,
     Lazy<IAccountApplication> account_app,
@@ -33,6 +35,7 @@ class VpnApplication(
     private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
     private Lazy<ITrafficDataRepository> TrafficDataRepo { get; } = traffic_data_repo;
     private Lazy<IPlanStateRepository> PlanStateRepo { get; } = plan_state_repo;
+    private Lazy<IPlanUsageReader> PlanUsageReader { get; } = plan_usage_reader;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
     private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
     private Lazy<IAccountApplication> AccountApp { get; } = account_app;
@@ -75,10 +78,12 @@ class VpnApplication(
         }
 
         var plan = await PlanStateRepo.Value.GetPlanState(account.Id);
+        var usage = await PlanUsageReader.Value.GetUsage(account.Id);
+        var time_left = usage?.ExpirationDate - DateTime.Now;
 
         if (plan == null ||
-            plan.TimeLeft is { TotalMinutes: < 1 } ||
-            plan.TrafficLeft is < 1)
+            time_left is { TotalMinutes: < 1 } ||
+            usage?.TrafficLeft is < 1)
         {
             throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
                 $"There is not ant plan for user {target}");

@@ -74,7 +74,7 @@ LEFT JOIN (
                 , td.DataOut
                 , ISNULL(SUM(DataIn + DataOut) OVER(PARTITION BY td.AccountId ORDER BY td.Id 
                                                     ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS CumulativeTrafficUsed
-                , MAX(td.StartSession) OVER(PARTITION BY td.AccountId) AS LastConnectTime
+                , MAX(CASE WHEN td.DataIn + td.DataOut > 0 THEN td.StartSession END) OVER(PARTITION BY td.AccountId) AS LastConnectTime
             FROM TrafficData td
         ) td
     ) td

@@ -5,6 +5,7 @@ using PhotonBypass.Infra;
 using PhotonBypass.Mikrotik.Radius;
 using PhotonBypass.OutSource;
 using PhotonBypass.ServerBridge;
+using PhotonBypass.Xui;
 
 namespace PhotonBypass;
 
@@ -16,6 +17,7 @@ public static class ServiceFactoryHandler
         builder.AddInfrastructureServices();
         builder.AddRadiusDeskServices();
         builder.AddMikrotikRadiusServices();
+        builder.AddXuiPanelServices();
         builder.AddOutSourceServices();
         builder.AddApplicationServices();
 

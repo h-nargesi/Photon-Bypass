@@ -11,5 +11,5 @@ public interface IRealmRepository : IEditableRepository<RealmEntity>
 
     Task<Dictionary<int, RealmEntity>> GetByIds(List<int> ids);
 
-    Task<List<int>> TryLockTrafficSync(IEnumerable<int> ids);
+    Task<List<int>> TryLockTrafficSync(IEnumerable<int> ids, int threshold_seconds);
 }

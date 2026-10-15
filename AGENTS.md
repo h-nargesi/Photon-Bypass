@@ -96,7 +96,7 @@ Layered DDD. One composition root chains six registrations in strict order:
 
 ```
 AddServerBridgeServices → AddInfrastructureServices → AddRadiusDeskServices
-  → AddMikrotikRadiusServices → AddOutSourceServices → AddApplicationServices
+  → AddMikrotikRadiusServices → AddXuiPanelServices → AddOutSourceServices → AddApplicationServices
 ```
 
 Each host then layers its own slice: `Portal` → `AddLogService().AddAppServices().AddPortalServices()`; `Admin` → `…​AddPortalServices().AddAdminServices()` (Admin currently just clones Portal).
@@ -178,6 +178,7 @@ Full reading order and per-file purpose is in [docs/00-index.md](docs/00-index.m
 - [docs/14-defects-audit.md](docs/14-defects-audit.md) — prioritized defect/security/performance audit of issues **not** in `Architecture/TODO.md` (fix tracking lives there)
 - [docs/15-payment-p2.md](docs/15-payment-p2.md) — P2 payment design: card-to-card + receipt + wallet (decisions, data model, API contract)
 - [docs/16-multi-server-panel.md](docs/16-multi-server-panel.md) — multi-server admin panel decision record: FreeRadius→RadiusDesk rename, x-ui dispatch/identity/UUID-rotation decisions, open items + probe checklist
+- [docs/17-xui-traffic.md](docs/17-xui-traffic.md) — x-ui traffic model & enforcement decision record (D5–D14): delta-row TrafficData, Renewal-hosted anchor/decision columns, server-side enforcement, collector + probe matrix
 
 ---
 

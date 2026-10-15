@@ -112,7 +112,7 @@ public static partial class AccountBusiness
     }
 
     [GeneratedRegex("^[a-zA-Z][a-zA-Z0-9_-]{3,16}[a-zA-Z0-9]$")]
-    private static partial Regex UsernamePattern();
+    public static partial Regex UsernamePattern();
 
     [GeneratedRegex(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$")]
     public static partial Regex EmailPattern();
