@@ -63,7 +63,7 @@ flowchart TB
 
 ## Radius DB (دیتابیس ردیوس MySQL)
 
-- دسترسی از طریق `RadDbContext` (`Backend/FreeRadius/Repository/DbContext/`) با options `RadDapperOptions`.
+- دسترسی از طریق `RadDbContext` (`Backend/RadiusDesk/Repository/DbContext/`) با options `RadDapperOptions`.
 - جداول RadiusDesk که استفاده می‌شوند (نام‌ها در repoها): `RadAcct` (حسابداری اتصال)، `permanent_users`، `nas`، `UserPlanState`، `TopUp`، `Profile`، `Realm` (مستقل از realm محلی)، `Cloud`.
 - **قاعده‌ی دسترسی** (`analyse.md:308`): **read مستقیم از rad-db**، **write از طریق rad-api** (Web API `cake4/rd_cake` در `RadiusDeskService`) تا بار روی FreeRADIUS کمتر شود.
 

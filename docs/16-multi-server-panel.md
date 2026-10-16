@@ -1,6 +1,6 @@
 # docs/16-multi-server-panel.md — پنل چند-سرور: ثبت تصمیمات جلسه ۱۴۰۵/۰۷/۲۲
 
-> **English summary**: Decision record for the multi-server admin panel (session 2026-10-14). Requirement: one panel managing heterogeneous VPN servers and reporting — Mikrotik UserManager (implemented), RadiusDesk (implemented, unlikely to be used), raw FreeRADIUS (explicitly deferred), and an x-ui panel adapter (next up, per `docs/13`). Decided: **D1** rename the misleadingly-named `FreeRadius` project to `RadiusDesk` (approved, not yet executed); **D2** x-ui joins the existing keyed-DI sync dispatch via one central Features→key mapping (interface names unchanged, `Xui = 0x4` inside the `ServerFeature.Radius` mask); **D3** identity mapping = client email `= username`, client UUID stored in the existing `AccountEntity.VpnPassword` column (no schema change); **D4** for x-ui accounts `ChangeVpnPassword` becomes an **automatic UUID rotation** (not user input), with contract/UX/throttle conditions. Open for next session: traffic data model (T1), quota enforcement (T2), capability gating, realm capacity, project name. Includes the probe checklist that blocks adapter implementation. **2026-10-15 update:** T1 and T2 are now closed in [docs/17](17-xui-traffic.md) (D5–D14); T2's closure **overrides** the "panel-only" default recorded in §3 below. **Fleet update (same day, later):** vm01.ir.arvan (v1.12.0) is **not operational** — the live fleet is vm06.ir.parssafe and vm08.ir.parssafe (continuation of vm07 state), both x-ui **v1.14.0**; the adapter contract was re-code-verified against v1.14.0 (route table and handlers for everything we use are identical to v1.12.0 — details in docs/17 §4) and the probe/registration target is now vm06/vm08.
+> **English summary**: Decision record for the multi-server admin panel (session 2026-10-14). Requirement: one panel managing heterogeneous VPN servers and reporting — Mikrotik UserManager (implemented), RadiusDesk (implemented, unlikely to be used), raw FreeRADIUS (explicitly deferred), and an x-ui panel adapter (next up, per `docs/13`). Decided: **D1** rename the misleadingly-named `FreeRadius` project to `RadiusDesk` (approved; **executed 2026-10-16**); **D2** x-ui joins the existing keyed-DI sync dispatch via one central Features→key mapping (interface names unchanged, `Xui = 0x4` inside the `ServerFeature.Radius` mask); **D3** identity mapping = client email `= username`, client UUID stored in the existing `AccountEntity.VpnPassword` column (no schema change); **D4** for x-ui accounts `ChangeVpnPassword` becomes an **automatic UUID rotation** (not user input), with contract/UX/throttle conditions. Open for next session: traffic data model (T1), quota enforcement (T2), capability gating, realm capacity, project name. Includes the probe checklist that blocks adapter implementation. **2026-10-15 update:** T1 and T2 are now closed in [docs/17](17-xui-traffic.md) (D5–D14); T2's closure **overrides** the "panel-only" default recorded in §3 below. **Fleet update (same day, later):** vm01.ir.arvan (v1.12.0) is **not operational** — the live fleet is vm06.ir.parssafe and vm08.ir.parssafe (continuation of vm07 state), both x-ui **v1.14.0**; the adapter contract was re-code-verified against v1.14.0 (route table and handlers for everything we use are identical to v1.12.0 — details in docs/17 §4) and the probe/registration target is now vm06/vm08.
 
 ## ۱. نیازمندی و زمینه
 
@@ -23,7 +23,7 @@
 
 ## ۲. تصمیم‌های قطعی‌شده
 
-### D1 — رنیم پروژه‌ی `FreeRadius` → `RadiusDesk` ✅ (تأیید مالک؛ اجرا نشده)
+### D1 — رنیم پروژه‌ی `FreeRadius` → `RadiusDesk` ✅ (تأیید مالک؛ اجرا شد ۱۴۰۵/۰۷/۲۴)
 
 همه‌چیز داخل پروژه از قبل «RadiusDesk» نام دارد (`RadiusDeskService`، `AccountRadiusSyncRadiusDeskService`، `AddRadiusDeskServices`، کلید `RadiusType.RadiusDesk`)؛ فقط نام گمراه‌کننده است.
 
@@ -33,6 +33,8 @@
 - اختیاری/زیبایی‌شناسی: کلید HttpClient `"free-radius"`، نام فولدر `MockFreeRadius`.
 - **بدون تغییر**: کلید DI، دیتابیس، قراردادها، رفتار. تأیید نهایی: `dotnet build` + `dotnet test`.
 - **پروژه‌ی جدید FreeRADIUS الان ساخته نمی‌شود** (پروژه‌ی خالی فقط نام را دوباره مبهم می‌کند). نام `FreeRadius` برای adapter آینده آزاد می‌ماند.
+
+> **اجرا (۱۴۰۵/۰۷/۲۴)**: پوشه/csproj/sln + `RootNamespace: PhotonBypass.RadiusDesk` (همه‌ی usingها) + فولدر `MockFreeRadius`→`MockRadiusDesk` + کلید HttpClient `"free-radius"`→`"radius-desk"`. GUID پروژه در sln حفظ شد؛ `dotnet test` سبز (۳۵۱ پاس/۰ خطا). خطای build ایزوله‌ی `Tik4net/tik4net.tests` از قبل روی HEAD موجود بود و بی‌ربط است.
 
 ### D2 — اتصال x-ui به dispatch: نگاشت مرکزی، نام‌ها می‌مانند ✅ (تأیید مالک)
 
@@ -98,7 +100,7 @@
 
 ## ۵. ترتیب اجرای توافقی (نقشه‌ی راه)
 
-1. **D1** رنیم `FreeRadius`→`RadiusDesk` (مکانیکی؛ build+test) — هر زمان.
+1. ~~**D1** رنیم `FreeRadius`→`RadiusDesk`~~ — ✅ اجرا شد (۱۴۰۵/۰۷/۲۴).
 2. **D2** نگاشت مرکزی dispatch + بیت `Xui` + `RadiusType.Xui`.
 3. اسکلت پروژه‌ی x-ui (T5) + probe (§۴) — موازی.
 4. adapter بر اساس نتیجه‌ی probe + D3/D4.
@@ -125,4 +127,4 @@
 - الگوی dispatch فعلی: [docs/06-radius-integration.md](06-radius-integration.md)
 - وضعیت پیاده‌سازی/شروع‌ها: [docs/12-current-state.md](12-current-state.md)
 - بک‌لاگ مالک: `Architecture/TODO.md:26` («پشتیبانی از پنل v2ray و amnezia»)، `:63` («پنل مدیریت سرورها»)
-- کدهای کلیدی: `ServerFeature.cs` · `RadiusType.cs` · `AccountRadiusSyncService.cs` · `SessionRadiusSyncService.cs` · `ServerRepository.cs:88-115` · `VpnApplication.cs:42-65` · `MikrotikDirectService.cs:101-173` · `FreeRadius/ServiceFactory.cs`
+- کدهای کلیدی: `ServerFeature.cs` · `RadiusType.cs` · `AccountRadiusSyncService.cs` · `SessionRadiusSyncService.cs` · `ServerRepository.cs:88-115` · `VpnApplication.cs:42-65` · `MikrotikDirectService.cs:101-173` · `RadiusDesk/ServiceFactory.cs`

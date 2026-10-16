@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using PhotonBypass.Application;
-using PhotonBypass.FreeRadius;
+using PhotonBypass.RadiusDesk;
 using PhotonBypass.Infra;
 using PhotonBypass.Mikrotik.Radius;
 using PhotonBypass.OutSource;

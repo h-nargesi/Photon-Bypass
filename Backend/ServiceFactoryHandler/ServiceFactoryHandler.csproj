@@ -10,7 +10,7 @@
 	<ItemGroup>
         <ProjectReference Include="..\Application\Application.csproj"/>
         <ProjectReference Include="..\Infrastructure\Infrastructure.csproj"/>
-		<ProjectReference Include="..\FreeRadius\FreeRadius.csproj"/>
+		<ProjectReference Include="..\RadiusDesk\RadiusDesk.csproj"/>
 		<ProjectReference Include="..\MikrotikRadius\MikrotikRadius.csproj"/>
 		<ProjectReference Include="..\OutSource\OutSource.csproj"/>
 		<ProjectReference Include="..\ServerBridge\ServerBridge.csproj"/>

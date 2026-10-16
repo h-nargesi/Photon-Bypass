@@ -1,0 +1,30 @@
+﻿using PhotonBypass.RadiusDesk.Entity;
+using PhotonBypass.RadiusDesk.Interfaces;
+using PhotonBypass.RadiusDesk.Repository.DbContext;
+using PhotonBypass.Infra.Database;
+using PhotonBypass.Tools;
+
+namespace PhotonBypass.RadiusDesk.Repository;
+
+class RealmRepository(RadDbContext context) : DapperRepository<RealmEntity>(context), IRealmRepository
+{
+    private static readonly string CloudId = EntityExtensions.GetColumnName<RealmEntity>(x => x.CloudId);
+
+    public async Task<RealmEntity?> Fetch(int realm_id)
+    {
+        var result = await FindAsync(statement => statement
+            .Where($"{Id} = @realm_id")
+            .WithParameters(new { realm_id }));
+
+        return result.FirstOrDefault();
+    }
+
+    public async Task<List<ServerDensityEntity>> FetchServerDensityEntity(int cloud_id)
+    {
+        var result = await FindAsync<ServerDensityEntity>(statement => statement
+            .Where($"{CloudId} = @cloud_id")
+            .WithParameters(new { cloud_id }));
+
+        return [.. result];
+    }
+}

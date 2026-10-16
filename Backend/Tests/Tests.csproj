@@ -29,7 +29,7 @@
         <ProjectReference Include="../Admin/Admin.csproj" />
         <ProjectReference Include="../Portal/Portal.csproj" />
 		<ProjectReference Include="../Application/Application.csproj" />
-        <ProjectReference Include="../FreeRadius/FreeRadius.csproj" />
+        <ProjectReference Include="../RadiusDesk/RadiusDesk.csproj" />
         <ProjectReference Include="../MikrotikRadius/MikrotikRadius.csproj" />
         <ProjectReference Include="../XuiPanel/XuiPanel.csproj" />
         <ProjectReference Include="../ServerBridge/ServerBridge.csproj" />

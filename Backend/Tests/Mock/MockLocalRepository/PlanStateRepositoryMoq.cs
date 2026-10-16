@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Moq;
 using PhotonBypass.Domain.Plan;
-using PhotonBypass.Test.Mock.MockFreeRadius.Model;
+using PhotonBypass.Test.Mock.MockRadiusDesk.Model;
 using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
 

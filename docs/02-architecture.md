@@ -27,7 +27,7 @@ flowchart TB
         Price[PriceCalculator Roslyn]
     end
     subgraph Adapters[Radius adapters + ServerBridge]
-        FreeRadius[FreeRadius - RadiusDesk]
+        RadiusDesk[RadiusDesk]
         Mikrotik[MikrotikRadius - UserManager + Direct SSH]
         Bridge[ServerBridge - SSH/Tik4Net/Api/Email]
     end
@@ -51,7 +51,7 @@ flowchart TB
 | `Application` | Application | سرویس‌های کاربردی + Quartz `JobInterval`. |
 | `Domain` | Domain | Entity/Enum/Business + اینترفیس‌ها. وابسته به هیچ پروژه‌ی بیرونی. |
 | `Infrastructure` | Infrastructure | Repositoryها، `LocalDbContext`، dispatchers ردیوس، `PriceCalculator`. |
-| `FreeRadius` | Adapter | RadiusDesk: MySQL `RadDbContext` + repoها + Web API `RadiusDeskService`. |
+| `RadiusDesk` | Adapter | RadiusDesk: MySQL `RadDbContext` + repoها + Web API `RadiusDeskService` (تا ۱۴۰۵/۰۷/۲۴ با نام `FreeRadius`). |
 | `MikrotikRadius` | Adapter | Mikrotik UserManager (tik4net) + SSH مستقیم NAS (`MikrotikDirectService`). |
 | `ServerBridge` | Adapter | `SshHandler`/`Tik4NetHandler`/`ApiHandler`/`EmailHandler` + `ProcessService`. |
 | `OutSource` | Adapter | `EmailService` + `SocialMediaService` (همگی stub). |
@@ -67,7 +67,7 @@ flowchart TB
 - `Domain` ← هیچ‌چیز (فقط اینترفیس و مدل‌ها).
 - `Application` → `Domain`.
 - `Infrastructure` → `Domain` (+ `Dapper.FastCrud`, `Microsoft.Data.SqlClient`, `Microsoft.CodeAnalysis.CSharp`).
-- `FreeRadius` / `MikrotikRadius` → `Infrastructure` (برای `IInfra*RadiusSyncService`) و `ServerBridge` و `Domain`.
+- `RadiusDesk` / `MikrotikRadius` → `Infrastructure` (برای `IInfra*RadiusSyncService`) و `ServerBridge` و `Domain`.
 - `ServerBridge` → `Domain` (+ `Renci.SshNet`).
 - `Portal`/`Admin` → `Application` (+ `Shared` برای لایه‌ی host).
 
@@ -78,7 +78,7 @@ flowchart TB
 ```
 AddServerBridgeServices()        // ServerBridge/ServiceFactory.cs   - SSH/Tik4Net singleton, Api/Email scoped
   → AddInfrastructureServices() // Infrastructure/ServiceFactory.cs - repos, LocalDbContext, dispatchers, PriceCalculator
-  → AddRadiusDeskServices()     // FreeRadius/ServiceFactory.cs      - RadDbContext, keyed(RadiusDesk) services
+  → AddRadiusDeskServices()     // RadiusDesk/ServiceFactory.cs      - RadDbContext, keyed(RadiusDesk) services
   → AddMikrotikRadiusServices() // MikrotikRadius/ServiceFactory.cs  - keyed(UserManager) services, MikrotikDirectService
   → AddOutSourceServices()      // OutSource/ServiceFactory.cs       - EmailOptions validated, Email + Social scoped
   → AddApplicationServices()    // Application/ServiceFactory.cs     - use-cases, ManagementOptions, Quartz JobInterval

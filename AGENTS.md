@@ -111,7 +111,7 @@ flowchart TB
   Admin --> App
   App --> SB["ServerBridge<br/>SSH, Tik4Net, API, Email"]
   App --> Infra["Infrastructure<br/>Repos + MSSQL + PriceCalculator"]
-  App --> RD["FreeRadius<br/>RadiusDesk (MySQL + Web API)"]
+  App --> RD["RadiusDesk<br/>(MySQL + Web API)"]
   App --> MR["MikrotikRadius<br/>UserManager + direct SSH"]
   App --> OS["OutSource<br/>Email + Social (stub)"]
   App --> AppL["Application<br/>Use-cases + Quartz JobInterval"]

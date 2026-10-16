@@ -87,7 +87,7 @@ flowchart TB
     IMPL[EditableRepository impls - Infrastructure]
     CTX[LocalDbContext - SqlConnection]
     SSMS[(Local MSSQL)]
-    RAD[Radius adapters - FreeRadius/MikrotikRadius]
+    RAD[Radius adapters - RadiusDesk/MikrotikRadius]
     RADDB[(RadDbContext - MySQL)]
     APP --> RI
     RI -.implemented by.-> IMPL

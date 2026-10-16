@@ -9,7 +9,7 @@
 - **نوشتن** (ثبت/غیرفعال/بستن کانکشن/تغییر پسورد) از طریق **Web API ردیوس (rad-api)** انجام می‌شود.
 
 و سیستم باید همزمان از دو پیاده‌سازی ردیوس پشتیبانی کند:
-- **RadiusDesk** = FreeRADIUS با MySQL + REST API (cake4/rd_cake) — پروژه‌ی `FreeRadius`.
+- **RadiusDesk** = FreeRADIUS با MySQL + REST API (cake4/rd_cake) — پروژه‌ی `RadiusDesk` (تا ۱۴۰۵/۰۷/۲۴ با نام `FreeRadius`).
 - **Mikrotik UserManager** = tik4net + SSH مستقیم — پروژه‌ی `MikrotikRadius`.
 
 ## Dispatch strategy (استراتژی dispatch)
@@ -41,7 +41,7 @@ switch (radius.Features & ServerFeature.Radius)
 - `RadiusType.UserManager = "UserManager"`
 
 ثبت keyed در:
-- `FreeRadius/ServiceFactory.cs:39-40` (`AddLazyKeyedTransient<...IInfra..., ...RadiusDeskService>(RadiusType.RadiusDesk)`).
+- `RadiusDesk/ServiceFactory.cs:39-40` (`AddLazyKeyedTransient<...IInfra..., ...RadiusDeskService>(RadiusType.RadiusDesk)`).
 - `MikrotikRadius/ServiceFactory.cs:21-22` (`AddLazyKeyedTransient<...IInfra..., ...UserManagerService>(RadiusType.UserManager)`).
 
 ```mermaid
@@ -49,7 +49,7 @@ flowchart TB
     APP[Application use-cases<br/>+ JobInterval]
     APP --> ARS[IAccountRadiusSyncService<br/>ISessionRadiusSyncService]
     ARS --> DISP[AccountRadiusSyncService<br/>SessionRadiusSyncService - Infrastructure]
-    DISP -->|FromKeyedServices RadiusDesk| RD[IInfra*RadiusSyncService<br/>RadiusDesk impl - FreeRadius]
+    DISP -->|FromKeyedServices RadiusDesk| RD[IInfra*RadiusSyncService<br/>RadiusDesk impl]
     DISP -->|FromKeyedServices UserManager| UM[IInfra*RadiusSyncService<br/>UserManager impl - MikrotikRadius]
     DISP -->|switch Features &amp; ServerFeature.Radius| SEL{per server}
     SEL -->|RadiusDesk| RD
@@ -60,13 +60,13 @@ flowchart TB
     UM --> SSH[SSH - MikrotikDirectService]
 ```
 
-## FreeRadius project (RadiusDesk)
+## RadiusDesk project
 
-پروژه‌ی `FreeRadius` (`Backend/FreeRadius/`):
+پروژه‌ی `RadiusDesk` (`Backend/RadiusDesk/`؛ تا ۱۴۰۵/۰۷/۲۴ با نام `FreeRadius`):
 
 - **`RadDbContext`** (MySQL، `MySql.Data`) — context read. با options `RadDapperOptions`.
 - **Repositories**: `CloudRepository`, `NasRepository`, `PermanentUsersRepository`, `ProfileRepository`, `RadAcctRepository`, `RealmRepository`, `TopUpRepository`, `UserPlanStateRepository`.
-- **`RadiusDeskService`** (`IRadiusService`) — Web API با `HttpClient` کلیددار `"free-radius"` و BaseAddress `cake4/rd_cake`.
+- **`RadiusDeskService`** (`IRadiusService`) — Web API با `HttpClient` کلیددار `"radius-desk"` و BaseAddress `cake4/rd_cake`.
 - **Account/Session sync**: `AccountRadiusSyncRadiusDeskService`, `SessionRadiusSyncRadiusDeskService` (پیاده‌سازی keyed RadiusDesk).
 - **Entities** (مثال): `RadAcctEntity`, `PermanentUserEntity`, `NasEntity`, `UserPlanStateEntity` و …
 

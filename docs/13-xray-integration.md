@@ -28,7 +28,7 @@
 | بستن کانکشن میکروتیک | رفتار دقیق باید probe شود (حذف کلاینت، اتصال‌های جاری) |
 | `UpdateTrafficData` از radacct (ردیف سشن) | poll شمارنده‌های تجمعی per-client از x-ui |
 
-نقطه‌ی ورود فنی: همان قراردادهای `IInfraAccountRadiusSyncService` / `IInfraSessionRadiusSyncService` با keyed DI (الگوی `docs/06`)؛ پروژه‌های `FreeRadius` و `MikrotikRadius` در این مسیر کنار می‌روند و یک adapter جدید (کلید سوم یا جایگزین) ساخته می‌شود. متدهای Radius هرگز مستقیم در Application صدا زده نمی‌شوند — همین قاعده برای adapter جدید هم برقرار است.
+نقطه‌ی ورود فنی: همان قراردادهای `IInfraAccountRadiusSyncService` / `IInfraSessionRadiusSyncService` با keyed DI (الگوی `docs/06`)؛ پروژه‌های `RadiusDesk` و `MikrotikRadius` در این مسیر کنار می‌روند و یک adapter جدید (کلید سوم یا جایگزین) ساخته می‌شود. متدهای Radius هرگز مستقیم در Application صدا زده نمی‌شوند — همین قاعده برای adapter جدید هم برقرار است.
 
 ## منبع حقیقت
 
