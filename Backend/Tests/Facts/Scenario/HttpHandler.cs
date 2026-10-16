@@ -6,6 +6,7 @@ using PhotonBypass.Portal.Context;
 using PhotonBypass.Result;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockServerBridge;
+using PhotonBypass.Tools;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 
@@ -207,6 +208,48 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
     {
         var response = await Client.PostAsJsonAsync("/api/billing/settle-wallet", new { code });
         await CheckResponse(response, status);
+    }
+
+    protected async Task WalletAdjust(string? target, short direction, int amount, string? description, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/wallet/adjust",
+            new { target, direction, amount, description });
+        await CheckResponse(response, status);
+    }
+
+    protected async Task<Dictionary<string, string?>> WalletHistory(string? target = null, int page = 1, int status = 2)
+    {
+        var url = $"/api/wallet/history?page={page}" + (target != null ? $"&target={target}" : "");
+        var response = await Client.GetAsync(url);
+        return await CheckResponseObject(response, status);
+    }
+
+    /// <summary>
+    /// Creates an account straight in the scenario database — register always
+    /// sets AllowSelfService (D11), so dependent/manager fixtures must be seeded here.
+    /// </summary>
+    protected async Task InsertAccount(string username, UserTypes user_type,
+        AccountRole role = AccountRole.User, int? owner_id = null, bool is_active = true)
+    {
+        using var scope = ServiceProvider.CreateScope();
+
+        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+
+        // deterministic per-username mobile (a length-based one collides)
+        var seed = Math.Abs(username.Aggregate(17, (current, c) => current * 31 + c));
+
+        await account_repo.Save(new AccountEntity
+        {
+            Username = username,
+            Password = PasswordHasher.Hash("Password"),
+            VpnPassword = HashHandler.GenerateHashCode(),
+            Email = $"{username}@gmail.com",
+            Mobile = $"+9891{seed % 100_000_000:D8}",
+            UserType = user_type,
+            Role = role,
+            Owner = owner_id,
+            IsActive = is_active,
+        });
     }
 
     protected async Task Estimate(string username, string token, string password, int status = 2)

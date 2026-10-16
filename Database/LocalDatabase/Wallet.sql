@@ -12,6 +12,9 @@ CREATE TABLE Wallet (
 	InvoiceCode			INT					NULL,
 	ReferenceCode		VARCHAR(31)			NULL,
 	Action				VARCHAR(16)			NULL,
+	-- docs/20 D5 (phase 3): admin who issued a manual adjustment; NULL for
+	-- system rows (register/renewal/threshold flows).
+	ActorId				INT					NULL	CONSTRAINT FK_Wallet_ActorId_Account FOREIGN KEY REFERENCES Account (Id),
 	Created				DATETIME		NOT NULL	CONSTRAINT DF_Wallet_Created DEFAULT GETDATE()
 )
 GO

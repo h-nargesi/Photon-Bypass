@@ -21,6 +21,13 @@ public interface ISelfServiceGuard
 
     /// <summary>EnsureSelfService semantics plus resolution of the paying actor account (D4).</summary>
     Task<AccountEntity> ResolvePayingActor();
+
+    /// <summary>
+    /// Resolves the logged-in active account without any self-service check —
+    /// for role-based decisions that are independent of the dependent flag
+    /// (e.g. wallet history access, docs/20 phase 3).
+    /// </summary>
+    Task<AccountEntity> ResolveActor();
 }
 
 class SelfServiceGuard(
@@ -48,7 +55,7 @@ class SelfServiceGuard(
     {
         var context = JobContext.Value;
 
-        var actor = await GetActor(context.Username);
+        var actor = await ResolveActor();
 
         if (context.Target == actor.Username && !actor.UserType.HasFlag(UserTypes.AllowSelfService))
         {
@@ -56,6 +63,11 @@ class SelfServiceGuard(
         }
 
         return actor;
+    }
+
+    public Task<AccountEntity> ResolveActor()
+    {
+        return GetActor(JobContext.Value.Username);
     }
 
     private async Task<AccountEntity> GetActor(string username)

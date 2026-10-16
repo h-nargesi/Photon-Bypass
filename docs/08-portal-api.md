@@ -55,8 +55,10 @@
 | GET | `/api/billing/get-invoice` | `?code` (int) `&target?` | `BillingController.GetInvoice` | Y | مدل کامل فاکتور: `code, kind, status, totalPrice, walletDeduction, payable, walletBalance, allowWallet, hasReceipt, items[], cardInfo[]`. |
 | POST | `/api/billing/register-receipt` | multipart: `code, target?, file XOR text` | `BillingController.RegisterReceipt` | Y | ثبت رسید (تصویر یا متن) → `Verifying`؛ برای فاکتور Plan، اجرای Renewal. اولین endpoint مولتی‌پارت (سقف درخواست ۳MB؛ فرمت‌های jpg/jpeg/png/webp). |
 | POST | `/api/billing/settle-wallet` | body `SettleWalletRequest {Code, Target?}` | `BillingController.SettleWallet` | Y | تسویه فاکتور Plan از کیف پول (فقط با موجودی کافی؛ انتقال اتمیک `Pending→Canceled`). |
+| POST | `/api/wallet/adjust` | body `WalletAdjustRequest {Target?, Direction, Amount, Description}` | `WalletController.Adjust` | Y + policy **Admin** | تراکنش شفاف ادمین (docs/20 D5/فاز ۳): ردیف Completed با `ActorId` + اجرای قاعده آستانه؛ `Direction` ∈ {1=Credit, -1=Debit}، `Amount>0`، توضیح اجباری (≤۱۲۷). |
+| GET | `/api/wallet/history` | `?target?&page=1` | `WalletController.GetHistory` | Y | تاریخچه کیف پول target با صفحه‌بندی سمت سرور (۲۰ ردیف، newest-first؛ پاکت `PagedResult {page,pageSize,totalCount,totalPages,items[]}`)؛ فقط خودِ صاحب حساب مستقل یا ادمین — مدیر ۴۰۳. |
 
-> توجه: همه‌ی endpoint های `BillingController` دارای `[Authorize]` هستند و `LoadJobContext(target)` را صدا می‌زنند (چنداکانتی). `payment-callback` در فاز P2 حذف شد (درگاه پرداخت وجود ندارد).
+> توجه: همه‌ی endpoint های `BillingController` دارای `[Authorize]` هستند و `LoadJobContext(target)` را صدا می‌زنند (چنداکانتی). `payment-callback` در فاز P2 حذف شد (درگاه پرداخت وجود ندارد). endpointهای `WalletController` (فاز ۳ پنل) همین الگو را دارند؛ `adjust` علاوه بر آن policy ادمین می‌خواهد.
 
 ## Request DTOs (Context)
 

@@ -27,6 +27,9 @@ public class WalletEntity : IBaseEntity
 
     public string? Action { get; set; }
 
+    /// <summary>Admin who issued this manual adjustment (docs/20 D5); null on system rows.</summary>
+    public int? ActorId { get; set; }
+
     public DateTime Created { get; init; } = DateTime.Now;
 
     [NotMapped]

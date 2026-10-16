@@ -1,8 +1,6 @@
 using PhotonBypass.Domain.Account;
-using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Test.Initializer;
-using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Facts.Scenario;
 
@@ -85,26 +83,5 @@ public class PayerSeparationTest(ProgramLevelInitializer.Factory factory) : Http
         Assert.Equal(((int)InvoiceKind.TopUp).ToString(), invoice["kind"]);
         Assert.Equal("50000", invoice["totalPrice"]);
         Assert.Equal("50000", invoice["payable"]);
-    }
-
-    /// <summary>
-    /// Creates an account straight in the scenario database — register always
-    /// sets AllowSelfService (D11), so dependent fixtures must be seeded here.
-    /// </summary>
-    private async Task InsertAccount(string username, UserTypes user_type)
-    {
-        using var scope = ServiceProvider.CreateScope();
-
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
-
-        await account_repo.Save(new AccountEntity
-        {
-            Username = username,
-            Password = PasswordHasher.Hash("Password"),
-            VpnPassword = HashHandler.GenerateHashCode(),
-            Email = $"{username}@gmail.com",
-            Mobile = $"+9891{username.Length:00}{username.Length}",
-            UserType = user_type,
-        });
     }
 }

@@ -35,6 +35,29 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
         return [..result];
     }
 
+    public async Task<(List<WalletEntity> Rows, int TotalCount)> GetHistory(int account_id, int page, int page_size)
+    {
+        var total = await ExecuteScalarAsync<int>(
+            $"""
+             select count(*) as Total
+             from {TableName}
+             where {nameof(WalletEntity.AccountId)} = @account_id
+             """,
+            new { account_id });
+
+        var sql = $"""
+                   select *
+                   from {TableName}
+                   where {nameof(WalletEntity.AccountId)} = @account_id
+                   order by {nameof(WalletEntity.Id)} desc
+                   offset @skip rows fetch next @take rows only
+                   """;
+
+        var rows = await QueryAsync<WalletEntity>(sql, new { account_id, skip = (page - 1) * page_size, take = page_size });
+
+        return ([.. rows], total);
+    }
+
     public async Task<Dictionary<int, int>> GetWalletsAmount(IEnumerable<int> ids)
     {
         var id_list = ids.ToArray();

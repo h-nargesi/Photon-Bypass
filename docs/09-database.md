@@ -14,7 +14,7 @@
 |---|---|---|---|
 | `Database.sql` | (db creation) | — | ساخت دیتابیس `FastBypass`. |
 | `Account.sql` | `Account` | `PK Id`, `UK_Account_Username`, `UK_Account_Email` (filtered `WHERE Email IS NOT NULL`), `UK_Account_Mobile` (filtered), `FK_Owner→Account`, `FK_CalculationMethod→Price` | اکانت + زیرمجموعه (`Owner`) + `VpnPassword` جدا. ستون‌های `Role` (پنل نقش‌ها، docs/20 D2/D9) و `LastCredentialRotateTime` (throttle چرخش UUID x-ui، docs/16 D4) ادغام‌شده. **بدون seed ادمین** — ادمین در زمان دیپلوی ساخته می‌شود (بخش Security note زیر). |
-| `Wallet.sql` | `Wallet` | `PK Id` | کیف پول + `InvoiceCode`. موجودی = `sum(Amount*Direction)` روی `Status in (Completed, Verifying)`. |
+| `Wallet.sql` | `Wallet` | `PK Id`, `FK ActorId→Account` | کیف پول + `InvoiceCode`. موجودی = `sum(Amount*Direction)` روی `Status in (Completed, Verifying)`. `ActorId` (docs/20 D5/فاز ۳) ادمینِ issuer تراکنش دستی است؛ روی ردیف‌های سیستمی NULL. |
 | `History.sql` | `History` | `PK Id` | لاگ رویداد روی `Target`. |
 | `ResetPassword.sql` | `ResetPassword` | — | توکن بازنشانی. |
 | `Renewal.sql` | `Renewal` | `PK Id`, `FK AccountId→Account`, `WalletDebit/WalletCredit` | یک تمدید + ستون‌های وضعیت ترافیک x-ui (docs/17 D6/D14): `LastSeenCounter`, `LastPollTime`, `TrafficUsed`, `LastActiveTime`. |

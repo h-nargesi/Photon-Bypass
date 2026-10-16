@@ -58,6 +58,16 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 return Task.FromResult(result);
             });
 
+        Setup(x => x.GetHistory(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
+            .Returns<int, int, int>((account_id, page, page_size) =>
+            {
+                var rows = Data.TryGetValue(account_id, out var list)
+                    ? list.OrderByDescending(w => w.Id).ToList()
+                    : [];
+
+                return Task.FromResult((rows.Skip((page - 1) * page_size).Take(page_size).ToList(), rows.Count));
+            });
+
         Setup(x => x.GetWalletsAmount(It.IsAny<IEnumerable<int>>()))
             .Returns<IEnumerable<int>>(ids =>
             {
@@ -139,6 +149,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                     Id = ex.Id,
                     AccountId = ex.AccountId,
                     Action = ex.Action,
+                    ActorId = ex.ActorId,
                     Status = ex.Status,
                     Amount = ex.Amount,
                     Description = ex.Description,
@@ -150,6 +161,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 db_context.RegisterUndo(() =>
                 {
                     ex.Action = snapshot.Action;
+                    ex.ActorId = snapshot.ActorId;
                     ex.Status = snapshot.Status;
                     ex.Amount = snapshot.Amount;
                     ex.Description = snapshot.Description;
@@ -160,6 +172,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 });
 
                 ex.Action = wallet.Action;
+                ex.ActorId = wallet.ActorId;
                 ex.Status = wallet.Status;
                 ex.Amount = wallet.Amount;
                 ex.Description = wallet.Description;
