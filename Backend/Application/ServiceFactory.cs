@@ -28,6 +28,7 @@ public static class ServiceFactory
             .ValidateOnStart();
 
         builder.Services.AddLazyTransient<IAccountApplication, AccountApplication>();
+        builder.Services.AddLazyTransient<IUserManagementApplication, UserManagementApplication>();
         builder.Services.AddLazyTransient<ISelfServiceGuard, SelfServiceGuard>();
         builder.Services.AddLazyTransient<IAuthApplication, AuthApplication>();
         builder.Services.AddLazyTransient<IBasicsApplication, BasicsApplication>();

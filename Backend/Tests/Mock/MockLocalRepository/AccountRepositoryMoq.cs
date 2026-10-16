@@ -3,6 +3,7 @@ using System.Text.Json;
 using Moq;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Repository;
 using PhotonBypass.Test.MockOptions;
 using PhotonBypass.Tools;
@@ -143,6 +144,55 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
 
                 return Task.FromResult(validation);
             });
+
+        Setup(x => x.SearchAccounts(It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<int>(), It.IsAny<int>()))
+            .Returns<int?, string?, int, int>((owner_id, term, page, page_size) =>
+            {
+                var query = Data.Values.AsEnumerable();
+
+                if (owner_id.HasValue)
+                {
+                    query = query.Where(account => account.Owner == owner_id.Value);
+                }
+
+                if (!string.IsNullOrWhiteSpace(term))
+                {
+                    var mask = term.Trim();
+
+                    query = query.Where(account =>
+                        account.Username.Contains(mask, StringComparison.OrdinalIgnoreCase) ||
+                        (account.Name?.Contains(mask, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (account.Surname?.Contains(mask, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                        (account.Email?.Contains(mask, StringComparison.OrdinalIgnoreCase) ?? false));
+                }
+
+                var ordered = query.OrderBy(account => account.Username, StringComparer.OrdinalIgnoreCase).ToList();
+
+                var rows = ordered
+                    .Skip((page - 1) * page_size)
+                    .Take(page_size)
+                    .Select(account => new AccountOverviewModel
+                    {
+                        Username = account.Username,
+                        Name = account.Name,
+                        Surname = account.Surname,
+                        Email = account.Email,
+                        Role = account.Role,
+                        AllowSelfService = account.UserType.HasFlag(UserTypes.AllowSelfService),
+                        IsActive = account.IsActive,
+                        Owner = account.Owner.HasValue
+                            ? Data.Values.FirstOrDefault(owner => owner.Id == account.Owner.Value)?.Username
+                            : null,
+                        Created = account.Created,
+                    })
+                    .ToList();
+
+                return Task.FromResult((rows, ordered.Count));
+            });
+
+        Setup(x => x.HasActiveSubordinate(It.IsAny<int>()))
+            .Returns<int>(manager_id => Task.FromResult(
+                Data.Values.Any(account => account.Owner == manager_id && account.IsActive)));
 
         Setup(x => x.Save(It.IsAny<AccountEntity>()))
             .Returns<AccountEntity>(account =>

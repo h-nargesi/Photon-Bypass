@@ -72,7 +72,8 @@ public class RolesAuthorizationTest(ProgramLevelInitializer.Factory factory) : H
         (await authorization.AuthorizeAsync(user_principal, null, ServiceFactory.ManagerPolicy))
             .Succeeded.Should().BeFalse();
 
-        // a manager (no such account exists yet, phase 4) passes Manager only
+        // a synthetic manager principal (scenario managers are seeded by the
+        // phase-4 tests) passes Manager only
         var manager_principal = new ClaimsPrincipal(new ClaimsIdentity(
             [new Claim(ClaimTypes.Role, nameof(AccountRole.Manager))], "Bearer"));
         (await authorization.AuthorizeAsync(manager_principal, null, ServiceFactory.ManagerPolicy))

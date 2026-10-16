@@ -57,8 +57,15 @@
 | POST | `/api/billing/settle-wallet` | body `SettleWalletRequest {Code, Target?}` | `BillingController.SettleWallet` | Y | تسویه فاکتور Plan از کیف پول (فقط با موجودی کافی؛ انتقال اتمیک `Pending→Canceled`). |
 | POST | `/api/wallet/adjust` | body `WalletAdjustRequest {Target?, Direction, Amount, Description}` | `WalletController.Adjust` | Y + policy **Admin** | تراکنش شفاف ادمین (docs/20 D5/فاز ۳): ردیف Completed با `ActorId` + اجرای قاعده آستانه؛ `Direction` ∈ {1=Credit, -1=Debit}، `Amount>0`، توضیح اجباری (≤۱۲۷). |
 | GET | `/api/wallet/history` | `?target?&page=1` | `WalletController.GetHistory` | Y | تاریخچه کیف پول target با صفحه‌بندی سمت سرور (۲۰ ردیف، newest-first؛ پاکت `PagedResult {page,pageSize,totalCount,totalPages,items[]}`)؛ فقط خودِ صاحب حساب مستقل یا ادمین — مدیر ۴۰۳. |
+| GET | `/api/user/list` | `?search?&page=1` | `UserController.GetList` | Y + policy **Manager** | لیست صفحه‌بندی‌شده کاربران (مدیر → فقط زیر دست‌ها شامل غیرفعال‌ها؛ ادمین → همه) با خلاصه‌ی آخرین پلن از `TotalPlanState`. |
+| POST | `/api/user/create` | body `CreateUserModel` | `UserController.Create` | Y + policy **Manager** | ساخت کاربر (docs/20 فاز ۴): مدیر → `Owner=self`/`Role=User` اجباری؛ ادمین → `Role` (بجز Admin) و `Owner` (مدیر فعال)؛ پسورد اولیه الزامی؛ تکراری → 409. |
+| POST | `/api/user/set-password` | body `{Target, Password}` | `UserController.SetPassword` | Y + policy **Manager** | بازنشانی پسورد (مدیر → زیر دست خودش؛ ادمین → هرکس بجز خودش). |
+| POST | `/api/user/set-role` | body `{Target, Role}` | `UserController.SetRole` | Y + policy **Admin** | فقط User↔Manager؛ خود/ادمین ممنوع (D9)؛ تنزل مدیرِ دارای زیر دست فعال → 400. |
+| POST | `/api/user/set-owner` | body `{Target, Owner?}` | `UserController.SetOwner` | Y + policy **Admin** | attach (به مدیر فعال، بدون چرخه) / detach (`Owner=null`) + بی‌اعتبارسازی کش دسترسی مالک‌ها. |
+| POST | `/api/user/set-self-service` | body `{Target, Allow}` | `UserController.SetSelfService` | Y + policy **Manager** | فلگ مستقل/وابسته (ادمین: هرکس؛ مدیر: فقط زیر دست خودش). |
+| POST | `/api/user/set-active` | body `{Target, Active}` | `UserController.SetActive` | Y + policy **Manager** | فعال/غیرفعال (D13؛ ادمین: هرکس بجز خودش — D9). |
 
-> توجه: همه‌ی endpoint های `BillingController` دارای `[Authorize]` هستند و `LoadJobContext(target)` را صدا می‌زنند (چنداکانتی). `payment-callback` در فاز P2 حذف شد (درگاه پرداخت وجود ندارد). endpointهای `WalletController` (فاز ۳ پنل) همین الگو را دارند؛ `adjust` علاوه بر آن policy ادمین می‌خواهد.
+> توجه: همه‌ی endpoint های `BillingController` دارای `[Authorize]` هستند و `LoadJobContext(target)` را صدا می‌زنند (چنداکانتی). `payment-callback` در فاز P2 حذف شد (درگاه پرداخت وجود ندارد). endpointهای `WalletController` (فاز ۳ پنل) همین الگو را دارند؛ `adjust` علاوه بر آن policy ادمین می‌خواهد. endpointهای `UserController` (فاز ۴ پنل) عمداً target را از `LoadJobContext(target)` عبور نمی‌دهند — رابطه actor→target در application زنده از دیتابیس اعتبارسنجی می‌شود (زیر دستِ تازه‌ساخته در همان نشست قابل مدیریت است).
 
 ## Request DTOs (Context)
 

@@ -2,7 +2,6 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Test.Initializer;
-using System.Text.Json;
 
 namespace PhotonBypass.Test.Facts.Scenario;
 
@@ -160,14 +159,5 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
         Assert.Equal(3, ParseItems(second).Count);
 
         await WalletHistory(page: 0, status: 4);
-    }
-
-    private static List<Dictionary<string, string?>> ParseItems(Dictionary<string, string?> page)
-    {
-        return JsonSerializer.Deserialize<JsonElement>(page["items"]!)
-            .EnumerateArray()
-            .Select(element => element.EnumerateObject()
-                .ToDictionary(property => property.Name, property => property.Value.ToString()))
-            .ToList();
     }
 }

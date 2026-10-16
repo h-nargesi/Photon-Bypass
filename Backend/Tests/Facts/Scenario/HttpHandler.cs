@@ -8,6 +8,7 @@ using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockServerBridge;
 using PhotonBypass.Tools;
 using System.Net.Http.Json;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace PhotonBypass.Test.Facts.Scenario;
@@ -222,6 +223,74 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         var url = $"/api/wallet/history?page={page}" + (target != null ? $"&target={target}" : "");
         var response = await Client.GetAsync(url);
         return await CheckResponseObject(response, status);
+    }
+
+    protected async Task<Dictionary<string, string?>> UserList(string? search = null, int page = 1, int status = 2)
+    {
+        var url = $"/api/user/list?page={page}" +
+                  (search != null ? $"&search={Uri.EscapeDataString(search)}" : "");
+        var response = await Client.GetAsync(url);
+        return await CheckResponseObject(response, status);
+    }
+
+    protected async Task UserCreate(string username, string password, bool self_service = false,
+        int? role = null, string? owner = null, string? email = null, string? mobile = null,
+        string firstname = "fname", string lastname = "lname", int status = 2)
+    {
+        var seed = Math.Abs(username.Aggregate(17, (current, c) => current * 31 + c));
+
+        var response = await Client.PostAsJsonAsync("/api/user/create", new
+        {
+            username,
+            password,
+            firstname,
+            lastname,
+            email = email ?? $"{username}@gmail.com",
+            mobile = mobile ?? $"+9893{seed % 100_000_000:D8}",
+            allowSelfService = self_service,
+            role,
+            owner,
+        });
+        await CheckResponse(response, status);
+    }
+
+    protected async Task UserSetPassword(string target, string password, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/user/set-password", new { target, password });
+        await CheckResponse(response, status);
+    }
+
+    protected async Task UserSetRole(string target, int role, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/user/set-role", new { target, role });
+        await CheckResponse(response, status);
+    }
+
+    protected async Task UserSetOwner(string target, string? owner, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/user/set-owner", new { target, owner });
+        await CheckResponse(response, status);
+    }
+
+    protected async Task UserSetSelfService(string target, bool allow, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/user/set-self-service", new { target, allow });
+        await CheckResponse(response, status);
+    }
+
+    protected async Task UserSetActive(string target, bool active, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/user/set-active", new { target, active });
+        await CheckResponse(response, status);
+    }
+
+    protected static List<Dictionary<string, string?>> ParseItems(Dictionary<string, string?> page)
+    {
+        return JsonSerializer.Deserialize<JsonElement>(page["items"]!)
+            .EnumerateArray()
+            .Select(element => element.EnumerateObject()
+                .ToDictionary(property => property.Name, property => property.Value.ToString()))
+            .ToList();
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
 ﻿using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Repository;
 
 namespace PhotonBypass.Domain.Account;
@@ -30,4 +31,18 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
     Task<int?> GetActiveAccountId(string username);
 
     Task<int> CheckUniqueData(string username, string? email, string? mobile);
+
+    /// <summary>
+    /// Paged user list for the management panel (docs/20 phase 4): inactive
+    /// accounts included; <paramref name="owner_id"/> scopes to one manager's
+    /// subordinates (null = every account — the admin view);
+    /// <paramref name="term"/> filters username/name/surname/email.
+    /// </summary>
+    Task<(List<AccountOverviewModel> Rows, int TotalCount)> SearchAccounts(int? owner_id, string? term, int page, int page_size);
+
+    /// <summary>
+    /// Whether the account still has at least one active subordinate — the
+    /// guard that blocks demoting such a manager (docs/20 §3).
+    /// </summary>
+    Task<bool> HasActiveSubordinate(int manager_id);
 }

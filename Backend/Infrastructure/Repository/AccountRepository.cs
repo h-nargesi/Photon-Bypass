@@ -1,6 +1,8 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using Dapper;
+using Microsoft.Data.SqlClient;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Infra.Database;
 using PhotonBypass.Infra.Repository.DbContext;
@@ -162,5 +164,73 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return (data.Any(d => string.Equals(d.Username, username, StringComparison.OrdinalIgnoreCase)) ? 1 : 0) |
                (data.Any(d => string.Equals(d.Email, email, StringComparison.OrdinalIgnoreCase)) ? 2 : 0) |
                (data.Any(d => string.Equals(d.Mobile, mobile, StringComparison.OrdinalIgnoreCase)) ? 4 : 0);
+    }
+
+    public async Task<(List<AccountOverviewModel> Rows, int TotalCount)> SearchAccounts(int? owner_id, string? term, int page, int page_size)
+    {
+        var parameters = new DynamicParameters();
+        var filters = new List<string>();
+
+        if (owner_id.HasValue)
+        {
+            filters.Add($"ac.{nameof(AccountEntity.Owner)} = @owner_id");
+            parameters.Add("owner_id", owner_id.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(term))
+        {
+            filters.Add($"(ac.{nameof(AccountEntity.Username)} like @term or ac.{nameof(AccountEntity.Name)} like @term" +
+                        $" or ac.{nameof(AccountEntity.Surname)} like @term or ac.{nameof(AccountEntity.Email)} like @term)");
+            parameters.Add("term", $"%{term.Trim()}%");
+        }
+
+        var where = filters.Count > 0 ? "where " + string.Join(" and ", filters) : string.Empty;
+
+        // the count never touches the TotalPlanState view — the plan join only
+        // runs on the requested page (docs/20 phase 4)
+        var total = await ExecuteScalarAsync<int>($"select count(*) from {TableName} ac {where}", parameters);
+
+        var sql = $"""
+                   select ac.{nameof(AccountEntity.Username)}
+                          , ac.{nameof(AccountEntity.Name)}
+                          , ac.{nameof(AccountEntity.Surname)}
+                          , ac.{nameof(AccountEntity.Email)}
+                          , ac.{nameof(AccountEntity.Role)}
+                          , case when ac.{nameof(AccountEntity.UserType)} & 4 /* UserTypes.AllowSelfService */ <> 0 then 1 else 0 end as {nameof(AccountOverviewModel.AllowSelfService)}
+                          , ac.{nameof(AccountEntity.IsActive)}
+                          , owner.{nameof(AccountEntity.Username)} as {nameof(AccountOverviewModel.Owner)}
+                          , ac.{nameof(AccountEntity.Created)}
+                          , state.{nameof(AccountOverviewModel.SimultaneousUser)}
+                          , state.{nameof(AccountOverviewModel.ExpirationDate)}
+                          , state.{nameof(AccountOverviewModel.TrafficLeft)}
+                          , state.{nameof(AccountOverviewModel.LastConnectTime)}
+                   from {TableName} ac
+                   left join {TableName} owner on ac.{nameof(AccountEntity.Owner)} = owner.{nameof(AccountEntity.Id)}
+                   outer apply (select top 1 tps.SimultaneousUser, tps.ExpirationDate, tps.TrafficLeft, tps.LastConnectTime
+                                from TotalPlanState tps
+                                where tps.Id = ac.{nameof(AccountEntity.Id)}
+                                order by tps.RowNumber desc) state
+                   {where}
+                   order by ac.{nameof(AccountEntity.Username)}
+                   offset @skip rows fetch next @take rows only
+                   """;
+
+        parameters.Add("skip", (page - 1) * page_size);
+        parameters.Add("take", page_size);
+
+        var rows = await QueryAsync<AccountOverviewModel>(sql, parameters);
+
+        return ([.. rows], total);
+    }
+
+    public Task<bool> HasActiveSubordinate(int manager_id)
+    {
+        var sql = $"""
+                   select top 1 1
+                   from {TableName}
+                   where {nameof(AccountEntity.Owner)} = @manager_id and {nameof(AccountEntity.IsActive)} = 1
+                   """;
+
+        return ExecuteScalarAsync<bool>(sql, new { manager_id });
     }
 }
