@@ -60,9 +60,9 @@ public class AuthAppTest : UnitLevelServiceInitializer
         Assert.NotNull(result.Data);
         Assert.Equal("User99", result.Data.Username);
         Assert.NotNull(result.Data.TargetArea);
-        Assert.Equal(2, result.Data.TargetArea.Count);
+        Assert.Equal(3, result.Data.TargetArea.Count);
         Assert.Equal(AccountRole.User, result.Data.Role);
-        Assert.False(result.Data.AllowSelfService);
+        Assert.True(result.Data.AllowSelfService);
     }
 
     [Fact]

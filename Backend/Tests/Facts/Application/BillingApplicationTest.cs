@@ -1,4 +1,5 @@
-﻿using PhotonBypass.Application.Billing;
+﻿using FluentAssertions;
+using PhotonBypass.Application.Billing;
 using PhotonBypass.Application.Management;
 using PhotonBypass.Application.Management.Model;
 using PhotonBypass.Application.Plan;
@@ -543,5 +544,110 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         Assert.NotNull(entry);
         Assert.Equal(500, entry.Price);
+    }
+
+    [Fact]
+    public async Task SelfFinancialEndpoints_DependentSelfUser_AreForbidden()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var billing_app = scope.ServiceProvider.GetRequiredService<IBillingApplication>();
+
+        job_context.InjectJobContext(11, "DependentUser11", "DependentUser11");
+
+        Func<Task> top_up = () => billing_app.IssueTopUp(500);
+        Func<Task> get_invoice = () => billing_app.GetInvoice(100001);
+        Func<Task> settle = () => billing_app.SettleWallet(100001);
+        Func<Task> receipt = () => billing_app.RegisterReceipt(100001, null, null, null, "receipt");
+
+        (await top_up.Should().ThrowAsync<UserException>()).Which.HttpCode.Should().Be(403);
+        (await get_invoice.Should().ThrowAsync<UserException>()).Which.HttpCode.Should().Be(403);
+        (await settle.Should().ThrowAsync<UserException>()).Which.HttpCode.Should().Be(403);
+        (await receipt.Should().ThrowAsync<UserException>()).Which.HttpCode.Should().Be(403);
+    }
+
+    [Fact]
+    public async Task GetInvoice_OnBehalfView_DoesNotLeakTargetWallet()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var billing_app = scope.ServiceProvider.GetRequiredService<IBillingApplication>();
+
+        job_context.InjectJobContext(2, "User2", "User2");
+
+        var code = (await billing_app.IssuePlanInvoice(800, "User2t|2u|120d|50g", "پلن تست")).Data!.Value;
+
+        // manager view of the target's invoice: wallet fields must stay empty
+        job_context.InjectJobContext(99, "User99", "User2");
+
+        var invoice = (await billing_app.GetInvoice(code)).Data;
+
+        Assert.NotNull(invoice);
+        Assert.Equal(0, invoice.WalletBalance);
+        Assert.False(invoice.AllowWallet);
+
+        // self view keeps the wallet fields
+        job_context.InjectJobContext(2, "User2", "User2");
+
+        invoice = (await billing_app.GetInvoice(code)).Data;
+
+        Assert.NotNull(invoice);
+        Assert.Equal(1500, invoice.WalletBalance);
+        Assert.True(invoice.AllowWallet);
+    }
+
+    [Fact]
+    public async Task SettleWallet_OnBehalf_DebitsPayerAndRenewsTarget()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var billing_app = scope.ServiceProvider.GetRequiredService<IBillingApplication>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
+        var wallet_moq = scope.ServiceProvider.GetRequiredService<WalletRepositoryMoq>();
+        var renewal_moq = scope.ServiceProvider.GetRequiredService<RenewalRepositoryMoq>();
+        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
+
+        // User99 (manager) renews User2's plan from its own wallet
+        job_context.InjectJobContext(99, "User99", "User2");
+
+        wallet_moq.Data[99] =
+        [
+            new WalletEntity
+            {
+                Id = 901,
+                AccountId = 99,
+                Amount = 1500,
+                Direction = BalanceDirection.Credit,
+                Status = BalanceStatus.Completed,
+                Description = "seed",
+            },
+        ];
+
+        var renewals_before = renewal_moq.Data.Count;
+
+        var code = (await plan_app.Renewal("User2", 2, 120, 25)).Data!.InvoiceCode!.Value;
+
+        // the payer's invoice is visible only in the payer's own view
+        job_context.InjectJobContext(99, "User99", "User99");
+
+        var settle_result = await billing_app.SettleWallet(code);
+
+        Assert.Equal(2, settle_result.Code / 100);
+
+        var debit = wallet_moq.Data[99].Single(w => w.Direction == BalanceDirection.Debit);
+        Assert.Equal(code, debit.InvoiceCode);
+
+        Assert.Empty(wallet_moq.Data[2].Where(w => w.Direction == BalanceDirection.Debit));
+        Assert.Equal(1500 - debit.Amount, await wallet_repo.GetBalance(99));
+        Assert.Equal(1500, await wallet_repo.GetBalance(2));
+
+        // renewal + plan application stay on the target
+        Assert.Equal(renewals_before + 1, renewal_moq.Data.Count);
+        Assert.Contains(renewal_moq.Data, r => r.AccountId == 2 && r.WalletDebit == debit.Id);
+
+        // financial history row on the payer, renewal row on the target
+        Assert.Contains(history_moq.Data, h => h.Target == 99 && h.Description == "از حساب کم شد.");
+        Assert.Contains(history_moq.Data, h => h.Target == 2 && h.Category == EventCategory.Renewal);
     }
 }

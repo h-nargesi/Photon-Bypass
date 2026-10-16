@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Billing.Model;
 using PhotonBypass.Application.Management;
 using PhotonBypass.Application.Management.Model;
@@ -24,6 +25,7 @@ class BillingApplication(
     Lazy<IWalletThresholdService> wallet_threshold_srv,
     IAccountSettlementGate settlement_gate,
     IOptions<ManagementOptions> options,
+    Lazy<ISelfServiceGuard> self_service_guard,
     Lazy<IJobContext> job_context)
     : IBillingApplication
 {
@@ -41,6 +43,7 @@ class BillingApplication(
     private Lazy<IWalletThresholdService> WalletThresholdSrv { get; } = wallet_threshold_srv;
     private IAccountSettlementGate SettlementGate { get; } = settlement_gate;
     private IOptions<ManagementOptions> Options { get; } = options;
+    private Lazy<ISelfServiceGuard> SelfServiceGuard { get; } = self_service_guard;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
     public async Task<ApiResult<int?>> IssueTopUp(int value)
@@ -50,7 +53,7 @@ class BillingApplication(
             throw new UserException("مبلغ وارد شده معتبر نیست!", $"Invalid pay amount: {value}");
         }
 
-        var account_id = RequireAccountId();
+        var account_id = (await SelfServiceGuard.Value.ResolvePayingActor()).Id;
 
         var code = await InvoiceRepo.GenerateNewInvoiceCode();
 
@@ -136,10 +139,15 @@ class BillingApplication(
 
     public async Task<ApiResult<InvoiceModel?>> GetInvoice(int code)
     {
+        await SelfServiceGuard.Value.EnsureSelfService();
+
         var invoice = await InvoiceRepo.GetByCodeOwner(JobContext.Value.Target, code)
                       ?? throw new UserException("فاکتور مورد نظر پیدا نشد!", $"Invoice not found: code={code}");
 
-        var wallet_balance = await WalletRepo.GetBalance(invoice.AccountId);
+        // Wallet fields belong to the invoice owner; they are exposed only in
+        // the self view so an on-behalf viewer never sees another wallet (D6/D10).
+        var self_view = JobContext.Value.Target == JobContext.Value.Username;
+        var wallet_balance = self_view ? await WalletRepo.GetBalance(invoice.AccountId) : 0;
 
         var items = new List<InvoiceItemModel>
         {
@@ -160,7 +168,8 @@ class BillingApplication(
             WalletDeduction = invoice.WalletDeduction,
             Payable = invoice.Payable,
             WalletBalance = wallet_balance,
-            AllowWallet = invoice.Kind == InvoiceKind.Plan &&
+            AllowWallet = self_view &&
+                          invoice.Kind == InvoiceKind.Plan &&
                           invoice.Status == BalanceStatus.Pending &&
                           wallet_balance >= invoice.TotalPrice,
             HasReceipt = invoice.HasReceipt,
@@ -173,6 +182,8 @@ class BillingApplication(
 
     public async Task<ApiResult> RegisterReceipt(int code, byte[]? image, string? file_name, string? content_type, string? text)
     {
+        await SelfServiceGuard.Value.EnsureSelfService();
+
         var invoice = await InvoiceRepo.GetByCodeOwner(JobContext.Value.Target, code)
                       ?? throw new UserException("فاکتور مورد نظر پیدا نشد!", $"Invoice not found: code={code}");
 
@@ -258,6 +269,8 @@ class BillingApplication(
 
     public async Task<ApiResult> SettleWallet(int code)
     {
+        await SelfServiceGuard.Value.EnsureSelfService();
+
         var invoice = await InvoiceRepo.GetByCodeOwner(JobContext.Value.Target, code)
                       ?? throw new UserException("فاکتور مورد نظر پیدا نشد!", $"Invoice not found: code={code}");
 

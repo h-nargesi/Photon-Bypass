@@ -31,6 +31,7 @@ class PlanApplication(
     Lazy<IServerManagementService> server_mng_srv,
     Lazy<IAccountApplication> account_app,
     Lazy<IBillingApplication> billing_app,
+    Lazy<ISelfServiceGuard> self_service_guard,
     Lazy<IJobContext> job_context)
     : IPlanApplication
 {
@@ -46,6 +47,7 @@ class PlanApplication(
     private Lazy<IServerManagementService> ServerMngSrv { get; } = server_mng_srv;
     private Lazy<IBillingApplication> BillingApp { get; } = billing_app;
     private Lazy<IAccountApplication> AccountApp { get; } = account_app;
+    private Lazy<ISelfServiceGuard> SelfServiceGuard { get; } = self_service_guard;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
     public async Task<ApiResult<PlanStateModel>> GetPlanState(string target)
@@ -101,6 +103,8 @@ class PlanApplication(
 
     public async Task<ApiResult<EstimateResult>> Estimate(string target, byte users, short days, int gigabytes)
     {
+        await SelfServiceGuard.Value.EnsureSelfService();
+
         var account = await AccountApp.Value.GetActiveUser(target);
 
         var renew = new RenewalEntity
@@ -130,9 +134,13 @@ class PlanApplication(
 
     public async Task<ApiResult<RenewalResult>> Renewal(string target, byte count, short days, int gigabytes)
     {
+        // D4: the invoice and the wallet debit always belong to the paying
+        // actor; the renewal itself is applied to the target account.
+        var payer = await SelfServiceGuard.Value.ResolvePayingActor();
+
         var account = await AccountApp.Value.GetActiveUser(target);
 
-        JobContext.Value.InjectJobContext(account.Id);
+        JobContext.Value.InjectJobContext(payer.Id, payer.Username, account.Username);
 
         var renewal = new RenewalEntity
         {
@@ -153,7 +161,7 @@ class PlanApplication(
 
         var estimate = await PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count,
             renewal.TimeLimitInDays ?? days, gigabytes);
-        var balance = await WalletRepo.Value.GetBalance(account.Id);
+        var balance = await WalletRepo.Value.GetBalance(payer.Id);
 
         Log.Information(@"
 [user: {0}] Plan renewal request:
@@ -161,7 +169,7 @@ class PlanApplication(
     request=(taget:{1}, user-count:{2}, days={3}, traffic:{4}, estimate:{7})
 ",
             JobContext.Value.Username, account.Username, count, days, gigabytes, balance,
-            JobContext.Value.Username, estimate);
+            payer.Username, estimate);
 
         var invoice_code = await BillingApp.Value.IssuePlanInvoice(estimate,
             $"{account.Username}t|{count}u|{days}d|{gigabytes}g", renewal.GetPlanTitle());
@@ -223,21 +231,18 @@ class PlanApplication(
             throw new Exception($"Invalid target={target_name} action={action} [count={count}, days={days}, gigabytes={gigabytes}]");
         }
 
-        var account = await AccountRepo.Value.GetUsernamesByAccountId([account_id]);
-
-        if (account.Count != 1)
-        {
-            throw new UserException("کاربر مورد نظر پیدا نشد!");
-        }
+        var payer = await AccountRepo.Value.GetActiveAccount(account_id)
+                    ?? throw new UserException("کاربر مورد نظر پیدا نشد!",
+                        $"Payer account not found or inactive: id={account_id}");
 
         var target = await AccountApp.Value.GetActiveUser(target_name);
 
-        JobContext.Value.InjectJobContext(account_id, account[account_id], target_name);
+        JobContext.Value.InjectJobContext(payer.Id, payer.Username, target_name);
 
-        return await Renewal(target, payment_id, count.Value, days.Value, gigabytes.Value, invoice_code);
+        return await Renewal(target, payer, payment_id, count.Value, days.Value, gigabytes.Value, invoice_code);
     }
 
-    private async Task<ApiResult<RenewalResult>> Renewal(AccountEntity account, int? payment_id, byte count, short days, int gigabytes, int? invoice_code)
+    private async Task<ApiResult<RenewalResult>> Renewal(AccountEntity account, AccountEntity payer, int? payment_id, byte count, short days, int gigabytes, int? invoice_code)
     {
         if (!account.IsActive)
         {
@@ -279,12 +284,12 @@ class PlanApplication(
 
         var estimate = await PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count,
             renew.TimeLimitInDays ?? days, gigabytes);
-        var balance = await WalletRepo.Value.GetBalance(account.Id);
+        var balance = await WalletRepo.Value.GetBalance(payer.Id);
 
-        if (account.CheckMoneyNeed(balance, estimate, out _))
+        if (payer.CheckMoneyNeed(balance, estimate, out _))
         {
             throw new UserException("موجودی کیف پول برای اجرای این تمدید کافی نیست!",
-                $"Settlement renewal with money-need: target={account.Username}, balance={balance}, estimate={estimate}");
+                $"Settlement renewal with money-need: payer={payer.Username}, target={account.Username}, balance={balance}, estimate={estimate}");
         }
 
         Log.Information(@"
@@ -298,7 +303,7 @@ class PlanApplication(
             current_state.SimultaneousUser, current_state.TimeLeft?.TotalDays, current_state.TimeLeft?.Hours,
             current_state.GetTrafficLeftInGig(),
             balance, estimate,
-            JobContext.Value.Username);
+            payer.Username);
 
         await AccountRepo.Value.DbContext.BeginTransactionAsync();
 
@@ -306,7 +311,7 @@ class PlanApplication(
         {
             var wallet_debit = new WalletEntity
             {
-                AccountId = account.Id,
+                AccountId = payer.Id,
                 Amount = estimate,
                 Direction = BalanceDirection.Debit,
                 Status = BalanceStatus.Completed,
@@ -321,7 +326,7 @@ class PlanApplication(
 
             await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
             {
-                Target = account.Id,
+                Target = payer.Id,
                 Category = EventCategory.Transaction,
                 Type = EventType.Information,
                 Title = "مالی",

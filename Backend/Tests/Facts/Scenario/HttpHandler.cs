@@ -130,6 +130,12 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
        return await CheckResponseObject(response, status);
     }
 
+    protected async Task<Dictionary<string, string?>> PlanInfo(string target, int status = 2)
+    {
+       var response = await Client.GetAsync($"/api/plan/plan-info?target={target}");
+       return await CheckResponseObject(response, status);
+    }
+
     protected async Task<Dictionary<string, string?>> Estimate(string username, byte users, short? days, short? gigs, int status = 2)
     {
        var request = new RenewalContext
@@ -160,6 +166,13 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
     {
         var response = await Client.GetAsync($"/api/billing/get-invoice?code={code}");
         return await CheckResponseObject(response, status);
+    }
+
+    protected async Task<int?> Pay(int value, string? target = null, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/billing/pay", new { value, target });
+        var result = await CheckResponse<int?>(response, status);
+        return result?.Data;
     }
 
     protected async Task<ApiResult> RegisterReceipt(

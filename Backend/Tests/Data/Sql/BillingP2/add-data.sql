@@ -1,6 +1,6 @@
-insert into Account (Username, Password)
-values ('Alpha', 'password')
-    , ('Beta', 'password')
+insert into Account (Username, Password, UserType)
+values ('Alpha', 'password', 4)
+    , ('Beta', 'password', 4)
 
 insert into Wallet (AccountId, Amount, Direction, Status, Description, InvoiceCode)
 select a.Id, 1000, 1, 1, 'T-alpha-credit', 6100 from Account a where a.Username = 'Alpha' union all

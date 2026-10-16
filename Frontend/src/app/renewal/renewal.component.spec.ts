@@ -138,6 +138,70 @@ describe('RenewalComponent', () => {
     expect(component.submitting).toBeFalse();
   });
 
+  it('on-behalf renewal opens the payment page in the payer view (no target)', async () => {
+    // manager with a selected dependent target (docs/20 D4: the invoice is
+    // issued on the manager, so the payment page must not carry the target)
+    localStorage.setItem('user|target', JSON.stringify('sub'));
+
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/renewal', RenewalComponent);
+
+    const drain = () => new Promise(resolve => setTimeout(resolve, 0));
+
+    http.expectOne('/api/basics/prices').flush(
+      { code: 200, data: [] },
+      { status: 200, statusText: 'OK' },
+    );
+
+    http.expectOne('/api/account/get-user').flush(
+      {
+        code: 200,
+        data: {
+          username: 'main',
+          fullname: 'Main',
+          email: 'main@test.local',
+          balance: 0,
+          targetArea: {
+            main: { username: 'main', fullname: 'Main', email: 'm@t.l' },
+            sub: { username: 'sub', fullname: 'Sub', email: 's@t.l' },
+          },
+        },
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    await drain();
+
+    http.expectOne('/api/plan/plan-info?target=sub').flush(
+      { code: 200, data: { target: 'sub', simultaneousUserCount: 1, days: 120, gigabytes: 50 } },
+      { status: 200, statusText: 'OK' },
+    );
+    await drain();
+
+    flushEstimate(230, 120);
+    await drain();
+
+    component.submit();
+
+    const request = http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/plan/renewal',
+    );
+    expect(request.request.body).toEqual({
+      days: 120,
+      gigabytes: 50,
+      simultaneousUserCount: 1,
+      target: 'sub',
+    });
+
+    request.flush(
+      { code: 200, data: { invoiceCode: 9013, currentPrice: 230 } },
+      { status: 200, statusText: 'OK' },
+    );
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await harness.fixture.whenStable();
+
+    expect(router.url).toBe('/payment?invoice=9013');
+  });
+
   it('submit is ignored while a renewal request is in flight (double-submit)', async () => {
     const [, component] = await openRenewal();
 

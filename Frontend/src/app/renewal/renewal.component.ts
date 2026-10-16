@@ -131,17 +131,12 @@ export class RenewalComponent implements OnInit {
         current_user.balance = result.currentPrice;
         this.user_service.reload();
 
+        // The invoice is always issued on the paying account (docs/20 D4), so
+        // the payment/receipt page must open in the payer's own view — the
+        // renewed target never owns the invoice.
         if (result.invoiceCode) {
-          const target =
-            this.renewal.target !== current_user.username
-              ? this.renewal.target
-              : undefined;
-
           this.router.navigate(['payment'], {
-            queryParams: {
-              invoice: result.invoiceCode,
-              ...(target ? { target } : {}),
-            },
+            queryParams: { invoice: result.invoiceCode },
           });
         }
 
