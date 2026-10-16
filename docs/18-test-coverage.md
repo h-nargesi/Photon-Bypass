@@ -141,6 +141,14 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 | sync اکانت UserManager (پروفایل/محدودیت از renewal) | docs/06، docs/16 §1 | `SyncUserActiveInactiveRemoveTest`، `AccountRadiusTest.SyncUserAndActive_*` | ✅ | |
 | شاخه‌بندی قابلیت دیتاپلین (kind/گیت‌های OVPN و تغییر رمز/پرچم چرخش) | docs/16 §3/§6، docs/17 §5.5 | `ServerManagementServiceTest.GetDataPlaneInfo_*`، `VpnApplicationTest.ChangeVpnPassword_*BlockedByGate`/`SendCertEmail_*BlockedBeforeCertificateBuild`، `PlanApplicationTest.GetPlanInfo_*`، `dashboard.component.spec.ts` (رندر دکمه‌ها بر اساس قابلیت) | ✅ | گیت قبل از ساخت گواهی؛ realm تهی = semantics هر-NAS/بدون-xui؛ `SupportsCredentialRotation` در هر دو لایه‌ی info/plan-info |
 
+### docs/20 (نقش‌ها و پنل مدیریت)
+
+| تصمیم | مرجع | تست‌ها | وضعیت | یادداشت |
+|---|---|---|---|---|
+| کش AccessService با نقش: bypass ادمین + InvalidateTargetArea + عدم bypass مدیر | docs/20 فاز ۱-۴ | `AccessService.CheckAccess_AdminRole_*`/`CheckAccess_ManagerRole_*`/`InvalidateTargetArea_*`، `CheckAccess.Test_admin` (سناریو، seed با Role=2) | ✅ | |
+| claim نقش در JWT + Role/AllowSelfService در پاسخ لاگین + اعمال policyها | docs/20 فاز ۱-۳/۵ | `RolesAuthorizationTest.Login_AdminTokenCarries*` (claim در توکن)، `RolesAuthorizationTest.GetUser_ReportsRoleAndSelfServiceFlag` (seed اسکریپت: Role=2/UserType\|=4 + پرچم مستقل D11)، `RolesAuthorizationTest.Policies_EnforceRoleMatrix*` (توکن validate شده + principal سنتزی مدیر: Manager شامل Admin، User هیچ‌کدام)، `AuthAppTest.CheckUserPassword_WithTargetArea` | ✅ | مصرف policy روی endpoint واقعی در فازهای ۴/۵ |
+| گیت ثبت‌نام (D11) + پرچم مستقل + endpoint عمومی app-config | docs/20 D11 | `AuthAppTest.Register_DisabledByConfig_*`/`Register_Success_SetsSelfServiceFlag`، `BasicsApplicationTest.GetAppConfig_MirrorsRegistrationFlag` (هر دو قطب فلگ)، `AppConfigTest` (عمومی بدون توکن + reflect فلگ)؛ سناریوها با `AllowRegistration=true` صریح در Factory | ✅ | مسیر 403 در سطح unit |
+
 ### لایه‌ی HTTP و فرانتند
 
 | نیازمندی | مرجع | تست‌ها | وضعیت | یادداشت |

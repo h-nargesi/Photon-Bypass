@@ -14,4 +14,10 @@ public class BasicsController(IBasicsApplication application) : ControllerBase
     {
         return ResultHandlerController.SafeApiResult(await application.GetPrices());
     }
+
+    [HttpGet("app-config")]
+    public async Task<ApiResult> GetAppConfig()
+    {
+        return ResultHandlerController.SafeApiResult(await application.GetAppConfig());
+    }
 }

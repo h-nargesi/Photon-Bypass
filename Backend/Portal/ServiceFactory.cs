@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Portal.Basical;
 using PhotonBypass.Tools;
 using System.Threading.RateLimiting;
@@ -13,6 +14,12 @@ namespace PhotonBypass.Portal;
 public static class ServiceFactory
 {
     public const string AuthRateLimitPolicy = "auth";
+
+    /// <summary>Role-gated endpoints for managers and the admin (docs/20 D10).</summary>
+    public const string ManagerPolicy = "Manager";
+
+    /// <summary>Role-gated endpoints for the single admin account (docs/20 D9).</summary>
+    public const string AdminPolicy = "Admin";
 
     public static TBuilder AddPortalServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
@@ -60,7 +67,12 @@ public static class ServiceFactory
 
         ProductionSecretsGuard.Validate(builder.Configuration, builder.Environment);
 
-        builder.Services.AddAuthorization();
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy(ManagerPolicy, policy => policy.RequireRole(
+                nameof(AccountRole.Manager), nameof(AccountRole.Admin)));
+            options.AddPolicy(AdminPolicy, policy => policy.RequireRole(nameof(AccountRole.Admin)));
+        });
         builder.Services.AddMemoryCache();
 
         builder.Services.AddLazyScoped<IAccessService, AccessService>();

@@ -52,6 +52,8 @@ public class AccountEntity : IBaseEntity
 
     public int? CalculationMethod { get; set; }
 
+    public AccountRole Role { get; set; }
+
     public UserTypes UserType { get; set; }
 
     public string VpnPassword { get; set; } = null!;

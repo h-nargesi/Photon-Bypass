@@ -1,5 +1,7 @@
 ﻿using FluentAssertions;
+using Microsoft.Extensions.Options;
 using PhotonBypass.Application.Authentication;
+using PhotonBypass.Application.Management.Model;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
@@ -59,6 +61,8 @@ public class AuthAppTest : UnitLevelServiceInitializer
         Assert.Equal("User99", result.Data.Username);
         Assert.NotNull(result.Data.TargetArea);
         Assert.Equal(2, result.Data.TargetArea.Count);
+        Assert.Equal(AccountRole.User, result.Data.Role);
+        Assert.False(result.Data.AllowSelfService);
     }
 
     [Fact]
@@ -277,6 +281,46 @@ public class AuthAppTest : UnitLevelServiceInitializer
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
+    }
+
+    [Fact]
+    public async Task Register_Success_SetsSelfServiceFlag()
+    {
+        using var scope = App.Services.CreateScope();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var account_mock = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+
+        account_mock.OnSave += account => Assert.True(account.UserType.HasFlag(UserTypes.AllowSelfService));
+
+        var result = await auth_app.Register(new RegisterModel
+        {
+            Username = "username10",
+            Email = null,
+            Mobile = "09113456799",
+        });
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+    }
+
+    [Fact]
+    public async Task Register_DisabledByConfig_RejectedWith403()
+    {
+        using var scope = App.Services.CreateScope();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<ManagementOptions>>();
+
+        options.Value.AllowRegistration = false;
+
+        var function = () => auth_app.Register(new RegisterModel
+        {
+            Username = "username10",
+            Email = null,
+            Mobile = "09113456799",
+        });
+
+        (await function.Should().ThrowAsync<UserException>())
+            .Which.HttpCode.Should().Be(403);
     }
 
     [Fact]

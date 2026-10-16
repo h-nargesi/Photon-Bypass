@@ -13,6 +13,7 @@
 |---|---|---|---|
 | `Database.sql` | (db creation) | — | ساخت دیتابیس `FastBypass`. |
 | `Account.sql` | `Account` | `PK Id`, `UK_Account_Username`, `UK_Account_Email` (filtered `WHERE Email IS NOT NULL`), `UK_Account_Mobile` (filtered), `FK_Owner→Account`, `FK_CalculationMethod→Price` | اکانت + زیرمجموعه (`Owner`) + `VpnPassword` جدا. |
+| `AccountRoleAndSelfService.sql` | `Account` (migration) | — | نقش‌های پنل (docs/20 D2/D9): ستون `Role TINYINT DEFAULT 0` (هم‌ارزش `AccountRole`)، seed ادمین → `Role=2`، و `UserType \|= 4` (`AllowSelfService`) برای همه‌ی اکانت‌های موجود. idempotent. |
 | `Wallet.sql` | `Wallet` | `PK Id` | کیف پول + `InvoiceCode`. موجودی = `sum(Amount*Direction)` روی `Status in (Completed, Verifying)`. |
 | `History.sql` | `History` | `PK Id` | لاگ رویداد روی `Target`. |
 | `ResetPassword.sql` | `ResetPassword` | — | توکن بازنشانی. |

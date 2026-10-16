@@ -45,7 +45,7 @@ public class AuthController(
 
         var token = GenerateToken(result.Data);
 
-        AccessSrv.Value.LoginEvent(result.Data.Username, [.. result.Data.TargetArea.Keys]);
+        AccessSrv.Value.LoginEvent(result.Data.Username, result.Data.Role, [.. result.Data.TargetArea.Keys]);
 
         return new ApiResult<object>
         {
@@ -111,7 +111,7 @@ public class AuthController(
         return SafeApiResult(result);
     }
 
-    private static string GenerateToken(TargetModel user)
+    private static string GenerateToken(UserModel user)
     {
         var creds = new SigningCredentials(IdentityHelper.Key, SecurityAlgorithms.HmacSha512Signature);
 
@@ -119,6 +119,7 @@ public class AuthController(
         {
             new(JwtRegisteredClaimNames.UniqueName, user.Username),
             new(JwtRegisteredClaimNames.Name, user.Fullname ?? string.Empty),
+            new(ClaimTypes.Role, user.Role.ToString()),
         };
 
         var token = new JwtSecurityToken(

@@ -1,5 +1,7 @@
-﻿using PhotonBypass.Application.Account;
+﻿using Microsoft.Extensions.Options;
+using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
+using PhotonBypass.Application.Management.Model;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
@@ -18,7 +20,8 @@ class AuthApplication(
     Lazy<IResetPassRepository> reset_pass_repo,
     ISocialMediaService social_media_srv,
     Lazy<IAccountApplication> account_app,
-    Lazy<IEmailService> email_srv)
+    Lazy<IEmailService> email_srv,
+    IOptions<ManagementOptions> options)
     : IAuthApplication
 {
     private IAccountRepository AccountRepo { get; } = account_repo;
@@ -27,6 +30,7 @@ class AuthApplication(
     private ISocialMediaService SocialMediaSrv { get; } = social_media_srv;
     private Lazy<IAccountApplication> AccountApp { get; } = account_app;
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
+    private IOptions<ManagementOptions> Options { get; } = options;
 
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
@@ -68,7 +72,7 @@ class AuthApplication(
             };
         }
 
-        var target_list = account.Id == 1 ?
+        var target_list = account.Role == AccountRole.Admin ?
             await AccountRepo.GetAllActive() :
             await AccountRepo.GetActiveTargetArea(account.Id);
 
@@ -91,6 +95,8 @@ class AuthApplication(
                 Username = account.Username,
                 Fullname = account.Fullname,
                 Email = account.Email,
+                Role = account.Role,
+                AllowSelfService = account.UserType.HasFlag(UserTypes.AllowSelfService),
                 TargetArea = target_area,
             },
             Message = "وارد شدید.",
@@ -197,6 +203,12 @@ class AuthApplication(
 
     public async Task<ApiResult> Register(RegisterModel model)
     {
+        if (!Options.Value.AllowRegistration)
+        {
+            throw new UserException("ثبت‌نام عمومی فعال نیست!",
+                "Public registration is disabled (ManagementOptions:AllowRegistration).", 403);
+        }
+
         var account = AccountBusiness.CreateFromModel(model);
         var duplicated = await AccountRepo.CheckUniqueData(account.Username, account.Email, account.Mobile);
 
@@ -217,6 +229,7 @@ class AuthApplication(
 
         account.VpnPassword = HashHandler.GenerateHashCode();
         account.Password = PasswordHasher.Hash(model.Password ?? string.Empty);
+        account.UserType |= UserTypes.AllowSelfService;
 
         await AccountRepo.Save(account);
 

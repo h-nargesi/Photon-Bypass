@@ -24,4 +24,10 @@ public class ManagementOptions
     /// </summary>
     [Range(0, 525_600)]
     public int MinUuidRotationMinutes { get; set; } = 60;
+
+    /// <summary>
+    /// Public self-service registration toggle (docs/20 D11): off for the first
+    /// release. Enabling it later creates independent (self-service) accounts.
+    /// </summary>
+    public bool AllowRegistration { get; set; }
 }

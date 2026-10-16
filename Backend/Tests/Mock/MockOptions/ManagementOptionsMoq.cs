@@ -17,6 +17,7 @@ internal class ManagementOptionsMoq : Mock<IOptions<ManagementOptions>>, IUnitLe
         WalletDeactivationThreshold = null,
         UnmeteredPlanDemandGigabytes = 25,
         MinUuidRotationMinutes = 60,
+        AllowRegistration = true,
     };
 
     public ManagementOptionsMoq()

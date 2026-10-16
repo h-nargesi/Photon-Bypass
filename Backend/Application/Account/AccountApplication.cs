@@ -65,6 +65,8 @@ class AccountApplication(
             Email = account.Email,
             Fullname = account.Fullname,
             Picture = account.Picture,
+            Role = account.Role,
+            AllowSelfService = account.UserType.HasFlag(UserTypes.AllowSelfService),
             TargetArea = target_area,
         });
     }

@@ -1,7 +1,9 @@
 using FluentAssertions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Moq;
 using PhotonBypass.Application.Basics;
+using PhotonBypass.Application.Management.Model;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
@@ -67,5 +69,22 @@ public class BasicsApplicationTest : UnitLevelServiceInitializer
 
         result.Code.Should().Be(200);
         result.Data.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetAppConfig_MirrorsRegistrationFlag(bool allow_registration)
+    {
+        using var scope = App.Services.CreateScope();
+        var basics = scope.ServiceProvider.GetRequiredService<IBasicsApplication>();
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<ManagementOptions>>();
+
+        options.Value.AllowRegistration = allow_registration;
+
+        var result = await basics.GetAppConfig();
+
+        result.Code.Should().Be(200);
+        result.Data!.AllowRegistration.Should().Be(allow_registration);
     }
 }

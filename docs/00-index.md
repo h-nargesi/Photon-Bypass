@@ -28,6 +28,7 @@
 | 17 | [docs/17-xui-traffic.md](17-xui-traffic.md) | بستن T1/T2 پنل چند-سرور: مدل ترافیک دلتای x-ui (D5–D8)، لنگر/حقیقت تصمیم روی Renewal (D6/D14)، enforcement سمت سرور (D13)، کلکتور و ماتریس probe. |
 | 18 | [docs/18-test-coverage.md](18-test-coverage.md) | حاکمیت پوشش تست: دستورات سنجش پوشش، مبنای اندازه‌گیری per-assembly، نقشه‌ی traceability نیازمندی→تست و شکاف‌های شناخته‌شده (جایگزین TestPlan.md). |
 | 19 | [docs/19-deploy-runbook.md](19-deploy-runbook.md) | ران‌بوک اولین انتشار روی هاست Plesk: تولید secretها از صفر، `private/secrets.json` + گارد، نصب دیتابیس از ابتدا، publish با FTP دستی و تأیید. |
+| 20 | [docs/20-admin-panel-roles.md](20-admin-panel-roles.md) | پنل مدیریت: مدل نقش‌ها (D1–D13)، ماتریس دسترسی، نقشه راه ۶ فازه (نقش/auth → تفکیک payer → تراکنش ادمین → مدیریت کاربران → CRUD سرور → فرانت نقش‌دار). |
 
 ## Read this file when…
 
@@ -52,6 +53,7 @@
 | Implement/verify the x-ui traffic model, collector, per-dataplane decision reads (D5-D14) | [17-xui-traffic](17-xui-traffic.md) |
 | See test coverage status / find coverage gaps / know which tests cover a flow | [18-test-coverage](18-test-coverage.md) |
 | Deploy to the Plesk host / manage production secrets (`private/secrets.json` + guard) | [19-deploy-runbook](19-deploy-runbook.md) |
+| Implement/verify the admin-panel roles roadmap (Role/SelfService, payer separation, wallet adjust, user management, server CRUD) | [20-admin-panel-roles](20-admin-panel-roles.md) |
 
 ## Related legacy docs
 

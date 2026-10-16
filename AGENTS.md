@@ -199,6 +199,7 @@ Full reading order and per-file purpose is in [docs/00-index.md](docs/00-index.m
 - [docs/17-xui-traffic.md](docs/17-xui-traffic.md) — x-ui traffic model & enforcement decision record (D5–D14): delta-row TrafficData, Renewal-hosted anchor/decision columns, server-side enforcement, collector + probe matrix
 - [docs/18-test-coverage.md](docs/18-test-coverage.md) — test coverage governance: coverage commands, measured baseline, requirement→test traceability matrix, known gaps (replaces the deleted `TestPlan.md`)
 - [docs/19-deploy-runbook.md](docs/19-deploy-runbook.md) — first-release Plesk deploy runbook: fresh production secrets, `private/secrets.json` loader + startup guard, DB install from scratch, manual FTP publish and verification
+- [docs/20-admin-panel-roles.md](docs/20-admin-panel-roles.md) — admin-panel roles decision record: D1–D13 (Role/UserTypes.AllowSelfService, payer=actor, admin wallet ledger), access matrix, 6-phase roadmap
 
 ---
 
