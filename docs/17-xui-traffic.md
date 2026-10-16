@@ -90,7 +90,7 @@ reset در تمدید = بخشی از پروتکل enforcement (D13)، نه به
 
 ## ۴. ماتریس probe روی vm06/vm08 (تأیید نهایی قرارداد پیش از ثبت سرور)
 
-قرارداد از سورس رسمی `alireza0/x-ui` کد-تأیید شده و در `XuiApiService` پیاده است. **به‌روزرسانی ناوگان ۱۴۰۵/۰۷/۲۴**: vm01 (v1.12.0) اجرایی نیست؛ هدفِ ثبت و probe سرورهای **vm06.ir.parssafe** و **vm08.ir.parssafe** هر دو با **v1.14.0** هستند. مقایسه‌ی سطر-به-سطر سورس v1.12.0 و v1.14.0 (جلسه‌ی سوم ۲۰۲۶-۱۰-۱۵): جدول مسیرهای `xui/API/inbounds` در `web/controller/api.go` و بدنه‌ی هندلرها در `web/controller/inbound.go` **بایت‌به‌بایت یکسان**؛ تنها تغییر additive و بی‌ارتباط `server/getMinecraftProfile` است. login (`index.go`)، پاکت `{success,msg,obj}`، کوکی `x-ui` با `Path=basePath`، و فیلدهای مدل کلاینت (`id/email/totalGB/expiryTime/limitIp/enable`) نیز در v1.14.0 بدون تغییرند. probe زنده (`fetch xui/API/openapi.json` + تست کلاینت تستی) فقط تطبیق نصبِ واقعی هر سرور را قفل می‌کند، پیش از ثبت سرور.
+قرارداد از سورس رسمی `alireza0/x-ui` کد-تأیید شده و در `XuiApiService` پیاده است. **به‌روزرسانی ناوگان ۱۴۰۵/۰۷/۲۴**: vm01 (v1.12.0) اجرایی نیست؛ هدفِ ثبت و probe سرورهای **vm06.ir.parssafe** و **vm08.ir.parssafe** هر دو با **v1.14.0** هستند. مقایسه‌ی سطر-به-سطر سورس v1.12.0 و v1.14.0 (جلسه‌ی سوم ۲۰۲۶-۱۰-۱۵): جدول مسیرهای `xui/API/inbounds` در `web/controller/api.go` و بدنه‌ی هندلرها در `web/controller/inbound.go` **بایت‌به‌بایت یکسان**؛ تنها تغییر additive و بی‌ارتباط `server/getMinecraftProfile` است. login (`index.go`)، پاکت `{success,msg,obj}`، کوکی `x-ui` با `Path=basePath`، و فیلدهای مدل کلاینت (`id/email/totalGB/expiryTime/limitIp/enable`) نیز در v1.14.0 بدون تغییرند. probe زنده (`fetch xui/API/openapi.json` + تست کلاینت تستی) فقط تطبیق نصبِ واقعی هر سرور را قفل می‌کند، پیش از ثبت سرور. **✅ اجرا شد (۱۴۰۵/۰۷/۲۴ = ۲۰۲۶-۱۰-۱۶)**: هر دو سرور **۱۴/۱۴ PASS** — تفکیک 307/401 با هدر `X-Requested-With`، login JSON + کوکی `x-ui` با `Path`، openapi 3.0.3 با همه‌ی مسیرهای مصرفی، `settings` دولایه، ردیف stats با تولد enable=true، **بقای ردیف email-keyed زیر چرخش UUID** (up/down/total/expiry بدون تغییر)، reset کلیدخورده با email، onlines با lastSeen برحسب **ثانیه**، حذف کلاینت + ردیف stats؛ هر دو اجرا **بدون ری‌استارت Xray** (pid/lstart یکسان، journal پاک، سشن‌های برقرار دست‌نخورده) و فقط با کلاینت تستی `kiloprobe`. رکورد کامل + اسکریپت قابل‌استفاده: Simorgh `docs/methods/xui-panel-api-probe.md` و `scripts/xui-panel-apiprobe.sh`؛ جزئیات در `servers/vm{06,08}.ir.parssafe/commands.md` 2026-10-16.
 
 > **نکته‌ی vm08** (ادامه‌ی state(vm07)): پنلِ restore-شده یعنی شمارنده‌های احتمالاً بازتنظیم‌شده — طبق D6/D10 اولین poll بعدی برای کلاینت‌های موجود باید epoch-alarm و re-base لنگر را انتظار داشته باشد؛ در سناریوی تست، لنگر اولین poll خودش NULL است و دلتا = شمارنده‌ی جاری بدون آلارم.
 
@@ -111,7 +111,7 @@ reset در تمدید = بخشی از پروتکل enforcement (D13)، نه به
 | flush آمار | فاصله‌ی flush شمارنده‌ها | شمارنده‌های panel DB هر ~۱۰s flush می‌شوند؛ کرانس ۵دقیقه‌ای کلکتور امن است (بدون تغییر) |
 | restart-on-update | آیا add/update کلاینت Xray را ری‌استارت می‌کند؟ | **پاسخ از سورس v1.14.0** (`web/service/inbound.go`): در مسیر عادی **خیر** — تغییرات کلاینت با gRPC زنده‌ی Xray اعمال می‌شوند (`AddUser`/`RemoveUser` با کلید email)؛ `needRestart=true` فقط fallback در شکست gRPC است و توسط cron ده‌ثانیه‌ای `IsNeedRestartAndSetFalse→RestartXray` اجرا می‌شود. پس چرخش UUID (D4) در مسیر عادی بدون قطعی inbound است؛ throttle همچنان توصیه‌شده باقی می‌ماند چون مسیر fallback ری‌استارت کل Xray را قطع می‌کند. تأیید زنده‌ی رفتار روی vm06/vm08 در probe |
 
-نتایج probe زنده → فایل method در Simorgh `docs/methods/` (طبق قواعد آن repo، فقط بعد از اجرا).
+نتایج probe زنده → ✅ ثبت شد در Simorgh `docs/methods/xui-panel-api-probe.md` (اجرای ۲۰۲۶-۱۰-۱۶، هر دو سرور ۱۴/۱۴).
 
 ## ۵. ثبت مسائل باز
 
@@ -140,7 +140,7 @@ reset در تمدید = بخشی از پروتکل enforcement (D13)، نه به
 
 ## ۷. ترتیب باقی‌مانده
 
-1. **تأیید زنده‌ی vm06/vm08** (§۴) — قرارداد از سورس v1.12.0 **و v1.14.0** کد-تأیید و در `XuiApiService` پیاده شد (مسیرهای مصرفی ما در دو نسخه یکسان‌اند)؛ probe (fetch `xui/API/openapi.json` + تست کلاینت تستی) فقط تطبیق نسخه‌ی نصب‌شده‌ی هر سرور را قفل می‌کند و پیش‌نیاز ثبت vm06/vm08 است. vm01 (v1.12.0) اجرایی نیست و از نقشه‌ی ثبت خارج شد.
+1. ~~**تأیید زنده‌ی vm06/vm08** (§۴)~~ — ✅ اجرا شد (۱۴۰۵/۰۷/۲۴؛ هر دو سرور ۱۴/۱۴ PASS بدون ری‌استارت Xray — رفتار restart-on-update و بقای ردیف email-keyed زیر چرخش UUID هم به‌صورت زنده تأیید شد؛ روش + اسکریپت: Simorgh `docs/methods/xui-panel-api-probe.md`). مسیر ثبت vm06/vm08 در پنل باز است.
 2. ~~D1 رنیم `FreeRadius`→`RadiusDesk`~~ — ✅ اجرا شد (۱۴۰۵/۰۷/۲۴؛ ثبت اجرا در docs/16 §D1).
 3. T3/T4 + شاخه‌های فرانت (نمایش kind دیتاپلین؛ مخفی‌کردن دکمه‌ی پسورد برای x-ui تا D4 کامل شود).
 4. D4 کامل: تغییر قرارداد بازگرداندن credential مؤثر + چرخش UUID + throttle.

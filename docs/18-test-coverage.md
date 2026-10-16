@@ -128,7 +128,7 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 | تصمیم | مرجع | تست‌ها | وضعیت | یادداشت |
 |---|---|---|---|---|
 | dispatch مرکزی Features→کلید keyed DI | docs/16 D2، docs/17 §6 | `AccountRadiusTest`، `SessionRadiusTest`، `XuiAccountSyncTest` | ✅ | |
-| قرارداد API x-ui (v1.12/v1.14) | docs/17 §4 | `XuiApiTransportTest` | ✅ | probe زنده‌ی vm06/vm08 هنوز اجرا نشده |
+| قرارداد API x-ui (v1.12/v1.14) | docs/17 §4 | `XuiApiTransportTest` | ✅ | probe زنده‌ی vm06/vm08 اجرا شد (۱۴۰۵/۰۷/۲۴؛ ۱۴/۱۴ PASS هر دو، بدون ری‌استارت — Simorgh `docs/methods/xui-panel-api-probe.md`) |
 | sync اکانت x-ui + enforcement سمت سرور (Encoding A) | docs/17 D13 | `XuiAccountSyncTest.SyncUserAndActive_*` | ✅ | |
 | حسابداری ترافیک x-ui (دلتا/epoch/گپ/ردیف صفر/یکتایی SessionId) | docs/17 D5–D8 | `XuiTrafficAccountingTest` | ✅ | |
 | sole-writer: ردیف‌های TrafficData + ستون‌های Renewal در یک tx | docs/17 D14 | `XuiTrafficSyncTest` | ✅ | rollback هر دو را برمی‌گرداند |
