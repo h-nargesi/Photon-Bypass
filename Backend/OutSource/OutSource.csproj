@@ -23,6 +23,9 @@
 	  <None Update="EmailTemplates\ResetPassword.html">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
+	  <None Update="EmailTemplates\VpnLinkEmail.html">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 
 </Project>

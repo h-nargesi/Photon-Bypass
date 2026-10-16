@@ -24,6 +24,7 @@ describe('ChangePasswordComponent', () => {
         provideRouter([
           { path: 'change-password', component: ChangePasswordComponent },
           { path: 'change-ovpn-password', component: ChangePasswordComponent },
+          { path: 'rotate-ovpn-id', component: ChangePasswordComponent },
           { path: 'reset-password', component: ChangePasswordComponent },
           { path: 'login', component: DummyComponent },
           { path: 'dashboard', component: DummyComponent },
@@ -108,5 +109,39 @@ describe('ChangePasswordComponent', () => {
     expect(request.request.body['token']).toBe('abc123');
 
     request.flush({ code: 200, message: 'ok' }, { status: 200, statusText: 'OK' });
+  });
+
+  it('rotate mode re-authenticates with the token only and posts no password', fakeAsync(async () => {
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/rotate-ovpn-id', ChangePasswordComponent);
+
+    expect(component.form.controls['password']).toBeUndefined();
+    expect(component.form.controls['confirmPassword']).toBeUndefined();
+    expect(component.form.controls['token']).toBeDefined();
+
+    component.form.controls['token'].setValue('account-password');
+    component.submit();
+
+    const request = http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/vpn/change-ovpn',
+    );
+    expect(request.request.body['token']).toBe('account-password');
+    expect(request.request.body['password']).toBeUndefined();
+
+    request.flush({ code: 200, message: 'ok' }, { status: 200, statusText: 'OK' });
+    tick(1000);
+  }));
+
+  it('rotate mode stays invalid until the token is filled', async () => {
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/rotate-ovpn-id', ChangePasswordComponent);
+
+    component.submit();
+
+    expect(component.submitted).toBeTrue();
+    expect(component.form.status).toBe('INVALID');
+    http.expectNone(
+      req => req.method === 'POST' && req.url === '/api/vpn/change-ovpn',
+    );
   });
 });

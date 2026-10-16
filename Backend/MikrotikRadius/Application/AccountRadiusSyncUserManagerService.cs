@@ -155,7 +155,7 @@ public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler, Resour
         connection.AssignUserProfile(account.Username, profile_name);
     }
 
-    public async Task ChangeVpnPassword(ServerEntity radius, string username, string password)
+    public async Task<string> ChangeVpnPassword(ServerEntity radius, string username, string password)
     {
         if (string.IsNullOrEmpty(username) || !InjectionRegex.Username().Match(username).Success)
         {
@@ -174,5 +174,7 @@ public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler, Resour
         user.Password = password;
 
         connection.Save(user, [password_field_name]);
+
+        return password;
     }
 }

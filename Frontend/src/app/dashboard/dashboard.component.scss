@@ -22,3 +22,18 @@
   width: 1.5rem;
   border-radius: 50%;
 }
+
+.vless-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  code {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-grow: 1;
+    direction: ltr;
+    font-size: 0.78rem;
+  }
+}

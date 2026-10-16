@@ -1,12 +1,20 @@
 ﻿using System.Collections.Concurrent;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.Test.Initializer;
+using PhotonBypass.Test.Mock.MockLocalRepository;
 using PhotonBypass.Test.Mock.MockServerBridge;
+using PhotonBypass.Test.Mock.MockXuiPanel;
+using PhotonBypass.Xui.WebService;
 using tik4net;
 
 namespace PhotonBypass.Test.Facts.Radius;
@@ -162,5 +170,106 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
         Assert.Equal(3, disabled_counter.GetValueOrDefault("User2"));
         Assert.Equal(2, disabled_counter.GetValueOrDefault("User3"));
         Assert.Equal(3, disabled_counter.GetValueOrDefault("User4"));
+    }
+
+    [Fact]
+    public async Task ChangeVpnPassword_RadiusRealm_AppliesAndReturnsThePassword()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var account_radius = scope.ServiceProvider.GetRequiredService<IAccountRadiusSyncService>();
+        var tik4_net_moq = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
+
+        var applied = new ConcurrentQueue<(string Command, List<ITikCommandParameter> Parameters)>();
+        tik4_net_moq.OnExecute += (command_text, parameters) =>
+        {
+            if (command_text == "/user-manager/user/set")
+            {
+                applied.Enqueue((command_text, parameters));
+            }
+        };
+
+        var result = await account_radius.ChangeVpnPassword(3, "User3", "new-radius-password");
+
+        result.Should().Be("new-radius-password");
+        applied.Should().ContainSingle();
+        applied.Single().Parameters.Should().Contain(p => p.Name == "password" && p.Value == "new-radius-password");
+    }
+
+    [Fact]
+    public async Task ChangeVpnPassword_XuiRealm_GeneratesOneUuidForAllServers()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+        server_moq
+            .Setup(x => x.GetActiveRadiusInRealmOrAll(2))
+            .ReturnsAsync([NewXuiServer(51), NewXuiServer(52)]);
+
+        var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
+        api_moq.AddClient("User3", "old-uuid", 10, 20);
+
+        var account_radius = scope.ServiceProvider.GetRequiredService<IAccountRadiusSyncService>();
+
+        var result = await account_radius.ChangeVpnPassword(2, "User3", "caller-supplied-password");
+
+        Guid.TryParse(result, out _).Should().BeTrue("the dispatcher must generate the UUID, not the caller input");
+        result.Should().NotBe("caller-supplied-password");
+
+        api_moq.Verify(api => api.UpdateClient(It.IsAny<ServerEntity>(), It.IsAny<string>(),
+            It.Is<XuiClientModel>(client => client.Uuid == result)), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task ChangeVpnPassword_MixedRealm_FailsLoudBeforeAnyServerIsTouched()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+        server_moq
+            .Setup(x => x.GetActiveRadiusInRealmOrAll(2))
+            .ReturnsAsync([
+                NewXuiServer(51),
+                new ServerEntity
+                {
+                    Id = 52,
+                    IsActive = true,
+                    RealmId = 2,
+                    Name = "UserManagerServer",
+                    IpAddress = "10.0.0.52",
+                    DomainName = "um.photon-bypass.com",
+                    Features = ServerFeature.UserManager,
+                },
+            ]);
+
+        var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
+        api_moq.AddClient("User3", "old-uuid", 0, 0);
+
+        var tik4_net_moq = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
+        var radius_touched = false;
+        tik4_net_moq.OnExecute += (_, _) => radius_touched = true;
+
+        var account_radius = scope.ServiceProvider.GetRequiredService<IAccountRadiusSyncService>();
+
+        var action = () => account_radius.ChangeVpnPassword(2, "User3", "new-password");
+
+        (await action.Should().ThrowAsync<UserException>())
+            .Which.UserMessage.Should().Contain("تغییر شناسه‌ی اتصال برای این سرور پشتیبانی نمی‌شود");
+        api_moq.Calls.Should().BeEmpty("the mixed-realm gate must fire before the fan-out");
+        radius_touched.Should().BeFalse();
+    }
+
+    private static ServerEntity NewXuiServer(int id)
+    {
+        return new ServerEntity
+        {
+            Id = id,
+            IsActive = true,
+            RealmId = 2,
+            Name = $"XuiServer{id}",
+            IpAddress = $"10.0.0.{id}",
+            DomainName = $"xui{id}.photon-bypass.com",
+            Features = ServerFeature.Xui | ServerFeature.V2ray,
+        };
     }
 }

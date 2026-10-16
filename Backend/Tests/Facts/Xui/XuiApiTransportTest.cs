@@ -256,6 +256,33 @@ public class XuiApiTransportTest
         entry.Ips["1.2.3.4"].Should().Be(1760000000123);
     }
 
+    [Fact]
+    public async Task GetInbound_ReturnsTransportOfManagedInbound()
+    {
+        var handler = ScriptedHandlerWith(
+            LoginOk("s1"),
+            InboundList(new
+            {
+                id = 3,
+                port = 443,
+                protocol = "vless",
+                streamSettings = JsonSerializer.Serialize(new { network = "ws", security = "tls" }),
+                settings = (string?)null,
+            }));
+
+        var inbound = await BuildApi(handler).GetInbound(BuildServer(inbound_id: 3));
+
+        inbound.Id.Should().Be(3);
+        inbound.Port.Should().Be(443);
+        inbound.Protocol.Should().Be("vless");
+        inbound.StreamSettings.Should().NotBeNull().And.Contain("\"network\":\"ws\"");
+
+        var list = handler.Requests[1];
+        list.Method.Should().Be(HttpMethod.Get);
+        list.Uri.AbsoluteUri.Should().EndWith("xui/API/inbounds/");
+        list.HasAjaxHeader.Should().BeTrue();
+    }
+
     private static ServerEntity BuildServer(int? inbound_id = 1, string? base_path = null)
     {
         // JsonConfig is set directly (plaintext) instead of via the Config

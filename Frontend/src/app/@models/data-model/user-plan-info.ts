@@ -20,6 +20,12 @@ export interface PlanInfo {
   kind?: string | null;
   supportsOvpnCert?: boolean | null;
   supportsPasswordChange?: boolean | null;
+  supportsCredentialRotation?: boolean | null;
+}
+
+export interface VpnConfigInfo {
+  kind?: string | null;
+  vlessLink?: string | null;
 }
 
 export interface RenewalResult {

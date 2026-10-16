@@ -18,5 +18,11 @@ public interface IAccountRadiusSyncService
 
     Task GetOVpnCertificate(int? realm_id, string username, CertContext default_context);
 
-    Task ChangeVpnPassword(int? realm_id, string username, string password);
+    /// <summary>
+    /// Applies a credential change on every active radius server of the realm and
+    /// returns the effective credential: for x-ui data-planes the input is ignored
+    /// and one freshly generated UUID is applied to all servers (docs/16 D4);
+    /// for Radius data-planes the (already applied) password comes back.
+    /// </summary>
+    Task<string> ChangeVpnPassword(int? realm_id, string username, string password);
 }

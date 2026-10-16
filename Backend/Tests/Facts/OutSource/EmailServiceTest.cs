@@ -1,6 +1,8 @@
 using PhotonBypass.Domain.OutSource;
+using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockServerBridge;
+using System.Net.Mail;
 
 namespace PhotonBypass.Test.Facts.OutSource;
 
@@ -28,5 +30,39 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         Assert.Equal(2, bodies.Count);
         Assert.Contains("code-111", bodies[0]);
         Assert.Contains("code-222", bodies[1]);
+    }
+
+    [Fact]
+    public async Task SendVpnLinkEmail_RendersUsernameAndLinkWithoutAttachment()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var email_service = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+
+        // capture inside the callback: the service disposes the MailMessage after sending
+        var sent_to = "";
+        var sent_body = "";
+        var attachment_count = -1;
+        email_handler_moq.OnSend += mail =>
+        {
+            sent_to = mail.To.First().Address;
+            sent_body = mail.Body;
+            attachment_count = mail.Attachments?.Count ?? 0;
+        };
+
+        await email_service.SendVpnLinkEmail("User Two", "two@test.com", new VpnLinkEmailContext
+        {
+            Username = "User2",
+            Link = "vless://4c1f3b2a-1111-2222-3333-444455556666@vm06.ir.parssafe:443?type=ws",
+        });
+
+        Assert.Equal("two@test.com", sent_to);
+        Assert.Contains("User2", sent_body);
+        Assert.Contains("vless://4c1f3b2a-1111-2222-3333-444455556666@vm06.ir.parssafe:443?type=ws", sent_body);
+        Assert.DoesNotContain("{username}", sent_body);
+        Assert.DoesNotContain("{link}", sent_body);
+        // the x-ui delivery carries the link in the body: no OVPN attachment
+        Assert.Equal(0, attachment_count);
     }
 }

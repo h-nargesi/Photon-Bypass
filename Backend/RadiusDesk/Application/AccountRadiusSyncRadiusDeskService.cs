@@ -32,8 +32,11 @@ public class AccountRadiusSyncRadiusDeskService : IInfraAccountRadiusSyncService
         throw new NotImplementedException();
     }
 
-    public Task ChangeVpnPassword(ServerEntity radius, string username, string password)
+    public Task<string> ChangeVpnPassword(ServerEntity radius, string username, string password)
     {
-        throw new NotImplementedException();
+        // Deferred with the rest of the RadiusDesk adapter (docs/14 L8): echo the
+        // effective-credential contract instead of throwing a landmine, so the
+        // dispatcher path stays uniform the day the adapter is implemented.
+        return Task.FromResult(password);
     }
 }

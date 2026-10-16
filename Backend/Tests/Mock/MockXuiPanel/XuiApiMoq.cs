@@ -17,6 +17,15 @@ internal class XuiApiMoq : Mock<IXuiApi>, IUnitLevelService
 
     public List<string> Calls { get; } = [];
 
+    public XuiInboundModel Inbound { get; set; } = new()
+    {
+        Id = 1,
+        Port = 443,
+        Protocol = "vless",
+        StreamSettings =
+            """{"network":"ws","security":"tls","tlsSettings":{"serverName":"xui.photon-bypass.com","fingerprint":"chrome"},"wsSettings":{"path":"/vpnv","headers":{"Host":"xui.photon-bypass.com"}}}""",
+    };
+
     public XuiApiMoq()
     {
         Setup(api => api.ListClients(It.IsAny<ServerEntity>()))
@@ -36,6 +45,15 @@ internal class XuiApiMoq : Mock<IXuiApi>, IUnitLevelService
         Setup(api => api.GetClient(It.IsAny<ServerEntity>(), It.IsAny<string>()))
             .Returns<ServerEntity, string>((_, email) => Task.FromResult(
                 Clients.FirstOrDefault(client => client.Email == email) is { } found ? Clone(found) : null));
+
+        Setup(api => api.GetInbound(It.IsAny<ServerEntity>()))
+            .Returns<ServerEntity>(_ => Task.FromResult(new XuiInboundModel
+            {
+                Id = Inbound.Id,
+                Port = Inbound.Port,
+                Protocol = Inbound.Protocol,
+                StreamSettings = Inbound.StreamSettings,
+            }));
 
         Setup(api => api.AddClient(It.IsAny<ServerEntity>(), It.IsAny<XuiClientModel>()))
             .Callback<ServerEntity, XuiClientModel>((_, client) =>

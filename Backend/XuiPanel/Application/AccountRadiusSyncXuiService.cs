@@ -3,6 +3,7 @@ using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Infra.Radius;
 using PhotonBypass.Xui.WebService;
 
@@ -108,11 +109,24 @@ public class AccountRadiusSyncXuiService(
         }
     }
 
-    public Task ChangeVpnPassword(ServerEntity radius, string username, string password)
+    public async Task<string> ChangeVpnPassword(ServerEntity radius, string username, string uuid)
     {
-        throw new NotImplementedException(
-            "x-ui credential change is an automatic UUID rotation (docs/16 D4); it needs the " +
-            "return-effective-credential contract change before it can be enabled.");
+        var client = await Api.Value.GetClient(radius, username)
+                  ?? throw new UserException(
+                         "شناسه‌ی اتصال شما روی سرور یافت نشد؛ لطفاً با پشتیبانی تماس بگیرید.",
+                         $"The x-ui client is missing for credential rotation: (server={radius.Name}, user={username})");
+
+        // Rotation is a patch-only UUID swap (docs/16 D4): the update is keyed by
+        // the UUID currently live in the panel (statistics are email-keyed and
+        // survive the change), quota/expiry/enable pass through untouched and no
+        // traffic reset or renewal-anchor rewrite may happen here.
+        var live_uuid = client.Uuid;
+
+        client.Uuid = uuid;
+
+        await Api.Value.UpdateClient(radius, live_uuid, client);
+
+        return uuid;
     }
 
     private static bool IsManagedClient(string email)

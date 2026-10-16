@@ -83,18 +83,26 @@
             </c-card-body>
             <ul cListGroup [flush]="true" class="ltr">
                 <li cListGroupItem>{{ targetUser.email }}</li>
+                <li cListGroupItem class="vless-link" *ngIf="vlessLink"
+                    [cTooltip]="'dashboard.account.vless-link' | translate">
+                    <code>{{ vlessLink }}</code>
+                    <a (click)="copyVlessLink()" class="icon-btn pointer">
+                        <svg [cIcon]="icons.cilShare" class="text-primary"></svg>
+                    </a>
+                    <c-spinner color="primary" size="sm" *ngIf="copying_vless_link" />
+                </li>
                 <li cListGroupItem class="icon-btn-group">
                     <a (click)="sendCertificateViaEmail(false)"
-                        *ngIf="!sending_cert_email && plan_capabilities?.supportsOvpnCert" class="icon-btn pointer"
+                        *ngIf="!sending_cert_email && supportsConfigDelivery" class="icon-btn pointer"
                         [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
                         <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
                     </a>
                     <a (click)="sendCertificateViaEmail(true)"
-                        *ngIf="!sending_cert_email && showTagetInUserPanel() && plan_capabilities?.supportsOvpnCert"
+                        *ngIf="!sending_cert_email && showTagetInUserPanel() && supportsConfigDelivery"
                         class="icon-btn pointer" [cTooltip]="'dashboard.account.send-cert-via-email-to' | translate">
                         <svg [cIcon]="icons.cilCursor" class="text-primary" cTextColor="warning"></svg>
                     </a>
-                    <a (click)="downloadCertificate()" *ngIf="!downloading_cert && plan_capabilities?.supportsOvpnCert"
+                    <a (click)="downloadCertificate()" *ngIf="!downloading_cert && supportsConfigDelivery"
                         class="icon-btn pointer" [cTooltip]="'dashboard.account.download-cert' | translate">
                         <svg [cIcon]="icons.cilCloudDownload" class="text-primary"></svg>
                     </a>
@@ -105,6 +113,10 @@
                         *ngIf="plan_capabilities?.supportsPasswordChange"
                         [cTooltip]="'dashboard.account.change-open-vpn-password' | translate">
                         <svg [cIcon]="icons.cilLockLocked" class="text-primary"></svg>
+                    </a>
+                    <a routerLink="/rotate-ovpn-id" class="icon-btn" *ngIf="supportsCredentialRotation"
+                        [cTooltip]="'dashboard.account.rotate-connection-id' | translate">
+                        <svg [cIcon]="icons.cilLoopCircular" class="text-warning"></svg>
                     </a>
                     <a routerLink="/edit-user-info" class="icon-btn"
                         [cTooltip]="'dashboard.account.edit-user-info' | translate">

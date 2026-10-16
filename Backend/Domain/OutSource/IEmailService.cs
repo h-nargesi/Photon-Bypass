@@ -8,5 +8,7 @@ public interface IEmailService
 
     Task SendCertEmail(string fullname, string email, CertEmailContext context);
 
+    Task SendVpnLinkEmail(string fullname, string email, VpnLinkEmailContext context);
+
     Task FinishServiceAlert(string fullname, string username, string email, string type, string left);
 }

@@ -59,6 +59,10 @@ export const routes: Routes = [
         component: ChangePasswordComponent,
       },
       {
+        path: 'rotate-ovpn-id',
+        component: ChangePasswordComponent,
+      },
+      {
         path: 'renewal',
         component: RenewalComponent,
       },

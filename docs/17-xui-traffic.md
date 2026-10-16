@@ -86,7 +86,7 @@ reset در تمدید = بخشی از پروتکل enforcement (D13)، نه به
 - **قفل realm**: `TryLockTrafficSync` با آستانه‌ی اختصاصی زیر کرانس (`XuiTrafficOptions.LockThresholdSeconds = 240` < `IntervalSeconds = 300`) — آستانه‌ی ۳۰۰ثانیه‌ای Radius دقیقاً برابر کرانس ۵دقیقه‌ای است و روی مرز مسابقه می‌کند. قفل مشترک با `UpdateTrafficData` روی `LastTrafficSync` است؛ گرفتن متناوبش بی‌خطر است (برای realmهای x-ui کار خاصی برای sync ساعتی نیست).
 - **یک سرور x-ui در هر realm**: `LoadAllActiveRadius` دداپ per-realm ندارد؛ کلکتور خودش GroupBy/First می‌کند. realm مخلوط x-ui+Radius به‌عنوان دیتاپلین تصمیم پشتیبانی نمی‌شود (بند بازها).
 - **کلاینت ناشناس** در پنل x-ui → skip + لاگ (سیگنال آشتی‌دهی)؛ حذف/غیرفعال‌سازی فقط کلاینت‌های «شبه‌نام‌کاربری پنل» را لمس می‌کند (`AccountBusiness.UsernamePattern`) تا کلاینت‌های دستی دیگران روی پنل اختصاصی دست نخورند.
-- **`ChangeVpnPassword` برای x-ui فعلاً `NotImplementedException`** می‌اندازد: چرخش UUID (D4) تا پیش از تغییر قرارداد «بازگرداندن credential مؤثر» (تا `VpnApplication` مقدار بازگشتی را در `VpnPassword` ذخیره کند) نباید روشن شود؛ وگرنه mapping می‌شکند.
+- **`ChangeVpnPassword` برای x-ui چرخش UUID است** (D4 اجرا شد، ۲۰۲۶-۱۰-۱۶): دیسپچر یک UUID per-request می‌سازد و به همه‌ی سرورهای x-ui پاس می‌دهد؛ adapter پچ-only آپدیت را با کلید UUID زنده‌ی پنل اعمال می‌کند (بدون `ResetClientTraffic`، بدون بازنویسی لنگرهای renewal) و همان UUID را برمی‌گرداند؛ `VpnApplication` مقدار بازگشتی را در `VpnPassword` ذخیره می‌کند و `LastCredentialRotateTime` را stamp می‌کند (throttle پیش‌فرض ۶۰ دقیقه). نبودن کلاینت روی پنل → `UserException`.
 
 ## ۴. ماتریس probe روی vm06/vm08 (تأیید نهایی قرارداد پیش از ثبت سرور)
 
@@ -118,7 +118,7 @@ reset در تمدید = بخشی از پروتکل enforcement (D13)، نه به
 1. **ویرایش دستی** (D10): آلارم epoch مسیر تشخیص است؛ مسیر درمان خودکار تعریف نشده.
 2. **بیش‌شماری restore**: قانون epoch روی rollback-restore بیش‌می‌شمارد + اگر enforcement به شمارنده‌ی برگشته نگاه کند ریسک **قطع زودهنگام** (تضاد با بیش‌شماری محافظه‌کارانه در ستون‌ها — دو جهت متفاوت از همان رویداد).
 3. **ناسازگاری enforcement انباشته/per-renewal**: مسائل pre-existing (stack شدن renewalها در برابر reset هر بار) — حالا روی x-ui هم با Encoding A موجود است.
-4. **realmهای mixed-datum** پشتیبانی نمی‌شوند: ردیف سرور x-ui = `Xui|V2ray` در features؛ realm با دو دیتاپلین تصمیم روشنی ندارد.
+4. **realmهای mixed-datum** پشتیبانی نمی‌شوند: ردیف سرور x-ui = `Xui|V2ray` در features؛ realm با دو دیتاپلین تصمیم روشنی ندارد. در مسیر تغییر credential دیسپچر از ۲۰۲۶-۱۰-۱۶ به‌صورت defensive با `UserException` fail-loud می‌شود (قبل از fan-out)؛ بقیه‌ی مسیرها همچنان تصمیم‌ندارند.
 5. **T3** (پیشنهاد باقی‌مانده): kind در payload های plan-info + گارد `UserException` در adapterها؛ `SendCertEmail` باید در `VpnApplication` *قبل از* `GetDefaultCertificate` گیت شود.
 6. **T4** (پیشنهاد باقی‌مانده): فرمول پهنای‌باند اگر `BandWidth` روی ردیف سرور x-ui ست شود کار می‌کند؛ `MaxClients` به‌عنوان گیت دوم در `GetAvailableRealm`.
 
@@ -143,7 +143,7 @@ reset در تمدید = بخشی از پروتکل enforcement (D13)، نه به
 1. ~~**تأیید زنده‌ی vm06/vm08** (§۴)~~ — ✅ اجرا شد (۱۴۰۵/۰۷/۲۴؛ هر دو سرور ۱۴/۱۴ PASS بدون ری‌استارت Xray — رفتار restart-on-update و بقای ردیف email-keyed زیر چرخش UUID هم به‌صورت زنده تأیید شد؛ روش + اسکریپت: Simorgh `docs/methods/xui-panel-api-probe.md`). مسیر ثبت vm06/vm08 در پنل باز است.
 2. ~~D1 رنیم `FreeRadius`→`RadiusDesk`~~ — ✅ اجرا شد (۱۴۰۵/۰۷/۲۴؛ ثبت اجرا در docs/16 §D1).
 3. T3/T4 + شاخه‌های فرانت (نمایش kind دیتاپلین؛ مخفی‌کردن دکمه‌ی پسورد برای x-ui تا D4 کامل شود).
-4. D4 کامل: تغییر قرارداد بازگرداندن credential مؤثر + چرخش UUID + throttle.
+4. ~~D4 کامل: تغییر قرارداد بازگرداندن credential مؤثر + چرخش UUID + throttle.~~ — ✅ اجرا شد (۲۰۲۶-۱۰-۱۶؛ ثبت کامل در docs/16 §D4: قرارداد `Task<string>`، تولید UUID در دیسپچر، گارد realm مخلوط، throttle با ستون `Account.LastCredentialRotateTime` و `ManagementOptions.MinUuidRotationMinutes`، تحویل سه‌کاناله از طریق `VlessLinkService`/`config-info`/`download`/قالب ایمیل `VpnLinkEmail`).
 
 ## ۸. ارجاع‌ها
 

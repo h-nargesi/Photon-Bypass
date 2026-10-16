@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using PhotonBypass.Domain.Servers;
+using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Infra.Radius;
 using PhotonBypass.Tools;
 using PhotonBypass.Xui.Application;
@@ -32,6 +34,7 @@ public static class ServiceFactory
 
         builder.Services.AddLazyTransient<IXuiApi, XuiApiService>();
         builder.Services.AddLazyTransient<IXuiTrafficSync, XuiTrafficSync>();
+        builder.Services.AddLazyTransient<IVpnLinkService, VlessLinkService>();
 
         builder.Services.AddLazyKeyedTransient<IInfraSessionRadiusSyncService, SessionRadiusSyncXuiService>(RadiusType.Xui);
         builder.Services.AddLazyKeyedTransient<IInfraAccountRadiusSyncService, AccountRadiusSyncXuiService>(RadiusType.Xui);

@@ -56,6 +56,10 @@ public class AccountEntity : IBaseEntity
 
     public string VpnPassword { get; set; } = null!;
 
+    // Stamp of the last x-ui UUID rotation (docs/16 D4): backs the per-account
+    // throttle, exactly like LastWarningTime backs the warning throttle.
+    public DateTime? LastCredentialRotateTime { get; set; }
+
     public DateTime? LastWarningTime { get; set; }
 
     public bool SendWarning { get; set; } = true;

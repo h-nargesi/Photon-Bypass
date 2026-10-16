@@ -28,11 +28,8 @@ public class VpnController(
             return BadRequestApiResult(message: "توکن خالی است!");
         }
 
-        if (string.IsNullOrWhiteSpace(context.Password))
-        {
-            return BadRequestApiResult(message: "کلمه عبور خالی است!");
-        }
-
+        // The password is optional: x-ui data-planes rotate a server-generated
+        // UUID and ignore it; Radius data-planes validate it in the application.
         var user = await auth.Value.CheckUserPassword(JobContext.Username, context.Token);
 
         if (user.Code == 401)
@@ -43,7 +40,7 @@ public class VpnController(
             return user;
         }
 
-        var result = await application.ChangeVpnPassword(JobContext.Target, context.Password);
+        var result = await application.ChangeVpnPassword(JobContext.Target, context.Password ?? string.Empty);
 
         return SafeApiResult(result);
     }
@@ -56,6 +53,26 @@ public class VpnController(
         var result = await application.SendCertEmail(JobContext.Target);
 
         return SafeApiResult(result);
+    }
+
+    [HttpGet("config-info")]
+    public async Task<ApiResult> ConfigInfo([FromQuery] string? target)
+    {
+        LoadJobContext(target);
+
+        var result = await application.GetConfigInfo(JobContext.Target);
+
+        return SafeApiResult(result);
+    }
+
+    [HttpGet("download")]
+    public async Task<IActionResult> DownloadConfig([FromQuery] string? target)
+    {
+        LoadJobContext(target);
+
+        var file = await application.DownloadVpnConfig(JobContext.Target);
+
+        return File(file.Content, file.ContentType, file.FileName);
     }
 
     [HttpGet("download-cert")]

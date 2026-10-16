@@ -1,15 +1,14 @@
 {
-    "support": {
-        "title": "پشتیبانی",
-        "phone-number": "+98-912-5157205",
-        "description": "در صورت قطعی اتصال یا بروز هرگونه مشکل و بعد از اطمینان از وجود اعتبار حساب کاربری خود، می‌توانید با این شماره ارتباط واتساپی بگیرید.\nما را از انتقاد و پیشنهاد خود محروم نکنید."
-    },
     "account": {
         "send-cert-via-email": "ارسال کانفیگ به کاربر",
         "send-cert-via-email-to": "ارسال کانفیگ به خودم",
         "download-cert": "دانلود کانفیگ اتصال",
         "edit-user-info": "ویرایش اطلاعات کاربر",
-        "change-open-vpn-password": "تغییر کلمه عبور open-vpn"
+        "change-open-vpn-password": "تغییر کلمه عبور open-vpn",
+        "rotate-connection-id": "چرخش شناسه اتصال",
+        "vless-link": "لینک اتصال (vless)",
+        "copy-vless-link": "کپی لینک اتصال",
+        "vless-link-copied": "لینک اتصال کپی شد."
     },
     "connections": {
         "title": "کاربران فعال",

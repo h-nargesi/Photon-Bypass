@@ -12,5 +12,9 @@ public interface IVpnApplication
 
     Task<CertContext> DownloadCertificate(string target);
 
+    Task<ApiResult<VpnConfigInfoModel>> GetConfigInfo(string target);
+
+    Task<VpnConfigFileModel> DownloadVpnConfig(string target);
+
     Task<ApiResult<TrafficDataModel>> TrafficData(string target);
 }

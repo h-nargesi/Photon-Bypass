@@ -20,6 +20,8 @@ public interface IXuiApi
 
     Task<XuiClientModel?> GetClient(ServerEntity server, string email);
 
+    Task<XuiInboundModel> GetInbound(ServerEntity server);
+
     Task AddClient(ServerEntity server, XuiClientModel client);
 
     Task UpdateClient(ServerEntity server, string currentUuid, XuiClientModel client);

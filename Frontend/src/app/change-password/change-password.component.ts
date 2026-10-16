@@ -82,6 +82,10 @@ export class ChangePasswordComponent {
     return PageMode.ovpn;
   }
 
+  get rotate(): PageMode {
+    return PageMode.rotate;
+  }
+
   get forgotten(): PageMode {
     return PageMode.forgotten;
   }
@@ -105,6 +109,9 @@ export class ChangePasswordComponent {
       case 'change-ovpn-password':
         this.mode = PageMode.ovpn;
         break;
+      case 'rotate-ovpn-id':
+        this.mode = PageMode.rotate;
+        break;
       case 'change-password':
         this.mode = PageMode.change;
         break;
@@ -126,12 +133,12 @@ export class ChangePasswordComponent {
 
     this.model = { ...this.model, ...this.form.value } as PasswordToken;
 
-    if (this.mode === PageMode.ovpn) {
+    if (this.mode === PageMode.ovpn || this.mode === PageMode.rotate) {
       (this.model as OvpnPasswordToken).target = this.user_service.targetName;
     }
 
     const job =
-      this.mode === PageMode.ovpn
+      this.mode === PageMode.ovpn || this.mode === PageMode.rotate
         ? this.service.changeOpenVpnPassword(this.model as OvpnPasswordToken)
         : this.service.changePassword(this.model);
 
@@ -152,8 +159,14 @@ export class ChangePasswordComponent {
   }
 
   private createForm() {
-    const controls: any = {
-      password: [
+    // rotation re-authenticates with the account token only: the x-ui
+    // data-plane generates the new UUID server-side, no password field applies
+    const token_only = this.mode === PageMode.rotate;
+
+    const controls: any = {};
+
+    if (!token_only) {
+      controls['password'] = [
         '',
         [
           Validators.required,
@@ -161,23 +174,23 @@ export class ChangePasswordComponent {
           Validators.maxLength(this.ValidatorValues.password.maxLengh),
           Validators.pattern(PasswordValidators.ValidationPattern),
         ],
-      ],
-      confirmPassword: [
+      ];
+      controls['confirmPassword'] = [
         '',
         [
           Validators.required,
           Validators.minLength(this.ValidatorValues.password.minLength),
           Validators.maxLength(this.ValidatorValues.password.maxLengh),
         ],
-      ],
-    };
+      ];
+    }
 
     if (this.mode !== PageMode.forgotten || !this.model.token) {
       controls['token'] = ['', [Validators.required]];
     }
 
     const formControl = this.form_builder.group(controls, {
-      validators: [PasswordValidators.confirmPassword],
+      validators: token_only ? [] : [PasswordValidators.confirmPassword],
     });
 
     return formControl;
@@ -187,5 +200,6 @@ export class ChangePasswordComponent {
 enum PageMode {
   change = 'change',
   ovpn = 'ovpn',
+  rotate = 'rotate',
   forgotten = 'forgotten',
 }

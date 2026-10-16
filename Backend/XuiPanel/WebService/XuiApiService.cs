@@ -43,6 +43,19 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
         return clients.FirstOrDefault(client => client.Email == email);
     }
 
+    public async Task<XuiInboundModel> GetInbound(ServerEntity server)
+    {
+        var inbound = await GetManagedInbound(server);
+
+        return new XuiInboundModel
+        {
+            Id = inbound.Id,
+            Port = inbound.Port,
+            Protocol = inbound.Protocol ?? "",
+            StreamSettings = inbound.StreamSettings,
+        };
+    }
+
     public async Task AddClient(ServerEntity server, XuiClientModel client)
     {
         await PostAsync(server, "xui/API/inbounds/addClient", BuildClientBody(server, client));
@@ -288,6 +301,12 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
     private sealed class XuiInboundBody
     {
         public int Id { get; set; }
+
+        public int Port { get; set; }
+
+        public string? Protocol { get; set; }
+
+        public string? StreamSettings { get; set; }
 
         public string? Settings { get; set; }
 

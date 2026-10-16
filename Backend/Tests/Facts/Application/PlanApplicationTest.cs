@@ -1,7 +1,11 @@
 ﻿using FluentAssertions;
+using Moq;
 using PhotonBypass.Application.Plan;
+using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Test.Initializer;
+using PhotonBypass.Test.Mock.MockLocalRepository;
 
 namespace PhotonBypass.Test.Facts.Application;
 
@@ -117,6 +121,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         Assert.Null(plan_state.Data.Kind);
         Assert.Null(plan_state.Data.SupportsOvpnCert);
         Assert.Null(plan_state.Data.SupportsPasswordChange);
+        Assert.Null(plan_state.Data.SupportsCredentialRotation);
     }
 
     [Fact]
@@ -135,6 +140,38 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         Assert.Equal("usermanager", plan_state.Data.Kind);
         Assert.True(plan_state.Data.SupportsOvpnCert);
         Assert.True(plan_state.Data.SupportsPasswordChange);
+        Assert.False(plan_state.Data.SupportsCredentialRotation);
+    }
+
+    [Fact]
+    public async Task GetPlanInfo_XuiRealm_ReportsCredentialRotationInsteadOfPasswordChange()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+
+        server_moq
+            .Setup(x => x.GetActiveRadiusInRealmOrAll(2))
+            .ReturnsAsync([new ServerEntity
+            {
+                Id = 21,
+                IsActive = true,
+                RealmId = 2,
+                Name = "XuiServer",
+                IpAddress = "10.0.1.21",
+                DomainName = "srv21.photon-bypass.com",
+                Features = ServerFeature.Xui | ServerFeature.V2ray,
+            }]);
+
+        // User2 is restricted to realm 2
+        var plan_state = await plan_app.GetPlanInfo("User2");
+
+        Assert.NotNull(plan_state);
+        Assert.Equal(2, plan_state.Code / 100);
+        Assert.NotNull(plan_state.Data);
+        Assert.Equal("xui", plan_state.Data.Kind);
+        Assert.False(plan_state.Data.SupportsPasswordChange);
+        Assert.True(plan_state.Data.SupportsCredentialRotation);
     }
 
     [Fact]

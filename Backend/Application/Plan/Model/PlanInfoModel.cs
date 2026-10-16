@@ -15,4 +15,6 @@ public class PlanInfoModel
     public bool? SupportsOvpnCert { get; init; }
 
     public bool? SupportsPasswordChange { get; init; }
+
+    public bool? SupportsCredentialRotation { get; init; }
 }

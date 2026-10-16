@@ -465,6 +465,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         Assert.Equal("usermanager", info.Kind);
         Assert.True(info.SupportsOvpnCert);
         Assert.True(info.SupportsPasswordChange);
+        Assert.False(info.SupportsCredentialRotation);
     }
 
     [Fact]
@@ -521,6 +522,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         Assert.NotNull(info);
         Assert.Equal("xui", info.Kind);
         Assert.False(info.SupportsPasswordChange);
+        Assert.True(info.SupportsCredentialRotation);
     }
 
     [Fact]
@@ -536,6 +538,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         Assert.Null(info.Kind);
         Assert.False(info.SupportsPasswordChange);
         Assert.True(info.SupportsOvpnCert);
+        Assert.False(info.SupportsCredentialRotation);
     }
 
     [Fact]
@@ -551,6 +554,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         // any realm with a Mikrotik OVPN NAS keeps the cert path for legacy users
         Assert.True(info.SupportsOvpnCert);
         Assert.True(info.SupportsPasswordChange);
+        Assert.False(info.SupportsCredentialRotation);
     }
 
     [Fact]
@@ -572,6 +576,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
 
         Assert.NotNull(info);
         Assert.False(info.SupportsPasswordChange);
+        Assert.True(info.SupportsCredentialRotation);
     }
 
     private static void UsePlanStates(IServiceScope scope, params PlanStateEntity[] plans)

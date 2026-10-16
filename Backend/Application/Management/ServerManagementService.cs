@@ -135,6 +135,7 @@ partial class ServerManagementService(
                 Kind = kind,
                 SupportsOvpnCert = nas_list.Any(IsOvpnCertSource),
                 SupportsPasswordChange = radius_list.Count > 0 && kind != DataPlaneKind.Xui,
+                SupportsCredentialRotation = kind == DataPlaneKind.Xui,
             };
         }
 
@@ -145,6 +146,7 @@ partial class ServerManagementService(
             Kind = kind,
             SupportsOvpnCert = nas_list.Any(IsOvpnCertSource),
             SupportsPasswordChange = all_radius.All(server => GetDataPlaneKind(server) != DataPlaneKind.Xui),
+            SupportsCredentialRotation = all_radius.Any(server => GetDataPlaneKind(server) == DataPlaneKind.Xui),
         };
     }
 

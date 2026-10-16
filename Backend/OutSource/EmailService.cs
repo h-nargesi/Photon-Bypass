@@ -72,6 +72,28 @@ class EmailService(IEmailHandler handler) : IEmailService
         await handler.Send(message);
     }
 
+    public async Task SendVpnLinkEmail(string fullname, string email, VpnLinkEmailContext context)
+    {
+        if (string.IsNullOrWhiteSpace(handler.Options.Address))
+        {
+            throw new Exception("Email Address is not set in config");
+        }
+
+        var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
+        var to_address = new MailAddress(email, fullname);
+
+        var body = await LoadTemplateAsync("EmailTemplates/VpnLinkEmail.html");
+        body = body.Replace("{username}", context.Username)
+            .Replace("{link}", context.Link);
+
+        using var message = new MailMessage(from_address, to_address);
+        message.Subject = $"VPN | {fullname}";
+        message.IsBodyHtml = false;
+        message.Body = body;
+
+        await handler.Send(message);
+    }
+
     public async Task SendResetPasswordLink(string fullname, string email, string hash_code)
     {
         if (string.IsNullOrWhiteSpace(handler.Options.Address))

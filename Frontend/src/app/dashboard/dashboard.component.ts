@@ -33,6 +33,7 @@ import {
   Target,
   UserModel,
   PlanState,
+  VpnConfigInfo,
 } from '../@models';
 import {
   MessageService,
@@ -79,12 +80,14 @@ export class DashboardComponent implements OnInit {
   current_user?: UserModel;
   sending_cert_email = false;
   downloading_cert = false;
+  copying_vless_link = false;
 
   connections?: ConnectionStateModel[];
   connection_count = '0';
 
   plan_info?: PlanState;
   plan_capabilities?: PlanInfo;
+  config_info?: VpnConfigInfo;
   readonly icons = ICON_SUBSET;
 
   constructor(
@@ -102,6 +105,21 @@ export class DashboardComponent implements OnInit {
 
   get targetUser(): Target | undefined {
     return this.user_service.targetUser;
+  }
+
+  get supportsCredentialRotation(): boolean {
+    return this.plan_capabilities?.supportsCredentialRotation === true;
+  }
+
+  get supportsConfigDelivery(): boolean {
+    return (
+      this.plan_capabilities?.supportsOvpnCert === true ||
+      this.supportsCredentialRotation
+    );
+  }
+
+  get vlessLink(): string | undefined {
+    return this.config_info?.vlessLink ?? undefined;
   }
 
   async ngOnInit() {
@@ -217,6 +235,34 @@ export class DashboardComponent implements OnInit {
     this.current_user = await this.user_service.user();
   }
 
+  copyVlessLink(): void {
+    const link = this.vlessLink;
+    if (!link || this.copying_vless_link) return;
+
+    this.copying_vless_link = true;
+
+    const done = (success: boolean) => {
+      this.copying_vless_link = false;
+      this.messages.messageHandler(
+        success ? ResultStatus.success : ResultStatus.error,
+        this.translation.translate('dashboard.account.copy-vless-link'),
+        success
+          ? this.translation.translate('dashboard.account.vless-link-copied')
+          : this.translation.translate('api.error'),
+      );
+    };
+
+    if (!navigator.clipboard) {
+      done(false);
+      return;
+    }
+
+    navigator.clipboard
+      .writeText(link)
+      .then(() => done(true))
+      .catch(() => done(false));
+  }
+
   private loadConnections() {
     this.service
       .fetchCurrentConnections(this.user_service.targetName)
@@ -239,7 +285,17 @@ export class DashboardComponent implements OnInit {
   private loadPlanCapabilities() {
     this.service
       .fetchPlanInfo(this.user_service.targetName)
-      .subscribe((info) => (this.plan_capabilities = info));
+      .subscribe(info => {
+        this.plan_capabilities = info;
+
+        if (info?.supportsCredentialRotation) this.loadConfigInfo();
+      });
+  }
+
+  private loadConfigInfo() {
+    this.service
+      .fetchConfigInfo(this.user_service.targetName)
+      .subscribe(info => (this.config_info = info));
   }
 
   private saveCertificateFile(response: HttpResponse<Blob>): void {
@@ -291,5 +347,6 @@ export class DashboardComponent implements OnInit {
     this.connection_count = '0';
     this.plan_info = undefined;
     this.plan_capabilities = undefined;
+    this.config_info = undefined;
   }
 }

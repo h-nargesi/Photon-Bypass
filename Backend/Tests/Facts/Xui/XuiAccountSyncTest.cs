@@ -4,6 +4,7 @@ using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Infra.Radius;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
@@ -150,14 +151,80 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task ChangeVpnPassword_ThrowsUntilTheD4ContractChangeLands()
+    public async Task ChangeVpnPassword_RotatesUuidAsPatchOnlyUpdate()
     {
         using var scope = App.Services.CreateScope();
 
+        var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
+        var renewal_moq = scope.ServiceProvider.GetRequiredService<RenewalRepositoryMoq>();
+
+        api_moq.AddClient("User3", "old-live-uuid", 400, 600);
+
+        var seeded = api_moq.Clients.Single();
+        seeded.TotalTrafficBytes = 26_843_545_600L;
+        seeded.ExpiryTime = 1_760_000_000_000L;
+        seeded.LimitIp = 3;
+        seeded.Enable = true;
+
         var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.Xui);
 
-        var action = () => service.ChangeVpnPassword(Server, "User3", "new-password");
+        var result = await service.ChangeVpnPassword(Server, "User3", "4c1f3b2a-1111-2222-3333-444455556666");
 
-        await action.Should().ThrowAsync<NotImplementedException>();
+        // the rotation returns the applied credential (docs/16 D4 contract)
+        result.Should().Be("4c1f3b2a-1111-2222-3333-444455556666");
+
+        // patch-only: a single update keyed by the OLD live uuid, no traffic
+        // reset and no renewal-anchor rewrite (unlike SyncUserAndActive)
+        api_moq.Calls.Should().Equal("update:User3");
+        api_moq.Verify(api => api.UpdateClient(It.IsAny<ServerEntity>(), "old-live-uuid",
+            It.Is<XuiClientModel>(client => client.Uuid == "4c1f3b2a-1111-2222-3333-444455556666")), Times.Once);
+
+        var rotated = api_moq.Clients.Single();
+        rotated.Uuid.Should().Be("4c1f3b2a-1111-2222-3333-444455556666");
+        rotated.TotalTrafficBytes.Should().Be(26_843_545_600L);
+        rotated.ExpiryTime.Should().Be(1_760_000_000_000L);
+        rotated.LimitIp.Should().Be(3);
+        rotated.Enable.Should().BeTrue();
+
+        api_moq.Counters["User3"].Should().Be((400, 600));
+
+        renewal_moq.Verify(repository => repository.Save(It.IsAny<RenewalEntity>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ChangeVpnPassword_DisabledClient_StaysDisabledAfterRotation()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
+
+        api_moq.AddClient("User3", "old-live-uuid", 0, 0);
+        api_moq.Clients.Single().Enable = false;
+
+        var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.Xui);
+
+        await service.ChangeVpnPassword(Server, "User3", "new-uuid");
+
+        // patch-only contract: rotation swaps the UUID and never flips enable —
+        // re-activation is exclusively the sync/monitoring path's business
+        api_moq.Clients.Single().Enable.Should().BeFalse();
+        api_moq.Calls.Should().Equal("update:User3");
+    }
+
+    [Fact]
+    public async Task ChangeVpnPassword_MissingClient_FailsLoudWithUserException()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
+        api_moq.AddClient("SomeoneElse", "uuid-1", 0, 0);
+
+        var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.Xui);
+
+        var action = () => service.ChangeVpnPassword(Server, "User3", "new-uuid");
+
+        (await action.Should().ThrowAsync<UserException>())
+            .Which.UserMessage.Should().Contain("شناسه‌ی اتصال شما روی سرور یافت نشد");
+        api_moq.Calls.Should().BeEmpty();
     }
 }

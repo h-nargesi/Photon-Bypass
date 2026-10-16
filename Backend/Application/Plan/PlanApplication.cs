@@ -95,6 +95,7 @@ class PlanApplication(
             Kind = data_plane_info?.Kind,
             SupportsOvpnCert = data_plane_info?.SupportsOvpnCert,
             SupportsPasswordChange = data_plane_info?.SupportsPasswordChange,
+            SupportsCredentialRotation = data_plane_info?.SupportsCredentialRotation,
         });
     }
 

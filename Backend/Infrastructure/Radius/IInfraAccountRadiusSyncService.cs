@@ -16,5 +16,10 @@ public interface IInfraAccountRadiusSyncService
 
     Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal);
 
-    Task ChangeVpnPassword(ServerEntity radius, string username, string password);
+    /// <summary>
+    /// Applies the credential and returns the effective value: Radius adapters
+    /// echo the password they applied; the x-ui adapter applies the UUID passed
+    /// in (generated once per request by the dispatcher, docs/16 D4).
+    /// </summary>
+    Task<string> ChangeVpnPassword(ServerEntity radius, string username, string password);
 }

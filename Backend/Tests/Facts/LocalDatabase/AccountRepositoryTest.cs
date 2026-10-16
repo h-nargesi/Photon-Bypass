@@ -80,6 +80,47 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
     }
 
     [Fact]
+    public async Task LastCredentialRotateTime_RoundTripsThroughSaveAndFetch()
+    {
+        using var scope = App.Services.CreateScope();
+        await scope.Register<LocalDatabaseInitializer>(TestPackage2, this);
+
+        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+
+        // the rotation stamp starts null (column default) and survives a full
+        // write/read cycle — this is the D4 throttle clock backing store
+        var account = new AccountEntity
+        {
+            Name = "Rotate",
+            Surname = "Stamp",
+            Password = PasswordHasher.Hash("password"),
+            Username = "U0060",
+            Email = "rotate-stamp@mail.com",
+            Mobile = "+989120001235",
+            VpnPassword = "uuid-before-rotation",
+        };
+
+        await account_repo.Save(account);
+
+        var fetched = await account_repo.GetAccount(account.Username);
+        Assert.NotNull(fetched);
+        Assert.Null(fetched.LastCredentialRotateTime);
+
+        var rotate_time = DateTime.Now.AddMinutes(-10);
+        account.VpnPassword = "uuid-after-rotation";
+        account.LastCredentialRotateTime = rotate_time;
+
+        await account_repo.Save(account);
+
+        fetched = await account_repo.GetAccount(account.Username);
+        Assert.NotNull(fetched);
+        Assert.Equal("uuid-after-rotation", fetched.VpnPassword);
+        Assert.NotNull(fetched.LastCredentialRotateTime);
+        // MSSQL datetime keeps ~3.3ms ticks: compare within a small window
+        Assert.True((fetched.LastCredentialRotateTime.Value - rotate_time).Duration() < TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
     public async Task GetTargetArea()
     {
         using var scope = App.Services.CreateScope();

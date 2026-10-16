@@ -151,7 +151,7 @@ class AccountRadiusSyncService(
         });
     }
 
-    public async Task ChangeVpnPassword(int? realm_id, string username, string password)
+    public async Task<string> ChangeVpnPassword(int? realm_id, string username, string password)
     {
         var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
 
@@ -160,11 +160,38 @@ class AccountRadiusSyncService(
             throw new Exception($"No radius server found for realm-id: ({realm_id})");
         }
 
-        await radius_list.RunJob(radius =>
+        var is_xui = radius_list.Any(radius => radius.GetSyncKey() == RadiusType.Xui);
+        var is_radius = radius_list.Any(radius => radius.GetSyncKey() != RadiusType.Xui);
+
+        if (is_xui && is_radius)
+        {
+            // Defensive gate before the fan-out: a mixed realm has no single
+            // credential semantics (docs/17 §5 open item) and RunJob only surfaces
+            // failures after every server already applied its change.
+            throw new UserException(
+                "تغییر شناسه‌ی اتصال برای این سرور پشتیبانی نمی‌شود؛ لطفاً با پشتیبانی تماس بگیرید.",
+                $"A mixed data-plane realm (x-ui + Radius) cannot change credentials: realm-id={realm_id}");
+        }
+
+        // One credential per request: for x-ui data-planes it is a freshly
+        // generated UUID applied to every server (docs/16 D4 — the dispatcher
+        // owns generation, adapters only apply and return); Radius servers
+        // apply the caller-supplied password.
+        var credential = is_xui ? Guid.NewGuid().ToString() : password;
+
+        var results = await radius_list.RunJob(radius =>
         {
             var sync = ResolveSync(radius);
-            return sync == null ? Task.CompletedTask : sync.Value.ChangeVpnPassword(radius, username, password);
+            return sync == null ? Task.FromResult(credential) : sync.Value.ChangeVpnPassword(radius, username, credential);
         });
+
+        if (results.Any(result => result != credential))
+        {
+            throw new Exception(
+                $"An adapter returned an unexpected credential: realm-id={realm_id}, user={username}");
+        }
+
+        return credential;
     }
 
     private async Task DeactivateUsers(IEnumerable<string> usernames, HashSet<int> realm_exceptions)

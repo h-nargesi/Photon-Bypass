@@ -7,6 +7,7 @@ import {
   PlanInfo,
   ShowMessageCase,
   PlanState,
+  VpnConfigInfo,
 } from '../@models';
 import {
   ApiBaseService,
@@ -26,7 +27,14 @@ export class DashboardService extends ApiBaseService {
 
   downloadCertificate(target?: string): Observable<HttpResponse<Blob>> {
     return this.api.download(
-      `${VPN_API_URL}/download-cert`,
+      `${VPN_API_URL}/download`,
+      target ? { target } as ApiParam : undefined,
+    );
+  }
+
+  fetchConfigInfo(target?: string): Observable<VpnConfigInfo> {
+    return this.getData<VpnConfigInfo>(
+      `${VPN_API_URL}/config-info`,
       target ? { target } as ApiParam : undefined,
     );
   }

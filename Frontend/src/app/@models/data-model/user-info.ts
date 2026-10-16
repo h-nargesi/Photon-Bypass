@@ -30,7 +30,7 @@ export interface RegisterModel extends FullUserModel {
 
 export interface PasswordToken {
   token: string;
-  password: string;
+  password?: string;
 }
 
 export interface OvpnPasswordToken extends PasswordToken, TagetAction {}
