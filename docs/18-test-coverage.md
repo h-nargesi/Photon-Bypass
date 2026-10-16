@@ -149,6 +149,12 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 | claim نقش در JWT + Role/AllowSelfService در پاسخ لاگین + اعمال policyها | docs/20 فاز ۱-۳/۵ | `RolesAuthorizationTest.Login_AdminTokenCarries*` (claim در توکن)، `RolesAuthorizationTest.GetUser_ReportsRoleAndSelfServiceFlag` (seed اسکریپت: Role=2/UserType\|=4 + پرچم مستقل D11)، `RolesAuthorizationTest.Policies_EnforceRoleMatrix*` (توکن validate شده + principal سنتزی مدیر: Manager شامل Admin، User هیچ‌کدام)، `AuthAppTest.CheckUserPassword_WithTargetArea` | ✅ | مصرف policy روی endpoint واقعی در فازهای ۴/۵ |
 | گیت ثبت‌نام (D11) + پرچم مستقل + endpoint عمومی app-config | docs/20 D11 | `AuthAppTest.Register_DisabledByConfig_*`/`Register_Success_SetsSelfServiceFlag`، `BasicsApplicationTest.GetAppConfig_MirrorsRegistrationFlag` (هر دو قطب فلگ)، `AppConfigTest` (عمومی بدون توکن + reflect فلگ)؛ سناریوها با `AllowRegistration=true` صریح در Factory | ✅ | مسیر 403 در سطح unit |
 
+### دیپلوی (docs/19)
+
+| نیازمندی | مرجع | تست‌ها | وضعیت | یادداشت |
+|---|---|---|---|---|
+| جریان دیپلوی دیتابیس + ساخت ادمین اول (batch ترتیب‌دار idempotent، گارد manifest فایل‌های فهرست‌نشده/غایب، گاردهای DeployCli: username تکراری بدون بازنویسی + تک‌ادمینی D9 + exit codes، `verify` روی هش PBKDF2، پارس `--secrets` بدون نشت به لاگ) | docs/19 §ج، docs/20 D9، `Database/LocalDatabase/README.md` | `scripts/deploy.sh db\|admin` + `DeployCli` (`create-admin`/`verify`، `AdminSeeder`/`DeploySecrets` static برای قابلیت تست) | ⚠️ | بدون تست خودکار — validation دستی (§۵-۷): اجرای smoke کامل روی MSSQL محلی ۱۴۰۵/۰۷/۲۴ (batch تازه، `Role/UserType=(2,4)`، idempotency، هر دو گارد، verify، لاگ بدون پسورد) |
+
 ### لایه‌ی HTTP و فرانتند
 
 | نیازمندی | مرجع | تست‌ها | وضعیت | یادداشت |
@@ -165,6 +171,7 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 4. **`ServerManagementServiceTest.CheckUserServerBalance_Check` = [SKIP]** — **حل شد (T3، ۱۴۰۵/۰۷/۲۴)**: با `SocialMediaServiceMoq` و متریک «جمع مصرف ۳۰روزه» فعال شد و سوئیت دیگر تست اسکیپ‌شده ندارد.
 5. **کنترلرهای کم‌پوشش**: `ConnectionController` (۰٪)، `ResultHandlerController` (۴۷٪). (`VpnController` با تست سناریویی `download-cert` پوشش گرفت.)
 6. **هندلرهای I/O واقعی ServerBridge** (شبکه/SSH واقعی): `SshHandler`، `SshConnection`، `ApiHandler`، `EmailHandler` — همه ۰٪؛ توسط mock (`MockServerBridge/ConfigurableSshHandlerMoq`) جایگزین شده‌اند.
+7. **جریان دیپلوی (`scripts/deploy.sh` + `DeployCli`)** — فقط validation دستی، بدون تست خودکار (ردیف §۴-دیپلوی): smoke روی MSSQL محلی با اجرای همان batch ساختار + `create-admin`/`verify` انجام شد؛ خودِ `sqlcmd` روی آن ماشین نصب نبود، پس مسیر sqlcmd (fail-fast `-b`، تایماوت، codepage) هنوز روی هاست واقعی آزمایش نشده — اولین اجرای پروداکشن با دقت دنبال شود (docs/19 §هـ).
 
 نوشتن تست برای این فهرست **کار آتی جدا** است (خارج از دامنه‌ی سند حاکمیت).
 

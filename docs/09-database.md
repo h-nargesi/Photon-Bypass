@@ -13,7 +13,7 @@
 | File | Table | Key / Unique | Notes |
 |---|---|---|---|
 | `Database.sql` | (db creation) | — | ساخت دیتابیس `FastBypass`. |
-| `Account.sql` | `Account` | `PK Id`, `UK_Account_Username`, `UK_Account_Email` (filtered `WHERE Email IS NOT NULL`), `UK_Account_Mobile` (filtered), `FK_Owner→Account`, `FK_CalculationMethod→Price` | اکانت + زیرمجموعه (`Owner`) + `VpnPassword` جدا. ستون‌های `Role` (پنل نقش‌ها، docs/20 D2/D9) و `LastCredentialRotateTime` (throttle چرخش UUID x-ui، docs/16 D4) ادغام‌شده. seed ادمین با `Role=2` و `UserType=4` (AllowSelfService). |
+| `Account.sql` | `Account` | `PK Id`, `UK_Account_Username`, `UK_Account_Email` (filtered `WHERE Email IS NOT NULL`), `UK_Account_Mobile` (filtered), `FK_Owner→Account`, `FK_CalculationMethod→Price` | اکانت + زیرمجموعه (`Owner`) + `VpnPassword` جدا. ستون‌های `Role` (پنل نقش‌ها، docs/20 D2/D9) و `LastCredentialRotateTime` (throttle چرخش UUID x-ui، docs/16 D4) ادغام‌شده. **بدون seed ادمین** — ادمین در زمان دیپلوی ساخته می‌شود (بخش Security note زیر). |
 | `Wallet.sql` | `Wallet` | `PK Id` | کیف پول + `InvoiceCode`. موجودی = `sum(Amount*Direction)` روی `Status in (Completed, Verifying)`. |
 | `History.sql` | `History` | `PK Id` | لاگ رویداد روی `Target`. |
 | `ResetPassword.sql` | `ResetPassword` | — | توکن بازنشانی. |
@@ -30,9 +30,9 @@
 
 > ایندکس‌های یکتای فیلترشده: `UK_Account_Email` و `UK_Account_Mobile` فقط روی ردیف‌های NOT NULL اعمال می‌شوند تا چند کاربر با ایمیل/موبایل خالی مجاز باشند (`Account.sql`؛ پنجره‌ی TOCTOU ثبت‌نام را می‌بندد — docs/14 L11).
 
-### Security note: default admin seed
+### Security note: admin account (بدون seed)
 
-`Account.sql` یک ادمین پیش‌فرض با یوزرنیم `admin` و یک هش پسورد ثابت seed می‌کند. این یک **TODO امنیتی** است: در محیط تولید باید این پسورد پیش‌فرض عوض شود یا ردیف حذف/غیرفعال گردد. مقدار هش در مستندات تکرار نمی‌شود.
+`Account.sql` دیگر **هیچ ادمین پیش‌فرضی seed نمی‌کند**. ادمین اولین انتشار با پسورد واقعی اپراتور و `Role=Admin` + `UserType=AllowSelfService` در زمان درج ساخته می‌شود: `Backend/Tools/DeployCli` (`create-admin`/`verify`) که از `scripts/deploy.sh` صدا زده می‌شود (ران‌بوک: docs/19 §ج). گاردها: username تکراری بدون بازنویسی رد می‌شود و وجود هر ادمین دیگر، درج ادمین دوم را بلاک می‌کند (docs/20 D9: تک‌ادمین). تنها fixture ادمین با پسورد تستی، seed داده‌ی سناریوی تست است (`Backend/Tests/Data/Sql/DbScenario/init.sql`) که هرگز روی پروداکشن اجرا نمی‌شود.
 
 ## `TotalPlanState` view (نمایش کلیدی)
 
@@ -90,6 +90,6 @@ erDiagram
 
 در `Backend/Tests/Data/`:
 
-- `Local/`, `Radius/`, `Sql/`, `Mikrotik/` — فایل‌های `.json`/`.sql` داده‌های seed سناریوی تست.
+- `Local/`, `Radius/`, `Sql/`, `Mikrotik/` — فایل‌های `.json`/`.sql` داده‌های seed سناریوی تست (ادمین سناریو `admin`/`admin` در `Sql/DbScenario/init.sql` live می‌کند؛ `Local/account.json` مکانیزم mock جداست).
 - `config.ovpn` — نمونه‌ی فایل کانفیگ OpenVpn برای تست‌های گواهی.
 - تست‌ها با `ServiceInitializer` (`Backend/Tests/Initializer/ServiceInitializer.cs`) یک host کامل (`AddAppServices` + `AddPortalServices` + `AddAdminServices`) می‌سازند و mockها را با reflection رجیستر می‌کنند.

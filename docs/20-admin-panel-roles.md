@@ -66,7 +66,7 @@
 
 ### فاز ۱ — مدل نقش و authorization
 
-1. ستون `Role TINYINT NOT NULL DEFAULT 0` و seed ادمین (`Account.sql`، username=`admin` با `Role=2` و `UserType=4` = AllowSelfService) — داخل مجموعه‌ی fresh-install؛ روی دیتابیس سناریو هم اعمال می‌شود (ساختار تست از همان پوشه می‌خواند).
+1. ستون `Role TINYINT NOT NULL DEFAULT 0` — داخل مجموعه‌ی fresh-install؛ روی دیتابیس سناریو هم اعمال می‌شود (ساختار تست از همان پوشه می‌خواند). ~~seed ادمین (`Account.sql`، username=`admin` با `Role=2` و `UserType=4`)~~ — seed بعداً حذف شد: ادمین حالا در زمان دیپلوی با `DeployCli` با همان `Role=2`/`UserType=4` ساخته می‌شود (docs/19) و fixture تستی به `Tests/Data/Sql/DbScenario/init.sql` منتقل شد.
 2. Domain: enum `AccountRole : byte { User=0, Manager=1, Admin=2 }`؛ `AccountEntity.Role`؛ `UserTypes.AllowSelfService = 4`.
 3. JWT/لاگین: `GenerateToken` یک claim نقش (`ClaimTypes.Role`) اضافه می‌کند؛ `UserModel` (پاسخ لاگین/get-user) `Role` + `AllowSelfService` حمل می‌کند (فرانت برای گیت منو لازم دارد). جایگزینی شرت‌کات `account.Id == 1` با `Role == Admin` در `CheckUserPassword`.
 4. `IAccessService`: مقدار کش → مدل `TargetAreaModel { Role, Targets }`؛ `CheckAccess` برای `Role==Admin` همیشه true؛ متد `InvalidateTargetArea(username)`؛ به‌روزرسانی تست‌ها.
@@ -119,7 +119,7 @@
 
 ## ۶. پیش‌نیاز امنیتی (شرط پیش از انتشار هر release آینده)
 
-- تعویض/حذف پسورد seed ادمین (`Account.sql`) — اپراتوری، در ران‌بوک deploy (docs/19).
+- ~~تعویض/حذف پسورد seed ادمین (`Account.sql`)~~ **حل شد**: seed حذف شد؛ ادمین در زمان دیپلوی با پسورد واقعی اپراتور توسط `DeployCli` ساخته می‌شود (`scripts/deploy.sh` — docs/19 §ج).
 - انتقال کلید JWT و connection stringها به env/secret (docs/12 security TODOs).
 
 ## ۷. ثبت اجرا

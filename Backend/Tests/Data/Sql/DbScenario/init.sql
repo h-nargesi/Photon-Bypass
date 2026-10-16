@@ -62,3 +62,9 @@ select Id
     }
 }'
 from Realm
+
+-- scenario-only admin fixture (docs/20: Role=2 Admin + UserType=4 AllowSelfService;
+-- password 'admin' — same committed PBKDF2 fixture family as CommittedTestSecretFixtures).
+-- production never seeds an admin: DeployCli creates it at deploy time (docs/19).
+insert into Account (Username, Password, Role, UserType)
+values ('admin', '$PBKDF2$v1$210000$o5kj88mA9pISrUSyKVsJqQ==$Ve055Dx3OaviuxbhfnsnGj/hHb3UFWFYTOrIHbYyN88=', 2, 4)

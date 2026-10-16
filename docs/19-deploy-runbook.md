@@ -1,6 +1,6 @@
 # docs/19-deploy-runbook.md — ران‌بوک اولین انتشار روی هاست Plesk (FTP دستی + secrets.json)
 
-> **English summary**: First-release deployment runbook. This panel has **never been deployed** — no production tokens exist to revoke, no live data needs migration, and every production secret is generated fresh at this release. Flow: (1) generate all production secrets from scratch; (2) create `private/secrets.json` in the Plesk vhost (outside the web root; loaded per-key over `appsettings.json` by `AddPleskPrivateSecrets`, enforced against committed test values by `ProductionSecretsGuard`); (3) install the MSSQL database from scratch by running all `Database/LocalDatabase/` scripts (`Database.sql` first); (4) publish to `httpdocs/` via manual FTP — the `private/` folder is never overwritten; (5) verify: site boots = guard green; a guard message = a secret was left behind. Scope: manual FTP only (no CI/CD, no Git deploy, no vault).
+> **English summary**: First-release deployment runbook. This panel has **never been deployed** — no production tokens exist to revoke, no live data needs migration, and every production secret is generated fresh at this release. Flow: (1) generate all production secrets from scratch; (2) create `private/secrets.json` in the Plesk vhost (outside the web root; loaded per-key over `appsettings.json` by `AddPleskPrivateSecrets`, enforced against committed test values by `ProductionSecretsGuard`); (3) install the MSSQL database from scratch and create the admin account with the operator's real password via `scripts/deploy.sh db` (DeployCli — no seeded admin exists); (4) stop the site from the Plesk panel, publish to `httpdocs/` via manual FTP — the `private/` folder is never overwritten — then restart it from the panel; (5) verify: site boots = guard green; a guard message = a secret was left behind. Scope: manual FTP + manual Plesk stop/start only (no CI/CD, no Git deploy, no vault, no scripted app pool control).
 
 > **فارسی**: ران‌بوک انتشار اول. این پنل هنوز منتشر نشده است؛ بنابراین هیچ چرخش/ابطال توکن و هیچ migration داده‌ای در کار نیست و همه secretهای پروداکشن در همین انتشار از صفر تولید می‌شوند.
 
@@ -8,7 +8,7 @@
 
 - مقادیر تستی فعلی در repo می‌مانند (کاربر تأیید کرد تستی‌اند)؛ گارد `ProductionSecretsGuard` مانع بالا آمدن پروداکشن با آن‌ها می‌شود.
 - مکانیزم ذخیره‌ی secret: فایل `secrets.json` در پوشه‌ی استاندارد `private` کنار `httpdocs` در vhost پلسک — خارج از web root، غیرقابل دانلود با URL، دست‌نخورده توسط deploy.
-- روش deploy: آپلود دستی FTP + اجرای دستی اسکریپت‌های DB (فریم‌ورک migration وجود ندارد).
+- روش deploy: آپلود دستی FTP + نصب دیتابیس و ساخت ادمین با `scripts/deploy.sh` (فریم‌ورک migration وجود ندارد). توقف/راه‌اندازی سایت دستی از پنل Plesk.
 - **اولین انتشار است**: دیتابیس از ابتدا با اجرای کل اسکریپت‌ها ساخته می‌شود؛ همه credentialها (کلید JWT، DB/Radius/ایمیل) تازه تولید می‌شوند.
 
 ## ۲. مکانیزم کانفیگ (چطور کار می‌کند)
@@ -75,21 +75,34 @@
 
 در صورت نیاز بخش‌های `EmailOptions`، `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند.
 
-### (ج) نصب دیتابیس از ابتدا (پیش از بالا آوردن app)
+### (ج) نصب دیتابیس از ابتدا + ساخت ادمین (پیش از بالا آوردن app)
 
-روی MSSQL پروداکشن، اسکریپت‌های `Database/LocalDatabase/` را به ترتیب اجرا کنید:
+روی MSSQL پروداکشن، `scripts/deploy.sh` کل batch را با ترتیب وابستگی FK و fail-fast اجرا می‌کند و در اولین اجرا ساخت ادمین را هم پیش می‌برد:
 
-1. ابتدا `Database.sql` (ساخت دیتابیس `FastBypass`).
-2. سپس بقیه‌ی اسکریپت‌های همان پوشه به‌ترتیب وابستگی FK (Realm/Price قبل از جدول‌های ارجاع‌دهنده؛ ویوها `TotalPlanState`/`PlanState` و `Indexes.sql` در انتها). مجموعه **fresh-install** است: اسکریپت‌های migration/ALTER قدیمی پیش از اولین انتشار در همین `CREATE TABLE` ها ادغام و حذف شده‌اند — داده‌ی legacy وجود ندارد.
-3. ویوی `TotalPlanState.sql` (منبع حقیقت وضعیت پلن‌ها) حتماً ساخته شود — جزو همان مجموعه است.
+```bash
+scripts/deploy.sh db --secrets /path/to/secrets.json   # کپی محلی private/secrets.json
+# یا با پارامترهای صریح:
+scripts/deploy.sh db -S <mssql-host> -U <login> -P '<password>'
+```
 
-### (د) publish و آپلود FTP
+1. `Database.sql` ابتدا بدون initial-catalog اجرا می‌شود (بافت master برای `CREATE DATABASE`؛ ساخت دیتابیس `FastBypass`)؛ ۱۴ اسکریپت بعدی هرکدام با هدر `USE FastBypass` می‌آیند. ترتیب در `MANIFEST` داخل اسکریپت ثابت است و **گارد manifest** هر فایل `.sql` فهرست‌نشده در `Database/LocalDatabase/` را با نام فایل abort می‌کند.
+2. مجموعه **fresh-install** و idempotent است: اسکریپت‌های migration/ALTER قدیمی در همین `CREATE TABLE` ها ادغام و حذف شده‌اند — داده‌ی legacy وجود ندارد و هر release همان batch را دوباره اجرا می‌کند (جزئیات و ترتیب کامل: `Database/LocalDatabase/README.md`). ویوی `TotalPlanState` (منبع حقیقت وضعیت پلن‌ها) جزو همان مجموعه ساخته می‌شود.
+3. **ساخت ادمین** — seed ادمین وجود ندارد؛ ادمین با پسورد واقعی اپراتور در زمان درج ساخته می‌شود: بعد از batch، اگر جدول `Account` خالی بود اسکریپت username (پیش‌فرض `admin`) و پسورد مخفی می‌پرسد و `DeployCli create-admin` را صدا می‌زند (`Role=Admin` + `UserType=AllowSelfService`؛ گاردهای username تکراری و تک‌ادمینی D9 در خود CLI). سپس `verify` همان credential را smoke-check می‌کند. غیرتعاملی: `--admin-user`/`--admin-password` یا env `DEPLOY_ADMIN_USER`/`DEPLOY_ADMIN_PASSWORD`. برای اجراهای بعدی: `scripts/deploy.sh admin`.
+4. اگر هاست به کاربر اجازه‌ی `CREATE DATABASE` نمی‌دهد، دیتابیس را از پنل Plesk بسازید — `Database.sql` با گارد `IF NOT EXISTS` no-op رد می‌شود و بقیه‌ی batch عادی ادامه می‌یابد.
+
+### (د) publish و آپلود FTP (توقف/راه‌اندازی دستی از پنل Plesk)
+
+توقف و راه‌اندازی سایت **دستی توسط اپراتور از پنل Plesk** انجام می‌شود (تصمیم ثبت‌شده — `app_offline.htm` و Plesk API رد شدند؛ اسکریپت‌پذیر نیست).
+
+1. اپراتور سایت را از پنل Plesk **متوقف** می‌کند.
 
 ```bash
 dotnet publish Backend/Portal -c Release -o publish/Portal
 ```
 
-خروجی را در `httpdocs/` آپلود کنید. پوشه‌ی `private/` **هرگز** بازنویسی نمی‌شود چون هدف deploy نیست (بیرون از `httpdocs`). اگر app در زیرپوشه‌ی `httpdocs` منتشر شود، کاندید دوم لودر (`../../private/secrets.json`) همان فایل را می‌گیرد. الگوهای `.gitignore` (`**/private/secrets.json` و `appsettings.Production.json`) هم ارسال تصادفی فایل به repo را می‌بندند.
+2. خروجی را فایل‌به‌فایل روی `httpdocs/` آپلود کنید (بدون حذف remote). مسیرهای محافظت‌شده — `data-protection-keys/`، `config/`، `events-*.log` — هرگز بازنویسی نمی‌شوند (جدول کامل PRESERVE در `Database/LocalDatabase/README.md`) و پوشه‌ی `private/` اصلاً هدف deploy نیست چون بیرون از `httpdocs` است. اگر app در زیرپوشه‌ی `httpdocs` منتشر شود، کاندید دوم لودر (`../../private/secrets.json`) همان فایل را می‌گیرد. الگوهای `.gitignore` (`**/private/secrets.json` و `appsettings.Production.json`) هم ارسال تصادفی فایل به repo را می‌بندند.
+
+3. اپراتور سایت را از پنل Plesk **راه‌اندازی** می‌کند.
 
 ### (هـ) تأیید
 
@@ -99,7 +112,7 @@ dotnet publish Backend/Portal -c Release -o publish/Portal
 ## ۴. نکات عملیاتی اولین انتشار
 
 - **بکاپ `data-protection-keys`**: پوشه‌ی کلیدهای Data Protection (docs/14 M12) باید در بکاپ vhost باشد؛ گم‌شدنش = ورود دوباره‌ی کانفیگ رمزنگاری‌شده‌ی سرورها.
-- **ادمین seed**: بعد از نصب، پسورد کاربر seed پیش‌فرض `Account.sql` عوض شود (یادآوری docs/12).
+- **ادمین**: seed پیش‌فرض حذف شده است؛ ادمین در گام (ج) با پسورد واقعی اپراتور ساخته و verify می‌شود (`scripts/deploy.sh db`/`admin` → `DeployCli`) — پسورد پیش‌فرضی برای تعویض پس از نصب وجود ندارد.
 - **خطای گارد در لاگ‌های هاست** چیزی مخفی نمی‌کند؛ پیام فقط کلیدها و مسیرها را می‌گوید، نه مقادیر.
 - Admin host فعلاً skeleton است؛ لودر/گارد برایش وصل شده تا در آینده بدون تغییر مکانیزم آماده باشد (docs/12).
 

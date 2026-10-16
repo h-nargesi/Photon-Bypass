@@ -402,3 +402,6 @@ FodyWeavers.xsd
 # Production secrets (Plesk vhost private folder) and machine-local production config
 **/private/secrets.json
 appsettings.Production.json
+
+# Deploy script logs (scripts/deploy.sh)
+scripts/logs/

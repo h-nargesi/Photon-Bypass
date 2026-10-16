@@ -25,8 +25,9 @@ IF OBJECT_ID('Account') IS NULL BEGIN
 		LastCredentialRotateTime	DATETIME	NULL,
 		SendWarning			BIT				NOT NULL	CONSTRAINT DF_Account_SendWarning DEFAULT 1
 	)
-	-- default admin password: admin (change on install — see docs/12)
-	INSERT INTO Account (Username, Password, Role, UserType) VALUES ('admin', '$PBKDF2$v1$210000$o5kj88mA9pISrUSyKVsJqQ==$Ve055Dx3OaviuxbhfnsnGj/hHb3UFWFYTOrIHbYyN88=', 2, 4)
+	-- No admin seed: the first-release admin is created at deploy time with a
+	-- real password by DeployCli (scripts/deploy.sh — see docs/19-deploy-runbook.md).
+	-- The test-only admin/admin fixture lives in Backend/Tests/Data/Sql/DbScenario/init.sql.
 END
 GO
 

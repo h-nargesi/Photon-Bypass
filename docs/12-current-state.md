@@ -94,6 +94,6 @@
 > فهرست کامل‌تر و اولویت‌بندی‌شده‌ی نقاط ضعف امنیتی/پرفورمنسی که در TODO نیستند: [docs/14-defects-audit.md](14-defects-audit.md).
 
 - **کلید JWT و connection stringها** در `Backend/Portal/appsettings.json` کامیت شده‌اند (`Issuer:Code`، `LocalDatabaseOptions:ConnectionString`، `RadiusServiceOptions`، `RadDapperOptions`) — مقادیر تستی‌اند و با تأیید مالک در repo می‌مانند. مکانیزم پروداکشن: فایل `private/secrets.json` در vhost پلسک که با `AddPleskPrivateSecrets` per-key روی appsettings اولویت می‌گیرد و گارد `ProductionSecretsGuard` در environment غیر Development بالا آمدن با مقادیر تستی را متوقف می‌کند (`Portal/Basical/PleskSecrets.cs` و `Portal/Basical/ProductionSecretsGuard.cs`). ران‌بوک انتشار: [docs/19-deploy-runbook.md](19-deploy-runbook.md). در مستندات فقط با نام کلید ارجاع داده می‌شوند.
-- **ادمین پیش‌فرض seed** در `Database/LocalDatabase/Account.sql` با یوزرنیم `admin` و هش ثابت — در تولید باید عوض/حذف شود.
+- ~~**ادمین پیش‌فرض seed** در `Database/LocalDatabase/Account.sql` با یوزرنیم `admin` و هش ثابت~~ **حل شد**: seed حذف شد؛ ادمین اولین انتشار در زمان دیپلوی با پسورد واقعی اپراتور توسط `DeployCli` ساخته می‌شود (`scripts/deploy.sh` — docs/19).
 - **اعتبارسنجی توکن کال‌بک پرداخت**: در `BillingApplication.PaymentCallback` علامت `// TODO: check token` وجود دارد (`BillingApplication.cs:108`) — امضای کال‌بک درگاه هنوز اعتبارسنجی نمی‌شود.
 - **تزریق دستور در SSH**: با regex `^[ \-\.\w\d]+$` مهار می‌شود (`docs/07`)؛ اگر مسیر جدیدی اضافه می‌کنید همین قاعده را حفظ کنید.
