@@ -119,11 +119,13 @@ class ServerRepository(LocalDbContext context, IMemoryCache cache) : EditableRep
 
     public async Task<Dictionary<int, List<ServerEntity>>> GetAllActiveNasInRealm(IEnumerable<int> realm_ids)
     {
+        // note: Dapper only expands list parameters in a bare "in @ids" clause,
+        // a parenthesized "in (@ids)" fails to bind multiple values
         var result = await FindAsync(statement => statement
             .Where($"""
 {nameof(ServerEntity.IsActive)} = 1
     and ({nameof(ServerEntity.Features)} & @nas) > 0
-    and {nameof(ServerEntity.RealmId)} in (@realm_ids)
+    and {nameof(ServerEntity.RealmId)} in @realm_ids
 """)
             .WithParameters(new { realm_ids, nas = ServerFeature.Nas }));
 
@@ -136,7 +138,7 @@ class ServerRepository(LocalDbContext context, IMemoryCache cache) : EditableRep
         var sql = $"""
                    select {nameof(ServerEntity.Id)}, {nameof(ServerEntity.RealmId)}, {nameof(ServerEntity.IpAddress)}
                    from {TableName}
-                   where {nameof(ServerEntity.IpAddress)} in (@ips)
+                   where {nameof(ServerEntity.IpAddress)} in @ips
                    """;
 
         var list = await QueryAsync(sql, ips);
@@ -150,7 +152,7 @@ class ServerRepository(LocalDbContext context, IMemoryCache cache) : EditableRep
             .Where($"""
 {nameof(ServerEntity.IsActive)} = 1
     and ({nameof(ServerEntity.Features)} & @radius) > 0
-    and {nameof(ServerEntity.RealmId)} in (@realm_ids)
+    and {nameof(ServerEntity.RealmId)} in @realm_ids
 """)
             .WithParameters(new { realm_ids, radius = ServerFeature.Radius }));
 

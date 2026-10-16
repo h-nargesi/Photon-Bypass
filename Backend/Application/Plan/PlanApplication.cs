@@ -82,6 +82,9 @@ class PlanApplication(
         }
 
         var renew = await PlanRepo.Value.GetPlanState(account_id.Value);
+        var data_plane_info = renew == null
+            ? null
+            : await ServerMngSrv.Value.GetDataPlaneInfo(renew.RestrictedRealmId);
 
         return ApiResult<PlanInfoModel>.Success(new PlanInfoModel
         {
@@ -89,6 +92,9 @@ class PlanApplication(
             SimultaneousUserCount = renew?.SimultaneousUser,
             Days = renew?.TimeLimitInDays,
             Gigabytes = renew?.GetTrafficLimitInGig(),
+            Kind = data_plane_info?.Kind,
+            SupportsOvpnCert = data_plane_info?.SupportsOvpnCert,
+            SupportsPasswordChange = data_plane_info?.SupportsPasswordChange,
         });
     }
 

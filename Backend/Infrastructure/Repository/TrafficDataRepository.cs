@@ -37,7 +37,7 @@ class TrafficDataRepository(LocalDbContext context)
 
         var result = await FindAsync(statement => statement
             .Where(
-                $"{nameof(TrafficDataEntity.NasId)} = @nas_id and {nameof(TrafficDataEntity.SessionId)} in (@session_ids)")
+                $"{nameof(TrafficDataEntity.NasId)} = @nas_id and {nameof(TrafficDataEntity.SessionId)} in @session_ids")
             .WithParameters(new { nas_id, session_ids = id_list }));
 
         return [.. result];
@@ -47,7 +47,7 @@ class TrafficDataRepository(LocalDbContext context)
     {
         var result = await FindAsync(statement => statement
             .Where(
-                $"{nameof(TrafficDataEntity.NasId)} in (@nas_ids) and {nameof(TrafficDataEntity.StartSession)} >= @from")
+                $"{nameof(TrafficDataEntity.NasId)} in @nas_ids and {nameof(TrafficDataEntity.StartSession)} >= @from")
             .WithParameters(new { nas_ids, from }));
 
         return result.GroupBy(k => k.NasId)
@@ -100,7 +100,7 @@ from (
         , ROW_NUMBER() over (partition by {nameof(TrafficDataEntity.AccountId)}
                               order by {nameof(TrafficDataEntity.Id)} desc) as RowNumber
     from {TableName}
-    where {nameof(TrafficDataEntity.AccountId)} in (@account_ids)
+    where {nameof(TrafficDataEntity.AccountId)} in @account_ids
       and {nameof(TrafficDataEntity.SessionId)} like @session_prefix
 ) ranked
 where ranked.RowNumber = 1";

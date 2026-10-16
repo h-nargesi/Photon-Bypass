@@ -23,7 +23,7 @@ class RenewalRepository(LocalDbContext context) : EditableRepository<RenewalEnti
         if (id_list.Count == 0) return [];
 
         var renewals = await FindAsync(statement => statement
-            .Where($"{nameof(RenewalEntity.AccountId)} in (@account_ids)")
+            .Where($"{nameof(RenewalEntity.AccountId)} in @account_ids")
             .WithParameters(new { account_ids = id_list }));
 
         return renewals.GroupBy(renewal => renewal.AccountId)

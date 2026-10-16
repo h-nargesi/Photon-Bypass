@@ -84,17 +84,25 @@
             <ul cListGroup [flush]="true" class="ltr">
                 <li cListGroupItem>{{ targetUser.email }}</li>
                 <li cListGroupItem class="icon-btn-group">
-                    <a (click)="sendCertificateViaEmail(false)" *ngIf="!sending_cert_email" class="icon-btn pointer"
+                    <a (click)="sendCertificateViaEmail(false)"
+                        *ngIf="!sending_cert_email && plan_capabilities?.supportsOvpnCert" class="icon-btn pointer"
                         [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
                         <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
                     </a>
-                    <a (click)="sendCertificateViaEmail(true)" *ngIf="!sending_cert_email && showTagetInUserPanel()"
+                    <a (click)="sendCertificateViaEmail(true)"
+                        *ngIf="!sending_cert_email && showTagetInUserPanel() && plan_capabilities?.supportsOvpnCert"
                         class="icon-btn pointer" [cTooltip]="'dashboard.account.send-cert-via-email-to' | translate">
                         <svg [cIcon]="icons.cilCursor" class="text-primary" cTextColor="warning"></svg>
                     </a>
+                    <a (click)="downloadCertificate()" *ngIf="!downloading_cert && plan_capabilities?.supportsOvpnCert"
+                        class="icon-btn pointer" [cTooltip]="'dashboard.account.download-cert' | translate">
+                        <svg [cIcon]="icons.cilCloudDownload" class="text-primary"></svg>
+                    </a>
                     <c-spinner color="primary" size="sm" *ngIf="sending_cert_email" />
                     <c-spinner color="warning" size="sm" *ngIf="sending_cert_email && showTagetInUserPanel()" />
+                    <c-spinner color="primary" size="sm" *ngIf="downloading_cert" />
                     <a routerLink="/change-ovpn-password" class="icon-btn"
+                        *ngIf="plan_capabilities?.supportsPasswordChange"
                         [cTooltip]="'dashboard.account.change-open-vpn-password' | translate">
                         <svg [cIcon]="icons.cilLockLocked" class="text-primary"></svg>
                     </a>

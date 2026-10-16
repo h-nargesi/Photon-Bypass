@@ -1,11 +1,16 @@
 ﻿using FluentAssertions;
+using Moq;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Plan.Entity;
+using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
 using PhotonBypass.Test.Mock.MockServerBridge;
 using PhotonBypass.Tools;
+using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
 namespace PhotonBypass.Test.Facts.Application;
 
@@ -76,6 +81,40 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public async Task ChangeVpnPassword_RealmWithoutRadiusServer_BlockedByGate()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var is_saved = false;
+        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        account_moq.OnSave += _ => is_saved = true;
+
+        // User2 plan is restricted to realm 2 which has no active radius server
+        var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .ChangeVpnPassword("User2", "new-password");
+
+        (await func.Should().ThrowAsync<UserException>())
+            .Which.UserMessage.Should().Contain("تغییر کلمه عبور VPN برای این سرور ممکن نیست");
+        Assert.False(is_saved);
+    }
+
+    [Fact]
+    public async Task ChangeVpnPassword_XuiRealm_BlockedByGate()
+    {
+        using var scope = App.Services.CreateScope();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+
+        server_moq
+            .Setup(x => x.GetActiveRadiusInRealmOrAll(2))
+            .ReturnsAsync([NewServer(21, 2, ServerFeature.Xui)]);
+
+        var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .ChangeVpnPassword("User2", "new-password");
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
     public async Task SendCertEmail_InvlaidAccount()
     {
         using var scope = App.Services.CreateScope();
@@ -135,6 +174,140 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
             .SendCertEmail("User2");
 
         Assert.True(is_saved);
+    }
+
+    [Fact]
+    public async Task SendCertEmail_RealmWithoutOvpn_BlockedBeforeCertificateBuild()
+    {
+        using var scope = App.Services.CreateScope();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+
+        // realm 2 NAS without the OVPN capability bit
+        server_moq
+            .Setup(x => x.GetActiveNasInRealmOrAll(2))
+            .ReturnsAsync([NewServer(21, 2, features: ServerFeature.Sstp)]);
+
+        var email_sent = false;
+        scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += _ => email_sent = true;
+
+        var cert_touched = false;
+        scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>().OnExecute += (_, _) => cert_touched = true;
+
+        var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .SendCertEmail("User2");
+
+        (await func.Should().ThrowAsync<UserException>())
+            .Which.UserMessage.Should().Contain("کانفیگ اتصال این سرور از نوع OpenVPN نیست");
+        Assert.False(email_sent);
+        Assert.False(cert_touched);
+    }
+
+    [Fact]
+    public async Task SendCertEmail_OvpnNasWithUnimplementedOs_BlockedBeforeCertificateBuild()
+    {
+        using var scope = App.Services.CreateScope();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+
+        // OVPN bit is set but the certificate method for Ubuntu NAS is not implemented
+        server_moq
+            .Setup(x => x.GetActiveNasInRealmOrAll(2))
+            .ReturnsAsync([NewServer(21, 2, features: ServerFeature.Nas | ServerFeature.Ovpn, os_type: OperatingSystem.Ubuntu)]);
+
+        var email_sent = false;
+        scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += _ => email_sent = true;
+
+        var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .SendCertEmail("User2");
+
+        await func.Should().ThrowAsync<UserException>();
+        Assert.False(email_sent);
+    }
+
+    [Fact]
+    public async Task DownloadCertificate_InvalidAccount()
+    {
+        using var scope = App.Services.CreateScope();
+        var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
+        var func = () => vpn_app.DownloadCertificate("Invalid Username");
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task DownloadCertificate_WithoutPlan()
+    {
+        using var scope = App.Services.CreateScope();
+        var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
+        var func = () => vpn_app.DownloadCertificate("User6");
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task DownloadCertificate_WithoutEmailAddress_Succeeds()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var plan_moq = scope.ServiceProvider.GetRequiredService<PlanStateRepositoryMoq>();
+
+        // User8 has no registered email address; the download path must not require one
+        plan_moq.Setup(x => x.GetPlanState(8))
+            .ReturnsAsync(new PlanStateEntity
+            {
+                Id = 8,
+                Username = "User8",
+                IsActive = true,
+                SimultaneousUser = 1,
+                RestrictedRealmId = 2,
+                TrafficLimit = 1073741824,
+                TimeLimitInDays = 120,
+                ExpirationDate = DateTime.Now.AddDays(111),
+                TrafficLeft = 1073001004,
+            });
+
+        var cert = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .DownloadCertificate("User8");
+
+        Assert.NotNull(cert);
+        Assert.NotEmpty(cert.CertFile);
+        Assert.Equal("Realm-LO-2", cert.Realm);
+    }
+
+    [Fact]
+    public async Task DownloadCertificate()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
+
+        var cert = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .DownloadCertificate("User2");
+
+        Assert.NotNull(cert);
+        Assert.NotEmpty(cert.CertFile);
+        Assert.Equal("Realm-LO-2", cert.Realm);
+        Assert.NotEmpty(cert.PrivateKeyOvpn);
+
+        var download_event = history_moq.Data.SingleOrDefault(h => h.Description == "کانفیگ اتصال دانلود شد.");
+        Assert.NotNull(download_event);
+        Assert.Equal(2, download_event.Target);
+    }
+
+    private static ServerEntity NewServer(int id, int realm_id, ServerFeature features,
+        OperatingSystem os_type = OperatingSystem.Mikrotik)
+    {
+        return new ServerEntity
+        {
+            Id = id,
+            IsActive = true,
+            RealmId = realm_id,
+            Name = $"Server{id}",
+            IpAddress = $"10.0.1.{id}",
+            DomainName = $"srv{id}.photon-bypass.com",
+            BandWidth = 100,
+            OsType = os_type,
+            Features = features,
+        };
     }
 
     [Fact]

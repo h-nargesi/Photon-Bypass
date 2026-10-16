@@ -13,6 +13,7 @@ SELECT ac.Id
     , pl.RestrictedRealmId
     , pl.TrafficLimit
     , pl.TimeLimitInDays
+    , pl.RateLimitInMeg
     -- Last Usage Info
     , pl.LastConnectTime
     , pl.TrafficUsed
@@ -29,6 +30,7 @@ LEFT JOIN (
         , rn.RestrictedRealmId
         , rn.TrafficLimit
         , rn.TimeLimitInDays
+        , rn.RateLimitInMeg
         -- Last Usage Info
         , td.LastConnectTime
         , td.TotalTrafficUsed AS TrafficUsed
@@ -44,6 +46,7 @@ LEFT JOIN (
             , rn.RestrictedRealmId
             , rn.TimeLimitInDays
             , rn.TrafficLimit
+            , rn.RateLimitInMeg
             , rn.TrafficLimitRangeStart
             , rn.TrafficLimit + rn.TrafficLimitRangeStart AS TrafficLimitRangeEnd
             , rn.ExpirationDate
@@ -56,6 +59,7 @@ LEFT JOIN (
                 , rn.RestrictedRealmId
                 , rn.TimeLimitInDays
                 , rn.TrafficLimit
+                , rn.RateLimitInMeg
                 , ISNULL(SUM(TrafficLimit) OVER(PARTITION BY rn.AccountId ORDER BY rn.Id 
                                                 ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS TrafficLimitRangeStart
                 , DATEADD(DAY, rn.TimeLimitInDays, rn.Created) AS ExpirationDate

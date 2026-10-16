@@ -114,6 +114,9 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         Assert.Null(plan_state.Data.SimultaneousUserCount);
         Assert.Null(plan_state.Data.Days);
         Assert.Null(plan_state.Data.Gigabytes);
+        Assert.Null(plan_state.Data.Kind);
+        Assert.Null(plan_state.Data.SupportsOvpnCert);
+        Assert.Null(plan_state.Data.SupportsPasswordChange);
     }
 
     [Fact]
@@ -129,6 +132,26 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         Assert.Equal(1, plan_state.Data.SimultaneousUserCount);
         Assert.Equal(120, plan_state.Data.Days);
         Assert.Equal(1, plan_state.Data.Gigabytes);
+        Assert.Equal("usermanager", plan_state.Data.Kind);
+        Assert.True(plan_state.Data.SupportsOvpnCert);
+        Assert.True(plan_state.Data.SupportsPasswordChange);
+    }
+
+    [Fact]
+    public async Task GetPlanInfo_RealmWithoutRadius_ReportsNoKindAndNoPasswordChange()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+
+        // User2 is restricted to realm 2 which has a NAS but no radius server
+        var plan_state = await plan_app.GetPlanInfo("User2");
+
+        Assert.NotNull(plan_state);
+        Assert.Equal(2, plan_state.Code / 100);
+        Assert.NotNull(plan_state.Data);
+        Assert.Null(plan_state.Data.Kind);
+        Assert.True(plan_state.Data.SupportsOvpnCert);
+        Assert.False(plan_state.Data.SupportsPasswordChange);
     }
 
     [Fact]

@@ -48,7 +48,7 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 
 ## ۳. مبنای اندازه‌گیری
 
-**محیط**: لینوکس، .NET SDK 10.0.101 (هدف net8.0)، MSSQL محلی (`Server=.`) با `FastBypass`/`FastBypass_DbScenario` در دسترس، Firefox 144 headless، Node 20 / yarn 1.22. **تاریخ**: ۱۴۰۵/۰۷/۲۴ (2026-10-16). **نتیجه‌ی اجرا**: بک‌اند ۳۵۲ تست (۳۵۱ پاس / ۱ اسکیپ / ۰ خطا)، فرانتند ۹۰/۹۰ سبز.
+**محیط**: لینوکس، .NET SDK 10.0.101 (هدف net8.0)، MSSQL محلی (`Server=.`) با `FastBypass`/`FastBypass_DbScenario` در دسترس، Firefox 144 headless، Node 20 / yarn 1.22. **تاریخ**: ۱۴۰۵/۰۷/۲۴ (2026-10-16). **نتیجه‌ی اجرا**: بک‌اند ۳۵۲ تست (۳۵۱ پاس / ۱ اسکیپ / ۰ خطا)، فرانتند ۹۰/۹۰ سبز. *(به‌روزرسانی همان روز — T3: بک‌اند ۳۸۸/۳۸۸ پاس / ۰ اسکیپ، فرانتند ۹۶/۹۶ سبز؛ درصدهای پوشش بازسنجی نشده‌اند.)*
 
 اعداد per-assembly از `coverage.cobertura.xml` (هر دو ستون از یک منبع):
 
@@ -90,8 +90,8 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 | هشدار پایان پلن + throttle | docs/11 §7 | `AccountMonitoringServiceTest.NotifSendServices_*` | ✅ | |
 | آبشار غیرفعال‌سازی ۷/۴۰ روز + حذف از radius | docs/11 §7 | `AccountMonitoringServiceTest.InactiveAbandonedUsers_Check`، `SyncUserActiveInactiveRemoveTest` | ✅ | |
 | غیرفعال‌سازی کاربران بدون پلن معتبر | docs/11 §7، docs/14 M5 | `AccountRadiusTest.DeactivateInvalidRadiusUsers_UnknownRealm_ShouldNotThrow` | ✅ | |
-| مدیریت ظرفیت realm/سرور | docs/11 §6، docs/14 M4 | `ServerManagementServiceTest.GetAvailableRealm_*` | ⚠️ | `CheckUserServerBalance_Check`=[SKIP] — §۵ |
-| گواهی OVPN (تولید/امضا/اکسپورت) | docs/16 §1 | `MikrotikDirectServiceTest.GetOVpnCertificate_*`، `ServerManagementServiceTest.GetDefaultCertificate_*`، `VpnApplicationTest.SendCertEmail*` | ⚠️ | `SetOVpnCertificate` ⛔ NotImplemented — §۶ |
+| مدیریت ظرفیت realm/سرور (تقاضای نظری + override دستی) | docs/11 §6، docs/14 M4، T3 §2/§3 | `ServerManagementServiceTest` (`GetAvailableRealm_*`, `GetRealmsCapacityState_*`, `SetRealmCapacityOverride_*`, `CheckUserServerBalance_*`)، `RealmCapacityOverrideTest` | ✅ | ظرفیت از تقاضای نظری پلن‌ها (quota/rate/min/fallback)؛ override روی DB واقعی سناریو؛ تست هشدار با `SocialMediaServiceMoq` از حالت skip خارج شد |
+| گواهی OVPN (تولید/امضا/اکسپورت) + دانلود مستقیم | docs/16 §1، T3 §1 | `MikrotikDirectServiceTest.GetOVpnCertificate_*`، `ServerManagementServiceTest.GetDefaultCertificate_*`، `VpnApplicationTest.SendCertEmail*`/`DownloadCertificate*`، `DownloadCert` (سناریو: content-type/disposition + audit) | ⚠️ | `SetOVpnCertificate` ⛔ NotImplemented — §۶ |
 | تغییر رمز VPN + ذخیره در DB (ضد desync) | docs/14 H7 | `VpnApplicationTest.ChangeVpnPassword*` | ✅ | برای x-ui: `XuiAccountSyncTest.ChangeVpnPassword_ThrowsUntilTheD4ContractChangeLands` |
 | چنداکانت + `target` (delegation/403) | docs/11 §8 | `CheckAccess` (سناریو)، `AccessService` (BF/Controller) | ✅ | |
 | فیلتر تاریخ History (قرارداد unix-ms) | docs/14 H13 | `HistoryContextTest` | ✅ | |
@@ -136,6 +136,7 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 | خوانش تصمیم per-dataplane | docs/17 D14 | `PlanUsageReaderTest` | ✅ | x-ui→ستون‌های Renewal، Radius→ویو |
 | `GetActiveConnections` x-ui از onlines | docs/17 §4 | `XuiSessionSyncTest.GetActiveConnections_*` | ✅ | |
 | sync اکانت UserManager (پروفایل/محدودیت از renewal) | docs/06، docs/16 §1 | `SyncUserActiveInactiveRemoveTest`، `AccountRadiusTest.SyncUserAndActive_*` | ✅ | |
+| شاخه‌بندی قابلیت دیتاپلین (kind/گیت‌های OVPN و تغییر رمز) | docs/16 §3/§6، docs/17 §5.5 | `ServerManagementServiceTest.GetDataPlaneInfo_*`، `VpnApplicationTest.ChangeVpnPassword_*BlockedByGate`/`SendCertEmail_*BlockedBeforeCertificateBuild`، `PlanApplicationTest.GetPlanInfo_*`، `dashboard.component.spec.ts` (رندر دکمه‌ها بر اساس قابلیت) | ✅ | گیت قبل از ساخت گواهی؛ realm تهی = semantics هر-NAS/بدون-xui |
 
 ### لایه‌ی HTTP و فرانتند
 
@@ -148,10 +149,10 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 ## ۵. شکاف‌های شناخته‌شده (صداقت کامل — جایگزین `[ ]`های TestPlan قدیمی)
 
 1. **`SessionRadiusSyncUserManagerService` (MikrotikRadius)** — بی‌تست مستقیم: `CloseConnectionByUsername` (۰٪)، `GetActiveConnections` (۷۸٪)، `CloseConnectionBySessionId` (۸۶٪ — پوشش فقط از مسیر `ConnectionApplicationTest` با mock).
-2. **ریپوهای Level 3 بی‌تست مستقیم**: Wallet، ResetPass، Price، Realm، Renewal، Server، TrafficData، PlanState. (Account/History/DatabaseGlobal/Billing P0/P2 تست مستقیم دارند. پوشش غیرمستقیم از سناریوها: Wallet/ResetPass/Price/Invoice ۱۰۰٪ ولی Server ۴۶٪، TrafficData ۴۳٪، Realm ۵۶٪، PlanState ۶۴٪، Renewal ۶۹٪.)
+2. **ریپوهای Level 3 بی‌تست مستقیم**: Wallet، ResetPass، Price، Renewal، Server، TrafficData، PlanState. (Account/History/DatabaseGlobal/Billing P0/P2 تست مستقیم دارند. پوشش غیرمستقیم از سناریوها: Wallet/ResetPass/Price/Invoice ۱۰۰٪ ولی Server ۴۶٪، TrafficData ۴۳٪، PlanState ۶۴٪، Renewal ۶۹٪. Realm از مسیر `RealmCapacityOverrideTest` — `SetCapacityOverride` + ظرفیت مؤثر روی DB واقعی — پوشش مستقیم گرفت.)
 3. **نقص باز `POST /api/billing/pay` → ۵۰۰**: `JobContext.AccountId` خارج از جریان renewal تزریق نمی‌شود — endpoint صدا-زده‌نشدنی است (`PayRequest` ۰٪). **تصمیم با مالک**.
-4. **`ServerManagementServiceTest.CheckUserServerBalance_Check` = [SKIP]** — تنها تست اسکیپ‌شده‌ی سوئیت؛ هشدار ظرفیت <۱۰٪/>۹۰٪ فعلاً بی‌پوشش اجرایی.
-5. **کنترلرهای کم‌پوشش**: `ConnectionController` (۰٪)، `VpnController` (۳۴٪)، `ResultHandlerController` (۴۷٪).
+4. **`ServerManagementServiceTest.CheckUserServerBalance_Check` = [SKIP]** — **حل شد (T3، ۱۴۰۵/۰۷/۲۴)**: با `SocialMediaServiceMoq` و متریک «جمع مصرف ۳۰روزه» فعال شد و سوئیت دیگر تست اسکیپ‌شده ندارد.
+5. **کنترلرهای کم‌پوشش**: `ConnectionController` (۰٪)، `ResultHandlerController` (۴۷٪). (`VpnController` با تست سناریویی `download-cert` پوشش گرفت.)
 6. **هندلرهای I/O واقعی ServerBridge** (شبکه/SSH واقعی): `SshHandler`، `SshConnection`، `ApiHandler`، `EmailHandler` — همه ۰٪؛ توسط mock (`MockServerBridge/ConfigurableSshHandlerMoq`) جایگزین شده‌اند.
 
 نوشتن تست برای این فهرست **کار آتی جدا** است (خارج از دامنه‌ی سند حاکمیت).

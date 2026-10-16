@@ -219,6 +219,21 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         await CheckResponseObject(response, status);
     }
 
+    protected async Task<HttpResponseMessage> DownloadCert(string? target = null, int status = 2)
+    {
+        var url = "/api/vpn/download-cert" + (target != null ? $"?target={target}" : "");
+        var response = await Client.GetAsync(url);
+
+        if (status != 2)
+        {
+            await CheckResponse(response, status);
+            return response;
+        }
+
+        response.EnsureSuccessStatusCode();
+        return response;
+    }
+
     protected async Task FakeAddMoney(string username, int value)
     {
         using var scope = ServiceProvider.CreateScope();

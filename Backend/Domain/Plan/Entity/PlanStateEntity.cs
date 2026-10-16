@@ -22,6 +22,8 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
 
     public short? TimeLimitInDays { get; set; }
 
+    public int? RateLimitInMeg { get; set; }
+
     // Last Usage Info
     public DateTime? LastConnectTime { get; set; }
 

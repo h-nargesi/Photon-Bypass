@@ -42,6 +42,12 @@ export class HttpClientHandler {
       .pipe(catchError(this.errorHandler));
   }
 
+  public download(url: string, params?: ApiParam): Observable<HttpResponse<Blob>> {
+    url = this.base_path + url;
+    const headers = this.getHeader();
+    return this.api.get(url, { params, observe: 'response', headers, responseType: 'blob' });
+  }
+
   public job(url: string, body: any | null): Observable<ApiResult> {
     url = this.base_path + url;
     const headers = this.getHeader();

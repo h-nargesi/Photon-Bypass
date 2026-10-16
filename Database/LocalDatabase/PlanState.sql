@@ -12,6 +12,7 @@ SELECT Id
     , RestrictedRealmId
     , TrafficLimit
     , TimeLimitInDays
+    , RateLimitInMeg
     -- Last Usage Info
     , LastConnectTime
     , TrafficUsed

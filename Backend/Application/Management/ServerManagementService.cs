@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Options;
 using PhotonBypass.Application.Management.Model;
+using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Management;
+using PhotonBypass.Domain.Management.Model;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan;
@@ -10,39 +12,52 @@ using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Plan.Model;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.ErrorHandler;
+using PhotonBypass.Result;
 using Serilog;
 using System.Text;
 using System.Text.RegularExpressions;
+using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
 namespace PhotonBypass.Application.Management;
 
 partial class ServerManagementService(
     IRealmRepository realm_repo,
     ITrafficDataRepository traffic_data_repo,
+    Lazy<IPlanStateRepository> plan_state_repo,
     Lazy<ISessionRadiusSyncService> session_radius_srv,
     Lazy<IServerRepository> server_repo,
     Lazy<IAccountRepository> account_repo,
     Lazy<ISocialMediaService> social_srv,
+    Lazy<IJobContext> job_context,
     IOptions<ManagementOptions> options)
     : IServerManagementService
 {
+    private const int CapacityWindowDays = 30;
+
+    private const double BytesPerMegabitPerSecond = 125_000;
+
+    private const double CapacityWindowSeconds = CapacityWindowDays * 24 * 60 * 60;
+
     private IRealmRepository RealmRepo { get; } = realm_repo;
     private ITrafficDataRepository TrafficDataRepo { get; } = traffic_data_repo;
+    private Lazy<IPlanStateRepository> PlanStateRepo { get; } = plan_state_repo;
     private Lazy<ISessionRadiusSyncService> SessionRadiusSrv { get; } = session_radius_srv;
     private Lazy<IServerRepository> ServerRepo { get; } = server_repo;
     private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
     private Lazy<ISocialMediaService> SocialSrv { get; } = social_srv;
+    private Lazy<IJobContext> JobContext { get; } = job_context;
     private IOptions<ManagementOptions> Options { get; } = options;
 
     public async Task<RealmEntity> GetAvailableRealm()
     {
-        var server_capacities = await LoadServersCapacity();
+        var server_capacities = await LoadRealmsCapacityState();
 
         var realm = server_capacities
-            .Where(realm => realm.Value.Rate > -1)
-            .OrderBy(s => s.Value.Rate)
-            .Select(s => s.Key)
+            .Where(realm => realm.DemandRate > -1)
+            .OrderBy(s => s.DemandRate)
+            .Select(s => s.Realm)
             .FirstOrDefault();
 
         return realm ?? throw new UserException("ظرفیت سرورها تکمیل است؛ لطفاً بعداً تلاش کنید!",
@@ -81,21 +96,21 @@ partial class ServerManagementService(
 
     public async Task CheckUserServerBalance()
     {
-        var realms = await LoadServersCapacity();
+        var realms = await LoadRealmsCapacityState();
 
         var alarms = new List<string>();
 
-        foreach (var realm_pair in realms.Where(r => r.Value.Rate > -1))
+        foreach (var realm_state in realms.Where(r => r.UsageRate > -1))
         {
-            var percent = 100 * realm_pair.Value.Rate;
+            var percent = 100 * realm_state.UsageRate;
 
             switch (percent)
             {
                 case < 10:
-                    alarms.Add($"Unused Realm: {realm_pair.Key.Name} ({percent:N2}% from {realm_pair.Value.Cap})");
+                    alarms.Add($"Unused Realm: {realm_state.Realm.Name} ({percent:N2}% from {realm_state.EffectiveCapacityBytes})");
                     break;
                 case > 90:
-                    alarms.Add($"Low Capacity: {realm_pair.Key.Name} ({percent:N2}% from {realm_pair.Value.Cap})");
+                    alarms.Add($"Low Capacity: {realm_state.Realm.Name} ({percent:N2}% from {realm_state.EffectiveCapacityBytes})");
                     break;
             }
         }
@@ -104,6 +119,82 @@ partial class ServerManagementService(
         {
             await SocialSrv.Value.AlarmServerCapacity(alarms);
         }
+    }
+
+    public async Task<DataPlaneInfoModel?> GetDataPlaneInfo(int? realm_id)
+    {
+        var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
+        var nas_list = await ServerRepo.Value.GetActiveNasInRealmOrAll(realm_id);
+
+        var kind = MergeDataPlaneKind(radius_list);
+
+        if (realm_id.HasValue)
+        {
+            return new DataPlaneInfoModel
+            {
+                Kind = kind,
+                SupportsOvpnCert = nas_list.Any(IsOvpnCertSource),
+                SupportsPasswordChange = radius_list.Count > 0 && kind != DataPlaneKind.Xui,
+            };
+        }
+
+        var all_radius = await ServerRepo.Value.GetAllActiveRadius();
+
+        return new DataPlaneInfoModel
+        {
+            Kind = kind,
+            SupportsOvpnCert = nas_list.Any(IsOvpnCertSource),
+            SupportsPasswordChange = all_radius.All(server => GetDataPlaneKind(server) != DataPlaneKind.Xui),
+        };
+    }
+
+    public async Task<ApiResult> SetRealmCapacityOverride(int realm_id, long? override_bytes)
+    {
+        if (override_bytes is < 0)
+        {
+            throw new UserException("مقدار ظرفیت واردشده معتبر نیست!",
+                $"Capacity override must be null or non-negative: {override_bytes}");
+        }
+
+        var realm = (await RealmRepo.GetByIds([realm_id])).TryGetValue(realm_id, out var found) ? found : null;
+
+        if (realm is not { IsActive: true })
+        {
+            throw new UserException("سرور مورد نظر پیدا نشد!", $"Active realm not found: {realm_id}");
+        }
+
+        var old_value = realm.CapacityOverrideBytes;
+
+        var updated = await RealmRepo.SetCapacityOverride(realm_id, override_bytes);
+
+        if (!updated)
+        {
+            throw new UserException("سرور مورد نظر پیدا نشد!", $"Realm capacity update missed: {realm_id}");
+        }
+
+        Log.Information("[user: {0}] Realm capacity override changed: (realm:{1}, {2} -> {3})",
+            JobContext.Value.Username, realm_id, old_value, override_bytes);
+
+        return ApiResult.Success("ظرفیت سرور به‌روزرسانی شد.");
+    }
+
+    public async Task<List<RealmCapacityModel>> GetRealmsCapacityState()
+    {
+        var states = await LoadRealmsCapacityState();
+
+        return states.Select(state => new RealmCapacityModel
+            {
+                RealmId = state.Realm.Id,
+                Name = state.Realm.Name,
+                ComputedCapacityBytes = state.ComputedCapacityBytes,
+                OverrideBytes = state.OverrideBytes,
+                EffectiveCapacityBytes = state.EffectiveCapacityBytes,
+                DemandBytes = state.DemandBytes,
+                ObservedUsageBytes = state.ObservedUsageBytes,
+                Rate = state.DemandRate,
+                IsEligibleForAssignment = state.IsEligibleForAssignment,
+            })
+            .ToList();
     }
 
     public async Task UpdateTrafficData()
@@ -146,49 +237,120 @@ partial class ServerManagementService(
         await TrafficDataRepo.Save(traffic_data_list);
     }
 
-    private async Task<Dictionary<RealmEntity, (double Rate, long Cap)>> LoadServersCapacity()
+    private async Task<List<RealmCapacityState>> LoadRealmsCapacityState()
     {
-        var index = DateTime.Now.AddDays(-30);
-
         var realms = (await RealmRepo.FetchAllActiveRealm())
             .ToDictionary(k => k.Id);
 
         var clusters = await ServerRepo.Value.GetAllActiveNasInRealm(realms.Keys);
-        var server_ids = clusters.SelectMany(s => s.Value).Select(s => s.Id).ToList();
 
-        var traffics = (await TrafficDataRepo.Fetch(server_ids, index))
-            .ToDictionary(k =>
-                k.Key, v =>
-                v.Value.Select(t => (t.StartSession, t.TotalData))
-                    .GroupBy(k => k.StartSession)
-                    .Select(a => a.Select(x => x.TotalData).Sum())
-                    .ToList());
-
-        // TODO: Use IQR to find real average
-        var real_traffics = traffics.ToDictionary(k => k.Key, v => v.Value.Average());
+        var demand_by_realm = await LoadRealmDemand(realms.Keys);
+        var usage_by_nas = await LoadObservedUsage(clusters.SelectMany(cluster => cluster.Value)
+            .Select(server => server.Id));
 
         return clusters.Select(cluster =>
             {
-                var usage = 0D;
-                var capacity = 0L;
+                var realm = realms[cluster.Key];
 
-                foreach (var server in cluster.Value)
+                return new RealmCapacityState
                 {
-                    capacity += server.BandWidth;
-                    if (real_traffics.TryGetValue(server.Id, out var data_usage))
-                    {
-                        usage += data_usage;
-                    }
-                }
-
-                return new
-                {
-                    Realm = realms[cluster.Key],
-                    Capacity = capacity,
-                    UsageRate = capacity == 0 ? -1 : usage / capacity,
+                    Realm = realm,
+                    ComputedCapacityBytes = cluster.Value.Sum(server => server.BandWidth),
+                    DemandBytes = demand_by_realm.GetValueOrDefault(cluster.Key),
+                    ObservedUsageBytes = cluster.Value.Sum(server => usage_by_nas.GetValueOrDefault(server.Id)),
                 };
             })
-            .ToDictionary(k => k.Realm, v => (v.UsageRate, v.Capacity));
+            .ToList();
+    }
+
+    private async Task<Dictionary<int, double>> LoadRealmDemand(IEnumerable<int> active_realm_ids)
+    {
+        var now = DateTime.Now;
+        var realm_mask = active_realm_ids.ToHashSet();
+
+        var active_plans = (await PlanStateRepo.Value.GetAll())
+            .Where(plan => plan.IsActive &&
+                           (plan.ExpirationDate == null || plan.ExpirationDate > now) &&
+                           (plan.TrafficLeft == null || plan.TrafficLeft > 0))
+            .ToList();
+
+        var demand_by_realm = new Dictionary<int, double>();
+
+        foreach (var plan in active_plans)
+        {
+            var plan_demand = GetPlanDemand(plan);
+
+            if (plan.RestrictedRealmId is int realm_id)
+            {
+                if (realm_mask.Contains(realm_id))
+                {
+                    demand_by_realm[realm_id] = demand_by_realm.GetValueOrDefault(realm_id) + plan_demand;
+                }
+
+                continue;
+            }
+
+            foreach (var realm in realm_mask)
+            {
+                demand_by_realm[realm] = demand_by_realm.GetValueOrDefault(realm) + plan_demand;
+            }
+        }
+
+        return demand_by_realm;
+    }
+
+    private double GetPlanDemand(PlanStateEntity plan)
+    {
+        double? quota_bound = plan.TrafficLimit.HasValue && plan.TimeLimitInDays.HasValue
+            ? plan.TrafficLimit.Value * (CapacityWindowDays / (double)Math.Max((int)plan.TimeLimitInDays.Value, 1))
+            : null;
+
+        double? rate_bound = plan.RateLimitInMeg.HasValue
+            ? (double)plan.RateLimitInMeg.Value * BytesPerMegabitPerSecond * CapacityWindowSeconds *
+              Math.Max((int)plan.SimultaneousUser, 1)
+            : null;
+
+        return (quota_bound, rate_bound) switch
+        {
+            ({ } quota, { } rate) => Math.Min(quota, rate),
+            ({ } quota, null) => quota,
+            (null, { } rate) => rate,
+            (null, null) => Options.Value.UnmeteredPlanDemandGigabytes * StaticValues.BytesInGigDouble,
+        };
+    }
+
+    private async Task<Dictionary<int, double>> LoadObservedUsage(IEnumerable<int> nas_ids)
+    {
+        var index = DateTime.Now.AddDays(-CapacityWindowDays);
+
+        var traffics = await TrafficDataRepo.Fetch(nas_ids, index);
+
+        return traffics.ToDictionary(
+            k => k.Key,
+            v => v.Value.Sum(traffic => (double)traffic.TotalData));
+    }
+
+    private static string? MergeDataPlaneKind(IEnumerable<ServerEntity> radius_servers)
+    {
+        var kinds = radius_servers.Select(GetDataPlaneKind).Distinct().ToList();
+
+        return kinds.Count == 1 ? kinds[0] : null;
+    }
+
+    private static string? GetDataPlaneKind(ServerEntity server)
+    {
+        return (server.Features & ServerFeature.Radius) switch
+        {
+            ServerFeature.UserManager => DataPlaneKind.UserManager,
+            ServerFeature.RadiusDesk => DataPlaneKind.RadiusDesk,
+            ServerFeature.Xui => DataPlaneKind.Xui,
+            _ => null,
+        };
+    }
+
+    private static bool IsOvpnCertSource(ServerEntity nas)
+    {
+        return (nas.Features & ServerFeature.Ovpn) != 0 && nas.OsType == OperatingSystem.Mikrotik;
     }
 
     private static string SetDomain(string cert, string name, IEnumerable<string> domains)
@@ -271,4 +433,25 @@ partial class ServerManagementService(
 
     [GeneratedRegex(@"setenv FRIENDLY_NAME ""[^""]+""")]
     private static partial Regex SetTitle();
+
+    private sealed record RealmCapacityState
+    {
+        public required RealmEntity Realm { get; init; }
+
+        public long ComputedCapacityBytes { get; init; }
+
+        public double DemandBytes { get; init; }
+
+        public double ObservedUsageBytes { get; init; }
+
+        public long? OverrideBytes => Realm.CapacityOverrideBytes;
+
+        public long EffectiveCapacityBytes => OverrideBytes ?? ComputedCapacityBytes;
+
+        public bool IsEligibleForAssignment => EffectiveCapacityBytes > 0;
+
+        public double DemandRate => IsEligibleForAssignment ? DemandBytes / EffectiveCapacityBytes : -1;
+
+        public double UsageRate => IsEligibleForAssignment ? ObservedUsageBytes / EffectiveCapacityBytes : -1;
+    }
 }

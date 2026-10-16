@@ -6,6 +6,7 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Management;
+using PhotonBypass.Domain.Management.Model;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan;
@@ -50,6 +51,8 @@ class VpnApplication(
                    throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
                        $"There is not ant plan for user: {target}");
 
+        await CheckPasswordChangeSupport(plan);
+
         await AccountRadiusSrv.Value.ChangeVpnPassword(plan.RestrictedRealmId, account.Username, password);
 
         account.VpnPassword = password;
@@ -69,9 +72,79 @@ class VpnApplication(
 
     public async Task<ApiResult> SendCertEmail(string target)
     {
+        var (account, cert_context) = await BuildCertificate(target, require_email: true);
+
+        var email_context = new CertEmailContext
+        {
+            Username = account.Username,
+            Password = account.VpnPassword,
+            Realm = cert_context.Realm,
+            PrivateKeyOvpn = cert_context.PrivateKeyOvpn,
+            CertFile = cert_context.CertFile,
+        };
+
+        await EmailSrv.Value.SendCertEmail(account.Fullname, account.EmailAddress!, email_context);
+
+        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+        {
+            Target = account.Id,
+            Category = EventCategory.Security,
+            Type = EventType.Information,
+            Title = "امنیت",
+            Description = "ایمیل گواهی اتصال ارسال شد.",
+        });
+
+        return ApiResult.Success("ایمیل گواهی اتصال ارسال شد.");
+    }
+
+    public async Task<CertContext> DownloadCertificate(string target)
+    {
+        var (account, cert_context) = await BuildCertificate(target, require_email: false);
+
+        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+        {
+            Target = account.Id,
+            Category = EventCategory.Security,
+            Type = EventType.Information,
+            Title = "امنیت",
+            Description = "کانفیگ اتصال دانلود شد.",
+        });
+
+        return cert_context;
+    }
+
+    public async Task<ApiResult<TrafficDataModel>> TrafficData(string target)
+    {
+        var account_id = await AccountRepo.Value.GetActiveAccountId(target);
+        if (!account_id.HasValue)
+        {
+            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
+        }
+
+        var min_date_time = DateTime.Now.AddDays(-MaxDateBefore);
+        var list = await TrafficDataRepo.Value.Fetch(account_id.Value, min_date_time);
+
+        var result = ConvertToModel(list);
+
+        return ApiResult<TrafficDataModel>.Success(result);
+    }
+
+    private async Task CheckPasswordChangeSupport(PlanStateEntity plan)
+    {
+        var info = await ServerMngSrv.Value.GetDataPlaneInfo(plan.RestrictedRealmId);
+
+        if (info?.SupportsPasswordChange != true)
+        {
+            throw new UserException("تغییر کلمه عبور VPN برای این سرور ممکن نیست؛ در صورت نیاز با پشتیبانی تماس بگیرید.",
+                $"VPN password change is not supported by the data-plane: realm={plan.RestrictedRealmId}");
+        }
+    }
+
+    private async Task<(AccountEntity Account, CertContext Cert)> BuildCertificate(string target, bool require_email)
+    {
         var account = await AccountApp.Value.GetActiveUser(target);
 
-        if (account.EmailAddress == null)
+        if (require_email && account.EmailAddress == null)
         {
             throw new UserException("ایمیل کاربر ثبت نشده است!",
                 $"account is email address is unknown: target={target}");
@@ -89,47 +162,19 @@ class VpnApplication(
                 $"There is not ant plan for user {target}");
         }
 
+        var info = await ServerMngSrv.Value.GetDataPlaneInfo(plan.RestrictedRealmId);
+
+        if (info?.SupportsOvpnCert != true)
+        {
+            throw new UserException("کانفیگ اتصال این سرور از نوع OpenVPN نیست؛ از لینک اتصال یا روش اتصال دیگر استفاده کنید.",
+                $"OVPN certificate is not available for the data-plane: realm={plan.RestrictedRealmId}");
+        }
+
         var cert_context = await ServerMngSrv.Value.GetDefaultCertificate(plan.RestrictedRealmId);
 
         await AccountRadiusSrv.Value.GetOVpnCertificate(plan.RestrictedRealmId, account.Username, cert_context);
 
-        var email_context = new CertEmailContext
-        {
-            Username = account.Username,
-            Password = account.VpnPassword,
-            Realm = cert_context.Realm,
-            PrivateKeyOvpn = cert_context.PrivateKeyOvpn,
-            CertFile = cert_context.CertFile,
-        };
-
-        await EmailSrv.Value.SendCertEmail(account.Fullname, account.EmailAddress, email_context);
-
-        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
-        {
-            Target = account.Id,
-            Category = EventCategory.Security,
-            Type = EventType.Information,
-            Title = "امنیت",
-            Description = "ایمیل گواهی اتصال ارسال شد.",
-        });
-
-        return ApiResult.Success("ایمیل گواهی اتصال ارسال شد.");
-    }
-
-    public async Task<ApiResult<TrafficDataModel>> TrafficData(string target)
-    {
-        var account_id = await AccountRepo.Value.GetActiveAccountId(target);
-        if (!account_id.HasValue)
-        {
-            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
-        }
-
-        var min_date_time = DateTime.Now.AddDays(-MaxDateBefore);
-        var list = await TrafficDataRepo.Value.Fetch(account_id.Value, min_date_time);
-
-        var result = ConvertToModel(list);
-
-        return ApiResult<TrafficDataModel>.Success(result);
+        return (account, cert_context);
     }
 
     private static TrafficDataModel ConvertToModel(IEnumerable<TrafficDataEntity> data)

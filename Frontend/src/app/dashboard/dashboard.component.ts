@@ -1,4 +1,5 @@
 import { CommonModule, NgStyle } from '@angular/common';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -27,12 +28,18 @@ import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
 import {
   ConnectionStateModel,
+  PlanInfo,
   ResultStatus,
   Target,
   UserModel,
   PlanState,
 } from '../@models';
-import { TranslationPipe, TranslationService, UserService } from '../@services';
+import {
+  MessageService,
+  TranslationPipe,
+  TranslationService,
+  UserService,
+} from '../@services';
 import { DashboardService } from './dashboard.service';
 import { TrafficChartComponent } from './traffic-chart/traffic-chart.component';
 
@@ -71,17 +78,20 @@ import { TrafficChartComponent } from './traffic-chart/traffic-chart.component';
 export class DashboardComponent implements OnInit {
   current_user?: UserModel;
   sending_cert_email = false;
+  downloading_cert = false;
 
   connections?: ConnectionStateModel[];
   connection_count = '0';
 
   plan_info?: PlanState;
+  plan_capabilities?: PlanInfo;
   readonly icons = ICON_SUBSET;
 
   constructor(
     private readonly user_service: UserService,
     private readonly service: DashboardService,
-    private readonly translation: TranslationService
+    private readonly translation: TranslationService,
+    private readonly messages: MessageService
   ) {}
 
   private readonly destroy_ref = inject(DestroyRef);
@@ -114,6 +124,22 @@ export class DashboardComponent implements OnInit {
         toMe ? this.current_user?.username : this.user_service.targetName
       )
       .subscribe(() => (this.sending_cert_email = false));
+  }
+
+  downloadCertificate(): void {
+    this.downloading_cert = true;
+    this.service
+      .downloadCertificate(this.user_service.targetName)
+      .subscribe({
+        next: (response) => {
+          this.downloading_cert = false;
+          this.saveCertificateFile(response);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.downloading_cert = false;
+          void this.reportDownloadError(error);
+        },
+      });
   }
 
   closeConnection(index: number) {
@@ -184,6 +210,7 @@ export class DashboardComponent implements OnInit {
   private loadData() {
     this.loadConnections();
     this.loadPlanInfo();
+    this.loadPlanCapabilities();
   }
 
   private async loadCurrentUser() {
@@ -209,6 +236,47 @@ export class DashboardComponent implements OnInit {
       .subscribe((info) => (this.plan_info = info));
   }
 
+  private loadPlanCapabilities() {
+    this.service
+      .fetchPlanInfo(this.user_service.targetName)
+      .subscribe((info) => (this.plan_capabilities = info));
+  }
+
+  private saveCertificateFile(response: HttpResponse<Blob>): void {
+    if (!response.ok || !response.body) return;
+
+    const file_name = this.fileDispositionName(response) ?? `${this.user_service.targetName}.ovpn`;
+    const download_url = URL.createObjectURL(response.body);
+    const anchor = document.createElement('a');
+    anchor.href = download_url;
+    anchor.download = file_name;
+    anchor.click();
+    URL.revokeObjectURL(download_url);
+  }
+
+  private fileDispositionName(response: HttpResponse<Blob>): string | undefined {
+    const type = response.headers.get('Content-Disposition') ?? '';
+    return /filename="?([^";]+)"?/i.exec(type)?.[1];
+  }
+
+  private async reportDownloadError(error: HttpErrorResponse): Promise<void> {
+    let message: string | undefined;
+
+    if (error.error instanceof Blob) {
+      try {
+        message = JSON.parse(await error.error.text())?.message;
+      } catch {
+        message = undefined;
+      }
+    }
+
+    this.messages.messageHandler(
+      ResultStatus.error,
+      this.translation.translate('api.error'),
+      message ?? this.translation.translate('api.error')
+    );
+  }
+
   private detectTargetChanges() {
     this.user_service.onTargetChanged
       .pipe(takeUntilDestroyed(this.destroy_ref))
@@ -222,5 +290,6 @@ export class DashboardComponent implements OnInit {
     this.connections = undefined;
     this.connection_count = '0';
     this.plan_info = undefined;
+    this.plan_capabilities = undefined;
   }
 }

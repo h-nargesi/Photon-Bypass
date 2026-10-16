@@ -415,6 +415,9 @@ export class FakeDataService {
         days: days,
         gigabytes: gigabytes,
         simultaneousUserCount: 1 + Math.floor(Math.random() * 5),
+        kind: 'usermanager',
+        supportsOvpnCert: true,
+        supportsPasswordChange: true,
       },
     } as ApiResultData<PlanInfo>);
   }

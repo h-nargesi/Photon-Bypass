@@ -15,6 +15,7 @@ internal class ManagementOptionsMoq : Mock<IOptions<ManagementOptions>>, IUnitLe
             new PaymentCard { BankName = "Test Bank", CardNumber = "0000-0000-0000-0000", HolderName = "Test Holder" },
         ],
         WalletDeactivationThreshold = null,
+        UnmeteredPlanDemandGigabytes = 25,
     };
 
     public ManagementOptionsMoq()

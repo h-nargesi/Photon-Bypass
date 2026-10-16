@@ -17,6 +17,9 @@ export interface PlanInfo {
   days: number;
   gigabytes: number;
   simultaneousUserCount: number;
+  kind?: string | null;
+  supportsOvpnCert?: boolean | null;
+  supportsPasswordChange?: boolean | null;
 }
 
 export interface RenewalResult {

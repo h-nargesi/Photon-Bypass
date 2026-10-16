@@ -47,6 +47,12 @@ select Id
     , 1
     , 0x402
     , '{
+    "SshConfig": {
+        "HostName": "192.168.56.12",
+        "Username": "admin",
+        "Password": "admin",
+        "Port": 22
+    },
     "WebApiConfig": {
         "HostName": "192.168.56.12",
         "Username": "admin",

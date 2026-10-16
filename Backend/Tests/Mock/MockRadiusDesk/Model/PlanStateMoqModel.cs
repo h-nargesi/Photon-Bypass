@@ -8,6 +8,8 @@ public class PlanStateMoqModel
 
     public string Username { get; set; } = null!;
 
+    public bool IsActive { get; set; }
+
     public byte SimultaneousUser { get; set; }
 
     public int? RestrictedRealmId { get; set; }
@@ -15,6 +17,8 @@ public class PlanStateMoqModel
     public long? TrafficLimit { get; set; }
 
     public short? TimeLimitInDays { get; set; }
+
+    public int? RateLimitInMeg { get; set; }
 
     public DateTime? LastConnectTime { get; set; }
 
@@ -29,10 +33,12 @@ public class PlanStateMoqModel
         {
             Id = Id,
             Username = Username,
+            IsActive = IsActive,
             SimultaneousUser = SimultaneousUser,
             RestrictedRealmId = RestrictedRealmId,
             TrafficLimit = TrafficLimit,
             TimeLimitInDays = TimeLimitInDays,
+            RateLimitInMeg = RateLimitInMeg,
             LastConnectTime = LastConnectTime,
             ExpirationDate = ExpirationDate,
             TrafficLeft = TrafficLeft

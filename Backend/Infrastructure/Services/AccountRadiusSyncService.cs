@@ -6,6 +6,7 @@ using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Infra.Nas;
 using PhotonBypass.Infra.Radius;
 using Serilog;
@@ -126,8 +127,9 @@ class AccountRadiusSyncService(
                 await MikrotikDirectSrv.Value.GetOVpnCertificate(master_nas_server, username, default_context);
                 break;
             default:
-                throw new Exception($"Unknown radius-server: (realm-id={master_nas_server.RealmId}, " +
-                                    $"radius-id={master_nas_server.Id}, feature={master_nas_server.Features})");
+                throw new UserException("کانفیگ اتصال این سرور از نوع OpenVPN نیست؛ از لینک اتصال یا روش اتصال دیگر استفاده کنید.",
+                    $"Certificate fetch is not implemented for the nas operating-system: (realm-id={master_nas_server.RealmId}, " +
+                    $"nas-id={master_nas_server.Id}, os={master_nas_server.OsType}, feature={master_nas_server.Features})");
         }
 
         if (nas_list.Count <= 1)

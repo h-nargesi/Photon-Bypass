@@ -59,6 +59,19 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IUnitLevelService
 
                 return Task.FromResult(result);
             });
+
+        Setup(repository => repository.SetCapacityOverride(It.IsAny<int>(), It.IsAny<long?>()))
+            .Returns<int, long?>((id, override_bytes) =>
+            {
+                if (!data_dictionary.TryGetValue(id, out var realm))
+                {
+                    return Task.FromResult(false);
+                }
+
+                realm.CapacityOverrideBytes = override_bytes;
+
+                return Task.FromResult(true);
+            });
     }
 
     private const string FilePath = "Data/Local/realms.json";

@@ -1,8 +1,10 @@
+import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   ApiResult,
   ConnectionStateModel,
+  PlanInfo,
   ShowMessageCase,
   PlanState,
 } from '../@models';
@@ -22,6 +24,13 @@ export class DashboardService extends ApiBaseService {
     });
   }
 
+  downloadCertificate(target?: string): Observable<HttpResponse<Blob>> {
+    return this.api.download(
+      `${VPN_API_URL}/download-cert`,
+      target ? { target } as ApiParam : undefined,
+    );
+  }
+
   fetchCurrentConnections(target?: string): Observable<ConnectionStateModel[]> {
     const url = `${CONNECTION_API_URL}/current-con-state`;
     return this.getData<ConnectionStateModel[]>(url, target ? { target } as ApiParam : undefined);
@@ -39,5 +48,10 @@ export class DashboardService extends ApiBaseService {
   fetchPlanState(target?: string): Observable<PlanState> {
     const url = `${PLAN_API_URL}/plan-state`;
     return this.getData<PlanState>(url, target ? { target } as ApiParam : undefined);
+  }
+
+  fetchPlanInfo(target?: string): Observable<PlanInfo> {
+    const url = `${PLAN_API_URL}/plan-info`;
+    return this.getData<PlanInfo>(url, target ? { target } as ApiParam : undefined);
   }
 }

@@ -54,4 +54,18 @@ class RealmRepository(LocalDbContext context) : EditableRepository<RealmEntity>(
 
         return [.. result];
     }
+
+    public async Task<bool> SetCapacityOverride(int realm_id, long? override_bytes)
+    {
+        var sql = $"""
+                   update {TableName}
+                   set {nameof(RealmEntity.CapacityOverrideBytes)} = @override_bytes
+                   output inserted.{nameof(RealmEntity.Id)}
+                   where {nameof(RealmEntity.Id)} = @realm_id
+                   """;
+
+        var result = await QueryAsync<int>(sql, new { realm_id, override_bytes });
+
+        return result.Any();
+    }
 }

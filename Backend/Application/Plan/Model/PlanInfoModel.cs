@@ -9,4 +9,10 @@ public class PlanInfoModel
     public double? Gigabytes { get; init; }
 
     public int? SimultaneousUserCount { get; init; }
+
+    public string? Kind { get; init; }
+
+    public bool? SupportsOvpnCert { get; init; }
+
+    public bool? SupportsPasswordChange { get; init; }
 }

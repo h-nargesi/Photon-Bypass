@@ -16,6 +16,8 @@ public class RealmEntity : IBaseEntity
 
     public DateTime? LastTrafficSync { get; set; }
 
+    public long? CapacityOverrideBytes { get; set; }
+
     [NotMapped]
     public bool HasChanged {  get; set; }
 
