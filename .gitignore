@@ -398,3 +398,7 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Production secrets (Plesk vhost private folder) and machine-local production config
+**/private/secrets.json
+appsettings.Production.json

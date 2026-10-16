@@ -16,6 +16,8 @@ public class ServiceInitializer
 
     private WebApplication Initialize(Type[] types)
     {
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
+
         var builder = WebApplication.CreateBuilder()
             .AddAppServices()
             .AddPortalServices()

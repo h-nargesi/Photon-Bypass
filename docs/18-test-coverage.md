@@ -115,6 +115,7 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 | مصرف atomic کد reset-pass | docs/14 M10 (P5) | `AuthAppTest.ResetPassword_*` | ✅ | |
 | قفل atomic سینک ترافیک realm | docs/14 H18 (P1) | `SessionRadiusTest.GetTrafficData_TimeLimit_IndexWindowsEachRealm`، `XuiTrafficSyncTest.RealmLockNotAcquired_SkipsTheServer` | ✅ | |
 | گیت تسویه per-account (برداشت موازی) | docs/14 M28 (P2) | `BillingApplicationTest.SettleWallet_ParallelOnSameAccount_OnlyOneSucceeds`، `SettlementRollbackTest` | ✅ | |
+| گارد secretهای تستی در startup (بلاک پروداکشن با مقادیر کامیت‌شده) | docs/14 M29، docs/19 §2 | `ProductionSecretsGuardTest` (هر ۴ کلید / Development / override کامل / فقط یک کلید / کلیدهای غایب)، `PleskSecretsTest` (override با per-key و hierarchy جزئی / کاندید دوم برای app تودرتو / تقدم کاندید اول / no-op وقتی فایل نیست) + دو تست wiring در `ProductionSecretsGuardTest` (`AddPortalServices` در Production با مقادیر تستی → throw از گارد؛ در Development → ثبت کامل بدون خطا) | ✅ | گارد/لودر با `AddInMemoryCollection` + stub ساده‌ی `IHostEnvironment` — بدون بوت host؛ لودر با `WebApplication.CreateBuilder` و ContentRootPath موقت در دایرکتوری تمپ |
 
 ### docs/15 (پرداخت P2)
 

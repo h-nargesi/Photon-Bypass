@@ -57,6 +57,9 @@ public static class ServiceFactory
                     ClockSkew = TimeSpan.Zero,
                 };
             });
+
+        ProductionSecretsGuard.Validate(builder.Configuration, builder.Environment);
+
         builder.Services.AddAuthorization();
         builder.Services.AddMemoryCache();
 
