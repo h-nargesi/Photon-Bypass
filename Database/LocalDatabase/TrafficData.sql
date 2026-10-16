@@ -7,13 +7,15 @@ CREATE TABLE TrafficData (
 	AccountId			INT				NOT NULL	CONSTRAINT FK_TrafficData_AccountId FOREIGN KEY REFERENCES Account (Id)
 													ON DELETE CASCADE,
 	NasId				INT					NULL	CONSTRAINT FK_TrafficData_NasId_Server FOREIGN KEY REFERENCES [Server] (Id),
-	SessionId			VARCHAR(8)		NOT NULL,
+	-- The x-ui collector writes synthetic day rows keyed 'xui:{accountId}:{renewalId}:{yyyyMMdd}'
+	-- (docs/17 D7), so 8 characters are not enough.
+	SessionId			VARCHAR(64)		NOT NULL,
 	StartSession		DATETIME		NOT NULL,
 	EndSession			DATETIME			NULL,
 	DataIn				BIGINT			NOT NULL,
 	DataOut				BIGINT			NOT NULL,
 	Created				DATETIME		NOT NULL	CONSTRAINT DF_TrafficData_Created DEFAULT GETDATE(),
 
-	CONSTRAINT UK_TrafficData_NasId_SessionId UNIQUE (NasId, SessionId),
+	CONSTRAINT UK_TrafficData_NasId_SessionId UNIQUE (NasId, SessionId)
 )
 GO

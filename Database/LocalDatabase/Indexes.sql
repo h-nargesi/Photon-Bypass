@@ -1,35 +1,13 @@
 USE FastBypass;
 GO
 
--- P1/H20 (docs/14-defects-audit.md): missing indexes for the hot query paths.
--- Idempotent: safe to re-run. There is no migration framework -- deploy manually.
--- Run TrafficDataDedup.sql first when duplicate (NasId, SessionId) rows exist,
--- otherwise the unique index creation fails.
-
--- TrafficData (NasId, SessionId) unique: relational backstop for the traffic merge key (C1).
-IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UK_TrafficData_NasId_SessionId')
-BEGIN
-    DECLARE @uk_traffic_sql NVARCHAR(MAX) =
-        N'CREATE UNIQUE NONCLUSTERED INDEX UK_TrafficData_NasId_SessionId ON TrafficData (NasId, SessionId)';
-
-    IF SERVERPROPERTY('EngineEdition') IN (3, 5, 8)
-        SET @uk_traffic_sql += N' WITH (ONLINE = ON)';
-
-    EXEC sp_executesql @uk_traffic_sql;
-END
-GO
+-- Hot-path indexes (docs/14 H20). The unique TrafficData (NasId, SessionId) key
+-- is the inline table constraint in TrafficData.sql. Run after the table scripts.
 
 -- TrafficData (AccountId, StartSession) INCLUDE (EndSession): Fetch / FetchOpen / chart reads.
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_TrafficData_AccountId_StartSession')
-BEGIN
-    DECLARE @ix_traffic_sql NVARCHAR(MAX) =
-        N'CREATE NONCLUSTERED INDEX IX_TrafficData_AccountId_StartSession ON TrafficData (AccountId, StartSession) INCLUDE (EndSession)';
-
-    IF SERVERPROPERTY('EngineEdition') IN (3, 5, 8)
-        SET @ix_traffic_sql += N' WITH (ONLINE = ON)';
-
-    EXEC sp_executesql @ix_traffic_sql;
-END
+CREATE NONCLUSTERED INDEX IX_TrafficData_AccountId_StartSession
+ON TrafficData (AccountId, StartSession) INCLUDE (EndSession);
 GO
 
 -- Renewal (AccountId): TotalPlanState view window functions.

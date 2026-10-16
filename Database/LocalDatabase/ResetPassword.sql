@@ -8,6 +8,6 @@ CREATE TABLE ResetPassword (
 													ON DELETE CASCADE,
 	ExpireDate			DATETIME		NOT NULL,
 	HashCode			VARCHAR(88)		NOT NULL,
-	Created				DATETIME		NOT NULL	CONSTRAINT DF_ResetPassword_Created DEFAULT GETDATE(),
+	Created				DATETIME		NOT NULL	CONSTRAINT DF_ResetPassword_Created DEFAULT GETDATE()
 )
 GO

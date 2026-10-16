@@ -5,32 +5,34 @@
 ## Local DB (دیتابیس محلی MSSQL)
 
 - دیتابیس: `FastBypass` (تولید) و `FastBypass_DbScenario` (سناریو/تست). connection string در `LocalDatabaseOptions:ConnectionString` (`Backend/Portal/appsettings.json`) — **مقدار در مستندات تکرار نمی‌شود**.
-- اسکریپت‌ها در `Database/LocalDatabase/`؛ اجرا به‌ترتیب: ابتدا `Database.sql` سپس بقیه‌ی `.sql`.
+- اسکریپت‌ها در `Database/LocalDatabase/`؛ اجرا به‌ترتیب: ابتدا `Database.sql` سپس بقیه‌ی `.sql` (FK ها ترتیب را تعیین می‌کنند؛ initializer تست پوشه را topological مرتب می‌کند).
+- مجموعه **فقط نصب تازه** است: چون هنوز release‌ای منتشر نشده، اسکریپت migration/ALTER حذف و همه‌ی ستون‌های بعداًاضافه‌شده داخل `CREATE TABLE` مربوطه ادغام شده‌اند.
 
 ### Tables (جداول)
 
 | File | Table | Key / Unique | Notes |
 |---|---|---|---|
 | `Database.sql` | (db creation) | — | ساخت دیتابیس `FastBypass`. |
-| `Account.sql` | `Account` | `PK Id`, `UK_Account_Username`, `UK_Account_Email` (filtered `WHERE Email IS NOT NULL`), `UK_Account_Mobile` (filtered), `FK_Owner→Account`, `FK_CalculationMethod→Price` | اکانت + زیرمجموعه (`Owner`) + `VpnPassword` جدا. |
-| `AccountRoleAndSelfService.sql` | `Account` (migration) | — | نقش‌های پنل (docs/20 D2/D9): ستون `Role TINYINT DEFAULT 0` (هم‌ارزش `AccountRole`)، seed ادمین → `Role=2`، و `UserType \|= 4` (`AllowSelfService`) برای همه‌ی اکانت‌های موجود. idempotent. |
+| `Account.sql` | `Account` | `PK Id`, `UK_Account_Username`, `UK_Account_Email` (filtered `WHERE Email IS NOT NULL`), `UK_Account_Mobile` (filtered), `FK_Owner→Account`, `FK_CalculationMethod→Price` | اکانت + زیرمجموعه (`Owner`) + `VpnPassword` جدا. ستون‌های `Role` (پنل نقش‌ها، docs/20 D2/D9) و `LastCredentialRotateTime` (throttle چرخش UUID x-ui، docs/16 D4) ادغام‌شده. seed ادمین با `Role=2` و `UserType=4` (AllowSelfService). |
 | `Wallet.sql` | `Wallet` | `PK Id` | کیف پول + `InvoiceCode`. موجودی = `sum(Amount*Direction)` روی `Status in (Completed, Verifying)`. |
 | `History.sql` | `History` | `PK Id` | لاگ رویداد روی `Target`. |
 | `ResetPassword.sql` | `ResetPassword` | — | توکن بازنشانی. |
-| `Renewal.sql` | `Renewal` | `PK Id`, `FK AccountId→Account`, `WalletDebit/WalletCredit` | یک تمدید. |
-| `PaymentP2.sql` | `Invoice` | `PK Code` (از `InvoiceSequence`، بدون identity), `FK AccountId→Account`, `IX (AccountId, Status)`, `CK` XOR رسید | والد فاکتور: `Kind (1=TopUp,2=Plan)`, `Title`, `TotalPrice`, `WalletDeduction`, `Payable`, `Action nvarchar(400)`, `Status` (هم‌ارزش `BalanceStatus`), `ReceiptImage/ReceiptText/ReceiptAt`. |
+| `Renewal.sql` | `Renewal` | `PK Id`, `FK AccountId→Account`, `WalletDebit/WalletCredit` | یک تمدید + ستون‌های وضعیت ترافیک x-ui (docs/17 D6/D14): `LastSeenCounter`, `LastPollTime`, `TrafficUsed`, `LastActiveTime`. |
+| `Invoice.sql` | `Invoice` | `PK Code` (از `InvoiceSequence`، بدون identity), `FK AccountId→Account`, `IX (AccountId, Status)`, `CK` XOR رسید | والد فاکتور: `Kind (1=TopUp,2=Plan)`, `Title`, `TotalPrice`, `WalletDeduction`, `Payable`, `Action nvarchar(400)`, `Status` (هم‌ارزش `BalanceStatus`), `ReceiptImage/ReceiptText/ReceiptAt`. |
 | `PlanState.sql` | `PlanState` | — | **view** mapping (نه جدول پر-شده؛ از `TotalPlanState` خوانده می‌شود). |
-| `TrafficData.sql` | `TrafficData` | `PK Id` | رکورد ترافیک دوره‌ای. |
-| `Server.sql` | `Server` | `PK Id`, `FK RealmId→Realm` | سرور با `Features` (Flags) و `OsType`. |
-| `Realm.sql` | `Realm` | `PK Id` | گروه سرور + `BandWidth`. |
+| `TrafficData.sql` | `TrafficData` | `PK Id`, `UK (NasId, SessionId)` inline | رکورد ترافیک دوره‌ای؛ `SessionId VARCHAR(64)` برای کلیدهای مصنوعی روزانه‌ی x-ui (docs/17 D7). |
+| `Server.sql` | `Server` | `PK Id`, `FK RealmId→Realm` | سرور با `Features` (Flags) و `OsType`؛ `Config VARCHAR(4000)` برای payload رمزنگاری‌شده‌ی Data Protection (docs/14 M12). |
+| `Realm.sql` | `Realm` | `PK Id` | گروه سرور + `BandWidth` + `CapacityOverrideBytes` (بازنویسی ظرفیت دستی، T3). |
 | `Price.sql` | `Price` | `PK Id` | `CalculatorCode` (کد C#). |
+| `InvoiceSequence.sql` | (sequence) | — | کد فاکتور اتمیک؛ شروع ثابت 10001 روی نصب تازه (docs/14 C4). |
 | `TotalPlanState.sql` | `TotalPlanState` (VIEW) | — | محاسباتی — پایه‌ی `PlanStateEntity`. |
+| `Indexes.sql` | (indexes) | — | ایندکس‌های مسیر داغ (docs/14 H20) روی TrafficData/Renewal/History/Wallet/Account. |
 
-> ایندکس‌های یکتای فیلترشده: `UK_Account_Email` و `UK_Account_Mobile` فقط روی ردیف‌های NOT NULL اعمال می‌شوند تا چند کاربر با ایمیل/موبایل خالی مجاز باشند (`Account.sql:28-35`).
+> ایندکس‌های یکتای فیلترشده: `UK_Account_Email` و `UK_Account_Mobile` فقط روی ردیف‌های NOT NULL اعمال می‌شوند تا چند کاربر با ایمیل/موبایل خالی مجاز باشند (`Account.sql`؛ پنجره‌ی TOCTOU ثبت‌نام را می‌بندد — docs/14 L11).
 
 ### Security note: default admin seed
 
-`Account.sql:24` یک ادمین پیش‌فرض با یوزرنیم `admin` و یک هش پسورد ثابت seed می‌کند. این یک **TODO امنیتی** است: در محیط تولید باید این پسورد پیش‌فرض عوض شود یا ردیف حذف/غیرفعال گردد. مقدار هش در مستندات تکرار نمی‌شود.
+`Account.sql` یک ادمین پیش‌فرض با یوزرنیم `admin` و یک هش پسورد ثابت seed می‌کند. این یک **TODO امنیتی** است: در محیط تولید باید این پسورد پیش‌فرض عوض شود یا ردیف حذف/غیرفعال گردد. مقدار هش در مستندات تکرار نمی‌شود.
 
 ## `TotalPlanState` view (نمایش کلیدی)
 

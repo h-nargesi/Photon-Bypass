@@ -75,7 +75,7 @@ Canceled  → تسویه از کیف پول (پول بیرونی وارد نشد
 | `ReceiptImage` / `ReceiptText` / `ReceiptAt` | varbinary(max) / nvarchar(1000) / datetime2 | رسید؛ check constraint: هر دو با هم non-null ممنوع (XOR کامل در app) |
 | `Created` | datetime2 | |
 
-اسکریپت: `Database/LocalDatabase/PaymentP2.sql` (idempotent، اجرای دستی روی `FastBypass` قبل از release؛ بدون backfill — کدهای قدیمی بدون رکورد Invoice با نمایش فقط-ردیف‌ها handle می‌شوند).
+اسکریپت: `Database/LocalDatabase/Invoice.sql` (عضو مجموعه‌ی fresh-install؛ بدون backfill — کدهای قدیمی بدون رکورد Invoice با نمایش فقط-ردیف‌ها handle می‌شوند).
 
 ### تنظیمات (`ManagementOptions` + `appsettings.json`)
 
@@ -153,7 +153,7 @@ Canceled  → تسویه از کیف پول (پول بیرونی وارد نشد
 2. **صدور فاکتور جدید، فاکتورهای `Pending` قبلی همان اکانت را `Canceled` می‌کند** (رفتار قبلی سیستم حفظ شد)؛ wallet rows وابسته به آن فاکتورها هم Canceled می‌شوند. فاکتورهای `Verifying` هرگز Canceled نمی‌شوند.
 3. **`Action` به `Invoice.Action nvarchar(400)` منتقل شد**؛ نوشتن `Wallet.Action` (ستون `VARCHAR(16)`) متوقف شد (رفع باگ truncation نام‌های بلند).
 4. **شاخه مرده M9** (`RenewalRepository.GetNotPaid`) و منطق consolidation قدیمی `GenerateInvoice` حذف شدند. `GetByWalletCredit` به‌عنوان idempotency check در مسیر رسید حفظ شد.
-5. **بدون migration/backfill** — سیستم اجرایی نیست؛ اسکریپت `PaymentP2.sql` idempotent است و تست‌ها آن را خودکار اجرا می‌کنند.
+5. **بدون migration/backfill** — سیستم اجرایی نیست؛ اسکریپت `Invoice.sql` عضو مجموعه‌ی fresh-install است و تست‌ها آن را خودکار اجرا می‌کنند.
 6. **آستانه کیف پول**: `WalletDeactivationThreshold: int?` — `null` = خاموش (پیش‌فرض)؛ اگر تنظیم شود باید **≤ 0** باشد (validation در startup، fail-fast). غیرفعال‌سازی/فعال‌سازی مجدد فقط کانفیگ‌ها در همه سرورهای Radius (`DeactivateUsers`/`ActivateUsers` جدید)؛ `Account.IsActive` دست نمی‌خورد. state قبلی قاعده از History خوانده می‌شود (`Title = «آستانه کیف پول»`، آخرین رخداد per-account). فراخوانی: انتهای `JobInterval.Execute` + بعد از هر settlement موفق (await، بدون fire-and-forget).
 7. **مسیر عمومی `Renewal` همیشه فاکتور صادر می‌کند** (شاخه اجرای فوری موجودی-کافی حذف شد)؛ اجرای تمدید فقط از settlement (رسید یا تسویه کیف پول) انجام می‌شود و اگر در زمان اجرا money-need>0 داشت `UserException` می‌دهد (نه صدور فاکتور جدید). `RenewalResult {CurrentPrice, InvoiceCode}` — `MoneyNeeds` اضافه نشد.
 8. **دبیت تمدید `InvoiceCode` می‌گیرد** (پارامتر جدید `invoice_code` روی `Renewal(int, int?, string, int?)`) تا trace فاکتور→دبیت حفظ شود.
@@ -170,7 +170,7 @@ Canceled  → تسویه از کیف پول (پول بیرونی وارد نشد
 
 ### فایل‌های کلیدی پیاده‌سازی
 
-- DB: `Database/LocalDatabase/PaymentP2.sql`؛ تست: `Backend/Tests/Data/Sql/BillingP2/add-data.sql`
+- DB: `Database/LocalDatabase/Invoice.sql`؛ تست: `Backend/Tests/Data/Sql/BillingP2/add-data.sql`
 - Domain: `BalanceStatus` (+Verifying)، `InvoiceKind`، `InvoiceEntity`، `IInvoiceRepository`، `IWalletRepository`، `IAccountRadiusSyncService.ActivateUsers`
 - Infra: `InvoiceRepository`، `WalletThresholdService` (Application/Management)، `AccountRadiusSyncUserManagerService.ActivateUser`
 - App: `BillingApplication` (بازنویسی کامل)، `PlanApplication` (بازآرایی)، `ManagementOptions` (+PaymentCards/WalletDeactivationThreshold/ReceiptMaxBytes)

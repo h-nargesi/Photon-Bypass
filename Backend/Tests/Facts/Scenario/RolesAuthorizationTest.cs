@@ -33,7 +33,7 @@ public class RolesAuthorizationTest(ProgramLevelInitializer.Factory factory) : H
     [Fact]
     public async Task GetUser_ReportsRoleAndSelfServiceFlag()
     {
-        // admin: Role=2 + UserType|=4 come from AccountRoleAndSelfService.sql
+        // admin: Role=2 + UserType=4 come from the Account.sql seed
         await Login("admin", "admin");
         var admin = await GetUser();
         Assert.Equal("2", admin["role"]);

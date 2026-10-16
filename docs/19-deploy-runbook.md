@@ -79,8 +79,8 @@
 
 روی MSSQL پروداکشن، اسکریپت‌های `Database/LocalDatabase/` را به ترتیب اجرا کنید:
 
-1. ابتدا `Database.sql` (ساخت دیتابیس `FastBypass` و اشیای پایه).
-2. سپس همه‌ی اسکریپت‌های باقی‌مانده‌ی همان پوشه (طبق AGENTS.md)؛ همگی idempotent نوشته شده‌اند. موارد ALTER-based ستون‌های جدید (`AccountCredentialRotation.sql`، `RenewalTrafficState.sql`، …) و ایندکس/sequenceها (`Indexes.sql`، `InvoiceSequence.sql`، `AccountUniqueIndexes.sql`، `PaymentP2.sql`) روی نصب تازه هم باید اجرا شوند؛ `TrafficDataDedup.sql` پاکسازی داده‌ی legacy است و روی دیتابیس خالی no-op.
+1. ابتدا `Database.sql` (ساخت دیتابیس `FastBypass`).
+2. سپس بقیه‌ی اسکریپت‌های همان پوشه به‌ترتیب وابستگی FK (Realm/Price قبل از جدول‌های ارجاع‌دهنده؛ ویوها `TotalPlanState`/`PlanState` و `Indexes.sql` در انتها). مجموعه **fresh-install** است: اسکریپت‌های migration/ALTER قدیمی پیش از اولین انتشار در همین `CREATE TABLE` ها ادغام و حذف شده‌اند — داده‌ی legacy وجود ندارد.
 3. ویوی `TotalPlanState.sql` (منبع حقیقت وضعیت پلن‌ها) حتماً ساخته شود — جزو همان مجموعه است.
 
 ### (د) publish و آپلود FTP

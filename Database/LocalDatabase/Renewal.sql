@@ -10,10 +10,15 @@ CREATE TABLE Renewal (
 	SimultaneousUser	TINYINT			NOT NULL,
 	TrafficLimit		BIGINT				NULL,
 	TimeLimitInDays		SMALLINT			NULL,
-	RateLimitInMeg		TINYINT				NULL,
+	RateLimitInMeg		TINYINT			NULL,
 	WalletDebit			INT				NOT NULL	CONSTRAINT FK_Renewal_WalletDebit FOREIGN KEY REFERENCES Wallet (Id),
 	WalletCredit		INT					NULL	CONSTRAINT FK_Renewal_WalletCredit FOREIGN KEY REFERENCES Wallet (Id),
 	Comment				NVARCHAR(255)		NULL,
-	Created				DATETIME		NOT NULL	CONSTRAINT DF_Renewal_Created DEFAULT GETDATE(),
+	-- x-ui traffic state (docs/17 D6/D14): counter anchor and decision-truth columns.
+	LastSeenCounter		BIGINT				NULL,
+	LastPollTime		DATETIME			NULL,
+	TrafficUsed			BIGINT			NOT NULL	CONSTRAINT DF_Renewal_TrafficUsed DEFAULT 0,
+	LastActiveTime		DATETIME			NULL,
+	Created				DATETIME		NOT NULL	CONSTRAINT DF_Renewal_Created DEFAULT GETDATE()
 )
 GO

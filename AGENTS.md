@@ -75,7 +75,7 @@ yarn start        # ng serve, dev server with proxy to :5226
 yarn build        # production build
 ```
 
-**Database** (MSSQL, database name `FastBypass` / scenario DB `FastBypass_DbScenario`): run `Database/LocalDatabase/Database.sql` first, then the remaining `.sql` files in that folder. Connection string lives in `Backend/Portal/appsettings.json` under `LocalDatabaseOptions:ConnectionString`.
+**Database** (MSSQL, database name `FastBypass` / scenario DB `FastBypass_DbScenario`): run `Database/LocalDatabase/Database.sql` first, then the remaining `.sql` files in that folder. The set is **fresh-install only** — nothing has shipped yet, so there are no migration scripts; every later-added column is folded into its `CREATE TABLE`. Foreign keys define the run order (the test initializer sorts the folder topologically). Connection string lives in `Backend/Portal/appsettings.json` under `LocalDatabaseOptions:ConnectionString`.
 
 **Test**
 
