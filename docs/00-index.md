@@ -26,6 +26,7 @@
 | 15 | [docs/15-payment-p2.md](15-payment-p2.md) | طراحی فاز P2: پرداخت کارت‌به‌کارت + رسید + کیف پول (تصمیمات، مدل داده، قرارداد API). |
 | 16 | [docs/16-multi-server-panel.md](16-multi-server-panel.md) | ثبت تصمیمات پنل چند-سرور: رنیم FreeRadius→RadiusDesk، الگوی dispatch کلید سوم x-ui، نگاشت هویت، چرخش UUID؛ بازها و probe. |
 | 17 | [docs/17-xui-traffic.md](17-xui-traffic.md) | بستن T1/T2 پنل چند-سرور: مدل ترافیک دلتای x-ui (D5–D8)، لنگر/حقیقت تصمیم روی Renewal (D6/D14)، enforcement سمت سرور (D13)، کلکتور و ماتریس probe. |
+| 18 | [docs/18-test-coverage.md](18-test-coverage.md) | حاکمیت پوشش تست: دستورات سنجش پوشش، مبنای اندازه‌گیری per-assembly، نقشه‌ی traceability نیازمندی→تست و شکاف‌های شناخته‌شده (جایگزین TestPlan.md). |
 
 ## Read this file when…
 
@@ -48,6 +49,7 @@
 | Implement/verify the P2 payment flow (card-to-card, receipt, wallet) | [15-payment-p2](15-payment-p2.md) |
 | Continue the multi-server panel / x-ui adapter work (D1-D4 decisions, open T1-T5) | [16-multi-server-panel](16-multi-server-panel.md) |
 | Implement/verify the x-ui traffic model, collector, per-dataplane decision reads (D5-D14) | [17-xui-traffic](17-xui-traffic.md) |
+| See test coverage status / find coverage gaps / know which tests cover a flow | [18-test-coverage](18-test-coverage.md) |
 
 ## Related legacy docs
 

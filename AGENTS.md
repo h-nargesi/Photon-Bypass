@@ -84,6 +84,24 @@ dotnet test Backend/Photon-Bypass.sln        # xUnit + Moq + FluentAssertions
 cd Frontend && yarn test                      # Karma + Jasmine
 ```
 
+**Coverage** (report-only, no threshold — commands, baseline and traceability matrix live in [docs/18-test-coverage.md](docs/18-test-coverage.md)):
+
+```bash
+# backend (coverlet + reportgenerator, pinned via .config/dotnet-tools.json)
+rm -rf Backend/Tests/TestResults
+dotnet test Backend/Tests/Tests.csproj \
+  --collect:"XPlat Code Coverage" --results-directory:Backend/Tests/TestResults
+dotnet tool restore
+dotnet reportgenerator \
+  -reports:"Backend/Tests/TestResults/*/coverage.cobertura.xml" \
+  -targetdir:"Backend/Tests/TestResults/coverage-report" \
+  "-reporttypes:TextSummary;Html"
+# frontend (Firefox required)
+cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverage
+```
+
+> Governance: any PR that adds/changes tests or introduces a new flow/decision updates its row in `docs/18-test-coverage.md` (§4 matrix) in the same PR.
+
 > App secrets and the JWT signing key are committed in `Backend/Portal/appsettings.json` (`Issuer:Code`, connection strings). Do not copy values into docs or logs; reference by config key name only. See [docs/12-current-state.md](docs/12-current-state.md) for the security TODOs.
 
 ---
@@ -179,6 +197,7 @@ Full reading order and per-file purpose is in [docs/00-index.md](docs/00-index.m
 - [docs/15-payment-p2.md](docs/15-payment-p2.md) — P2 payment design: card-to-card + receipt + wallet (decisions, data model, API contract)
 - [docs/16-multi-server-panel.md](docs/16-multi-server-panel.md) — multi-server admin panel decision record: FreeRadius→RadiusDesk rename, x-ui dispatch/identity/UUID-rotation decisions, open items + probe checklist
 - [docs/17-xui-traffic.md](docs/17-xui-traffic.md) — x-ui traffic model & enforcement decision record (D5–D14): delta-row TrafficData, Renewal-hosted anchor/decision columns, server-side enforcement, collector + probe matrix
+- [docs/18-test-coverage.md](docs/18-test-coverage.md) — test coverage governance: coverage commands, measured baseline, requirement→test traceability matrix, known gaps (replaces the deleted `TestPlan.md`)
 
 ---
 
