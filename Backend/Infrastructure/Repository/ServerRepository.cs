@@ -10,6 +10,38 @@ namespace PhotonBypass.Infra.Repository;
 class ServerRepository(LocalDbContext context, IMemoryCache cache) : EditableRepository<ServerEntity>(context), IServerRepository
 {
     private static readonly TimeSpan RadiusCacheDuration = TimeSpan.FromSeconds(30);
+
+    public async Task<List<ServerEntity>> GetAllServers()
+    {
+        var result = await FindAsync(statement => statement
+            .OrderBy($"{nameof(ServerEntity.Id)}"));
+
+        return [.. result];
+    }
+
+    public async Task<ServerEntity?> GetServerById(int id)
+    {
+        var result = await FindAsync(statement => statement
+            .Where($"{nameof(ServerEntity.Id)} = @id")
+            .WithParameters(new { id }));
+
+        return result.FirstOrDefault();
+    }
+
+    public async Task<List<ServerEntity>> FindConflicts(string ip, string name, string domain, int exclude_id)
+    {
+        var result = await FindAsync(statement => statement
+            .Where($"""
+{nameof(ServerEntity.Id)} <> @exclude_id
+    and ({nameof(ServerEntity.IpAddress)} = @ip
+         or {nameof(ServerEntity.Name)} = @name
+         or {nameof(ServerEntity.DomainName)} = @domain)
+""")
+            .WithParameters(new { ip, name, domain, exclude_id }));
+
+        return [.. result];
+    }
+
     public async Task<ServerEntity?> GetActiveNasInfo(string ip)
     {
         var result = await FindAsync(statement => statement

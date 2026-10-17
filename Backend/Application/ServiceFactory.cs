@@ -40,6 +40,7 @@ public static class ServiceFactory
         builder.Services.AddLazySingleton<IAccountSettlementGate, AccountSettlementGate>();
         builder.Services.AddLazyTransient<IVpnApplication, VpnApplication>();
         builder.Services.AddLazyTransient<IServerManagementService, ServerManagementService>();
+        builder.Services.AddLazyTransient<IServerCrudApplication, ServerCrudApplication>();
         builder.Services.AddLazyTransient<IAccountMonitoringService, AccountMonitoringService>();
         builder.Services.AddLazyScoped<IWalletThresholdService, WalletThresholdService>();
 

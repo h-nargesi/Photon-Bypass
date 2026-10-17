@@ -284,6 +284,30 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         await CheckResponse(response, status);
     }
 
+    protected async Task<Dictionary<string, string?>[]> ServerList(int status = 2)
+    {
+        var response = await Client.GetAsync("/api/server/list");
+        return await CheckResponseArray(response, status);
+    }
+
+    protected async Task ServerCreate(object payload, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/server/create", payload);
+        await CheckResponse(response, status);
+    }
+
+    protected async Task ServerUpdate(object payload, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/server/update", payload);
+        await CheckResponse(response, status);
+    }
+
+    protected async Task ServerSetActive(int id, bool active, int status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/server/set-active", new { id, active });
+        await CheckResponse(response, status);
+    }
+
     protected static List<Dictionary<string, string?>> ParseItems(Dictionary<string, string?> page)
     {
         return JsonSerializer.Deserialize<JsonElement>(page["items"]!)
