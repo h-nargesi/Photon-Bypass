@@ -9,7 +9,15 @@ import { LoginComponent } from './login/login.component';
 import { PaymentComponent } from './payment/payment.component';
 import { RegisterComponent } from './register/register.component';
 import { RenewalComponent } from './renewal/renewal.component';
-import { authGuard } from './@services/auth-services/auth-guard';
+import {
+  adminGuard,
+  authGuard,
+  managerGuard,
+  selfServiceGuard,
+} from './@services';
+import { ServersComponent } from './management/servers/servers.component';
+import { UsersComponent } from './management/users/users.component';
+import { WalletComponent } from './management/wallet/wallet.component';
 
 export const routes: Routes = [
   {
@@ -65,10 +73,27 @@ export const routes: Routes = [
       {
         path: 'renewal',
         component: RenewalComponent,
+        canActivate: [selfServiceGuard],
       },
       {
         path: 'payment',
         component: PaymentComponent,
+        canActivate: [selfServiceGuard],
+      },
+      {
+        path: 'users',
+        component: UsersComponent,
+        canActivate: [managerGuard],
+      },
+      {
+        path: 'servers',
+        component: ServersComponent,
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'wallet',
+        component: WalletComponent,
+        canActivate: [adminGuard],
       },
     ],
   },

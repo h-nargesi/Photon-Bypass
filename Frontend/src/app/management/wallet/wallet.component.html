@@ -1,0 +1,134 @@
+<c-row class="g-4">
+  <c-col>
+    <!-- adjust (D5) -->
+    <c-card class="mb-3">
+      <c-card-body>
+        <h3 class="mb-3">{{ "management.wallet.adjust.title" | translate }}</h3>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <c-input-group>
+            <span cInputGroupText>{{ "management.wallet.target" | translate }}</span>
+            <input cFormControl type="text" class="ltr" [(ngModel)]="target"
+              [placeholder]="'management.wallet.target-holder' | translate"
+              (keyup.enter)="applyTarget()" />
+          </c-input-group>
+
+          <c-input-group>
+            <span cInputGroupText>{{ "management.wallet.adjust.direction" | translate }}</span>
+            <select cFormControl [(ngModel)]="direction">
+              @for (item of directions; track item) {
+                <option [ngValue]="item">
+                  {{ "management.wallet.direction." + (item === 1 ? "credit" : "debit") | translate }}
+                </option>
+              }
+            </select>
+          </c-input-group>
+
+          <c-input-group>
+            <span cInputGroupText>{{ "management.wallet.adjust.amount" | translate }}</span>
+            <input cFormControl type="number" class="digits" min="1" [(ngModel)]="amount" />
+          </c-input-group>
+
+          <c-input-group class="flex-grow-1">
+            <span cInputGroupText>{{ "management.wallet.adjust.description" | translate }}</span>
+            <input cFormControl type="text" [(ngModel)]="description"
+              [placeholder]="'management.wallet.adjust.description-holder' | translate" />
+          </c-input-group>
+
+          <button cButton color="primary" [disabled]="busy" (click)="submitAdjust()">
+            <svg [cIcon]="icons.cilDollar" class="me-1"></svg>
+            {{ "management.modals.submit" | translate }}
+          </button>
+        </div>
+      </c-card-body>
+    </c-card>
+
+    <!-- history -->
+    <c-card class="mb-3">
+      <c-card-body>
+        <div class="d-flex align-items-center mb-2">
+          <h4 class="me-auto mb-0">{{ "management.wallet.history.title" | translate }}</h4>
+          @if (loading) {
+            <c-spinner size="sm" class="ms-2"></c-spinner>
+          }
+        </div>
+        <div class="mat-elevation-z8 wallet-table">
+          <table mat-table [dataSource]="rows">
+
+            <ng-container matColumnDef="time">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.wallet.history.columns.time" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.eventTimeTitle }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.wallet.history.columns.amount" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="digits"
+                [class.text-success]="row.direction === 1"
+                [class.text-danger]="row.direction === -1">
+                {{ amountTitle(row) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="direction">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.wallet.history.columns.direction" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <c-badge [color]="row.direction === 1 ? 'success' : 'danger'">
+                  {{ directionTitle(row) }}
+                </c-badge>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.wallet.history.columns.status" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ statusTitle(row) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="description">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.wallet.history.columns.description" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.description }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actor">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.wallet.history.columns.actor" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="ltr">{{ row.actor || "—" }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="invoice">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.wallet.history.columns.invoice" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="ltr digits">
+                {{ row.invoiceCode ?? "—" }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" colspan="7">
+                {{ "management.wallet.history.no-rows" | translate }}
+              </td>
+            </tr>
+          </table>
+
+          <mat-paginator [length]="result?.totalCount ?? 0" [pageIndex]="page - 1"
+            [pageSize]="result?.pageSize ?? page_size" [pageSizeOptions]="[page_size]"
+            [showFirstLastButtons]="true" (page)="onPage($event)">
+          </mat-paginator>
+        </div>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>

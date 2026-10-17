@@ -1,5 +1,5 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -22,7 +22,12 @@ import {
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
 import { ApiResult, ResultStatus } from '../@models';
-import { AuthService, MessageService, TranslationPipe } from '../@services';
+import {
+  AppConfigService,
+  AuthService,
+  MessageService,
+  TranslationPipe,
+} from '../@services';
 
 @Component({
   selector: 'app-login',
@@ -61,8 +66,13 @@ export class LoginComponent {
   password?: string;
   result?: ApiResult;
 
+  /// D11: the register CTA is only shown when the public app-config
+  /// explicitly enables registration (defaults to hidden).
+  allow_registration = false;
+
   constructor(
     private readonly service: AuthService,
+    private readonly app_config: AppConfigService,
     private readonly router: Router,
     active_route: ActivatedRoute,
     auth_service: AuthService
@@ -78,6 +88,12 @@ export class LoginComponent {
         }
       });
     }
+  }
+
+  ngOnInit(): void {
+    this.app_config.config().subscribe((config) => {
+      this.allow_registration = config?.allowRegistration === true;
+    });
   }
 
   login() {

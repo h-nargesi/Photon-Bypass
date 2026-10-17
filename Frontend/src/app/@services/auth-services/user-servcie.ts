@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { firstValueFrom, Observable, Subject } from 'rxjs';
-import { Target, UserModel } from '../../@models';
+import { AccountRole, Target, UserModel } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
 import { ACCOUNT_API_URL } from '../api-services/models/app-api-url';
 import { LocalStorageService } from '../local-storage/local-storage-service';
@@ -27,6 +27,24 @@ export class UserService extends ApiBaseService {
 
   get hasSubUsers(): boolean {
     return this.current_user?.targetArea ? true : false;
+  }
+
+  get role(): AccountRole | undefined {
+    return this.current_user?.role;
+  }
+
+  get isAdmin(): boolean {
+    return this.current_user?.role === AccountRole.Admin;
+  }
+
+  get isManager(): boolean {
+    return (this.current_user?.role ?? AccountRole.User) >= AccountRole.Manager;
+  }
+
+  /// D6 gate: only independent accounts (AllowSelfService) reach the
+  /// self financial flows — the server enforces the same matrix (docs/20 §3).
+  get isSelfService(): boolean {
+    return this.current_user?.allowSelfService === true;
   }
 
   get invoice(): string | undefined {
@@ -75,6 +93,24 @@ export class UserService extends ApiBaseService {
     LocalStorageService.set(['user', 'target'], username);
 
     this.targetUserEventSubject.next(this.currentTargetUser);
+  }
+
+  /// On-behalf target chosen from the admin user list (docs/20 phase 6):
+  /// the admin's targetArea only holds its own subordinates, while the
+  /// server-side access check bypasses every target for the admin role.
+  setExternalTarget(target: Target): boolean {
+    if (!this.isAdmin || !target?.username) return false;
+
+    if (this.currentTargetUser?.username === target.username) {
+      return true;
+    }
+
+    this.currentTargetUser = target;
+    LocalStorageService.set(['user', 'target'], target.username);
+
+    this.targetUserEventSubject.next(target);
+
+    return true;
   }
 
   reload() {

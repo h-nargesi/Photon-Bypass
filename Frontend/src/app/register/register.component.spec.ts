@@ -38,6 +38,16 @@ describe('RegisterComponent', () => {
   });
 
   afterEach(() => {
+    // register mode fetches the public app-config (D11) on init — answer any
+    // pending lookup so verify() stays strict about real leaks
+    http
+      .match(req => req.url === '/api/basics/app-config')
+      .forEach(request =>
+        request.flush(
+          { code: 200, data: { allowRegistration: true } },
+          { status: 200, statusText: 'OK' },
+        ),
+      );
     http.verify();
     localStorage.clear();
   });
@@ -118,6 +128,13 @@ describe('RegisterComponent', () => {
   }));
 
   it('keeps the button disabled while the registration is in flight (double-submit)', fakeAsync(() => {
+    fixture.detectChanges(); // ngOnInit -> app-config lookup
+    http.expectOne(req => req.url === '/api/basics/app-config').flush(
+      { code: 200, data: { allowRegistration: true } },
+      { status: 200, statusText: 'OK' },
+    );
+    fixture.detectChanges(); // the form is rendered
+
     fillValidForm();
 
     component.submit();
@@ -156,4 +173,24 @@ describe('RegisterComponent', () => {
     tick(1000);
     expect(router.url).not.toBe('/login');
   }));
+
+  it('shows the closed notice instead of the form when registration is off (D11)', () => {
+    fixture.detectChanges();
+
+    http.expectOne(req => req.url === '/api/basics/app-config').flush(
+      { code: 200, data: { allowRegistration: false } },
+      { status: 200, statusText: 'OK' },
+    );
+    fixture.detectChanges();
+
+    expect(component.allow_registration).toBeFalse();
+
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.querySelector('form')).toBeNull();
+    expect(element.textContent).toContain('ثبت نام در حال حاضر فعال نیست');
+
+    http.expectNone(
+      req => req.method === 'POST' && req.url === '/api/auth/register',
+    );
+  });
 });

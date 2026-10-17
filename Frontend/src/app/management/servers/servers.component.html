@@ -1,0 +1,202 @@
+<c-row class="g-4">
+  <c-col>
+    <c-card class="mb-3">
+      <c-card-body class="d-flex flex-wrap align-items-center gap-2">
+        <h3 class="me-auto mb-0">{{ "management.servers.title" | translate }}</h3>
+        <button cButton color="primary" (click)="openCreate()">
+          <svg [cIcon]="icons.cilPlus" class="me-1"></svg>
+          {{ "management.servers.create" | translate }}
+        </button>
+      </c-card-body>
+      <c-card-body>
+        <div class="mat-elevation-z8 servers-table">
+          <table mat-table [dataSource]="rows">
+
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.servers.columns.name" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.name }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="ip">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.servers.columns.ip" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="ltr">{{ row.ipAddress }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="domain">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.servers.columns.domain" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="ltr">{{ row.domainName || "—" }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="realm">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.servers.columns.realm" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.realm ?? row.realmId }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="bandwidth">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.servers.columns.bandwidth" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="digits">{{ row.bandWidth }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="os">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.servers.columns.os" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <c-badge [color]="row.osType === 1 ? 'warning' : 'info'">
+                  {{ osTitle(row.osType) }}
+                </c-badge>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="features">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.servers.columns.features" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                @for (title of featureTitles(row); track title) {
+                  <c-badge color="secondary" class="me-1">{{ title }}</c-badge>
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="config">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.servers.columns.config" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <c-badge [color]="row.hasConfig ? 'success' : 'light'">
+                  {{ (row.hasConfig ? "management.servers.has-config" : "management.servers.no-config") | translate }}
+                </c-badge>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.servers.columns.status" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <c-badge [color]="row.isActive ? 'success' : 'danger'">
+                  {{ (row.isActive ? "management.users.status.active" : "management.users.status.inactive") | translate }}
+                </c-badge>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="created">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.servers.columns.created" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.createdTitle }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.actions" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="d-flex gap-1">
+                <button cButton size="sm" color="light" [disabled]="busy"
+                  [cTooltip]="'management.servers.actions.edit' | translate" (click)="openEdit(row)">
+                  <svg [cIcon]="icons.cilPencil"></svg>
+                </button>
+                <button cButton size="sm" color="light" [disabled]="busy"
+                  [cTooltip]="'management.servers.actions.toggle-active' | translate" (click)="toggleActive(row)">
+                  <svg [cIcon]="row.isActive ? icons.cilXCircle : icons.cilCheckCircle"></svg>
+                </button>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" colspan="11">
+                {{ "management.servers.messages.no-rows" | translate }}
+              </td>
+            </tr>
+          </table>
+        </div>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>
+
+<!-- create / edit server -->
+<c-modal [(visible)]="edit_visible" [scrollable]="true">
+  <c-modal-header>
+    <h5 cModalTitle>
+      {{ (edit_id === 0 ? "management.servers.modals.create-title" : "management.servers.modals.edit-title") | translate }}
+    </h5>
+    <button cButtonClose (click)="edit_visible = false"></button>
+  </c-modal-header>
+  <c-modal-body>
+    <c-input-group class="mb-3">
+      <span cInputGroupText>{{ "management.servers.columns.name" | translate }}</span>
+      <input cFormControl type="text" [(ngModel)]="name" />
+    </c-input-group>
+
+    <c-input-group class="mb-3 ltr">
+      <span cInputGroupText>{{ "management.servers.columns.ip" | translate }}</span>
+      <input cFormControl type="text" [(ngModel)]="ip_address" placeholder="0.0.0.0" />
+    </c-input-group>
+
+    <c-input-group class="mb-3 ltr">
+      <span cInputGroupText>{{ "management.servers.columns.domain" | translate }}</span>
+      <input cFormControl type="text" [(ngModel)]="domain_name" placeholder="server.example.com" />
+    </c-input-group>
+
+    <c-input-group class="mb-3">
+      <span cInputGroupText>{{ "management.servers.columns.realm" | translate }}</span>
+      <input cFormControl type="number" class="digits" [(ngModel)]="realm_id" />
+    </c-input-group>
+
+    <c-input-group class="mb-3">
+      <span cInputGroupText>{{ "management.servers.columns.bandwidth" | translate }}</span>
+      <input cFormControl type="number" class="digits" [(ngModel)]="band_width" />
+    </c-input-group>
+
+    <c-input-group class="mb-3">
+      <span cInputGroupText>{{ "management.servers.columns.os" | translate }}</span>
+      <select cFormControl [(ngModel)]="os_type">
+        @for (os of os_types; track os) {
+          <option [ngValue]="os">{{ osTitle(os) }}</option>
+        }
+      </select>
+    </c-input-group>
+
+    <p class="mb-1">{{ "management.servers.columns.features" | translate }}</p>
+    <div class="d-flex flex-wrap gap-3 mb-3">
+      @for (flag of feature_flags; track flag) {
+        <div class="form-check">
+          <input cFormCheckInput class="mt-0" type="checkbox" [id]="'feature' + flag"
+            [(ngModel)]="feature_state[flag]" />
+          <label cFormCheckLabel [for]="'feature' + flag">{{ featureTitle(flag) }}</label>
+        </div>
+      }
+    </div>
+
+    <p class="mb-1">
+      {{ (edit_id === 0 ? "management.servers.modals.config" : "management.servers.modals.config-keep") | translate }}
+    </p>
+    <textarea class="form-control ltr w-100" rows="5" [(ngModel)]="config_text"
+      [placeholder]="'management.servers.modals.config-placeholder' | translate"></textarea>
+  </c-modal-body>
+  <c-modal-footer>
+    <button cButton color="secondary" (click)="edit_visible = false">
+      {{ "management.modals.cancel" | translate }}
+    </button>
+    <button cButton color="primary" [disabled]="busy" (click)="submit()">
+      {{ "management.modals.submit" | translate }}
+    </button>
+  </c-modal-footer>
+</c-modal>

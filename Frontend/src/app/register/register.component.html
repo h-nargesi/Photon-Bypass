@@ -12,7 +12,13 @@
                 <svg [cIcon]="icons.cilHome" title="Home"></svg>
               </a>
             </div>
-            <form cForm (ngSubmit)="submit()" [formGroup]="form" novalidate>
+            @if (!isEdit && !allow_registration) {
+              <h1>{{ "register.new-title" | translate }}</h1>
+              <c-alert color="warning" class="mt-3">
+                {{ "register.messages.registration-closed" | translate }}
+              </c-alert>
+            } @else {
+              <form cForm (ngSubmit)="submit()" [formGroup]="form" novalidate>
               <h1>{{ `register.${isEdit ? 'edit' : 'new'}-title` | translate }}</h1>
               <p class="text-body-secondary">{{ `register.${isEdit ? 'edit' : 'new'}-caption` | translate }}</p>
 
@@ -177,7 +183,8 @@
                   <c-spinner size="sm" *ngIf="submitted" />
                 </button>
               </div>
-            </form>
+              </form>
+            }
           </c-card-body>
         </c-card>
       </c-col>

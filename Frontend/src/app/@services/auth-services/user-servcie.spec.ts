@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { UserModel } from '../../@models';
+import { AccountRole, UserModel } from '../../@models';
 import { API_BASE_URL } from '../api-services/models/app-base-path';
 import { LocalStorageService } from '../local-storage/local-storage-service';
 import { UserService } from './user-servcie';
@@ -16,6 +16,8 @@ describe('UserService', () => {
     fullname: 'Main User',
     email: 'main@test.local',
     balance: 100,
+    role: AccountRole.Manager,
+    allowSelfService: true,
     targetArea: {
       main: { username: 'main', fullname: 'Main User', email: 'main@test.local' },
       sub1: { username: 'sub1', fullname: 'Sub One', email: 'sub1@test.local' },
@@ -119,6 +121,8 @@ describe('UserService', () => {
       fullname: 'Solo User',
       email: 'solo@test.local',
       balance: 0,
+      role: AccountRole.User,
+      allowSelfService: true,
     };
 
     await expectAsync(loadUser(plain_user))
@@ -138,5 +142,54 @@ describe('UserService', () => {
     const user = await promise;
 
     expect(user.username).toBe('main');
+  });
+
+  it('exposes the role/self-service flags of the loaded user', async () => {
+    await loadUser(main_user);
+
+    expect(service.role).toBe(AccountRole.Manager);
+    expect(service.isManager).toBeTrue();
+    expect(service.isAdmin).toBeFalse();
+    expect(service.isSelfService).toBeTrue();
+  });
+
+  it('setExternalTarget is refused for non-admin roles', async () => {
+    await loadUser(main_user);
+    service.setTraget('main');
+
+    expect(
+      service.setExternalTarget({ username: 'whoever', fullname: 'Who', email: '' }),
+    ).toBeFalse();
+    expect(service.targetName).toBe('main');
+  });
+
+  it('setExternalTarget moves the admin to any account and emits the change', async () => {
+    const admin_user: UserModel = {
+      ...main_user,
+      username: 'boss',
+      role: AccountRole.Admin,
+      allowSelfService: true,
+      targetArea: {
+        boss: { username: 'boss', fullname: 'Boss', email: 'boss@test.local' },
+      },
+    };
+    await loadUser(admin_user);
+
+    const emitted: (string | undefined)[] = [];
+    service.onTargetChanged.subscribe(target => emitted.push(target?.username));
+
+    expect(
+      service.setExternalTarget({ username: 'far-away', fullname: 'Far', email: '' }),
+    ).toBeTrue();
+
+    expect(service.targetName).toBe('far-away');
+    expect(LocalStorageService.get(['user', 'target'])).toBe('far-away');
+    expect(emitted).toEqual(['far-away']);
+
+    // picking the same account again is a no-op (no re-emit)
+    expect(
+      service.setExternalTarget({ username: 'far-away', fullname: 'Far', email: '' }),
+    ).toBeTrue();
+    expect(emitted).toEqual(['far-away']);
   });
 });

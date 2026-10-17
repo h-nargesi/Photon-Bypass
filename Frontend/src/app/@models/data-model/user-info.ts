@@ -1,3 +1,9 @@
+export enum AccountRole {
+  User = 0,
+  Manager = 1,
+  Admin = 2,
+}
+
 export interface TagetAction {
   target?: string;
 }
@@ -11,7 +17,21 @@ export interface Target {
 export interface UserModel extends Target {
   picture?: string;
   balance: number;
+  role: AccountRole;
+  allowSelfService: boolean;
   targetArea?: SubUsers;
+}
+
+export interface CreateUserModel {
+  username: string;
+  password: string;
+  email: string;
+  mobile?: string;
+  firstname?: string;
+  lastname?: string;
+  allowSelfService: boolean;
+  owner?: string;
+  role?: AccountRole;
 }
 
 export interface FullUserModel {

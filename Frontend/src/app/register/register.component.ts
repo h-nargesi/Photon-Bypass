@@ -29,6 +29,7 @@ import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
 import { ApiResult, RegisterModel, ResultStatus } from '../@models';
 import {
+  AppConfigService,
   MessageService,
   PasswordValidators,
   TranslationPipe,
@@ -89,9 +90,14 @@ export class RegisterComponent implements OnInit {
   result?: ApiResult;
   usernameSuffic: string = ' - -';
 
+  /// D11: public registration can be disabled via app-config — the form
+  /// is replaced by a closed notice (server enforces the same flag anyway).
+  allow_registration = false;
+
   constructor(
     private readonly form_builder: FormBuilder,
     private readonly service: RegisterService,
+    private readonly app_config: AppConfigService,
     private readonly user_service: UserService,
     private readonly router: Router,
     route: ActivatedRoute
@@ -117,7 +123,12 @@ export class RegisterComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.mode === PageMode.Register) return;
+    if (this.mode === PageMode.Register) {
+      this.app_config.config().subscribe((config) => {
+        this.allow_registration = config?.allowRegistration === true;
+      });
+      return;
+    }
     this.loadUserFullData();
 
     if (this.mode !== PageMode.EditSub) return;

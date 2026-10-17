@@ -1,0 +1,156 @@
+{
+  "modals": {
+    "submit": "ثبت",
+    "cancel": "انصراف"
+  },
+  "users": {
+    "title": "کاربران من",
+    "title-admin": "مدیریت کاربران",
+    "search": "جستجو (نام کاربری / نام / ایمیل)",
+    "create": "کاربر جدید",
+    "fields": {
+      "username": "نام کاربری",
+      "password": "کلمه عبور",
+      "email": "ایمیل",
+      "mobile": "موبایل",
+      "firstname": "نام",
+      "lastname": "نام خانوادگی",
+      "self-service": "کاربر مستقل (دسترسی به کیف پول و تمدید)",
+      "role": "نقش",
+      "owner": "مدیر مسئول",
+      "owner-holder": "username"
+    },
+    "roles": {
+      "user": "کاربر",
+      "manager": "مدیر",
+      "admin": "ادمین"
+    },
+    "type": {
+      "independent": "مستقل",
+      "dependent": "وابسته"
+    },
+    "status": {
+      "active": "فعال",
+      "inactive": "غیرفعال"
+    },
+    "columns": {
+      "username": "نام کاربری",
+      "fullname": "نام",
+      "email": "ایمیل",
+      "role": "نقش",
+      "type": "نوع",
+      "status": "وضعیت",
+      "owner": "مدیر",
+      "plan": "آخرین پلن",
+      "created": "تاریخ ساخت",
+      "actions": "عملیات"
+    },
+    "plan": {
+      "none": "بدون پلن",
+      "traffic": "{0} گیگ",
+      "users": "{0} کاربره"
+    },
+    "actions": {
+      "on-behalf": "عمل از طرف",
+      "set-password": "بازنشانی کلمه عبور",
+      "toggle-self-service": "تغییر مستقل / وابسته",
+      "toggle-active": "فعال / غیرفعال",
+      "set-role": "تغییر نقش",
+      "set-owner": "تغییر مدیر مسئول"
+    },
+    "modals": {
+      "create-title": "ساخت کاربر",
+      "password-title": "بازنشانی کلمه عبور",
+      "password-caption": "کلمه عبور جدید برای «{0}»:",
+      "role-title": "تغییر نقش",
+      "role-caption": "نقش جدید برای «{0}»:",
+      "owner-title": "تغییر مدیر مسئول",
+      "owner-caption": "نام کاربری مدیر جدید برای «{0}» (خالی = جدا کردن):"
+    },
+    "messages": {
+      "no-rows": "کاربری یافت نشد."
+    }
+  },
+  "servers": {
+    "title": "مدیریت سرورها",
+    "create": "سرور جدید",
+    "has-config": "کانفیگ دارد",
+    "no-config": "بدون کانفیگ",
+    "columns": {
+      "name": "نام",
+      "ip": "آدرس IP",
+      "domain": "دامنه",
+      "realm": "قلمرو",
+      "bandwidth": "پهنای باند",
+      "os": "سیستم‌عامل",
+      "features": "امکانات",
+      "config": "کانفیگ",
+      "status": "وضعیت",
+      "created": "تاریخ ساخت"
+    },
+    "os": {
+      "Mikrotik": "میکروتیک",
+      "Ubuntu": "اوبونتو"
+    },
+    "features": {
+      "RadiusDesk": "RadiusDesk",
+      "UserManager": "UserManager",
+      "Xui": "X-UI",
+      "Ikev2": "IKEv2",
+      "Sstp": "SSTP",
+      "Ovpn": "OpenVPN",
+      "V2ray": "V2Ray"
+    },
+    "actions": {
+      "edit": "ویرایش",
+      "toggle-active": "فعال / غیرفعال"
+    },
+    "modals": {
+      "create-title": "ساخت سرور",
+      "edit-title": "ویرایش سرور",
+      "config": "کانفیگ سرور (JSON):",
+      "config-keep": "کانفیگ جدید (JSON) — خالی بماند تا کانفیگ فعلی حفظ شود:",
+      "config-placeholder": "{ \"sshConfig\": { ... } }"
+    },
+    "messages": {
+      "no-rows": "سروری ثبت نشده است.",
+      "invalid-config": "کانفیگ ارسالی JSON معتبر نیست!"
+    }
+  },
+  "wallet": {
+    "target": "حساب:",
+    "target-holder": "username",
+    "adjust": {
+      "title": "تراکنش شفاف کیف پول",
+      "direction": "نوع تراکنش",
+      "amount": "مبلغ (هزار تومان)",
+      "description": "توضیح",
+      "description-holder": "علت تراکنش (الزامی)",
+      "invalid": "نام کاربری، مبلغ مثبت و توضیح الزامی است!"
+    },
+    "direction": {
+      "credit": "واریز",
+      "debit": "کسر"
+    },
+    "status": {
+      "Pending": "در انتظار",
+      "Completed": "انجام‌شده",
+      "Failed": "ناموفق",
+      "Canceled": "لغوشده",
+      "Verifying": "در حال بررسی"
+    },
+    "history": {
+      "title": "تاریخچه کیف پول",
+      "no-rows": "تراکنشی یافت نشد.",
+      "columns": {
+        "time": "زمان",
+        "amount": "مبلغ (تومان)",
+        "direction": "نوع",
+        "status": "وضعیت",
+        "description": "توضیح",
+        "actor": "انجام‌دهنده",
+        "invoice": "فاکتور"
+      }
+    }
+  }
+}

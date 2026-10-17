@@ -45,6 +45,16 @@ describe('LoginComponent', () => {
   });
 
   afterEach(() => {
+    // the component fetches the public app-config (D11) on init — answer any
+    // pending lookup so verify() stays strict about real leaks
+    http
+      .match(req => req.url === '/api/basics/app-config')
+      .forEach(request =>
+        request.flush(
+          { code: 200, data: { allowRegistration: true } },
+          { status: 200, statusText: 'OK' },
+        ),
+      );
     http.verify();
     localStorage.clear();
   });
@@ -127,4 +137,18 @@ describe('LoginComponent', () => {
     tick(1000);
     expect(router.url).toBe('/dashboard');
   }));
+
+  it('hides the register CTA while registration is disabled (D11)', () => {
+    const component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    http.expectOne(req => req.url === '/api/basics/app-config').flush(
+      { code: 200, data: { allowRegistration: false } },
+      { status: 200, statusText: 'OK' },
+    );
+    fixture.detectChanges();
+
+    expect(component.allow_registration).toBeFalse();
+    expect(fixture.nativeElement.querySelector('[routerLink="/register"]')).toBeNull();
+  });
 });

@@ -95,4 +95,68 @@ describe('UserSelectorModalComponent', () => {
     expect(component.visible).toBeFalse();
     expect(emitted).toEqual(['sub1']);
   });
+
+  it('the admin searches the whole user list and picks targets outside its targetArea', async () => {
+    const admin_payload = {
+      ...user_payload,
+      username: 'boss',
+      role: 2,
+      targetArea: {
+        boss: { username: 'boss', fullname: 'Boss', email: 'b@t.l' },
+      },
+    };
+
+    fixture.detectChanges();
+
+    const promise = user_service.user();
+    http.expectOne('/api/account/get-user').flush(
+      { code: 200, data: admin_payload },
+      { status: 200, statusText: 'OK' },
+    );
+    await promise;
+    await fixture.whenStable();
+
+    // admin init fires a user-list lookup instead of the local targetArea
+    const request = http.expectOne(
+      req => req.method === 'GET' && req.url === '/api/user/list',
+    );
+    expect(request.request.params.get('page')).toBe('1');
+    request.flush(
+      {
+        code: 200,
+        data: {
+          page: 1,
+          pageSize: 20,
+          totalCount: 1,
+          totalPages: 1,
+          items: [
+            {
+              username: 'far-user',
+              name: 'Far',
+              surname: 'User',
+              email: 'f@t.l',
+              role: 0,
+              allowSelfService: true,
+              isActive: true,
+              created: 1700000000000,
+              createdTitle: '۱۴۰۲',
+            },
+          ],
+        },
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    await fixture.whenStable();
+
+    expect(component.admin).toBeTrue();
+    expect(component.usernameList).toEqual(['far-user']);
+    expect(component.fullnameOf('far-user')).toBe('Far User');
+
+    component.visible = true;
+    component.setTargetIndex('far-user');
+
+    // outside the targetArea, yet selected — the admin bypass (docs/20 step 22)
+    expect(user_service.targetName).toBe('far-user');
+    expect(component.visible).toBeFalse();
+  });
 });

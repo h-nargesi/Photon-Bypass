@@ -91,6 +91,25 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
     return this.user_service.hasSubUsers;
   }
 
+  /// target selector: managers pick from their targetArea, the admin picks
+  /// from the full user list (docs/20 phase 6 step 22)
+  get canSelectTarget(): boolean {
+    return this.hasSubUsers || this.user_service.isAdmin;
+  }
+
+  /// D6: dependent accounts see no financial UI at all
+  get isSelfService(): boolean {
+    return this.user_service.isSelfService;
+  }
+
+  get isManager(): boolean {
+    return this.user_service.isManager;
+  }
+
+  get isAdmin(): boolean {
+    return this.user_service.isAdmin;
+  }
+
   get targetName(): string | undefined {
     return this.user_service.targetName;
   }

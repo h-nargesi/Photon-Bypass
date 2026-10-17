@@ -9,7 +9,7 @@
       </h4>
     </div>
 
-    <c-header-nav class="d-flex ms-auto">
+    <c-header-nav class="d-flex ms-auto" *ngIf="isSelfService">
       <c-alert class="m-0 p-2 me-2 digits pointer" [cModalToggle]="paymentModal" color="light">
         <span>{{ "global.header.walet.title" | translate }}</span>
         <strong> {{ showBalance() }}</strong> &nbsp;
@@ -17,7 +17,7 @@
       </c-alert>
     </c-header-nav>
 
-    <c-header-nav>
+    <c-header-nav *ngIf="isSelfService">
       <div class="nav-item py-1">
         <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
       </div>
@@ -27,16 +27,31 @@
       <a cNavLink routerLink="/dashboard" [cTooltip]="'global.header.navbar.dashboard' | translate">
         <svg [cIcon]="icons.cilSpeedometer" class="my-1" size="lg"></svg>
       </a>
-      <a cNavLink routerLink="/renewal" [cTooltip]="'global.header.navbar.renewal' | translate">
-        <svg [cIcon]="icons.cilLoopCircular" class="my-1" size="lg"></svg>
-      </a>
-      <a cNavLink (click)="goPayment()" [cTooltip]="'global.header.navbar.payment' |
-        translate">
-        <svg [cIcon]="icons.cilCreditCard" class="my-1" size="lg"></svg>
-      </a>
+      @if (isSelfService) {
+        <a cNavLink routerLink="/renewal" [cTooltip]="'global.header.navbar.renewal' | translate">
+          <svg [cIcon]="icons.cilLoopCircular" class="my-1" size="lg"></svg>
+        </a>
+        <a cNavLink (click)="goPayment()" [cTooltip]="'global.header.navbar.payment' |
+          translate">
+          <svg [cIcon]="icons.cilCreditCard" class="my-1" size="lg"></svg>
+        </a>
+      }
       <a cNavLink routerLink="/history" [cTooltip]="'global.header.navbar.history' | translate">
         <svg [cIcon]="icons.cilHistory" class="my-1" size="lg"></svg>
       </a>
+      @if (isManager) {
+        <a cNavLink routerLink="/users" [cTooltip]="'global.header.navbar.users' | translate">
+          <svg [cIcon]="icons.cilPeople" class="my-1" size="lg"></svg>
+        </a>
+      }
+      @if (isAdmin) {
+        <a cNavLink routerLink="/servers" [cTooltip]="'global.header.navbar.servers' | translate">
+          <svg [cIcon]="icons.cilLayers" class="my-1" size="lg"></svg>
+        </a>
+        <a cNavLink routerLink="/wallet" [cTooltip]="'global.header.navbar.wallet' | translate">
+          <svg [cIcon]="icons.cilDollar" class="my-1" size="lg"></svg>
+        </a>
+      }
     </c-header-nav>
 
     <c-header-nav>
@@ -55,7 +70,7 @@
       </div>
     </c-header-nav>
 
-    <c-header-nav class="d-flex" *ngIf="hasSubUsers">
+    <c-header-nav class="d-flex" *ngIf="canSelectTarget">
       <button [cModalToggle]="userSelector" cButton size="sm" color="info" cTextColor="light">
         {{ targetName }}
       </button>

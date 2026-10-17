@@ -1,0 +1,325 @@
+<c-row class="g-4">
+  <c-col>
+    <c-card class="mb-3">
+      <c-card-body class="d-flex flex-wrap align-items-center gap-2">
+        <h3 class="me-auto mb-0">
+          {{ (isAdmin ? 'management.users.title-admin' : 'management.users.title') | translate }}
+        </h3>
+        <c-input-group>
+          <input cFormControl type="text" [(ngModel)]="search"
+            [placeholder]="'management.users.search' | translate" (keyup.enter)="applySearch()" />
+          <span cInputGroupText class="pointer" (click)="applySearch()">
+            <svg [cIcon]="icons.cilMagnifyingGlass"></svg>
+          </span>
+        </c-input-group>
+        <button cButton color="primary" (click)="openCreate()">
+          <svg [cIcon]="icons.cilPlus" class="me-1"></svg>
+          {{ "management.users.create" | translate }}
+        </button>
+      </c-card-body>
+      <c-card-body>
+        <div class="mat-elevation-z8 users-table">
+          <table mat-table [dataSource]="rows">
+
+            <ng-container matColumnDef="username">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.username" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="ltr">{{ row.username }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="fullname">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.fullname" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ fullname(row) || "—" }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.email" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="ltr">{{ row.email || "—" }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="role">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.role" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <c-badge [color]="row.role === 2 ? 'danger' : row.role === 1 ? 'info' : 'secondary'">
+                  {{ roleTitle(row.role) }}
+                </c-badge>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="type">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.type" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <c-badge [color]="row.allowSelfService ? 'success' : 'warning'">
+                  {{ (row.allowSelfService ? "management.users.type.independent" : "management.users.type.dependent") | translate }}
+                </c-badge>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.status" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">
+                <c-badge [color]="row.isActive ? 'success' : 'danger'">
+                  {{ (row.isActive ? "management.users.status.active" : "management.users.status.inactive") | translate }}
+                </c-badge>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="owner">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.owner" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="ltr">{{ row.owner || "—" }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="plan">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.plan" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="digits">
+                @if (row.expirationDate !== undefined && row.expirationDate !== null) {
+                  {{ expirationTitle(row) }}
+                  @if (row.trafficLeft !== undefined && row.trafficLeft !== null) {
+                    — {{ "management.users.plan.traffic" | translate : [row.trafficLeft.toString()] }}
+                  }
+                  @if (row.simultaneousUser) {
+                    — {{ "management.users.plan.users" | translate : [row.simultaneousUser.toString()] }}
+                  }
+                } @else {
+                  {{ "management.users.plan.none" | translate }}
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="created">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.created" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row">{{ row.createdTitle }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>
+                {{ "management.users.columns.actions" | translate }}
+              </th>
+              <td mat-cell *matCellDef="let row" class="d-flex gap-1">
+                <button cButton size="sm" color="light" [disabled]="busy || !row.isActive"
+                  [cTooltip]="'management.users.actions.on-behalf' | translate" (click)="actOnBehalf(row)">
+                  <svg [cIcon]="icons.cilUser"></svg>
+                </button>
+                <button cButton size="sm" color="light" [disabled]="busy"
+                  [cTooltip]="'management.users.actions.set-password' | translate" (click)="openPassword(row)">
+                  <svg [cIcon]="icons.cilLockLocked"></svg>
+                </button>
+                <button cButton size="sm" color="light" [disabled]="busy"
+                  [cTooltip]="'management.users.actions.toggle-self-service' | translate" (click)="toggleSelfService(row)">
+                  <svg [cIcon]="row.allowSelfService ? icons.cilUserUnfollow : icons.cilUserFollow"></svg>
+                </button>
+                <button cButton size="sm" color="light" [disabled]="busy"
+                  [cTooltip]="'management.users.actions.toggle-active' | translate" (click)="toggleActive(row)">
+                  <svg [cIcon]="row.isActive ? icons.cilXCircle : icons.cilCheckCircle"></svg>
+                </button>
+                @if (isAdmin && row.role !== 2) {
+                  <button cButton size="sm" color="light" [disabled]="busy"
+                    [cTooltip]="'management.users.actions.set-role' | translate" (click)="openRole(row)">
+                    <svg [cIcon]="icons.cilPeople"></svg>
+                  </button>
+                  <button cButton size="sm" color="light" [disabled]="busy"
+                    [cTooltip]="'management.users.actions.set-owner' | translate" (click)="openOwner(row)">
+                    <svg [cIcon]="icons.cilShare"></svg>
+                  </button>
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+            <tr class="mat-row" *matNoDataRow>
+              <td class="mat-cell" [colSpan]="displayedColumns.length">
+                {{ "management.users.messages.no-rows" | translate }}
+              </td>
+            </tr>
+          </table>
+
+          <mat-paginator [length]="total" [pageIndex]="page - 1" [pageSize]="page_size"
+            [pageSizeOptions]="[page_size]" [showFirstLastButtons]="true" (page)="onPage($event)">
+          </mat-paginator>
+        </div>
+      </c-card-body>
+    </c-card>
+  </c-col>
+</c-row>
+
+<!-- create user -->
+<c-modal [(visible)]="create_visible" [scrollable]="true">
+  <c-modal-header>
+    <h5 cModalTitle>{{ "management.users.modals.create-title" | translate }}</h5>
+    <button cButtonClose (click)="create_visible = false"></button>
+  </c-modal-header>
+  <c-modal-body>
+    <form cForm [formGroup]="create_form" [validated]="create_submitted" (ngSubmit)="submitCreate()">
+      <c-input-group class="mb-3 ltr has-validation">
+        <span cInputGroupText>
+          <svg [cIcon]="icons.cilUser"></svg>
+        </span>
+        <input cFormControl type="text" formControlName="username"
+          [placeholder]="'management.users.fields.username' | translate" />
+        <c-form-feedback [valid]="false" *ngIf="isInvalid('username')">
+          {{ "global.validations.invalid" | translate : ["management.users.fields.username"] }}
+        </c-form-feedback>
+      </c-input-group>
+
+      <c-input-group class="mb-3 ltr has-validation">
+        <span cInputGroupText>
+          <svg [cIcon]="icons.cilLockLocked"></svg>
+        </span>
+        <input cFormControl type="password" formControlName="password"
+          [placeholder]="'management.users.fields.password' | translate" />
+        <c-form-feedback [valid]="false" *ngIf="isInvalid('password')">
+          {{ "register.messages.password-requirement" | translate }}
+        </c-form-feedback>
+      </c-input-group>
+
+      <c-input-group class="mb-3 ltr has-validation">
+        <span cInputGroupText>&#64;</span>
+        <input cFormControl type="email" formControlName="email"
+          [placeholder]="'management.users.fields.email' | translate" />
+        <c-form-feedback [valid]="false" *ngIf="isInvalid('email')">
+          {{ "global.validations.invalid" | translate : ["management.users.fields.email"] }}
+        </c-form-feedback>
+      </c-input-group>
+
+      <c-input-group class="mb-3 ltr">
+        <span cInputGroupText>
+          <svg [cIcon]="icons.cilPhone"></svg>
+        </span>
+        <input cFormControl type="text" formControlName="mobile"
+          [placeholder]="'management.users.fields.mobile' | translate" />
+      </c-input-group>
+
+      <c-input-group class="mb-3">
+        <input cFormControl type="text" formControlName="firstname"
+          [placeholder]="'management.users.fields.firstname' | translate" />
+        <input cFormControl type="text" formControlName="lastname"
+          [placeholder]="'management.users.fields.lastname' | translate" />
+      </c-input-group>
+
+      <div class="form-check mb-3">
+        <input cFormCheckInput id="createSelfService" type="checkbox"
+          [(ngModel)]="create_allow_self_service" [ngModelOptions]="{ standalone: true }" />
+        <label cFormCheckLabel for="createSelfService">
+          {{ "management.users.fields.self-service" | translate }}
+        </label>
+      </div>
+
+      @if (isAdmin) {
+        <c-input-group class="mb-3">
+          <span cInputGroupText>
+            {{ "management.users.fields.role" | translate }}
+          </span>
+          <select cFormControl [(ngModel)]="create_role" [ngModelOptions]="{ standalone: true }">
+            @for (role of roles; track role) {
+              <option [ngValue]="role">{{ roleTitle(role) }}</option>
+            }
+          </select>
+        </c-input-group>
+
+        <c-input-group class="ltr">
+          <span cInputGroupText>
+            {{ "management.users.fields.owner" | translate }}
+          </span>
+          <input cFormControl type="text" [(ngModel)]="create_owner"
+            [ngModelOptions]="{ standalone: true }"
+            [placeholder]="'management.users.fields.owner-holder' | translate" />
+        </c-input-group>
+      }
+    </form>
+  </c-modal-body>
+  <c-modal-footer>
+    <button cButton color="secondary" (click)="create_visible = false">
+      {{ "management.modals.cancel" | translate }}
+    </button>
+    <button cButton color="primary" [disabled]="busy" (click)="submitCreate()">
+      {{ "management.modals.submit" | translate }}
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<!-- reset password -->
+<c-modal [(visible)]="password_visible">
+  <c-modal-header>
+    <h5 cModalTitle>{{ "management.users.modals.password-title" | translate }}</h5>
+    <button cButtonClose (click)="password_visible = false"></button>
+  </c-modal-header>
+  <c-modal-body>
+    <p>
+      {{ "management.users.modals.password-caption" | translate : [selected?.username ?? ''] }}
+    </p>
+    <input cFormControl type="text" class="ltr" [(ngModel)]="new_password"
+      [placeholder]="'management.users.fields.password' | translate" (keyup.enter)="submitPassword()" />
+  </c-modal-body>
+  <c-modal-footer>
+    <button cButton color="secondary" (click)="password_visible = false">
+      {{ "management.modals.cancel" | translate }}
+    </button>
+    <button cButton color="primary" [disabled]="busy" (click)="submitPassword()">
+      {{ "management.modals.submit" | translate }}
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<!-- set role (admin) -->
+<c-modal [(visible)]="role_visible">
+  <c-modal-header>
+    <h5 cModalTitle>{{ "management.users.modals.role-title" | translate }}</h5>
+    <button cButtonClose (click)="role_visible = false"></button>
+  </c-modal-header>
+  <c-modal-body>
+    <p>{{ "management.users.modals.role-caption" | translate : [selected?.username ?? ''] }}</p>
+    <select cFormControl [(ngModel)]="new_role">
+      @for (role of roles; track role) {
+        <option [ngValue]="role">{{ roleTitle(role) }}</option>
+      }
+    </select>
+  </c-modal-body>
+  <c-modal-footer>
+    <button cButton color="secondary" (click)="role_visible = false">
+      {{ "management.modals.cancel" | translate }}
+    </button>
+    <button cButton color="primary" [disabled]="busy" (click)="submitRole()">
+      {{ "management.modals.submit" | translate }}
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<!-- set owner (admin) -->
+<c-modal [(visible)]="owner_visible">
+  <c-modal-header>
+    <h5 cModalTitle>{{ "management.users.modals.owner-title" | translate }}</h5>
+    <button cButtonClose (click)="owner_visible = false"></button>
+  </c-modal-header>
+  <c-modal-body>
+    <p>{{ "management.users.modals.owner-caption" | translate : [selected?.username ?? ''] }}</p>
+    <input cFormControl type="text" class="ltr" [(ngModel)]="new_owner"
+      [placeholder]="'management.users.fields.owner-holder' | translate" (keyup.enter)="submitOwner()" />
+  </c-modal-body>
+  <c-modal-footer>
+    <button cButton color="secondary" (click)="owner_visible = false">
+      {{ "management.modals.cancel" | translate }}
+    </button>
+    <button cButton color="primary" [disabled]="busy" (click)="submitOwner()">
+      {{ "management.modals.submit" | translate }}
+    </button>
+  </c-modal-footer>
+</c-modal>

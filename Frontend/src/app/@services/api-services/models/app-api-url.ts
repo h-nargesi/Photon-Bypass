@@ -5,3 +5,6 @@ export const VPN_API_URL: string = '/vpn';
 export const CONNECTION_API_URL: string = '/connection';
 export const PLAN_API_URL: string = '/plan';
 export const BILLING_API_URL: string = '/billing';
+export const USER_API_URL: string = '/user';
+export const SERVER_API_URL: string = '/server';
+export const WALLET_API_URL: string = '/wallet';

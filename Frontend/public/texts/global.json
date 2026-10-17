@@ -7,7 +7,10 @@
             "dashboard": "داشبورد",
             "renewal": "تمدید",
             "payment": "پرداخت",
-            "history": "تاریخچه"
+            "history": "تاریخچه",
+            "users": "کاربران",
+            "servers": "سرورها",
+            "wallet": "کیف پول"
         },
         "walet": {
             "title": "کیف پول:",
