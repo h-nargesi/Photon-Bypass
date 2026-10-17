@@ -6,9 +6,7 @@ public interface IEmailService
 {
     Task SendResetPasswordLink(string fullname, string email, string hash_code);
 
-    Task SendCertEmail(string fullname, string email, CertEmailContext context);
-
-    Task SendVpnLinkEmail(string fullname, string email, VpnLinkEmailContext context);
+    Task SendConnectionEmail(string fullname, string email, ConnectionEmailContext context);
 
     Task FinishServiceAlert(string fullname, string username, string email, string type, string left);
 }

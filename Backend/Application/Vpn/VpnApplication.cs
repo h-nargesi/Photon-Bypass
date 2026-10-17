@@ -73,40 +73,38 @@ class VpnApplication(
     {
         var (account, realm_id, info) = await LoadConfigContext(target, require_email: true);
 
-        if (info?.SupportsCredentialRotation == true)
+        var has_link = info?.SupportsCredentialRotation == true;
+        var has_cert = info?.SupportsOvpnCert == true;
+
+        if (!has_link && !has_cert)
         {
-            var link = await FetchVlessLink(realm_id, account.Username);
-
-            await EmailSrv.Value.SendVpnLinkEmail(account.Fullname, account.EmailAddress!, new VpnLinkEmailContext
-            {
-                Username = account.Username,
-                Link = link,
-            });
-
-            await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
-            {
-                Target = account.Id,
-                Category = EventCategory.Security,
-                Type = EventType.Information,
-                Title = "امنیت",
-                Description = "کانفیگ اتصال به ایمیل ارسال شد.",
-            });
-
-            return ApiResult.Success("کانفیگ اتصال به ایمیل ارسال شد.");
+            throw new UserException("کانفیگ اتصال این سرور از نوع OpenVPN نیست؛ از لینک اتصال یا روش اتصال دیگر استفاده کنید.",
+                $"Neither a vless link nor an OVPN certificate is available for the data-plane: realm={realm_id}");
         }
 
-        var cert_context = await BuildCertificate(account, realm_id, info);
-
-        var email_context = new CertEmailContext
+        // One request builds every connection artifact the account owns and
+        // delivers them in a single email; template sections without a value
+        // are stripped by the email service.
+        var email_context = new ConnectionEmailContext
         {
             Username = account.Username,
-            Password = account.VpnPassword,
-            Realm = cert_context.Realm,
-            PrivateKeyOvpn = cert_context.PrivateKeyOvpn,
-            CertFile = cert_context.CertFile,
         };
 
-        await EmailSrv.Value.SendCertEmail(account.Fullname, account.EmailAddress!, email_context);
+        if (has_link)
+        {
+            email_context.Link = await FetchVlessLink(realm_id, account.Username);
+        }
+
+        if (has_cert)
+        {
+            var cert_context = await BuildCertificate(account, realm_id, info);
+
+            email_context.Password = account.VpnPassword;
+            email_context.PrivateKeyOvpn = cert_context.PrivateKeyOvpn;
+            email_context.CertFile = cert_context.CertFile;
+        }
+
+        await EmailSrv.Value.SendConnectionEmail(account.Fullname, account.EmailAddress!, email_context);
 
         await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
@@ -114,10 +112,10 @@ class VpnApplication(
             Category = EventCategory.Security,
             Type = EventType.Information,
             Title = "امنیت",
-            Description = "ایمیل گواهی اتصال ارسال شد.",
+            Description = "کانفیگ اتصال به ایمیل ارسال شد.",
         });
 
-        return ApiResult.Success("ایمیل گواهی اتصال ارسال شد.");
+        return ApiResult.Success("کانفیگ اتصال به ایمیل ارسال شد.");
     }
 
     public async Task<CertContext> DownloadCertificate(string target)

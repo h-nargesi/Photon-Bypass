@@ -14,16 +14,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="EmailTemplates\CertEmail.html">
+	  <None Update="EmailTemplates\ConnectionEmail.html">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
 	  <None Update="EmailTemplates\FinishServiceAlert.html">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
 	  <None Update="EmailTemplates\ResetPassword.html">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="EmailTemplates\VpnLinkEmail.html">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>

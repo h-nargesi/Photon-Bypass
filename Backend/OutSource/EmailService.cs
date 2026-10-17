@@ -3,6 +3,7 @@ using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.ServerBridge.Services;
 using System.Collections.Concurrent;
 using System.Net.Mail;
+using System.Text.RegularExpressions;
 
 namespace PhotonBypass.OutSource;
 
@@ -44,7 +45,7 @@ class EmailService(IEmailHandler handler) : IEmailService
         await handler.Send(message);
     }
 
-    public async Task SendCertEmail(string fullname, string email, CertEmailContext context)
+    public async Task SendConnectionEmail(string fullname, string email, ConnectionEmailContext context)
     {
         if (string.IsNullOrWhiteSpace(handler.Options.Address))
         {
@@ -54,44 +55,42 @@ class EmailService(IEmailHandler handler) : IEmailService
         var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
         var to_address = new MailAddress(email, fullname);
 
-        var body = await LoadTemplateAsync("EmailTemplates/CertEmail.html");
+        var body = await LoadTemplateAsync("EmailTemplates/ConnectionEmail.html");
+        body = RenderSection(body, "password", context.Password);
+        body = RenderSection(body, "link", context.Link);
+        body = RenderSection(body, "ovpn", context.PrivateKeyOvpn);
         body = body.Replace("{username}", context.Username)
-            .Replace("{server}", context.Realm)
-            .Replace("{password}", context.Password)
-            .Replace("{ovpn}", context.PrivateKeyOvpn);
+            .Replace("{password}", context.Password ?? string.Empty)
+            .Replace("{link}", context.Link ?? string.Empty)
+            .Replace("{ovpn}", context.PrivateKeyOvpn ?? string.Empty);
 
         using var message = new MailMessage(from_address, to_address);
         message.Subject = $"VPN | {fullname}";
         message.IsBodyHtml = false;
         message.Body = body;
 
-        using var stream = new MemoryStream(context.CertFile);
+        if (context.CertFile is { Length: > 0 })
+        {
+            using var stream = new MemoryStream(context.CertFile);
 
-        message.Attachments.Add(new Attachment(stream, "cert.ovpn"));
+            message.Attachments.Add(new Attachment(stream, "cert.ovpn"));
+        }
 
         await handler.Send(message);
     }
 
-    public async Task SendVpnLinkEmail(string fullname, string email, VpnLinkEmailContext context)
+    /// <summary>
+    /// Keeps the <c>&lt;!--if:key--&gt;…&lt;!--end:key--&gt;</c> block (without the
+    /// markers) when the section value exists, or removes the whole block
+    /// otherwise, so sections the account does not own never reach the user.
+    /// </summary>
+    private static string RenderSection(string body, string key, string? value)
     {
-        if (string.IsNullOrWhiteSpace(handler.Options.Address))
-        {
-            throw new Exception("Email Address is not set in config");
-        }
+        var pattern = $@"<!--\s*if:{key}\s*-->(?<content>.*?)<!--\s*end:{key}\s*-->";
 
-        var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
-        var to_address = new MailAddress(email, fullname);
-
-        var body = await LoadTemplateAsync("EmailTemplates/VpnLinkEmail.html");
-        body = body.Replace("{username}", context.Username)
-            .Replace("{link}", context.Link);
-
-        using var message = new MailMessage(from_address, to_address);
-        message.Subject = $"VPN | {fullname}";
-        message.IsBodyHtml = false;
-        message.Body = body;
-
-        await handler.Send(message);
+        return Regex.Replace(body, pattern,
+            string.IsNullOrWhiteSpace(value) ? string.Empty : "${content}",
+            RegexOptions.Singleline);
     }
 
     public async Task SendResetPasswordLink(string fullname, string email, string hash_code)

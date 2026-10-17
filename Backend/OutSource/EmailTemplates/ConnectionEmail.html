@@ -60,6 +60,11 @@
             color: #666;
         }
 
+        a {
+            color: #1e90ff;
+            text-decoration: none;
+        }
+
         code {
             background: #f1f1f1;
             padding: 2px 4px;
@@ -85,14 +90,18 @@
     <div class="container">
         <div class="header">
             <img src="https://via.placeholder.com/150x50?text=LOGO" alt="لوگو">
-            <h2 style="margin: 10px 0 0;">کانفیگ اتصال</h2>
+            <h2 style="margin: 10px 0 0;">مشخصات اتصال</h2>
         </div>
         <div class="content">
             <div class="section">
                 <strong>اطلاعات کاربری:</strong><br>
                 <span class="ltr">User: <code>{username}</code></span>
+                <!--if:password-->
+                <br><span class="ltr">Password: <code>{password}</code></span>
+                <!--end:password-->
             </div>
 
+            <!--if:link-->
             <div class="section">
                 <strong>لینک اتصال (vless):</strong><br>
                 <span class="ltr"><code>{link}</code></span><br>
@@ -102,6 +111,23 @@
             <div class="section">
                 <strong>نکته:</strong><br>
                 با هر بار چرخش شناسه‌ی اتصال، کانفیگ قبلی باطل می‌شود؛ در آن صورت کانفیگ جدید را از همین مسیر دریافت کنید.
+            </div>
+            <!--end:link-->
+
+            <!--if:ovpn-->
+            <div class="section">
+                <strong>OpenVPN (گواهی + رمز):</strong><br>
+                <span class="ltr">User key password: <code>{ovpn}</code></span><br>
+                فایل config.ovpn در پیوست قرار دارد.
+            </div>
+            <!--end:ovpn-->
+
+            <div class="section">
+                <strong>راهنما:</strong><br>
+                <a target="_blank" href="https://drive.google.com/drive/u/1/folders/1qv_TUemGNftxNcHnz2DnPn9V6S39Pfij">راهنمای اتصال</a>
+                <!--if:ovpn-->
+                | <a target="_blank" href="https://drive.google.com/drive/u/1/folders/14jaxqfGGHvG5KIfkPpzMzsL5Hg8ktZxh">نصب‌کننده OpenVPN</a>
+                <!--end:ovpn-->
             </div>
         </div>
         <div class="footer">

@@ -465,6 +465,13 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
 
         SetupXuiRealm(scope);
 
+        // pure x-ui realm: NAS without the OVPN capability bit, so the
+        // certificate section stays hidden (ServerFeature.Nas is a mask
+        // that would imply Ovpn)
+        scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>()
+            .Setup(x => x.GetActiveNasInRealmOrAll(2))
+            .ReturnsAsync([NewServer(31, 2, features: ServerFeature.Sstp)]);
+
         var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
         api_moq.AddClient("User2", "live-uuid-2", 0, 0);
 
@@ -480,7 +487,39 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
             .SendCertEmail("User2");
 
         sent_body.Should().Contain("vless://live-uuid-2@");
+        sent_body.Should().NotContain("OpenVPN");
         attachment_count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task SendCertEmail_RealmWithBothCapabilities_SendsOneEmailWithLinkAndCertificate()
+    {
+        using var scope = App.Services.CreateScope();
+
+        // x-ui radius server for the vless link while the default realm-2 NAS
+        // still provides the OpenVPN certificate: both artifacts in ONE email
+        SetupXuiRealm(scope);
+
+        var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
+        api_moq.AddClient("User2", "live-uuid-2", 0, 0);
+
+        var send_count = 0;
+        var sent_body = "";
+        var attachment_count = -1;
+        scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += mail =>
+        {
+            send_count++;
+            sent_body = mail.Body;
+            attachment_count = mail.Attachments?.Count ?? 0;
+        };
+
+        await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .SendCertEmail("User2");
+
+        send_count.Should().Be(1);
+        sent_body.Should().Contain("vless://live-uuid-2@");
+        sent_body.Should().Contain("User key password");
+        attachment_count.Should().Be(1);
     }
 
     [Fact]
