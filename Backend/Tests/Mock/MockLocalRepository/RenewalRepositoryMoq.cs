@@ -115,6 +115,8 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
             LastPollTime = renewal.LastPollTime,
             TrafficUsed = renewal.TrafficUsed,
             LastActiveTime = renewal.LastActiveTime,
+            ExpirationDate = renewal.ExpirationDate,
+            CumulativeTrafficLeft = renewal.CumulativeTrafficLeft,
             Created = renewal.Created,
         };
     }

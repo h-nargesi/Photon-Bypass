@@ -66,6 +66,8 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
         pushed.Email.Should().Be("User3");
         pushed.Uuid.Should().Be(account.VpnPassword);
         pushed.Enable.Should().BeTrue();
+        // pre-D16 renewal row (no stacked columns): the push falls back to the
+        // renewal's own share and now+days expiry
         pushed.TotalTrafficBytes.Should().Be(renewal.TrafficLimit);
         pushed.LimitIp.Should().Be(2);
         pushed.ExpiryTime.Should().BeGreaterThan(0);
@@ -112,6 +114,85 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
         added.Uuid.Should().NotBeNullOrEmpty();
         added.ExpiryTime.Should().Be(0, "a traffic-only renewal must encode 'never' as 0");
         added.TotalTrafficBytes.Should().Be(renewal.TrafficLimit);
+    }
+
+    [Fact]
+    public async Task SyncUserAndActive_StackedRenewal_PushesCumulativeQuotaAndStoredExpiry()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
+
+        var account = new AccountEntity
+        {
+            Id = 3,
+            Username = "User3",
+            Password = "x",
+            VpnPassword = "4c1f3b2a-1111-2222-3333-444455556666",
+        };
+
+        // D16: 20G remaining + this renewal's 25G share, expiry frozen at purchase
+        var stacked_expiry = DateTime.Now.AddDays(96);
+
+        var renewal = new RenewalEntity
+        {
+            Id = 12,
+            AccountId = 3,
+            SimultaneousUser = 2,
+            TrafficLimit = 25 * StaticValues.BytesInGigLong,
+            TimeLimitInDays = 30,
+            CumulativeTrafficLeft = 45 * StaticValues.BytesInGigLong,
+            ExpirationDate = stacked_expiry,
+            LastSeenCounter = 5000,
+            LastPollTime = DateTime.Now.AddHours(-1),
+            TrafficUsed = 5000,
+        };
+
+        var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.Xui);
+
+        await service.SyncUserAndActive(Server, account, renewal);
+
+        var pushed = api_moq.Clients.Single();
+        pushed.TotalTrafficBytes.Should().Be(45 * StaticValues.BytesInGigLong);
+        pushed.ExpiryTime.Should().Be(new DateTimeOffset(stacked_expiry).ToUnixTimeMilliseconds());
+        pushed.LimitIp.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task SyncUserAndActive_UnlimitedStack_PushesZeroTotalAndNeverExpiry()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
+
+        var account = new AccountEntity
+        {
+            Id = 3,
+            Username = "User3",
+            Password = "x",
+            VpnPassword = null!,
+        };
+
+        // previous plan was unlimited → the stacked quota is unlimited (0),
+        // no time limit → expiry 0
+        var renewal = new RenewalEntity
+        {
+            Id = 13,
+            AccountId = 3,
+            SimultaneousUser = 1,
+            TrafficLimit = null,
+            TimeLimitInDays = null,
+            CumulativeTrafficLeft = null,
+            ExpirationDate = null,
+        };
+
+        var service = scope.ServiceProvider.GetRequiredKeyedService<IInfraAccountRadiusSyncService>(RadiusType.Xui);
+
+        await service.SyncUserAndActive(Server, account, renewal);
+
+        var pushed = api_moq.Clients.Single();
+        pushed.TotalTrafficBytes.Should().Be(0);
+        pushed.ExpiryTime.Should().Be(0);
     }
 
     [Fact]

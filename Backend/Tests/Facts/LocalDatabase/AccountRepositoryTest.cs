@@ -221,6 +221,8 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
             SimultaneousUser = 3,
             TrafficLimit = 25,
             TimeLimitInDays = 120,
+            // D16: the view reads the stacked expiry stored at purchase time
+            ExpirationDate = DateTime.Now.AddDays(120),
             WalletDebit = debit.Id,
         });
 

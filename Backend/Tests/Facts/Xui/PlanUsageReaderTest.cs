@@ -42,7 +42,7 @@ public class PlanUsageReaderTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task XuiRealmWithPolledRenewal_ReadsFromRenewalColumns()
+    public async Task XuiRealmWithStackedRenewal_ReadsCumulativeColumns()
     {
         using var scope = App.Services.CreateScope();
         UseXuiServer(scope);
@@ -50,27 +50,72 @@ public class PlanUsageReaderTest : UnitLevelServiceInitializer
         var renewal_moq = scope.ServiceProvider.GetRequiredService<RenewalRepositoryMoq>();
 
         var last_active = DateTime.Now.AddHours(-2);
-        var created = DateTime.Now.AddDays(-10);
-        var renewal = ReplaceStoredRenewal(renewal_moq, new RenewalEntity
+        var stacked_expiry = DateTime.Now.AddDays(96);
+        ReplaceStoredRenewal(renewal_moq, new RenewalEntity
         {
             Id = 1,
             AccountId = 3,
             TrafficLimit = 25 * StaticValues.BytesInGigLong,
             TimeLimitInDays = 30,
+            CumulativeTrafficLeft = 45 * StaticValues.BytesInGigLong,
+            ExpirationDate = stacked_expiry,
             TrafficUsed = 5 * StaticValues.BytesInGigLong,
             LastActiveTime = last_active,
             LastPollTime = DateTime.Now.AddMinutes(-5),
             LastSeenCounter = 5 * StaticValues.BytesInGigLong,
-            Created = created,
         });
 
         var usage = await scope.ServiceProvider.GetRequiredService<IPlanUsageReader>().GetUsage(3);
 
         usage.Should().NotBeNull();
         usage!.TrafficUsed.Should().Be(5 * StaticValues.BytesInGigLong);
-        usage.TrafficLeft.Should().Be(20 * StaticValues.BytesInGigLong);
+        usage.TrafficLeft.Should().Be(40 * StaticValues.BytesInGigLong);
         usage.LastActiveTime.Should().Be(last_active);
-        usage.ExpirationDate.Should().Be(created.AddDays(30));
+        usage.ExpirationDate.Should().Be(stacked_expiry);
+    }
+
+    [Fact]
+    public async Task XuiRealmWithPreD16Renewal_FallsBackToTheView()
+    {
+        using var scope = App.Services.CreateScope();
+        UseXuiServer(scope);
+
+        var renewal_moq = scope.ServiceProvider.GetRequiredService<RenewalRepositoryMoq>();
+        var plan_moq = scope.ServiceProvider.GetRequiredService<PlanStateRepositoryMoq>();
+
+        // polled renewal written before D16: its own limit is set while the
+        // stacked columns are NULL — decision reads fall back to the view
+        ReplaceStoredRenewal(renewal_moq, new RenewalEntity
+        {
+            Id = 1,
+            AccountId = 3,
+            TrafficLimit = 25 * StaticValues.BytesInGigLong,
+            TimeLimitInDays = 30,
+            TrafficUsed = 5 * StaticValues.BytesInGigLong,
+            LastActiveTime = DateTime.Now.AddHours(-2),
+            LastPollTime = DateTime.Now.AddMinutes(-5),
+            LastSeenCounter = 5 * StaticValues.BytesInGigLong,
+            Created = DateTime.Now.AddDays(-10),
+        });
+
+        var plan = new PhotonBypass.Domain.Plan.Entity.PlanStateEntity
+        {
+            Id = 3,
+            Username = "User3",
+            RestrictedRealmId = 3,
+            TrafficUsed = 111,
+            TrafficLeft = 222,
+            LastConnectTime = DateTime.Now.AddDays(-1),
+            ExpirationDate = DateTime.Now.AddDays(9),
+        };
+
+        plan_moq.Setup(repository => repository.GetPlanState(3)).ReturnsAsync(plan);
+
+        var usage = await scope.ServiceProvider.GetRequiredService<IPlanUsageReader>().GetUsage(3);
+
+        usage!.TrafficUsed.Should().Be(5 * StaticValues.BytesInGigLong);
+        usage.TrafficLeft.Should().Be(222);
+        usage.ExpirationDate.Should().Be(plan.ExpirationDate);
     }
 
     [Fact]

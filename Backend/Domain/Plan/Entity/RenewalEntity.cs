@@ -36,5 +36,11 @@ public class RenewalEntity : IRenewalEntity, IBaseEntity
 
     public DateTime? LastActiveTime { get; set; }
 
+    // Stacked plan state (docs/17 D16): frozen once at purchase time by
+    // PlanApplication.Renewal — the sole writer; NULL = no limit.
+    public DateTime? ExpirationDate { get; set; }
+
+    public long? CumulativeTrafficLeft { get; set; }
+
     public DateTime Created { get; init; } = DateTime.Now;
 }

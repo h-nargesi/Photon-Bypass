@@ -17,8 +17,12 @@ CREATE TABLE Renewal (
 	-- x-ui traffic state (docs/17 D6/D14): counter anchor and decision-truth columns.
 	LastSeenCounter		BIGINT				NULL,
 	LastPollTime		DATETIME			NULL,
-	TrafficUsed			BIGINT			NOT NULL	CONSTRAINT DF_Renewal_TrafficUsed DEFAULT 0,
+	TrafficUsed			BIGINT				NOT NULL	CONSTRAINT DF_Renewal_TrafficUsed DEFAULT 0,
 	LastActiveTime		DATETIME			NULL,
+	-- Stacked plan state (docs/17 D16): frozen once at purchase time; sole writer
+	-- is PlanApplication.Renewal (the collector never writes them). NULL = no limit.
+	ExpirationDate		DATETIME			NULL,
+	CumulativeTrafficLeft BIGINT			NULL,
 	Created				DATETIME		NOT NULL	CONSTRAINT DF_Renewal_Created DEFAULT GETDATE()
 )
 GO

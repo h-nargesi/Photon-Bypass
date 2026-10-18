@@ -62,7 +62,9 @@ LEFT JOIN (
                 , rn.RateLimitInMeg
                 , ISNULL(SUM(TrafficLimit) OVER(PARTITION BY rn.AccountId ORDER BY rn.Id 
                                                 ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS TrafficLimitRangeStart
-                , DATEADD(DAY, rn.TimeLimitInDays, rn.Created) AS ExpirationDate
+                -- D16: stacked expiry, frozen once at purchase by PlanApplication.Renewal —
+                -- no longer derived here from Created + TimeLimitInDays.
+                , rn.ExpirationDate
                 , rn.Created
             FROM Renewal rn
         ) rn

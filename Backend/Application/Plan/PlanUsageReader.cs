@@ -85,13 +85,17 @@ class PlanUsageReader(
             {
                 AccountId = plan.Id,
                 TrafficUsed = renewal.TrafficUsed,
-                TrafficLeft = renewal.TrafficLimit.HasValue
-                    ? renewal.TrafficLimit.Value - renewal.TrafficUsed
-                    : null,
+                // D16: TrafficLeft is the stacked remaining (CumulativeTrafficLeft
+                // minus what the counter has consumed since the reset). A renewal
+                // whose own limit is set while the stacked column is NULL predates
+                // D16 and keeps reading the view instead.
+                TrafficLeft = HasStackedTrafficLeft(renewal)
+                    ? renewal.CumulativeTrafficLeft - renewal.TrafficUsed
+                    : plan.TrafficLeft,
                 LastActiveTime = renewal.LastActiveTime,
-                ExpirationDate = renewal.TimeLimitInDays.HasValue
-                    ? renewal.Created.AddDays(renewal.TimeLimitInDays.Value)
-                    : null,
+                ExpirationDate = HasStackedExpiry(renewal)
+                    ? renewal.ExpirationDate
+                    : plan.ExpirationDate,
             };
         }
 
@@ -102,6 +106,16 @@ class PlanUsageReader(
         }
 
         return FromView(plan);
+    }
+
+    private static bool HasStackedTrafficLeft(RenewalEntity renewal)
+    {
+        return renewal.CumulativeTrafficLeft.HasValue || renewal.TrafficLimit is null;
+    }
+
+    private static bool HasStackedExpiry(RenewalEntity renewal)
+    {
+        return renewal.ExpirationDate.HasValue || renewal.TimeLimitInDays is null;
     }
 
     private static PlanUsageSnapshot FromView(PlanStateEntity plan)

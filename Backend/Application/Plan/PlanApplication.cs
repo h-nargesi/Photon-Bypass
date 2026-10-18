@@ -282,6 +282,16 @@ class PlanApplication(
             throw user_exception;
         }
 
+        // D16 (docs/17): stacked plan state — both values are computed once,
+        // right here, and stored on the renewal; the x-ui push and the usage
+        // reader only read them. Expiry stacks on the still-running plan, the
+        // traffic quota on the cumulative remaining (view TrafficLeft of the
+        // current band); NULL means "no limit" on either axis.
+        renew.ExpirationDate = renew.TimeLimitInDays.HasValue
+            ? LaterOf(DateTime.Now, current_state.ExpirationDate).AddDays(renew.TimeLimitInDays.Value)
+            : null;
+        renew.CumulativeTrafficLeft = StackRemainingTraffic(current_state, renew.TrafficLimit);
+
         var estimate = await PriceCalc.CalculatePrice(account.CalculationMethod ?? 0, count,
             renew.TimeLimitInDays ?? days, gigabytes);
         var balance = await WalletRepo.Value.GetBalance(payer.Id);
@@ -411,5 +421,32 @@ class PlanApplication(
         {
             CurrentPrice = balance,
         });
+    }
+
+    private static DateTime LaterOf(DateTime now, DateTime? current_expiry)
+    {
+        return current_expiry.HasValue && current_expiry.Value > now ? current_expiry.Value : now;
+    }
+
+    /// <summary>
+    /// D16 (docs/17): the traffic quota carried into the new renewal — the
+    /// cumulative remaining of the current band (view TrafficLeft; a NULL on a
+    /// limited band means "no usage recorded yet", i.e. the full quota) plus
+    /// this renewal's share, clamped at zero for overdrawn plans. A NULL
+    /// previous remaining means an unlimited current plan, so the stack is
+    /// unlimited; an account with no plan at all starts from its own share.
+    /// </summary>
+    private static long? StackRemainingTraffic(PlanStateEntity current_state, long? new_share)
+    {
+        var has_current_plan = current_state.TrafficLimit.HasValue || current_state.TimeLimitInDays.HasValue;
+
+        if (!has_current_plan)
+        {
+            return new_share;
+        }
+
+        var remaining = current_state.TrafficLeft ?? current_state.TrafficLimit;
+
+        return remaining.HasValue ? Math.Max(0, remaining.Value) + new_share : null;
     }
 }
