@@ -48,7 +48,7 @@ public class SetActiveRequest
 
 /// <summary>
 /// Manager/admin user management (docs/20 phase 4). Note: these endpoints
-/// never route <c>target</c> through <see cref="ResultHandlerController.LoadJobContext(string?)"/>'s
+/// never route <c>target</c> through <see cref="ResultHandlerController.LoadJobContextAsync(string?)"/>'s
 /// cached access check — the application validates the actor→target
 /// relationship live against the database, so freshly created or attached
 /// subordinates are manageable in the same session.
@@ -66,7 +66,7 @@ public class UserController(
     [HttpGet("list")]
     public async Task<ApiResult> GetList([FromQuery] string? search, [FromQuery] int page = 1)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.GetList(search, page);
 
@@ -77,7 +77,7 @@ public class UserController(
     [HttpPost("create")]
     public async Task<ApiResult> Create([FromBody] CreateUserModel request)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.Create(request);
 
@@ -88,7 +88,7 @@ public class UserController(
     [HttpPost("set-password")]
     public async Task<ApiResult> SetPassword([FromBody] SetPasswordRequest request)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.SetPassword(request.Target!, request.Password!);
 
@@ -99,7 +99,7 @@ public class UserController(
     [HttpPost("set-role")]
     public async Task<ApiResult> SetRole([FromBody] SetRoleRequest request)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.SetRole(request.Target!, request.Role ?? AccountRole.User);
 
@@ -110,7 +110,7 @@ public class UserController(
     [HttpPost("set-owner")]
     public async Task<ApiResult> SetOwner([FromBody] SetOwnerRequest request)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.SetOwner(request.Target!, request.Owner);
 
@@ -121,7 +121,7 @@ public class UserController(
     [HttpPost("set-self-service")]
     public async Task<ApiResult> SetSelfService([FromBody] SetSelfServiceRequest request)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.SetSelfService(request.Target!, request.Allow);
 
@@ -133,7 +133,7 @@ public class UserController(
     [HttpPost("set-active")]
     public async Task<ApiResult> SetActive([FromBody] SetActiveRequest request)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.SetActive(request.Target!, request.Active);
 

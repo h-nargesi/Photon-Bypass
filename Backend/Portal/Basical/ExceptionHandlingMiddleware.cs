@@ -41,7 +41,10 @@ public class ExceptionHandlingMiddleware(RequestDelegate next)
 
     protected static string GetMessage(Exception ex)
     {
-        return ex.Message + "\n" + ex.StackTrace;
+        // ToString carries the full chain: message + stack + every inner
+        // exception — a flattened Message+StackTrace loses the wrapped cause
+        // (e.g. a SqlException inside an infrastructure wrapper)
+        return ex.ToString();
     }
 
     protected virtual ApiResult GetApiResult(Exception ex, out short http_code)

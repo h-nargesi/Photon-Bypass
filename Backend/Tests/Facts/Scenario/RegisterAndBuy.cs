@@ -20,7 +20,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
     private async Task OnePerson(string username, string phone)
     {
         // /api/auth/register
-        var password = "Password";
+        var password = "Passw0rd1";
         await Register(username, phone, password);
 
         // /api/auth/token
@@ -49,13 +49,13 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
         }
 
         // /api/account/change-pass
-        password = "new-password";
-        await ChangePass("Password", password);
+        password = "NewPassw0rd";
+        await ChangePass("Passw0rd1", password);
         await Login(username, password);
 
         // reset-password
         var code = await ForgetPass(username);
-        password = "reset-password";
+        password = "ResetPassw0rd";
         await ResetPass(code, password);
         await Login(username, password);
 

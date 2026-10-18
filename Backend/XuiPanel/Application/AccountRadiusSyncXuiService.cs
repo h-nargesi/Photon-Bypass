@@ -46,15 +46,19 @@ public class AccountRadiusSyncXuiService(
 
     public async Task DeactivateUser(ServerEntity radius, IEnumerable<string> usernames)
     {
-        foreach (var username in usernames.Where(IsManagedClient))
+        // one full listing for the whole batch: a per-username GetClient costs
+        // a complete inbound fetch each time, and the hourly sweeps call this
+        // with many users at once
+        var target_set = usernames.Where(IsManagedClient).ToHashSet();
+
+        if (target_set.Count == 0)
         {
-            var client = await Api.Value.GetClient(radius, username);
+            return;
+        }
 
-            if (client is not { Enable: true })
-            {
-                continue;
-            }
-
+        foreach (var client in (await Api.Value.ListClients(radius))
+                     .Where(client => target_set.Contains(client.Email) && client.Enable))
+        {
             client.Enable = false;
 
             await Api.Value.UpdateClient(radius, client.Uuid, client);
@@ -63,15 +67,16 @@ public class AccountRadiusSyncXuiService(
 
     public async Task ActivateUser(ServerEntity radius, IEnumerable<string> usernames)
     {
-        foreach (var username in usernames.Where(IsManagedClient))
+        var target_set = usernames.Where(IsManagedClient).ToHashSet();
+
+        if (target_set.Count == 0)
         {
-            var client = await Api.Value.GetClient(radius, username);
+            return;
+        }
 
-            if (client is not { Enable: false })
-            {
-                continue;
-            }
-
+        foreach (var client in (await Api.Value.ListClients(radius))
+                     .Where(client => target_set.Contains(client.Email) && !client.Enable))
+        {
             client.Enable = true;
 
             await Api.Value.UpdateClient(radius, client.Uuid, client);

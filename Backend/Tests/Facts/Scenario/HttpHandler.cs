@@ -16,7 +16,7 @@ namespace PhotonBypass.Test.Facts.Scenario;
 public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : ProgramLevelInitializer(factory)
 {
     protected async Task Register(string username, string phone, 
-        string password = "Password", string firstname = "fname", string lastname = "lname", int status = 2)
+        string password = "Passw0rd1", string firstname = "fname", string lastname = "lname", int status = 2)
     {
         var response = await Client.PostAsJsonAsync("/api/auth/register", new RegisterModel
         {
@@ -346,7 +346,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         await account_repo.Save(new AccountEntity
         {
             Username = username,
-            Password = PasswordHasher.Hash("Password"),
+            Password = PasswordHasher.Hash("Passw0rd1"),
             VpnPassword = HashHandler.GenerateHashCode(),
             Email = $"{username}@gmail.com",
             Mobile = $"+9891{seed % 100_000_000:D8}",

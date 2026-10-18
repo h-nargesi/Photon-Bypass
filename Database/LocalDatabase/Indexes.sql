@@ -22,6 +22,14 @@ CREATE NONCLUSTERED INDEX IX_History_Target_Created
 ON History (Target, Created);
 GO
 
+-- Wallet-threshold state machine reads (docs/14 M33): GetLastByTitle groups
+-- History by Target for a fixed Title on every wallet settlement and every
+-- hourly run — without this index each read is a full table scan.
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_History_Title_Target')
+CREATE NONCLUSTERED INDEX IX_History_Title_Target
+ON History (Title, Target);
+GO
+
 -- Wallet (AccountId): GetBalance aggregate.
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Wallet_AccountId')
 CREATE NONCLUSTERED INDEX IX_Wallet_AccountId

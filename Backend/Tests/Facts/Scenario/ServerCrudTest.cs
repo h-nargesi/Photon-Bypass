@@ -61,14 +61,14 @@ public class ServerCrudTest(ProgramLevelInitializer.Factory factory) : HttpHandl
     public async Task List_AdminOnly_ReturnsScalarsWithoutConfig()
     {
         // plain user and manager are refused by the Admin policy (docs/20 §3)
-        await Register("srv_user77", "77", "Password");
-        await Login("srv_user77", "Password");
+        await Register("srv_user77", "77", "Passw0rd1");
+        await Login("srv_user77", "Passw0rd1");
         await ServerList(status: 403);
 
         var manager = "srv_manager71";
 
         await InsertAccount(manager, UserTypes.AllowSelfService, AccountRole.Manager);
-        await Login(manager, "Password");
+        await Login(manager, "Passw0rd1");
         await ServerList(status: 403);
 
         await Login("admin", "admin");

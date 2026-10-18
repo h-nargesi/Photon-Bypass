@@ -277,6 +277,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
             Username = "username10",
             Email = null,
             Mobile = "09113456799",
+            Password = "Passw0rd1",
         });
 
         Assert.NotNull(result);
@@ -297,6 +298,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
             Username = "username10",
             Email = null,
             Mobile = "09113456799",
+            Password = "Passw0rd1",
         });
 
         Assert.NotNull(result);

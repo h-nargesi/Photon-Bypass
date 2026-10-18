@@ -16,7 +16,7 @@ public class DownloadConfig(ProgramLevelInitializer.Factory factory) : HttpHandl
         await Register("userdl", "70");
 
         // /api/auth/token
-        await Login("userdl", "Password");
+        await Login("userdl", "Passw0rd1");
 
         // /api/plan/estimate + wallet top-up + /api/plan/renewal
         var request = new RenewalContext

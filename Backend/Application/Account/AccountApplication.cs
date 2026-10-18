@@ -146,6 +146,10 @@ class AccountApplication(
 
     private async Task<ApiResult> SetPassword(AccountEntity account, string password)
     {
+        // every password-setting path funnels through here (change-pass with
+        // the current token, reset-pass codes, admin/manager set-password)
+        AccountBusiness.ValidatePassword(password);
+
         account.Password = PasswordHasher.Hash(password);
 
         await AccountRepo.Save(account);

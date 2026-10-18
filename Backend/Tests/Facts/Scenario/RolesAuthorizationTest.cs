@@ -24,9 +24,9 @@ public class RolesAuthorizationTest(ProgramLevelInitializer.Factory factory) : H
         var admin_token = await LoginAndGetToken("admin", "admin");
         Assert.Equal(nameof(AccountRole.Admin), RoleClaimOf(admin_token));
 
-        await Register("roles_user01", "90", "Password");
+        await Register("roles_user01", "90", "Passw0rd1");
 
-        var user_token = await LoginAndGetToken("roles_user01", "Password");
+        var user_token = await LoginAndGetToken("roles_user01", "Passw0rd1");
         Assert.Equal(nameof(AccountRole.User), RoleClaimOf(user_token));
     }
 
@@ -40,8 +40,8 @@ public class RolesAuthorizationTest(ProgramLevelInitializer.Factory factory) : H
         Assert.Equal("True", admin["allowSelfService"]);
 
         // registered user: independent account created with the flag (D11)
-        await Register("roles_user02", "91", "Password");
-        await Login("roles_user02", "Password");
+        await Register("roles_user02", "91", "Passw0rd1");
+        await Login("roles_user02", "Passw0rd1");
         var user = await GetUser();
         Assert.Equal("0", user["role"]);
         Assert.Equal("True", user["allowSelfService"]);
@@ -53,8 +53,8 @@ public class RolesAuthorizationTest(ProgramLevelInitializer.Factory factory) : H
         using var scope = ServiceProvider.CreateScope();
         var authorization = scope.ServiceProvider.GetRequiredService<IAuthorizationService>();
 
-        await Register("roles_user03", "92", "Password");
-        var user_token = await LoginAndGetToken("roles_user03", "Password");
+        await Register("roles_user03", "92", "Passw0rd1");
+        var user_token = await LoginAndGetToken("roles_user03", "Passw0rd1");
         var admin_token = await LoginAndGetToken("admin", "admin");
 
         var user_principal = ValidateToken(user_token);

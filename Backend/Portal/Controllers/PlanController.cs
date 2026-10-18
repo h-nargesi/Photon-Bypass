@@ -21,7 +21,7 @@ public class PlanController(
     [HttpGet("plan-state")]
     public async Task<ApiResult> GetPlanState([FromQuery] string? target)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.GetPlanState(JobContext.Target);
 
@@ -31,7 +31,7 @@ public class PlanController(
     [HttpGet("plan-info")]
     public async Task<ApiResult> GetPlanInfo([FromQuery] string? target)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.GetPlanInfo(JobContext.Target);
 
@@ -41,7 +41,7 @@ public class PlanController(
     [HttpPost("estimate")]
     public async Task<ApiResult> Estimate([FromBody] RenewalContext context)
     {
-        LoadJobContext(context.Target);
+        await LoadJobContextAsync(context.Target);
 
         if (!context.Days.HasValue && !context.Gigabytes.HasValue)
         {
@@ -62,7 +62,7 @@ public class PlanController(
     [HttpPost("renewal")]
     public async Task<ApiResult> Renewal([FromBody] RenewalContext context)
     {
-        LoadJobContext(context.Target);
+        await LoadJobContextAsync(context.Target);
         context.Target = JobContext.Target;
 
         if (!context.Days.HasValue && !context.Gigabytes.HasValue)

@@ -19,7 +19,7 @@ public class ConnectionController(
     [HttpGet("current-con-state")]
     public async Task<ApiResult> GetCurrentConnectionState([FromQuery] string? target)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.GetCurrentConnectionState(JobContext.Target);
 
@@ -29,7 +29,7 @@ public class ConnectionController(
     [HttpPost("close-con")]
     public async Task<ApiResult> CloseConnection([FromBody] CloseConnectionContext context)
     {
-        LoadJobContext(context.Target);
+        await LoadJobContextAsync(context.Target);
 
         if (string.IsNullOrWhiteSpace(context.Server))
         {

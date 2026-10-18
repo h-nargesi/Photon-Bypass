@@ -15,7 +15,7 @@ public class ResultHandlerController(IJobContext context, Lazy<IAccessService> a
 
     protected string Username => User.Identity?.Name ?? string.Empty;
 
-    protected void LoadJobContext(string? target = null)
+    protected async Task LoadJobContextAsync(string? target = null)
     {
         Log.Debug("Request.GetDisplayUrl(): {0}", Request.GetDisplayUrl());
 
@@ -29,7 +29,7 @@ public class ResultHandlerController(IJobContext context, Lazy<IAccessService> a
 
         if (target == null || target == Username) return;
 
-        if (!access.Value.CheckAccess(Username, target))
+        if (!await access.Value.CheckAccess(Username, target))
         {
             throw new UserException("شما به این کاربر دسترسی ندارید!",
                 $"Target access denied: ({target}, '{Request.GetDisplayUrl()}')",

@@ -7,7 +7,7 @@ public class CheckAccess(ProgramLevelInitializer.Factory factory) : HttpHandler(
     [Fact]
     public async Task Test_invalid_password()
     {
-        await Register("user_a_00", "00", "Password");
+        await Register("user_a_00", "00", "Passw0rd1");
 
         await Login("user_a_01", "Password-1", 401);
         await FullInfo("user_a_01", 401);
@@ -16,18 +16,18 @@ public class CheckAccess(ProgramLevelInitializer.Factory factory) : HttpHandler(
     [Fact]
     public async Task Test_access_forbidden()
     {
-        await Register("user_a_01", "21", "Password");
-        await Register("user_a_02", "22", "Password");
+        await Register("user_a_01", "21", "Passw0rd1");
+        await Register("user_a_02", "22", "Passw0rd1");
 
-        await Login("user_a_01", "Password");
+        await Login("user_a_01", "Passw0rd1");
         await FullInfo("user_a_02", 403);
     }
 
     [Fact]
     public async Task Test_admin()
     {
-        await Register("user_a_11", "23", "Password");
-        await Register("user_a_12", "24", "Password");
+        await Register("user_a_11", "23", "Passw0rd1");
+        await Register("user_a_12", "24", "Passw0rd1");
 
         await Login("admin", "admin");
         await FullInfo("user_a_11");

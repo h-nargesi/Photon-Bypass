@@ -32,7 +32,7 @@ public class ReceiptEndpointTest(ProgramLevelInitializer.Factory factory) : Http
     private async Task<int> NewPendingInvoice(string username, string phone)
     {
         await Register(username, phone);
-        await Login(username, "Password");
+        await Login(username, "Passw0rd1");
 
         var renewal = await Renewal(username, 1, 120, 50);
         Assert.NotNull(renewal["invoiceCode"]);
@@ -136,7 +136,7 @@ public class ReceiptEndpointTest(ProgramLevelInitializer.Factory factory) : Http
     public async Task RegisterReceipt_UnknownInvoice_ReturnsUserError()
     {
         await Register("rcpt_user08", "38");
-        await Login("rcpt_user08", "Password");
+        await Login("rcpt_user08", "Passw0rd1");
 
         await RegisterReceipt(999_999, text: "some receipt", status: 4);
     }
@@ -147,11 +147,11 @@ public class ReceiptEndpointTest(ProgramLevelInitializer.Factory factory) : Http
         var code = await NewPendingInvoice("rcpt_owner09", "39");
 
         await Register("rcpt_attacker09", "40");
-        await Login("rcpt_attacker09", "Password");
+        await Login("rcpt_attacker09", "Passw0rd1");
 
         await RegisterReceipt(code, text: "stolen receipt", target: "rcpt_owner09", status: 403);
 
-        await Login("rcpt_owner09", "Password");
+        await Login("rcpt_owner09", "Passw0rd1");
         var invoice = await GetInvoice(code);
         Assert.Equal("0", invoice["status"]); // untouched
     }
@@ -162,7 +162,7 @@ public class ReceiptEndpointTest(ProgramLevelInitializer.Factory factory) : Http
         var code = await NewPendingInvoice("rcpt_owner10", "44");
 
         await Register("rcpt_attacker10", "45");
-        await Login("rcpt_attacker10", "Password");
+        await Login("rcpt_attacker10", "Passw0rd1");
 
         // no target: attacker is the owner from the repo's point of view → not found
         await RegisterReceipt(code, text: "stolen receipt", status: 4);

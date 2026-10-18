@@ -152,16 +152,6 @@ internal class AccountMonitoringService(
             Log.Information("The user '{0}' is going to finish plan (x{1}, {2})",
                 plan.Username, plan.SimultaneousUser, remains_title);
 
-            history_list.Add(new HistoryEntity
-            {
-                Target = plan.Id,
-                Category = EventCategory.Renewal,
-                Type = EventType.Warning,
-                Title = "پایان پلن",
-                Description = "اخطار پایان پلن.",
-                Value = remains_title,
-            });
-
             if (!account.SendWarning)
             {
                 continue;
@@ -178,6 +168,8 @@ internal class AccountMonitoringService(
                 tasks.Add(SocialSrv.Value.FinishServiceAlert(
                     plan.Username, phone, plan.GetPlanTitle(), remains_title ?? string.Empty));
 
+                history_list.Add(WarnHistory(plan, remains_title));
+
                 IncreaseWarningTime(account, warned_account_ids);
 
                 continue;
@@ -188,6 +180,8 @@ internal class AccountMonitoringService(
             {
                 tasks.Add(EmailSrv.Value.FinishServiceAlert(
                     account.Fullname, plan.Username, account.EmailAddress, plan.GetPlanTitle(), remains_title));
+
+                history_list.Add(WarnHistory(plan, remains_title));
 
                 IncreaseWarningTime(account, warned_account_ids);
             }
@@ -201,6 +195,23 @@ internal class AccountMonitoringService(
         tasks.Add(HistoryRepo.Save(history_list));
 
         await Task.WhenAll(tasks);
+    }
+
+    private static HistoryEntity WarnHistory(PlanStateEntity plan, string? remains_title)
+    {
+        // recorded only when a warning is actually dispatched: writing it for
+        // every finishing plan on every hourly run spammed History for
+        // accounts with no reachable channel (the throttle only stamps when a
+        // message goes out)
+        return new HistoryEntity
+        {
+            Target = plan.Id,
+            Category = EventCategory.Renewal,
+            Type = EventType.Warning,
+            Title = "پایان پلن",
+            Description = "اخطار پایان پلن.",
+            Value = remains_title,
+        };
     }
 
     private static void IncreaseWarningTime(AccountEntity account, List<int> warned_account_ids)

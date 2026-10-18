@@ -36,7 +36,7 @@ public class BillingController(
     [HttpPost("pay")]
     public async Task<ApiResult> Pay([FromBody] PayRequest request)
     {
-        LoadJobContext(request.Target);
+        await LoadJobContextAsync(request.Target);
 
         var result = await application.IssueTopUp(request.Value);
 
@@ -47,7 +47,7 @@ public class BillingController(
     [HttpGet("get-invoice")]
     public async Task<ApiResult> GetInvoice([FromQuery] int code, [FromQuery] string? target)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.GetInvoice(code);
 
@@ -60,7 +60,7 @@ public class BillingController(
     [RequestSizeLimit(3_145_728)]
     public async Task<ApiResult> RegisterReceipt([FromForm] int code, [FromForm] string? target, IFormFile? file, [FromForm] string? text)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         byte[]? image = null;
         string? file_name = null;
@@ -93,7 +93,7 @@ public class BillingController(
     [HttpPost("settle-wallet")]
     public async Task<ApiResult> SettleWallet([FromBody] SettleWalletRequest request)
     {
-        LoadJobContext(request.Target);
+        await LoadJobContextAsync(request.Target);
 
         var result = await application.SettleWallet(request.Code);
 

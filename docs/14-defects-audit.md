@@ -8,10 +8,10 @@
 |---|---|
 | Critical | 6 |
 | High | 25 |
-| Medium | 28 |
+| Medium | 38 |
 | Low | 11 |
 
-مجموع: **۷۰ مورد**.
+مجموع: **۸۰ مورد**.
 
 ---
 
@@ -237,6 +237,21 @@
 5. **نبود قرارداد مشترک فرانت/بک‌اند** (route ها، شکل body، query param ها) — C3/H13/H14؛ نشانه نبود تست E2E.
 6. **ویرایش رشته‌های SQL خام/raw-string بدون تست واقعی** — H21/H23 (و C1 در نسل قبل): الحاق/پرانتز/کوتیشن جاافتاده فقط روی DB واقعی منفجر می‌شود؛ Moq هرگز SQL را نمی‌بیند. پادزهر: تست LocalDatabase برای هر کوئری raw (الگوی `ServerRepositoryTest`).
 7. **پارامتر لیستی Dapper بدون تمپلیت anonymous** — H22 (و H9 نسل قبل): لیست خام بایند نمی‌شود.
+
+## MEDIUM — کشف ثانویه (بازبینی دوم ۱۴۰۵/۰۷؛ همگی اصلاح‌شده در همان روز)
+
+| چک | # | عنوان | مکان | شرح |
+|---|---|---|---|---|
+| [x] | M30 | اسپم ساعتی History برای پلن‌های در حال اتمام | `Application/Management/AccountMonitoringService.cs` (`NotifSendServices`) | ردیف «پایان پلن» برای هر پلن رو به اتمام در **هر اجرای ساعتی** نوشته می‌شد؛ throttle فقط هنگام ارسال واقعی ایمیل زده می‌شد. **اصلاح**: ردیف History فقط در شاخه‌ی تحویل واقعی (ایمیل/سوشال) ثبت می‌شود. |
+| [x] | M31 | `GetLatestByAccountIds` کل تاریخچه Renewal را در حافظه کاهش می‌داد | `Infrastructure/Repository/RenewalRepository.cs` | در هر چرخه‌ی کلکتور x-ui (۵ دقیقه) همه‌ی ردیف‌های Renewal اکانت‌ها fetch می‌شد. **اصلاح**: `ROW_NUMBER() partition by AccountId` (الگوی `GetLastNasId`)؛ تست DB واقعی: `RenewalRepositoryTest` (پکیج `Data/Sql/RenewalLatest`). |
+| [x] | M32 | کش AccessService با restart پاک می‌شد ولی JWT زنده بود → deny-on-miss | `Portal/Basical/AccessService.cs` + `ResultHandlerController` | بعد از restart (یا با هاست دوم) مدیر/ادمین تا login مجدد روی همه‌ی درخواست‌های cross-target خطای ۴۰۳ می‌گرفت. **اصلاح**: روی cache miss ناحیه از DB با همان قواعد لاگین بازسازی و کش می‌شود (ادمین→`GetAllActive`، بقیه→`GetActiveTargetArea`؛ اکانت نامعلوم/غیرفعال همچنان رد)؛ `CheckAccess` و `LoadJobContext→LoadJobContextAsync` async شدند؛ تست: `AccessService.CheckAccess_CacheMiss_RebuildsAreaFromRepository`. |
+| [x] | M33 | `GetLastByTitle` بدون ایندکس روی Title = full-scan در هر تسویه | `HistoryRepository` + `Database/LocalDatabase/Indexes.sql` | ماشین حالت آستانه کیف پول بعد از هر عملیات مالی موفق + ساعتی اجرا می‌شود و روی History رو به رشد group-by می‌زند. **اصلاح**: ایندکس `IX_History_Title_Target (Title, Target)` در مجموعه‌ی fresh-install. |
+| [x] | M34 | دورزدن rate-limit از مسیر `change-ovpn`/`change-pass` | `Portal/Controllers/VpnController.cs`، `AccountController.cs` | این دو endpoint پسورد پرتال را validate می‌کنند ولی policy «auth» فقط روی AuthController بود → brute-force بدون محدودیت + ردیف History به‌ازای هر تلاش. **اصلاح**: `[EnableRateLimiting(ServiceFactory.AuthRateLimitPolicy)]` روی هر دو متد. |
+| [x] | M35 | هیچ سیاست پسوردی سمت سرور وجود نداشت | `Domain/Account/Business/AccountBusiness.ValidatePassword` | پسورد ۱ کاراکتری در register/reset-pass/change-pass/set-password پذیرفته می‌شد؛ الگو فقط در فرانت بود. **اصلاح**: `AccountBusiness.ValidatePassword` (۸..۴۸ کاراکتر + همان regex فرانت: رقم + حروف کوچک/بزرگ یا فارسی) در هر ۴ مسیر set پسورد (`Register`، `AccountApplication.SetPassword`، `UserManagementApplication.Create`)؛ fixtureهای تست به رمزهای منطبق به‌روزرسانی شدند. |
+| [x] | M36 | کش task معیوب در EmailService | `OutSource/EmailService.cs` | `GetOrAdd` تکلیف faulted را برای همیشه کش می‌کرد → یک خطای گذرای خواندن فایل، همه‌ی ایمیل‌های بعدی تا restart را می‌کشت. **اصلاح**: evict-then-rethrow در هر دو کش (template/logo). |
+| [x] | M37 | پشت reverse proxy همه کاربران یک IP دیده می‌شدند | `Portal/Program.cs` | بدون `UseForwardedHeaders`، پارتیشن rate-limiter = IP پراکسی → سهمیه‌ی ۱۰/دقیقه auth بین همه مشترک (خود-DoS). **اصلاح**: `XForwardedFor | XForwardedProto` با known-proxies پیش‌فرض (loopback = nginx محلی Plesk؛ پراکسی ریموت باید به `KnownProxies` اضافه شود). |
+| [x] | M38 | Inner exception در لاگ تولید حذف می‌شد | `Portal/Basical/ExceptionHandlingMiddleware.cs` | `ex.Message + StackTrace` زنجیره‌ی علت (مثلاً SqlException داخل wrapper) را لاگ نمی‌کرد. **اصلاح**: `ex.ToString()`. |
+| [x] | M39 | عملیات گروهی x-ui: لیست کامل inbound به‌ازای هر username | `XuiPanel/Application/AccountRadiusSyncXuiService.cs` | `DeactivateUser/ActivateUser` برای هر username یک `GetClient` (هر کدام `ListInbounds` کامل) می‌زدند — همان الگوی H16 برای x-ui؛ در جاروب ساعتی با کاربران زیاد اجرا می‌شود. **اصلاح**: یک `ListClients` برای کل دسته + فیلتر مجموعه‌ی هدف. |
 
 ## فازهای اجرایی پیشنهادی (اولویت)
 

@@ -18,7 +18,7 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : HttpHand
             Mobile = "+989121234568",
             Email = "user02@gmail.com",
             Username = "user02",
-            Password = "Password",
+            Password = "Passw0rd1",
         });
         await CheckResponse(response);
 
@@ -26,7 +26,7 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : HttpHand
         response = await Client.PostAsJsonAsync("/api/auth/token", new TokenContext
         {
             Username = "user02",
-            Password = "Password",
+            Password = "Passw0rd1",
         });
         SetToken(await CheckResponseObject(response));
 

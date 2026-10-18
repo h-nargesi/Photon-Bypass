@@ -34,7 +34,7 @@ public class WalletController(
     [HttpPost("adjust")]
     public async Task<ApiResult> Adjust([FromBody] WalletAdjustRequest request)
     {
-        LoadJobContext(request.Target);
+        await LoadJobContextAsync(request.Target);
 
         var result = await application.Adjust(request.Direction, request.Amount, request.Description);
 
@@ -49,7 +49,7 @@ public class WalletController(
     [HttpGet("history")]
     public async Task<ApiResult> GetHistory([FromQuery] string? target, [FromQuery] int page = 1)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.GetHistory(page);
 

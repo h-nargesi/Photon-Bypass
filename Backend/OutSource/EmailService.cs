@@ -16,18 +16,30 @@ class EmailService(IEmailHandler handler, IOptions<BrandingOptions> branding_opt
     private static readonly ConcurrentDictionary<string, Task<string>> TemplateCache = new();
     private static readonly ConcurrentDictionary<string, Task<byte[]>> LogoCache = new();
 
-    private static Task<string> LoadTemplateAsync(string file_name)
+    private static async Task<string> LoadTemplateAsync(string file_name)
     {
-        return TemplateCache.GetOrAdd(file_name, path => File.ReadAllTextAsync(path));
+        var task = TemplateCache.GetOrAdd(file_name, path => File.ReadAllTextAsync(path));
+
+        try
+        {
+            return await task;
+        }
+        catch
+        {
+            // a faulted task must not stay cached: a single transient read
+            // failure would break every subsequent send until a restart
+            TemplateCache.TryRemove(file_name, out _);
+            throw;
+        }
     }
 
     /// <summary>
     /// Loads the branding logo once per path; a missing file fails fast with a
     /// clear message because every outbound email would otherwise go out broken.
     /// </summary>
-    private static Task<byte[]> LoadLogoAsync(string path)
+    private static async Task<byte[]> LoadLogoAsync(string path)
     {
-        return LogoCache.GetOrAdd(path, async p =>
+        var task = LogoCache.GetOrAdd(path, async p =>
         {
             if (!File.Exists(p))
             {
@@ -36,6 +48,16 @@ class EmailService(IEmailHandler handler, IOptions<BrandingOptions> branding_opt
 
             return await File.ReadAllBytesAsync(p);
         });
+
+        try
+        {
+            return await task;
+        }
+        catch
+        {
+            LogoCache.TryRemove(path, out _);
+            throw;
+        }
     }
 
     private async Task<MailMessage> CreateHtmlMessageAsync(MailAddress from, MailAddress to, string subject, string body)

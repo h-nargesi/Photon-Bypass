@@ -84,11 +84,9 @@ class UserManagementApplication(
 
     public async Task<ApiResult> Create(CreateUserModel model)
     {
-        if (string.IsNullOrWhiteSpace(model.Password))
-        {
-            throw new UserException("کلمه عبور اولیه الزامی است!",
-                "Created accounts need an initial password (docs/20 D12: the creator sets it).");
-        }
+        // same policy as self-service registration (docs/20 D12: the creator
+        // sets the initial password — it must satisfy the portal policy)
+        AccountBusiness.ValidatePassword(model.Password);
 
         var actor = await ResolveActor();
 
