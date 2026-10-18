@@ -37,7 +37,10 @@
 ### `SetOVpnCertificate` — `NotImplementedException`
 
 `Backend/MikrotikRadius/Application/MikrotikDirectService.cs:165` فعلاً فقط اعتبارسنجی یوزرنیم را می‌کند و سپس `throw new NotImplementedException()`. این متد برای پخش گواهی روی NASهای ثانویه استفاده می‌شود (`AccountRadiusSyncService.GetOVpnCertificate` آن را صدا می‌زند).
-**نقطه‌ی شروع**: همان فایل + `MikrotikDirectService.GetOVpnCertificate` (که گواهی را می‌سازد) به‌عنوان الگو برای SSH/`ProcessService`.
+
+**تصمیم (۲۰۲۶-۱۰-۱۸)**: پیاده‌سازی تا فاز پشتیبانی OpenVPN به تعویق افتاد. تا آن زمان کل مسیر گواهی پشت گیت T3 (`SupportsOvpnCert` = بیت `ServerFeature.Ovpn` + Mikrotik) بسته است — تا وقتی هیچ سروری آن بیت را نداشته باشد، این متد فراخوانی نمی‌شود (ممیزی: `Database/Ops/audit-server-ovpn-feature.sql`). هشدار: فعال‌سازی اشتباهی بیت روی realm چند-NAS → `NotImplementedException` (خطای ۵۰۰ خام). این متد فقط برای realmهای ۲+ NAS میکروتیک لازم است؛ realm تک-NAS بدون آن کار می‌کند.
+
+**نقطه‌ی شروع**: همان فایل + `MikrotikDirectService.GetOVpnCertificate` (که گواهی را می‌سازد) به‌عنوان الگو برای SSH/`ProcessService`. همراه با `Architecture/TODO.md:64` (throttle گواهی) و `:61` (مدیریت گواهی‌های قدیمی) در همان فاز انجام شود.
 
 ### WhatsApp — gated پشت `#if SOCIAL`
 
