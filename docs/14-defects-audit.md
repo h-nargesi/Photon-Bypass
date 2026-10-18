@@ -7,11 +7,11 @@
 | شدت | تعداد |
 |---|---|
 | Critical | 6 |
-| High | 20 |
+| High | 25 |
 | Medium | 28 |
 | Low | 11 |
 
-مجموع: **۶۵ مورد**.
+مجموع: **۷۰ مورد**.
 
 ---
 
@@ -216,6 +216,18 @@
 
 ---
 
+## HIGH — کشف ثانویه (بازبینی دوم ۱۴۰۵/۰۷؛ همگی اصلاح‌شده در همان روز)
+
+> ریشه مشترک H21–H23: کوئری‌های SQL خامِ ریپوها فقط با Moq تست شده بودند و سه خطای سینتکس/پارامتر زنده از سوئیت رد شدند — پوشش LocalDatabase برای همین متدها اضافه شد (`ServerRepositoryTest`).
+
+| چک | # | عنوان | مکان | شرح |
+|---|---|---|---|---|
+| [x] | H21 | الحاق فیلتر realm بدون فاصله → خطای سینتکس SQL در هر فراخوانی realm-دار | `Infrastructure/Repository/ServerRepository.cs` (`GetAllActiveNasDomainInRealm`) | رشته‌ی raw-string با `> 0` تمام می‌شود و `sql += "and RealmId = ..."` می‌چسبد → `> 0and ...`؛ یعنی `GetDefaultCertificate → SendCertEmail/DownloadVpnConfig` برای همه‌ی کاربران OVPN با realm تخصیص‌یافته ۵۰۰ می‌شد. تست Moq موجود (`GetDefaultCertificate_SingleRealm`) از آن عبور می‌کرد. **اصلاح**: فیلتر داخل خود raw string با جای‌نگهد `{realm_filter}`؛ تست رگرسیون واقعی: `ServerRepositoryTest.GetAllActiveNasDomainInRealm_ScopedToRealm` (پکیج `Data/Sql/ServerLookup`). |
+| [x] | H22 | پارامتر Dapper به‌صورت لیست خام → «Must declare the scalar variable @ips» | `Infrastructure/Repository/ServerRepository.cs` (`GetServerIdByIpAddress`) | `QueryAsync(sql, ips)` به‌جای `new { ips }` — لیست خام تمپلیت پارامتر معتبری نیست و `@ips` هرگز بایند نمی‌شود؛ یعنی `Merge` در `UpdateTrafficData` با اولین دیتای واقعی radius می‌مرد. **اصلاح**: `new { ips }`؛ تست: `ServerRepositoryTest.GetServerIdByIpAddress_BindsTheListParameter`. |
+| [x] | H23 | `")` سرگردان داخل where raw-string → «Unclosed quotation mark» در lookup بستن کانکشن | `Infrastructure/Repository/ServerRepository.cs` (`GetActiveNasInfo`) | علامت `")` متد در انتهای literal مانده بود و داخل SQL می‌رفت؛ یعنی `ConnectionApplication.CloseConnection` (بستن کانکشن از داشبورد) روی DB واقعی همیشه استثنا می‌داد. **اصلاح**: بستن صحیح raw string؛ تست: `ServerRepositoryTest.GetActiveNasInfo_FindsActiveNasByIp`. |
+| [x] | H24 | شکست مراحل پس از commit در تمدید → فاکتور به Pending برمی‌گردد در حالی که دبیت/پلن commit شده‌اند | `Application/Plan/PlanApplication.cs` (بخش پس از `CommitAsync`) + `BillingApplication.SettleWalletCore` | `CloseConnectionByUsername` (SSH)، History موفقیت و `CheckUserServerBalance` بعد از commit اجرا می‌شدند و exception آن‌ها باعث `RevertToPending` + پیام «ناموفق» می‌شد در حالی که پلن فعال و پول مصرف‌شده بود (تسویه مجدد = تمدید دوباره). **اصلاح**: هر سه گام best-effort با try/catch و لاگ — commit موفق همیشه موفقیت برمی‌گرداند؛ تست: `RenewalPostCommitFailureTest.SettleWallet_CloseConnectionFailureAfterCommit_StillSucceeds`. |
+| [x] | H25 | بلوک `#if SOCIAL` کامپایل نمی‌شود — فعال‌سازی واتساپ build را می‌شکند | `Application/Management/AccountMonitoringService.cs` (`NotifSendServices`) | ارجاع به `contact`/`SocialSrv`/`remainsTitle`/`plan.PlanType` که هیچ‌کدام وجود نداشتند. **اصلاح**: وابستگی `Lazy<ISocialMediaService>` به کلاس + بازنویسی شاخه با `account.MobileNumber`/`plan.GetPlanTitle()`؛ راستی‌آزمایی: build پروژه‌ی Application با `-p:DefineConstants=SOCIAL` سبز (۰ خطا؛ تنها هشدار باقی‌مانده CS8604 خط ایمیل از HEAD است). |
+
 ## الگوهای ریشه‌ای (ریشه مشترک چند ایراد)
 
 1. **Fire-and-forget `_ = ...`** روی منابع scoped — ریشه H4/H18 و بخشی از M18.
@@ -223,6 +235,8 @@
 3. **تراکنش‌ها فقط روی overload تک-Entity معتبرند** — C2 و همه جاهایی که `Save(IEnumerable)` صدا زده می‌شود.
 4. **Check-then-act بدون قفل/unique** — C4، M4، M10، H19.
 5. **نبود قرارداد مشترک فرانت/بک‌اند** (route ها، شکل body، query param ها) — C3/H13/H14؛ نشانه نبود تست E2E.
+6. **ویرایش رشته‌های SQL خام/raw-string بدون تست واقعی** — H21/H23 (و C1 در نسل قبل): الحاق/پرانتز/کوتیشن جاافتاده فقط روی DB واقعی منفجر می‌شود؛ Moq هرگز SQL را نمی‌بیند. پادزهر: تست LocalDatabase برای هر کوئری raw (الگوی `ServerRepositoryTest`).
+7. **پارامتر لیستی Dapper بدون تمپلیت anonymous** — H22 (و H9 نسل قبل): لیست خام بایند نمی‌شود.
 
 ## فازهای اجرایی پیشنهادی (اولویت)
 

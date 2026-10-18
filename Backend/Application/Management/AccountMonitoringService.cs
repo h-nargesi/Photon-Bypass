@@ -18,6 +18,7 @@ internal class AccountMonitoringService(
     IHistoryRepository history_repo,
     Lazy<IPlanUsageReader> plan_usage_reader,
     Lazy<IEmailService> email_srv,
+    Lazy<ISocialMediaService> social_srv,
     Lazy<IAccountRadiusSyncService> account_radius_srv)
     : IAccountMonitoringService
 {
@@ -25,6 +26,7 @@ internal class AccountMonitoringService(
     private IHistoryRepository HistoryRepo { get; } = history_repo;
     private Lazy<IPlanUsageReader> PlanUsageReader { get; } = plan_usage_reader;
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
+    private Lazy<ISocialMediaService> SocialSrv { get; } = social_srv;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
 
     public async Task InactiveAbandonedUsers(IEnumerable<PlanStateEntity> plan_state_list)
@@ -166,17 +168,20 @@ internal class AccountMonitoringService(
             }
 
 #if SOCIAL
-            if (contact.Phone != null)
-            {
-                tasks.Add(SocialSrv.FinishServiceAlert(plan.Username, contact.Phone, plan.PlanType, remainsTitle));
+            // WhatsApp-first: a validated mobile number gets the social alert
+            // instead of the email below (the interface contract is
+            // FinishServiceAlert(username, phone, type, left)).
+            var phone = account.MobileNumber;
 
-                if (account != null)
-                {
-                    IncreaseWarningTime(account, warned_account_ids);
-                }
+            if (phone != null)
+            {
+                tasks.Add(SocialSrv.Value.FinishServiceAlert(
+                    plan.Username, phone, plan.GetPlanTitle(), remains_title ?? string.Empty));
+
+                IncreaseWarningTime(account, warned_account_ids);
 
                 continue;
-        }
+            }
 #endif
 
             if (account.EmailAddress != null)
