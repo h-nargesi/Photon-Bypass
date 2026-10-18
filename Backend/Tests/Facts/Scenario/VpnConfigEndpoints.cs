@@ -37,12 +37,12 @@ public class VpnConfigEndpoints(ProgramLevelInitializer.Factory factory) : HttpH
         Assert.Equal("usermanager", info["kind"]);
         Assert.Null(info["vlessLink"]);
 
-        // /api/vpn/download — same OVPN payload as the legacy download-cert
+        // /api/vpn/download — OVPN data-plane: ZIP with cert + connection sheet
         var download_response = await Client.GetAsync("/api/vpn/download");
 
-        Assert.Equal("application/x-openvpn-profile", download_response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("application/zip", download_response.Content.Headers.ContentType?.MediaType);
         Assert.Equal("attachment", download_response.Content.Headers.ContentDisposition?.DispositionType);
-        Assert.EndsWith(".ovpn", download_response.Content.Headers.ContentDisposition?.FileName);
+        Assert.EndsWith(".zip", download_response.Content.Headers.ContentDisposition?.FileName);
         Assert.NotEmpty(await download_response.Content.ReadAsByteArrayAsync());
 
         // /api/vpn/config-info for a foreign target is rejected by the access gate

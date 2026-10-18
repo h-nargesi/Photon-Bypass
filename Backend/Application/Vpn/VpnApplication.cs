@@ -17,6 +17,7 @@ using PhotonBypass.Domain.Vpn;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
+using System.IO.Compression;
 using System.Text;
 
 namespace PhotonBypass.Application.Vpn;
@@ -33,10 +34,13 @@ class VpnApplication(
     Lazy<IEmailService> email_srv,
     Lazy<IVpnLinkService> vpn_link_srv,
     Lazy<IJobContext> job_context,
-    IOptions<ManagementOptions> options)
+    IOptions<ManagementOptions> options,
+    IOptions<BrandingOptions> branding_options)
     : IVpnApplication
 {
     private const int MaxDateBefore = 30;
+
+    private static readonly string HeaderRule = new('=', 36);
 
     private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
     private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
@@ -50,6 +54,7 @@ class VpnApplication(
     private Lazy<IVpnLinkService> VpnLinkSrv { get; } = vpn_link_srv;
     private Lazy<IJobContext> JobContext { get; } = job_context;
     private IOptions<ManagementOptions> Options { get; } = options;
+    private IOptions<BrandingOptions> BrandingOptions { get; } = branding_options;
 
     public async Task<ApiResult> ChangeVpnPassword(string target, string password)
     {
@@ -118,22 +123,6 @@ class VpnApplication(
         return ApiResult.Success("کانفیگ اتصال به ایمیل ارسال شد.");
     }
 
-    public async Task<CertContext> DownloadCertificate(string target)
-    {
-        var (account, cert_context) = await BuildCertificate(target, require_email: false);
-
-        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
-        {
-            Target = account.Id,
-            Category = EventCategory.Security,
-            Type = EventType.Information,
-            Title = "امنیت",
-            Description = "کانفیگ اتصال دانلود شد.",
-        });
-
-        return cert_context;
-    }
-
     public async Task<ApiResult<VpnConfigInfoModel>> GetConfigInfo(string target)
     {
         var (account, realm_id, info) = await LoadConfigContext(target, require_email: false);
@@ -152,34 +141,39 @@ class VpnApplication(
         });
     }
 
+    /// <summary>
+    /// Single config download for every data-plane kind: x-ui accounts get a
+    /// plain-text connection sheet ({username}.txt), OpenVPN accounts get a ZIP
+    /// ({username}.zip) carrying the certificate plus the same info sheet.
+    /// </summary>
     public async Task<VpnConfigFileModel> DownloadVpnConfig(string target)
     {
         var (account, realm_id, info) = await LoadConfigContext(target, require_email: false);
+
+        VpnConfigFileModel file;
 
         if (info?.SupportsCredentialRotation == true)
         {
             var link = await FetchVlessLink(realm_id, account.Username);
 
-            var content = Encoding.UTF8.GetBytes($"{account.Username}\n{link}\n");
-
-            await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
-            {
-                Target = account.Id,
-                Category = EventCategory.Security,
-                Type = EventType.Information,
-                Title = "امنیت",
-                Description = "کانفیگ اتصال دانلود شد.",
-            });
-
-            return new VpnConfigFileModel
+            file = new VpnConfigFileModel
             {
                 FileName = $"{account.Username}.txt",
-                ContentType = "text/plain",
-                Content = content,
+                ContentType = "text/plain; charset=utf-8",
+                Content = Encoding.UTF8.GetBytes(BuildConnectionInfoText(account.Username, link: link, cert_key_password: null)),
             };
         }
+        else
+        {
+            var cert_context = await BuildCertificate(account, realm_id, info);
 
-        var cert_context = await BuildCertificate(account, realm_id, info);
+            file = new VpnConfigFileModel
+            {
+                FileName = $"{account.Username}.zip",
+                ContentType = "application/zip",
+                Content = BuildConfigZip(account.Username, cert_context),
+            };
+        }
 
         await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
@@ -190,12 +184,76 @@ class VpnApplication(
             Description = "کانفیگ اتصال دانلود شد.",
         });
 
-        return new VpnConfigFileModel
+        return file;
+    }
+
+    /// <summary>
+    /// Builds the shared connection sheet: Persian label on one line, the
+    /// (mostly LTR) value on the next, exactly one blank line between
+    /// sections; full Persian sentences stay unsplit.
+    /// </summary>
+    private string BuildConnectionInfoText(string username, string? link, string? cert_key_password)
+    {
+        var branding = BrandingOptions.Value;
+
+        var sections = new List<string>
         {
-            FileName = $"{account.Username}.ovpn",
-            ContentType = "application/x-openvpn-profile",
-            Content = cert_context.CertFile,
+            $"{HeaderRule}\n{branding.Title} | مشخصات اتصال\n{HeaderRule}",
+            $"نام کاربری:\n{username}",
         };
+
+        if (cert_key_password != null)
+        {
+            sections.Add($"رمز گواهی (User key password):\n{cert_key_password}");
+        }
+
+        if (link != null)
+        {
+            sections.Add($"لینک اتصال (vless):\n{link}");
+        }
+
+        sections.Add($"راهنمای اتصال:\n{branding.ConnectionGuideUrl}");
+
+        if (!string.IsNullOrWhiteSpace(branding.OvpnInstallerUrl))
+        {
+            sections.Add($"نصب‌کننده OpenVPN:\n{branding.OvpnInstallerUrl}");
+        }
+
+        sections.Add($"سایت:\n{branding.SiteUrl}");
+
+        if (link != null)
+        {
+            sections.Add("نکته:\nبا هر چرخش شناسه اتصال، کانفیگ قبلی باطل می‌شود؛ کانفیگ جدید را از پنل کاربری دریافت کنید.");
+        }
+
+        return string.Join("\n\n", sections) + "\n";
+    }
+
+    private byte[] BuildConfigZip(string username, CertContext cert_context)
+    {
+        using var output = new MemoryStream();
+
+        using (var archive = new ZipArchive(output, ZipArchiveMode.Create))
+        {
+            var cert_entry = archive.CreateEntry("config.ovpn");
+
+            using (var cert_stream = cert_entry.Open())
+            {
+                cert_stream.Write(cert_context.CertFile, 0, cert_context.CertFile.Length);
+            }
+
+            var info_entry = archive.CreateEntry("connection-info.txt");
+
+            using (var info_stream = info_entry.Open())
+            {
+                var info = Encoding.UTF8.GetBytes(
+                    BuildConnectionInfoText(username, link: null, cert_key_password: cert_context.PrivateKeyOvpn));
+
+                info_stream.Write(info, 0, info.Length);
+            }
+        }
+
+        return output.ToArray();
     }
 
     public async Task<ApiResult<TrafficDataModel>> TrafficData(string target)
@@ -349,27 +407,6 @@ class VpnApplication(
         await AccountRadiusSrv.Value.GetOVpnCertificate(realm_id, account.Username, cert_context);
 
         return cert_context;
-    }
-
-    private async Task<(AccountEntity Account, CertContext Cert)> BuildCertificate(string target, bool require_email)
-    {
-        var account = await AccountApp.Value.GetActiveUser(target);
-
-        if (require_email && account.EmailAddress == null)
-        {
-            throw new UserException("ایمیل کاربر ثبت نشده است!",
-                $"account is email address is unknown: target={target}");
-        }
-
-        var plan = (await PlanStateRepo.Value.GetPlanState(account.Id)) ??
-                   throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
-                       $"There is not ant plan for user {target}");
-
-        var info = await ServerMngSrv.Value.GetDataPlaneInfo(plan.RestrictedRealmId);
-
-        var cert_context = await BuildCertificate(account, plan.RestrictedRealmId, info);
-
-        return (account, cert_context);
     }
 
     private static TrafficDataModel ConvertToModel(IEnumerable<TrafficDataEntity> data)

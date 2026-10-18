@@ -14,8 +14,9 @@ public class VpnConfigInfoModel
 }
 
 /// <summary>
-/// A downloadable config file: for x-ui a plain-text file (username + vless
-/// link), for Mikrotik the OVPN profile content unchanged.
+/// A downloadable config file: for x-ui a plain-text connection sheet
+/// (username + vless link + branding), for OpenVPN a ZIP carrying
+/// config.ovpn plus the same connection sheet.
 /// </summary>
 public class VpnConfigFileModel
 {

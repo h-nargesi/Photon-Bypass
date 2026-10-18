@@ -13,6 +13,7 @@ using PhotonBypass.Test.Mock.MockLocalRepository;
 using PhotonBypass.Test.Mock.MockServerBridge;
 using PhotonBypass.Test.Mock.MockXuiPanel;
 using PhotonBypass.Tools;
+using System.IO.Compression;
 using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 
 namespace PhotonBypass.Test.Facts.Application;
@@ -334,27 +335,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task DownloadCertificate_InvalidAccount()
-    {
-        using var scope = App.Services.CreateScope();
-        var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
-        var func = () => vpn_app.DownloadCertificate("Invalid Username");
-
-        await func.Should().ThrowAsync<UserException>();
-    }
-
-    [Fact]
-    public async Task DownloadCertificate_WithoutPlan()
-    {
-        using var scope = App.Services.CreateScope();
-        var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
-        var func = () => vpn_app.DownloadCertificate("User6");
-
-        await func.Should().ThrowAsync<UserException>();
-    }
-
-    [Fact]
-    public async Task DownloadCertificate_WithoutEmailAddress_Succeeds()
+    public async Task DownloadVpnConfig_WithoutEmailAddress_Succeeds()
     {
         using var scope = App.Services.CreateScope();
 
@@ -375,32 +356,14 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
                 TrafficLeft = 1073001004,
             });
 
-        var cert = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .DownloadCertificate("User8");
+        var file = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .DownloadVpnConfig("User8");
 
-        Assert.NotNull(cert);
-        Assert.NotEmpty(cert.CertFile);
-        Assert.Equal("Realm-LO-2", cert.Realm);
-    }
+        file.FileName.Should().Be("User8.zip");
+        file.ContentType.Should().Be("application/zip");
 
-    [Fact]
-    public async Task DownloadCertificate()
-    {
-        using var scope = App.Services.CreateScope();
-
-        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
-
-        var cert = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .DownloadCertificate("User2");
-
-        Assert.NotNull(cert);
-        Assert.NotEmpty(cert.CertFile);
-        Assert.Equal("Realm-LO-2", cert.Realm);
-        Assert.NotEmpty(cert.PrivateKeyOvpn);
-
-        var download_event = history_moq.Data.SingleOrDefault(h => h.Description == "کانفیگ اتصال دانلود شد.");
-        Assert.NotNull(download_event);
-        Assert.Equal(2, download_event.Target);
+        using var archive = new ZipArchive(new MemoryStream(file.Content));
+        archive.Entries.Select(e => e.FullName).Should().Contain(["config.ovpn", "connection-info.txt"]);
     }
 
     [Fact]
@@ -479,7 +442,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         var attachment_count = -1;
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += mail =>
         {
-            sent_body = mail.Body;
+            sent_body = HtmlBody(mail);
             attachment_count = mail.Attachments?.Count ?? 0;
         };
 
@@ -509,7 +472,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += mail =>
         {
             send_count++;
-            sent_body = mail.Body;
+            sent_body = HtmlBody(mail);
             attachment_count = mail.Attachments?.Count ?? 0;
         };
 
@@ -554,7 +517,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task DownloadVpnConfig_XuiRealm_ReturnsTextFileWithUsernameAndLink()
+    public async Task DownloadVpnConfig_XuiRealm_ReturnsBrandedConnectionSheet()
     {
         using var scope = App.Services.CreateScope();
 
@@ -567,11 +530,30 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
             .DownloadVpnConfig("User2");
 
         file.FileName.Should().Be("User2.txt");
-        file.ContentType.Should().Be("text/plain");
+        file.ContentType.Should().Be("text/plain; charset=utf-8");
+
+        // UTF-8 without BOM, like every other text artifact the panel serves
+        file.Content.Should().NotBeEmpty();
+        file.Content[0].Should().NotBe(0xEF);
 
         var text = System.Text.Encoding.UTF8.GetString(file.Content);
-        text.Should().Contain("User2\n");
-        text.Should().Contain("vless://live-uuid-2@srv21.photon-bypass.com:443");
+
+        // branded header
+        text.Should().Contain("Fast Bypass | مشخصات اتصال");
+
+        // D2 RTL/LTR rule: Persian label on one line, value on the next,
+        // sections separated by exactly one blank line
+        text.Should().Contain("نام کاربری:\nUser2");
+        text.Should().Contain("لینک اتصال (vless):\nvless://live-uuid-2@srv21.photon-bypass.com:443");
+        text.Should().Contain("راهنمای اتصال:\nhttps://guide.example.com/vpn");
+        text.Should().Contain("نصب‌کننده OpenVPN:\nhttps://example.com/ovpn-installer");
+        text.Should().Contain("سایت:\nhttps://photon-bypass.com");
+        text.Should().Contain("\n\n");
+
+        // the rotation note is x-ui-only, the OVPN password section is absent
+        text.Should().Contain("نکته:");
+        text.Should().Contain("با هر چرخش شناسه اتصال، کانفیگ قبلی باطل می‌شود؛ کانفیگ جدید را از پنل کاربری دریافت کنید.");
+        text.Should().NotContain("رمز گواهی");
     }
 
     [Fact]
@@ -605,21 +587,77 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task DownloadVpnConfig_NonXuiRealm_ReturnsTheOvpnFileUnchanged()
+    public async Task DownloadVpnConfig_OvpnRealm_ReturnsZipWithCertAndInfoText()
     {
         using var scope = App.Services.CreateScope();
+
+        // capture the exact certificate bytes the same pipeline emails, so the
+        // ZIP entry can be byte-compared against the live CertFile
+        byte[]? emailed_cert = null;
+        scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += mail =>
+        {
+            using var copy = new MemoryStream();
+            mail.Attachments.Single().ContentStream.CopyTo(copy);
+            emailed_cert = copy.ToArray();
+        };
+
+        await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
+            .SendCertEmail("User2");
+
+        emailed_cert.Should().NotBeNull();
 
         var file = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
             .DownloadVpnConfig("User2");
 
-        file.FileName.Should().Be("User2.ovpn");
-        file.ContentType.Should().Be("application/x-openvpn-profile");
-        file.Content.Should().NotBeEmpty();
+        file.FileName.Should().Be("User2.zip");
+        file.ContentType.Should().Be("application/zip");
+
+        using var archive = new ZipArchive(new MemoryStream(file.Content));
+
+        archive.Entries.Select(e => e.FullName).Should().BeEquivalentTo(["config.ovpn", "connection-info.txt"]);
+
+        // the certificate travels inside the ZIP unchanged
+        ReadZipEntry(archive, "config.ovpn").Should().Equal(emailed_cert!);
+
+        var info_text = System.Text.Encoding.UTF8.GetString(ReadZipEntry(archive, "connection-info.txt"));
+
+        info_text.Should().Contain("Fast Bypass | مشخصات اتصال");
+        info_text.Should().Contain("نام کاربری:\nUser2");
+        info_text.Should().Contain("رمز گواهی (User key password):\n");
+        info_text.Should().Contain("راهنمای اتصال:\nhttps://guide.example.com/vpn");
+        info_text.Should().Contain("نصب‌کننده OpenVPN:\nhttps://example.com/ovpn-installer");
+        info_text.Should().Contain("سایت:\nhttps://photon-bypass.com");
+
+        // OVPN accounts do not rotate: no vless section, no rotation note
+        info_text.Should().NotContain("لینک اتصال");
+        info_text.Should().NotContain("نکته:");
 
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
         var download_event = history_moq.Data.SingleOrDefault(h => h.Description == "کانفیگ اتصال دانلود شد.");
         download_event.Should().NotBeNull();
         download_event.Target.Should().Be(2);
+    }
+
+    private static byte[] ReadZipEntry(ZipArchive archive, string entry_name)
+    {
+        var entry = archive.GetEntry(entry_name)!;
+
+        using var stream = entry.Open();
+        using var copy = new MemoryStream();
+        stream.CopyTo(copy);
+
+        return copy.ToArray();
+    }
+
+    /// <summary>
+    /// The delivered HTML lives on the message's alternate view, not in
+    /// <see cref="System.Net.Mail.MailMessage.Body"/>.
+    /// </summary>
+    private static string HtmlBody(System.Net.Mail.MailMessage mail)
+    {
+        using var reader = new StreamReader(mail.AlternateViews[0].ContentStream, System.Text.Encoding.UTF8);
+
+        return reader.ReadToEnd();
     }
 
     [Fact]

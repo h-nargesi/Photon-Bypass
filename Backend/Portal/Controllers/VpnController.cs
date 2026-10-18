@@ -75,16 +75,6 @@ public class VpnController(
         return File(file.Content, file.ContentType, file.FileName);
     }
 
-    [HttpGet("download-cert")]
-    public async Task<IActionResult> DownloadCert([FromQuery] string? target)
-    {
-        LoadJobContext(target);
-
-        var cert = await application.DownloadCertificate(JobContext.Target);
-
-        return File(cert.CertFile, "application/x-openvpn-profile", $"{JobContext.Target}.ovpn");
-    }
-
     [HttpGet("traffic-data")]
     public async Task<ApiResult> TrafficData([FromQuery] string? target)
     {

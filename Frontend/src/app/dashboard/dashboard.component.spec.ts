@@ -287,16 +287,16 @@ describe('DashboardComponent', () => {
       req => req.method === 'GET' && req.url === '/api/vpn/download',
     );
     expect(request.request.responseType).toBe('blob');
-    request.flush(new Blob(['cert-body'], { type: 'application/x-openvpn-profile' }), {
+    request.flush(new Blob(['zip-body'], { type: 'application/zip' }), {
       status: 200,
       statusText: 'OK',
       headers: new HttpHeaders({
-        'Content-Type': 'application/x-openvpn-profile',
-        'Content-Disposition': 'attachment; filename="main.ovpn"',
+        'Content-Type': 'application/zip',
+        'Content-Disposition': 'attachment; filename="main.zip"',
       }),
     });
     expect(component.downloading_cert).toBeFalse();
-    expect(anchors.clicked?.download).toBe('main.ovpn');
+    expect(anchors.clicked?.download).toBe('main.zip');
     expect(create_spy).toHaveBeenCalled();
     expect(revoke_spy).toHaveBeenCalled();
   });

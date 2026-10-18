@@ -301,7 +301,7 @@ export class DashboardComponent implements OnInit {
   private saveCertificateFile(response: HttpResponse<Blob>): void {
     if (!response.ok || !response.body) return;
 
-    const file_name = this.fileDispositionName(response) ?? `${this.user_service.targetName}.ovpn`;
+    const file_name = this.fileDispositionName(response) ?? `${this.user_service.targetName}.zip`;
     const download_url = URL.createObjectURL(response.body);
     const anchor = document.createElement('a');
     anchor.href = download_url;

@@ -44,6 +44,8 @@
 | GET | `/api/account/history` | `?target` + query `HistoryContext` | `AccountController.GetHistory` | Y | تاریخچه‌ی target. |
 | POST | `/api/vpn/change-ovpn` | body `ChangeOvpnContext` | `VpnController.ChangeOvpnPassword` | Y | تغییر پسورد OpenVpn؛ نیازمند تأیید پسورد اکانت. |
 | GET | `/api/vpn/send-cert-email` | `?target` | `VpnController.SendCertEmail` | Y | ایمیل کانفیگ/گواهی. |
+| GET | `/api/vpn/config-info` | `?target` | `VpnController.ConfigInfo` | Y | kind دیتاپلین + لینک vless زنده (فقط x-ui). |
+| GET | `/api/vpn/download` | `?target` | `VpnController.DownloadConfig` | Y | دانلود واحد کانفیگ (endpoint جداگانه‌ی `download-cert` حذف شد): x-ui → `{username}.txt` با ساختار عنوان/مقدار دوخطی (قاعده‌ی RTL/LTR) + URLهای برندینگ؛ OpenVPN → `{username}.zip` شامل `config.ovpn` (عین گواهی) + `connection-info.txt`. مقادیر استاتیک از `BrandingOptions` می‌آیند. |
 | GET | `/api/vpn/traffic-data` | `?target` | `VpnController.TrafficData` | Y | داده‌های ترافیک (نمودار). |
 | GET | `/api/connection/current-con-state` | `?target` | `ConnectionController.GetCurrentConnectionState` | Y | وضعیت اتصال‌های فعال. |
 | POST | `/api/connection/close-con` | body `CloseConnectionContext` | `ConnectionController.CloseConnection` | Y | بستن کانکشن (`Server` + `SessionId`). |

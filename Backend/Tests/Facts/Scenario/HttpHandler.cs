@@ -90,7 +90,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         var email_srv = ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         email_srv.OnSend += message =>
         {
-            var match = CodeSelector().Match(message.Body);
+            var match = CodeSelector().Match(EmailBody(message));
             Assert.True(match.Success);
             code = match.Groups[1].Value;
         };
@@ -102,6 +102,18 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         await CheckResponse(response, status);
 
         return code;
+    }
+
+    /// <summary>
+    /// The delivered HTML lives on the message's alternate view, not in
+    /// <see cref="System.Net.Mail.MailMessage.Body"/>.
+    /// </summary>
+    private static string EmailBody(System.Net.Mail.MailMessage message)
+    {
+        using var reader = new System.IO.StreamReader(
+            message.AlternateViews[0].ContentStream, System.Text.Encoding.UTF8);
+
+        return reader.ReadToEnd();
     }
 
     protected async Task ResetPass(string code, string password, int status = 2)
@@ -368,9 +380,9 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         await CheckResponseObject(response, status);
     }
 
-    protected async Task<HttpResponseMessage> DownloadCert(string? target = null, int status = 2)
+    protected async Task<HttpResponseMessage> DownloadConfig(string? target = null, int status = 2)
     {
-        var url = "/api/vpn/download-cert" + (target != null ? $"?target={target}" : "");
+        var url = "/api/vpn/download" + (target != null ? $"?target={target}" : "");
         var response = await Client.GetAsync(url);
 
         if (status != 2)
