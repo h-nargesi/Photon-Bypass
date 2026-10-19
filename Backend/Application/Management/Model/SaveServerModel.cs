@@ -24,6 +24,9 @@ public class SaveServerModel
 
     public long BandWidth { get; set; }
 
+    /// <summary>Optional hard client-count cap (x-ui capacity gate, T4). Null = gate off.</summary>
+    public int? MaxClients { get; set; }
+
     public OperatingSystem OsType { get; set; }
 
     public ServerFeature Features { get; set; }

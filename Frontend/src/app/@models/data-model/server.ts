@@ -24,6 +24,8 @@ export interface ServerRow {
   name: string;
   domainName: string;
   bandWidth: number;
+  /// T4: optional hard client-count cap (x-ui capacity gate). Null/undefined = gate off.
+  maxClients?: number | null;
   osType: OperatingSystem;
   features: ServerFeature;
   hasConfig: boolean;
@@ -40,6 +42,8 @@ export interface SaveServer {
   name: string;
   domainName: string;
   bandWidth: number;
+  /// T4: optional hard client-count cap — only meaningful on x-ui rows; null = gate off.
+  maxClients?: number | null;
   osType: OperatingSystem;
   features: ServerFeature;
   config?: unknown;

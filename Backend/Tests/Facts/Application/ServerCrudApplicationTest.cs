@@ -30,6 +30,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
         string domain = "unit01",
         int realm_id = 5,
         long bandwidth = 1_073_741_824,
+        int? max_clients = null,
         OperatingSystem os = OperatingSystem.Mikrotik,
         ServerFeature features = ServerFeature.UserManager | ServerFeature.V2ray,
         ServerConfiguration? config = null)
@@ -42,6 +43,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
             Name = name,
             DomainName = domain,
             BandWidth = bandwidth,
+            MaxClients = max_clients,
             OsType = os,
             Features = features,
             Config = config,
@@ -77,6 +79,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
         Assert.Equal("Realm-LO-1", row.Realm);
         Assert.False(row.HasConfig); // the fixture rows carry no config
         Assert.Equal(server_moq.Data[1].Features, row.Features);
+        Assert.Null(row.MaxClients); // fixture rows run with the count gate off
     }
 
     [Fact]
@@ -97,6 +100,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(name: new string('n', 16))));
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(domain: new string('d', 16))));
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(bandwidth: 0)));
+        await Assert.ThrowsAsync<UserException>(() => application.Create(Model(max_clients: 0))); // T4: null allowed, 0 is not
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(os: (OperatingSystem)99)));
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(features: 0)));
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(features: unchecked((ServerFeature)0x8000_0000))));
@@ -235,5 +239,31 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
         };
 
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(name: "SRV-Big01", domain: "big01", config: oversized)));
+    }
+
+    [Fact]
+    public async Task CreateAndUpdate_MaxClientsRoundTrip()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+        var application = scope.ServiceProvider.GetRequiredService<IServerCrudApplication>();
+
+        account_moq.Data["User99"].Role = AccountRole.Admin;
+        job_context.InjectJobContext(99, "User99", "User99");
+
+        await application.Create(Model(name: "SRV-Cap01", domain: "cap01", ip: "10.50.0.1",
+            features: ServerFeature.Xui | ServerFeature.V2ray, max_clients: 5));
+
+        var id = Assert.Single(server_moq.Data.Values, s => s.Name == "SRV-Cap01").Id;
+
+        Assert.Equal(5, server_moq.Data[id].MaxClients);
+
+        // a null on update clears the cap — same contract as the optional form field
+        await application.Update(Model(id: id, name: "SRV-Cap01", domain: "cap01", ip: "10.50.0.1",
+            features: ServerFeature.Xui | ServerFeature.V2ray));
+
+        Assert.Null(server_moq.Data[id].MaxClients);
     }
 }

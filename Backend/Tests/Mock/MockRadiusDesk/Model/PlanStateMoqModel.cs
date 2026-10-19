@@ -10,6 +10,8 @@ public class PlanStateMoqModel
 
     public bool IsActive { get; set; }
 
+    public int RowNumber { get; set; }
+
     public byte SimultaneousUser { get; set; }
 
     public int? RestrictedRealmId { get; set; }
@@ -34,6 +36,7 @@ public class PlanStateMoqModel
             Id = Id,
             Username = Username,
             IsActive = IsActive,
+            RowNumber = RowNumber,
             SimultaneousUser = SimultaneousUser,
             RestrictedRealmId = RestrictedRealmId,
             TrafficLimit = TrafficLimit,

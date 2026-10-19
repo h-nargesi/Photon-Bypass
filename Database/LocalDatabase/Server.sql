@@ -10,6 +10,8 @@ CREATE TABLE Server (
 	Name				NVARCHAR(15)	NOT NULL,
 	DomainName			VARCHAR(15)		NOT NULL,
 	BandWidth			BIGINT			NOT NULL,
+	-- T4 (docs/16 §3): hard client-count cap for x-ui rows; NULL/0 = gate off.
+	MaxClients			INT				NULL,
 	OsType				TINYINT			NOT NULL,
 	Features			INT				NOT NULL,
 	-- Data Protection payload (base64) is larger than the plaintext JSON (docs/14 M12).

@@ -26,6 +26,9 @@ public class ServerEntity : IBaseEntity
 
     public long BandWidth { get; set; }
 
+    /// <summary>Hard client-count cap for x-ui rows (T4, docs/16 §3). Null/0 = gate off.</summary>
+    public int? MaxClients { get; set; }
+
     public OperatingSystem OsType { get; set; } = 0;
 
     public ServerFeature Features { get; set; } = 0;

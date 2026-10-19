@@ -94,6 +94,7 @@ export class ServersComponent implements OnInit {
   domain_name = '';
   realm_id?: number;
   band_width?: number;
+  max_clients?: number;
   os_type: OperatingSystem = OperatingSystem.Mikrotik;
   feature_state: Record<number, boolean> = {};
   config_text = '';
@@ -151,6 +152,7 @@ export class ServersComponent implements OnInit {
     this.domain_name = row.domainName;
     this.realm_id = row.realmId;
     this.band_width = row.bandWidth;
+    this.max_clients = row.maxClients ?? undefined;
     this.os_type = row.osType;
     for (const flag of this.feature_flags) {
       this.feature_state[flag] = this.hasFeature(row.features, flag);
@@ -170,6 +172,7 @@ export class ServersComponent implements OnInit {
       name: this.name.trim(),
       domainName: this.domain_name.trim(),
       bandWidth: this.band_width ?? 0,
+      maxClients: this.is_xui ? (this.max_clients ?? null) : null,
       osType: this.os_type,
       features: this.selectedFeatures(),
     };
@@ -216,6 +219,11 @@ export class ServersComponent implements OnInit {
 
   // --- helpers ---
 
+  // T4: the client-count cap only applies to x-ui rows — the field is x-ui-only
+  get is_xui(): boolean {
+    return !!this.feature_state[ServerFeature.Xui];
+  }
+
   hasFeature(features: ServerFeature, flag: ServerFeature): boolean {
     return (features & flag) === flag;
   }
@@ -252,6 +260,7 @@ export class ServersComponent implements OnInit {
     this.domain_name = '';
     this.realm_id = undefined;
     this.band_width = undefined;
+    this.max_clients = undefined;
     this.os_type = OperatingSystem.Mikrotik;
     this.feature_state = {};
     this.config_text = '';

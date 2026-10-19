@@ -74,6 +74,7 @@ internal class ServerRepositoryMoq : Mock<IServerRepository>, IUnitLevelService
                         Name = stored.Name,
                         DomainName = stored.DomainName,
                         BandWidth = stored.BandWidth,
+                        MaxClients = stored.MaxClients,
                         OsType = stored.OsType,
                         Features = stored.Features,
                         JsonConfig = stored.JsonConfig,
@@ -87,6 +88,7 @@ internal class ServerRepositoryMoq : Mock<IServerRepository>, IUnitLevelService
                         stored.Name = snapshot.Name;
                         stored.DomainName = snapshot.DomainName;
                         stored.BandWidth = snapshot.BandWidth;
+                        stored.MaxClients = snapshot.MaxClients;
                         stored.OsType = snapshot.OsType;
                         stored.Features = snapshot.Features;
                         stored.JsonConfig = snapshot.JsonConfig;
@@ -98,6 +100,7 @@ internal class ServerRepositoryMoq : Mock<IServerRepository>, IUnitLevelService
                     stored.Name = server.Name;
                     stored.DomainName = server.DomainName;
                     stored.BandWidth = server.BandWidth;
+                    stored.MaxClients = server.MaxClients;
                     stored.OsType = server.OsType;
                     stored.Features = server.Features;
                     stored.JsonConfig = server.JsonConfig;

@@ -55,7 +55,7 @@ partial class ServerManagementService(
         var server_capacities = await LoadRealmsCapacityState();
 
         var realm = server_capacities
-            .Where(realm => realm.DemandRate > -1)
+            .Where(realm => realm.DemandRate > -1 && realm.IsSelectableForAssignment)
             .OrderBy(s => s.DemandRate)
             .Select(s => s.Realm)
             .FirstOrDefault();
@@ -112,6 +112,19 @@ partial class ServerManagementService(
                 case > 90:
                     alarms.Add($"Low Capacity: {realm_state.Realm.Name} ({percent:N2}% from {realm_state.EffectiveCapacityBytes})");
                     break;
+            }
+        }
+
+        // T4-E: symmetric count alarm — the client gate closes at 100%, so the
+        // operator needs the same early warning on the count axis
+        foreach (var realm_state in realms.Where(r => r.EffectiveMaxClients.HasValue))
+        {
+            var percent = 100 * realm_state.ActiveClients / (double)realm_state.EffectiveMaxClients!.Value;
+
+            if (percent >= 90)
+            {
+                alarms.Add(
+                    $"Low Capacity (clients): {realm_state.Realm.Name} ({percent:N2}% from {realm_state.EffectiveMaxClients} client slots)");
             }
         }
 
@@ -195,6 +208,9 @@ partial class ServerManagementService(
                 ObservedUsageBytes = state.ObservedUsageBytes,
                 Rate = state.DemandRate,
                 IsEligibleForAssignment = state.IsEligibleForAssignment,
+                ActiveClients = state.ActiveClients,
+                EffectiveMaxClients = state.EffectiveMaxClients,
+                IsSelectableForAssignment = state.IsSelectableForAssignment,
             })
             .ToList();
     }
@@ -246,7 +262,12 @@ partial class ServerManagementService(
 
         var clusters = await ServerRepo.Value.GetAllActiveNasInRealm(realms.Keys);
 
-        var demand_by_realm = await LoadRealmDemand(realms.Keys);
+        // one plan-state read feeds both the demand estimate and the T4
+        // client count — the repository call must not be repeated
+        var active_plans = await LoadActivePlans();
+
+        var demand_by_realm = LoadRealmDemand(active_plans, realms.Keys);
+        var clients_by_realm = CountActiveClientsByRealm(active_plans, realms.Keys);
         var usage_by_nas = await LoadObservedUsage(clusters.SelectMany(cluster => cluster.Value)
             .Select(server => server.Id));
 
@@ -260,21 +281,27 @@ partial class ServerManagementService(
                     ComputedCapacityBytes = cluster.Value.Sum(server => server.BandWidth),
                     DemandBytes = demand_by_realm.GetValueOrDefault(cluster.Key),
                     ObservedUsageBytes = cluster.Value.Sum(server => usage_by_nas.GetValueOrDefault(server.Id)),
+                    ActiveClients = clients_by_realm.GetValueOrDefault(cluster.Key),
+                    EffectiveMaxClients = GetEffectiveMaxClients(cluster.Value),
                 };
             })
             .ToList();
     }
 
-    private async Task<Dictionary<int, double>> LoadRealmDemand(IEnumerable<int> active_realm_ids)
+    private async Task<List<PlanStateEntity>> LoadActivePlans()
     {
         var now = DateTime.Now;
-        var realm_mask = active_realm_ids.ToHashSet();
 
-        var active_plans = (await PlanStateRepo.Value.GetAll())
+        return (await PlanStateRepo.Value.GetAll())
             .Where(plan => plan.IsActive &&
                            (plan.ExpirationDate == null || plan.ExpirationDate > now) &&
                            (plan.TrafficLeft == null || plan.TrafficLeft > 0))
             .ToList();
+    }
+
+    private Dictionary<int, double> LoadRealmDemand(List<PlanStateEntity> active_plans, IEnumerable<int> active_realm_ids)
+    {
+        var realm_mask = active_realm_ids.ToHashSet();
 
         var demand_by_realm = new Dictionary<int, double>();
 
@@ -299,6 +326,59 @@ partial class ServerManagementService(
         }
 
         return demand_by_realm;
+    }
+
+    /// <summary>
+    /// T4-C: an account is counted once, not per plan row. Its realm is the
+    /// highest-<see cref="PlanStateEntity.RowNumber"/> passing row (D16 stacks
+    /// renewals as multiple rows); an unrestricted account fans out to every
+    /// active realm, mirroring <see cref="LoadRealmDemand"/>.
+    /// </summary>
+    private static Dictionary<int, int> CountActiveClientsByRealm(List<PlanStateEntity> active_plans,
+        IEnumerable<int> active_realm_ids)
+    {
+        var realm_mask = active_realm_ids.ToHashSet();
+
+        var clients_by_realm = new Dictionary<int, int>();
+
+        foreach (var account in active_plans.GroupBy(plan => plan.Username))
+        {
+            var realm_id = account.MaxBy(plan => plan.RowNumber)!.RestrictedRealmId;
+
+            if (realm_id is int id)
+            {
+                if (realm_mask.Contains(id))
+                {
+                    clients_by_realm[id] = clients_by_realm.GetValueOrDefault(id) + 1;
+                }
+
+                continue;
+            }
+
+            foreach (var realm in realm_mask)
+            {
+                clients_by_realm[realm] = clients_by_realm.GetValueOrDefault(realm) + 1;
+            }
+        }
+
+        return clients_by_realm;
+    }
+
+    /// <summary>
+    /// T4-D: every x-ui account is provisioned on all x-ui servers of the
+    /// realm (<c>AccountRadiusSyncService.SyncUserAndActive</c>), so the
+    /// smallest positive cap binds. Null/0 caps are gate-off; a realm with no
+    /// capped x-ui server returns null (gate off).
+    /// </summary>
+    private static int? GetEffectiveMaxClients(IEnumerable<ServerEntity> nas_cluster)
+    {
+        var caps = nas_cluster
+            .Where(server => (server.Features & ServerFeature.Xui) != 0)
+            .Select(server => server.MaxClients)
+            .Where(max_clients => max_clients is > 0)
+            .ToList();
+
+        return caps.Count > 0 ? caps.Min() : null;
     }
 
     private double GetPlanDemand(PlanStateEntity plan)
@@ -455,5 +535,14 @@ partial class ServerManagementService(
         public double DemandRate => IsEligibleForAssignment ? DemandBytes / EffectiveCapacityBytes : -1;
 
         public double UsageRate => IsEligibleForAssignment ? ObservedUsageBytes / EffectiveCapacityBytes : -1;
+
+        // T4-C/T4-D: distinct active accounts vs the min x-ui cap of the realm
+        public int ActiveClients { get; init; }
+
+        public int? EffectiveMaxClients { get; init; }
+
+        // T4-E: selectable = positive effective capacity AND (no cap OR count below it)
+        public bool IsSelectableForAssignment => IsEligibleForAssignment &&
+                                                 (EffectiveMaxClients is not int max_clients || ActiveClients < max_clients);
     }
 }

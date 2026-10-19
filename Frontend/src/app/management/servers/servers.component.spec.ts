@@ -98,6 +98,7 @@ describe('ServersComponent (docs/20 phase 6)', () => {
     component.os_type = OperatingSystem.Ubuntu;
     component.feature_state[ServerFeature.Xui] = true;
     component.feature_state[ServerFeature.V2ray] = true;
+    component.max_clients = 50;
     component.config_text = '{ "sshConfig": { "username": "root" } }';
     component.submit();
 
@@ -111,6 +112,7 @@ describe('ServersComponent (docs/20 phase 6)', () => {
       name: 'nas-2',
       domainName: 'nas2.example.com',
       bandWidth: 200,
+      maxClients: 50,
       osType: OperatingSystem.Ubuntu,
       features: ServerFeature.Xui | ServerFeature.V2ray,
       config: { sshConfig: { username: 'root' } },
@@ -158,6 +160,51 @@ describe('ServersComponent (docs/20 phase 6)', () => {
     expect(request.request.body['config']).toBeUndefined();
     expect(request.request.body['domainName']).toBe('changed.example.com');
     expect(request.request.body['features']).toBe(rows[0].features);
+    request.flush(
+      { code: 200, message: 'ذخیره شد' },
+      { status: 200, statusText: 'OK' },
+    );
+
+    flushList();
+  });
+
+  it('x-ui rows carry the client cap; dropping the Xui bit clears it', () => {
+    fixture.detectChanges();
+    flushList();
+
+    const xui_row: ServerRow = {
+      ...rows[0],
+      id: 8,
+      features: ServerFeature.Xui | ServerFeature.V2ray,
+      maxClients: 12,
+    };
+
+    component.openEdit(xui_row);
+    expect(component.is_xui).toBeTrue();
+    expect(component.max_clients).toBe(12);
+    component.submit();
+
+    let request = http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/server/update',
+    );
+    expect(request.request.body['id']).toBe(8);
+    expect(request.request.body['maxClients']).toBe(12);
+    request.flush(
+      { code: 200, message: 'ذخیره شد' },
+      { status: 200, statusText: 'OK' },
+    );
+
+    flushList();
+
+    // the cap is x-ui-only: without the bit the payload clears it (gate off)
+    component.openEdit(xui_row);
+    component.feature_state[ServerFeature.Xui] = false;
+    component.submit();
+
+    request = http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/server/update',
+    );
+    expect(request.request.body['maxClients']).toBeNull();
     request.flush(
       { code: 200, message: 'ذخیره شد' },
       { status: 200, statusText: 'OK' },

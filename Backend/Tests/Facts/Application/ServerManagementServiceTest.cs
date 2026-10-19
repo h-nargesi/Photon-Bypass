@@ -73,6 +73,105 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public async Task GetAvailableRealm_XuiClientGateFull_LowestDemandRealmSkipped()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+
+        server_moq
+            .Setup(x => x.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
+            {
+                // realm 3 keeps by far the lower demand rate, but its single x-ui slot is taken
+                [3] = [NewXuiNas(31, 3, max_clients: 1, band_width: 150)],
+                [1] = [NewNas(11, 1, band_width: 110)],
+            });
+
+        UsePlanStates(scope,
+            NewPlan(realm_id: 1, traffic_limit: 100 * BytesInGigLong, days: 30),
+            NewPlan(realm_id: 3, traffic_limit: BytesInGigLong, days: 30, username: "User3"));
+
+        var realm = await manager.GetAvailableRealm();
+
+        Assert.NotNull(realm);
+        Assert.Equal(1, realm.Id);
+    }
+
+    [Fact]
+    public async Task GetAvailableRealm_TwoXuiServers_TheSmallerCapBinds()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+
+        server_moq
+            .Setup(x => x.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
+            {
+                // caps 5 and 2: every account lands on both servers, so min = 2 binds
+                [3] = [NewXuiNas(31, 3, max_clients: 5), NewXuiNas(32, 3, max_clients: 2, band_width: 150)],
+                [1] = [NewNas(11, 1, band_width: 110)],
+            });
+
+        UsePlanStates(scope,
+            NewPlan(realm_id: 1, traffic_limit: 100 * BytesInGigLong, days: 30),
+            NewPlan(realm_id: 3, traffic_limit: BytesInGigLong, days: 30, username: "User3"),
+            NewPlan(realm_id: 3, traffic_limit: BytesInGigLong, days: 30, username: "User4"),
+            NewPlan(realm_id: 3, traffic_limit: BytesInGigLong, days: 30, username: "User5"));
+
+        var realm = await manager.GetAvailableRealm();
+
+        Assert.NotNull(realm);
+        Assert.Equal(1, realm.Id);
+
+        var states = (await manager.GetRealmsCapacityState()).ToDictionary(s => s.RealmId);
+
+        Assert.Equal(2, states[3].EffectiveMaxClients);
+        Assert.Equal(3, states[3].ActiveClients);
+        Assert.False(states[3].IsSelectableForAssignment);
+        Assert.Null(states[1].EffectiveMaxClients);
+        Assert.True(states[1].IsSelectableForAssignment);
+    }
+
+    [Fact]
+    public async Task GetAvailableRealm_UncappedXuiServer_GateStaysOff()
+    {
+        // T4-B: null and zero caps are both gate-off — behavior stays exactly today's
+        foreach (var disabled_cap in new int?[] { null, 0 })
+        {
+            using var scope = App.Services.CreateScope();
+            var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+            var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+
+            server_moq
+                .Setup(x => x.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
+                .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
+                {
+                    [3] = [NewXuiNas(31, 3, max_clients: disabled_cap, band_width: 150)],
+                    [1] = [NewNas(11, 1, band_width: 110)],
+                });
+
+            UsePlanStates(scope,
+                NewPlan(realm_id: 1, traffic_limit: 100 * BytesInGigLong, days: 30),
+                NewPlan(realm_id: 3, traffic_limit: BytesInGigLong, days: 30, username: "User3"),
+                NewPlan(realm_id: 3, traffic_limit: BytesInGigLong, days: 30, username: "User4"));
+
+            var states = (await manager.GetRealmsCapacityState()).ToDictionary(s => s.RealmId);
+
+            Assert.Null(states[3].EffectiveMaxClients);
+            Assert.Equal(2, states[3].ActiveClients);
+            Assert.True(states[3].IsSelectableForAssignment);
+
+            // lowest demand rate wins untouched
+            var realm = await manager.GetAvailableRealm();
+
+            Assert.NotNull(realm);
+            Assert.Equal(3, realm.Id);
+        }
+    }
+
+    [Fact]
     public async Task GetDefaultCertificate_MultiRealm()
     {
         using var scope = App.Services.CreateScope();
@@ -223,6 +322,73 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public async Task CheckUserServerBalance_ClientCountAtCapThreshold_Alarms()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+
+        server_moq
+            .Setup(x => x.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
+            {
+                [3] = [NewXuiNas(31, 3, max_clients: 10, band_width: 150)],
+                [1] = [NewNas(11, 1, band_width: 110)],
+            });
+
+        // 9 accounts on a cap of 10 = exactly the 90% threshold
+        var plans = new List<PlanStateEntity>
+            { NewPlan(realm_id: 1, traffic_limit: BytesInGigLong, days: 30, username: "UserR1") };
+        plans.AddRange(Enumerable.Range(1, 9)
+            .Select(i => NewPlan(realm_id: 3, traffic_limit: BytesInGigLong, days: 30, username: $"User{i}")));
+
+        UsePlanStates(scope, [.. plans]);
+
+        IReadOnlyList<string>? reported_alarms = null;
+        social_moq.OnAlarmServerCapacity += alarms => reported_alarms = alarms;
+
+        await manager.CheckUserServerBalance();
+
+        Assert.NotNull(reported_alarms);
+        Assert.Contains(reported_alarms,
+            alarm => alarm.Contains("Low Capacity (clients)") && alarm.Contains("Realm-LO-3"));
+    }
+
+    [Fact]
+    public async Task CheckUserServerBalance_ClientCountBelowCapThreshold_NoClientAlarm()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+
+        server_moq
+            .Setup(x => x.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
+            {
+                [3] = [NewXuiNas(31, 3, max_clients: 10, band_width: 150)],
+                [1] = [NewNas(11, 1, band_width: 110)],
+            });
+
+        // 8 accounts on a cap of 10 = 80% — below the threshold
+        var plans = new List<PlanStateEntity>
+            { NewPlan(realm_id: 1, traffic_limit: BytesInGigLong, days: 30, username: "UserR1") };
+        plans.AddRange(Enumerable.Range(1, 8)
+            .Select(i => NewPlan(realm_id: 3, traffic_limit: BytesInGigLong, days: 30, username: $"User{i}")));
+
+        UsePlanStates(scope, [.. plans]);
+
+        IReadOnlyList<string>? reported_alarms = null;
+        social_moq.OnAlarmServerCapacity += alarms => reported_alarms = alarms;
+
+        await manager.CheckUserServerBalance();
+
+        Assert.NotNull(reported_alarms);
+        Assert.DoesNotContain(reported_alarms, alarm => alarm.Contains("(clients)"));
+    }
+
+    [Fact]
     public async Task GetRealmsCapacityState_ObservedUsage_IsThirtyDaySumNotSessionAverage()
     {
         using var scope = App.Services.CreateScope();
@@ -319,6 +485,55 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
 
         Assert.Equal([1, 3, 4], states.Keys.Order().ToArray());
         Assert.All(states.Values, state => Assert.Equal(BytesInGigLong, state.DemandBytes));
+    }
+
+    [Fact]
+    public async Task GetRealmsCapacityState_UnrestrictedAccount_CountedInEveryRealm()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+
+        // T4-C: the client count fans out exactly like the demand — default server data
+        UsePlanStates(scope, NewPlan(realm_id: null, traffic_limit: BytesInGigLong, days: 30));
+
+        var states = (await manager.GetRealmsCapacityState()).ToDictionary(s => s.RealmId);
+
+        Assert.Equal([1, 3, 4], states.Keys.Order().ToArray());
+        Assert.All(states.Values, state => Assert.Equal(1, state.ActiveClients));
+    }
+
+    [Fact]
+    public async Task GetRealmsCapacityState_StackedRenewals_CountedOnceInNewestPassingRealm()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+
+        // D16 stacks renewals as multiple rows of one account: counted once, in the newest
+        UsePlanStates(scope,
+            NewPlan(realm_id: 1, username: "User1", row_number: 1, traffic_limit: BytesInGigLong, days: 30),
+            NewPlan(realm_id: 3, username: "User1", row_number: 2, traffic_limit: BytesInGigLong, days: 30));
+
+        var states = (await manager.GetRealmsCapacityState()).ToDictionary(s => s.RealmId);
+
+        Assert.Equal(0, states[1].ActiveClients);
+        Assert.Equal(1, states[3].ActiveClients);
+    }
+
+    [Fact]
+    public async Task GetRealmsCapacityState_ExpiredNewestRenewal_CountsTheOlderPassingRow()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+
+        // conservative fallback (plan §ریسک‌ها): newest renewal expired → older passing row wins
+        UsePlanStates(scope,
+            NewPlan(realm_id: 1, username: "User1", row_number: 1, traffic_limit: BytesInGigLong, days: 30),
+            NewPlan(realm_id: 3, username: "User1", row_number: 2, traffic_limit: BytesInGigLong, days: 30, expired: true));
+
+        var states = (await manager.GetRealmsCapacityState()).ToDictionary(s => s.RealmId);
+
+        Assert.Equal(1, states[1].ActiveClients);
+        Assert.Equal(0, states[3].ActiveClients);
     }
 
     [Fact]
@@ -588,13 +803,14 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
 
     private static PlanStateEntity NewPlan(int? realm_id, long? traffic_limit = null, short? days = null,
         int? rate_limit_meg = null, byte users = 1, bool expired = false, long? traffic_left = null,
-        bool inactive = false)
+        bool inactive = false, string username = "User1", int row_number = 1)
     {
         return new PlanStateEntity
         {
             Id = 1,
-            Username = "User1",
+            Username = username,
             IsActive = !inactive,
+            RowNumber = row_number,
             SimultaneousUser = users,
             RestrictedRealmId = realm_id,
             TrafficLimit = traffic_limit,
@@ -619,6 +835,23 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
             BandWidth = band_width,
             OsType = os_type,
             Features = ServerFeature.Ovpn,
+        };
+    }
+
+    private static ServerEntity NewXuiNas(int id, int realm_id, int? max_clients, long band_width = 100)
+    {
+        return new ServerEntity
+        {
+            Id = id,
+            IsActive = true,
+            RealmId = realm_id,
+            Name = $"Xui{id}",
+            IpAddress = $"10.2.0.{id}",
+            DomainName = $"xui{id}.photon-bypass.com",
+            BandWidth = band_width,
+            OsType = OperatingSystem.Ubuntu,
+            Features = ServerFeature.Xui | ServerFeature.V2ray,
+            MaxClients = max_clients,
         };
     }
 

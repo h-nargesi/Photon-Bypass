@@ -165,6 +165,13 @@
       <input cFormControl type="number" class="digits" [(ngModel)]="band_width" />
     </c-input-group>
 
+    @if (is_xui) {
+      <c-input-group class="mb-3">
+        <span cInputGroupText>{{ "management.servers.columns.max-clients" | translate }}</span>
+        <input cFormControl type="number" min="1" class="digits" [(ngModel)]="max_clients" />
+      </c-input-group>
+    }
+
     <c-input-group class="mb-3">
       <span cInputGroupText>{{ "management.servers.columns.os" | translate }}</span>
       <select cFormControl [(ngModel)]="os_type">

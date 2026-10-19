@@ -69,6 +69,7 @@ class ServerCrudApplication(
             Name = server.Name,
             DomainName = server.DomainName,
             BandWidth = server.BandWidth,
+            MaxClients = server.MaxClients,
             OsType = server.OsType,
             Features = server.Features,
             HasConfig = server.JsonConfig != null,
@@ -95,6 +96,7 @@ class ServerCrudApplication(
             Name = model.Name,
             DomainName = model.DomainName,
             BandWidth = model.BandWidth,
+            MaxClients = model.MaxClients,
             OsType = model.OsType,
             Features = model.Features,
         };
@@ -130,6 +132,7 @@ class ServerCrudApplication(
         server.Name = model.Name;
         server.DomainName = model.DomainName;
         server.BandWidth = model.BandWidth;
+        server.MaxClients = model.MaxClients;
         server.OsType = model.OsType;
         server.Features = model.Features;
 
@@ -211,6 +214,12 @@ class ServerCrudApplication(
         if (model.BandWidth < 1)
         {
             throw new UserException("پهنای باند سرور نامعتبر است!", $"Server bandwidth must be positive: {model.BandWidth}");
+        }
+
+        if (model.MaxClients is < 1)
+        {
+            throw new UserException("سقف تعداد کاربر سرور نامعتبر است!",
+                $"Server max-clients must be null or >= 1: {model.MaxClients}");
         }
 
         if (!Enum.IsDefined(model.OsType))

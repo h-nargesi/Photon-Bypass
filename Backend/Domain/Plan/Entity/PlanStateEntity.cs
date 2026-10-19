@@ -13,6 +13,10 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
 
     public bool IsActive { get; set; }
 
+    // Renewal ordinal within the account (ROW_NUMBER in TotalPlanState) — the
+    // T4 client-count gate assigns an account to its highest passing row.
+    public int RowNumber { get; set; }
+
     // Plan Info (Latest Renewal)
     public byte SimultaneousUser { get; set; }
 

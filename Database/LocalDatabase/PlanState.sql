@@ -7,6 +7,7 @@ SELECT Id
 	, IsActive
 	, Username
     , Created
+    , RowNumber
     -- Plan Info (Latest State)
     , SimultaneousUser
     , RestrictedRealmId
