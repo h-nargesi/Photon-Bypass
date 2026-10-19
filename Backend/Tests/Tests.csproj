@@ -123,6 +123,9 @@
         <None Update="Data\Sql\RenewalLatest\add-data.sql">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+        <None Update="Data\Sql\ResetPassExpire\add-data.sql">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
         <None Update="Data\Local\wallet.json">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

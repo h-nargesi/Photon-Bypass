@@ -22,6 +22,9 @@ internal class AccountMonitoringService(
     Lazy<IAccountRadiusSyncService> account_radius_srv)
     : IAccountMonitoringService
 {
+    /// <summary>Upper bound of concurrent warning sends (SMTP connections).</summary>
+    private const int MaxConcurrentNotifications = 4;
+
     private IAccountRepository AccountRepo { get; } = account_repo;
     private IHistoryRepository HistoryRepo { get; } = history_repo;
     private Lazy<IPlanUsageReader> PlanUsageReader { get; } = plan_usage_reader;
@@ -130,9 +133,11 @@ internal class AccountMonitoringService(
         var account_ids = plan_state_list.Select(x => x.Id).ToList();
         var accounts = await AccountRepo.GetActiveAccounts(account_ids);
 
-        var tasks = new List<Task>();
-        var history_list = new List<HistoryEntity>();
-        var warned_account_ids = new List<int>();
+        // cap of concurrent SMTP connections: the SMTP server (and the send
+        // timeout) must not see one connection per finishing account
+        using var throttle = new SemaphoreSlim(MaxConcurrentNotifications);
+
+        var dispatches = new List<(AccountEntity Account, HistoryEntity History, Task Send)>();
 
         foreach (var plan in plan_state_list)
         {
@@ -165,12 +170,9 @@ internal class AccountMonitoringService(
 
             if (phone != null)
             {
-                tasks.Add(SocialSrv.Value.FinishServiceAlert(
-                    plan.Username, phone, plan.GetPlanTitle(), remains_title ?? string.Empty));
-
-                history_list.Add(WarnHistory(plan, remains_title));
-
-                IncreaseWarningTime(account, warned_account_ids);
+                dispatches.Add((account, WarnHistory(plan, remains_title), Dispatch(
+                    () => SocialSrv.Value.FinishServiceAlert(
+                        plan.Username, phone, plan.GetPlanTitle(), remains_title ?? string.Empty))));
 
                 continue;
             }
@@ -178,12 +180,47 @@ internal class AccountMonitoringService(
 
             if (account.EmailAddress != null)
             {
-                tasks.Add(EmailSrv.Value.FinishServiceAlert(
-                    account.Fullname, plan.Username, account.EmailAddress, plan.GetPlanTitle(), remains_title));
+                dispatches.Add((account, WarnHistory(plan, remains_title), Dispatch(
+                    () => EmailSrv.Value.FinishServiceAlert(
+                        account.Fullname, plan.Username, account.EmailAddress, plan.GetPlanTitle(), remains_title))));
 
-                history_list.Add(WarnHistory(plan, remains_title));
+                continue;
+            }
 
-                IncreaseWarningTime(account, warned_account_ids);
+            // stamp-after-success: an account without a reachable channel must
+            // not be stamped either — the hourly rerun would skip it forever.
+            // No history either: writing one for every finishing plan on every
+            // hourly run spammed History for accounts that got no message.
+            Log.Warning("No reachable channel for finishing-plan warning: account-id={0}, user={1}",
+                account.Id, plan.Username);
+        }
+
+        try
+        {
+            await Task.WhenAll(dispatches.Select(dispatch => dispatch.Send));
+        }
+        catch
+        {
+            // per-dispatch failures are reported below; a failing send must
+            // never fail the whole hourly JobInterval
+        }
+
+        var warned_account_ids = new List<int>();
+        var history_list = new List<HistoryEntity>();
+
+        foreach (var (account, history, send) in dispatches)
+        {
+            if (send.IsCompletedSuccessfully)
+            {
+                // stamp only after success: a failed account stays unstamped
+                // so the next hourly run retries it naturally
+                warned_account_ids.Add(account.Id);
+                history_list.Add(history);
+            }
+            else if (send.IsFaulted)
+            {
+                Log.Warning(send.Exception, "Finish-service notification failed: account-id={0}, user={1}",
+                    account.Id, account.Username);
             }
         }
 
@@ -192,9 +229,24 @@ internal class AccountMonitoringService(
             await AccountRepo.UpdateWarningTimes(warned_account_ids);
         }
 
-        tasks.Add(HistoryRepo.Save(history_list));
+        if (history_list.Count > 0)
+        {
+            await HistoryRepo.Save(history_list);
+        }
 
-        await Task.WhenAll(tasks);
+        async Task Dispatch(Func<Task> send)
+        {
+            await throttle.WaitAsync();
+
+            try
+            {
+                await send();
+            }
+            finally
+            {
+                throttle.Release();
+            }
+        }
     }
 
     private static HistoryEntity WarnHistory(PlanStateEntity plan, string? remains_title)
@@ -212,11 +264,6 @@ internal class AccountMonitoringService(
             Description = "اخطار پایان پلن.",
             Value = remains_title,
         };
-    }
-
-    private static void IncreaseWarningTime(AccountEntity account, List<int> warned_account_ids)
-    {
-        warned_account_ids.Add(account.Id);
     }
 
     private static string DayHour(double time)

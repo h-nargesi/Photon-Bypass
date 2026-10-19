@@ -9,4 +9,8 @@ public interface IEmailService
     Task SendConnectionEmail(string fullname, string email, ConnectionEmailContext context);
 
     Task FinishServiceAlert(string fullname, string username, string email, string type, string left);
+
+    Task SendWelcomeEmail(string fullname, string email, string username);
+
+    Task SendRenewalSuccessEmail(string fullname, string email, string plan_title, int price, string expiration);
 }

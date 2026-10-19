@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Tahoma, sans-serif;
+            background-color: #eef6ff;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 520px;
+            margin: auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+            .header img {
+                max-width: 150px;
+                height: auto;
+            }
+
+        .content {
+            padding: 20px;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .section {
+            background: #f4f9fd;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            border-right: 4px solid #3498db;
+            border-radius: 4px;
+        }
+
+        .row {
+            margin: 6px 0;
+        }
+
+        .row .label {
+            display: inline-block;
+            min-width: 110px;
+            font-weight: bold;
+        }
+
+        .footer {
+            background-color: #f0f4f7;
+            text-align: center;
+            padding: 12px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .content, .header, .footer {
+                padding: 15px;
+                font-size: 14px;
+            }
+
+            .section {
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="cid:logo" alt="لوگو">
+            <h2 style="margin: 10px 0 0;">تمدید با موفقیت انجام شد</h2>
+        </div>
+        <div class="content">
+            <p><strong>{fullname}</strong> عزیز،</p>
+            <p>پلن شما با موفقیت تمدید شد. جزئیات تراکنش:</p>
+            <div class="section">
+                <div class="row"><span class="label">پلن:</span> {plan_title}</div>
+                <div class="row"><span class="label">مبلغ:</span> {price} تومان</div>
+                <div class="row"><span class="label">اعتبار تا:</span> {expiration}</div>
+            </div>
+            <p>برای مشاهده‌ی جزئیات بیشتر و دریافت کانفیگ اتصال به <a target="_blank" href="{site_url}">پنل کاربری</a> مراجعه کنید.</p>
+            <div class="section">
+                <strong>راهنما:</strong><br>
+                <a target="_blank" href="{guide_url}">راهنمای اتصال</a>
+            </div>
+        </div>
+        <div class="footer">
+            تیم پشتیبانی | <a target="_blank" href="{site_url}">{title}</a>
+        </div>
+    </div>
+</body>
+</html>

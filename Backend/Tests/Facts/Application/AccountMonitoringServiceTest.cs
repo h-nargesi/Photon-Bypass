@@ -138,8 +138,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var emails = new HashSet<string> { "User99@gmail.com", "User4@gmail.com" };
         email_service_moq.OnSend += mail =>
         {
-            Assert.Single(mail.To);
-            Assert.Contains(mail.To.First().Address, emails);
+            Assert.Contains(mail.ToAddress, emails);
         };
 
         account_repo_moq.OnUpdateWarningTimes += account_ids =>
@@ -216,5 +215,144 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var function = () => monitoring.NotifSendServices([ghost_plan]);
 
         await function.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task NotifSendServices_OneSendFails_OnlySuccessfulAccountsAreStamped()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
+        var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
+
+        account_repo_moq.Data["User3"].IsEmailValid = true;
+        account_repo_moq.Data["User4"].IsEmailValid = true;
+
+        var plan_state_list = await plan_state_repo.GetAll();
+        var finishing_list = plan_state_list.Where(plan => plan.IsFinishing()).ToList();
+
+        email_moq.OnSend += mail =>
+        {
+            if (mail.ToAddress == "user4@gmail.com")
+            {
+                throw new InvalidOperationException("smtp refused the recipient");
+            }
+        };
+
+        var function = () => monitoring.NotifSendServices(finishing_list);
+
+        // a failing send must never fail the whole hourly job
+        await function.Should().NotThrowAsync();
+
+        var user3 = account_repo_moq.Data["User3"];
+        var user4 = account_repo_moq.Data["User4"];
+
+        // stamp-after-success: the delivered warning stamps its account, the
+        // failed one stays unstamped so the next hourly run retries it
+        user3.LastWarningTime.Should().NotBeNull();
+        user4.LastWarningTime.Should().BeNull();
+
+        var warn_targets = history_moq.Data
+            .Where(history => history.Title == "پایان پلن")
+            .Select(history => history.Target)
+            .ToHashSet();
+
+        warn_targets.Should().Contain(user3.Id);
+        warn_targets.Should().NotContain(user4.Id);
+    }
+
+    [Fact]
+    public async Task NotifSendServices_NoReachableChannel_NoStampNoSendNoHistory()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
+        var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
+
+        var plan_state_list = await plan_state_repo.GetAll();
+        var finishing_list = plan_state_list.Where(plan => plan.IsFinishing()).ToList();
+
+        // no finishing account carries a validated email (and this build has
+        // no SOCIAL channel): the whole batch has no reachable channel
+        finishing_list.Select(plan => account_repo_moq.Data.GetValueOrDefault(plan.Username)?.EmailAddress)
+            .Should().OnlyContain(address => address == null);
+
+        var send_count = 0;
+        var stamped = false;
+        email_moq.OnSend += _ => send_count++;
+        account_repo_moq.OnUpdateWarningTimes += _ => stamped = true;
+
+        var function = () => monitoring.NotifSendServices(finishing_list);
+
+        await function.Should().NotThrowAsync();
+
+        send_count.Should().Be(0);
+        stamped.Should().BeFalse();
+        history_moq.Data.Should().NotContain(history => history.Title == "پایان پلن");
+    }
+
+    [Fact]
+    public async Task NotifSendServices_UserOptOut_NoSendNoStampNoHistory()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
+        var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
+
+        // User4 finishes its plan but opted out of the finishing warnings
+        account_repo_moq.Data["User4"].IsEmailValid = true;
+        account_repo_moq.Data["User4"].SendWarning = false;
+
+        var finishing_list = (await plan_state_repo.GetAll()).Where(plan => plan.IsFinishing()).ToList();
+
+        var send_count = 0;
+        var stamped = false;
+        email_moq.OnSend += _ => send_count++;
+        account_repo_moq.OnUpdateWarningTimes += _ => stamped = true;
+
+        await monitoring.NotifSendServices(finishing_list);
+
+        send_count.Should().Be(0);
+        stamped.Should().BeFalse();
+        history_moq.Data.Should().NotContain(history => history.Title == "پایان پلن");
+    }
+
+    [Fact]
+    public async Task NotifSendServices_RecentlyWarnedAccount_IsSkippedByTheThrottle()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
+        var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
+
+        // User4 was warned minutes ago: inside the DelayBetweenWarnings window
+        account_repo_moq.Data["User4"].IsEmailValid = true;
+        account_repo_moq.Data["User4"].LastWarningTime = DateTime.Now.AddMinutes(-10);
+
+        var finishing_list = (await plan_state_repo.GetAll()).Where(plan => plan.IsFinishing()).ToList();
+
+        var send_count = 0;
+        var stamped = false;
+        email_moq.OnSend += _ => send_count++;
+        account_repo_moq.OnUpdateWarningTimes += _ => stamped = true;
+
+        await monitoring.NotifSendServices(finishing_list);
+
+        // the throttle skips the account before any dispatch is built
+        send_count.Should().Be(0);
+        stamped.Should().BeFalse();
+        history_moq.Data.Should().NotContain(history => history.Title == "پایان پلن");
     }
 }

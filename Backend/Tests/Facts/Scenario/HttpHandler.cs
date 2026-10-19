@@ -90,7 +90,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         var email_srv = ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         email_srv.OnSend += message =>
         {
-            var match = CodeSelector().Match(EmailBody(message));
+            var match = CodeSelector().Match(message.HtmlBody ?? string.Empty);
             Assert.True(match.Success);
             code = match.Groups[1].Value;
         };
@@ -102,18 +102,6 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         await CheckResponse(response, status);
 
         return code;
-    }
-
-    /// <summary>
-    /// The delivered HTML lives on the message's alternate view, not in
-    /// <see cref="System.Net.Mail.MailMessage.Body"/>.
-    /// </summary>
-    private static string EmailBody(System.Net.Mail.MailMessage message)
-    {
-        using var reader = new System.IO.StreamReader(
-            message.AlternateViews[0].ContentStream, System.Text.Encoding.UTF8);
-
-        return reader.ReadToEnd();
     }
 
     protected async Task ResetPass(string code, string password, int status = 2)

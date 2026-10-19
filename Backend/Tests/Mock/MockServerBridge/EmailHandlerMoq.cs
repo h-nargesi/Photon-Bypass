@@ -1,5 +1,4 @@
-﻿using System.Net.Mail;
-using Moq;
+﻿using Moq;
 using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.Test.Mock.MockOptions;
 using PhotonBypass.Tools;
@@ -8,12 +7,12 @@ namespace PhotonBypass.Test.Mock.MockServerBridge;
 
 internal class EmailHandlerMoq : Mock<IEmailHandler>, IUnitLevelService, IProgramLevelService
 {
-    public event Action<MailMessage>? OnSend;
+    public event Action<EmailMessage>? OnSend;
 
     public EmailHandlerMoq()
     {
-        Setup(x => x.Send(It.IsAny<MailMessage>()))
-            .Returns<MailMessage>(mail =>
+        Setup(x => x.Send(It.IsAny<EmailMessage>()))
+            .Returns<EmailMessage>(mail =>
             {
                 OnSend?.Invoke(mail);
                 return Task.CompletedTask;

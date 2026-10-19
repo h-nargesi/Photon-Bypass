@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Tahoma, sans-serif;
+            background-color: #f0f4f8;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 520px;
+            margin: auto;
+            background: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background-color: #2ecc71;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+            .header img {
+                max-width: 150px;
+                height: auto;
+            }
+
+        .content {
+            padding: 20px;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .section {
+            background: #f7fbf8;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            border-right: 4px solid #2ecc71;
+            border-radius: 4px;
+        }
+
+        .footer {
+            background-color: #f2f5f3;
+            text-align: center;
+            padding: 12px;
+            font-size: 13px;
+            color: #888;
+        }
+
+        a {
+            color: #27ae60;
+            text-decoration: none;
+        }
+
+        @media only screen and (max-width: 600px) {
+            .content, .header, .footer {
+                padding: 15px;
+                font-size: 14px;
+            }
+
+            .section {
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="cid:logo" alt="لوگو">
+            <h2 style="margin: 10px 0 0;">خوش آمدید</h2>
+        </div>
+        <div class="content">
+            <p><strong>{fullname}</strong> عزیز، خوش آمدید!</p>
+            <p>حساب کاربری شما با نام کاربری <strong>{username}</strong> با موفقیت ساخته شد.</p>
+            <p>از همین حالا می‌توانید پلن مورد نظر خود را خریداری و از سرویس استفاده کنید.</p>
+            <div class="section">
+                <strong>راهنما:</strong><br>
+                <a target="_blank" href="{guide_url}">راهنمای اتصال</a> |
+                <a target="_blank" href="{site_url}">ورود به پنل کاربری</a>
+            </div>
+            <p>در صورت بروز مشکل با پشتیبانی تماس بگیرید.</p>
+        </div>
+        <div class="footer">
+            تیم پشتیبانی | <a target="_blank" href="{site_url}">{title}</a>
+        </div>
+    </div>
+</body>
+</html>

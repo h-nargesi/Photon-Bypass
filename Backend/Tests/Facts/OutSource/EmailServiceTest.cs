@@ -2,11 +2,10 @@ using FluentAssertions;
 using Microsoft.Extensions.Options;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
+using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockOptions;
 using PhotonBypass.Test.Mock.MockServerBridge;
-using System.Net.Mail;
-using System.Text;
 
 namespace PhotonBypass.Test.Facts.OutSource;
 
@@ -23,7 +22,7 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         var email_handler_moq = scope_1.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
 
         var bodies = new List<string>();
-        email_handler_moq.OnSend += mail => bodies.Add(HtmlBody(mail));
+        email_handler_moq.OnSend += mail => bodies.Add(mail.HtmlBody!);
 
         // Two different service instances share the static template cache: the
         // second send must reuse the cached template and still apply its own
@@ -43,6 +42,53 @@ public class EmailServiceTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public async Task EveryEmail_CarriesAPlainTextViewOfTheSameContent()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var email_service = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+
+        EmailMessage? sent = null;
+        email_handler_moq.OnSend += mail => sent = mail;
+
+        await email_service.SendResetPasswordLink("User One", "one@test.com", "code-111");
+
+        sent.Should().NotBeNull();
+        sent!.PlainTextBody.Should().NotBeNullOrEmpty("every email must ship a plain-text view");
+        sent.PlainTextBody!.Should().Contain("code-111");
+        sent.PlainTextBody.Should().Contain("https://photon-bypass.com");
+
+        // no markup or conditional marker may leak into the plain-text body
+        sent.PlainTextBody.Should().NotContain("<");
+        sent.PlainTextBody.Should().NotContain("<!--if:");
+        sent.PlainTextBody.Should().NotContain("<!--end:");
+    }
+
+    [Fact]
+    public async Task UserValues_AreHtmlEncodedInHtmlOnly()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var email_service = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+
+        EmailMessage? sent = null;
+        email_handler_moq.OnSend += mail => sent = mail;
+
+        await email_service.FinishServiceAlert(
+            "<b>Ali</b> & Co", "user1", "one@test.com", "100 گیگی <و> دو روزه", "2 روز");
+
+        sent.Should().NotBeNull();
+        sent!.HtmlBody.Should().Contain("&lt;b&gt;Ali&lt;/b&gt; &amp; Co");
+        sent.HtmlBody.Should().Contain("100 گیگی &lt;و&gt; دو روزه");
+        sent.HtmlBody.Should().NotContain("<b>Ali</b>");
+
+        // the plain-text view keeps the raw values
+        sent.PlainTextBody.Should().Contain("<b>Ali</b> & Co");
+    }
+
+    [Fact]
     public async Task SendConnectionEmail_VlessOnly_RendersTheLinkAndStripsMissingSections()
     {
         using var scope = App.Services.CreateScope();
@@ -50,15 +96,14 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         var email_service = scope.ServiceProvider.GetRequiredService<IEmailService>();
         var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
 
-        // capture inside the callback: the service disposes the MailMessage after sending
         var sent_to = "";
         var sent_body = "";
         var attachment_count = -1;
         email_handler_moq.OnSend += mail =>
         {
-            sent_to = mail.To.First().Address;
-            sent_body = HtmlBody(mail);
-            attachment_count = mail.Attachments?.Count ?? 0;
+            sent_to = mail.ToAddress;
+            sent_body = mail.HtmlBody!;
+            attachment_count = mail.Attachments.Count;
         };
 
         await email_service.SendConnectionEmail("User Two", "two@test.com", new ConnectionEmailContext
@@ -102,8 +147,8 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         var attachment_names = new List<string>();
         email_handler_moq.OnSend += mail =>
         {
-            sent_body = HtmlBody(mail);
-            attachment_names = [.. mail.Attachments.Select(a => a.Name!)];
+            sent_body = mail.HtmlBody!;
+            attachment_names = [.. mail.Attachments.Select(a => a.FileName)];
         };
 
         await email_service.SendConnectionEmail("User One", "one@test.com", new ConnectionEmailContext
@@ -141,7 +186,7 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         var send_count = 0;
         email_handler_moq.OnSend += mail =>
         {
-            sent_bodies.Add(HtmlBody(mail));
+            sent_bodies.Add(mail.HtmlBody!);
             send_count++;
         };
 
@@ -174,20 +219,11 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         var cid_body = "";
         email_handler_moq.OnSend += mail =>
         {
-            // the body travels through the HTML alternate view only
-            mail.AlternateViews.Count.Should().Be(1);
-            mail.Body.Should().BeEmpty("the body must ride on the alternate view, not the plain-text part");
+            cid_body = mail.HtmlBody!;
 
-            cid_body = HtmlBody(mail);
-
-            var logo = mail.AlternateViews[0].LinkedResources.SingleOrDefault(r => r.ContentId == "logo");
-
-            logo.Should().NotBeNull("the logo must be embedded as a CID resource");
-            logo!.ContentType.MediaType.Should().Be("image/png");
-
-            using var copy = new MemoryStream();
-            logo.ContentStream.CopyTo(copy);
-            copy.Length.Should().BeGreaterThan(0);
+            mail.EmbeddedLogo.Should().NotBeNull("the logo must travel on the message");
+            mail.EmbeddedLogo!.Length.Should().BeGreaterThan(0);
+            mail.LogoContentType.Should().Be("image/png");
 
             logo_found = true;
         };
@@ -214,7 +250,7 @@ public class EmailServiceTest : UnitLevelServiceInitializer
             var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
 
             var sent_body = "";
-            email_handler_moq.OnSend += mail => sent_body = HtmlBody(mail);
+            email_handler_moq.OnSend += mail => sent_body = mail.HtmlBody!;
 
             await email_service.SendConnectionEmail("User One", "one@test.com", new ConnectionEmailContext
             {
@@ -259,16 +295,157 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         }
     }
 
-    /// <summary>
-    /// The delivered HTML lives on the message's alternate view, not in
-    /// <see cref="MailMessage.Body"/>; read it back from the view's content stream.
-    /// </summary>
-    private static string HtmlBody(MailMessage mail)
+    [Fact]
+    public async Task FaultedLogoRead_IsEvictedFromTheCache()
     {
-        var view = mail.AlternateViews[0];
+        using var scope = App.Services.CreateScope();
 
-        using var reader = new StreamReader(view.ContentStream, Encoding.UTF8);
+        var branding = scope.ServiceProvider.GetRequiredService<IOptions<BrandingOptions>>();
+        var configured_path = branding.Value.LogoPath;
+        var email_service = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
 
-        return reader.ReadToEnd();
+        var send_count = 0;
+        email_handler_moq.OnSend += _ => send_count++;
+
+        // same cache key on both attempts: the logo file is created between
+        // them, proving the faulted task was evicted (docs/14 M36) instead of
+        // staying cached until a restart
+        var temp_logo = Path.Combine(Path.GetTempPath(), $"pb-logo-{Guid.NewGuid():N}.png");
+        branding.Value.LogoPath = temp_logo;
+
+        try
+        {
+            await FluentActions.Awaiting(() => email_service.SendResetPasswordLink("User One", "one@test.com", "code-111"))
+                .Should().ThrowAsync<FileNotFoundException>();
+
+            File.Copy(Path.Combine(AppContext.BaseDirectory, "Branding", "logo.png"), temp_logo);
+
+            await email_service.SendResetPasswordLink("User One", "one@test.com", "code-222");
+
+            send_count.Should().Be(1);
+        }
+        finally
+        {
+            branding.Value.LogoPath = configured_path;
+            File.Delete(temp_logo);
+        }
+    }
+
+    [Fact]
+    public async Task SendConnectionEmail_PlainTextView_StripsMissingSections()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var email_service = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+
+        var sent_text = "";
+        email_handler_moq.OnSend += mail => sent_text = mail.PlainTextBody ?? string.Empty;
+
+        await email_service.SendConnectionEmail("User Two", "two@test.com", new ConnectionEmailContext
+        {
+            Username = "User2",
+            Link = "vless://4c1f3b2a-1111-2222-3333-444455556666@vm06.ir.parssafe:443?type=ws",
+        });
+
+        // the plain-text view carries the same conditional rendering: the
+        // password and OpenVPN sections never reach the recipient
+        sent_text.Should().Contain("User2");
+        sent_text.Should().Contain("vless://4c1f3b2a-1111-2222-3333-444455556666@vm06.ir.parssafe:443?type=ws");
+        sent_text.Should().NotContain("Password:");
+        sent_text.Should().NotContain("OpenVPN");
+        sent_text.Should().NotContain("<!--if:");
+        sent_text.Should().NotContain("<!--end:");
+    }
+
+    [Fact]
+    public async Task TemplatesAndLogo_ResolveFromTheApplicationBaseDirectory()
+    {
+        using var scope = App.Services.CreateScope();
+
+        // templates and branding resolve from the app base directory (the
+        // test output folder here), never from the process working directory
+        File.Exists(Path.Combine(AppContext.BaseDirectory, "EmailTemplates", "ResetPassword.html"))
+            .Should().BeTrue("the template folder must resolve from the app base");
+        File.Exists(Path.Combine(AppContext.BaseDirectory, "Branding", "logo.png"))
+            .Should().BeTrue("the branding logo must resolve from the app base");
+    }
+
+    [Fact]
+    public async Task RootedLogoPath_IsUsedAsIs()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var branding = scope.ServiceProvider.GetRequiredService<IOptions<BrandingOptions>>();
+        var configured_path = branding.Value.LogoPath;
+
+        var rooted_path = Path.Combine(AppContext.BaseDirectory, "Branding", "logo.png");
+        branding.Value.LogoPath = rooted_path;
+
+        try
+        {
+            var email_service = scope.ServiceProvider.GetRequiredService<IEmailService>();
+            var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+
+            var logo_found = false;
+            email_handler_moq.OnSend += mail => logo_found = mail.EmbeddedLogo is { Length: > 0 };
+
+            await email_service.SendResetPasswordLink("User One", "one@test.com", "code-111");
+
+            logo_found.Should().BeTrue("an absolute logo path must be honored directly");
+        }
+        finally
+        {
+            branding.Value.LogoPath = configured_path;
+        }
+    }
+
+    [Fact]
+    public async Task SendWelcomeEmail_RendersTemplateAndBranding()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var email_service = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+
+        EmailMessage? sent = null;
+        email_handler_moq.OnSend += mail => sent = mail;
+
+        await email_service.SendWelcomeEmail("User One", "one@test.com", "user1");
+
+        sent.Should().NotBeNull();
+        sent!.ToAddress.Should().Be("one@test.com");
+        sent.Subject.Should().Contain("خوش آمدید");
+        sent.HtmlBody.Should().Contain("User One");
+        sent.HtmlBody.Should().Contain("user1");
+        sent.HtmlBody.Should().Contain("https://guide.example.com/vpn");
+        sent.HtmlBody.Should().Contain("https://photon-bypass.com");
+        sent.HtmlBody.Should().NotContain("{fullname}");
+        sent.PlainTextBody.Should().Contain("user1");
+    }
+
+    [Fact]
+    public async Task SendRenewalSuccessEmail_RendersPlanPriceAndExpiration()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var email_service = scope.ServiceProvider.GetRequiredService<IEmailService>();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+
+        EmailMessage? sent = null;
+        email_handler_moq.OnSend += mail => sent = mail;
+
+        await email_service.SendRenewalSuccessEmail("User One", "one@test.com", "50 گیگی و 120 روزه و 1 کاربره", 250000, "1405/07/01");
+
+        sent.Should().NotBeNull();
+        sent!.ToAddress.Should().Be("one@test.com");
+        sent.Subject.Should().Contain("تمدید");
+        sent.HtmlBody.Should().Contain("50 گیگی و 120 روزه و 1 کاربره");
+        sent.HtmlBody.Should().Contain("250,000");
+        sent.HtmlBody.Should().Contain("1405/07/01");
+        sent.HtmlBody.Should().Contain("https://photon-bypass.com");
+        sent.HtmlBody.Should().NotContain("{plan_title}");
+        sent.PlainTextBody.Should().Contain("250,000");
     }
 }

@@ -10,6 +10,7 @@ internal class EmailOptionsMoq : Mock<IOptions<EmailOptions>>, IUnitLevelService
     {
         Setup(options => options.Value).Returns(new EmailOptions
         {
+            Enabled = true,
             Address = "info@website.com",
             FullName = "Administrator",
             Password = "password",

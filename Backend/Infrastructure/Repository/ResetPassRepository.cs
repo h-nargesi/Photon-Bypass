@@ -25,4 +25,18 @@ class ResetPassRepository(LocalDbContext context) : DapperRepository<ResetPassEn
     {
         await context.Connection.InsertAsync(hash_code);
     }
+
+    public async Task ExpireActiveCodes(int account_id)
+    {
+        var now = DateTime.Now;
+
+        var sql = $"""
+                   update {TableName}
+                   set {nameof(ResetPassEntity.ExpireDate)} = @now
+                   where {nameof(ResetPassEntity.AccountId)} = @account_id
+                     and {nameof(ResetPassEntity.ExpireDate)} > @now
+                   """;
+
+        await ExecuteAsync(sql, new { account_id, now });
+    }
 }

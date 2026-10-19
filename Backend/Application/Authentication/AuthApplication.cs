@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Application.Management.Model;
@@ -21,15 +22,24 @@ class AuthApplication(
     ISocialMediaService social_media_srv,
     Lazy<IAccountApplication> account_app,
     Lazy<IEmailService> email_srv,
+    IMemoryCache reset_limit_cache,
     IOptions<ManagementOptions> options)
     : IAuthApplication
 {
+    /// <summary>Reset-code requests allowed per identifier inside the window.</summary>
+    private const int MaxResetRequestsPerWindow = 3;
+
+    private static readonly TimeSpan ResetRateWindowLength = TimeSpan.FromHours(1);
+
+    private static readonly object ResetRateLimitLock = new();
+
     private IAccountRepository AccountRepo { get; } = account_repo;
     private IHistoryRepository HistoryRepo { get; } = history_repo;
     private Lazy<IResetPassRepository> ResetPassRepo { get; } = reset_pass_repo;
     private ISocialMediaService SocialMediaSrv { get; } = social_media_srv;
     private Lazy<IAccountApplication> AccountApp { get; } = account_app;
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
+    private IMemoryCache ResetLimitCache { get; } = reset_limit_cache;
     private IOptions<ManagementOptions> Options { get; } = options;
 
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
@@ -111,6 +121,14 @@ class AuthApplication(
 
         if (AccountBusiness.MobileNumberPattern().IsMatch(email_mobile))
         {
+            // the limiter runs before the lookup (also for unknown accounts)
+            // so it cannot be used as an enumeration oracle; the response
+            // stays neutral when the limit is exhausted
+            if (!TryConsumeResetRequest(email_mobile))
+            {
+                return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
+            }
+
 #if !SOCIAL
             return new ApiResult
             {
@@ -123,6 +141,8 @@ class AuthApplication(
             if (account is { Status: not AccountStatus.Deactivated })
             {
                 var hash_code = HashHandler.GenerateHashCode(56);
+
+                await ResetPassRepo.Value.ExpireActiveCodes(account.Id);
 
                 await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
                 {
@@ -142,7 +162,7 @@ class AuthApplication(
                     Description = "درخواست تغییر کلمه عبور (موبایل)",
                 });
 
-                Log.Verbose("Reset-Password message has been sent: {0}", email_mobile);
+                Log.Information("Reset-Password message has been sent: account-id={0}", account.Id);
             }
 
             return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
@@ -150,16 +170,21 @@ class AuthApplication(
         }
         else if (AccountBusiness.EmailPattern().IsMatch(email_mobile))
         {
+            if (!TryConsumeResetRequest(email_mobile))
+            {
+                return ApiResult.Success("اگر این حساب ثبت شده باشد، ایمیل بازیابی ارسال شد.");
+            }
+
             var account = await AccountRepo.GetAccountByEmail(email_mobile);
 
             if (account is { Status: not AccountStatus.Deactivated })
             {
                 var hash_code = HashHandler.GenerateHashCode(56, true);
 
-                // The email send has no local-database work, so it can overlap the
-                // two inserts below; the inserts themselves share the scoped
-                // SqlConnection and must run one after the other.
-                var email_task = EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
+                // the inserts share the scoped SqlConnection and run one after
+                // the other; only then is the email sent, so a stored code is
+                // never announced before it exists
+                await ResetPassRepo.Value.ExpireActiveCodes(account.Id);
 
                 await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
                 {
@@ -177,9 +202,20 @@ class AuthApplication(
                     Description = "درخواست تغییر کلمه عبور (ایمیل)",
                 });
 
-                Log.Verbose("Reset-Password email has been sent: {0}", email_mobile);
+                try
+                {
+                    await EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
+                }
+                catch (Exception error)
+                {
+                    // the code stays stored: the user may simply retry later
+                    Log.Error(error, "Reset-Password email failed: account-id={0}", account.Id);
 
-                await email_task;
+                    throw new UserException("ارسال ایمیل ناموفق بود؛ لطفاً بعداً تلاش کنید",
+                        $"Reset-password email failed: account-id={account.Id}");
+                }
+
+                Log.Information("Reset-Password email has been sent: account-id={0}", account.Id);
             }
 
             return ApiResult.Success("اگر این حساب ثبت شده باشد، ایمیل بازیابی ارسال شد.");
@@ -187,6 +223,47 @@ class AuthApplication(
 
         throw new UserException("ایمیل/موبایل نا معتبر است!",
             $"Invalid Email/Mobile: {email_mobile}");
+    }
+
+    /// <summary>
+    /// Sliding-window limiter (3 requests per identifier per hour) backed by
+    /// the process-wide <see cref="IMemoryCache"/>; every well-formed request
+    /// consumes a slot whether or not the account exists.
+    /// </summary>
+    private bool TryConsumeResetRequest(string email_mobile)
+    {
+        var key = $"reset-limit|{email_mobile.ToLowerInvariant()}";
+
+        lock (ResetRateLimitLock)
+        {
+            var now = DateTime.Now;
+
+            if (!ResetLimitCache.TryGetValue(key, out ResetRateWindow? window) || window is null)
+            {
+                window = new ResetRateWindow();
+            }
+
+            while (window.Requests.Count > 0 && window.Requests.Peek() <= now - ResetRateWindowLength)
+            {
+                window.Requests.Dequeue();
+            }
+
+            if (window.Requests.Count >= MaxResetRequestsPerWindow)
+            {
+                return false;
+            }
+
+            window.Requests.Enqueue(now);
+
+            ResetLimitCache.Set(key, window, now + ResetRateWindowLength);
+
+            return true;
+        }
+    }
+
+    private sealed class ResetRateWindow
+    {
+        public Queue<DateTime> Requests { get; } = new();
     }
 
     public async Task<ApiResult> ResetPassword(string code, string password)
@@ -239,6 +316,21 @@ class AuthApplication(
         await AccountRepo.Save(account);
 
         await SocialMediaSrv.NewUserRegistrationAlert(account);
+
+        if (account.Email != null)
+        {
+            // the address was just submitted in this request — the very same
+            // channel ForgetPassword mails — so it needs no validation stamp.
+            // Best-effort: registration must never fail because of the email.
+            try
+            {
+                await EmailSrv.Value.SendWelcomeEmail(account.Fullname, account.Email, account.Username);
+            }
+            catch (Exception error)
+            {
+                Log.Error(error, "Welcome email failed: account-id={0}, user={1}", account.Id, account.Username);
+            }
+        }
 
         Log.Information("New User Registered: ({0}, {1})", account.Username, account.Email);
 

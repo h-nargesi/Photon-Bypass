@@ -14,7 +14,14 @@ public static class ServiceFactory
     public static void AddServerBridgeServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder
     {
         builder.Services.BindValidateReturn<ServerBridgeOptions>();
-        builder.Services.BindValidateReturn<Email.EmailOptions>();
+
+        // conditional rule: an Enabled transport must be fully configured,
+        // which data annotations cannot express
+        builder.Services.AddOptions<EmailOptions>()
+            .BindConfiguration(nameof(EmailOptions))
+            .Validate(EmailOptionsValidation.IsValid,
+                "EmailOptions: when Enabled is true, Address, Password and Host must be set. See docs/19-deploy-runbook.md.")
+            .ValidateOnStart();
 
         builder.Services.AddLazyScoped<IApiHandler, ApiHandler>();
         builder.Services.AddLazyScoped<IEmailHandler, EmailHandler>();

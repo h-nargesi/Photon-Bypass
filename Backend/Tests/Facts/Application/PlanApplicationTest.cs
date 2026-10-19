@@ -9,8 +9,10 @@ using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.ErrorHandler;
+using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
+using PhotonBypass.Test.Mock.MockServerBridge;
 
 namespace PhotonBypass.Test.Facts.Application;
 
@@ -254,6 +256,82 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         Assert.NotNull(result.Data);
         Assert.Equal(1500, result.Data.CurrentPrice);
         Assert.NotNull(result.Data.InvoiceCode);
+    }
+
+    [Fact]
+    public async Task Renewal_SendsConfirmationEmailToThePlanOwner()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var wallet_moq = scope.ServiceProvider.GetRequiredService<WalletRepositoryMoq>();
+
+        // replay path: manager 99 pays, the confirmation goes to plan owner User2
+        job_context.InjectJobContext(99, "User99", "User2");
+
+        wallet_moq.Data[99] =
+        [
+            new WalletEntity
+            {
+                Id = 902,
+                AccountId = 99,
+                Amount = 1500,
+                Direction = BalanceDirection.Credit,
+                Status = BalanceStatus.Completed,
+                Description = "seed",
+            },
+        ];
+
+        EmailMessage? sent = null;
+        scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += mail => sent = mail;
+
+        var result = await plan_app.Renewal(99, 1, "User2t|2u|120d|25g");
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+
+        // the confirmation goes to the plan owner's validated address,
+        // not to the payer
+        sent.Should().NotBeNull();
+        sent!.ToAddress.Should().Be("user2@gmail.com");
+        sent.Subject.Should().Contain("تمدید");
+        sent.HtmlBody.Should().Contain("25 گیگی");
+        sent.PlainTextBody.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task Renewal_EmailFailure_DoesNotFailTheCommittedRenewal()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var wallet_moq = scope.ServiceProvider.GetRequiredService<WalletRepositoryMoq>();
+
+        job_context.InjectJobContext(99, "User99", "User2");
+
+        wallet_moq.Data[99] =
+        [
+            new WalletEntity
+            {
+                Id = 902,
+                AccountId = 99,
+                Amount = 1500,
+                Direction = BalanceDirection.Credit,
+                Status = BalanceStatus.Completed,
+                Description = "seed",
+            },
+        ];
+
+        scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend +=
+            _ => throw new InvalidOperationException("smtp unavailable");
+
+        var result = await plan_app.Renewal(99, 1, "User2t|2u|120d|25g");
+
+        // the plan is committed and the money is gone: a failed email must
+        // not turn the settled renewal into an error
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+        Assert.NotNull(result.Data);
     }
 
     [Fact]

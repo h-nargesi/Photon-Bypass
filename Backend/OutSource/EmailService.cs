@@ -1,24 +1,23 @@
-﻿using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Options;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.ServerBridge.Services;
 using System.Collections.Concurrent;
-using System.Net.Mail;
-using System.Text;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace PhotonBypass.OutSource;
 
 class EmailService(IEmailHandler handler, IOptions<BrandingOptions> branding_options) : IEmailService
 {
-    private const string LogoContentId = "logo";
+    private const string TemplateFolderName = "EmailTemplates";
 
     private static readonly ConcurrentDictionary<string, Task<string>> TemplateCache = new();
     private static readonly ConcurrentDictionary<string, Task<byte[]>> LogoCache = new();
 
-    private static async Task<string> LoadTemplateAsync(string file_name)
+    private static async Task<string> LoadTemplateAsync(string path)
     {
-        var task = TemplateCache.GetOrAdd(file_name, path => File.ReadAllTextAsync(path));
+        var task = TemplateCache.GetOrAdd(path, p => File.ReadAllTextAsync(p));
 
         try
         {
@@ -28,7 +27,7 @@ class EmailService(IEmailHandler handler, IOptions<BrandingOptions> branding_opt
         {
             // a faulted task must not stay cached: a single transient read
             // failure would break every subsequent send until a restart
-            TemplateCache.TryRemove(file_name, out _);
+            TemplateCache.TryRemove(path, out _);
             throw;
         }
     }
@@ -60,29 +59,58 @@ class EmailService(IEmailHandler handler, IOptions<BrandingOptions> branding_opt
         }
     }
 
-    private async Task<MailMessage> CreateHtmlMessageAsync(MailAddress from, MailAddress to, string subject, string body)
+    /// <summary>
+    /// Root for template and relative-logo paths: the application base
+    /// directory, where the build/publish pipeline places EmailTemplates and
+    /// Branding — stable regardless of the process working directory or the
+    /// host's content root (fix for the CWD-dependent lookups).
+    /// </summary>
+    private static string AppBasePath => AppContext.BaseDirectory;
+
+    private string TemplatePath(string template_name, string extension)
+    {
+        return Path.Combine(AppBasePath, TemplateFolderName, $"{template_name}.{extension}");
+    }
+
+    private string LogoPath()
     {
         var branding = branding_options.Value;
-        var logo = await LoadLogoAsync(branding.LogoPath);
 
-        var message = new MailMessage(from, to)
+        return Path.IsPathRooted(branding.LogoPath)
+            ? branding.LogoPath
+            : Path.Combine(AppBasePath, branding.LogoPath);
+    }
+
+    /// <summary>
+    /// Loads the HTML and plain-text views of one template; both share the
+    /// same placeholders and conditional markers (the markers never survive
+    /// rendering: <see cref="RenderSection"/> strips them from both views).
+    /// </summary>
+    private async Task<(string Html, string Text)> LoadTemplatePairAsync(string template_name)
+    {
+        var html = await LoadTemplateAsync(TemplatePath(template_name, "html"));
+        var text = await LoadTemplateAsync(TemplatePath(template_name, "txt"));
+
+        return (html, text);
+    }
+
+    private async Task<EmailMessage> CreateMessageAsync(string to_name, string to_address, string subject,
+        (string Html, string Text) bodies, IReadOnlyList<EmailAttachment>? attachments = null)
+    {
+        var branding = branding_options.Value;
+        var logo = await LoadLogoAsync(LogoPath());
+
+        return new EmailMessage
         {
+            ToName = to_name,
+            ToAddress = to_address,
             Subject = subject,
+            HtmlBody = bodies.Html,
+            PlainTextBody = bodies.Text,
+            EmbeddedLogo = logo,
+            LogoContentType = LogoContentType(branding.LogoPath),
+            Attachments = attachments ?? [],
         };
-
-        // The HTML body travels only through the alternate view so the CID
-        // logo rides on the same part as the markup; disposing the message
-        // disposes the view and its linked-resource stream.
-        var view = AlternateView.CreateAlternateViewFromString(body, Encoding.UTF8, "text/html");
-
-        view.LinkedResources.Add(new LinkedResource(new MemoryStream(logo), LogoContentType(branding.LogoPath))
-        {
-            ContentId = LogoContentId,
-        });
-
-        message.AlternateViews.Add(view);
-
-        return message;
     }
 
     private static string LogoContentType(string path)
@@ -113,64 +141,100 @@ class EmailService(IEmailHandler handler, IOptions<BrandingOptions> branding_opt
             .Replace("{ovpn_installer_url}", branding.OvpnInstallerUrl ?? string.Empty);
     }
 
-    public async Task FinishServiceAlert(string fullname, string username, string email, string type, string left)
+    /// <summary>
+    /// Applies branding plus the per-placeholder values to both views. User
+    /// input is HTML-encoded in the HTML view only � never in plain text and
+    /// never for server-generated codes/links that must stay verbatim.
+    /// </summary>
+    private (string Html, string Text) RenderPair((string Html, string Text) bodies,
+        params (string Placeholder, string Value, bool EncodeInHtml)[] values)
     {
-        if (string.IsNullOrWhiteSpace(handler.Options.Address))
+        var (html, text) = (ApplyBranding(bodies.Html), ApplyBranding(bodies.Text));
+
+        foreach (var (placeholder, value, encode) in values)
         {
-            throw new Exception("Email Address is not set in config");
+            html = html.Replace(placeholder, encode ? WebUtility.HtmlEncode(value) : value);
+            text = text.Replace(placeholder, value);
         }
 
+        return (html, text);
+    }
+
+    public async Task FinishServiceAlert(string fullname, string username, string email, string type, string left)
+    {
         if (string.IsNullOrWhiteSpace(fullname))
         {
             fullname = username;
         }
 
-        var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
-        var to_address = new MailAddress(email, fullname);
-
-        var body = ApplyBranding(await LoadTemplateAsync("EmailTemplates/FinishServiceAlert.html"));
-        body = body.Replace("{fullname}", fullname)
-            .Replace("{type}", type)
-            .Replace("{left}", left);
-
-        using var message = await CreateHtmlMessageAsync(from_address, to_address, $"پایان سرویس | {username}", body);
+        var message = await CreateMessageAsync(fullname, email, $"پایان سرویس | {username}",
+            RenderPair(await LoadTemplatePairAsync("FinishServiceAlert"),
+                ("{fullname}", fullname, true),
+                ("{type}", type, true),
+                ("{left}", left, true)));
 
         await handler.Send(message);
     }
 
     public async Task SendConnectionEmail(string fullname, string email, ConnectionEmailContext context)
     {
-        if (string.IsNullOrWhiteSpace(handler.Options.Address))
-        {
-            throw new Exception("Email Address is not set in config");
-        }
+        var bodies = await LoadTemplatePairAsync("ConnectionEmail");
 
-        var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
-        var to_address = new MailAddress(email, fullname);
+        // sections the account does not own are stripped from both views
+        bodies = (
+            RenderSection(RenderSection(RenderSection(bodies.Html,
+                "password", context.Password), "link", context.Link), "ovpn", context.PrivateKeyOvpn),
+            RenderSection(RenderSection(RenderSection(bodies.Text,
+                "password", context.Password), "link", context.Link), "ovpn", context.PrivateKeyOvpn));
 
-        var body = ApplyBranding(await LoadTemplateAsync("EmailTemplates/ConnectionEmail.html"));
-        body = RenderSection(body, "password", context.Password);
-        body = RenderSection(body, "link", context.Link);
-        body = RenderSection(body, "ovpn", context.PrivateKeyOvpn);
-        body = body.Replace("{username}", context.Username)
-            .Replace("{password}", context.Password ?? string.Empty)
-            .Replace("{link}", context.Link ?? string.Empty)
-            .Replace("{ovpn}", context.PrivateKeyOvpn ?? string.Empty);
+        IReadOnlyList<EmailAttachment> attachments = context.CertFile is { Length: > 0 }
+            ? [new EmailAttachment(context.CertFile, "cert.ovpn", "application/octet-stream")]
+            : [];
 
-        using var message = await CreateHtmlMessageAsync(from_address, to_address, $"VPN | {fullname}", body);
+        var message = await CreateMessageAsync(fullname, email, $"VPN | {fullname}",
+            RenderPair(bodies,
+                ("{username}", context.Username, true),
+                ("{password}", context.Password ?? string.Empty, false),
+                ("{link}", context.Link ?? string.Empty, false),
+                ("{ovpn}", context.PrivateKeyOvpn ?? string.Empty, false)),
+            attachments);
 
-        if (context.CertFile is { Length: > 0 })
-        {
-            // the stream must outlive this method: MailMessage disposes its
-            // attachments (and their streams) when it is disposed after sending
-            message.Attachments.Add(new Attachment(new MemoryStream(context.CertFile), "cert.ovpn"));
-        }
+        await handler.Send(message);
+    }
+
+    public async Task SendResetPasswordLink(string fullname, string email, string hash_code)
+    {
+        var message = await CreateMessageAsync(fullname, email, "کد بازیابی",
+            RenderPair(await LoadTemplatePairAsync("ResetPassword"),
+                ("{code}", hash_code, false)));
+
+        await handler.Send(message);
+    }
+
+    public async Task SendWelcomeEmail(string fullname, string email, string username)
+    {
+        var message = await CreateMessageAsync(fullname, email, $"خوش آمدید | {branding_options.Value.Title}",
+            RenderPair(await LoadTemplatePairAsync("Welcome"),
+                ("{fullname}", fullname, true),
+                ("{username}", username, true)));
+
+        await handler.Send(message);
+    }
+
+    public async Task SendRenewalSuccessEmail(string fullname, string email, string plan_title, int price, string expiration)
+    {
+        var message = await CreateMessageAsync(fullname, email, $"تمدید موفق | {branding_options.Value.Title}",
+            RenderPair(await LoadTemplatePairAsync("RenewalSuccess"),
+                ("{fullname}", fullname, true),
+                ("{plan_title}", plan_title, true),
+                ("{price}", price.ToString("N0"), false),
+                ("{expiration}", expiration, false)));
 
         await handler.Send(message);
     }
 
     /// <summary>
-    /// Keeps the <c>&lt;!--if:key--&gt;…&lt;!--end:key--&gt;</c> block (without the
+    /// Keeps the <c>&lt;!--if:key--&gt;�&lt;!--end:key--&gt;</c> block (without the
     /// markers) when the section value exists, or removes the whole block
     /// otherwise, so sections the account does not own never reach the user.
     /// </summary>
@@ -181,23 +245,5 @@ class EmailService(IEmailHandler handler, IOptions<BrandingOptions> branding_opt
         return Regex.Replace(body, pattern,
             string.IsNullOrWhiteSpace(value) ? string.Empty : "${content}",
             RegexOptions.Singleline);
-    }
-
-    public async Task SendResetPasswordLink(string fullname, string email, string hash_code)
-    {
-        if (string.IsNullOrWhiteSpace(handler.Options.Address))
-        {
-            throw new Exception("Email Address is not set in config");
-        }
-
-        var from_address = new MailAddress(handler.Options.Address, handler.Options.FullName);
-        var to_address = new MailAddress(email, fullname);
-
-        var body = ApplyBranding(await LoadTemplateAsync("EmailTemplates/ResetPassword.html"));
-        body = body.Replace("{code}", hash_code);
-
-        using var message = await CreateHtmlMessageAsync(from_address, to_address, "کد بازیابی", body);
-
-        await handler.Send(message);
     }
 }

@@ -7,6 +7,7 @@ using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Management;
+using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Plan.Entity;
@@ -32,7 +33,8 @@ class PlanApplication(
     Lazy<IAccountApplication> account_app,
     Lazy<IBillingApplication> billing_app,
     Lazy<ISelfServiceGuard> self_service_guard,
-    Lazy<IJobContext> job_context)
+    Lazy<IJobContext> job_context,
+    Lazy<IEmailService> email_srv)
     : IPlanApplication
 {
     private Lazy<IRenewalRepository> RenewalRepo { get; } = renewal_repo;
@@ -49,6 +51,7 @@ class PlanApplication(
     private Lazy<IAccountApplication> AccountApp { get; } = account_app;
     private Lazy<ISelfServiceGuard> SelfServiceGuard { get; } = self_service_guard;
     private Lazy<IJobContext> JobContext { get; } = job_context;
+    private Lazy<IEmailService> EmailSrv { get; } = email_srv;
 
     public async Task<ApiResult<PlanStateModel>> GetPlanState(string target)
     {
@@ -450,6 +453,23 @@ class PlanApplication(
         {
             Log.Error(post_commit_error,
                 "Server capacity check after renewal commit failed: target={0}", account.Username);
+        }
+
+        try
+        {
+            // the confirmation goes to the plan owner, not the payer
+            // (docs/20 payer=actor)
+            if (account.EmailAddress != null)
+            {
+                await EmailSrv.Value.SendRenewalSuccessEmail(account.Fullname, account.EmailAddress,
+                    renew.GetPlanTitle(), estimate,
+                    renew.ExpirationDate?.ToString("yyyy/MM/dd HH:mm") ?? string.Empty);
+            }
+        }
+        catch (Exception post_commit_error)
+        {
+            Log.Error(post_commit_error,
+                "Sending renewal success email failed: target={0}", account.Username);
         }
 
         Log.Information("[user: {0}] Plan renewal finished: ({1}, {2}, {3}, {4})",

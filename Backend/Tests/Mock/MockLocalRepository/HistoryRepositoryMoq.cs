@@ -61,6 +61,19 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IUnitLevelServic
                 return Task.CompletedTask;
             });
 
+        Setup(x => x.Save(It.IsAny<IEnumerable<HistoryEntity>>()))
+            .Returns<IEnumerable<HistoryEntity>>(entities =>
+            {
+                foreach (var entity in entities)
+                {
+                    entity.Id = Data.Count > 0 ? Data.Max(h => h.Id) + 1 : 1;
+                    Data.Add(entity);
+                    db_context.RegisterUndo(() => Data.Remove(entity));
+                }
+
+                return Task.CompletedTask;
+            });
+
         Setup(x => x.DbContext).Returns(db_context);
     }
 

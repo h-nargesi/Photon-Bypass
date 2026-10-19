@@ -29,6 +29,12 @@ public static class ProductionSecretsGuard
         ("LocalDatabaseOptions:ConnectionString", value => value?.Contains(CommittedTestSecretFixtures.LocalDatabaseMarker) == true),
         ("RadDapperOptions:ConnectionString", value => value?.Contains(CommittedTestSecretFixtures.RadDatabaseMarker) == true),
         ("RadiusServiceOptions:Password", value => value == CommittedTestSecretFixtures.RadiusServicePassword),
+
+        // email is the only recovery channel until SOCIAL ships, so an enabled,
+        // fully configured transport is mandatory in production
+        ("EmailOptions:Enabled", value => !bool.TryParse(value, out var enabled) || !enabled),
+        ("EmailOptions:Address", string.IsNullOrWhiteSpace),
+        ("EmailOptions:Password", string.IsNullOrWhiteSpace),
     ];
 
     public static void Validate(IConfiguration configuration, IHostEnvironment environment)

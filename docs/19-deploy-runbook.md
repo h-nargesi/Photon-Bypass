@@ -28,6 +28,9 @@
 | `LocalDatabaseOptions:ConnectionString` | شامل نام دیتابیس سناریوی تستی (`FastBypass_DbScenario`) |
 | `RadDapperOptions:ConnectionString` | شامل نام دیتابیس تستی Radius |
 | `RadiusServiceOptions:Password` | تساوی دقیق با مقدار تستی کامیت‌شده |
+| `EmailOptions:Enabled` | نبودن مقدار یا `false` بودن |
+| `EmailOptions:Address` | خالی/فاصله بودن |
+| `EmailOptions:Password` | خالی/فاصله بودن |
 
 نکته‌ی environment: اگر `ASPNETCORE_ENVIRONMENT` ست نشود، پیش‌فرض **Production** است و گارد فعال می‌شود. تست‌های xUnit هاست را با `ASPNETCORE_ENVIRONMENT=Development` بوت می‌کنند (`Backend/Tests/Initializer/ServiceInitializer.cs`) و `WebApplicationFactory` هم به‌طور پیش‌فرض Development است.
 
@@ -46,7 +49,7 @@
    خروجی را یک‌جا (بدون شکستن خط) در `Issuer:Code` بگذارید.
 2. **دیتابیس محلی MSSQL** (`LocalDatabaseOptions:ConnectionString`): دیتابیس `FastBypass` را با کاربر اختصاصی و پسورد قوی بسازید (نه کاربر تستی repo).
 3. **Radius**: connection string دیتابیس Radius (`RadDapperOptions:ConnectionString`) و credential وب‌سرویس RadiusDesk (`RadiusServiceOptions`) با مقادیر واقعی سرور.
-4. **ایمیل** (`EmailOptions`): در صورت فعال بودن ارسال ایمیل، credential صندوق واقعی.
+4. **ایمیل** (`EmailOptions`): **الزامی** — ایمیل تا وقتی کانال SOCIAL ساخته نشده تنها راه بازیابی رمز است؛ پروداکشن بدون `Enabled: true` و credential صندوق واقعی بوت نمی‌شود (گارد).
 5. **SSH/ServerBridge**: در صورت وجود credential پیش‌فرض در `ServerBridgeOptions`. (credential تک‌تک سرورها در جدول `Server` ذخیره می‌شود و از پنل وارد می‌شود؛ رمزنگاری at-rest آن: docs/14 M12.)
 6. **پرداخت/OVPN** (در صورت استفاده): `ManagementOptions:PaymentCards` (شماره کارت‌های واقعی) و `ManagementOptions:DefaultPrivateKeyOVpn`.
 
@@ -69,11 +72,20 @@
     "BaseUrl": "<radiusdesk-host>",
     "Username": "<user>",
     "Password": "<password>"
+  },
+  "EmailOptions": {
+    "Enabled": true,
+    "FullName": "<display name>",
+    "Address": "<mailbox address>",
+    "Password": "<mailbox password or app password>",
+    "Host": "<smtp-host>",
+    "Port": 587,
+    "EnableSsl": true
   }
 }
 ```
 
-در صورت نیاز بخش‌های `EmailOptions`، `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند.
+در صورت نیاز بخش‌های `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند؛ `EmailOptions` عمداً در `appsettings.json` کامیت نمی‌شود و کامل در `secrets.json` می‌آید (`Enabled: true` + credential).
 
 ### (ج) نصب دیتابیس از ابتدا + ساخت ادمین (پیش از بالا آوردن app)
 

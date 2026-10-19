@@ -13,6 +13,8 @@ internal class ResetPassRepositoryMoq : Mock<IResetPassRepository>, IUnitLevelSe
 
     public event Action<string, ResetPassEntity?>? OnGetAccount;
 
+    public event Action<int>? OnExpireActiveCodes;
+
     public ResetPassRepositoryMoq()
     {
         Setup(x => x.AddHashCode(It.IsNotNull<ResetPassEntity>()))
@@ -34,6 +36,23 @@ internal class ResetPassRepositoryMoq : Mock<IResetPassRepository>, IUnitLevelSe
                 OnGetAccount?.Invoke(hash_code, entity);
 
                 return Task.FromResult(entity);
+            });
+
+        Setup(x => x.ExpireActiveCodes(It.IsInRange(1, int.MaxValue, Moq.Range.Inclusive)))
+            .Returns<int>(account_id =>
+            {
+                var now = DateTime.Now;
+
+                foreach (var entity in data.Values.Where(entity => entity.AccountId == account_id))
+                {
+                    if (entity.ExpireDate > now)
+                    {
+                        entity.ExpireDate = now;
+                    }
+                }
+
+                OnExpireActiveCodes?.Invoke(account_id);
+                return Task.CompletedTask;
             });
     }
 

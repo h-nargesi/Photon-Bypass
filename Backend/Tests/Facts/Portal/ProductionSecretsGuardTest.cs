@@ -37,15 +37,9 @@ public class ProductionSecretsGuardTest
     }
 
     [Fact]
-    public void Validate_ProductionWithRealSecrets_Passes()
+    public void Validate_ProductionWithRealSecretsAndEnabledEmail_Passes()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
-        {
-            ["Issuer:Code"] = "cHJvZHVjdGlvbi1vbmx5LXNpZ25pbmcta2V5LW5vdC1hLXRlc3QtZml4dHVyZQ==",
-            ["LocalDatabaseOptions:ConnectionString"] = "Server=prod-sql; Database=FastBypass; User Id=svc_bypass; Password=strong-secret; Encrypt=True;",
-            ["RadDapperOptions:ConnectionString"] = "Server=prod-radius-db;Database=production_radius;User=radius;Password=strong-secret;",
-            ["RadiusServiceOptions:Password"] = "a-real-radius-api-password",
-        }).Build();
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(ProductionValues()).Build();
         var environment = HostEnvironment("Production");
 
         var act = () => ProductionSecretsGuard.Validate(configuration, environment);
@@ -56,13 +50,10 @@ public class ProductionSecretsGuardTest
     [Fact]
     public void Validate_ProductionWithOnlyTestJwtKey_ThrowsNamingOnlyThatKey()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
-        {
-            ["Issuer:Code"] = CommittedTestSecretFixtures.JwtSigningKey,
-            ["LocalDatabaseOptions:ConnectionString"] = "Server=prod-sql; Database=FastBypass; User Id=svc_bypass; Password=strong-secret; Encrypt=True;",
-            ["RadDapperOptions:ConnectionString"] = "Server=prod-radius-db;Database=production_radius;User=radius;Password=strong-secret;",
-            ["RadiusServiceOptions:Password"] = "a-real-radius-api-password",
-        }).Build();
+        var values = ProductionValues();
+        values["Issuer:Code"] = CommittedTestSecretFixtures.JwtSigningKey;
+
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
         var environment = HostEnvironment("Production");
 
         var act = () => ProductionSecretsGuard.Validate(configuration, environment);
@@ -72,17 +63,63 @@ public class ProductionSecretsGuardTest
         exception.Message.Should().NotContain("LocalDatabaseOptions:ConnectionString");
         exception.Message.Should().NotContain("RadDapperOptions:ConnectionString");
         exception.Message.Should().NotContain("RadiusServiceOptions:Password");
+        exception.Message.Should().NotContain("EmailOptions");
     }
 
     [Fact]
-    public void Validate_ProductionWithMissingKeys_DoesNotThrow()
+    public void Validate_ProductionWithoutEmailOptions_ThrowsNamingTheEmailKeys()
     {
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>()).Build();
+        var values = ProductionValues();
+        values.Remove("EmailOptions:Enabled");
+        values.Remove("EmailOptions:Address");
+        values.Remove("EmailOptions:Password");
+
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
         var environment = HostEnvironment("Production");
 
         var act = () => ProductionSecretsGuard.Validate(configuration, environment);
 
-        act.Should().NotThrow();
+        var exception = act.Should().Throw<InvalidOperationException>().Which;
+        exception.Message.Should().Contain("EmailOptions:Enabled");
+        exception.Message.Should().Contain("EmailOptions:Address");
+        exception.Message.Should().Contain("EmailOptions:Password");
+        exception.Message.Should().NotContain("Issuer:Code");
+    }
+
+    [Fact]
+    public void Validate_ProductionWithDisabledEmail_ThrowsNamingEnabledOnly()
+    {
+        var values = ProductionValues();
+        values["EmailOptions:Enabled"] = "false";
+
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        var environment = HostEnvironment("Production");
+
+        var act = () => ProductionSecretsGuard.Validate(configuration, environment);
+
+        var exception = act.Should().Throw<InvalidOperationException>().Which;
+        exception.Message.Should().Contain("EmailOptions:Enabled");
+        exception.Message.Should().NotContain("EmailOptions:Address");
+        exception.Message.Should().NotContain("EmailOptions:Password");
+    }
+
+    [Fact]
+    public void Validate_ProductionWithEmailWithoutCredentials_ThrowsNamingAddressAndPassword()
+    {
+        var values = ProductionValues();
+        values["EmailOptions:Address"] = " ";
+
+        values.Remove("EmailOptions:Password");
+
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        var environment = HostEnvironment("Production");
+
+        var act = () => ProductionSecretsGuard.Validate(configuration, environment);
+
+        var exception = act.Should().Throw<InvalidOperationException>().Which;
+        exception.Message.Should().Contain("EmailOptions:Address");
+        exception.Message.Should().Contain("EmailOptions:Password");
+        exception.Message.Should().NotContain("EmailOptions:Enabled");
     }
 
     [Fact]
@@ -119,6 +156,24 @@ public class ProductionSecretsGuardTest
             ["LocalDatabaseOptions:ConnectionString"] = $"Server=.; Database={CommittedTestSecretFixtures.LocalDatabaseMarker}; User Id=test; Password=abc.123456; Encrypt=False;",
             ["RadDapperOptions:ConnectionString"] = $"Server=localhost;{CommittedTestSecretFixtures.RadDatabaseMarker}User=rd;Password=rd;",
             ["RadiusServiceOptions:Password"] = CommittedTestSecretFixtures.RadiusServicePassword,
+
+            // a well-formed email transport: the email rules enforce
+            // presence/enabled, they have no committed-fixture detection
+            ["EmailOptions:Enabled"] = "true",
+            ["EmailOptions:Address"] = "info@website.com",
+            ["EmailOptions:Password"] = "password",
+        };
+
+    private static Dictionary<string, string?> ProductionValues() =>
+        new()
+        {
+            ["Issuer:Code"] = "cHJvZHVjdGlvbi1vbmx5LXNpZ25pbmcta2V5LW5vdC1hLXRlc3QtZml4dHVyZQ==",
+            ["LocalDatabaseOptions:ConnectionString"] = "Server=prod-sql; Database=FastBypass; User Id=svc_bypass; Password=strong-secret; Encrypt=True;",
+            ["RadDapperOptions:ConnectionString"] = "Server=prod-radius-db;Database=production_radius;User=radius;Password=strong-secret;",
+            ["RadiusServiceOptions:Password"] = "a-real-radius-api-password",
+            ["EmailOptions:Enabled"] = "true",
+            ["EmailOptions:Address"] = "mail@example.com",
+            ["EmailOptions:Password"] = "real-secret",
         };
 
     private static IHostEnvironment HostEnvironment(string name) =>

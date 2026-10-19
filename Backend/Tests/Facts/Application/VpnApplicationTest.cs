@@ -276,9 +276,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         email_moq.OnSend += mail =>
         {
             is_saved = true;
-            Assert.Single(mail.To);
-            Assert.Equal("user2@gmail.com", mail.To.First().Address);
-            Assert.NotNull(mail.Attachments);
+            Assert.Equal("user2@gmail.com", mail.ToAddress);
             Assert.Single(mail.Attachments);
         };
 
@@ -443,8 +441,8 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         var attachment_count = -1;
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += mail =>
         {
-            sent_body = HtmlBody(mail);
-            attachment_count = mail.Attachments?.Count ?? 0;
+            sent_body = mail.HtmlBody ?? string.Empty;
+            attachment_count = mail.Attachments.Count;
         };
 
         await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
@@ -473,8 +471,8 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += mail =>
         {
             send_count++;
-            sent_body = HtmlBody(mail);
-            attachment_count = mail.Attachments?.Count ?? 0;
+            sent_body = mail.HtmlBody ?? string.Empty;
+            attachment_count = mail.Attachments.Count;
         };
 
         await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
@@ -597,9 +595,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         byte[]? emailed_cert = null;
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += mail =>
         {
-            using var copy = new MemoryStream();
-            mail.Attachments.Single().ContentStream.CopyTo(copy);
-            emailed_cert = copy.ToArray();
+            emailed_cert = mail.Attachments.Single().Content;
         };
 
         await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
@@ -648,17 +644,6 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         stream.CopyTo(copy);
 
         return copy.ToArray();
-    }
-
-    /// <summary>
-    /// The delivered HTML lives on the message's alternate view, not in
-    /// <see cref="System.Net.Mail.MailMessage.Body"/>.
-    /// </summary>
-    private static string HtmlBody(System.Net.Mail.MailMessage mail)
-    {
-        using var reader = new StreamReader(mail.AlternateViews[0].ContentStream, System.Text.Encoding.UTF8);
-
-        return reader.ReadToEnd();
     }
 
     [Fact]

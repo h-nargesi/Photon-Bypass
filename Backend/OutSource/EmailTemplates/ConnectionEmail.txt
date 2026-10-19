@@ -1,0 +1,32 @@
+مشخصات اتصال
+
+اطلاعات کاربری:
+User: {username}
+<!--if:password-->
+Password: {password}
+<!--end:password-->
+
+<!--if:link-->
+لینک اتصال (vless):
+{link}
+لینک بالا را در برنامه‌ی v2rayNG یا کلاینت مشابه وارد کنید.
+
+نکته:
+با هر بار چرخش شناسه‌ی اتصال، کانفیگ قبلی باطل می‌شود؛ در آن صورت کانفیگ جدید را از پنل کاربری دریافت کنید.
+<!--end:link-->
+
+<!--if:ovpn-->
+OpenVPN (گواهی + رمز):
+User key password: {ovpn}
+فایل config.ovpn در پیوست قرار دارد.
+<!--end:ovpn-->
+
+راهنما:
+راهنمای اتصال: {guide_url}
+<!--if:ovpn-->
+<!--if:installer-->
+نصب‌کننده OpenVPN: {ovpn_installer_url}
+<!--end:installer-->
+<!--end:ovpn-->
+
+در صورت بروز مشکل با پشتیبانی تماس بگیرید.

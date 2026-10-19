@@ -6,6 +6,7 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
+using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
 using PhotonBypass.Test.Mock.MockServerBridge;
@@ -134,14 +135,151 @@ public class AuthAppTest : UnitLevelServiceInitializer
         email_handler_moq.OnSend += message =>
         {
             Assert.NotNull(message);
-            Assert.True(message.To.Count > 0);
-            Assert.Equal("user4@gmail.com", message.To.First().Address);
+            Assert.Equal("user4@gmail.com", message.ToAddress);
         };
 
         var result = await auth_app.ForgetPassword("user4@gmail.com");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_FourthRequestWithinTheHour_ReturnsNeutralMessageWithoutSending()
+    {
+        using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        var send_count = 0;
+        email_handler_moq.OnSend += _ => send_count++;
+
+        for (var request = 1; request <= 3; request++)
+        {
+            var result = await auth_app.ForgetPassword("user4@gmail.com");
+
+            Assert.Equal(2, result.Code / 100);
+        }
+
+        Assert.Equal(3, send_count);
+
+        var fourth = await auth_app.ForgetPassword("user4@gmail.com");
+
+        // the limit is invisible to the caller: same neutral 2xx answer
+        Assert.NotNull(fourth);
+        Assert.Equal(2, fourth.Code / 100);
+        Assert.Equal(3, send_count);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_RateLimit_WorksPerEmailAddress()
+    {
+        using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        var send_count = 0;
+        email_handler_moq.OnSend += _ => send_count++;
+
+        for (var request = 0; request < 3; request++)
+        {
+            await auth_app.ForgetPassword("user4@gmail.com");
+        }
+
+        // another address has its own window: this one still goes through
+        var other = await auth_app.ForgetPassword("user5@gmail.com");
+
+        Assert.Equal(2, other.Code / 100);
+        Assert.Equal(4, send_count);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_UnknownAccount_ConsumesRateLimitSlots()
+    {
+        using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+
+        var send_count = 0;
+        email_handler_moq.OnSend += _ => send_count++;
+
+        // three requests for an address that has no account: each consumes a
+        // slot BEFORE the lookup, so the limiter cannot be used to tell
+        // whether the account exists
+        for (var request = 0; request < 3; request++)
+        {
+            var result = await auth_app.ForgetPassword("rate.user@gmail.com");
+
+            Assert.Equal(2, result.Code / 100);
+        }
+
+        send_count.Should().Be(0);
+
+        // the account appears (registered meanwhile) but its window is spent
+        account_repo_moq.Data["RateUser"] = new AccountEntity
+        {
+            Id = 3000,
+            Username = "RateUser",
+            Email = "rate.user@gmail.com",
+            Status = AccountStatus.Active,
+        };
+
+        var fourth = await auth_app.ForgetPassword("rate.user@gmail.com");
+
+        fourth.Code.Should().Be(200);
+        send_count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_NewRequest_ExpiresThePreviousCodes()
+    {
+        using var scope = App.Services.CreateScope();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
+
+        var codes = new List<string>();
+        var expired_accounts = new List<int>();
+        reset_moq.OnAddHashCode += entity => codes.Add(entity.HashCode);
+        reset_moq.OnExpireActiveCodes += expired_accounts.Add;
+
+        await auth_app.ForgetPassword("user4@gmail.com");
+        await auth_app.ForgetPassword("user4@gmail.com");
+
+        codes.Should().HaveCount(2);
+        expired_accounts.Should().AllBeEquivalentTo(4);
+
+        // the first code exists but is expired: only the newest one works
+        var first_code = await reset_moq.Object.GetAccount(codes[0]);
+
+        first_code.Should().NotBeNull();
+        first_code!.ExpireDate.Should().BeOnOrBefore(DateTime.Now);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_EmailFailure_ThrowsUserExceptionButKeepsTheCode()
+    {
+        using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
+
+        var code = string.Empty;
+        reset_moq.OnAddHashCode += entity => code = entity.HashCode;
+
+        email_handler_moq.OnSend += _ => throw new InvalidOperationException("smtp unavailable");
+
+        var function = () => auth_app.ForgetPassword("user4@gmail.com");
+
+        (await function.Should().ThrowAsync<UserException>())
+            .Which.UserMessage.Should().Contain("ارسال ایمیل ناموفق بود");
+
+        code.Should().NotBeNullOrEmpty("the stored code must survive a failed send");
+
+        var stored = await reset_moq.Object.GetAccount(code);
+
+        stored.Should().NotBeNull();
+        stored!.ExpireDate.Should().BeAfter(DateTime.Now);
     }
 
     [Fact]
@@ -323,6 +461,77 @@ public class AuthAppTest : UnitLevelServiceInitializer
 
         (await function.Should().ThrowAsync<UserException>())
             .Which.HttpCode.Should().Be(403);
+    }
+
+    [Fact]
+    public async Task Register_WithEmail_SendsWelcomeEmail()
+    {
+        using var scope = App.Services.CreateScope();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+
+        EmailMessage? sent = null;
+        email_handler_moq.OnSend += mail => sent = mail;
+
+        var result = await auth_app.Register(new RegisterModel
+        {
+            Username = "username10",
+            Email = "welcome.user@gmail.com",
+            Mobile = "09113456799",
+            Password = "Passw0rd1",
+        });
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+
+        sent.Should().NotBeNull("a registration with an email must send the welcome mail");
+        sent!.ToAddress.Should().Be("welcome.user@gmail.com");
+        sent.Subject.Should().Contain("خوش آمدید");
+        sent.HtmlBody.Should().Contain("username10");
+        sent.PlainTextBody.Should().Contain("username10");
+    }
+
+    [Fact]
+    public async Task Register_WithoutEmail_SendsNoWelcomeEmail()
+    {
+        using var scope = App.Services.CreateScope();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+
+        var send_count = 0;
+        email_handler_moq.OnSend += _ => send_count++;
+
+        var result = await auth_app.Register(new RegisterModel
+        {
+            Username = "username10",
+            Email = null,
+            Mobile = "09113456799",
+            Password = "Passw0rd1",
+        });
+
+        Assert.Equal(2, result.Code / 100);
+        send_count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Register_WelcomeEmailFailure_DoesNotFailTheRegistration()
+    {
+        using var scope = App.Services.CreateScope();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+
+        email_handler_moq.OnSend += _ => throw new InvalidOperationException("smtp unavailable");
+
+        var result = await auth_app.Register(new RegisterModel
+        {
+            Username = "username10",
+            Email = "welcome.user@gmail.com",
+            Mobile = "09113456799",
+            Password = "Passw0rd1",
+        });
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
     }
 
     [Fact]
