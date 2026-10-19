@@ -244,9 +244,17 @@ class PlanApplication(
 
     private async Task<ApiResult<RenewalResult>> Renewal(AccountEntity account, AccountEntity payer, int? payment_id, byte count, short days, int gigabytes, int? invoice_code)
     {
-        if (!account.IsActive)
+        if (account.Status == AccountStatus.Deactivated)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
+        }
+
+        // D-A: a VPN-suspended account keeps portal access but must not renew
+        // — reactivation is a management-only operation
+        if (account.Status == AccountStatus.VpnSuspended)
+        {
+            throw new UserException("سرویس VPN شما توسط مدیریت غیرفعال است؛ برای تمدید ابتدا با مدیر خود تماس بگیرید!",
+                $"Renewal refused for a VPN-suspended account (docs/20 D13): target={account.Username}");
         }
 
         var current_state = (await PlanRepo.Value.GetPlanState(account.Id)) ??

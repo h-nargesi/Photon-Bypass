@@ -137,7 +137,7 @@ describe('UserSelectorModalComponent', () => {
               email: 'f@t.l',
               role: 0,
               allowSelfService: true,
-              isActive: true,
+              status: 0,
               created: 1700000000000,
               createdTitle: '۱۴۰۲',
             },

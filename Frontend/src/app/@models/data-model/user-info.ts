@@ -4,6 +4,15 @@ export enum AccountRole {
   Admin = 2,
 }
 
+/// Two-stage account status (backend `AccountStatus`, docs/20 D13):
+/// VpnSuspended keeps portal access but loses the VPN config everywhere;
+/// Deactivated loses both.
+export enum AccountStatus {
+  Active = 0,
+  VpnSuspended = 1,
+  Deactivated = 2,
+}
+
 export interface TagetAction {
   target?: string;
 }

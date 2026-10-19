@@ -28,7 +28,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
 
     public event Action<IEnumerable<int>>? OnUpdateWarningTimes;
 
-    public event Action<IEnumerable<int>>? OnSetInactive;
+    public event Action<IEnumerable<int>>? OnSetDeactivated;
 
     public Dictionary<string, AccountEntity> Data;
 
@@ -120,7 +120,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
         Setup(x => x.GetActiveAccountId(It.IsAny<string>()))
             .Returns<string>(username =>
             {
-                if (!Data.TryGetValue(username, out var account) || !account.IsActive)
+                if (!Data.TryGetValue(username, out var account) || account.Status == AccountStatus.Deactivated)
                 {
                     account = null;
                 }
@@ -179,7 +179,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
                         Email = account.Email,
                         Role = account.Role,
                         AllowSelfService = account.UserType.HasFlag(UserTypes.AllowSelfService),
-                        IsActive = account.IsActive,
+                        Status = account.Status,
                         Owner = account.Owner.HasValue
                             ? Data.Values.FirstOrDefault(owner => owner.Id == account.Owner.Value)?.Username
                             : null,
@@ -192,7 +192,7 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
 
         Setup(x => x.HasActiveSubordinate(It.IsAny<int>()))
             .Returns<int>(manager_id => Task.FromResult(
-                Data.Values.Any(account => account.Owner == manager_id && account.IsActive)));
+                Data.Values.Any(account => account.Owner == manager_id && account.Status != AccountStatus.Deactivated)));
 
         Setup(x => x.Save(It.IsAny<AccountEntity>()))
             .Returns<AccountEntity>(account =>
@@ -228,17 +228,17 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
                 return Task.CompletedTask;
             });
 
-        Setup(x => x.SetInactive(It.IsNotNull<IEnumerable<int>>()))
+        Setup(x => x.SetDeactivated(It.IsNotNull<IEnumerable<int>>()))
             .Returns<IEnumerable<int>>(account_ids =>
             {
                 var id_mask = account_ids.ToHashSet();
 
                 foreach (var account in Data.Values.Where(account => id_mask.Contains(account.Id)))
                 {
-                    account.IsActive = false;
+                    account.Status = AccountStatus.Deactivated;
                 }
 
-                OnSetInactive?.Invoke(account_ids);
+                OnSetDeactivated?.Invoke(account_ids);
                 return Task.CompletedTask;
             });
 

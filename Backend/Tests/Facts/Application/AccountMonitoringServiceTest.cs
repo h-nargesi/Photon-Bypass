@@ -1,4 +1,5 @@
 ﻿using FluentAssertions;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Business;
@@ -91,7 +92,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
             }
         };
 
-        account_repo_moq.OnSetInactive += account_ids =>
+        account_repo_moq.OnSetDeactivated += account_ids =>
         {
             var saved_list = account_ids.ToList();
 
@@ -169,7 +170,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
 
         // User4 finishes its plan and hits the delete-inactivity threshold at the
         // same time: NotifSendServices stamps LastWarningTime while
-        // InactiveAbandonedUsers clears IsActive.
+        // InactiveAbandonedUsers marks the account Deactivated.
         account_repo_moq.Data["User4"].IsEmailValid = true;
 
         var user4_id = account_repo_moq.Data["User4"].Id;
@@ -178,7 +179,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var inactive_ids = new HashSet<int>();
 
         account_repo_moq.OnUpdateWarningTimes += ids => warned_ids.UnionWith(ids);
-        account_repo_moq.OnSetInactive += ids => inactive_ids.UnionWith(ids);
+        account_repo_moq.OnSetDeactivated += ids => inactive_ids.UnionWith(ids);
 
         await Task.WhenAll(
             monitoring.NotifSendServices(plan_state_list),
@@ -190,7 +191,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         Assert.Contains(user4_id, inactive_ids);
 
         Assert.NotNull(account_repo_moq.Data["User4"].LastWarningTime);
-        Assert.False(account_repo_moq.Data["User4"].IsActive);
+        Assert.Equal(AccountStatus.Deactivated, account_repo_moq.Data["User4"].Status);
     }
 
     [Fact]

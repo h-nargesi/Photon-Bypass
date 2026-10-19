@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using FluentAssertions;
 using Moq;
 using PhotonBypass.Application.Management.Model;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Management.Model;
 using PhotonBypass.Domain.Plan.Entity;
@@ -809,7 +810,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         {
             Id = 1,
             Username = username,
-            IsActive = !inactive,
+            Status = inactive ? AccountStatus.Deactivated : AccountStatus.Active,
             RowNumber = row_number,
             SimultaneousUser = users,
             RestrictedRealmId = realm_id,

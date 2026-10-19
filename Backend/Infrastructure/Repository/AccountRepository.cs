@@ -24,10 +24,16 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
                 $"Duplicate account data rejected by unique index: {ex.Message} (username={entity.Username})", 409);
         }
     }
+    // Status predicates: "in (0, 1)" is the portal-accessible set — everything
+    // but Deactivated (2); a VpnSuspended account still logs in and keeps its
+    // target area (docs/20 D13). "= 2" marks Deactivated. The fragments are
+    // inlined because Dapper.FastCrud renders non-property string arguments
+    // as SQL parameters, not raw SQL.
+
     public async Task<List<AccountEntity>> GetAllActive()
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.IsActive)} = 1"));
+            .Where($"{nameof(AccountEntity.Status)} in (0, 1)"));
 
         return [.. result];
     }
@@ -35,7 +41,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
     public async Task<AccountEntity?> GetActiveAccount(int id)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Id)} = @id and {nameof(AccountEntity.IsActive)} = 1")
+            .Where($"{nameof(AccountEntity.Id)} = @id and {nameof(AccountEntity.Status)} in (0, 1)")
             .WithParameters(new { id }));
 
         return result.FirstOrDefault();
@@ -71,7 +77,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
     public async Task<List<AccountEntity>> GetActiveTargetArea(int account_id)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Owner)} = @account_id and {nameof(AccountEntity.IsActive)} = 1")
+            .Where($"{nameof(AccountEntity.Owner)} = @account_id and {nameof(AccountEntity.Status)} in (0, 1)")
             .WithParameters(new { account_id }));
 
         return [.. result];
@@ -80,7 +86,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
     public async Task<Dictionary<int, AccountEntity>> GetActiveAccounts(IEnumerable<int> account_ids)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(AccountEntity.Id)} in @account_ids and {nameof(AccountEntity.IsActive)} = 1")
+            .Where($"{nameof(AccountEntity.Id)} in @account_ids and {nameof(AccountEntity.Status)} in (0, 1)")
             .WithParameters(new { account_ids }));
 
         return result.ToDictionary(k => k.Id);
@@ -97,11 +103,11 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         return ExecuteAsync(sql, new { account_ids, now = DateTime.Now });
     }
 
-    public Task SetInactive(IEnumerable<int> account_ids)
+    public Task SetDeactivated(IEnumerable<int> account_ids)
     {
         var sql = $"""
                    update {TableName}
-                   set {nameof(AccountEntity.IsActive)} = 0
+                   set {nameof(AccountEntity.Status)} = {(byte)AccountStatus.Deactivated}
                    where {nameof(AccountEntity.Id)} in @account_ids
                    """;
 
@@ -140,7 +146,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
             $"""
              select {nameof(AccountEntity.Id)} 
              from {TableName}
-             where {nameof(AccountEntity.Username)} = @username and {nameof(AccountEntity.IsActive)} = 1
+             where {nameof(AccountEntity.Username)} = @username and {nameof(AccountEntity.Status)} in (0, 1)
              """
             , new { username });
 
@@ -197,7 +203,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
                           , ac.{nameof(AccountEntity.Email)}
                           , ac.{nameof(AccountEntity.Role)}
                           , case when ac.{nameof(AccountEntity.UserType)} & 4 /* UserTypes.AllowSelfService */ <> 0 then 1 else 0 end as {nameof(AccountOverviewModel.AllowSelfService)}
-                          , ac.{nameof(AccountEntity.IsActive)}
+                           , ac.{nameof(AccountEntity.Status)}
                           , owner.{nameof(AccountEntity.Username)} as {nameof(AccountOverviewModel.Owner)}
                           , ac.{nameof(AccountEntity.Created)}
                           , state.{nameof(AccountOverviewModel.SimultaneousUser)}
@@ -228,7 +234,7 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
         var sql = $"""
                    select top 1 1
                    from {TableName}
-                   where {nameof(AccountEntity.Owner)} = @manager_id and {nameof(AccountEntity.IsActive)} = 1
+                   where {nameof(AccountEntity.Owner)} = @manager_id and {nameof(AccountEntity.Status)} in (0, 1)
                    """;
 
         return ExecuteScalarAsync<bool>(sql, new { manager_id });

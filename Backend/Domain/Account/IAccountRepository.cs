@@ -22,7 +22,7 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
 
     Task UpdateWarningTimes(IEnumerable<int> account_ids);
 
-    Task SetInactive(IEnumerable<int> account_ids);
+    Task SetDeactivated(IEnumerable<int> account_ids);
 
     Task<Dictionary<string, int>> GetAccountIdByUsername(IEnumerable<string> usernames);
 

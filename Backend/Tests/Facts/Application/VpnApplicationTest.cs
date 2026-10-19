@@ -4,6 +4,7 @@ using Moq;
 using PhotonBypass.Application.Management.Model;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
@@ -347,7 +348,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
             {
                 Id = 8,
                 Username = "User8",
-                IsActive = true,
+                Status = AccountStatus.Active,
                 SimultaneousUser = 1,
                 RestrictedRealmId = 2,
                 TrafficLimit = 1073741824,

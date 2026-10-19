@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+using PhotonBypass.Domain.Account.Model;
+
 namespace PhotonBypass.Domain.Plan.Entity;
 
 [Table("PlanState")]
@@ -11,7 +13,7 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
 
     public string Username { get; set; } = null!;
 
-    public bool IsActive { get; set; }
+    public AccountStatus Status { get; set; }
 
     // Renewal ordinal within the account (ROW_NUMBER in TotalPlanState) — the
     // T4 client-count gate assigns an account to its highest passing row.

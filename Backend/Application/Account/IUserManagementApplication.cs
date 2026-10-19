@@ -26,5 +26,11 @@ public interface IUserManagementApplication
 
     Task<ApiResult> SetSelfService(string target, bool allow);
 
-    Task<ApiResult> SetActive(string target, bool active);
+    /// <summary>
+    /// Two-stage status change (docs/20 D13): Active = VPN on, VpnSuspended =
+    /// VPN off but portal keeps working (renewal blocked, D-A), Deactivated =
+    /// both off. Free transition between all three states; the immediate
+    /// radius sync is best-effort — the hourly sweep reconciles.
+    /// </summary>
+    Task<ApiResult> SetStatus(string target, AccountStatus status);
 }

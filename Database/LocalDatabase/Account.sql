@@ -4,7 +4,8 @@ GO
 IF OBJECT_ID('Account') IS NULL BEGIN
 	CREATE TABLE Account (
 		Id					INT IDENTITY	NOT NULL	CONSTRAINT PK_Account_Id PRIMARY KEY,
-		IsActive			BIT				NOT NULL	CONSTRAINT DF_Account_IsActive DEFAULT 1,
+		-- Two-stage status: 0=Active, 1=VpnSuspended (portal only), 2=Deactivated (portal blocked too)
+		Status				TINYINT			NOT NULL	CONSTRAINT DF_Account_Status DEFAULT 0,
 		Username			VARCHAR(255)	NOT NULL	CONSTRAINT UK_Account_Username UNIQUE,
 		Password			VARCHAR(200)	NOT NULL,
 		Owner				INT					NULL	CONSTRAINT FK_Account_Owner_Account FOREIGN KEY REFERENCES Account (Id),

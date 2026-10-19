@@ -43,6 +43,7 @@ import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../../@icons';
 import {
   AccountRole,
+  AccountStatus,
   CreateUserModel,
   ResultStatus,
   UserRow,
@@ -183,6 +184,25 @@ export class UsersComponent implements OnInit {
     return this.translation.translate(
       'management.users.roles.' + AccountRole[role].toLowerCase(),
     );
+  }
+
+  statusTitle(status: AccountStatus): string {
+    return this.translation.translate(
+      'management.users.status.' +
+        (status === AccountStatus.Active
+          ? 'active'
+          : status === AccountStatus.VpnSuspended
+            ? 'vpn-suspended'
+            : 'inactive'),
+    );
+  }
+
+  statusColor(status: AccountStatus): string {
+    return status === AccountStatus.Active
+      ? 'success'
+      : status === AccountStatus.VpnSuspended
+        ? 'warning'
+        : 'danger';
   }
 
   expirationTitle(row: UserRow): string {
@@ -334,11 +354,29 @@ export class UsersComponent implements OnInit {
     });
   }
 
+  /// VPN suspension (0↔1): portal login stays, only the VPN config goes off;
+  /// a fully deactivated account has no VPN to toggle (D13).
+  toggleVpn(row: UserRow): void {
+    if (this.busy || row.status === AccountStatus.Deactivated) return;
+
+    this.setStatus(row, row.status === AccountStatus.VpnSuspended
+      ? AccountStatus.Active
+      : AccountStatus.VpnSuspended);
+  }
+
+  /// Full deactivation (→2) and reactivation (→0): at VpnSuspended the same
+  /// button escalates to a full deactivation.
   toggleActive(row: UserRow): void {
     if (this.busy) return;
 
+    this.setStatus(row, row.status === AccountStatus.Deactivated
+      ? AccountStatus.Active
+      : AccountStatus.Deactivated);
+  }
+
+  private setStatus(row: UserRow, status: AccountStatus): void {
     this.busy = true;
-    this.service.setActive(row.username, !row.isActive).subscribe((result) => {
+    this.service.setStatus(row.username, status).subscribe((result) => {
       this.busy = false;
       if (result.status() !== ResultStatus.success) return;
 
@@ -349,7 +387,7 @@ export class UsersComponent implements OnInit {
   // --- act on behalf (docs/20 phase 6 step 21/22) ---
 
   actOnBehalf(row: UserRow): void {
-    if (!row.isActive) return;
+    if (row.status === AccountStatus.Deactivated) return;
 
     if (this.isAdmin) {
       this.user_service.setExternalTarget({

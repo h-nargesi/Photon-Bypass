@@ -18,6 +18,7 @@ class UserManagementApplication(
     Lazy<IHistoryRepository> history_repo,
     Lazy<ISelfServiceGuard> self_service_guard,
     Lazy<IAccessService> access,
+    Lazy<IAccountRadiusSyncService> account_radius_srv,
     Lazy<IJobContext> job_context) : IUserManagementApplication
 {
     private const int ListPageSize = 20;
@@ -33,6 +34,8 @@ class UserManagementApplication(
     private Lazy<ISelfServiceGuard> SelfServiceGuard { get; } = self_service_guard;
 
     private Lazy<IAccessService> Access { get; } = access;
+
+    private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
 
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
@@ -63,7 +66,7 @@ class UserManagementApplication(
             Email = row.Email,
             Role = row.Role,
             AllowSelfService = row.AllowSelfService,
-            IsActive = row.IsActive,
+            Status = row.Status,
             Owner = row.Owner,
             Created = row.Created,
             CreatedTitle = row.Created.ToPersianString(),
@@ -291,7 +294,7 @@ class UserManagementApplication(
         return ApiResult.Success("وضعیت دسترسی مالی کاربر ذخیره شد.");
     }
 
-    public async Task<ApiResult> SetActive(string target, bool active)
+    public async Task<ApiResult> SetStatus(string target, AccountStatus status)
     {
         var actor = await ResolveActor();
         var account = await GetTarget(target);
@@ -300,7 +303,7 @@ class UserManagementApplication(
 
         if (actor.Role == AccountRole.Admin)
         {
-            // the admin may (de)activate anyone but itself — D9/D13
+            // the admin may change anyone's status but itself — D9/D13
         }
         else if (actor.Role == AccountRole.Manager)
         {
@@ -311,17 +314,55 @@ class UserManagementApplication(
             throw Forbidden("تغییر وضعیت کاربر مجاز نیست!", actor);
         }
 
-        account.IsActive = active;
+        if (!Enum.IsDefined(status))
+        {
+            throw new UserException("این وضعیت قابل اعمال نیست!",
+                $"Undefined account status (docs/20 D13): {status}");
+        }
+
+        if (account.Status == status)
+        {
+            return ApiResult.Success("وضعیت کاربر تغییر نکرد.");
+        }
+
+        var was_deactivated = account.Status == AccountStatus.Deactivated;
+
+        account.Status = status;
 
         await AccountRepo.Save(account);
 
-        Access.Value.InvalidateTargetArea(account.Username);
+        // the cached target area only depends on the Deactivated flag — drop
+        // it on transitions crossing that boundary so access rules apply now
+        if (was_deactivated || status == AccountStatus.Deactivated)
+        {
+            Access.Value.InvalidateTargetArea(account.Username);
+        }
 
-        await SaveHistory(account.Id, active ? "حساب فعال شد." : "حساب غیرفعال شد.");
+        await SaveHistory(account.Id, PersianStatusHistory(status));
 
-        Log.Information("Active flag changed by {0}: target={1}, active={2}", actor.Username, account.Username, active);
+        Log.Information("Account status changed by {0}: target={1}, status={2}", actor.Username, account.Username, status);
 
-        return ApiResult.Success(active ? "حساب کاربر فعال شد." : "حساب کاربر غیرفعال شد.");
+        // best-effort immediate VPN sync: adapters skip clients already in
+        // the desired state, and the hourly sweep reconciles any failure —
+        // closing live sessions is the radius server's own job (D-D)
+        try
+        {
+            if (status == AccountStatus.Active)
+            {
+                await AccountRadiusSrv.Value.ActivateUsers([account.Username]);
+            }
+            else
+            {
+                await AccountRadiusSrv.Value.DeactivateUsers([account.Username]);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "[set-status] Immediate radius sync failed; the hourly sweep will reconcile: target={0}, status={1}",
+                account.Username, status);
+        }
+
+        return ApiResult.Success(PersianStatusMessage(status));
     }
 
     private async Task<AccountEntity> ResolveActor()
@@ -362,10 +403,10 @@ class UserManagementApplication(
         var owner = await AccountRepo.GetAccount(owner_username)
                     ?? throw new UserException("مدیر جدید پیدا نشد!", $"Owner account not found: {owner_username}");
 
-        if (!owner.IsActive || owner.Role != AccountRole.Manager)
+        if (owner.Status == AccountStatus.Deactivated || owner.Role != AccountRole.Manager)
         {
             throw new UserException("مالک جدید باید یک مدیر فعال باشد!",
-                $"Owner must be an active manager (docs/20 §3): {owner_username}, role={owner.Role}, active={owner.IsActive}");
+                $"Owner must be an active manager (docs/20 §3): {owner_username}, role={owner.Role}, status={owner.Status}");
         }
 
         if (exclude != null)
@@ -440,6 +481,26 @@ class UserManagementApplication(
         {
             AccountRole.Manager => "مدیر",
             _ => "کاربر",
+        };
+    }
+
+    private static string PersianStatusHistory(AccountStatus status)
+    {
+        return status switch
+        {
+            AccountStatus.Active => "حساب فعال شد.",
+            AccountStatus.VpnSuspended => "سرویس VPN کاربر غیرفعال شد.",
+            _ => "حساب غیرفعال شد.",
+        };
+    }
+
+    private static string PersianStatusMessage(AccountStatus status)
+    {
+        return status switch
+        {
+            AccountStatus.Active => "حساب کاربر فعال شد.",
+            AccountStatus.VpnSuspended => "سرویس VPN کاربر غیرفعال شد.",
+            _ => "حساب کاربر غیرفعال شد.",
         };
     }
 

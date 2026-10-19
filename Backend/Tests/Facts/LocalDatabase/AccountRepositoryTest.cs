@@ -201,7 +201,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
             Mobile = "+989120000083",
         };
         await account_repo.Save([sub_active, sub_inactive]);
-        await account_repo.SetInactive([sub_inactive.Id]);
+        await account_repo.SetDeactivated([sub_inactive.Id]);
 
         // Renewal.WalletDebit has an FK to Wallet — seed the debit row first
         var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
@@ -265,7 +265,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         var unplanned = Assert.Single(rows, row => row.Username == "SchSubTwo");
         Assert.Null(unplanned.SimultaneousUser);
-        Assert.False(unplanned.IsActive);
+        Assert.Equal(AccountStatus.Deactivated, unplanned.Status);
 
         // admin scope + search over username/name
         var (_, admin_total) = await account_repo.SearchAccounts(null, "SchSub", 1, 20);
@@ -286,7 +286,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         // the demote guard counts only active subordinates
         Assert.True(await account_repo.HasActiveSubordinate(manager.Id));
 
-        await account_repo.SetInactive([sub_active.Id]);
+        await account_repo.SetDeactivated([sub_active.Id]);
 
         Assert.False(await account_repo.HasActiveSubordinate(manager.Id));
     }

@@ -4,7 +4,7 @@ GO
 CREATE OR ALTER VIEW PlanState AS
 
 SELECT Id
-	, IsActive
+	, Status
 	, Username
     , Created
     , RowNumber

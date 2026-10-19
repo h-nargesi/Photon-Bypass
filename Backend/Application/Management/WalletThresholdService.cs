@@ -71,6 +71,14 @@ class WalletThresholdService(
 
         foreach (var account in accounts.Values)
         {
+            // a manager-suspended VPN (VpnSuspended) must not be re-enabled by
+            // the wallet rule — and a fully Active account is the only one the
+            // rule may touch in either direction (docs/20 D13)
+            if (account.Status != AccountStatus.Active)
+            {
+                continue;
+            }
+
             if (deactivate)
             {
                 Log.Warning("[wallet-threshold] Deactivating radius users: (target:{0}, account-id:{1})",

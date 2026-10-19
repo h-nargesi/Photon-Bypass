@@ -99,7 +99,7 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
         {
             Id = 2,
             Username = "User2",
-            IsActive = true,
+            Status = AccountStatus.Active,
         });
 
         renewal.CumulativeTrafficLeft.Should().Be(25 * Gig);
@@ -124,7 +124,7 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
         {
             Id = 2,
             Username = "User2",
-            IsActive = true,
+            Status = AccountStatus.Active,
             SimultaneousUser = 1,
             RestrictedRealmId = realm_id,
             TrafficLimit = trafficLimit,

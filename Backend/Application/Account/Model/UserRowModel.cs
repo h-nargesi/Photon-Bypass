@@ -19,7 +19,7 @@ public class UserRowModel
 
     public bool AllowSelfService { get; set; }
 
-    public bool IsActive { get; set; }
+    public AccountStatus Status { get; set; }
 
     public string? Owner { get; set; }
 

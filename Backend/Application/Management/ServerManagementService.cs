@@ -2,6 +2,7 @@
 using PhotonBypass.Application.Management.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Management.Model;
 using PhotonBypass.Domain.OutSource;
@@ -293,7 +294,7 @@ partial class ServerManagementService(
         var now = DateTime.Now;
 
         return (await PlanStateRepo.Value.GetAll())
-            .Where(plan => plan.IsActive &&
+            .Where(plan => plan.Status == AccountStatus.Active &&
                            (plan.ExpirationDate == null || plan.ExpirationDate > now) &&
                            (plan.TrafficLeft == null || plan.TrafficLeft > 0))
             .ToList();

@@ -50,15 +50,16 @@ internal class AccessService(IMemoryCache cache, Lazy<IAccountRepository> accoun
 
     /// <summary>
     /// Rebuilds the login area from the database with the same rules the
-    /// login path applies (docs/14 M32): admins cover every active account,
-    /// everyone else exactly their active subordinates. Unknown or inactive
-    /// accounts are not rebuilt — access stays denied.
+    /// login path applies (docs/14 M32): admins cover every portal-accessible
+    /// account (Active or VpnSuspended), everyone else exactly their active
+    /// subordinates. Unknown or deactivated accounts are not rebuilt — access
+    /// stays denied.
     /// </summary>
     private async Task<TargetAreaModel?> RebuildTargetArea(string username)
     {
         var account = await account_repo.Value.GetAccount(username);
 
-        if (account is not { IsActive: true })
+        if (account is not { Status: not AccountStatus.Deactivated })
         {
             return null;
         }

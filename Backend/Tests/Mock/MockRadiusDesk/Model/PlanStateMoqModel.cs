@@ -1,3 +1,4 @@
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Plan.Entity;
 
 namespace PhotonBypass.Test.Mock.MockRadiusDesk.Model;
@@ -8,7 +9,7 @@ public class PlanStateMoqModel
 
     public string Username { get; set; } = null!;
 
-    public bool IsActive { get; set; }
+    public AccountStatus Status { get; set; }
 
     public int RowNumber { get; set; }
 
@@ -35,7 +36,7 @@ public class PlanStateMoqModel
         {
             Id = Id,
             Username = Username,
-            IsActive = IsActive,
+            Status = Status,
             RowNumber = RowNumber,
             SimultaneousUser = SimultaneousUser,
             RestrictedRealmId = RestrictedRealmId,

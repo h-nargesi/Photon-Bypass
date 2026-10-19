@@ -2,7 +2,7 @@
   {
     "Id": 99,
     "Username": "User99",
-    "IsActive": true,
+    "Status": 0,
     "SimultaneousUser": 1,
     "RestrictedRealmId": null,
     "TrafficLimit": 1073741824,
@@ -13,7 +13,7 @@
   {
     "Id": 2,
     "Username": "User2",
-    "IsActive": true,
+    "Status": 0,
     "SimultaneousUser": 1,
     "RestrictedRealmId": 2,
     "TrafficLimit": 1073741824,
@@ -22,7 +22,7 @@
   {
     "Id": 3,
     "Username": "User3",
-    "IsActive": true,
+    "Status": 0,
     "SimultaneousUser": 1,
     "RestrictedRealmId": 3,
     "TrafficLimit": 1073741824,
@@ -34,7 +34,7 @@
   {
     "Id": 4,
     "Username": "User4",
-    "IsActive": true,
+    "Status": 0,
     "SimultaneousUser": 1,
     "RestrictedRealmId": 10,
     "TrafficLimit": 1073741824,
@@ -46,7 +46,7 @@
   {
     "Id": 10,
     "Username": "User10",
-    "IsActive": true,
+    "Status": 0,
     "SimultaneousUser": 1,
     "RestrictedRealmId": 2,
     "TrafficLimit": 1073741824,

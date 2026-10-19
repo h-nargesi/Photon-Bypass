@@ -28,6 +28,26 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public async Task Renewal_VpnSuspendedTarget_IsRefusedWithFriendlyMessage()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+
+        // D-A: a VPN-suspended account keeps portal access but renewal is
+        // blocked until a manager reactivates it
+        account_moq.Data["User2"].Status = AccountStatus.VpnSuspended;
+
+        job_context.InjectJobContext(99, "User99", "User2");
+
+        (await Assert.ThrowsAsync<UserException>(() => plan_app.Renewal(99, null, "User2t|1u|30d|25g")))
+            .UserMessage.Should().Contain("سرویس VPN شما توسط مدیریت غیرفعال است");
+
+        Assert.Equal(AccountStatus.VpnSuspended, account_moq.Data["User2"].Status);
+    }
+
+    [Fact]
     public async Task GetPlanState_InactiveAccount()
     {
         using var scope = App.Services.CreateScope();

@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Caching.Memory;
+using Moq;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
@@ -7,8 +8,11 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.ErrorHandler;
+using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
+using PhotonBypass.Test.Mock.MockServerBridge;
+using MikrotikUserModel = PhotonBypass.Mikrotik.Radius.Model.UserModel;
 
 namespace PhotonBypass.Test.Facts.Application;
 
@@ -29,7 +33,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User5"].Role = AccountRole.Manager;
-        account_moq.Data["User6"].IsActive = false; // inactive subordinates stay visible
+        account_moq.Data["User6"].Status = AccountStatus.Deactivated; // deactivated subordinates stay visible
 
         job_context.InjectJobContext(5, "User5", "User5");
 
@@ -171,9 +175,9 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
         await Assert.ThrowsAsync<UserException>(
             () => application.SetRole("User5", AccountRole.User));
 
-        account_moq.Data["User6"].IsActive = false;
-        account_moq.Data["User8"].IsActive = false;
-        account_moq.Data["User9"].IsActive = false;
+        account_moq.Data["User6"].Status = AccountStatus.Deactivated;
+        account_moq.Data["User8"].Status = AccountStatus.Deactivated;
+        account_moq.Data["User9"].Status = AccountStatus.Deactivated;
 
         var result = await application.SetRole("User5", AccountRole.User);
 
@@ -236,7 +240,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task SetPasswordAndActive_ManagerSubordinateGuards()
+    public async Task SetPasswordAndStatus_ManagerSubordinateGuards()
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
@@ -255,16 +259,16 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
 
         await Assert.ThrowsAsync<UserException>(() => application.SetPassword("User6", " "));
 
-        (await Assert.ThrowsAsync<UserException>(() => application.SetActive("User2", false)))
+        (await Assert.ThrowsAsync<UserException>(() => application.SetStatus("User2", AccountStatus.Deactivated)))
             .HttpCode.Should().Be(403);
 
-        var deactivate = await application.SetActive("User6", false);
+        var deactivate = await application.SetStatus("User6", AccountStatus.Deactivated);
 
         Assert.Equal(2, deactivate.Code / 100);
-        Assert.False(account_moq.Data["User6"].IsActive);
+        Assert.Equal(AccountStatus.Deactivated, account_moq.Data["User6"].Status);
 
         // a manager cannot deactivate itself (not its own subordinate either way)
-        (await Assert.ThrowsAsync<UserException>(() => application.SetActive("User5", false)))
+        (await Assert.ThrowsAsync<UserException>(() => application.SetStatus("User5", AccountStatus.Deactivated)))
             .HttpCode.Should().Be(403);
     }
 
@@ -291,5 +295,88 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
         // outside the subordinate area → 403
         (await Assert.ThrowsAsync<UserException>(() => application.SetSelfService("User2", true)))
             .HttpCode.Should().Be(403);
+    }
+
+    [Fact]
+    public async Task SetStatus_VpnSuspension_PushesImmediateRadiusDeactivation()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var tik4_net_moq = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
+        var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
+
+        account_moq.Data["User99"].Role = AccountRole.Admin;
+        job_context.InjectJobContext(99, "User99", "User99");
+
+        var user_data_dictionary = tik4_net_moq.GetData<MikrotikUserModel>()
+            .ToDictionary(user => user.Id ?? string.Empty, user => user.Name);
+
+        var suspended = false;
+        tik4_net_moq.OnExecute += (command_text, parameters) =>
+        {
+            if (command_text != "/user-manager/user/set") return;
+
+            var id = parameters.Where(parameter => parameter.Name == ".id")
+                .Select(parameter => parameter.Value)
+                .FirstOrDefault();
+
+            if (id != null && user_data_dictionary.GetValueOrDefault(id) == "User3" &&
+                parameters.Any(parameter => parameter.Name == "disabled"))
+            {
+                suspended = true;
+            }
+        };
+
+        var result = await application.SetStatus("User3", AccountStatus.VpnSuspended);
+
+        Assert.Equal(2, result.Code / 100);
+        Assert.Equal(AccountStatus.VpnSuspended, account_moq.Data["User3"].Status);
+        Assert.True(suspended, "the VPN suspension must reach the radius adapter immediately");
+    }
+
+    [Fact]
+    public async Task SetStatus_ImmediateSyncFailure_DoesNotFailTheOperation()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+        var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
+
+        account_moq.Data["User99"].Role = AccountRole.Admin;
+        job_context.InjectJobContext(99, "User99", "User99");
+
+        // best-effort contract: the adapter outage is logged, the status still
+        // lands and the hourly sweep reconciles the radius side later
+        server_moq.Setup(x => x.GetAllActiveRadius())
+            .ReturnsAsync(() => throw new Exception("radius down"));
+
+        var result = await application.SetStatus("User3", AccountStatus.VpnSuspended);
+
+        Assert.Equal(2, result.Code / 100);
+        Assert.Equal(AccountStatus.VpnSuspended, account_moq.Data["User3"].Status);
+    }
+
+    [Fact]
+    public async Task SetStatus_SameStatus_ShortCircuitsWithoutSideEffects()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
+        var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
+
+        account_moq.Data["User99"].Role = AccountRole.Admin;
+        job_context.InjectJobContext(99, "User99", "User99");
+
+        AccountEntity? saved = null;
+        account_moq.OnSave += account => saved = account;
+
+        var result = await application.SetStatus("User3", AccountStatus.Active);
+
+        Assert.Equal(2, result.Code / 100);
+        Assert.Null(saved);
+        Assert.Empty(history_moq.Data.Where(history => history.Target == account_moq.Data["User3"].Id));
     }
 }

@@ -36,7 +36,9 @@ class AuthApplication(
     {
         var account = await AccountRepo.GetAccount(username);
 
-        if (account is not { IsActive: true } || !PasswordHasher.Verify(password, account.Password))
+        // portal-accessible: Deactivated is blocked with 401; VpnSuspended
+        // still logs in (docs/20 D13)
+        if (account == null || account.Status == AccountStatus.Deactivated || !PasswordHasher.Verify(password, account.Password))
         {
             if (account == null)
             {
@@ -51,7 +53,7 @@ class AuthApplication(
 
             await SocialMediaSrv.InvalidPasswordAlert(account.Username);
 
-            if (account.IsActive)
+            if (account.Status != AccountStatus.Deactivated)
             {
                 await HistoryRepo.Save(new HistoryEntity
                 {
@@ -63,7 +65,7 @@ class AuthApplication(
                 });
             }
 
-            Log.Warning("Invalid password for {0}, active={1}", account.Username, account.IsActive);
+            Log.Warning("Invalid password for {0}, status={1}", account.Username, account.Status);
 
             return new ApiResult<UserModel>
             {
@@ -118,7 +120,7 @@ class AuthApplication(
 #else
             var account = await AccountRepo.GetAccountByMobile(email_mobile);
 
-            if (account is { IsActive: true })
+            if (account is { Status: not AccountStatus.Deactivated })
             {
                 var hash_code = HashHandler.GenerateHashCode(56);
 
@@ -150,7 +152,7 @@ class AuthApplication(
         {
             var account = await AccountRepo.GetAccountByEmail(email_mobile);
 
-            if (account is { IsActive: true })
+            if (account is { Status: not AccountStatus.Deactivated })
             {
                 var hash_code = HashHandler.GenerateHashCode(56, true);
 

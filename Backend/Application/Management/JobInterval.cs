@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Management;
 using PhotonBypass.Domain.Plan;
 using Quartz;
@@ -39,10 +40,15 @@ public class JobInterval(IServiceProvider service_provider) : IJob
         var account_mng_srv_2 = scope_abandoned.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
         var account_radius_srv = scope_radius.ServiceProvider.GetRequiredService<IAccountRadiusSyncService>();
 
+        // the monitoring services skip deactivated accounts up front (their
+        // Log.Fatal noise on missing accounts is pure noise there); the radius
+        // sweep takes the full list and applies its own Status filter
+        var monitored_list = plan_state_list.Where(plan => plan.Status != AccountStatus.Deactivated).ToList();
+
         await Task.WhenAll(
-            account_mng_srv_1.NotifSendServices(plan_state_list),
+            account_mng_srv_1.NotifSendServices(monitored_list),
             account_radius_srv.DeactivateInvalidRadiusUsers(plan_state_list),
-            account_mng_srv_2.InactiveAbandonedUsers(plan_state_list),
+            account_mng_srv_2.InactiveAbandonedUsers(monitored_list),
             server_mng_srv.CheckUserServerBalance());
 
         await RunWalletThresholdRule(scope_main);

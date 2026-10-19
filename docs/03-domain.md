@@ -8,7 +8,7 @@
 
 | Entity file | DB table | Group | Notes |
 |---|---|---|---|
-| `Domain/Account/Entity/AccountEntity.cs` | `Account` | Account | یوزرنیم یکتا، پسورد هش‌شده، `VpnPassword` جداگانه، `Owner` (FK خود-ارجاع برای زیرمجموعه). |
+| `Domain/Account/Entity/AccountEntity.cs` | `Account` | Account | یوزرنیم یکتا، پسورد هش‌شده، `VpnPassword` جداگانه، `Owner` (FK خود-ارجاع برای زیرمجموعه)، `Status` از نوع `AccountStatus` (ستون `TINYINT`، غیرفعال‌سازی دووضعیتی). |
 | `Domain/Account/Entity/WalletEntity.cs` | `Wallet` | Account | کیف پول؛ `Direction` (Credit/Debit)، `Status`، `InvoiceCode`، `Action` (رشته‌ی تمدید تعویق‌یافته). |
 | `Domain/Account/Entity/HistoryEntity.cs` | `History` | Account | لاگ رویدادها روی یک target. |
 | `Domain/Account/Entity/ResetPassEntity.cs` | `ResetPassword` | Account | توکن فراموشی پسورد. |
@@ -36,6 +36,8 @@
 | Enum | File | Kind | Values |
 |---|---|---|---|
 | `UserTypes` | `Domain/Account/Model/UserTypes.cs` | `[Flags] byte` | `None=0`, `OldUser=1`, `AllowMonthly=2` |
+| `AccountRole` | `Domain/Account/Model/AccountRole.cs` | `byte` | `User=0`, `Manager=1`, `Admin=2` (docs/20 D2/D9) |
+| `AccountStatus` | `Domain/Account/Model/AccountStatus.cs` | `byte` | `Active=0`, `VpnSuspended=1`, `Deactivated=2` — غیرفعال‌سازی دووضعیتی (docs/20 D13): ۱ = فقط VPN خاموش (لاگین پنل آزاد، تمدید مسدود)؛ ۲ = لاگین پنل هم بلاک (401). |
 | `BalanceDirection` | `Domain/Account/Model/BalanceDirection.cs` | `short` | Credit / Debit |
 | `BalanceStatus` | `Domain/Account/Model/BalanceStatus.cs` | `byte` | وضعیت تراکنش/فاکتور (مثل `Failed`, `Completed`) |
 | `EventCategory` | `Domain/Account/Model/EventCategory.cs` | `byte` | دسته‌ی رویداد تاریخچه (مثل `Transaction`) |

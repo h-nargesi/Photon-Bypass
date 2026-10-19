@@ -133,21 +133,38 @@ flowchart LR
 ## 7. Deactivation cascade (آبشار غیرفعال‌سازی)
 
 در `JobInterval` (موازی با Task.WaitAll):
-- **`InactiveAbandonedUsers`** (`AccountMonitoringService`): اکانت‌های رهاشده پس از `MaxDaysDeactivatePlanToDisable=7` روز غیرفعال می‌شوند و پس از `MaxDaysDeactivatePlanToDelete=40` روز از radius حذف می‌شوند.
-- **`DeactivateInvalidRadiusUsers`** (`AccountRadiusSyncService`): کاربرانی که پلن معتبر ندارند در radius غیرفعال می‌شوند (`DeactivateUserExcept` realm).
-- **`NotifSendServices`** (`AccountMonitoringService`): هشدار پایان پلن به‌صورت ایمیل/واتساپ با throttle `DelayBetweenWarnings=20h`.
+- **`InactiveAbandonedUsers`** (`AccountMonitoringService`): اکانت‌های رهاشده پس از `MaxDaysDeactivatePlanToDisable=7` روز غیرفعال می‌شوند و پس از `MaxDaysDeactivatePlanToDelete=40` روز از radius حذف می‌شوند (آبشار ۴۰روزه اکانت را `Deactivated` می‌کند — `SetDeactivated`).
+- **`DeactivateInvalidRadiusUsers`** (`AccountRadiusSyncService`): کاربرانی که پلن معتبر ندارند **یا `Status != Active` دارند** در radius غیرفعال می‌شوند (`DeactivateUserExcept` realm) — این sweep تضمین می‌کند تعلیق/غیرفعال‌سازی مدیریتی حتی اگر sync فوری شکست خورده باشد حداکثر ظرف یک ساعت روی همه‌ی سرورها اعمال شود.
+- **`NotifSendServices`** (`AccountMonitoringService`): هشدار پایان پلن به‌صورت ایمیل/واتساپ با throttle `DelayBetweenWarnings=20h` — لیست ورودی از قبل `Status != Deactivated` فیلتر می‌شود.
 
 ```mermaid
 flowchart TB
     PS[All PlanState] --> A{InactiveAbandonedUsers}
     PS --> B{DeactivateInvalidRadiusUsers}
-    PS --> C{NotifSendServices}
+    MON[monitored list: Status != 2] --> A
+    MON --> C{NotifSendServices}
     A -->|>7 day inactive| DA[Deactivate in Radius]
-    A -->|>40 day inactive| RM[Remove from Radius]
-    B -->|no valid plan| DA
+    A -->|>40 day inactive| RM[Remove from Radius + SetDeactivated]
+    B -->|no valid plan or Status != 0| DA
     C -->|IsFinishing &amp; !OverWarningTime| EM[Email + WhatsApp SOCIAL]
     C -->|update LastWarningTime| TH[throttle 20h]
 ```
+
+## 7b. Two-stage deactivation (غیرفعال‌سازی دووضعیتی — docs/20 D13)
+
+`POST /api/user/set-status` وضعیت سه‌مقداری `AccountStatus` را تنظیم می‌کند (جایگزین `set-active`):
+
+| وضعیت | لاگین پنل | VPN | تمدید |
+|---|---|---|---|
+| `Active=0` | ✅ | فعال (در valid-set ساعتی) | ✅ |
+| `VpnSuspended=1` | ✅ | غیرفعال در همه‌ی سرورها | ❌ `UserException` با پیام «سرویس VPN شما توسط مدیریت غیرفعال است…» |
+| `Deactivated=2` | ❌ (401 از `CheckUserPassword`/`RebuildTargetArea`) | غیرفعال | ❌ (از `GetActiveUser` رد می‌شود) |
+
+- ترنزیشن آزاد بین هر سه وضعیت (شامل 2→1: بازگرداندن لاگین بدون فعال‌سازی VPN)؛ same-status → موفق بدون عارضه جانبی.
+- بعد از ذخیره، sync فوری best-effort (`ActivateUsers`/`DeactivateUsers`) داخل try/catch اجرا می‌شود — شکست فقط `Log.Error` می‌دهد و sweep ساعتی آشتی می‌کند؛ بستن اتصال‌های زنده کار خود سرور مدیریت کاربر است (D-D).
+- ترنزیشن‌های درگیر `Deactivated` کش `TargetArea|{username}` را بی‌اعتبر می‌کنند.
+- قاعده‌ی نگاشت در کد: «portal-accessible» = `Status in (0,1)` (لاگین/دسترسی/بازیابی رمز) و «VPN-valid» = `Status = 0` (کانفیگ فعال، برآورد ظرفیت، قاعده‌ی آستانه‌ی کیف پول).
+- قاعده‌ی کیف پول (`WalletThresholdService`): فقط اکانت‌های `Active` را لمس می‌کند — بازیابی موجودی هرگز VPNِ تعلیق‌شده توسط مدیر را روشن نمی‌کند.
 
 ## 8. Multi-account delegation (تکلیف زیرمجموعه)
 

@@ -290,10 +290,10 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         await CheckResponse(response, status);
     }
 
-    protected async Task UserSetActive(string target, bool active, int status = 2)
+    protected async Task UserSetStatus(string target, AccountStatus status, int http_status = 2)
     {
-        var response = await Client.PostAsJsonAsync("/api/user/set-active", new { target, active });
-        await CheckResponse(response, status);
+        var response = await Client.PostAsJsonAsync("/api/user/set-status", new { target, status });
+        await CheckResponse(response, http_status);
     }
 
     protected async Task<Dictionary<string, string?>[]> ServerList(int status = 2)
@@ -334,7 +334,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
     /// sets AllowSelfService (D11), so dependent/manager fixtures must be seeded here.
     /// </summary>
     protected async Task InsertAccount(string username, UserTypes user_type,
-        AccountRole role = AccountRole.User, int? owner_id = null, bool is_active = true)
+        AccountRole role = AccountRole.User, int? owner_id = null, AccountStatus status = AccountStatus.Active)
     {
         using var scope = ServiceProvider.CreateScope();
 
@@ -353,7 +353,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
             UserType = user_type,
             Role = role,
             Owner = owner_id,
-            IsActive = is_active,
+            Status = status,
         });
     }
 

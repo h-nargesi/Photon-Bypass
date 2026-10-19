@@ -28,7 +28,7 @@ class AccountApplication(
         var account = (await AccountRepo.GetAccount(username)) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
 
-        if (!account.IsActive)
+        if (account.Status == AccountStatus.Deactivated)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
@@ -107,11 +107,11 @@ class AccountApplication(
 
     public async Task<ApiResult> ChangePassword(AccountEntity? account, string token, string password)
     {
-        if (account is not { IsActive: true } || !PasswordHasher.Verify(token, account.Password))
+        if (account is not { Status: not AccountStatus.Deactivated } || !PasswordHasher.Verify(token, account.Password))
         {
             if (account != null)
             {
-                if (account.IsActive)
+                if (account.Status != AccountStatus.Deactivated)
                 {
                     await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
                     {
@@ -123,8 +123,8 @@ class AccountApplication(
                     });
                 }
 
-                Log.Warning("[user: {0}] Invalid password (change-pass) for {1}, active={2}",
-                    account.Username, account.Username, account.IsActive);
+                Log.Warning("[user: {0}] Invalid password (change-pass) for {1}, status={2}",
+                    account.Username, account.Username, account.Status);
             }
 
             throw new UserException("کلمه عبور فعلی اشتباه است!");
@@ -135,7 +135,7 @@ class AccountApplication(
 
     public async Task<ApiResult> ChangePassword(AccountEntity? account, string password)
     {
-        if (account is not { IsActive: true })
+        if (account is not { Status: not AccountStatus.Deactivated })
         {
             throw new UserException("کاربر یافت نشد یا غیرفعال است!",
                 $"Cannot change password, account is null or inactive.");

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   AccountRole,
+  AccountStatus,
   ApiResult,
   CreateUserModel,
   PagedResult,
@@ -42,7 +43,7 @@ export class UsersService extends ApiBaseService {
     return this.job(`${USER_API_URL}/set-self-service`, { target, allow });
   }
 
-  setActive(target: string, active: boolean): Observable<ApiResult> {
-    return this.job(`${USER_API_URL}/set-active`, { target, active });
+  setStatus(target: string, status: AccountStatus): Observable<ApiResult> {
+    return this.job(`${USER_API_URL}/set-status`, { target, status });
   }
 }

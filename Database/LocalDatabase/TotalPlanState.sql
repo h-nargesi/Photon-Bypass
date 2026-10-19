@@ -4,7 +4,7 @@ GO
 CREATE OR ALTER VIEW TotalPlanState AS
 
 SELECT ac.Id
-	, ac.IsActive
+	, ac.Status
 	, ac.Username
     , pl.Created
     -- Plan Info

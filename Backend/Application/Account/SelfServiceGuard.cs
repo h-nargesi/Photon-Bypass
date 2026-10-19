@@ -75,7 +75,7 @@ class SelfServiceGuard(
         var actor = await AccountRepo.Value.GetAccount(username)
                     ?? throw new UserException("کاربر پیدا نشد!", $"Account not found. actor:{username}");
 
-        if (!actor.IsActive)
+        if (actor.Status == AccountStatus.Deactivated)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: actor={actor.Username}");
         }

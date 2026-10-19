@@ -106,7 +106,7 @@ internal class AccountMonitoringService(
 
         if (remove_account_ids.Count > 0)
         {
-            await AccountRepo.SetInactive(remove_account_ids);
+            await AccountRepo.SetDeactivated(remove_account_ids);
         }
 
         var task = HistoryRepo.Save(history_list);

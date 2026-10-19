@@ -19,7 +19,7 @@ public class AccountOverviewModel
 
     public bool AllowSelfService { get; set; }
 
-    public bool IsActive { get; set; }
+    public AccountStatus Status { get; set; }
 
     /// <summary>Username of the owning account; null when independent.</summary>
     public string? Owner { get; set; }

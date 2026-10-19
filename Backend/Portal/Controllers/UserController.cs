@@ -5,6 +5,7 @@ using PhotonBypass.Application.Account.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Portal;
 using PhotonBypass.Portal.Basical;
 using PhotonBypass.Result;
@@ -39,11 +40,11 @@ public class SetSelfServiceRequest
     public bool Allow { get; set; }
 }
 
-public class SetActiveRequest
+public class SetStatusRequest
 {
     public string? Target { get; set; }
 
-    public bool Active { get; set; }
+    public AccountStatus? Status { get; set; }
 }
 
 /// <summary>
@@ -128,14 +129,22 @@ public class UserController(
         return SafeApiResult(result);
     }
 
-    /// <summary>Activate/deactivate (docs/20 D13 — the manager may do both to its own subordinates).</summary>
+    /// <summary>
+    /// Two-stage status change (docs/20 D13): Manager may suspend/deactivate
+    /// its own subordinates; the immediate VPN sync is best-effort.
+    /// </summary>
     [Authorize(Policy = ServiceFactory.ManagerPolicy)]
-    [HttpPost("set-active")]
-    public async Task<ApiResult> SetActive([FromBody] SetActiveRequest request)
+    [HttpPost("set-status")]
+    public async Task<ApiResult> SetStatus([FromBody] SetStatusRequest request)
     {
         await LoadJobContextAsync();
 
-        var result = await application.SetActive(request.Target!, request.Active);
+        if (request.Status is not { } status)
+        {
+            throw new UserException("وضعیت کاربر مشخص نشده!", "set-status requires a Status value.");
+        }
+
+        var result = await application.SetStatus(request.Target!, status);
 
         return SafeApiResult(result);
     }

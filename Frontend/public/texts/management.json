@@ -31,6 +31,7 @@
     },
     "status": {
       "active": "فعال",
+      "vpn-suspended": "تعلیق VPN",
       "inactive": "غیرفعال"
     },
     "columns": {
@@ -54,7 +55,8 @@
       "on-behalf": "عمل از طرف",
       "set-password": "بازنشانی کلمه عبور",
       "toggle-self-service": "تغییر مستقل / وابسته",
-      "toggle-active": "فعال / غیرفعال",
+      "toggle-vpn": "تعلیق / فعال‌سازی VPN",
+      "toggle-active": "غیرفعال / فعال‌سازی کامل",
       "set-role": "تغییر نقش",
       "set-owner": "تغییر مدیر مسئول"
     },

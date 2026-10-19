@@ -27,7 +27,7 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
         var manager_id = (await account_repo.GetAccountIdByUsername([fixture.Manager]))[fixture.Manager];
 
         await InsertAccount(fixture.Subordinate, UserTypes.None, owner_id: manager_id);
-        await InsertAccount(fixture.Inactive, UserTypes.None, owner_id: manager_id, is_active: false);
+        await InsertAccount(fixture.Inactive, UserTypes.None, owner_id: manager_id, status: AccountStatus.Deactivated);
 
         return fixture;
     }
@@ -183,7 +183,7 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
         await UserSetRole(fixture.Manager, 0, status: 4);
 
         // after deactivating the subordinate the demotion succeeds (§3 guard)
-        await UserSetActive(fixture.Subordinate, false);
+        await UserSetStatus(fixture.Subordinate, AccountStatus.Deactivated);
         await UserSetRole(fixture.Manager, 0);
 
         using (var scope = ServiceProvider.CreateScope())
@@ -262,28 +262,33 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
     }
 
     [Fact]
-    public async Task SetActive_Guards()
+    public async Task SetStatus_Guards()
     {
         var fixture = await SeedManager("61");
         await Login(fixture.Manager, "Passw0rd1");
 
-        // deactivating the subordinate blocks its login…
-        await UserSetActive(fixture.Subordinate, false);
+        // suspending only the VPN keeps the portal login working (D13)…
+        await UserSetStatus(fixture.Subordinate, AccountStatus.VpnSuspended);
+        await Login(fixture.Subordinate, "Passw0rd1");
+
+        // …while full deactivation blocks it
+        await Login(fixture.Manager, "Passw0rd1");
+        await UserSetStatus(fixture.Subordinate, AccountStatus.Deactivated);
         await Login(fixture.Subordinate, "Passw0rd1", status: 4);
 
-        // …and it stays visible in the manager's list
+        // …and the account stays visible in the manager's list
         var list = await UserList();
-        Assert.Contains(ParseItems(list), row => row["username"] == fixture.Subordinate && row["isActive"] == "False");
+        Assert.Contains(ParseItems(list), row => row["username"] == fixture.Subordinate && row["status"] == "2");
 
         // outside the area → 403; admin self → 403 (D9/D13)
         await Register("um_user62", "59", "Passw0rd1");
-        await UserSetActive("um_user62", false, status: 403);
+        await UserSetStatus("um_user62", AccountStatus.Deactivated, http_status: 403);
 
         await Login("admin", "admin");
-        await UserSetActive("admin", false, status: 403);
+        await UserSetStatus("admin", AccountStatus.Deactivated, http_status: 403);
 
-        // the admin reactivates it
-        await UserSetActive(fixture.Subordinate, true);
+        // the admin reactivates it and the login works again
+        await UserSetStatus(fixture.Subordinate, AccountStatus.Active);
         await Login(fixture.Subordinate, "Passw0rd1");
     }
 }

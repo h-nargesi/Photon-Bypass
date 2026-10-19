@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers.Entity;
@@ -170,6 +171,50 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
         Assert.Equal(3, disabled_counter.GetValueOrDefault("User2"));
         Assert.Equal(2, disabled_counter.GetValueOrDefault("User3"));
         Assert.Equal(3, disabled_counter.GetValueOrDefault("User4"));
+    }
+
+    [Fact]
+    public async Task DeactivateInvalidRadiusUsers_NonActiveStatus_DropsFromValidSet()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var account_radius = scope.ServiceProvider.GetRequiredService<IAccountRadiusSyncService>();
+        var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
+        var tik4_net_moq = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
+
+        var plan_state_list = await plan_state_repo.GetAll();
+
+        // a management-suspended or deactivated account leaves the valid set
+        // of its own realm too (docs/20 D13): the hourly sweep is the safety
+        // net that disables it everywhere even when the immediate sync failed
+        plan_state_list.Single(plan => plan.Username == "User3").Status = AccountStatus.VpnSuspended;
+        plan_state_list.Single(plan => plan.Username == "User99").Status = AccountStatus.Deactivated;
+
+        var user_data_dictionary = tik4_net_moq.GetData<UserModel>()
+            .ToDictionary(user => user.Id ?? string.Empty, user => user.Name);
+
+        var disabled_counter = new ConcurrentDictionary<string, int>();
+
+        tik4_net_moq.OnExecute += (command_text, parameters) =>
+        {
+            if (!command_text.EndsWith("/set")) return;
+
+            var id = parameters.Where(parameter => parameter.Name == ".id")
+                .Select(parameter => parameter.Value)
+                .FirstOrDefault();
+
+            if (id == null || !user_data_dictionary.TryGetValue(id, out var username)) return;
+
+            disabled_counter.AddOrUpdate(username, 1, (_, count) => count + 1);
+        };
+
+        await account_radius.DeactivateInvalidRadiusUsers(plan_state_list);
+
+        // baseline with every status Active (see UnknownRealm test above):
+        // User99 and User3 are disabled only on realms 1 and 4 (count 2);
+        // non-Active they now drop out of realm 3's valid set as well (count 3)
+        Assert.Equal(3, disabled_counter.GetValueOrDefault("User99"));
+        Assert.Equal(3, disabled_counter.GetValueOrDefault("User3"));
     }
 
     [Fact]

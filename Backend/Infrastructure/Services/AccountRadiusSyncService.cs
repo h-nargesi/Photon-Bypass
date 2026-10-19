@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Servers;
@@ -68,7 +69,14 @@ class AccountRadiusSyncService(
     public async Task DeactivateInvalidRadiusUsers(IEnumerable<PlanStateEntity> plan_state_list)
     {
         var radius_list = await ServerRepo.Value.GetAllActiveRadius();
-        var realm_user_dictionary = plan_state_list.GroupBy(plan => plan.RestrictedRealmId ?? 0)
+
+        // VPN-valid reconciliation: only Active accounts belong in the valid
+        // set — a suspended or deactivated account is disabled on every realm
+        // within one sweep, even when the immediate sync failed (docs/20 D13).
+        // Bucket-zero rows (unrestricted realm) still spread to every realm.
+        var realm_user_dictionary = plan_state_list
+            .Where(plan => plan.Status == AccountStatus.Active)
+            .GroupBy(plan => plan.RestrictedRealmId ?? 0)
             .ToDictionary(grouping => grouping.Key, grouping => grouping.Select(plan => plan.Username).ToList());
 
         if (realm_user_dictionary.TryGetValue(0, out var list))

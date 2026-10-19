@@ -92,4 +92,54 @@ public class WalletThresholdServiceTest : UnitLevelServiceInitializer
 
         Assert.Empty(history_moq.Data.Where(h => h.Title == IWalletThresholdService.HistoryTitle));
     }
+
+    [Fact]
+    public async Task VpnSuspendedAccount_DeactivatePathIsSkipped()
+    {
+        using var scope = App.Services.CreateScope();
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<ManagementOptions>>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
+
+        options.Value.WalletDeactivationThreshold = 0;
+
+        // management suspended User3's VPN: the below-threshold path leaves it
+        // alone — the account is not a wallet-rule target anymore
+        account_moq.Data["User3"].Status = AccountStatus.VpnSuspended;
+
+        var service = scope.ServiceProvider.GetRequiredService<IWalletThresholdService>();
+
+        await service.CheckAndApply();
+
+        Assert.Empty(history_moq.Data.Where(history =>
+            history.Title == IWalletThresholdService.HistoryTitle && history.Target == 3));
+    }
+
+    [Fact]
+    public async Task VpnSuspendedAccount_ActivatePathIsSkipped()
+    {
+        using var scope = App.Services.CreateScope();
+        var options = scope.ServiceProvider.GetRequiredService<IOptions<ManagementOptions>>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
+
+        options.Value.WalletDeactivationThreshold = -5000;
+
+        account_moq.Data["User3"].Status = AccountStatus.VpnSuspended;
+
+        // a previous run deactivated the config and the balance has recovered:
+        // the recovery must not re-enable a manager-suspended VPN (D13)
+        history_moq.Data.Add(new HistoryEntity
+        {
+            Target = 3,
+            Title = IWalletThresholdService.HistoryTitle,
+            Value = "deactivated",
+        });
+
+        var service = scope.ServiceProvider.GetRequiredService<IWalletThresholdService>();
+
+        await service.CheckAndApply();
+
+        Assert.Single(history_moq.Data.Where(h => h.Title == IWalletThresholdService.HistoryTitle));
+    }
 }
