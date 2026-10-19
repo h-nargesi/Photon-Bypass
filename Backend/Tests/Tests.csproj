@@ -117,6 +117,12 @@
         <None Update="Data\Sql\RealmCapacity\add-data.sql">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+        <None Update="Data\Sql\ServerLookup\add-data.sql">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+        <None Update="Data\Sql\RenewalLatest\add-data.sql">
+		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
         <None Update="Data\Local\wallet.json">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

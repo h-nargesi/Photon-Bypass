@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using PhotonBypass.Portal;
 using PhotonBypass.Portal.Basical;
 using PhotonBypass.Portal.Context;
 using PhotonBypass.Application.Authentication;
@@ -18,10 +20,13 @@ public class VpnController(
     IVpnApplication application, IJobContext job, Lazy<IAccessService> access, Lazy<IAuthApplication> auth) :
     ResultHandlerController(job, access)
 {
+    // re-validates the portal password → must sit behind the auth throttle,
+    // otherwise it is a brute-force bypass of the /api/auth rate limit
     [HttpPost("change-ovpn")]
+    [EnableRateLimiting(ServiceFactory.AuthRateLimitPolicy)]
     public async Task<ApiResult> ChangeOvpnPassword([FromBody] ChangeOvpnContext context)
     {
-        LoadJobContext(context.Target);
+        await LoadJobContextAsync(context.Target);
 
         if (string.IsNullOrWhiteSpace(context.Token))
         {
@@ -48,7 +53,7 @@ public class VpnController(
     [HttpGet("send-cert-email")]
     public async Task<ApiResult> SendCertEmail([FromQuery] string? target)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.SendCertEmail(JobContext.Target);
 
@@ -58,7 +63,7 @@ public class VpnController(
     [HttpGet("config-info")]
     public async Task<ApiResult> ConfigInfo([FromQuery] string? target)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.GetConfigInfo(JobContext.Target);
 
@@ -68,7 +73,7 @@ public class VpnController(
     [HttpGet("download")]
     public async Task<IActionResult> DownloadConfig([FromQuery] string? target)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var file = await application.DownloadVpnConfig(JobContext.Target);
 
@@ -78,7 +83,7 @@ public class VpnController(
     [HttpGet("traffic-data")]
     public async Task<ApiResult> TrafficData([FromQuery] string? target)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.TrafficData(JobContext.Target);
 

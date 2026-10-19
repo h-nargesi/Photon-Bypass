@@ -35,7 +35,7 @@ public class ServerController(
     [HttpGet("list")]
     public async Task<ApiResult> GetList()
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.GetList();
 
@@ -46,7 +46,7 @@ public class ServerController(
     [HttpPost("create")]
     public async Task<ApiResult> Create([FromBody] SaveServerModel request)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.Create(request);
 
@@ -57,7 +57,7 @@ public class ServerController(
     [HttpPost("update")]
     public async Task<ApiResult> Update([FromBody] SaveServerModel request)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.Update(request);
 
@@ -73,7 +73,7 @@ public class ServerController(
     [HttpPost("set-active")]
     public async Task<ApiResult> SetActive([FromBody] ServerSetActiveRequest request)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.SetActive(request.Id, request.Active);
 

@@ -391,28 +391,58 @@ class PlanApplication(
             throw;
         }
 
-        if (count < current_state.SimultaneousUser)
+        // The wallet debit, the renewal and the radius sync are committed at
+        // this point: everything below is best-effort. A failure must not
+        // propagate — the settlement callers (SettleWalletCore /
+        // RunRenewalAfterReceipt) would revert the invoice to pending or tell
+        // the user the payment failed although the plan is already active and
+        // the money is gone.
+        try
         {
-            Log.Information("""
-                            [user: {0}] Plan renewal change user count: (closing connections)
-                                change=(taget:{1}, user-count:{2}, to:{3})
-                            """,
-                JobContext.Value.Username, account.Username, current_state.SimultaneousUser, count);
+            if (count < current_state.SimultaneousUser)
+            {
+                Log.Information("""
+                                [user: {0}] Plan renewal change user count: (closing connections)
+                                    change=(taget:{1}, user-count:{2}, to:{3})
+                                """,
+                    JobContext.Value.Username, account.Username, current_state.SimultaneousUser, count);
 
-            await SessionRadiusSrv.Value.CloseConnectionByUsername(renew.RestrictedRealmId, account.Username);
+                await SessionRadiusSrv.Value.CloseConnectionByUsername(renew.RestrictedRealmId, account.Username);
+            }
+        }
+        catch (Exception post_commit_error)
+        {
+            Log.Error(post_commit_error,
+                "Closing connections after renewal commit failed: target={0}", account.Username);
         }
 
-        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+        try
         {
-            Target = account.Id,
-            Category = EventCategory.Renewal,
-            Type = EventType.Success,
-            Title = "تمدید",
-            Description = "پلن تمید شد.",
-            Value = renew.GetPlanTitle(),
-        });
+            await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+            {
+                Target = account.Id,
+                Category = EventCategory.Renewal,
+                Type = EventType.Success,
+                Title = "تمدید",
+                Description = "پلن تمید شد.",
+                Value = renew.GetPlanTitle(),
+            });
+        }
+        catch (Exception post_commit_error)
+        {
+            Log.Error(post_commit_error,
+                "Saving renewal success history failed: target={0}", account.Username);
+        }
 
-        await ServerMngSrv.Value.CheckUserServerBalance();
+        try
+        {
+            await ServerMngSrv.Value.CheckUserServerBalance();
+        }
+        catch (Exception post_commit_error)
+        {
+            Log.Error(post_commit_error,
+                "Server capacity check after renewal commit failed: target={0}", account.Username);
+        }
 
         Log.Information("[user: {0}] Plan renewal finished: ({1}, {2}, {3}, {4})",
             JobContext.Value.Username, account.Username, count, days, gigabytes);

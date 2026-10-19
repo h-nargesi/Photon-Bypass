@@ -12,6 +12,33 @@ public static partial class AccountBusiness
     public const int MaxDaysDeactivatePlanToDisable = 7;
     public const string PicturePath = "map/to/picture/";
 
+    public const int PasswordMinLength = 8;
+    public const int PasswordMaxLength = 48;
+
+    /// <summary>
+    /// Enforces the portal-password policy server-side. The frontend already
+    /// applies the very same contract (register/change-password forms use
+    /// <c>PasswordValidators.ValidationPattern</c> with an 8..48 length window);
+    /// every path that sets a password — register, reset-pass, change-pass and
+    /// the admin/manager set-password — must call this so bypassing the UI
+    /// cannot produce a weak or empty password.
+    /// </summary>
+    public static void ValidatePassword(string? password)
+    {
+        if (string.IsNullOrWhiteSpace(password) ||
+            password.Length is < PasswordMinLength or > PasswordMaxLength ||
+            !PasswordPattern().Match(password).Success)
+        {
+            throw new UserException(
+                $"کلمه عبور باید حداقل {PasswordMinLength} کاراکتر و شامل عدد، حروف کوچک و بزرگ انگلیسی یا فارسی باشد!",
+                $"Invalid password: length={password?.Length ?? 0}, " +
+                $"policy=[{PasswordMinLength}..{PasswordMaxLength}] chars, one digit + (mixed-case latin or persian letters)");
+        }
+    }
+
+    [GeneratedRegex(@"(?=.*[\d\u06F0-\u06F9])((?=.*[a-z])(?=.*[A-Z])|(?=.*[\u0622-\u0648\u067E-\u06CC])).+")]
+    private static partial Regex PasswordPattern();
+
     public static AccountEntity CreateFromModel(RegisterModel model)
     {
         if (string.IsNullOrWhiteSpace(model.Username))

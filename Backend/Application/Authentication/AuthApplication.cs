@@ -210,6 +210,9 @@ class AuthApplication(
         }
 
         var account = AccountBusiness.CreateFromModel(model);
+
+        AccountBusiness.ValidatePassword(model.Password);
+
         var duplicated = await AccountRepo.CheckUniqueData(account.Username, account.Email, account.Mobile);
 
         if ((duplicated & 1) == 1)

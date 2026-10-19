@@ -128,7 +128,7 @@ public class AccountAppTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var func = () => account_app.ChangePassword("User99", "xyz", "new-password");
+        var func = () => account_app.ChangePassword("User99", "xyz", "NewPassw0rd");
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -139,7 +139,7 @@ public class AccountAppTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
 
-        var result = await account_app.ChangePassword("User99", "abc", "new-password");
+        var result = await account_app.ChangePassword("User99", "abc", "NewPassw0rd");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);

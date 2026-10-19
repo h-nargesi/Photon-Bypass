@@ -16,7 +16,7 @@ public class PayerSeparationTest(ProgramLevelInitializer.Factory factory) : Http
     public async Task DependentUser_AllSelfFinancialEndpoints_Forbidden()
     {
         await InsertAccount("dep_self01", UserTypes.None);
-        await Login("dep_self01", "Password");
+        await Login("dep_self01", "Passw0rd1");
 
         await Renewal("dep_self01", 1, 120, 50, status: 403);
         await Estimate("dep_self01", 1, 120, 50, status: 403);
@@ -72,8 +72,8 @@ public class PayerSeparationTest(ProgramLevelInitializer.Factory factory) : Http
     [Fact]
     public async Task Pay_IssuesTopUpInvoiceForActor()
     {
-        await Register("dep_payer03", "82", "Password");
-        await Login("dep_payer03", "Password");
+        await Register("dep_payer03", "82", "Passw0rd1");
+        await Login("dep_payer03", "Passw0rd1");
 
         var code = await Pay(50_000);
 

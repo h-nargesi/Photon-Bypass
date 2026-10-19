@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using PhotonBypass.Application.Account;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Portal;
 using PhotonBypass.Portal.Basical;
 using PhotonBypass.Portal.Context;
 using PhotonBypass.Result;
@@ -20,7 +22,7 @@ public class AccountController(
     [HttpGet("get-user")]
     public async Task<ApiResult> GetUser()
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         var result = await application.GetUser(Username);
 
@@ -30,7 +32,7 @@ public class AccountController(
     [HttpGet("full-info")]
     public async Task<ApiResult> GetFullInfo([FromQuery] string? target)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.GetFullInfo(JobContext.Target);
 
@@ -40,17 +42,20 @@ public class AccountController(
     [HttpPost("edit-user")]
     public async Task<ApiResult> EditUser([FromQuery] string? target, [FromBody] EditUserModel context)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.EditUser(JobContext.Target, context);
 
         return SafeApiResult(result);
     }
 
+    // verifies the current password → shares the auth rate-limit bucket so it
+    // cannot be used as an unthrottled oracle for the portal password
     [HttpPost("change-pass")]
+    [EnableRateLimiting(ServiceFactory.AuthRateLimitPolicy)]
     public async Task<ApiResult> ChangePassword([FromBody] ChangePasswordContext context)
     {
-        LoadJobContext();
+        await LoadJobContextAsync();
 
         if (string.IsNullOrWhiteSpace(context.Token))
         {
@@ -70,7 +75,7 @@ public class AccountController(
     [HttpGet("history")]
     public async Task<ApiResult> GetHistory([FromQuery] string? target, [FromQuery] HistoryContext context)
     {
-        LoadJobContext(target);
+        await LoadJobContextAsync(target);
 
         var result = await application.GetHistory(JobContext.Target, context.FromDateTime, context.ToDateTime);
 

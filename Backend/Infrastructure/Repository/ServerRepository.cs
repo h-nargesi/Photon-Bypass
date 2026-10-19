@@ -44,12 +44,14 @@ class ServerRepository(LocalDbContext context, IMemoryCache cache) : EditableRep
 
     public async Task<ServerEntity?> GetActiveNasInfo(string ip)
     {
+        // the where-fragment must end at "@ip": a stray `")` inside the raw
+        // string literal produced "Unclosed quotation mark" on a real database
         var result = await FindAsync(statement => statement
             .Where($"""
-{nameof(ServerEntity.IsActive)} = 1
-    and ({nameof(ServerEntity.Features)} & @nas) > 0
-    and {nameof(ServerEntity.IpAddress)} = @ip")
-""")
+                    {nameof(ServerEntity.IsActive)} = 1
+                        and ({nameof(ServerEntity.Features)} & @nas) > 0
+                        and {nameof(ServerEntity.IpAddress)} = @ip
+                    """)
             .WithParameters(new { ip, nas = ServerFeature.Nas }));
 
         return result.FirstOrDefault();
@@ -57,17 +59,20 @@ class ServerRepository(LocalDbContext context, IMemoryCache cache) : EditableRep
 
     public async Task<List<string>> GetAllActiveNasDomainInRealm(int? realm_id)
     {
-        var sql = $"""
-                  select {nameof(ServerEntity.DomainName)}
-                  from {TableName}
-                  where {nameof(ServerEntity.IsActive)} = 1 
-                    and ({nameof(ServerEntity.Features)} & @nas) > 0
-                  """;
+        // the realm filter must stay inside the raw string: appending it to the
+        // literal (which ends without a trailing newline/space) produced
+        // "> 0and RealmId = ..." — a syntax error for every realm-scoped call
+        var realm_filter = realm_id.HasValue
+            ? $"and {nameof(ServerEntity.RealmId)} = @realm_id"
+            : string.Empty;
 
-        if (realm_id.HasValue)
-        {
-            sql += $"and {nameof(ServerEntity.RealmId)} = @realm_id";
-        }
+        var sql = $"""
+                   select {nameof(ServerEntity.DomainName)}
+                   from {TableName}
+                   where {nameof(ServerEntity.IsActive)} = 1 
+                     and ({nameof(ServerEntity.Features)} & @nas) > 0
+                     {realm_filter}
+                   """;
 
         var result = await QueryAsync(sql, new { nas = ServerFeature.Nas, realm_id });
 
@@ -173,7 +178,9 @@ class ServerRepository(LocalDbContext context, IMemoryCache cache) : EditableRep
                    where {nameof(ServerEntity.IpAddress)} in @ips
                    """;
 
-        var list = await QueryAsync(sql, ips);
+        // the ips must be wrapped in an anonymous object: a bare list is not a
+        // valid Dapper parameter template and never binds the @ips parameter
+        var list = await QueryAsync(sql, new { ips });
 
         return list.ToDictionary(pair => (string)pair.IpAddress, pair => ((int)pair.Id, (int)pair.RealmId));
     }

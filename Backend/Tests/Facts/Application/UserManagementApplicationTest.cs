@@ -71,7 +71,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
         var result = await application.Create(new CreateUserModel
         {
             Username = "new_sub",
-            Password = "Password",
+            Password = "Passw0rd1",
             Email = "new_sub@gmail.com",
             Mobile = "+989120000001",
             AllowSelfService = true,
@@ -86,13 +86,13 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
         // a manager cannot pick a role or an owner (docs/20 §3)
         await Assert.ThrowsAsync<UserException>(() => application.Create(new CreateUserModel
         {
-            Username = "new_sub2", Password = "Password", Email = "n2@gmail.com", Mobile = "+989120000002",
+            Username = "new_sub2", Password = "Passw0rd1", Email = "n2@gmail.com", Mobile = "+989120000002",
             Role = AccountRole.Manager,
         }));
 
         await Assert.ThrowsAsync<UserException>(() => application.Create(new CreateUserModel
         {
-            Username = "new_sub3", Password = "Password", Email = "n3@gmail.com", Mobile = "+989120000003",
+            Username = "new_sub3", Password = "Passw0rd1", Email = "n3@gmail.com", Mobile = "+989120000003",
             Owner = "User4",
         }));
     }
@@ -112,14 +112,14 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
         // D9: no admin creation, no promotion path
         await Assert.ThrowsAsync<UserException>(() => application.Create(new CreateUserModel
         {
-            Username = "new_admin", Password = "Password", Email = "na@gmail.com", Mobile = "+989120000010",
+            Username = "new_admin", Password = "Passw0rd1", Email = "na@gmail.com", Mobile = "+989120000010",
             Role = AccountRole.Admin,
         }));
 
         // owner must be an active manager
         await Assert.ThrowsAsync<UserException>(() => application.Create(new CreateUserModel
         {
-            Username = "new_owned", Password = "Password", Email = "no@gmail.com", Mobile = "+989120000011",
+            Username = "new_owned", Password = "Passw0rd1", Email = "no@gmail.com", Mobile = "+989120000011",
             Owner = "User4",
         }));
 
@@ -129,7 +129,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
         var result = await application.Create(new CreateUserModel
         {
             Username = "new_manager",
-            Password = "Password",
+            Password = "Passw0rd1",
             Email = "nm@gmail.com",
             Mobile = "+989120000012",
             Role = AccountRole.Manager,
@@ -249,7 +249,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
         (await Assert.ThrowsAsync<UserException>(() => application.SetPassword("User2", "NewPassword")))
             .HttpCode.Should().Be(403);
 
-        var reset = await application.SetPassword("User6", "NewPassword");
+        var reset = await application.SetPassword("User6", "NewPassword1");
 
         Assert.Equal(2, reset.Code / 100);
 

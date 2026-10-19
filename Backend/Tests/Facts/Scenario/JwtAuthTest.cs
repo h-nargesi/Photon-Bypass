@@ -7,7 +7,7 @@ namespace PhotonBypass.Test.Facts.Scenario;
 
 public class JwtAuthTest(ProgramLevelInitializer.Factory factory) : HttpHandler(factory)
 {
-    private const string TokenPassword = "Password";
+    private const string TokenPassword = "Passw0rd1";
 
     [Fact]
     public async Task AuthorizedEndpoint_WithoutToken_Returns401()

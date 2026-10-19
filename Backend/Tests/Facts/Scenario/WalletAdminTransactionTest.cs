@@ -55,8 +55,8 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
         await WalletAdjust("wal_ghost02", (short)BalanceDirection.Credit, 100, "d", status: 4);
 
         // adjust is admin-only (docs/20 §3): a plain user is refused by policy
-        await Register("wal_user03", "62", "Password");
-        await Login("wal_user03", "Password");
+        await Register("wal_user03", "62", "Passw0rd1");
+        await Login("wal_user03", "Passw0rd1");
 
         await WalletAdjust(null, (short)BalanceDirection.Credit, 100, "d", status: 403);
         await WalletAdjust("wal_user03", (short)BalanceDirection.Credit, 100, "d", status: 403);
@@ -84,13 +84,13 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
         Assert.Equal("admin", item["actor"]);
 
         // the dependent owner is refused its own wallet history (D6)
-        await Login(target, "Password");
+        await Login(target, "Passw0rd1");
 
         await WalletHistory(status: 403);
 
         // an independent account sees its own (empty) history
-        await Register("wal_indep05", "63", "Password");
-        await Login("wal_indep05", "Password");
+        await Register("wal_indep05", "63", "Passw0rd1");
+        await Login("wal_indep05", "Passw0rd1");
 
         var self = await WalletHistory();
         Assert.Equal("0", self["totalCount"]);
@@ -114,7 +114,7 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
             await InsertAccount(subordinate, UserTypes.None, owner_id: manager_id);
         }
 
-        await Login(manager, "Password");
+        await Login(manager, "Passw0rd1");
 
         await WalletHistory(subordinate, status: 403);
     }
@@ -124,7 +124,7 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
     {
         var owner = "wal_pager08";
 
-        await Register(owner, "64", "Password");
+        await Register(owner, "64", "Passw0rd1");
 
         using (var scope = ServiceProvider.CreateScope())
         {
@@ -146,7 +146,7 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
             }
         }
 
-        await Login(owner, "Password");
+        await Login(owner, "Passw0rd1");
 
         var first = await WalletHistory();
 

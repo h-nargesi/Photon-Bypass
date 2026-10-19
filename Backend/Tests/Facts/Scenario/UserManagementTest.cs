@@ -38,12 +38,12 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
         var fixture = await SeedManager("40");
 
         // a plain user is refused by the Manager policy
-        await Register("um_user43", "65", "Password");
-        await Login("um_user43", "Password");
+        await Register("um_user43", "65", "Passw0rd1");
+        await Login("um_user43", "Passw0rd1");
         await UserList(status: 403);
 
         // the manager sees exactly its own subordinates — inactive included
-        await Login(fixture.Manager, "Password");
+        await Login(fixture.Manager, "Passw0rd1");
 
         var manager_list = await UserList();
 
@@ -83,7 +83,7 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
     public async Task Create_MatrixAndGuards()
     {
         var fixture = await SeedManager("44");
-        await Login(fixture.Manager, "Password");
+        await Login(fixture.Manager, "Passw0rd1");
 
         // manager: forced own subordinate; independent flag respected (D3)
         await UserCreate("um_dep45", "InitPass1");
@@ -134,16 +134,16 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
     public async Task SetPassword_Guards()
     {
         var fixture = await SeedManager("53");
-        await Login(fixture.Manager, "Password");
+        await Login(fixture.Manager, "Passw0rd1");
 
-        await UserSetPassword(fixture.Subordinate, "RenewedPass");
+        await UserSetPassword(fixture.Subordinate, "RenewedPass1");
 
-        await Login(fixture.Subordinate, "RenewedPass");
+        await Login(fixture.Subordinate, "RenewedPass1");
 
         // manager cannot reset outside its area
-        await Login(fixture.Manager, "Password");
-        await Register("um_outside54", "66", "Password");
-        await UserSetPassword("um_outside54", "Whatever1", status: 403);
+        await Login(fixture.Manager, "Passw0rd1");
+        await Register("um_outside54", "66", "Passw0rd1");
+        await UserSetPassword("um_outside54", "WhateverPass1", status: 403);
 
         // admin can reset anyone but itself
         await Login("admin", "admin");
@@ -159,10 +159,10 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
         var fixture = await SeedManager("55");
 
         // role changes are admin-only (policy)
-        await Login(fixture.Manager, "Password");
+        await Login(fixture.Manager, "Passw0rd1");
         await UserSetRole("um_user56", 0, status: 403);
 
-        await Register("um_user56", "67", "Password");
+        await Register("um_user56", "67", "Passw0rd1");
         await Login("admin", "admin");
 
         // self-change and admin-target are refused (D9)
@@ -198,7 +198,7 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
     public async Task SetOwner_AttachDetachAndGuards()
     {
         var fixture = await SeedManager("57");
-        await Register("um_user58", "68", "Password");
+        await Register("um_user58", "68", "Passw0rd1");
         await Login("admin", "admin");
 
         // the owner must be an active manager; self-ownership and admin
@@ -211,7 +211,7 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
 
         // attached in the same admin session — the manager can manage it
         // immediately (relationship checked live, not via the login cache)
-        await Login(fixture.Manager, "Password");
+        await Login(fixture.Manager, "Passw0rd1");
         await UserSetPassword("um_user58", "Attached1");
         await Login("um_user58", "Attached1");
 
@@ -219,7 +219,7 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
         await Login("admin", "admin");
         await UserSetOwner("um_user58", null);
 
-        await Login(fixture.Manager, "Password");
+        await Login(fixture.Manager, "Passw0rd1");
         await UserSetPassword("um_user58", "Detached1", status: 403);
 
         using (var scope = ServiceProvider.CreateScope())
@@ -236,28 +236,28 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
         var fixture = await SeedManager("59");
 
         // the dependent subordinate is gated out of its own wallet (D6)
-        await Login(fixture.Subordinate, "Password");
+        await Login(fixture.Subordinate, "Passw0rd1");
         await WalletHistory(status: 403);
 
         // the manager flips the flag for its own subordinate…
-        await Login(fixture.Manager, "Password");
+        await Login(fixture.Manager, "Passw0rd1");
         await UserSetSelfService(fixture.Subordinate, true);
 
         // …and the gate opens for the account itself
-        await Login(fixture.Subordinate, "Password");
+        await Login(fixture.Subordinate, "Passw0rd1");
         var history = await WalletHistory();
         Assert.Equal("0", history["totalCount"]);
 
         // revoking closes it again
-        await Login(fixture.Manager, "Password");
+        await Login(fixture.Manager, "Passw0rd1");
         await UserSetSelfService(fixture.Subordinate, false);
 
-        await Login(fixture.Subordinate, "Password");
+        await Login(fixture.Subordinate, "Passw0rd1");
         await WalletHistory(status: 403);
 
         // outside the manager's area → 403
-        await Register("um_user60", "69", "Password");
-        await Login(fixture.Manager, "Password");
+        await Register("um_user60", "69", "Passw0rd1");
+        await Login(fixture.Manager, "Passw0rd1");
         await UserSetSelfService("um_user60", false, status: 403);
     }
 
@@ -265,18 +265,18 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
     public async Task SetActive_Guards()
     {
         var fixture = await SeedManager("61");
-        await Login(fixture.Manager, "Password");
+        await Login(fixture.Manager, "Passw0rd1");
 
         // deactivating the subordinate blocks its login…
         await UserSetActive(fixture.Subordinate, false);
-        await Login(fixture.Subordinate, "Password", status: 4);
+        await Login(fixture.Subordinate, "Passw0rd1", status: 4);
 
         // …and it stays visible in the manager's list
         var list = await UserList();
         Assert.Contains(ParseItems(list), row => row["username"] == fixture.Subordinate && row["isActive"] == "False");
 
         // outside the area → 403; admin self → 403 (D9/D13)
-        await Register("um_user62", "59", "Password");
+        await Register("um_user62", "59", "Passw0rd1");
         await UserSetActive("um_user62", false, status: 403);
 
         await Login("admin", "admin");
@@ -284,6 +284,6 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
 
         // the admin reactivates it
         await UserSetActive(fixture.Subordinate, true);
-        await Login(fixture.Subordinate, "Password");
+        await Login(fixture.Subordinate, "Passw0rd1");
     }
 }

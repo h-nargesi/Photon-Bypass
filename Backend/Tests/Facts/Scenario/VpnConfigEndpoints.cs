@@ -11,7 +11,7 @@ public class VpnConfigEndpoints(ProgramLevelInitializer.Factory factory) : HttpH
     {
         // /api/auth/register + /api/auth/token
         await Register("usercfg", "80");
-        await Login("usercfg", "Password");
+        await Login("usercfg", "Passw0rd1");
 
         // /api/plan/estimate + wallet top-up + /api/plan/renewal
         var request = new RenewalContext

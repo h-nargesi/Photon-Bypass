@@ -18,6 +18,7 @@ internal class AccountMonitoringService(
     IHistoryRepository history_repo,
     Lazy<IPlanUsageReader> plan_usage_reader,
     Lazy<IEmailService> email_srv,
+    Lazy<ISocialMediaService> social_srv,
     Lazy<IAccountRadiusSyncService> account_radius_srv)
     : IAccountMonitoringService
 {
@@ -25,6 +26,7 @@ internal class AccountMonitoringService(
     private IHistoryRepository HistoryRepo { get; } = history_repo;
     private Lazy<IPlanUsageReader> PlanUsageReader { get; } = plan_usage_reader;
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
+    private Lazy<ISocialMediaService> SocialSrv { get; } = social_srv;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
 
     public async Task InactiveAbandonedUsers(IEnumerable<PlanStateEntity> plan_state_list)
@@ -150,39 +152,36 @@ internal class AccountMonitoringService(
             Log.Information("The user '{0}' is going to finish plan (x{1}, {2})",
                 plan.Username, plan.SimultaneousUser, remains_title);
 
-            history_list.Add(new HistoryEntity
-            {
-                Target = plan.Id,
-                Category = EventCategory.Renewal,
-                Type = EventType.Warning,
-                Title = "پایان پلن",
-                Description = "اخطار پایان پلن.",
-                Value = remains_title,
-            });
-
             if (!account.SendWarning)
             {
                 continue;
             }
 
 #if SOCIAL
-            if (contact.Phone != null)
-            {
-                tasks.Add(SocialSrv.FinishServiceAlert(plan.Username, contact.Phone, plan.PlanType, remainsTitle));
+            // WhatsApp-first: a validated mobile number gets the social alert
+            // instead of the email below (the interface contract is
+            // FinishServiceAlert(username, phone, type, left)).
+            var phone = account.MobileNumber;
 
-                if (account != null)
-                {
-                    IncreaseWarningTime(account, warned_account_ids);
-                }
+            if (phone != null)
+            {
+                tasks.Add(SocialSrv.Value.FinishServiceAlert(
+                    plan.Username, phone, plan.GetPlanTitle(), remains_title ?? string.Empty));
+
+                history_list.Add(WarnHistory(plan, remains_title));
+
+                IncreaseWarningTime(account, warned_account_ids);
 
                 continue;
-        }
+            }
 #endif
 
             if (account.EmailAddress != null)
             {
                 tasks.Add(EmailSrv.Value.FinishServiceAlert(
                     account.Fullname, plan.Username, account.EmailAddress, plan.GetPlanTitle(), remains_title));
+
+                history_list.Add(WarnHistory(plan, remains_title));
 
                 IncreaseWarningTime(account, warned_account_ids);
             }
@@ -196,6 +195,23 @@ internal class AccountMonitoringService(
         tasks.Add(HistoryRepo.Save(history_list));
 
         await Task.WhenAll(tasks);
+    }
+
+    private static HistoryEntity WarnHistory(PlanStateEntity plan, string? remains_title)
+    {
+        // recorded only when a warning is actually dispatched: writing it for
+        // every finishing plan on every hourly run spammed History for
+        // accounts with no reachable channel (the throttle only stamps when a
+        // message goes out)
+        return new HistoryEntity
+        {
+            Target = plan.Id,
+            Category = EventCategory.Renewal,
+            Type = EventType.Warning,
+            Title = "پایان پلن",
+            Description = "اخطار پایان پلن.",
+            Value = remains_title,
+        };
     }
 
     private static void IncreaseWarningTime(AccountEntity account, List<int> warned_account_ids)
