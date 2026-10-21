@@ -239,4 +239,18 @@ class AccountRepository(LocalDbContext context) : EditableRepository<AccountEnti
 
         return ExecuteScalarAsync<bool>(sql, new { manager_id });
     }
+
+    public Task SetTelegramChat(int account_id, long? chat_id)
+    {
+        var sql = $"""
+                   update {TableName}
+                   set {nameof(AccountEntity.TelegramChatId)} = @chat_id
+                   where {nameof(AccountEntity.Id)} = @account_id
+                   """;
+
+        // a duplicate-key error from UK_Account_TelegramChatId (2601/2627)
+        // propagates untouched: the caller (the bot link handler) turns it
+        // into the "this chat already belongs to another account" reply
+        return ExecuteAsync(sql, new { account_id, chat_id });
+    }
 }

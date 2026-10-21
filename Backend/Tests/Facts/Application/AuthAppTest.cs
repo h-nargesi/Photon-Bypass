@@ -9,6 +9,7 @@ using PhotonBypass.ErrorHandler;
 using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
+using PhotonBypass.Test.Mock.MockOutSource;
 using PhotonBypass.Test.Mock.MockServerBridge;
 using PhotonBypass.Tools;
 
@@ -82,13 +83,210 @@ public class AuthAppTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task ForgetPassword_InvalidMobileEmail()
+    public async Task CheckUserPassword_InvalidPassword_SendsTheSocialAlertWithTheAccount()
     {
         using var scope = App.Services.CreateScope();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var function = () => auth_app.ForgetPassword("invalid email/mobile");
 
-        await function.Should().ThrowAsync<UserException>();
+        AccountEntity? alerted_account = null;
+        social_moq.OnInvalidPasswordAlert += account => alerted_account = account;
+
+        var result = await auth_app.CheckUserPassword("User99", "invalid password");
+
+        Assert.Equal(401, result.Code);
+        alerted_account.Should().NotBeNull();
+        alerted_account!.Username.Should().Be("User99");
+    }
+
+    [Fact]
+    public async Task CheckUserPassword_SocialAlertFailure_DoesNotBreakTheLoginAnswer()
+    {
+        using var scope = App.Services.CreateScope();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        social_moq.OnInvalidPasswordAlert += _ => throw new InvalidOperationException("bot unreachable");
+
+        var result = await auth_app.CheckUserPassword("User99", "invalid password");
+
+        // best-effort alert: the 401 goes out even when the channel is down
+        Assert.Equal(401, result.Code);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_NeitherEmailNorMobile_IsTreatedAsUsername_NeutralAnswer()
+    {
+        using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        var send_count = 0;
+        email_handler_moq.OnSend += _ => send_count++;
+
+        // no pattern check rejects it anymore (D4): every non-email/mobile
+        // input is a username lookup with the same neutral answer
+        var result = await auth_app.ForgetPassword("invalid email/mobile");
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+        Assert.Equal(0, send_count);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_UsernameWithSocialChat_SendsTheCodeToTheChat()
+    {
+        using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        account_repo_moq.Data["User4"].IsEmailValid = true;
+        account_repo_moq.Data["User4"].TelegramChatId = 777;
+        social_moq.SupportsAccounts = true;
+
+        (AccountEntity? account, string code)? social_send = null;
+        social_moq.OnSendResetPasswordLink += (account, code) => social_send = (account, code);
+
+        var email_send_count = 0;
+        email_handler_moq.OnSend += _ => email_send_count++;
+
+        var result = await auth_app.ForgetPassword("User4");
+
+        Assert.Equal(2, result.Code / 100);
+
+        // telegram-first (D5): the connected chat wins, the email is untouched
+        social_send.Should().NotBeNull();
+        social_send!.Value.account.Username.Should().Be("User4");
+        social_send.Value.code.Should().NotBeNullOrEmpty();
+
+        email_send_count.Should().Be(0);
+
+        // the code is stored and still valid: the user may retry the entry
+        var stored = await reset_moq.Object.GetAccount(social_send.Value.code);
+
+        stored.Should().NotBeNull();
+        stored!.AccountId.Should().Be(account_repo_moq.Data["User4"].Id);
+        stored.ExpireDate.Should().BeAfter(DateTime.Now);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_UsernameWithoutSocialChat_FallsBackToEmail()
+    {
+        using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        // no social reach, but a validated email (D6)
+        account_repo_moq.Data["User4"].IsEmailValid = true;
+        social_moq.SupportsAccounts = false;
+
+        var social_send_count = 0;
+        social_moq.OnSendResetPasswordLink += (_, _) => social_send_count++;
+
+        EmailMessage? sent = null;
+        email_handler_moq.OnSend += mail => sent = mail;
+
+        var result = await auth_app.ForgetPassword("User4");
+
+        Assert.Equal(2, result.Code / 100);
+
+        social_send_count.Should().Be(0);
+        sent.Should().NotBeNull();
+        sent!.ToAddress.Should().Be("user4@gmail.com");
+    }
+
+    [Fact]
+    public async Task ForgetPassword_UsernameWithoutAnyChannel_StaysNeutral()
+    {
+        using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        account_repo_moq.Data["User4"].IsEmailValid = false;
+        social_moq.SupportsAccounts = false;
+
+        var email_send_count = 0;
+        var social_send_count = 0;
+        var stored_code_count = 0;
+
+        email_handler_moq.OnSend += _ => email_send_count++;
+        social_moq.OnSendResetPasswordLink += (_, _) => social_send_count++;
+        reset_moq.OnAddHashCode += _ => stored_code_count++;
+
+        var result = await auth_app.ForgetPassword("User4");
+
+        // neutral — and indistinguishable from the unknown-account answer
+        Assert.Equal(2, result.Code / 100);
+        Assert.Equal("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.", result.Message);
+
+        email_send_count.Should().Be(0);
+        social_send_count.Should().Be(0);
+        stored_code_count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_Username_SocialSendFailure_ThrowsButKeepsTheCode()
+    {
+        using var scope = App.Services.CreateScope();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        social_moq.SupportsAccounts = true;
+        account_repo_moq.Data["User4"].TelegramChatId = 777;
+
+        var code = string.Empty;
+        reset_moq.OnAddHashCode += entity => code = entity.HashCode;
+
+        social_moq.OnSendResetPasswordLink += (_, _) => throw new InvalidOperationException("bot unreachable");
+
+        var function = () => auth_app.ForgetPassword("User4");
+
+        (await function.Should().ThrowAsync<UserException>())
+            .Which.UserMessage.Should().Contain("ارسال پیام ناموفق بود");
+
+        var stored = await reset_moq.Object.GetAccount(code);
+
+        stored.Should().NotBeNull("the stored code must survive a failed send");
+        stored!.ExpireDate.Should().BeAfter(DateTime.Now);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_UsernameLimiter_ConsumesSlotsLikeEveryInput()
+    {
+        using var scope = App.Services.CreateScope();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        social_moq.SupportsAccounts = true;
+
+        var send_count = 0;
+        social_moq.OnSendResetPasswordLink += (_, _) => send_count++;
+
+        // an unknown username burns its own three slots
+        for (var request = 0; request < 3; request++)
+        {
+            var result = await auth_app.ForgetPassword("GhostUser");
+
+            Assert.Equal(2, result.Code / 100);
+        }
+
+        send_count.Should().Be(0);
+
+        // the real account appears, but its identifier's window is spent
+        var fourth = await auth_app.ForgetPassword("User4");
+
+        fourth.Code.Should().Be(200);
+        send_count.Should().Be(0);
     }
 
     [Fact]
@@ -526,6 +724,27 @@ public class AuthAppTest : UnitLevelServiceInitializer
         {
             Username = "username10",
             Email = "welcome.user@gmail.com",
+            Mobile = "09113456799",
+            Password = "Passw0rd1",
+        });
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+    }
+
+    [Fact]
+    public async Task Register_SocialAlertFailure_DoesNotFailTheRegistration()
+    {
+        using var scope = App.Services.CreateScope();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        social_moq.OnNewUserRegistrationAlert += _ => throw new InvalidOperationException("bot unreachable");
+
+        var result = await auth_app.Register(new RegisterModel
+        {
+            Username = "username10",
+            Email = null,
             Mobile = "09113456799",
             Password = "Passw0rd1",
         });

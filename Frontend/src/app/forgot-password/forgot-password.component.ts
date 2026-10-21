@@ -101,8 +101,11 @@ export class ForgotPasswordComponent {
   }
 
   private createForm() {
+    // D4: the input is an email OR a username — the server routes the code
+    // (telegram chat → social message, valid email → mail, else neutral),
+    // so only presence is enforced client-side
     const formControl = this.form_builder.group({
-      emailMobile: ['', [Validators.required, Validators.email]],
+      emailMobile: ['', [Validators.required]],
     });
 
     return formControl;

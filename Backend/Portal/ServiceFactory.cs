@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.OutSource;
 using PhotonBypass.Portal.Basical;
 using PhotonBypass.Tools;
 using System.Threading.RateLimiting;
@@ -77,6 +78,11 @@ public static class ServiceFactory
 
         builder.Services.AddLazyScoped<IAccessService, AccessService>();
         builder.Services.AddLazyScoped<IJobContext, JobContext>();
+
+        // Telegram poller lives here (not in AddOutSourceServices) so the
+        // Admin host — which clones the OutSource slice — never runs a second
+        // concurrent getUpdates loop (Telegram answers 409 to one of them)
+        builder.Services.AddHostedService<TelegramUpdatePoller>();
 
         return builder;
     }

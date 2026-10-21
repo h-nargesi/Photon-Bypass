@@ -30,6 +30,8 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
 
     public event Action<IEnumerable<int>>? OnSetDeactivated;
 
+    public event Action<int, long?>? OnSetTelegramChat;
+
     public Dictionary<string, AccountEntity> Data;
 
     public AccountRepositoryMoq(TransactionalMockDbContext db_context) : this(db_context, FilePath)
@@ -239,6 +241,20 @@ internal class AccountRepositoryMoq : Mock<IAccountRepository>, IUnitLevelServic
                 }
 
                 OnSetDeactivated?.Invoke(account_ids);
+                return Task.CompletedTask;
+            });
+
+        Setup(x => x.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()))
+            .Returns<int, long?>((account_id, chat_id) =>
+            {
+                var account = Data.Values.FirstOrDefault(account => account.Id == account_id);
+
+                if (account != null)
+                {
+                    account.TelegramChatId = chat_id;
+                }
+
+                OnSetTelegramChat?.Invoke(account_id, chat_id);
                 return Task.CompletedTask;
             });
 

@@ -1,6 +1,6 @@
 # docs/01-overview.md — Product overview
 
-> **English summary**: Photon-Bypass sells and manages VPN accounts from one backend that serves two sites — a public Home (ads/plans) and a logged-in Profile. Three actor types (customer, manager-with-subusers, system/background) interact with five external resources: local MSSQL DB, Radius server (read via rad-db, write via rad-api), Mikrotik routers over SSH, WhatsApp, and an email server. Phasing comes from `README.md`.
+> **English summary**: Photon-Bypass sells and manages VPN accounts from one backend that serves two sites — a public Home (ads/plans) and a logged-in Profile. Three actor types (customer, manager-with-subusers, system/background) interact with five external resources: local MSSQL DB, Radius server (read via rad-db, write via rad-api), Mikrotik routers over SSH, Telegram (social channel — runtime-selected, WhatsApp adapter later), and an email server. Phasing comes from `README.md`.
 
 ## Two websites (دو وب‌سایت)
 
@@ -26,8 +26,8 @@
 | **Local DB** (`local db`) | اکانت، کیف پول، تاریخچه، تمدید، پلن، سرورها، قیمت | مستقیم MSSQL (`LocalDbContext`) |
 | **Radius server** | وضعیت/اتصال کاربران VPN | **rad-db** (read، MySQL) و **rad-api** (write، Web API) — دو حالت RadiusDesk یا Mikrotik UserManager (`docs/06`) |
 | **Mikrotik routers** (`mikrotik ssh`) | بستن کانکشن، ساخت گواهی، اسکریپت | SSH مستقیم (`ServerBridge/Ssh`) و tik4net (`docs/07`) |
-| **WhatsApp** (`whatsapp api`) | هشدار ثبت‌نام/اعتبارسنجی/پایان سرویس | gated پشت `#if SOCIAL` (`docs/12`) |
-| **Email server** | فراموشی پسورد، گواهی، هشدار پایان | SmtpClient (`EmailHandler`) |
+| **Telegram** (Bot API از طریق پروکسی) | کد بازیابی، هشدار پایان سرویس/پسورد اشتباه به chat متصل + هشدار اپراتور | کانال runtime با `SocialMediaOptions:Channel` (`docs/21`)؛ واتساپ بعداً = آداپتور روی همین اینترفیس |
+| **Email server** | فراموشی پسورد، گواهی، هشدار پایان (fallback کانال اجتماعی) | SmtpClient (`EmailHandler`) |
 
 قاعده‌ی مهم Radius: **خواندن از دیتابیس ردیوس (rad-db)** و **نوشتن از طریق API (rad-api)** انجام می‌شود تا بار روی ردیوس کمتر شود (`analyse.md:308`).
 
@@ -49,7 +49,7 @@ flowchart TB
     API --> Email[Email Server]
     Job --> RadDB
     Job --> Email
-    Job --> WhatsApp[WhatsApp - SOCIAL]
+    Job --> Telegram[Telegram Bot - docs/21]
     Job --> LocalDB
 ```
 
@@ -60,7 +60,7 @@ flowchart TB
 1. **Web Site Core** — هسته‌ی وب (Unit Test، Cloudflare Human Test، پنل چنداکانت، FAQ).
 2. **MySql Performance** — بهینه‌سازی MySQL.
 3. **Fake Website** — نماد، ساماندهی، درگاه پرداخت جعلی.
-4. **Send WhatsApp Notif** — دکمه‌ی feedback و نوتیفیکیشن واتساپ.
+4. **Send WhatsApp Notif** — دکمه‌ی feedback و نوتیفیکیشن؛ کانال اجتماعی با تلگرام فعال شد (`docs/21`)، واتساپ بعداً = آداپتور.
 5. **Google Auth** — ورود با گوگل.
 6. **Other features**.
 

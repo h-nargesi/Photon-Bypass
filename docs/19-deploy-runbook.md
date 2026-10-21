@@ -49,9 +49,10 @@
    خروجی را یک‌جا (بدون شکستن خط) در `Issuer:Code` بگذارید.
 2. **دیتابیس محلی MSSQL** (`LocalDatabaseOptions:ConnectionString`): دیتابیس `FastBypass` را با کاربر اختصاصی و پسورد قوی بسازید (نه کاربر تستی repo).
 3. **Radius**: connection string دیتابیس Radius (`RadDapperOptions:ConnectionString`) و credential وب‌سرویس RadiusDesk (`RadiusServiceOptions`) با مقادیر واقعی سرور.
-4. **ایمیل** (`EmailOptions`): **الزامی** — ایمیل تا وقتی کانال SOCIAL ساخته نشده تنها راه بازیابی رمز است؛ پروداکشن بدون `Enabled: true` و credential صندوق واقعی بوت نمی‌شود (گارد).
+4. **ایمیل** (`EmailOptions`): **الزامی** — کانال پیش‌فرض بازیابی/هشدار است (تلگرام اختیاری است و جایگزین اجباری ایمیل نمی‌شود)؛ پروداکشن بدون `Enabled: true` و credential صندوق واقعی بوت نمی‌شود (گارد).
 5. **SSH/ServerBridge**: در صورت وجود credential پیش‌فرض در `ServerBridgeOptions`. (credential تک‌تک سرورها در جدول `Server` ذخیره می‌شود و از پنل وارد می‌شود؛ رمزنگاری at-rest آن: docs/14 M12.)
 6. **پرداخت/OVPN** (در صورت استفاده): `ManagementOptions:PaymentCards` (شماره کارت‌های واقعی) و `ManagementOptions:DefaultPrivateKeyOVpn`.
+7. **تلگرام** (در صورت فعال‌سازی کانال — docs/21): bot token واقعی از @BotFather، `BotUsername` بدون `@`، `OperationsChatId` (chat اپراتور — با `/start` گفتگو با بات به دست می‌آید) و `Proxy:Address` (+ Username/Password اختیاری؛ Bot API از سرور بدون پروکسی خروجی در دسترس نیست). توکن تستی کامیت‌شده در appsettings توسط گارد بلاک می‌شود؛ کلیدها فقط با نام در مستندات می‌آیند.
 
 ### (ب) ساخت `private/secrets.json`
 
@@ -81,11 +82,24 @@
     "Host": "<smtp-host>",
     "Port": 587,
     "EnableSsl": true
+  },
+  "SocialMediaOptions": {
+    "Channel": "Telegram"
+  },
+  "TelegramOptions": {
+    "BotToken": "<real bot token from @BotFather>",
+    "BotUsername": "<bot username without @>",
+    "OperationsChatId": "<operator chat id>",
+    "Proxy": {
+      "Address": "<outbound proxy, e.g. http://127.0.0.1:9050>",
+      "Username": "<optional>",
+      "Password": "<optional>"
+    }
   }
 }
 ```
 
-در صورت نیاز بخش‌های `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند؛ `EmailOptions` عمداً در `appsettings.json` کامیت نمی‌شود و کامل در `secrets.json` می‌آید (`Enabled: true` + credential).
+در صورت نیاز بخش‌های `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند؛ `EmailOptions` عمداً در `appsettings.json` کامیت نمی‌شود و کامل در `secrets.json` می‌آید (`Enabled: true` + credential). بلوک تلگرام فقط اگر کانال فعال می‌شود لازم است: با `Channel: "Telegram"` گارد پروداکشن کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (docs/21 §فعال‌سازی)؛ بدون آن کانال `None` می‌ماند (no-op) و بلوک لازم نیست.
 
 ### (ج) نصب دیتابیس از ابتدا + ساخت ادمین (پیش از بالا آوردن app)
 
@@ -126,6 +140,7 @@ dotnet publish Backend/Portal -c Release -o publish/Portal
 - **بکاپ `data-protection-keys`**: پوشه‌ی کلیدهای Data Protection (docs/14 M12) باید در بکاپ vhost باشد؛ گم‌شدنش = ورود دوباره‌ی کانفیگ رمزنگاری‌شده‌ی سرورها.
 - **ادمین**: seed پیش‌فرض حذف شده است؛ ادمین در گام (ج) با پسورد واقعی اپراتور ساخته و verify می‌شود (`scripts/deploy.sh db`/`admin` → `DeployCli`) — پسورد پیش‌فرضی برای تعویض پس از نصب وجود ندارد.
 - **خطای گارد در لاگ‌های هاست** چیزی مخفی نمی‌کند؛ پیام فقط کلیدها و مسیرها را می‌گوید، نه مقادیر.
+- **poller تلگرام با کانال فعال**: همان پیش‌نیاز چرخه‌حیات Quartz `JobInterval` را دارد (recycle مدام = offset از دست می‌رود ولی دوباره-delivery بی‌ضرر است — کدها تک‌مصرف‌اند)؛ حلقه‌ی ~۲۵ ثانیه‌ای `getUpdates` خودش درخواست‌های درحال‌انجام نگه می‌دارد و keep-alive است. خطای 409 در لاگ یعنی یک poller دوم (هاست/نسخه‌ی همزمان دیگر) دارد poll می‌کند.
 - Admin host فعلاً skeleton است؛ لودر/گارد برایش وصل شده تا در آینده بدون تغییر مکانیزم آماده باشد (docs/12).
 
 ## ۵. خارج از دامنه

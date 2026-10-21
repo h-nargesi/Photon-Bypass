@@ -16,6 +16,8 @@ public static class CommittedTestSecretFixtures
 
     public const string RadiusServicePassword = "jt8GRBX5wbuQJY6hZN9MCnHqpFTcPykveAUxSgr3";
 
+    public const string TelegramBotToken = "0000000000:TEST-TELEGRAM-BOT-TOKEN-FIXTURE-0000000000";
+
     public const string LocalDatabaseMarker = "FastBypass_DbScenario";
 
     public const string RadDatabaseMarker = "Database=rd;";
@@ -30,11 +32,15 @@ public static class ProductionSecretsGuard
         ("RadDapperOptions:ConnectionString", value => value?.Contains(CommittedTestSecretFixtures.RadDatabaseMarker) == true),
         ("RadiusServiceOptions:Password", value => value == CommittedTestSecretFixtures.RadiusServicePassword),
 
-        // email is the only recovery channel until SOCIAL ships, so an enabled,
-        // fully configured transport is mandatory in production
+        // email is the main recovery channel while the social channel is off,
+        // so an enabled, fully configured transport is mandatory in production
         ("EmailOptions:Enabled", value => !bool.TryParse(value, out var enabled) || !enabled),
         ("EmailOptions:Address", string.IsNullOrWhiteSpace),
         ("EmailOptions:Password", string.IsNullOrWhiteSpace),
+
+        // telegram adapter: the committed bot token is a test fixture — the
+        // real one must come from private/secrets.json
+        ("TelegramOptions:BotToken", value => value == CommittedTestSecretFixtures.TelegramBotToken),
     ];
 
     public static void Validate(IConfiguration configuration, IHostEnvironment environment)
@@ -48,6 +54,26 @@ public static class ProductionSecretsGuard
             .Where(rule => rule.IsCommittedTestValue(configuration[rule.Key]))
             .Select(rule => rule.Key)
             .ToList();
+
+        // channel-conditional completeness (array rules are value-only and
+        // cannot see the Channel selection): enabling the Telegram channel
+        // requires its whole configuration block
+        if (configuration["SocialMediaOptions:Channel"] == "Telegram")
+        {
+            foreach (var required_key in new[]
+                     {
+                         "TelegramOptions:BotToken",
+                         "TelegramOptions:BotUsername",
+                         "TelegramOptions:Proxy:Address",
+                         "TelegramOptions:OperationsChatId",
+                     })
+            {
+                if (string.IsNullOrWhiteSpace(configuration[required_key]))
+                {
+                    offenders.Add(required_key);
+                }
+            }
+        }
 
         if (offenders.Count == 0)
         {

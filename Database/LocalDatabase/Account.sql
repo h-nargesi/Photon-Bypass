@@ -24,7 +24,10 @@ IF OBJECT_ID('Account') IS NULL BEGIN
 		LastWarningTime		DATETIME			NULL,
 		-- docs/16 D4: x-ui UUID-rotation throttle stamp
 		LastCredentialRotateTime	DATETIME	NULL,
-		SendWarning			BIT				NOT NULL	CONSTRAINT DF_Account_SendWarning DEFAULT 1
+		SendWarning			BIT				NOT NULL	CONSTRAINT DF_Account_SendWarning DEFAULT 1,
+		-- Telegram deep-link binding; the connection itself is the proof of
+		-- validity, so no IsXxxValid flag exists for this column
+		TelegramChatId		BIGINT				NULL
 	)
 	-- No admin seed: the first-release admin is created at deploy time with a
 	-- real password by DeployCli (scripts/deploy.sh — see docs/19-deploy-runbook.md).
@@ -43,4 +46,12 @@ GO
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UK_Account_Mobile')
 CREATE UNIQUE NONCLUSTERED INDEX UK_Account_Mobile
 ON Account(Mobile) WHERE Mobile IS NOT NULL;
+GO
+
+-- Same filtered pattern for the Telegram chat: optional column, but one chat
+-- can belong to only one account (the bot's "already linked elsewhere" reply
+-- comes from this index).
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UK_Account_TelegramChatId')
+CREATE UNIQUE NONCLUSTERED INDEX UK_Account_TelegramChatId
+ON Account(TelegramChatId) WHERE TelegramChatId IS NOT NULL;
 GO

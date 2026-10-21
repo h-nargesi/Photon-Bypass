@@ -8,6 +8,7 @@ using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.OutSource;
+using PhotonBypass.Domain.OutSource.Model;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
@@ -23,7 +24,8 @@ class AuthApplication(
     Lazy<IAccountApplication> account_app,
     Lazy<IEmailService> email_srv,
     IMemoryCache reset_limit_cache,
-    IOptions<ManagementOptions> options)
+    IOptions<ManagementOptions> options,
+    IOptions<SocialMediaOptions> social_options)
     : IAuthApplication
 {
     /// <summary>Reset-code requests allowed per identifier inside the window.</summary>
@@ -41,6 +43,7 @@ class AuthApplication(
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
     private IMemoryCache ResetLimitCache { get; } = reset_limit_cache;
     private IOptions<ManagementOptions> Options { get; } = options;
+    private IOptions<SocialMediaOptions> SocialOptions { get; } = social_options;
 
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
@@ -61,7 +64,17 @@ class AuthApplication(
                 };
             }
 
-            await SocialMediaSrv.InvalidPasswordAlert(account.Username);
+            // best-effort: a failing social alert must not turn a wrong-
+            // password login into a 500 — the 401 below still goes out
+            try
+            {
+                await SocialMediaSrv.InvalidPasswordAlert(account);
+            }
+            catch (Exception error)
+            {
+                Log.Error(error, "Invalid-password social alert failed: account-id={0}, user={1}",
+                    account.Id, account.Username);
+            }
 
             if (account.Status != AccountStatus.Deactivated)
             {
@@ -129,46 +142,42 @@ class AuthApplication(
                 return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
             }
 
-#if !SOCIAL
-            return new ApiResult
+            // the WhatsApp adapter is a reserved seam: until it ships, every
+            // build rejects the mobile channel up front (runtime check — the
+            // compile-time #if SOCIAL gates are gone)
+            if (SocialOptions.Value.Channel != SocialChannel.WhatsApp)
             {
-                Code = 100,
-                Message = "موبایل هنوز پشتیبانی نشده است!"
-            };
-#else
-            var account = await AccountRepo.GetAccountByMobile(email_mobile);
-
-            if (account is { Status: not AccountStatus.Deactivated })
-            {
-                var hash_code = HashHandler.GenerateHashCode(56);
-
-                await ResetPassRepo.Value.ExpireActiveCodes(account.Id);
-
-                await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
+                return new ApiResult
                 {
-                    AccountId = account.Id,
-                    ExpireDate = DateTime.Now.AddDays(1),
-                    HashCode = hash_code,
-                });
+                    Code = 100,
+                    Message = "موبایل هنوز پشتیبانی نشده است!"
+                };
+            }
 
-                await SocialMediaSrv.SendResetPasswordLink(email_mobile, hash_code);
+            var mobile_account = await AccountRepo.GetAccountByMobile(email_mobile);
+
+            if (mobile_account is { Status: not AccountStatus.Deactivated })
+            {
+                var mobile_code = await StoreResetCode(mobile_account.Id);
+
+                await SocialMediaSrv.SendResetPasswordLink(mobile_account, mobile_code);
 
                 await HistoryRepo.Save(new HistoryEntity
                 {
-                    Target = account.Id,
+                    Target = mobile_account.Id,
                     Category = EventCategory.Security,
                     Type = EventType.Information,
                     Title = "امنیت",
                     Description = "درخواست تغییر کلمه عبور (موبایل)",
                 });
 
-                Log.Information("Reset-Password message has been sent: account-id={0}", account.Id);
+                Log.Information("Reset-Password message has been sent: account-id={0}", mobile_account.Id);
             }
 
             return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
-#endif
         }
-        else if (AccountBusiness.EmailPattern().IsMatch(email_mobile))
+
+        if (AccountBusiness.EmailPattern().IsMatch(email_mobile))
         {
             if (!TryConsumeResetRequest(email_mobile))
             {
@@ -179,19 +188,36 @@ class AuthApplication(
 
             if (account is { Status: not AccountStatus.Deactivated })
             {
-                var hash_code = HashHandler.GenerateHashCode(56, true);
+                await SendResetCodeViaEmail(account, email_mobile);
+            }
 
-                // the inserts share the scoped SqlConnection and run one after
-                // the other; only then is the email sent, so a stored code is
-                // never announced before it exists
-                await ResetPassRepo.Value.ExpireActiveCodes(account.Id);
+            return ApiResult.Success("اگر این حساب ثبت شده باشد، ایمیل بازیابی ارسال شد.");
+        }
 
-                await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
-                {
-                    AccountId = account.Id,
-                    ExpireDate = DateTime.Now.AddDays(1),
-                    HashCode = hash_code,
-                });
+        // neither pattern: the input is a username (D4)
+        return await ForgetPasswordByUsername(email_mobile);
+    }
+
+    /// <summary>
+    /// D4/D6: the username branch — an account the configured social channel
+    /// can reach gets the code there, otherwise a valid email is the
+    /// fallback, otherwise the same neutral answer an unknown account gets
+    /// (no enumeration signal).
+    /// </summary>
+    private async Task<ApiResult> ForgetPasswordByUsername(string username)
+    {
+        if (!TryConsumeResetRequest(username))
+        {
+            return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
+        }
+
+        var account = await AccountRepo.GetAccount(username);
+
+        if (account is { Status: not AccountStatus.Deactivated })
+        {
+            if (SocialMediaSrv.Supports(account))
+            {
+                var hash_code = await StoreResetCode(account.Id);
 
                 await HistoryRepo.Save(new HistoryEntity
                 {
@@ -199,30 +225,81 @@ class AuthApplication(
                     Category = EventCategory.Security,
                     Type = EventType.Information,
                     Title = "امنیت",
-                    Description = "درخواست تغییر کلمه عبور (ایمیل)",
+                    Description = "درخواست تغییر کلمه عبور (پیام رسان)",
                 });
 
                 try
                 {
-                    await EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_mobile, hash_code);
+                    await SocialMediaSrv.SendResetPasswordLink(account, hash_code);
                 }
                 catch (Exception error)
                 {
                     // the code stays stored: the user may simply retry later
-                    Log.Error(error, "Reset-Password email failed: account-id={0}", account.Id);
+                    Log.Error(error, "Reset-Password social message failed: account-id={0}", account.Id);
 
-                    throw new UserException("ارسال ایمیل ناموفق بود؛ لطفاً بعداً تلاش کنید",
-                        $"Reset-password email failed: account-id={account.Id}");
+                    throw new UserException("ارسال پیام ناموفق بود؛ لطفاً بعداً تلاش کنید",
+                        $"Reset-password social message failed: account-id={account.Id}");
                 }
 
-                Log.Information("Reset-Password email has been sent: account-id={0}", account.Id);
+                Log.Information("Reset-Password social message has been sent: account-id={0}", account.Id);
             }
-
-            return ApiResult.Success("اگر این حساب ثبت شده باشد، ایمیل بازیابی ارسال شد.");
+            else if (account.EmailAddress != null)
+            {
+                await SendResetCodeViaEmail(account, account.EmailAddress);
+            }
         }
 
-        throw new UserException("ایمیل/موبایل نا معتبر است!",
-            $"Invalid Email/Mobile: {email_mobile}");
+        return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
+    }
+
+    /// <summary>
+    /// Stores one fresh reset code, retiring the account's previous active
+    /// codes first. The inserts share the scoped SqlConnection and run one
+    /// after the other; only the caller's send afterwards announces the code.
+    /// </summary>
+    private async Task<string> StoreResetCode(int account_id)
+    {
+        var hash_code = HashHandler.GenerateHashCode(56, true);
+
+        await ResetPassRepo.Value.ExpireActiveCodes(account_id);
+
+        await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
+        {
+            AccountId = account_id,
+            ExpireDate = DateTime.Now.AddDays(1),
+            HashCode = hash_code,
+        });
+
+        return hash_code;
+    }
+
+    private async Task SendResetCodeViaEmail(AccountEntity account, string email)
+    {
+        var hash_code = await StoreResetCode(account.Id);
+
+        await HistoryRepo.Save(new HistoryEntity
+        {
+            Target = account.Id,
+            Category = EventCategory.Security,
+            Type = EventType.Information,
+            Title = "امنیت",
+            Description = "درخواست تغییر کلمه عبور (ایمیل)",
+        });
+
+        try
+        {
+            await EmailSrv.Value.SendResetPasswordLink(account.Fullname, email, hash_code);
+        }
+        catch (Exception error)
+        {
+            // the code stays stored: the user may simply retry later
+            Log.Error(error, "Reset-Password email failed: account-id={0}", account.Id);
+
+            throw new UserException("ارسال ایمیل ناموفق بود؛ لطفاً بعداً تلاش کنید",
+                $"Reset-password email failed: account-id={account.Id}");
+        }
+
+        Log.Information("Reset-Password email has been sent: account-id={0}", account.Id);
     }
 
     /// <summary>
@@ -315,7 +392,16 @@ class AuthApplication(
 
         await AccountRepo.Save(account);
 
-        await SocialMediaSrv.NewUserRegistrationAlert(account);
+        // best-effort: registration must never fail because of the social
+        // alert (same contract as the welcome email below)
+        try
+        {
+            await SocialMediaSrv.NewUserRegistrationAlert(account);
+        }
+        catch (Exception error)
+        {
+            Log.Error(error, "Registration social alert failed: account-id={0}, user={1}", account.Id, account.Username);
+        }
 
         if (account.Email != null)
         {

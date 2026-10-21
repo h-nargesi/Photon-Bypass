@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router, provideRouter } from '@angular/router';
 import { ResultStatus } from '../@models';
@@ -40,17 +40,10 @@ describe('ForgotPasswordComponent', () => {
     localStorage.clear();
   });
 
-  it('requires a valid email before sending anything', () => {
+  it('blocks the submit until an identifier is entered', () => {
     component.submit();
 
     expect(component.submitted).toBeTrue();
-    http.expectNone(
-      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
-    );
-
-    component.getEmailMobile().setValue('not-an-email');
-    component.submit();
-
     http.expectNone(
       req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
     );
@@ -68,6 +61,29 @@ describe('ForgotPasswordComponent', () => {
 
     request.flush(
       { code: 200, message: 'ایمیل بازیابی ارسال شد' },
+      { status: 200, statusText: 'OK' },
+    );
+
+    expect(component.result?.status()).toBe(ResultStatus.success);
+
+    tick(1000);
+    expect(router.url).toBe('/login');
+  }));
+
+  it('accepts a plain username as the recovery identifier (D4)', fakeAsync(() => {
+    component.getEmailMobile().setValue('tg-user');
+
+    component.submit();
+
+    // no client-side email validation anymore: the username goes through
+    // and the server routes the code (telegram chat, email fallback)
+    const request = http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
+    );
+    expect(request.request.body).toEqual({ emailMobile: 'tg-user' });
+
+    request.flush(
+      { code: 200, message: 'اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.' },
       { status: 200, statusText: 'OK' },
     );
 

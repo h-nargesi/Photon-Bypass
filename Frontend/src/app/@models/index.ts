@@ -8,5 +8,6 @@ export * from './data-model/user-info';
 export * from './data-model/user-plan-info';
 export * from './data-model/user-row';
 export * from './data-model/connection-state';
+export * from './data-model/telegram-link';
 export * from './data-model/wallet-transaction';
 export * from './meta-model/api-result';

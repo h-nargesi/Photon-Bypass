@@ -53,6 +53,18 @@ public static class LazyDependencyInjections
         services.AddKeyedTransient(key, (provider, key) => new Lazy<TService>(() => provider.GetRequiredKeyedService<TService>(key)));
     }
 
+    /// <summary>
+    /// Object-keyed variant for enum-keyed adapters (e.g. SocialChannel);
+    /// string call sites still bind to the string overload above.
+    /// </summary>
+    public static void AddLazyKeyedTransient<TService, TImplementation>(this IServiceCollection services, object key)
+        where TService : class
+        where TImplementation : class, TService
+    {
+        services.AddKeyedTransient<TService, TImplementation>(key);
+        services.AddKeyedTransient(key, (provider, key) => new Lazy<TService>(() => provider.GetRequiredKeyedService<TService>(key)));
+    }
+
     public static void BindValidateReturn<TOptions>(this IServiceCollection services) where TOptions : class
     {
         services.AddOptions<TOptions>()

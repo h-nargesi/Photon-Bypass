@@ -45,6 +45,11 @@ public class AccountEntity : IBaseEntity
     [NotMapped]
     public string? EmailAddress => IsEmailValid ? Email : null;
 
+    // Telegram: the chat bound through the one-time deep-link flow; null = not
+    // connected. No validity flag — unlike email/mobile, reaching this column
+    // means the chat authenticated itself via the bot link.
+    public long? TelegramChatId { get; set; }
+
     [NotMapped]
     public string Picture => AccountBusiness.PicturePath + Id;
 

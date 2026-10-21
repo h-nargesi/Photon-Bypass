@@ -22,6 +22,7 @@ public class ProductionSecretsGuardTest
         exception.Message.Should().Contain("LocalDatabaseOptions:ConnectionString");
         exception.Message.Should().Contain("RadDapperOptions:ConnectionString");
         exception.Message.Should().Contain("RadiusServiceOptions:Password");
+        exception.Message.Should().Contain("TelegramOptions:BotToken");
         exception.Message.Should().Contain("private/secrets.json");
     }
 
@@ -123,6 +124,41 @@ public class ProductionSecretsGuardTest
     }
 
     [Fact]
+    public void Validate_ProductionWithTelegramChannelButIncompleteConfig_ThrowsNamingTheMissingKeys()
+    {
+        var values = ProductionValues();
+        values["SocialMediaOptions:Channel"] = "Telegram";
+        values["TelegramOptions:BotToken"] = "a-real-bot-token";
+
+        // BotUsername, Proxy:Address and OperationsChatId are missing
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        var environment = HostEnvironment("Production");
+
+        var act = () => ProductionSecretsGuard.Validate(configuration, environment);
+
+        var exception = act.Should().Throw<InvalidOperationException>().Which;
+        exception.Message.Should().Contain("TelegramOptions:BotUsername");
+        exception.Message.Should().Contain("TelegramOptions:Proxy:Address");
+        exception.Message.Should().Contain("TelegramOptions:OperationsChatId");
+        exception.Message.Should().NotContain("TelegramOptions:BotToken");
+    }
+
+    [Fact]
+    public void Validate_ProductionWithTelegramChannelOff_IgnoresTheChannelBlock()
+    {
+        var values = ProductionValues();
+        values["SocialMediaOptions:Channel"] = "None";
+
+        // the channel is off: an incomplete telegram block is irrelevant
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        var environment = HostEnvironment("Production");
+
+        var act = () => ProductionSecretsGuard.Validate(configuration, environment);
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
     public void AddPortalServices_ProductionWithCommittedTestValues_ThrowsFromGuard()
     {
         var builder = new HostApplicationBuilder(new HostApplicationBuilderSettings { EnvironmentName = "Production" });
@@ -162,6 +198,8 @@ public class ProductionSecretsGuardTest
             ["EmailOptions:Enabled"] = "true",
             ["EmailOptions:Address"] = "info@website.com",
             ["EmailOptions:Password"] = "password",
+
+            ["TelegramOptions:BotToken"] = CommittedTestSecretFixtures.TelegramBotToken,
         };
 
     private static Dictionary<string, string?> ProductionValues() =>

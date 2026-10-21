@@ -105,6 +105,8 @@ import {
   cilBan,
   cilCheckCircle,
   cilSend,
+  cilCopy,
+  cibTelegram,
 } from '@coreui/icons';
 
 import { signet } from './signet';
@@ -114,6 +116,8 @@ export const ICON_SUBSET = {
   cilSend,
   cilCheckCircle,
   cilBan,
+  cilCopy,
+  cibTelegram,
   cilPhone,
   cilPlus,
   cilReload,
@@ -241,6 +245,8 @@ export enum IconSubset {
   cifUs = 'cifUs',
   cilAccountLogout = 'cilAccountLogout',
   cilPlus = 'cilPlus',
+  cilCopy = 'cilCopy',
+  cibTelegram = 'cibTelegram',
   cilAlignCenter = 'cilAlignCenter',
   cilAlignLeft = 'cilAlignLeft',
   cilAlignRight = 'cilAlignRight',

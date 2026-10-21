@@ -57,6 +57,15 @@ export class HttpClientHandler {
       .pipe(catchError(this.errorHandler));
   }
 
+  public remove(url: string, params?: ApiParam): Observable<ApiResult> {
+    url = this.base_path + url;
+    const headers = this.getHeader();
+    return this.api
+      .delete<ApiResult>(url, { params, observe: 'response', headers })
+      .pipe(map(this.processResponse))
+      .pipe(catchError(this.errorHandler));
+  }
+
   public post<M>(url: string, body: any | null): Observable<ApiResultData<M>> {
     url = this.base_path + url;
     const headers = this.getHeader();

@@ -1,6 +1,6 @@
 # docs/12-current-state.md — Implementation state & starting points
 
-> **English summary**: The customer-facing flow is functional: auth/JWT, account CRUD, renewal + invoice/callback billing, dual-Radius sync, the 60-min Quartz job, email notifications, dynamic Roslyn pricing, and main frontend pages. Incomplete: the `Admin` panel (empty `AddAdminServices`, no controllers), `OutSource/SocialMediaService` (all stubs), `SetOVpnCertificate` (throws `NotImplementedException`), and WhatsApp/Google-Auth (gated or phase 4/5). For each gap there is a "where to start" pointer.
+> **English summary**: The customer-facing flow is functional: auth/JWT, account CRUD, renewal + invoice/callback billing, dual-Radius sync, the 60-min Quartz job, email notifications, the Telegram social channel (one-time-code chat binding + runtime channel selection — docs/21), and dynamic Roslyn pricing, plus the main frontend pages. Incomplete: the `Admin` panel (empty `AddAdminServices`, no controllers), `SetOVpnCertificate` (throws `NotImplementedException`), and WhatsApp/Google-Auth (WhatsApp now needs only an adapter on the channel-neutral interface). For each gap there is a "where to start" pointer.
 
 ## Implemented / active (پیاده‌سازی‌شده)
 
@@ -10,6 +10,7 @@
 - **Dual-Radius sync**: dispatch با keyed DI روی RadiusDesk و UserManager؛ `RunJob` موازی (`docs/06`).
 - **`JobInterval`** (Quartz، ۶۰ دقیقه): `UpdateTrafficData`, `NotifSendServices`, `DeactivateInvalidRadiusUsers`, `InactiveAbandonedUsers`, `CheckUserServerBalance`.
 - **Email**: فراموشی پسورد، گواهی، هشدار پایان (`EmailService`/`EmailHandler`).
+- **کانال تلگرام (docs/21)**: آداپتور واقعی `ISocialMediaService` با انتخاب runtime کانال (`SocialMediaOptions:Channel`)، اتصال chat با کد یک‌بارمصرف و دیپ‌لینک (`TelegramLink` + poller)، کد بازیابی/هشدارها به chat متصل (تلگرام‌اول، fallback ایمیل)، endpointهای پروفایل `telegram-link` و کارت اتصال فرانت. پیش‌فرض `Channel=None` (no-op) — فعال‌سازی استقرار: docs/19 §۳-الف.
 - **`PriceCalculator`** پویا (Roslyn) با refresh خودکار روی `PriceRepository.OnSave` (`docs/05`).
 - **Frontend**: صفحات اصلی Home/Login/Register/Forgot/Reset/Dashboard/History/Edit/Change-pass/Renewal/Payment.
 - **MSSQL schema + `TotalPlanState` view** (`docs/09`).
@@ -23,16 +24,11 @@
 - **نقطه‌ی شروع**: `Backend/Admin/ServiceFactory.cs:5` (`AddAdminServices`) و افزودن کنترلرهای مدیریت سرور/کاربر/پروفایل با `[Authorize]` و قواعد دسترسی ادمین. مدیریت سرورها/پروفایل/کاربر در `README.md:14-29` و `Architecture/TODO.md:24` آمده.
 - توجه: `Backend/Administration/` یک پوشه‌ی یتیم با کنترلر خالی است و **در سولوشن نیست** — آن را با `Admin` اشتباه نگیرید.
 
-### `OutSource/SocialMediaService` — همه‌ی متدها stub
+### کانال اجتماعی — تلگرام پیاده شد؛ واتساپ = آداپتور آینده
 
-`Backend/OutSource/SocialMediaService.cs` — هر پنج متد `Task.CompletedTask` برمی‌گردانند با `// TODO: Implement`:
-- `AlarmServerCapacity(alarms)`
-- `FinishServiceAlert(username, phone, type, left)`
-- `InvalidPasswordAlert(username)`
-- `NewUserRegistrationAlert(account)`
-- `SendResetPasswordLink(email, hashCode)`
-
-**نقطه‌ی شروع**: همان فایل + اینترفیس `ISocialMediaService` در `Domain/OutSource`. راهاندازی واقعی واتساپ با `#if SOCIAL` گیت شده (زیر را ببینید).
+- **تلگرام کامل شد (۲۰۲۶-۱۰-۲۱، docs/21)**: `Backend/OutSource/TelegramMediaService.cs` + `TelegramUpdatePoller`/`TelegramLinkHandler` + کلیدهای DI در `OutSource/ServiceFactory.cs`. استب `SocialMediaService` حذف و با `NoopSocialMediaService` (کانال None) جایگزین شد؛ گیت‌های `#if SOCIAL` از رفته‌اند.
+- **واتساپ باقی است ولی دیگر compile-gate ندارد**: کلید `SocialChannel.WhatsApp` رزرو شده؛ `ForgetPassword` مسیر موبایل را با پیام «موبایل هنوز پشتیبانی نشده است» رد می‌کند تا آداپتور برسد.
+- **نقطه‌ی شروع واتساپ**: `Backend/OutSource/ServiceFactory.cs:55` — آداپتور جدید (الگوی `TelegramMediaService`، گیرنده از `AccountEntity.MobileNumber` بدون فلوی اتصال) + یک خط `AddLazyKeyedTransient`؛ هیچ تغییری در Application لازم نیست (امضاهای کانال‌خنثی).
 
 ### `SetOVpnCertificate` — `NotImplementedException`
 
@@ -41,11 +37,6 @@
 **تصمیم (۲۰۲۶-۱۰-۱۸)**: پیاده‌سازی تا فاز پشتیبانی OpenVPN به تعویق افتاد. تا آن زمان کل مسیر گواهی پشت گیت T3 (`SupportsOvpnCert` = بیت `ServerFeature.Ovpn` + Mikrotik) بسته است — تا وقتی هیچ سروری آن بیت را نداشته باشد، این متد فراخوانی نمی‌شود (ممیزی: `Database/Ops/audit-server-ovpn-feature.sql`). هشدار: فعال‌سازی اشتباهی بیت روی realm چند-NAS → `NotImplementedException` (خطای ۵۰۰ خام). این متد فقط برای realmهای ۲+ NAS میکروتیک لازم است؛ realm تک-NAS بدون آن کار می‌کند.
 
 **نقطه‌ی شروع**: همان فایل + `MikrotikDirectService.GetOVpnCertificate` (که گواهی را می‌سازد) به‌عنوان الگو برای SSH/`ProcessService`. همراه با `Architecture/TODO.md:64` (throttle گواهی) و `:61` (مدیریت گواهی‌های قدیمی) در همان فاز انجام شود.
-
-### WhatsApp — gated پشت `#if SOCIAL`
-
-- `AuthApplication.cs:104` (`#if !SOCIAL`) و `AccountMonitoringService.cs:144` (`#if SOCIAL`): مسیر واتساپ در زمان کامپایل با نماد `SOCIAL` فعال/غیرفعال می‌شود.
-- **نقطه‌ی شروع**: تعریف `SOCIAL` در `<DefineConstants>` پروژه‌ی `Application` + پیاده‌سازی واقعی `SocialMediaService` (احتمالاً با HttpClient به WhatsApp Business API). فاز ۴ در `README.md:296`.
 
 ### Google Auth — فاز ۵
 
@@ -76,8 +67,8 @@
 | مدیریت گواهی‌های قدیمی میکروتیک | باقی‌مانده | `MikrotikDirectService` |
 | خروجی List به‌جای Enumerable در tik4net | باقی‌مانده | `MikrotikRadius/ApiWrapper` |
 | **پنل مدیریت سرورها** | باقی‌مانده | `Admin` project |
-| راه‌اندازی واتساپ | باقی‌مانده | `SocialMediaService` + `#if SOCIAL` |
-| انتخاب نوع اطلاع‌رسانی (ایمیل/واتساپ) | باقی‌مانده | `AccountMonitoringService` |
+| راه‌اندازی واتساپ | باقی‌مانده (آداپتور روی کانال خنثی) | `OutSource/ServiceFactory.cs` + docs/21 |
+| انتخاب نوع اطلاع‌رسانی (ایمیل/تلگرام) | انجام‌شده | dispatch runtime در `ForgetPasswordByUsername` + `NotifSendServices` (docs/21 D4–D6) |
 
 ## Phase mapping (فازها)
 
@@ -88,7 +79,7 @@
 | 1. Web Site Core | جزئی | هسته‌ی وب OK؛ Unit Test هست؛ Cloudflare Human Test و FAQ ناقص. |
 | 2. MySql Performance | باز | بهینه‌سازی MySQL radius. |
 | 3. Fake Website | باز | نماد/ساماندهی/درگاه جعلی. |
-| 4. Send WhatsApp Notif | باز | gated پشت `#if SOCIAL`. |
+| 4. Send WhatsApp Notif | تلگرام انجام شد؛ واتساپ باز | کانال اجتماعی با تلگرام فعال شد (docs/21)؛ واتساپ = آداپتور روی کانال خنثی. |
 | 5. Google Auth | باز | در دکمه‌ی Login اشاره شده. |
 | 6. Other features | باز | — |
 

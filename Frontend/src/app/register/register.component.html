@@ -184,6 +184,43 @@
                 </button>
               </div>
               </form>
+
+              <!-- TELEGRAM CONNECTION (edit mode only) -->
+              @if (isEdit) {
+                <hr class="mt-4" />
+                <h2 class="h6 mb-3">{{ "register.telegram.title" | translate }}</h2>
+
+                @if (telegram_connected) {
+                  <c-alert color="success" class="mb-3">
+                    {{ "register.telegram.connected" | translate }}
+                  </c-alert>
+                  <button cButton color="danger" type="button" [disabled]="telegram_busy" (click)="disconnectTelegram()">
+                    {{ "register.telegram.disconnect" | translate }}
+                  </button>
+                } @else if (telegram_link) {
+                  <p class="text-body-secondary">{{ "register.telegram.code-hint" | translate }}</p>
+                  <div class="d-grid gap-2 mb-2">
+                    <a cButton color="success" [href]="telegram_link!.url" target="_blank" rel="noopener">
+                      {{ "register.telegram.open-telegram" | translate }}
+                    </a>
+                  </div>
+                  <c-input-group class="mb-3 ltr">
+                    <input cFormControl class="telegram-code-input" readOnly [value]="telegram_link!.code" />
+                    <span cInputGroupText (click)="copyTelegramCode(telegram_link!.code)" class="pointer" [cTooltip]="'register.telegram.copy-code' | translate">
+                      <svg [cIcon]="icons.cilCopy"></svg>
+                    </span>
+                  </c-input-group>
+                  <button cButton color="secondary" type="button" [disabled]="telegram_busy" (click)="createTelegramLink()">
+                    {{ "register.telegram.new-code" | translate }}
+                  </button>
+                } @else {
+                  <p class="text-body-secondary">{{ "register.telegram.caption" | translate }}</p>
+                  <button cButton color="primary" type="button" [disabled]="telegram_busy" (click)="createTelegramLink()">
+                    <c-spinner size="sm" *ngIf="telegram_busy" />
+                    {{ "register.telegram.connect" | translate }}
+                  </button>
+                }
+              }
             }
           </c-card-body>
         </c-card>

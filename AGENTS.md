@@ -14,7 +14,7 @@
 - a public **Home** page (advertisement / plan listing), and
 - a **Profile** area where end-users view usage, renew plans, edit their account, and download VPN config.
 
-External resources the backend talks to: the **local MSSQL database**, the **Radius server** (RadiusDesk = FreeRADIUS/MySQL + Web API, and/or **Mikrotik UserManager** via tik4net + SSH), the **Mikrotik routers** (direct SSH), an **email server**, and **WhatsApp** (social notifications). Background jobs (Quartz) periodically sync traffic, send warnings, deactivate stale accounts, and check server capacity.
+External resources the backend talks to: the **local MSSQL database**, the **Radius server** (RadiusDesk = FreeRADIUS/MySQL + Web API, and/or **Mikrotik UserManager** via tik4net + SSH), the **Mikrotik routers** (direct SSH), an **email server**, and **Telegram** (social channel, runtime-selected — WhatsApp adapter later). Background jobs (Quartz) periodically sync traffic, send warnings, deactivate stale accounts, and check server capacity.
 
 **این چیست**: پلتفرم فروش و مدیریت اکانت VPN با دو سایت (صفحه تبلیغاتی + پروفایل کاربر). منابع خارجی: دیتابیس محلی، سرور Radius (RadiusDesk و/یا Mikrotik UserManager)، روترهای Mikrotik، ایمیل، واتساپ. کارهای پس‌زمینه همگام‌سازی ترافیک/هشدار/غیرفعال‌سازی را انجام می‌دهند.
 
@@ -200,17 +200,17 @@ Full reading order and per-file purpose is in [docs/00-index.md](docs/00-index.m
 - [docs/18-test-coverage.md](docs/18-test-coverage.md) — test coverage governance: coverage commands, measured baseline, requirement→test traceability matrix, known gaps (replaces the deleted `TestPlan.md`)
 - [docs/19-deploy-runbook.md](docs/19-deploy-runbook.md) — first-release Plesk deploy runbook: fresh production secrets, `private/secrets.json` loader + startup guard, DB install from scratch, manual FTP publish and verification
 - [docs/20-admin-panel-roles.md](docs/20-admin-panel-roles.md) — admin-panel roles decision record: D1–D13 (Role/UserTypes.AllowSelfService, payer=actor, admin wallet ledger), access matrix, 6-phase roadmap
+- [docs/21-social-media-telegram-channel.md](docs/21-social-media-telegram-channel.md) — telegram channel record (D1–D6): channel-neutral `ISocialMediaService` + runtime channel selection, one-time-code chat binding, Telegram-first reset/warnings with email fallback
 
 ---
 
 ## Known gaps / starting points
 
-The platform is functional for the customer-facing flow (auth, account, plan renewal + billing, dual-Radius sync, background jobs, email notifications, dynamic pricing, main frontend pages). Incomplete areas:
+The platform is functional for the customer-facing flow (auth, account, plan renewal + billing, dual-Radius sync, background jobs, email notifications, the Telegram social channel — runtime-selected, see [docs/21-social-media-telegram-channel.md](docs/21-social-media-telegram-channel.md), dynamic pricing, main frontend pages). Incomplete areas:
 
 - **`Backend/Admin`** — only `Program.cs` + empty `AddAdminServices`; no admin controllers. The server/profile/user management panel is not built.
-- **`OutSource/SocialMediaService`** — all five methods return `Task.CompletedTask` (`// TODO`).
 - **`SetOVpnCertificate`** (`MikrotikRadius/Application/MikrotikDirectService.cs:165`) — throws `NotImplementedException`.
-- **WhatsApp** — compile-time gated behind `#if SOCIAL` (`AuthApplication.cs:104`, `AccountMonitoringService.cs:144`).
+- **WhatsApp** — future adapter on the channel-neutral `ISocialMediaService` (one class + one keyed registration in `OutSource/ServiceFactory.cs`; `SocialChannel.WhatsApp` is reserved). No compile-time gates anymore.
 - **Google Auth** — listed as phase 5 in `README.md`.
 
 See [docs/12-current-state.md](docs/12-current-state.md) for the full list and where to start for each, and `Architecture/TODO.md` for the original backlog.

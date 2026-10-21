@@ -132,6 +132,23 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
       .pipe(map(this.resultHandler));
   }
 
+  /** DELETE twin of {@link job}: same message handling, no body. */
+  protected remove(url: string, params?: ApiParam, options?: ApiOptions): Observable<ApiResult> {
+    const service = this;
+    return this.api.remove(url, params).pipe(
+      map((result) => {
+        const context: ApiResultContext = (options ?? {}) as ApiResultContext;
+        context.title ??= TranslationService.translate('api.job');
+        context.show_message ??= ShowMessageCase.success;
+        context.result = result;
+        context.service = service;
+        return context;
+      }),
+      tap(this.checkLoginUser),
+      map(this.resultHandler),
+    );
+  }
+
   protected post<M>(
     url: string,
     model: any | null,

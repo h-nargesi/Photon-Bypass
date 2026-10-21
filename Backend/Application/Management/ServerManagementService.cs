@@ -131,7 +131,16 @@ partial class ServerManagementService(
 
         if (alarms.Count != 0)
         {
-            await SocialSrv.Value.AlarmServerCapacity(alarms);
+            // best-effort: a failing operator alert must not kill the
+            // capacity job — the next hourly run reports the state again
+            try
+            {
+                await SocialSrv.Value.AlarmServerCapacity(alarms);
+            }
+            catch (Exception error)
+            {
+                Log.Error(error, "Server-capacity alarm failed: {0} alarm(s) were not delivered.", alarms.Count);
+            }
         }
     }
 

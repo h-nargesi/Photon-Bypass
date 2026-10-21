@@ -27,6 +27,7 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IAccountRepository, AccountRepository>();
         builder.Services.AddLazyTransient<IHistoryRepository, HistoryRepository>();
         builder.Services.AddLazyTransient<IResetPassRepository, ResetPassRepository>();
+        builder.Services.AddLazyTransient<ITelegramLinkRepository, TelegramLinkRepository>();
         builder.Services.AddLazyTransient<IRenewalRepository, RenewalRepository>();
         builder.Services.AddLazyTransient<ITrafficDataRepository, TrafficDataRepository>();
         builder.Services.AddLazyTransient<IServerRepository, ServerRepository>();

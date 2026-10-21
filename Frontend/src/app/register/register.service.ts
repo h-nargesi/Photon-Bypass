@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { ApiResult, FullUserModel, RegisterModel } from '../@models';
+import {
+  ApiResult,
+  FullUserModel,
+  RegisterModel,
+  TelegramLinkModel,
+} from '../@models';
 import {
   ACCOUNT_API_URL,
   ApiBaseService,
@@ -21,5 +26,22 @@ export class RegisterService extends ApiBaseService {
 
   register(model: RegisterModel): Observable<ApiResult> {
     return this.job(`${AUTH_API_URL}/register`, model);
+  }
+
+  telegramLinkStatus(target?: string): Observable<TelegramLinkModel> {
+    const param = target ? { target } as ApiParam : undefined;
+    return this.getData<TelegramLinkModel>(`${ACCOUNT_API_URL}/telegram-link`, param);
+  }
+
+  createTelegramLink(target?: string): Observable<TelegramLinkModel> {
+    return this.postData<TelegramLinkModel>(
+      `${ACCOUNT_API_URL}/telegram-link?target=${target ?? ''}`,
+      null,
+    );
+  }
+
+  disconnectTelegram(target?: string): Observable<ApiResult> {
+    const param = target ? { target } as ApiParam : undefined;
+    return this.remove(`${ACCOUNT_API_URL}/telegram-link`, param);
   }
 }

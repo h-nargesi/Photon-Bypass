@@ -5,6 +5,10 @@
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<RootNamespace>PhotonBypass.Admin</RootNamespace>
+		<!-- The host serves pure JSON APIs and owns no static assets: the SDK's
+		     DotNetWatch browser bundle has no endpoints here and newer SDKs
+		     (11 RC) fail the build over it — disable static web assets. -->
+		<StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
 	</PropertyGroup>
 
 	<ItemGroup>

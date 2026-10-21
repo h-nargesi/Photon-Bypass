@@ -162,21 +162,17 @@ internal class AccountMonitoringService(
                 continue;
             }
 
-#if SOCIAL
-            // WhatsApp-first: a validated mobile number gets the social alert
-            // instead of the email below (the interface contract is
-            // FinishServiceAlert(username, phone, type, left)).
-            var phone = account.MobileNumber;
-
-            if (phone != null)
+            // social-first (D5): an account the configured channel can reach
+            // gets the alert there instead of the email below — Supports
+            // answers false for the no-op channel, so a fresh install keeps
+            // the email path
+            if (SocialSrv.Value.Supports(account))
             {
                 dispatches.Add((account, WarnHistory(plan, remains_title), Dispatch(
-                    () => SocialSrv.Value.FinishServiceAlert(
-                        plan.Username, phone, plan.GetPlanTitle(), remains_title ?? string.Empty))));
+                    () => SocialSrv.Value.FinishServiceAlert(account, plan.GetPlanTitle(), remains_title ?? string.Empty))));
 
                 continue;
             }
-#endif
 
             if (account.EmailAddress != null)
             {

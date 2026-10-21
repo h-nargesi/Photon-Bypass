@@ -45,4 +45,12 @@ public interface IAccountRepository : IEditableRepository<AccountEntity>
     /// guard that blocks demoting such a manager (docs/20 §3).
     /// </summary>
     Task<bool> HasActiveSubordinate(int manager_id);
+
+    /// <summary>
+    /// Attaches (or detaches with null) the Telegram chat of an account. The
+    /// filtered unique index <c>UK_Account_TelegramChatId</c> rejects a chat
+    /// already bound to another account — the raw SQL duplicate-key error
+    /// (2601/2627) propagates so the bot reply can explain it.
+    /// </summary>
+    Task SetTelegramChat(int account_id, long? chat_id);
 }

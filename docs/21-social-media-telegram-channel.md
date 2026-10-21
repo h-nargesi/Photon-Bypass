@@ -1,120 +1,55 @@
-# پیاده‌سازی کانال تلگرام برای SocialMedia با معماری قابل‌تعویض (واتساپ بعداً ارزان)
+# docs/21-social-media-telegram-channel.md — کانال تلگرام با معماری آداپتور قابل‌تعویض (D1–D6)
 
-## هدف
+> **English summary**: Telegram is the first real `ISocialMediaService` channel, shipped behind a channel-neutral adapter architecture: method signatures are `AccountEntity`-based, each adapter resolves its own recipient field (Telegram → `AccountEntity.TelegramChatId`, a future WhatsApp → `MobileNumber`), and the active channel is selected at **runtime** via `SocialMediaOptions:Channel` — the compile-time `#if SOCIAL` gates are gone. Chat binding uses a one-time Base64Url code delivered through the `t.me/{bot}?start={code}` deep link and consumed by a long-poll `BackgroundService`. `ForgetPassword` now accepts usernames (code → connected chat, else email fallback, else neutral). WhatsApp later = one adapter + one keyed registration line.
 
-پیاده‌سازی واقعی کانال تلگرام برای هر ۵ کارایی `ISocialMediaService`، به‌گونه‌ای که تعویض/افزودن واتساپ در آینده فقط «یک آداپتور جدید + یک خط ثبت» باشد. گیت‌های کامپایل‌تایم `#if SOCIAL` حذف و با انتخاب runtime جایگزین می‌شوند.
+## تصمیم‌های تأییدشده (D1–D6)
 
-## تصمیم‌های تأییدشده با کاربر
-
-| # | تصمیم |
-|---|---|
-| D1 | این فاز: تلگرام واقعی + معماری کانال‌خنثی؛ واتساپ بعداً = آداپتور ساده روی `Account.Mobile` (بدون فلوی اتصال) |
-| D2 | اتصال chat_id: کد یک‌بارمصرف + دیپ‌لینک `t.me/{bot}?start={CODE}` |
-| D3 | ترنسپورت: long-polling در `BackgroundService` روی named HttpClient پروکسی‌دار (سازگار با IIS/Plesk تک‌نمونه‌ای) |
-| D4 | `ForgetPassword` ورودی username را هم بپذیرد → کد بازیابی به chat متصل |
-| D5 | اولویت ارسال: تلگرام‌اول، وگرنه ایمیل (runtime، جایگزین منطق «واتساپ‌اول» فعلی) |
+| # | تصمیم | پیاده‌سازی |
+|---|---|---|
+| D1 | این فاز: تلگرام واقعی + معماری کانال‌خنثی؛ واتساپ بعداً = آداپتور ساده روی `Account.Mobile` (بدون فلوی اتصال) | `SocialChannel.WhatsApp` فقط seam کلید DI است؛ آداپتور ثبت نشده → فعال‌سازیش در دیسپچر fail-fast خطا می‌دهد |
+| D2 | اتصال chat_id: کد یک‌بارمصرف + دیپ‌لینک `t.me/{bot}?start={CODE}` | `TelegramLinkEntity` (DELETE-output = مصرف اتمیک)، `HashHandler.GenerateUrlSafeCode()` (Base64Url ~۴۳ کاراکتر؛ سقف ۶۴ کاراکتری start-param) |
+| D3 | ترنسپورت: long-polling در `BackgroundService` روی named HttpClient پروکسی‌دار | `TelegramUpdatePoller` (`Backend/OutSource/TelegramUpdatePoller.cs:18`) — حلقه‌ی `getUpdates?timeout=25`، backoff نمایی، offset در حافظه |
+| D4 | `ForgetPassword` ورودی username را هم بپذیرد → کد بازیابی به chat متصل | `AuthApplication.ForgetPasswordByUsername` (`Backend/Application/Authentication/AuthApplication.cs:198`) |
+| D5 | اولویت ارسال: تلگرام‌اول، وگرنه ایمیل (runtime) | `ISocialMediaService.Supports` (`Backend/Domain/OutSource/ISocialMediaService.cs:30`) — مصرف در `ForgetPasswordByUsername` و `NotifSendServices` (`AccountMonitoringService.cs:169`) |
+| D6 | ForgetPassword با username و بدون تلگرامِ متصل → fallback به ایمیل معتبر؛ وگرنه پاسخ خنثی | همان متد — `else if (account.EmailAddress != null) → SendResetCodeViaEmail`، وگرنه پاسخ خنثیِ بی‌تفاوت از unknown-account |
 
 ## اصل طراحی: حل گیرنده داخل آداپتور
 
-اینترفیس فعلی واتساپ‌محور است (`phone`، `email` که موبایل است). تغییر کلیدی: **امضاهای متدها به `AccountEntity`-محور تغییر می‌کنند** و هر آداپتور خودش فیلد گیرنده را انتخاب می‌کند (واتساپ→`MobileNumber`، تلگرام→`TelegramChatId`). سرویس‌های Application هرگز نوع نشانی را نمی‌دانند → هزینه‌ی تعویض کانال حداقلی می‌شود.
+امضاهای `ISocialMediaService` حساب‌محورند (`AccountEntity` + `Supports`)؛ سرویس‌های Application هرگز نوع نشانی را نمی‌دانند. آداپتورها با کلید `SocialChannel` به‌صورت keyed ثبت می‌شوند (الگوی Radius) و یک دیسپچرِ factory غیر-keyedِ `ISocialMediaService` بر اساس `SocialMediaOptions:Channel` انتخاب می‌کند (`Backend/OutSource/ServiceFactory.cs:55-63`):
+`None → NoopSocialMediaService` (جایگزین استب قبلی، همان رفتار no-op) / `Telegram → TelegramMediaService`.
 
----
+## نقشه‌ی پیاده‌سازی (as-built)
 
-## مراحل اجرا
+| لایه | فایل‌ها |
+|---|---|
+| Domain | `ISocialMediaService` (امضاهای خنثی + `Supports`)، `SocialChannel`، `Model/SocialMediaOptions`، `AccountEntity.TelegramChatId` (`AccountEntity.cs:51` — بدون فلگ اعتبار؛ خودِ اتصال = احراز)، `TelegramLinkEntity`، `ITelegramLinkRepository`، `IAccountRepository.SetTelegramChat` |
+| Database | `Account.sql` (ستون `TelegramChatId BIGINT NULL` + ایندکس یکتای فیلترشده `UK_Account_TelegramChatId`)، `TelegramLink.sql` (الگوی `ResetPassword.sql`، FK با `ON DELETE CASCADE`) |
+| Infrastructure | `TelegramLinkRepository` (مصرف اتمیک `Consume` = delete-output)، `AccountRepository.SetTelegramChat` (`AccountRepository.cs:243` — خطای یکتایی 2601/2627 عمداً خاموش نمی‌شود تا هندلر توضیحش بدهد) |
+| OutSource | `TelegramOptions` (BotToken/BotUsername/ApiBase/OperationsChatId/Proxy + اعتبارسنجی Proxy:Address)، `ITelegramBotClient` + `TelegramBotClient` (429 → احترام به Retry-After با یک retry)، `TelegramMediaService` (هشدارهای کاربر → chat حساب، ثبت‌نام/ظرفیت → `OperationsChatId`، متن‌های هم‌محتوا با قالب‌های ایمیل)، `TelegramLinkHandler` (منطق `/start` — قابل‌تست جدا از poller)، `TelegramUpdatePoller` (public، ثبت در `AddPortalServices` — پایین را ببینید)، `NoopSocialMediaService` |
+| Application | `AuthApplication`: شاخه‌ی username + best-effort برای `InvalidPasswordAlert`/`NewUserRegistrationAlert`؛ `AccountMonitoringService.NotifSendServices`: social-first + حفظ stamp-after-success؛ `ServerManagementService`: `AlarmServerCapacity` داخل try/catch؛ `AccountApplication`: `CreateTelegramLink`/`GetTelegramLinkStatus`/`DisconnectTelegram` (انقضای کد ۱۵ دقیقه، باطل‌کردن کدهای pending قبلی) |
+| Portal | endpointهای `GET/POST/DELETE /api/account/telegram-link` با `target` (والد می‌تواند زیرمجموعه را متصل کند؛ دیپ‌لینک در کنترلر کامل می‌شود چون فقط همان `BotUsername` را می‌بیند) — `AccountController.cs:90-115`؛ گسترش `ProductionSecretsGuard` (فیکسچر توکن + قواعد شرطی کانال)؛ ثبت poller |
+| Frontend | کارت «اتصال تلگرام» در `RegisterComponent` حالت ویرایش (دریافت کد → دیپ‌لینک + کد + کپی، وضعیت در load، قطع اتصال)، `RegisterService` (سه متد + primitive جدید `remove` در `HttpClientHandler`)، ورودی «ایمیل / نام کاربری» در forgot-password، i18n (`register.json` بخش `telegram`، `forgot-password.json`) |
 
-### ۱. Domain — اینترفیس خنثی + موجودیت‌ها
+## چرا poller در `AddPortalServices` ثبت شده نه در OutSource؟
 
-`Backend/Domain/OutSource/ISocialMediaService.cs` — بازآرایی امضاها (نام اینترفیس حفظ می‌شود):
+هاست Admin سرویس‌های OutSource را کلون می‌کند؛ ثبت poller آنجا یعنی دو حلقه‌ی `getUpdates` همزمان = خطای 409 تلگرام. `AddPortalServices` متعلق به پورتال است (`Portal/ServiceFactory.cs:85`). توجه: Admin فعلاً `AddPortalServices` را هم صدا می‌زند (اسکلت است و deploy نمی‌شود)؛ اگر روزی هر دو هاست همزمان بالا آمدند، poller دومی با 409 و backoff لاگ می‌خورد (degraded، نه فاجعه). poller وقتی `Channel != Telegram` است بلافاصله idle می‌شود.
 
-```csharp
-Task NewUserRegistrationAlert(AccountEntity account);                    // بدون تغییر
-Task SendResetPasswordLink(AccountEntity account, string hashCode);      // قبلاً (email, code)
-Task InvalidPasswordAlert(AccountEntity account);                        // قبلاً (username) — caller حساب را دارد
-Task FinishServiceAlert(AccountEntity account, string planTitle, string remainsTitle); // قبلاً (username, phone, ...)
-Task AlarmServerCapacity(IReadOnlyList<string> alarms);                  // بدون تغییر
-bool Supports(AccountEntity account);                                    // جدید: WhatsApp→MobileNumber!=null، Telegram→TelegramChatId!=null
-```
+## فعال‌سازی در استقرار
 
-- `AccountEntity` (`Domain/Account/Entity/AccountEntity.cs`): افزودن `public long? TelegramChatId { get; set; }`
-- موجودیت جدید `TelegramLinkEntity` (الگوی `ResetPassEntity`): `[Table("TelegramLink")]`، `Id`، `AccountId`، `Code VARCHAR(64)`، `ExpireDate`، `Created` — مصرف کد = DELETE ردیف (تک‌مصرفی)
-- اینترفیس ریپوی جدید `ITelegramLinkRepository` در Domain/Account (الگوی `IResetPassRepository`)
+1. `appsettings.json` مقادیر تست دارد (عرف repo). پروداکشن: `private/secrets.json` با per-key override (لودر `AddPleskPrivateSecrets`) — کلیدها: `TelegramOptions:BotToken` (الزامی — گارد فیکسچر کامیت‌شده را می‌بندد)، `BotUsername`، `OperationsChatId`، `Proxy:Address` (+ Username/Password اختیاری).
+2. `SocialMediaOptions:Channel` را `"Telegram"` بگذارید؛ گارد پروداکشن در این حالت کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (`ProductionSecretsGuard.cs:43-65`).
+3. `OperationsChatId` = chat اپراتور (هشدار ثبت‌نام + ظرفیت) — از `/start` گفتگو با بات به دست می‌آید.
+4. IIS/Plesk: poller همان پیش‌نیاز چرخه‌حیات Quartz `JobInterval` را دارد؛ حلقه‌ی ~۲۵ ثانیه‌ای خودش keep-alive است (docs/19 §۴).
+5. Enumeration: پاسخ ForgetPassword روی هر سه مسیر خنثی است و limiter موجود (۳/ساعت) روی username هم اعمال می‌شود.
 
-### ۲. دیتابیس (مجموعه‌ی fresh-install — بدون migration طبق AGENTS)
+## تست‌ها
 
-- `Database/LocalDatabase/Account.sql`: ستون `TelegramChatId BIGINT NULL` + ایندکس یکتای فیلترشده `UK_Account_TelegramChatId WHERE TelegramChatId IS NOT NULL` (مشابه `UK_Account_Email`)
-- فایل جدید `Database/LocalDatabase/TelegramLink.sql`: کپی الگوی `ResetPassword.sql` (FK با `ON DELETE CASCADE`). مرتب‌سازی توپولوژیک initializer تست خودش ترتیب را حل می‌کند.
-
-### ۳. Infrastructure
-
-- پیاده‌سازی `TelegramLinkRepository : IEditableRepository<TelegramLinkEntity>` روی `DapperRepository<T>` + ثبت `AddLazyTransient` در `Infrastructure/ServiceFactory.cs`
-- `IAccountRepository`: متد `SetTelegramChat(int accountId, long? chatId)` (UPDATE ساده)
-
-### ۴. OutSource — آداپتور تلگرام + انتخاب کانال + poller
-
-`Backend/OutSource/ServiceFactory.cs`:
-
-- `TelegramOptions` (با `BindValidateReturn`): `BotToken` [required]، `BotUsername` [required — برای دیپ‌لینک]، `ApiBase` = `https://api.telegram.org`، `Proxy:Address` [required]، `Proxy:Username?`، `Proxy:Password?`، `OperationsChatId (long)` [required — گیرنده‌ی ۲ هشدار اپراتور]
-- `SocialMediaOptions`: `Channel` = `None | Telegram | WhatsApp` (پیش‌فرض None)
-- named HttpClient `"telegram"` (الگوی `XuiPanel/ServiceFactory.cs:17`): `HttpClientHandler { Proxy = new WebProxy(...) }` — هم ارسال هم poll از آن
-- ثبت keyed با الگوی Radius: `AddLazyKeyedTransient<ISocialMediaService, TelegramMediaService>(SocialChannel.Telegram)` + `NoopSocialMediaService` برای `None` (جایگزین استب فعلی، همان رفتار) + دیسپچر انتخاب بر اساس options
-- `AddHostedService<TelegramUpdatePoller>()` — اگر Channel != Telegram فقط no-op
-
-کلاس‌های جدید در `Backend/OutSource/`:
-
-- **`TelegramMediaService : ISocialMediaService`** — ارسال با `sendMessage` (متن ساده فارسی، هم‌محتوا با قالب‌های ایمیل). هشدارهای کاربر → `account.TelegramChatId` (null → no-op)؛ `NewUserRegistrationAlert` و `AlarmServerCapacity` → `OperationsChatId`
-- **`TelegramUpdatePoller : BackgroundService`** — حلقه‌ی `getUpdates?offset=&timeout=25` با backoff نمایی خطا و لاگ Serilog؛ offset در حافظه (redelivery بعد از recycle بی‌ضرر است چون کدها تک‌مصرف‌اند). هندل `/start CODE`:
-  - کد معتبر و منقضی‌نشده → DELETE کد + `SetTelegramChat` (تداخل با ایندکس یکتا → پیام «این چت قبلاً متصل است»)
-  - نادرست/منقضی → پاسخ مؤدبانه؛ `/start` خالی → متن راهنما با لینک پورتال
-
-### ۵. Application — حذف `#if SOCIAL` و دیسپچ runtime
-
-- `AuthApplication.CheckUserPassword` (خط ۶۴): `InvalidPasswordAlert(account)` + try/catch بهترین‌تلاش (شکست تلگرام نباید login را ۵۰۰ کند — الگوی کامنت «registration must never fail because of the email»)
-- `AuthApplication.ForgetPassword`:
-  - حذف کامل بلوک `#if !SOCIAL` / `#else` (خطوط ۱۳۲-۱۵۰). شاخه‌ی موبایل: پیام «موبایل هنوز پشتیبانی نشده است» فقط وقتی Channel != WhatsApp (چک runtime با `IOptions<SocialMediaOptions>`)
-  - شاخه‌ی جدید username (بعد از چک email/mobile pattern): `TryConsumeResetRequest` همان limiter → `GetAccount(username)` → اگر `TelegramChatId != null`: INSERT کد بازیابی + `SendResetPasswordLink(account, code)` با try/catch و `UserException` دوستانه (الگوی شاخه‌ی ایمیل خط ۲۰۵)؛ وگرنه پاسخ خنثی
-- `AccountMonitoringService.NotifSendServices` (خطوط ۱۶۰-۱۸۸): جایگزینی کل بلوک `#if SOCIAL` با: `if (SocialSrv.Supports(account)) → FinishServiceAlert(account, plan.GetPlanTitle(), remains)` else-if `EmailAddress != null` → ایمیل. تاریخچه/`UpdateWarningTimes` در هر دو شاخه یکسان می‌ماند
-- `ServerManagementService.CheckUserServerBalance` و `Register`: فقط تغییر امضا (عبور account)؛ بدون تغییر منطق
-
-### ۶. Portal — endpointهای پروفایل
-
-`Backend/Portal/Controllers/AccountController.cs` (الگوی `ResultHandlerController` + `LoadJobContext`):
-
-- `POST /api/account/telegram-link` → ساخت کد (انقضا ۱۵ دقیقه، باطل‌کردن کدهای pending قبلی همان حساب) → `{ code, url: "https://t.me/{BotUsername}?start={code}" }`
-- `GET /api/account/telegram-link` → وضعیت متصل/غیرمتصل
-- `DELETE /api/account/telegram-link` → قطع اتصال (null کردن chat)
-
-### ۷. Frontend
-
-- صفحه‌ی `edit-user-info` (route موجود از dashboard خط ۱۲۱): کارت «اتصال تلگرام» — دکمه‌ی ساخت کد → نمایش دکمه‌ی دیپ‌لینک + کد؛ وضعیت در load؛ دکمه‌ی قطع اتصال
-- `forgot-password.component.ts`: پذیرش username در ورودی + به‌روزرسانی hint/i18n
-- کلیدهای ترجمه‌ی جدید در فایل‌های i18n موجود (جایی که `dashboard.account.*` تعریف شده)
-
-### ۸. امنیت و استقرار
-
-- مقادیر تستِ `TelegramOptions` در `appsettings.json` (عرف ریپو)؛ پروداکشن از `private/secrets.json` (لودر `AddPleskPrivateSecrets` per-key)
-- **گسترش `ProductionSecretsGuard.Rules`** (`Portal/Basical/ProductionSecretsGuard.cs:26`): اگر `SocialMediaOptions:Channel == Telegram` آنگاه `TelegramOptions:BotToken` و `Proxy:Address` نباید خالی/تست باشند (الگوی قواعد EmailOptions خط ۳۵)
-- IIS: poller همان پیش‌نیاز چرخه‌حیات Quartz `JobInterval` را دارد؛ حلقه‌ی ~۲۵ثانیه‌ای خودش keep-alive است — نکته در `docs/19` تکمیل شود
-- Enumeration: پاسخ ForgetPassword خنثی می‌ماند + limiter موجود (۳/ساعت) روی username هم اعمال می‌شود
-
-### ۹. تست‌ها + حکمرانی (در همان PR)
-
-- به‌روزرسانی `SocialMediaServiceMoq` برای امضاهای جدید (۴ مصرف‌کننده در `ServerManagementServiceTest` باید سبز بمانند)
-- تست‌های جدید: شاخه‌ی username در ForgetPassword (متصل/غیرمتصل/limiter)؛ تقدم تلگرام‌اول در `NotifSendServices` (+dفایع bookkeeping)؛ poller (کد معتبر متصل می‌کند، منقضی/مصرف‌شده رد، replay بی‌اثر)؛ `TelegramMediaService` (chat مقصد درست کاربر/اپراتور)؛ round-trip اتصال روی DB سناریو (الگوی `RealmCapacityOverrideTest`)
-- فرانت: کارت اتصال + ورودی username فراموشی رمز (Karma)
-- مستندات: ردیف‌های `docs/18-test-coverage.md` §4؛ `docs/12-current-state.md`؛ `docs/01-overview.md` (منبع خارجی تلگرام+پروکسی)؛ `docs/19`؛ خطوط AGENTS «Known gaps»؛ `Architecture/TODO.md` خط ۶۹ `[x]` و خط ۷۰ `[x]` (با تقدم runtime حل شد)
-
----
-
-## اعتبارسنجی نهایی
-
-1. `dotnet build Backend/Photon-Bypass.sln` — بدون خطا/هشدار جدید
-2. `dotnet test Backend/Photon-Bypass.sln` — سبز، بدون تست skip شده
-3. `cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless`
-4. دستی با bot token + proxy تستی: `/start` با کد → متصل؛ ForgetPassword با username → کد در چت؛ هشدار ظرفیت → chat اپراتور
+ردیف‌های کامل در `docs/18-test-coverage.md` §۴ (جدول docs/21). خلاصه: `TelegramLinkHandlerTest` (کد معتبر/منقضی/replay/حساب غیرفعال/چت تکراری با `SqlException` واقعی/`/start` خالی/ترافیک غیر-start)، `TelegramMediaServiceTest` (chat مقصد کاربر/اپراتور + no-op بدون chat)، `TelegramLinkRoundTripTest` (روی DB سناریو با ریپوهای واقعی + ایندکس یکتا)، شاخه‌های username در ForgetPassword (متصل/fallback/خنثی/limiter/شکست ارسال)، تقدم social-first در `NotifSendServices` (+ stamp-after-success و ایزوله‌سازی خطا)، `AccountAppTest` (صدور کد/وضعیت/قطع)، `ProductionSecretsGuardTest` (قواعد تلگرام)، و specهای فرانت (کارت اتصال + ورودی username).
 
 ## ریسک‌ها / نکته‌های باز
 
-- در دسترس بودن پروکسی = در دسترس بودن تلگرام؛ شکست ارسال هشدار پایان سرویس → fallback ایمیل موجود؛ شکست ارسال کد بازیابی → `UserException` دوستانه (کاربر دوباره تلاش می‌کند)
-- سقف ۶۴ کاراکتری start-param تلگرام: کد ~۳۲ کاراکتری Base64URL مشکلی ندارد
-- `BotUsername` در options لازم است (ساخت دیپ‌لینک در سمت سرور)
-- webhook بعداً اگر لازم شد: تغییر داخلی همان آداپتور، بدون دست‌زدن به اینترفیس
+- در دسترس بودن پروکسی = در دسترس بودن تلگرام؛ شکست ارسال هشدار پایان سرویس → حساب unstamped می‌ماند و اجرای ساعتی بعدی retry می‌کند؛ شکست ارسال کد بازیابی → `UserException` دوستانه (کد ذخیره می‌ماند، کاربر دوباره تلاش می‌کند).
+- offset آپدیت در حافظه است: بعد از recycle آخرین آپدیت دوباره تحویل می‌شود — بی‌ضرر (کدها تک‌مصرف و `SetTelegramChat` آیدمپوتنت است). offset قبل از هندل جلو می‌رود تا آپدیت مسموم حلقه را روی همان آفست قفل نکند.
+- webhook بعداً اگر لازم شد: تغییر داخلی poller/کلاینت، بدون دست‌زدن به اینترفیس.
+- واتساپ: فقط کلید `SocialChannel.WhatsApp` و آرگومان‌های `MobileNumber`-محور در `NoopSocialMediaService.Supports`/دیسپچر باقی مانده — آداپتور + یک خط ثبت.
+- پنل ادمین برای دیدن وضعیت تلگرام حساب‌ها خارج از دامنه بود (پنل ادمین اصلاً ساخته نشده).

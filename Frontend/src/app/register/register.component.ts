@@ -24,6 +24,7 @@ import {
   RowComponent,
   SpinnerComponent,
   TextColorDirective,
+  TooltipModule,
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
@@ -33,6 +34,7 @@ import {
   MessageService,
   PasswordValidators,
   TranslationPipe,
+  TranslationService,
   UserService,
 } from '../@services';
 import { RegisterService } from './register.service';
@@ -61,6 +63,7 @@ import { RegisterService } from './register.service';
     FormFeedbackComponent,
     SpinnerComponent,
     AlertComponent,
+    TooltipModule,
     TranslationPipe,
   ],
   providers: [RegisterService],
@@ -90,6 +93,12 @@ export class RegisterComponent implements OnInit {
   result?: ApiResult;
   usernameSuffic: string = ' - -';
 
+  /// Telegram connection card (edit mode only, D2): status loads with the
+  /// form, "connect" issues a one-time deep-link code, "disconnect" detaches.
+  telegram_connected = false;
+  telegram_link?: { code: string; url: string };
+  telegram_busy = false;
+
   /// D11: public registration can be disabled via app-config — the form
   /// is replaced by a closed notice (server enforces the same flag anyway).
   allow_registration = false;
@@ -99,6 +108,8 @@ export class RegisterComponent implements OnInit {
     private readonly service: RegisterService,
     private readonly app_config: AppConfigService,
     private readonly user_service: UserService,
+    private readonly messages: MessageService,
+    private readonly translation: TranslationService,
     private readonly router: Router,
     route: ActivatedRoute
   ) {
@@ -130,11 +141,15 @@ export class RegisterComponent implements OnInit {
       return;
     }
     this.loadUserFullData();
+    this.loadTelegramStatus();
 
     if (this.mode !== PageMode.EditSub) return;
     this.user_service.onTargetChanged
       .pipe(takeUntilDestroyed(this.destroy_ref))
-      .subscribe(() => this.loadUserFullData());
+      .subscribe(() => {
+        this.loadUserFullData();
+        this.loadTelegramStatus();
+      });
   }
 
   submit() {
@@ -162,6 +177,59 @@ export class RegisterComponent implements OnInit {
 
   getColor(code: ResultStatus) {
     return MessageService.getStatusCode(code);
+  }
+
+  createTelegramLink() {
+    this.telegram_busy = true;
+
+    this.service.createTelegramLink(this.target).subscribe({
+      next: (state) => {
+        this.telegram_busy = false;
+
+        if (state?.code && state.url) {
+          this.telegram_link = { code: state.code, url: state.url };
+          this.telegram_connected = state.connected;
+        }
+      },
+      error: () => (this.telegram_busy = false),
+    });
+  }
+
+  disconnectTelegram() {
+    this.telegram_busy = true;
+
+    this.service.disconnectTelegram(this.target).subscribe({
+      next: () => {
+        this.telegram_busy = false;
+        this.telegram_connected = false;
+        this.telegram_link = undefined;
+      },
+      error: () => (this.telegram_busy = false),
+    });
+  }
+
+  copyTelegramCode(code: string) {
+    if (!navigator.clipboard) return;
+
+    navigator.clipboard.writeText(code).then(() => {
+      this.messages.messageHandler(
+        ResultStatus.success,
+        this.translation.translate('register.telegram.title'),
+        this.translation.translate('register.telegram.code-copied'),
+      );
+    });
+  }
+
+  private loadTelegramStatus() {
+    this.telegram_busy = true;
+
+    this.service.telegramLinkStatus(this.target).subscribe({
+      next: (state) => {
+        this.telegram_connected = state?.connected === true;
+        this.telegram_busy = false;
+      },
+      error: () => (this.telegram_busy = false),
+    });
   }
 
   private async loadUserFullData() {

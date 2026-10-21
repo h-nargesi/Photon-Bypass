@@ -15,12 +15,17 @@ class AccountApplication(
     IAccountRepository account_repo,
     Lazy<IHistoryRepository> history_repo,
     Lazy<IWalletRepository> wallet_repo,
+    Lazy<ITelegramLinkRepository> telegram_link_repo,
     Lazy<IJobContext> job_context)
     : IAccountApplication
 {
+    /// <summary>Lifetime of a Telegram link code (D2: one-time, short-lived).</summary>
+    private static readonly TimeSpan TelegramLinkLifetime = TimeSpan.FromMinutes(15);
+
     private IAccountRepository AccountRepo { get; } = account_repo;
     private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
     private Lazy<IWalletRepository> WalletRepo { get; } = wallet_repo;
+    private Lazy<ITelegramLinkRepository> TelegramLinkRepo { get; } = telegram_link_repo;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
     public async Task<AccountEntity> GetActiveUser(string username)
@@ -190,5 +195,61 @@ class AccountApplication(
         });
 
         return ApiResult<IList<HistoryModel>>.Success([.. result]);
+    }
+
+    public async Task<ApiResult<TelegramLinkModel>> CreateTelegramLink(string target)
+    {
+        var account = await GetActiveUser(target);
+
+        if (account.TelegramChatId != null)
+        {
+            var connected = ApiResult<TelegramLinkModel>.Success(new TelegramLinkModel { Connected = true });
+
+            connected.Message = "این حساب قبلاً به تلگرام متصل است.";
+
+            return connected;
+        }
+
+        // retire the pending codes so only the newest deep link can bind
+        await TelegramLinkRepo.Value.ExpireActiveCodes(account.Id);
+
+        var code = HashHandler.GenerateUrlSafeCode();
+
+        await TelegramLinkRepo.Value.AddCode(new TelegramLinkEntity
+        {
+            AccountId = account.Id,
+            Code = code,
+            ExpireDate = DateTime.Now + TelegramLinkLifetime,
+        });
+
+        Log.Information("[user: {0}] Telegram link code issued: account-id={1}",
+            JobContext.Value.Username, account.Id);
+
+        return ApiResult<TelegramLinkModel>.Success(new TelegramLinkModel { Connected = false, Code = code });
+    }
+
+    public async Task<ApiResult<TelegramLinkModel>> GetTelegramLinkStatus(string target)
+    {
+        var account = await GetActiveUser(target);
+
+        return ApiResult<TelegramLinkModel>.Success(new TelegramLinkModel
+        {
+            Connected = account.TelegramChatId != null,
+        });
+    }
+
+    public async Task<ApiResult> DisconnectTelegram(string target)
+    {
+        var account = await GetActiveUser(target);
+
+        if (account.TelegramChatId != null)
+        {
+            await AccountRepo.SetTelegramChat(account.Id, null);
+
+            Log.Information("[user: {0}] Telegram chat detached: account-id={1}",
+                JobContext.Value.Username, account.Id);
+        }
+
+        return ApiResult.Success("اتصال تلگرام قطع شد.");
     }
 }
