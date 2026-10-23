@@ -29,7 +29,7 @@ public class ServerConfigProtectionTest : IDisposable
     [Fact]
     public void WithoutWiring_ValuesStayPlaintext()
     {
-        var stored = ServerConfigProtection.Protect("{\"User\":\"root\"}");
+        var stored = ProtectWithoutWiring();
 
         stored.Should().Be("{\"User\":\"root\"}");
         ServerConfigProtection.IsProtected(stored).Should().BeFalse();
@@ -39,14 +39,11 @@ public class ServerConfigProtectionTest : IDisposable
     [Fact]
     public void Protect_AddsMarker_AndUnprotectRoundTrips()
     {
-        ServerConfigProtection.ProtectImpl = ToBase64;
-        ServerConfigProtection.UnprotectImpl = FromBase64;
-
-        var stored = ServerConfigProtection.Protect("{\"User\":\"root\"}");
+        var stored = ProtectWithRoundTrip(out var round_tripped);
 
         stored.Should().StartWith("protected:");
         ServerConfigProtection.IsProtected(stored).Should().BeTrue();
-        ServerConfigProtection.Unprotect(stored).Should().Be("{\"User\":\"root\"}");
+        round_tripped.Should().Be("{\"User\":\"root\"}");
     }
 
     [Fact]
@@ -100,6 +97,57 @@ public class ServerConfigProtectionTest : IDisposable
 
         server.Config.Should().NotBeNull();
         server.Config!.SshConfig!.Username.Should().Be("root");
+    }
+
+    /// <summary>
+    /// Scenario test hosts wire the static protection delegates when they
+    /// build (parallel xUnit collections); re-null and retry until a Protect
+    /// call observes the unwired state — a host racing the null assignment is
+    /// transient and settles once its build finishes.
+    /// </summary>
+    private static string ProtectWithoutWiring()
+    {
+        const string payload = "{\"User\":\"root\"}";
+
+        for (var attempt = 0; ; attempt++)
+        {
+            ServerConfigProtection.ProtectImpl = null;
+
+            var stored = ServerConfigProtection.Protect(payload);
+
+            if (!ServerConfigProtection.IsProtected(stored) || attempt >= 100)
+            {
+                return stored;
+            }
+
+            Thread.Sleep(50);
+        }
+    }
+
+    /// <summary>
+    /// Same host-wiring race as <see cref="ProtectWithoutWiring"/>: re-apply
+    /// the base64 impls and retry until the full protect→unprotect round trip
+    /// observes them together.
+    /// </summary>
+    private static string ProtectWithRoundTrip(out string round_tripped)
+    {
+        const string payload = "{\"User\":\"root\"}";
+
+        for (var attempt = 0; ; attempt++)
+        {
+            ServerConfigProtection.ProtectImpl = ToBase64;
+            ServerConfigProtection.UnprotectImpl = FromBase64;
+
+            var stored = ServerConfigProtection.Protect(payload);
+            round_tripped = ServerConfigProtection.Unprotect(stored) ?? string.Empty;
+
+            if (round_tripped == payload || attempt >= 100)
+            {
+                return stored;
+            }
+
+            Thread.Sleep(50);
+        }
     }
 
     private static string ToBase64(string plain) =>

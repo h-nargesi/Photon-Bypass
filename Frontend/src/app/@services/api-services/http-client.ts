@@ -48,11 +48,11 @@ export class HttpClientHandler {
     return this.api.get(url, { params, observe: 'response', headers, responseType: 'blob' });
   }
 
-  public job(url: string, body: any | null): Observable<ApiResult> {
+  public job(url: string, body: any | null, headers?: Record<string, string>): Observable<ApiResult> {
     url = this.base_path + url;
-    const headers = this.getHeader();
+    const http_headers = this.getHeader(headers);
     return this.api
-      .post<ApiResult>(url, body, { observe: 'response', headers })
+      .post<ApiResult>(url, body, { observe: 'response', headers: http_headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
   }
@@ -75,10 +75,13 @@ export class HttpClientHandler {
       .pipe(catchError(this.errorHandler));
   }
 
-  public authorization(url: string, body: any | null): Observable<ApiResult> {
+  public authorization(url: string, body: any | null, headers?: Record<string, string>): Observable<ApiResult> {
     url = this.base_path + url;
     return this.api
-      .post<ApiResultData<string>>(url, body, { observe: 'response' })
+      .post<ApiResultData<string>>(url, body, {
+        observe: 'response',
+        headers: this.getHeader(headers),
+      })
       .pipe(
         tap((response) => {
           if (response.body && response.body.data && response.body.code < 300) {
@@ -95,14 +98,13 @@ export class HttpClientHandler {
       .pipe(catchError(this.errorHandler));
   }
 
-  private getHeader(): Record<string, string | string[]> | undefined {
-    const token = LocalStorageService.get(['user', 'bearer']);
-    if (token)
-      return {
-        Authorization: 'Bearer ' + token.access_token,
-      };
+  private getHeader(extra?: Record<string, string>): Record<string, string | string[]> | undefined {
+    const headers: Record<string, string | string[]> = { ...(extra ?? {}) };
 
-    return undefined;
+    const token = LocalStorageService.get(['user', 'bearer']);
+    if (token) headers['Authorization'] = 'Bearer ' + token.access_token;
+
+    return Object.keys(headers).length ? headers : undefined;
   }
 
   protected errorHandler(error: any): Observable<ApiResult> {

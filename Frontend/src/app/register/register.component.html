@@ -158,6 +158,16 @@
                 </c-form-feedback>
               </c-input-group>
 
+              <!-- CAPTCHA (adaptive: after a 428, register mode only) -->
+              @if (!isEdit && captcha_required) {
+                <div class="mb-4">
+                  <app-captcha-input #captcha prefix="register" />
+                  <c-form-feedback [valid]="false" class="rtl" *ngIf="submitted && captcha.empty">
+                    {{ "global.validations.required" | translate : ["register.captcha.code"] }}
+                  </c-form-feedback>
+                </div>
+              }
+
               <!-- FIRSTNAME -->
               <c-input-group class="mb-3" *ngIf="form.controls['firstname'] as ctrl">
                 <span cInputGroupText>

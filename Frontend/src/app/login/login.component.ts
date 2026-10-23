@@ -1,5 +1,5 @@
 import { CommonModule, NgStyle } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -21,6 +21,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
+import { CaptchaInputComponent } from '../@components/captcha-input/captcha-input.component';
 import { ApiResult, ResultStatus } from '../@models';
 import {
   AppConfigService,
@@ -55,6 +56,7 @@ import {
     ButtonDirective,
     GutterDirective,
     AlertComponent,
+    CaptchaInputComponent,
   ],
 })
 export class LoginComponent {
@@ -65,6 +67,14 @@ export class LoginComponent {
   username?: string;
   password?: string;
   result?: ApiResult;
+
+  /// Adaptive captcha: hidden until the server answers 428 (too many
+  /// anonymous failures from this IP); afterwards every attempt needs a
+  /// fresh single-use code.
+  captcha_required = false;
+
+  @ViewChild(CaptchaInputComponent)
+  private readonly captcha_input?: CaptchaInputComponent;
 
   /// D11: the register CTA is only shown when the public app-config
   /// explicitly enables registration (defaults to hidden).
@@ -101,11 +111,23 @@ export class LoginComponent {
 
     if (!this.username || !this.password || this.busy) return;
 
+    if (this.captcha_required && this.captcha_input?.empty) return;
+
     this.busy = true;
 
-    this.service.login(this.username, this.password).subscribe((result) => {
+    this.service
+      .login(this.username, this.password, this.captcha_headers())
+      .subscribe((result) => {
       this.result = result;
       this.busy = false;
+
+      if (result.code === 428) {
+        this.showCaptcha();
+        return;
+      }
+
+      // the captcha is single-use: every further attempt needs a fresh image
+      if (this.captcha_required) this.captcha_input?.refresh();
 
       if (result.status() === ResultStatus.success) {
         setTimeout(() => this.router.navigateByUrl(this.redirect), 1000);
@@ -115,5 +137,19 @@ export class LoginComponent {
 
   getColor(code: ResultStatus) {
     return MessageService.getStatusCode(code);
+  }
+
+  private showCaptcha(): void {
+    if (this.captcha_required) {
+      this.captcha_input?.refresh();
+    } else {
+      // the input appears with this change-detection cycle and fetches its
+      // own first image on init
+      this.captcha_required = true;
+    }
+  }
+
+  private captcha_headers(): Record<string, string> | undefined {
+    return this.captcha_required ? this.captcha_input?.headers() : undefined;
   }
 }

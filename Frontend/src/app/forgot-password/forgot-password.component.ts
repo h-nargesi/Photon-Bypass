@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -25,6 +25,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
+import { CaptchaInputComponent } from '../@components/captcha-input/captcha-input.component';
 import { ApiResult, ResultStatus } from '../@models';
 import { MessageService, TranslationPipe } from '../@services';
 import { ForgotPasswordService } from './forgot-password.service';
@@ -51,6 +52,7 @@ import { ForgotPasswordService } from './forgot-password.service';
     TextColorDirective,
     FormControlDirective,
     TranslationPipe,
+    CaptchaInputComponent,
   ],
   templateUrl: './forgot-password.component.html',
   styleUrl: './forgot-password.component.scss',
@@ -64,6 +66,12 @@ export class ForgotPasswordComponent {
   userInfo?: string;
   submitted = false;
   result?: ApiResult;
+
+  /// Adaptive captcha: hidden until the server answers 428.
+  captcha_required = false;
+
+  @ViewChild(CaptchaInputComponent)
+  private readonly captcha_input?: CaptchaInputComponent;
 
   constructor(
     private readonly form_builder: FormBuilder,
@@ -80,10 +88,20 @@ export class ForgotPasswordComponent {
   submit() {
     if (!this.onValidate()) return;
 
+    if (this.captcha_required && this.captcha_input?.empty) return;
+
     const emailMobile = this.form.controls['emailMobile'].value;
 
-    this.service.reset(emailMobile).subscribe((result) => {
+    this.service.reset(emailMobile, this.captcha_headers()).subscribe((result) => {
       this.result = result;
+
+      if (result.code === 428) {
+        this.showCaptcha();
+        return;
+      }
+
+      // the captcha is single-use: every further attempt needs a fresh image
+      if (this.captcha_required) this.captcha_input?.refresh();
 
       if (result.status() === ResultStatus.success) {
         setTimeout(() => this.router.navigate(['login']), 1000);
@@ -93,6 +111,18 @@ export class ForgotPasswordComponent {
 
   getColor(code: ResultStatus) {
     return MessageService.getStatusCode(code);
+  }
+
+  private showCaptcha(): void {
+    if (this.captcha_required) {
+      this.captcha_input?.refresh();
+    } else {
+      this.captcha_required = true;
+    }
+  }
+
+  private captcha_headers(): Record<string, string> | undefined {
+    return this.captcha_required ? this.captcha_input?.headers() : undefined;
   }
 
   private onValidate() {

@@ -1,0 +1,20 @@
+.captcha-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  direction: ltr;
+
+  .captcha-image {
+    height: 48px;
+    border-radius: 0.25rem;
+    border: 1px solid var(--cui-border-color, #d8dbe0);
+    cursor: pointer;
+  }
+
+  .captcha-code-input {
+    max-width: 9rem;
+    text-transform: none;
+    letter-spacing: 0.2em;
+    font-family: monospace;
+  }
+}

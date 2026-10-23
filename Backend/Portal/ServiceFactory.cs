@@ -1,12 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.OutSource;
 using PhotonBypass.Portal.Basical;
+using PhotonBypass.Portal.Basical.Captcha;
 using PhotonBypass.Tools;
 using System.Threading.RateLimiting;
 
@@ -15,6 +17,28 @@ namespace PhotonBypass.Portal;
 public static class ServiceFactory
 {
     public const string AuthRateLimitPolicy = "auth";
+
+    /// <summary>Anonymous forget-pass (reset-code issue) bucket.</summary>
+    public const string ForgetRateLimitPolicy = "forget";
+
+    /// <summary>Anonymous registration bucket.</summary>
+    public const string RegisterRateLimitPolicy = "register";
+
+    /// <summary>Anonymous reset-pass (reset-code consumption) bucket.</summary>
+    public const string ResetRateLimitPolicy = "reset";
+
+    /// <summary>Captcha image generation bucket (CPU guard).</summary>
+    public const string CaptchaRateLimitPolicy = "captcha";
+
+    /// <summary>
+    /// Every endpoint rate-limit policy in one place: test hosts raise all of
+    /// them to an unthrottled ceiling by iterating this list.
+    /// </summary>
+    public static readonly string[] AllRateLimitPolicies =
+    [
+        AuthRateLimitPolicy, ForgetRateLimitPolicy, RegisterRateLimitPolicy,
+        ResetRateLimitPolicy, CaptchaRateLimitPolicy,
+    ];
 
     /// <summary>Role-gated endpoints for managers and the admin (docs/20 D10).</summary>
     public const string ManagerPolicy = "Manager";
@@ -29,17 +53,11 @@ public static class ServiceFactory
         builder.Services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            var permit_limit = builder.Configuration.GetValue("RateLimitOptions:PermitLimit", 10);
-            var window = TimeSpan.FromSeconds(builder.Configuration.GetValue("RateLimitOptions:WindowSeconds", 60));
-            options.AddPolicy(AuthRateLimitPolicy, context =>
-                RateLimitPartition.GetFixedWindowLimiter(
-                    context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                    _ => new FixedWindowRateLimiterOptions
-                    {
-                        PermitLimit = permit_limit,
-                        Window = window,
-                        QueueLimit = 0,
-                    }));
+            AddFixedWindowPolicy(options, builder.Configuration, AuthRateLimitPolicy, 10, 60);
+            AddFixedWindowPolicy(options, builder.Configuration, ForgetRateLimitPolicy, 3, 60);
+            AddFixedWindowPolicy(options, builder.Configuration, RegisterRateLimitPolicy, 5, 60);
+            AddFixedWindowPolicy(options, builder.Configuration, ResetRateLimitPolicy, 5, 60);
+            AddFixedWindowPolicy(options, builder.Configuration, CaptchaRateLimitPolicy, 30, 60);
         });
         builder.Services.AddAuthentication(options =>
             {
@@ -78,6 +96,8 @@ public static class ServiceFactory
 
         builder.Services.AddLazyScoped<IAccessService, AccessService>();
         builder.Services.AddLazyScoped<IJobContext, JobContext>();
+        builder.Services.AddLazyScoped<ICaptchaService, CaptchaService>();
+        builder.Services.BindValidateReturn<CaptchaOptions>();
 
         // Telegram poller lives here (not in AddOutSourceServices) so the
         // Admin host — which clones the OutSource slice — never runs a second
@@ -85,5 +105,34 @@ public static class ServiceFactory
         builder.Services.AddHostedService<TelegramUpdatePoller>();
 
         return builder;
+    }
+
+    /// <summary>
+    /// Per-endpoint fixed-window policy partitioned by client IP. Values are
+    /// read as RateLimitOptions:{policy}:PermitLimit|WindowSeconds with a
+    /// fallback to the former shared keys RateLimitOptions:PermitLimit|
+    /// WindowSeconds — a host that raises the global keys (the scenario test
+    /// factory) stays unthrottled on every policy at once.
+    /// </summary>
+    private static void AddFixedWindowPolicy(
+        RateLimiterOptions options, IConfiguration configuration,
+        string policy, int default_permit_limit, int default_window_seconds)
+    {
+        var permit_limit = configuration.GetValue(
+            $"RateLimitOptions:{policy}:PermitLimit",
+            configuration.GetValue("RateLimitOptions:PermitLimit", default_permit_limit));
+        var window = TimeSpan.FromSeconds(configuration.GetValue(
+            $"RateLimitOptions:{policy}:WindowSeconds",
+            configuration.GetValue("RateLimitOptions:WindowSeconds", default_window_seconds)));
+
+        options.AddPolicy(policy, context =>
+            RateLimitPartition.GetFixedWindowLimiter(
+                context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = permit_limit,
+                    Window = window,
+                    QueueLimit = 0,
+                }));
     }
 }

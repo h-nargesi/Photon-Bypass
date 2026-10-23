@@ -45,7 +45,7 @@ describe('ForgotPasswordComponent', () => {
 
     expect(component.submitted).toBeTrue();
     http.expectNone(
-      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
+      req => req.method === 'POST' && req.url === '/api/auth/forget-pass',
     );
   });
 
@@ -55,7 +55,7 @@ describe('ForgotPasswordComponent', () => {
     component.submit();
 
     const request = http.expectOne(
-      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
+      req => req.method === 'POST' && req.url === '/api/auth/forget-pass',
     );
     expect(request.request.body).toEqual({ emailMobile: 'user@test.local' });
 
@@ -78,7 +78,7 @@ describe('ForgotPasswordComponent', () => {
     // no client-side email validation anymore: the username goes through
     // and the server routes the code (telegram chat, email fallback)
     const request = http.expectOne(
-      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
+      req => req.method === 'POST' && req.url === '/api/auth/forget-pass',
     );
     expect(request.request.body).toEqual({ emailMobile: 'tg-user' });
 
@@ -99,7 +99,7 @@ describe('ForgotPasswordComponent', () => {
     component.submit();
 
     http.expectOne(
-      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
+      req => req.method === 'POST' && req.url === '/api/auth/forget-pass',
     ).flush(
       { code: 400, message: 'کاربری با این ایمیل یافت نشد!' },
       { status: 200, statusText: 'OK' },

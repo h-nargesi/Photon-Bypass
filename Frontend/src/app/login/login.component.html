@@ -42,6 +42,16 @@
                   </c-form-feedback>
                 </c-input-group>
 
+                <!-- CAPTCHA (adaptive: after a 428) -->
+                @if (captcha_required) {
+                  <div class="mb-4">
+                    <app-captcha-input #captcha prefix="login" />
+                    <c-form-feedback [valid]="false" class="rtl" *ngIf="isValidated && captcha.empty">
+                      {{ "global.validations.required" | translate : ["login.captcha.code"] }}
+                    </c-form-feedback>
+                  </div>
+                }
+
                 <!-- ACTIONS -->
                 <c-row>
                   <c-col class="text-right" xs="6">

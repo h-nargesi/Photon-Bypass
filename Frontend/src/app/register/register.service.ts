@@ -24,8 +24,8 @@ export class RegisterService extends ApiBaseService {
     return this.job(`${ACCOUNT_API_URL}/edit-user?target=${target ?? ''}`, model);
   }
 
-  register(model: RegisterModel): Observable<ApiResult> {
-    return this.job(`${AUTH_API_URL}/register`, model);
+  register(model: RegisterModel, headers?: Record<string, string>): Observable<ApiResult> {
+    return this.job(`${AUTH_API_URL}/register`, model, undefined, headers);
   }
 
   telegramLinkStatus(target?: string): Observable<TelegramLinkModel> {

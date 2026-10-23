@@ -1,0 +1,15 @@
+<div class="captcha-box" *ngIf="image">
+  <img [src]="image" (click)="refresh()" class="captcha-image" alt="captcha"
+    [title]="prefix + '.captcha.refresh' | translate" />
+
+  <input cFormControl type="text" class="captcha-code-input" autocomplete="off" spellcheck="false"
+    [(ngModel)]="code" [ngModelOptions]="{ standalone: true }" maxlength="8"
+    [placeholder]="prefix + '.captcha.holder' | translate" />
+
+  <c-spinner size="sm" *ngIf="busy" />
+
+  <button cButton type="button" color="secondary" size="sm" (click)="refresh()" [disabled]="busy"
+    [title]="prefix + '.captcha.refresh' | translate">
+    <svg [cIcon]="icons.cilReload"></svg>
+  </button>
+</div>

@@ -8,6 +8,7 @@ using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Portal.Basical;
+using PhotonBypass.Portal.Basical.Captcha;
 using PhotonBypass.Result;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -16,17 +17,19 @@ using PhotonBypass.Portal.Context;
 namespace PhotonBypass.Portal.Controllers;
 
 [ApiController]
-[EnableRateLimiting(ServiceFactory.AuthRateLimitPolicy)]
 [Route("/api/[controller]")]
 public class AuthController(
     IAuthApplication application,
     IJobContext job,
-    Lazy<IAccessService> access) :
+    Lazy<IAccessService> access,
+    ICaptchaService captcha) :
     ResultHandlerController(job, access)
 {
     private Lazy<IAccessService> AccessSrv { get; } = access;
 
     [HttpPost("token")]
+    [RequireCaptcha]
+    [EnableRateLimiting(ServiceFactory.AuthRateLimitPolicy)]
     public async Task<ApiResult> Login([FromBody] Context.TokenContext context)
     {
         if (string.IsNullOrWhiteSpace(context.Username))
@@ -62,7 +65,21 @@ public class AuthController(
         };
     }
 
+    /// <summary>Fresh single-use captcha; unauthenticated by design but CPU-guarded.</summary>
+    [HttpGet("captcha")]
+    [EnableRateLimiting(ServiceFactory.CaptchaRateLimitPolicy)]
+    public ApiResult<CaptchaResult> Captcha()
+    {
+        return new ApiResult<CaptchaResult>
+        {
+            Code = 200,
+            Data = captcha.New(),
+        };
+    }
+
     [HttpPost("forget-pass")]
+    [RequireCaptcha]
+    [EnableRateLimiting(ServiceFactory.ForgetRateLimitPolicy)]
     public async Task<ApiResult> ForgetPassword([FromBody] ResetPasswordContext context)
     {
         if (string.IsNullOrWhiteSpace(context.EmailMobile))
@@ -76,6 +93,8 @@ public class AuthController(
     }
 
     [HttpPost("reset-pass")]
+    [RequireCaptcha]
+    [EnableRateLimiting(ServiceFactory.ResetRateLimitPolicy)]
     public async Task<ApiResult> ResetPassword([FromBody] ChangePasswordContext context)
     {
         if (string.IsNullOrWhiteSpace(context.Token))
@@ -94,6 +113,8 @@ public class AuthController(
     }
 
     [HttpPost("register")]
+    [RequireCaptcha]
+    [EnableRateLimiting(ServiceFactory.RegisterRateLimitPolicy)]
     public async Task<ApiResult> Register([FromBody] RegisterModel context)
     {
         if (string.IsNullOrWhiteSpace(context.Username))

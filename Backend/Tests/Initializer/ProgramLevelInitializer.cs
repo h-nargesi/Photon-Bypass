@@ -79,8 +79,21 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
         {
             base.ConfigureWebHost(builder);
 
+            // scenario classes share one Factory + IMemoryCache + client IP:
+            // a failed-login test would trip the adaptive captcha gate for
+            // every later test in the class — captcha stays off here and is
+            // covered by the dedicated CaptchaTest factory
+            builder.UseSetting("CaptchaOptions:Enabled", "false");
+
+            // raise every endpoint policy in one sweep (per-policy keys in
+            // appsettings.json would otherwise win over the global fallback)
             builder.UseSetting("RateLimitOptions:PermitLimit", "100000");
             builder.UseSetting("RateLimitOptions:WindowSeconds", "60");
+            foreach (var policy in PhotonBypass.Portal.ServiceFactory.AllRateLimitPolicies)
+            {
+                builder.UseSetting($"RateLimitOptions:{policy}:PermitLimit", "100000");
+                builder.UseSetting($"RateLimitOptions:{policy}:WindowSeconds", "60");
+            }
             // scenario tests drive the register → buy journey; the production
             // default (off, docs/20 D11) must not disable them
             builder.UseSetting("ManagementOptions:AllowRegistration", "true");

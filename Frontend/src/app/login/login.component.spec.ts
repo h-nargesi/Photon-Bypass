@@ -114,6 +114,63 @@ describe('LoginComponent', () => {
     expect(router.url).not.toBe('/dashboard');
   });
 
+  it('a 428 answer reveals the captcha and resubmits with its headers', () => {
+    const component = fixture.componentInstance;
+    component.username = 'user';
+    component.password = 'Passw0rd';
+
+    component.login();
+
+    // adaptive gate: body code 428 rides an HTTP 200 ApiResult
+    http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/auth/token',
+    ).flush(
+      { code: 428, message: 'کد امنیتی نامعتبر یا لازم است!' },
+      { status: 200, statusText: 'OK' },
+    );
+
+    expect(component.captcha_required).toBeTrue();
+
+    // the revealed input fetches its first image on init
+    fixture.detectChanges();
+    http.expectOne(
+      req => req.method === 'GET' && req.url === '/api/auth/captcha',
+    ).flush(
+      { code: 200, data: { id: 'cap-1', image: 'data:image/png;base64,AAA', expiresInSeconds: 180 } },
+      { status: 200, statusText: 'OK' },
+    );
+
+    // an empty captcha code blocks the submit
+    component.login();
+    http.expectNone(req => req.method === 'POST' && req.url === '/api/auth/token');
+
+    const captcha_input = fixture.debugElement.query(
+      debug => debug.name === 'app-captcha-input',
+    )?.componentInstance as { code: string };
+    captcha_input.code = 'AB2CD';
+
+    component.login();
+
+    const request = http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/auth/token',
+    );
+    expect(request.request.headers.get('X-Captcha-Id')).toBe('cap-1');
+    expect(request.request.headers.get('X-Captcha-Code')).toBe('AB2CD');
+
+    // single-use: a failed attempt fetches a fresh image
+    request.flush(
+      { code: 401, message: 'نام کاربری یا رمز عبور اشتباه است!' },
+      { status: 200, statusText: 'OK' },
+    );
+
+    http.expectOne(
+      req => req.method === 'GET' && req.url === '/api/auth/captcha',
+    ).flush(
+      { code: 200, data: { id: 'cap-2', image: 'data:image/png;base64,BBB', expiresInSeconds: 180 } },
+      { status: 200, statusText: 'OK' },
+    );
+  });
+
   it('successful login stores the token and navigates to the redirect', fakeAsync(() => {
     const component = fixture.componentInstance;
     component.username = 'user';

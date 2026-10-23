@@ -21,9 +21,13 @@ export class AuthService extends ApiBaseService {
     super(api, undefined, message_handler);
   }
 
-  public login(username: string, password: string): Observable<ApiResult> {
+  public login(
+    username: string,
+    password: string,
+    headers?: Record<string, string>
+  ): Observable<ApiResult> {
     const params = { username, password };
-    return this.authorization(`${AUTH_API_URL}/token`, params);
+    return this.authorization(`${AUTH_API_URL}/token`, params, undefined, headers);
   }
 
   public override check(): Observable<ApiResult> {

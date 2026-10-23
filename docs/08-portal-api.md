@@ -10,6 +10,14 @@
 - صدور توکن در `AuthController.Login` (`AuthController.cs:44`) → `expires_in = 3600`.
 - سرویس احراز هویت توکن را در هدر `Authorization: Bearer <token>` می‌خواند (frontend).
 
+## Anonymous-auth protection (کپچای adaptive + rate-limit تفکیک‌شده)
+
+- چهار endpoint بی‌نام `AuthController` (token/register/forget-pass/reset-pass) با فیلتر `RequireCaptchaAttribute` گیت می‌شوند. کپچا به‌صورت پیش‌فرض لازم نیست؛ بعد از `FailureThreshold` نتیجه‌ی ناموفق (exception یا `ApiResult.Code >= 400`) از یک IP در پنجره‌ی لغزان `FailureWindowMinutes`، فقط برای آن IP اجباری می‌شود؛ موفقیت (2xx) شمارنده را صفر می‌کند (`CaptchaService`, IMemoryCache، تک‌instance پلزک).
+- پاسخ کپچا فقط از طریق هدرهای `X-Captcha-Id`/`X-Captcha-Code` می‌آید (مدل‌های body دست‌نخورده ماندند)؛ هر Validate یک بار مصرف است — یک کپچا = یک تلاش.
+- سیگنال «کپچا لازم/نادرست»: `ApiResult { Code = 428, Message = "کد امنیتی نامعتبر یا لازم است!" }` روی HTTP 200 (قرارداد ApiResult؛ فرانت `result.code === 428` را چک و تصویر را refresh می‌کند).
+- rate-limit از bucket مشترک کنترلری به policy per-action تفکیک شد: `auth` (token؛ `/account/change-pass` و `/vpn/change-ovpn` همان bucket را نگه داشتند — M34)، `forget` ۳/دقیقه، `register` ۵/دقیقه، `reset` ۵/دقیقه، `captcha` ۳۰/دقیقه. مقادیر از `RateLimitOptions:{policy}:PermitLimit|WindowSeconds` با fallback به کلیدهای سراسری `RateLimitOptions:PermitLimit|WindowSeconds` (مهم برای تست‌ها) خوانده می‌شوند؛ پارتیشن IP کلاینت.
+- تنظیمات در `CaptchaOptions` (bind + validate روی start)؛ غیرفعال‌سازی با `CaptchaOptions:Enabled=false`.
+
 ## Base controller & result contract
 
 - `ResultHandlerController` (`Backend/Portal/Basical/ResultHandlerController.cs:12`) کلاس پایه‌ی همه‌ی کنترلرها (به‌جز `BasicsController` که مستقیم `ControllerBase` را استفاده می‌کند).
@@ -33,10 +41,11 @@
 | Method | Path | Input | Controller:Method | Auth | Notes |
 |---|---|---|---|---|---|
 | GET | `/api/basics/prices` | — | `BasicsController.GetPrices` | N | لیست پلن‌ها/قیمت‌ها برای صفحه‌ی Home. |
-| POST | `/api/auth/token` | body `TokenContext` | `AuthController.Login` | N | لاگین؛ خروجی `access_token`/`token_type`/`expires_in`. |
-| POST | `/api/auth/forget-pass` | body `ResetPasswordContext` | `AuthController.ForgetPassword` | N | ارسال کد بازنشانی. |
-| POST | `/api/auth/reset-pass` | body `ChangePasswordContext` | `AuthController.ResetPassword` | N | تغییر پسورد با کد. |
-| POST | `/api/auth/register` | body `RegisterModel` | `AuthController.Register` | N | ثبت‌نام. |
+| GET | `/api/auth/captcha` | — | `AuthController.Captcha` | N | کپچای تصویری خودمیزبان (SkiaSharp PNG data-url)؛ پاسخ در `IMemoryCache` با TTL `CodeExpirySeconds`، **single-use**. policy `captcha` (پیش‌فرض ۳۰/دقیقه — محافظت CPU). |
+| POST | `/api/auth/token` | body `TokenContext` + headers `X-Captcha-Id`/`X-Captcha-Code` (اختیاری) | `AuthController.Login` | N | لاگین؛ خروجی `access_token`/`token_type`/`expires_in`. policy `auth` (۱۰/دقیقه). بعد از آستانه خطای IP، کپچا اجباری → بدون/با کد نادرست `ApiResult {Code=428}` روی HTTP 200. |
+| POST | `/api/auth/forget-pass` | body `ResetPasswordContext` + headers `X-Captcha-*` (اختیاری) | `AuthController.ForgetPassword` | N | ارسال کد بازنشانی. policy `forget` (۳/دقیقه)؛ همان گیت کپچای adaptive (428). |
+| POST | `/api/auth/reset-pass` | body `ChangePasswordContext` + headers `X-Captcha-*` (اختیاری) | `AuthController.ResetPassword` | N | تغییر پسورد با کد. policy `reset` (۵/دقیقه)؛ همان گیت کپچای adaptive (428). |
+| POST | `/api/auth/register` | body `RegisterModel` + headers `X-Captcha-*` (اختیاری) | `AuthController.Register` | N | ثبت‌نام. policy `register` (۵/دقیقه)؛ همان گیت کپچای adaptive (428). |
 | GET | `/api/account/get-user` | — | `AccountController.GetUser` | Y | اطلاعات کاربر جاری. |
 | GET | `/api/account/full-info` | `?target` | `AccountController.GetFullInfo` | Y | اطلاعات کامل target. |
 | POST | `/api/account/edit-user` | `?target` + body `EditUserModel` | `AccountController.EditUser` | Y | ویرایش اطلاعات target. |

@@ -113,11 +113,12 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
   protected job(
     url: string,
     model: any | null,
-    options?: ApiOptions
+    options?: ApiOptions,
+    headers?: Record<string, string>
   ): Observable<ApiResult> {
     const service = this;
     return this.api
-      .job(url, model)
+      .job(url, model, headers)
       .pipe(
         map((result) => {
           const context: ApiResultContext = (options ?? {}) as ApiResultContext;
@@ -185,11 +186,12 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
   protected authorization(
     url: string,
     params?: ApiParam,
-    options?: ApiOptions
+    options?: ApiOptions,
+    headers?: Record<string, string>
   ): Observable<ApiResult> {
     const service = this;
     return this.api
-      .authorization(url, params)
+      .authorization(url, params, headers)
       .pipe(
         map((result) => {
           const context: ApiResultContext = (options ?? {}) as ApiResultContext;

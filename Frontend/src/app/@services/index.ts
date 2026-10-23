@@ -6,6 +6,7 @@ export * from './api-services/models/app-api-url';
 export * from './api-services/models/app-base-path';
 export * from './auth-services/auth-guard';
 export * from './auth-services/auth-service';
+export * from './auth-services/captcha-service';
 export * from './auth-services/role-guards';
 export * from './auth-services/user-servcie';
 export * from './local-storage/local-storage-service';

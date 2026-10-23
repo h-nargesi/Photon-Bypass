@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormBuilder,
@@ -28,6 +28,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
+import { CaptchaInputComponent } from '../@components/captcha-input/captcha-input.component';
 import { ApiResult, RegisterModel, ResultStatus } from '../@models';
 import {
   AppConfigService,
@@ -65,6 +66,7 @@ import { RegisterService } from './register.service';
     AlertComponent,
     TooltipModule,
     TranslationPipe,
+    CaptchaInputComponent,
   ],
   providers: [RegisterService],
 })
@@ -102,6 +104,13 @@ export class RegisterComponent implements OnInit {
   /// D11: public registration can be disabled via app-config — the form
   /// is replaced by a closed notice (server enforces the same flag anyway).
   allow_registration = false;
+
+  /// Adaptive captcha for the anonymous register endpoint (register mode
+  /// only): hidden until the server answers 428.
+  captcha_required = false;
+
+  @ViewChild(CaptchaInputComponent)
+  private readonly captcha_input?: CaptchaInputComponent;
 
   constructor(
     private readonly form_builder: FormBuilder,
@@ -155,16 +164,33 @@ export class RegisterComponent implements OnInit {
   submit() {
     if (!this.onValidate()) return;
 
+    if (this.mode === PageMode.Register && this.captcha_required && this.captcha_input?.empty) {
+      return;
+    }
+
     this.model = { ...this.form.value } as RegisterModel;
+
+    const headers = this.mode === PageMode.Register ? this.captcha_headers() : undefined;
 
     const job =
       this.mode !== PageMode.Register
         ? this.service.edit(this.model, this.target)
-        : this.service.register(this.model);
+        : this.service.register(this.model, headers);
 
     job.subscribe((result) => {
       this.result = result;
       this.submitted = false;
+
+      if (result.code === 428) {
+        this.showCaptcha();
+        return;
+      }
+
+      // the captcha is single-use: every further attempt needs a fresh image
+      if (this.mode === PageMode.Register && this.captcha_required) {
+        this.captcha_input?.refresh();
+      }
+
       if (result.status() !== ResultStatus.success) return;
 
       this.user_service.reload();
@@ -173,6 +199,18 @@ export class RegisterComponent implements OnInit {
         setTimeout(() => this.router.navigate(['login']), 1000);
       }
     });
+  }
+
+  private showCaptcha(): void {
+    if (this.captcha_required) {
+      this.captcha_input?.refresh();
+    } else {
+      this.captcha_required = true;
+    }
+  }
+
+  private captcha_headers(): Record<string, string> | undefined {
+    return this.captcha_required ? this.captcha_input?.headers() : undefined;
   }
 
   getColor(code: ResultStatus) {

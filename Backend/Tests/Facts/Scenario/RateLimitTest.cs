@@ -8,16 +8,17 @@ namespace PhotonBypass.Test.Facts.Scenario;
 public class RateLimitTest(RateLimitTest.LowRateFactory factory)
     : HttpHandler(factory), IClassFixture<RateLimitTest.LowRateFactory>
 {
-    private const int PermitLimit = 2;
+    private const int PermitLimit = 1;
 
     [Fact]
     public async Task AuthEndpoint_ThirdRequestWithinWindow_Gets429()
     {
-        // register uses the rate-limited auth controller too, so count it in
         var username = "rate_user01";
         await Register(username, "61");
         await Login(username, "Passw0rd1");
 
+        // the login above consumed the single auth permit: any further token
+        // attempt inside the window is throttled
         var third = await Client.PostAsJsonAsync("/api/auth/token",
             new { Username = username, Password = "wrong-password" });
 
@@ -30,8 +31,14 @@ public class RateLimitTest(RateLimitTest.LowRateFactory factory)
         {
             base.ConfigureWebHost(builder);
 
-            builder.UseSetting("RateLimitOptions:PermitLimit", PermitLimit.ToString());
-            builder.UseSetting("RateLimitOptions:WindowSeconds", "60");
+            // one permit per policy per window: the endpoint buckets are
+            // separate (register ≠ auth), so each helper call survives but
+            // the very next hit on the same policy is throttled
+            foreach (var policy in PhotonBypass.Portal.ServiceFactory.AllRateLimitPolicies)
+            {
+                builder.UseSetting($"RateLimitOptions:{policy}:PermitLimit", PermitLimit.ToString());
+                builder.UseSetting($"RateLimitOptions:{policy}:WindowSeconds", "60");
+            }
         }
     }
 }
@@ -55,8 +62,9 @@ public class PasswordEndpointRateLimitTest(RateLimitTest.LowRateFactory factory)
         await Register(username, "99");
         await Login(username, "Passw0rd1");
 
-        // register + login exhausted the two-permit window: the next password
-        // verification attempt on change-ovpn must be throttled too
+        // register + login each consumed their policy's single permit; the
+        // next password verification attempt on change-ovpn hits the same
+        // exhausted auth bucket and must be throttled too
         var third = await Client.PostAsJsonAsync("/api/vpn/change-ovpn", new
         {
             Target = (string?)null,

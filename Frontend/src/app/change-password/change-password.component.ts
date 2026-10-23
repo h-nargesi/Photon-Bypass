@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -9,6 +9,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
+  AlertComponent,
   ButtonDirective,
   CardBodyComponent,
   CardComponent,
@@ -24,6 +25,7 @@ import {
 } from '@coreui/angular';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../@icons';
+import { CaptchaInputComponent } from '../@components/captcha-input/captcha-input.component';
 import {
   ApiResult,
   OvpnPasswordToken,
@@ -54,6 +56,8 @@ import { ChangePasswordService } from './change-password.service';
     ButtonDirective,
     FormFeedbackComponent,
     TranslationPipe,
+    AlertComponent,
+    CaptchaInputComponent,
   ],
   templateUrl: './change-password.component.html',
   styleUrl: './change-password.component.scss',
@@ -73,6 +77,13 @@ export class ChangePasswordComponent {
   model: PasswordToken = {} as PasswordToken;
   submitted = false;
   result?: ApiResult;
+
+  /// Adaptive captcha for the anonymous reset endpoint (forgotten mode
+  /// only): hidden until the server answers 428.
+  captcha_required = false;
+
+  @ViewChild(CaptchaInputComponent)
+  private readonly captcha_input?: CaptchaInputComponent;
 
   get change(): PageMode {
     return PageMode.change;
@@ -131,18 +142,37 @@ export class ChangePasswordComponent {
   submit() {
     if (!this.onValidate()) return;
 
+    if (this.mode === PageMode.forgotten && this.captcha_required && this.captcha_input?.empty) {
+      return;
+    }
+
     this.model = { ...this.model, ...this.form.value } as PasswordToken;
 
     if (this.mode === PageMode.ovpn || this.mode === PageMode.rotate) {
       (this.model as OvpnPasswordToken).target = this.user_service.targetName;
     }
 
+    const headers = this.mode === PageMode.forgotten ? this.captcha_headers() : undefined;
+
     const job =
       this.mode === PageMode.ovpn || this.mode === PageMode.rotate
         ? this.service.changeOpenVpnPassword(this.model as OvpnPasswordToken)
-        : this.service.changePassword(this.model);
+        : this.mode === PageMode.forgotten
+          ? this.service.resetPassword(this.model, headers)
+          : this.service.changePassword(this.model);
 
     job.subscribe((result) => {
+      if (result.code === 428) {
+        this.result = result;
+        this.showCaptcha();
+        return;
+      }
+
+      // the captcha is single-use: every further attempt needs a fresh image
+      if (this.mode === PageMode.forgotten && this.captcha_required) {
+        this.captcha_input?.refresh();
+      }
+
       if (result.status() === ResultStatus.success) {
         if (this.mode === PageMode.forgotten)
           setTimeout(() => this.router.navigate(['login']), 1000);
@@ -151,6 +181,18 @@ export class ChangePasswordComponent {
 
       this.result = result;
     });
+  }
+
+  private showCaptcha(): void {
+    if (this.captcha_required) {
+      this.captcha_input?.refresh();
+    } else {
+      this.captcha_required = true;
+    }
+  }
+
+  private captcha_headers(): Record<string, string> | undefined {
+    return this.captcha_required ? this.captcha_input?.headers() : undefined;
   }
 
   private onValidate() {

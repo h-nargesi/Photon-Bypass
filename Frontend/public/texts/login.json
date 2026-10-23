@@ -11,5 +11,10 @@
         "forgot-password": "فراموش کرده‌اید؟",
         "register": "کاربر جدید",
         "register-now": "ثبت نام کنید"
+    },
+    "captcha": {
+        "code": "کد امنیتی",
+        "holder": "security code",
+        "refresh": "تصویر جدید"
     }
 }

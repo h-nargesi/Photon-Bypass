@@ -41,7 +41,8 @@
 [ ] فایلهای لاگ بصورت روزانه جدا شوند
 [ ] زیپ کردن روزانه لاگها
 [ ] ساده سازی دستورهای اجرای کوئری در ریپازیتوری‌ها
-[ ] human test
+[x] human test — کپچای تصویری خودمیزبان + adaptive + rate-limit تفکیک‌شده روی ۴ endpoint بی‌نام auth (پلن `.kilo/plans/1792342359013-self-hosted-captcha-auth.md`؛ همان تسک دو باگ URL ازقبل موجود فرانت هم اصلاح شد: forgot-password → `/api/auth/forget-pass` و حالت forgotten تغییر پسورد → `/api/auth/reset-pass`)
+[ ] Lockout per-account (شمارنده خطا per-username با backoff) — مکمل کپچای adaptive، به‌تصمیم مالک به تعویق افتاد (خارج از scope همان تسک؛ فقط این یادداشت)
 
 # ثبتنامه، تمدید و پرداخت
 ---------------------------

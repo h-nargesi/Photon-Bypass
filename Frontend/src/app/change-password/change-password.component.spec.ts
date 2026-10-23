@@ -103,8 +103,10 @@ describe('ChangePasswordComponent', () => {
     fillForm(component);
     component.submit();
 
+    // forgotten mode hits the anonymous reset endpoint — the account
+    // change-pass route is [Authorize]d and 401s an anonymous visitor
     const request = http.expectOne(
-      req => req.method === 'POST' && req.url === '/api/account/change-pass',
+      req => req.method === 'POST' && req.url === '/api/auth/reset-pass',
     );
     expect(request.request.body['token']).toBe('abc123');
 
