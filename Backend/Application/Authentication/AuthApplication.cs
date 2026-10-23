@@ -232,10 +232,31 @@ class AuthApplication(
                 {
                     await SocialMediaSrv.SendResetPasswordLink(account, hash_code);
                 }
-                catch (Exception error)
+                catch (Exception social_error)
                 {
                     // the code stays stored: the user may simply retry later
-                    Log.Error(error, "Reset-Password social message failed: account-id={0}", account.Id);
+                    Log.Error(social_error, "Reset-Password social message failed: account-id={0}", account.Id);
+
+                    // delivery fallback: a validated email re-announces the
+                    // SAME stored code — a fresh StoreResetCode would retire it
+                    if (account.EmailAddress is { } email_address)
+                    {
+                        try
+                        {
+                            await EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_address, hash_code);
+
+                            Log.Information("Reset-Password code re-sent by email after social failure: account-id={0}", account.Id);
+
+                            return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
+                        }
+                        catch (Exception email_error)
+                        {
+                            Log.Error(email_error, "Reset-Password email fallback failed: account-id={0}", account.Id);
+
+                            throw new UserException("ارسال ایمیل ناموفق بود؛ لطفاً بعداً تلاش کنید",
+                                $"Reset-password email fallback failed: account-id={account.Id}");
+                        }
+                    }
 
                     throw new UserException("ارسال پیام ناموفق بود؛ لطفاً بعداً تلاش کنید",
                         $"Reset-password social message failed: account-id={account.Id}");

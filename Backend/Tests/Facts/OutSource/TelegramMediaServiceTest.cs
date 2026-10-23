@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
+using Moq;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
@@ -16,6 +18,8 @@ public class TelegramMediaServiceTest
 
     private readonly TelegramBotClientFake bot = new();
 
+    private readonly Mock<IAccountRepository> account_repo = new();
+
     private TelegramMediaService CreateService()
     {
         return new TelegramMediaService(bot,
@@ -25,7 +29,8 @@ public class TelegramMediaServiceTest
                 Title = "Fast Bypass",
                 SiteUrl = "https://photon-bypass.com",
                 ConnectionGuideUrl = "https://guide.example.com/vpn",
-            }));
+            }),
+            new Lazy<IAccountRepository>(() => account_repo.Object));
     }
 
     private static AccountEntity Account(long? chat_id)
@@ -104,5 +109,82 @@ public class TelegramMediaServiceTest
 
         bot.Sent.Should().ContainSingle().Which.ChatId.Should().Be(OperationsChatId);
         bot.Sent[0].Text.Should().Contain("Realm-1").And.Contain("Realm-3");
+    }
+
+    [Fact]
+    public async Task BlockedBotChat_DetachesTheAccountAndRethrows()
+    {
+        bot.OnSendMessage = (_, _) => throw new TelegramBotException(403, "Forbidden: bot was blocked by the user");
+
+        var action = () => CreateService().SendResetPasswordLink(Account(UserChatId), "code");
+
+        await action.Should().ThrowAsync<TelegramBotException>();
+
+        account_repo.Verify(repo => repo.SetTelegramChat(5, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task ChatNotFound_DetachesTheAccountAndRethrows()
+    {
+        bot.OnSendMessage = (_, _) => throw new TelegramBotException(400, "Bad Request: chat not found");
+
+        var action = () => CreateService().InvalidPasswordAlert(Account(UserChatId));
+
+        await action.Should().ThrowAsync<TelegramBotException>();
+
+        account_repo.Verify(repo => repo.SetTelegramChat(5, null), Times.Once);
+    }
+
+    [Fact]
+    public async Task OtherBadRequestErrors_DoNotDetachTheChat()
+    {
+        bot.OnSendMessage = (_, _) => throw new TelegramBotException(400, "Bad Request: message is too long");
+
+        var action = () => CreateService().FinishServiceAlert(Account(UserChatId), "50GB-Plan", "3 روز");
+
+        await action.Should().ThrowAsync<TelegramBotException>();
+
+        account_repo.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RateLimitExhausted_DoesNotDetachTheChat()
+    {
+        bot.OnSendMessage = (_, _) => throw new TelegramBotException(429, "Too Many Requests: retry after 5");
+
+        var action = () => CreateService().SendResetPasswordLink(Account(UserChatId), "code");
+
+        await action.Should().ThrowAsync<TelegramBotException>();
+
+        account_repo.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task OperationsChatFailure_DetachesNoAccount()
+    {
+        bot.OnSendMessage = (_, _) => throw new TelegramBotException(403, "Forbidden: bot was blocked by the user");
+
+        var action = () => CreateService().NewUserRegistrationAlert(Account(UserChatId));
+
+        await action.Should().ThrowAsync<TelegramBotException>();
+
+        // OperationsChatId is config, not an account record: nothing to detach
+        account_repo.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DetachFailure_StillRethrowsTheOriginalSendError()
+    {
+        bot.OnSendMessage = (_, _) => throw new TelegramBotException(403, "Forbidden: bot was blocked by the user");
+
+        account_repo.Setup(repo => repo.SetTelegramChat(5, null))
+            .ThrowsAsync(new InvalidOperationException("db down"));
+
+        var action = () => CreateService().SendResetPasswordLink(Account(UserChatId), "code");
+
+        // the best-effort detach must not mask the failure the caller's
+        // email fallback depends on
+        (await action.Should().ThrowAsync<TelegramBotException>())
+            .Which.ErrorCode.Should().Be(403);
     }
 }

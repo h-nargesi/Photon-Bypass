@@ -28,7 +28,7 @@
 # انتشار اولیه
 ---------------
 [ ] بهتر کردن دیزاین فرانت - مخصوصا صفحه پیش پرداخت
-[ ] logo/link in email bodies
+[x] logo/link in email bodies (شاهد: برندینگ CID + `{title}`/`{site_url}`/`{guide_url}`/`{ovpn_installer_url}` در هر ۵ جفت قالب — `EmailService.ApplyBranding` + `EmailHandler.Build`)
 [ ] امکان غیرفعال کردن ثبت نام
 [ ] امکان انتقال از سرور قدیمی
 [ ] غیرفعال کردن کیف پول
@@ -36,7 +36,7 @@
 # مشاهده وضعیت توسط کاربر
 ---------------------------
 [ ] use check-mark in home-page footer
-[ ] Check email send limit
+[x] Check email send limit (`EmailSendLimiter` — پنجره‌ی لغزان یک‌ساعته، `EmailOptions:MaxSendsPerHour` پیش‌فرض ۵۰۰، صفر = نامحدود؛ reserve قبل از هر I/O شبکه)
 [ ] handle null-value / null-result for plan-info / user-plan-state in front
 [ ] فایلهای لاگ بصورت روزانه جدا شوند
 [ ] زیپ کردن روزانه لاگها

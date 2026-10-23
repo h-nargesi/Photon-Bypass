@@ -51,8 +51,8 @@
 | قفل برای ساخت آیتم مشترک (پروفایل/لیمیت) `[+]` | انجام‌شده | — |
 | email required but mobile `[+]` | انجام‌شده | `AccountBusiness.SetFromModel` |
 | handle null-value در front برای plan-info | باقی‌مانده | Frontend plan pages |
-| logo/link در ایمیل‌ها | باقی‌مانده | `EmailService` قالب‌ها |
-| محدودیت ارسال ایمیل | باقی‌مانده | `AccountBusiness.DelayBetweenWarnings` (نقش throttle) |
+| logo/link در ایمیل‌ها | انجام‌شده | برندینگ CID + `{title}`/`{site_url}`/`{guide_url}`/`{ovpn_installer_url}` در هر ۵ جفت قالب (`EmailService.ApplyBranding` + `EmailHandler.Build`) |
+| محدودیت ارسال ایمیل | انجام‌شده | `EmailSendLimiter` — سقف لغزان یک‌ساعته‌ی سراسری (`EmailOptions:MaxSendsPerHour`، پیش‌فرض ۵۰۰، صفر = نامحدود)؛ `DelayBetweenWarnings` همچنان throttle هر-اکانت است |
 | غیرفعال‌سازی انتخاب زمان برای غیرمجازها | باقی‌مانده | Frontend renewal + `AllowMonthly` |
 | تفکیک روزانه + زیپ لاگ | باقی‌مانده | Serilog config (`appsettings.json`) |
 | ساده‌سازی کوئری‌های repo | باقی‌مانده | `Infrastructure/Repository/*` |

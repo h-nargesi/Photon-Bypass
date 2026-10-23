@@ -169,7 +169,7 @@ internal class AccountMonitoringService(
             if (SocialSrv.Value.Supports(account))
             {
                 dispatches.Add((account, WarnHistory(plan, remains_title), Dispatch(
-                    () => SocialSrv.Value.FinishServiceAlert(account, plan.GetPlanTitle(), remains_title ?? string.Empty))));
+                    () => SendFinishServiceAlert(account, plan, remains_title))));
 
                 continue;
             }
@@ -242,6 +242,30 @@ internal class AccountMonitoringService(
             {
                 throttle.Release();
             }
+        }
+    }
+
+    /// <summary>
+    /// Social-first finish-service alert with a delivery fallback: when the
+    /// social send fails and the account carries a validated email, the same
+    /// warning goes out by email so a dead chat does not silence the account.
+    /// Either channel succeeding satisfies the stamp-after-success contract;
+    /// both failing leaves the account unstamped for the hourly retry.
+    /// </summary>
+    private async Task SendFinishServiceAlert(AccountEntity account, PlanStateEntity plan, string? remains_title)
+    {
+        try
+        {
+            await SocialSrv.Value.FinishServiceAlert(account, plan.GetPlanTitle(), remains_title ?? string.Empty);
+        }
+        catch (Exception social_error)
+        {
+            if (account.EmailAddress == null) throw;
+
+            Log.Warning(social_error, "Social finish-service alert failed, falling back to email: account-id={0}", account.Id);
+
+            await EmailSrv.Value.FinishServiceAlert(
+                account.Fullname, plan.Username, account.EmailAddress, plan.GetPlanTitle(), remains_title);
         }
     }
 

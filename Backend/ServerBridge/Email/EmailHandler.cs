@@ -5,7 +5,7 @@ using Serilog;
 
 namespace PhotonBypass.ServerBridge.Email;
 
-class EmailHandler(IOptions<EmailOptions> options) : IEmailHandler
+class EmailHandler(IOptions<EmailOptions> options, EmailSendLimiter send_limiter) : IEmailHandler
 {
     public EmailOptions Options => options.Value;
 
@@ -27,6 +27,14 @@ class EmailHandler(IOptions<EmailOptions> options) : IEmailHandler
         if (string.IsNullOrWhiteSpace(options.Value.Password))
         {
             throw new InvalidOperationException("EmailOptions: Password is not set");
+        }
+
+        // budget before any network I/O: an exhausted cap is a fast typed
+        // failure — the hourly warning job retries unstamped accounts anyway
+        if (!send_limiter.TryReserve())
+        {
+            throw new InvalidOperationException(
+                $"EmailOptions:MaxSendsPerHour ({send_limiter.Cap}) exceeded — send to {message.ToAddress} rejected; the hourly warning job retries unstamped accounts.");
         }
 
         var mime = Build(message, options.Value);

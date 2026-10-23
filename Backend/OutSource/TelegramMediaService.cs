@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Options;
+using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
+using Serilog;
 
 namespace PhotonBypass.OutSource;
 
@@ -10,12 +12,15 @@ namespace PhotonBypass.OutSource;
 /// warnings go to <see cref="AccountEntity.TelegramChatId"/> (a null chat is
 /// a silent no-op), operator alerts to TelegramOptions:OperationsChatId. The
 /// message bodies mirror the plain-text email templates so both channels
-/// carry the same content.
+/// carry the same content. A user chat that answers dead (blocked bot /
+/// deleted account) is detached from the account and the failure rethrown so
+/// callers can fall back to email.
 /// </summary>
 internal sealed class TelegramMediaService(
     ITelegramBotClient bot_client,
     IOptions<TelegramOptions> telegram_options,
-    IOptions<BrandingOptions> branding_options) : ISocialMediaService
+    IOptions<BrandingOptions> branding_options,
+    Lazy<IAccountRepository> account_repo) : ISocialMediaService
 {
     public bool Supports(AccountEntity account)
     {
@@ -28,7 +33,7 @@ internal sealed class TelegramMediaService(
 
         var branding = branding_options.Value;
 
-        await bot_client.SendMessage(chat_id, $"""
+        await SendToUserChat(account, chat_id, $"""
             سلام،
             درخواست بازیابی رمز عبور برای حساب {account.Username} ثبت شده است.
 
@@ -48,7 +53,7 @@ internal sealed class TelegramMediaService(
 
         var branding = branding_options.Value;
 
-        await bot_client.SendMessage(chat_id, $"""
+        await SendToUserChat(account, chat_id, $"""
             تلاش ناموفق برای ورود به حساب {account.Username} با کلمه عبور اشتباه ثبت شد.
 
             اگر این تلاش از سمت شما نبوده است، لطفاً هرچه سریع‌تر کلمه عبور خود را تغییر دهید.
@@ -65,7 +70,7 @@ internal sealed class TelegramMediaService(
         var branding = branding_options.Value;
         var fullname = string.IsNullOrWhiteSpace(account.Fullname) ? account.Username : account.Fullname;
 
-        await bot_client.SendMessage(chat_id, $"""
+        await SendToUserChat(account, chat_id, $"""
             {fullname} عزیز،
             سرویس شما از نوع {plan_title} به‌زودی منقضی خواهد شد.
 
@@ -93,6 +98,46 @@ internal sealed class TelegramMediaService(
     public Task AlarmServerCapacity(IReadOnlyList<string> alarms)
     {
         return SendToOperations("هشدار ظرفیت سرورها:\n\n" + string.Join("\n", alarms.Select(alarm => $"- {alarm}")));
+    }
+
+    /// <summary>
+    /// Sends to an account-bound chat and detaches it when the Bot API
+    /// reports it unreachable: 403 (bot blocked / account deleted) or
+    /// 400 "chat not found". The original exception is rethrown — even when
+    /// the detach itself fails — so the caller's email fallback (and the
+    /// next hourly run) takes over. Idempotent by design: two concurrent
+    /// sends into the same dead chat may both detach, harmlessly.
+    /// </summary>
+    private async Task SendToUserChat(AccountEntity account, long chat_id, string text)
+    {
+        try
+        {
+            await bot_client.SendMessage(chat_id, text);
+        }
+        catch (TelegramBotException error) when (IsDeadChat(error))
+        {
+            try
+            {
+                await account_repo.Value.SetTelegramChat(account.Id, null);
+            }
+            catch (Exception detach_error)
+            {
+                // the detach is best-effort and must not mask the original
+                // send failure that drives the caller's fallback
+                Log.Error(detach_error, "Detaching the dead Telegram chat failed: account-id={0}", account.Id);
+            }
+
+            Log.Warning(error, "Telegram chat {0} is unreachable (blocked/deleted); detached from account {1}",
+                chat_id, account.Username);
+
+            throw;
+        }
+    }
+
+    private static bool IsDeadChat(TelegramBotException error)
+    {
+        return error.ErrorCode == 403 ||
+               (error.ErrorCode == 400 && error.Description.Contains("chat not found", StringComparison.OrdinalIgnoreCase));
     }
 
     private Task SendToOperations(string text)

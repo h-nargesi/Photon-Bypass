@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using PhotonBypass.ServerBridge.Api;
 using PhotonBypass.ServerBridge.Email;
 using PhotonBypass.ServerBridge.Services;
@@ -25,6 +26,9 @@ public static class ServiceFactory
 
         builder.Services.AddLazyScoped<IApiHandler, ApiHandler>();
         builder.Services.AddLazyScoped<IEmailHandler, EmailHandler>();
+        // singleton so every scoped EmailHandler shares one hourly window
+        builder.Services.AddSingleton(sp => new EmailSendLimiter(
+            sp.GetRequiredService<IOptions<EmailOptions>>().Value.MaxSendsPerHour));
         builder.Services.AddSingleton<ISshHandler, SshHandler>();
         builder.Services.AddSingleton<ITik4NetHandler, Tik4NetHandler>();
         builder.Services.AddSingleton<ResourceSynchronization>();

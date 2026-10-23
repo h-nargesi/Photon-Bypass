@@ -99,7 +99,7 @@
 }
 ```
 
-در صورت نیاز بخش‌های `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند؛ `EmailOptions` عمداً در `appsettings.json` کامیت نمی‌شود و کامل در `secrets.json` می‌آید (`Enabled: true` + credential). بلوک تلگرام فقط اگر کانال فعال می‌شود لازم است: با `Channel: "Telegram"` گارد پروداکشن کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (docs/21 §فعال‌سازی)؛ بدون آن کانال `None` می‌ماند (no-op) و بلوک لازم نیست.
+در صورت نیاز بخش‌های `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند؛ `EmailOptions` عمداً در `appsettings.json` کامیت نمی‌شود و کامل در `secrets.json` می‌آید (`Enabled: true` + credential). کلید عملیاتی `EmailOptions:MaxSendsPerHour` (سقف لغزان یک‌ساعته‌ی سراسری ارسال — پیش‌فرض ۵۰۰، صفر/منفی = نامحدود؛ شیر ایمنی در برابر فال‌بک انبوه به ایمیل هنگام قطع کانال سوشال) secret نیست و اگر سرور SMTP شما سقف ساعتی دیگری دارد، همین‌جا override کنید. بلوک تلگرام فقط اگر کانال فعال می‌شود لازم است: با `Channel: "Telegram"` گارد پروداکشن کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (docs/21 §فعال‌سازی)؛ بدون آن کانال `None` می‌ماند (no-op) و بلوک لازم نیست.
 
 ### (ج) نصب دیتابیس از ابتدا + ساخت ادمین (پیش از بالا آوردن app)
 

@@ -6,6 +6,7 @@ using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Mikrotik.Radius.Model;
+using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
 using PhotonBypass.Test.Mock.MockOutSource;
@@ -210,7 +211,6 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
 
         account_repo_moq.Data["User3"].IsEmailValid = true;
-        account_repo_moq.Data["User4"].IsEmailValid = true;
         account_repo_moq.Data["User4"].TelegramChatId = 555;
         social_moq.SupportsAccounts = true;
 
@@ -235,6 +235,55 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
 
         user3.LastWarningTime.Should().NotBeNull("the email account succeeded and must be stamped");
         user4.LastWarningTime.Should().BeNull("the failed social send stays unstamped for the hourly retry");
+    }
+
+    [Fact]
+    public async Task NotifSendServices_SocialSendFailsWithValidEmail_FallsBackToEmailAndStamps()
+    {
+        using var scope = App.Services.CreateScope();
+
+        var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
+        var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
+        var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
+
+        account_repo_moq.Data["User4"].IsEmailValid = true;
+        account_repo_moq.Data["User4"].TelegramChatId = 555;
+        social_moq.SupportsAccounts = true;
+
+        social_moq.OnFinishServiceAlert += account =>
+        {
+            if (account.Username == "User4")
+            {
+                throw new InvalidOperationException("bot unreachable");
+            }
+        };
+
+        var finishing_list = (await plan_state_repo.GetAll()).Where(plan => plan.IsFinishing()).ToList();
+
+        // membership assert: EmailHandlerMoq is a composition singleton, its
+        // events and counters are not reset per test
+        var user4_emails = new List<EmailMessage>();
+        email_moq.OnSend += mail =>
+        {
+            if (mail.ToAddress == "user4@gmail.com")
+            {
+                user4_emails.Add(mail);
+            }
+        };
+
+        await monitoring.NotifSendServices(finishing_list);
+
+        user4_emails.Should().Contain(mail => mail.Subject.Contains("پایان سرویس"),
+            "the failed social warning must reach the account by email");
+
+        var user4 = account_repo_moq.Data["User4"];
+
+        user4.LastWarningTime.Should().NotBeNull("the email fallback delivered the warning");
+        history_moq.Data.Should().Contain(history =>
+            history.Title == "پایان پلن" && history.Target == user4.Id);
     }
 
     [Fact]

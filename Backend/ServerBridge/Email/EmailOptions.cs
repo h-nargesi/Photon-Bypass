@@ -22,4 +22,12 @@ public class EmailOptions
     public bool EnableSsl { get; set; } = true;
 
     public int SendTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Process-wide ceiling of email sends per sliding hour. Zero or negative
+    /// means unlimited. A run-away safety valve against feedback loops (e.g. a
+    /// social-channel outage falling back to email en masse): attempts are
+    /// counted, not only successful deliveries.
+    /// </summary>
+    public int MaxSendsPerHour { get; set; } = 500;
 }

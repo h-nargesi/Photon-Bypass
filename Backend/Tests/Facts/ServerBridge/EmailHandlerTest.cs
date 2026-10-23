@@ -74,7 +74,7 @@ public class EmailHandlerTest
     [Fact]
     public async Task Send_Disabled_DropsTheMessageWithoutNetworkAccess()
     {
-        var handler = new EmailHandler(Options.Create(new EmailOptions { Enabled = false }));
+        var handler = new EmailHandler(Options.Create(new EmailOptions { Enabled = false }), new EmailSendLimiter(0));
 
         // must complete without ever opening an SMTP connection
         await handler.Send(new EmailMessage { ToAddress = "to@example.com", Subject = "s" });
@@ -88,7 +88,7 @@ public class EmailHandlerTest
             Enabled = true,
             Address = null,
             Password = "secret",
-        }));
+        }), new EmailSendLimiter(0));
 
         var function = () => handler.Send(new EmailMessage { ToAddress = "to@example.com" });
 
@@ -104,13 +104,47 @@ public class EmailHandlerTest
             Enabled = true,
             Address = "from@example.com",
             Password = null,
-        }));
+        }), new EmailSendLimiter(0));
 
         var function = () => handler.Send(new EmailMessage { ToAddress = "to@example.com" });
 
         // regression: this used to report "Address is not set" (copy-paste)
         function.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*Password*");
+    }
+
+    [Fact]
+    public async Task Send_ExhaustedHourlyCap_ThrowsTypedErrorWithoutNetworkIo()
+    {
+        // attempts count, not deliveries: a plain reserve spends the budget
+        var limiter = new EmailSendLimiter(1);
+        limiter.TryReserve().Should().BeTrue();
+
+        var handler = new EmailHandler(Options.Create(new EmailOptions
+        {
+            Enabled = true,
+            Address = "from@example.com",
+            Password = "secret",
+        }), limiter);
+
+        var function = () => handler.Send(new EmailMessage { ToAddress = "to@example.com" });
+
+        // the reserve sits before Build/Connect, so the rejection is a fast
+        // typed failure — no SMTP connection is ever attempted
+        (await function.Should().ThrowAsync<InvalidOperationException>())
+            .WithMessage("*MaxSendsPerHour*");
+    }
+
+    [Fact]
+    public async Task Send_Disabled_ConsumesNoHourlyBudget()
+    {
+        var limiter = new EmailSendLimiter(1);
+
+        var handler = new EmailHandler(Options.Create(new EmailOptions { Enabled = false }), limiter);
+
+        await handler.Send(new EmailMessage { ToAddress = "to@example.com" });
+
+        limiter.TryReserve().Should().BeTrue("a disabled no-op must not spend the shared budget");
     }
 }
 

@@ -261,6 +261,79 @@ public class AuthAppTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public async Task ForgetPassword_Username_SocialSendFailureWithValidEmail_FallsBackToEmailWithTheSameCode()
+    {
+        using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        account_repo_moq.Data["User4"].IsEmailValid = true;
+        account_repo_moq.Data["User4"].TelegramChatId = 777;
+        social_moq.SupportsAccounts = true;
+
+        social_moq.OnSendResetPasswordLink += (_, _) => throw new InvalidOperationException("bot unreachable");
+
+        var stored_code_count = 0;
+        var stored_code = string.Empty;
+        reset_moq.OnAddHashCode += entity =>
+        {
+            stored_code_count++;
+            stored_code = entity.HashCode;
+        };
+
+        EmailMessage? fallback_mail = null;
+        email_handler_moq.OnSend += mail => fallback_mail = mail;
+
+        var result = await auth_app.ForgetPassword("User4");
+
+        // neutral success: the fallback channel delivered the code
+        Assert.Equal(2, result.Code / 100);
+        Assert.Equal("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.", result.Message);
+
+        // a second StoreResetCode would retire the first code — the fallback
+        // must re-announce the SAME stored code instead
+        stored_code_count.Should().Be(1);
+
+        fallback_mail.Should().NotBeNull();
+        fallback_mail!.ToAddress.Should().Be("user4@gmail.com");
+        fallback_mail.PlainTextBody.Should().Contain(stored_code);
+    }
+
+    [Fact]
+    public async Task ForgetPassword_Username_SocialAndEmailBothFail_ThrowsEmailFailureButKeepsTheCode()
+    {
+        using var scope = App.Services.CreateScope();
+        var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
+        var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        account_repo_moq.Data["User4"].IsEmailValid = true;
+        account_repo_moq.Data["User4"].TelegramChatId = 777;
+        social_moq.SupportsAccounts = true;
+
+        social_moq.OnSendResetPasswordLink += (_, _) => throw new InvalidOperationException("bot unreachable");
+        email_handler_moq.OnSend += _ => throw new InvalidOperationException("smtp unavailable");
+
+        var code = string.Empty;
+        reset_moq.OnAddHashCode += entity => code = entity.HashCode;
+
+        var function = () => auth_app.ForgetPassword("User4");
+
+        (await function.Should().ThrowAsync<UserException>())
+            .Which.UserMessage.Should().Contain("ارسال ایمیل ناموفق بود");
+
+        var stored = await reset_moq.Object.GetAccount(code);
+
+        stored.Should().NotBeNull("the stored code must survive both failed channels");
+        stored!.ExpireDate.Should().BeAfter(DateTime.Now);
+    }
+
+    [Fact]
     public async Task ForgetPassword_UsernameLimiter_ConsumesSlotsLikeEveryInput()
     {
         using var scope = App.Services.CreateScope();
