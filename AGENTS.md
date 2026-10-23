@@ -206,10 +206,10 @@ Full reading order and per-file purpose is in [docs/00-index.md](docs/00-index.m
 
 ## Known gaps / starting points
 
-The platform is functional for the customer-facing flow (auth, account, plan renewal + billing, dual-Radius sync, background jobs, email notifications, the Telegram social channel — runtime-selected, see [docs/21-social-media-telegram-channel.md](docs/21-social-media-telegram-channel.md), dynamic pricing, main frontend pages). Incomplete areas:
+The platform is functional for the customer-facing flow (auth, account, plan renewal + card-to-card receipt billing, dual-Radius + x-ui sync, background jobs, email notifications, the Telegram social channel — runtime-selected, see [docs/21-social-media-telegram-channel.md](docs/21-social-media-telegram-channel.md), dynamic pricing, main frontend pages, and the role-based management panel on the single Portal host — see [docs/20-admin-panel-roles.md](docs/20-admin-panel-roles.md)). Incomplete areas:
 
-- **`Backend/Admin`** — only `Program.cs` + empty `AddAdminServices`; no admin controllers. The server/profile/user management panel is not built.
-- **`SetOVpnCertificate`** (`MikrotikRadius/Application/MikrotikDirectService.cs:165`) — throws `NotImplementedException`.
+- **`Backend/Admin` host** — deliberately set aside (docs/20 D7: one Portal host + one Angular app); it stays an empty skeleton (`Program.cs` + empty `AddAdminServices`). The management panel itself is built and lives in Portal (`/api/user/*`, `/api/server/*`, `/api/wallet/*` + frontend `/users`, `/servers`, `/wallet`).
+- **`SetOVpnCertificate`** (`MikrotikRadius/Application/MikrotikDirectService.cs:165`) — throws `NotImplementedException` (deferred to the OpenVPN support phase; gated behind the `ServerFeature.Ovpn` bit).
 - **WhatsApp** — future adapter on the channel-neutral `ISocialMediaService` (one class + one keyed registration in `OutSource/ServiceFactory.cs`; `SocialChannel.WhatsApp` is reserved). No compile-time gates anymore.
 - **Google Auth** — listed as phase 5 in `README.md`.
 
