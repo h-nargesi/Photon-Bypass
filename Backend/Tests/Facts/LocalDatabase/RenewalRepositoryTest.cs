@@ -21,10 +21,10 @@ public class RenewalRepositoryTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
 
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var vpn_repo = scope.ServiceProvider.GetRequiredService<IVpnAccountRepository>();
         var renewal_repo = scope.ServiceProvider.GetRequiredService<IRenewalRepository>();
 
-        var accounts = await account_repo.GetAccountIdByUsername(["RenewA", "RenewB"]);
+        var accounts = await vpn_repo.GetAccountIdByUsername(["RenewA", "RenewB"]);
         var renew_a = accounts["RenewA"];
         var renew_b = accounts["RenewB"];
 

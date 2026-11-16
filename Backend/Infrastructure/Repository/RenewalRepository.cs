@@ -30,16 +30,16 @@ class RenewalRepository(LocalDbContext context) : EditableRepository<RenewalEnti
                    from (
                        select renewal.*,
                               ROW_NUMBER() over (
-                                  partition by renewal.{nameof(RenewalEntity.AccountId)}
+                                  partition by renewal.{nameof(RenewalEntity.VpnAccountId)}
                                   order by renewal.{nameof(RenewalEntity.Id)} desc) as RowNumber
                        from {TableName} renewal
-                       where renewal.{nameof(RenewalEntity.AccountId)} in @account_ids
+                       where renewal.{nameof(RenewalEntity.VpnAccountId)} in @account_ids
                    ) ranked
                    where ranked.RowNumber = 1
                    """;
 
         var result = await QueryAsync<RenewalEntity>(sql, new { account_ids = id_list });
 
-        return result.ToDictionary(renewal => renewal.AccountId);
+        return result.ToDictionary(renewal => renewal.VpnAccountId);
     }
 }

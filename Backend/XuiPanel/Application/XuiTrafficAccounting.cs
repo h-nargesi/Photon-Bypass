@@ -100,7 +100,7 @@ public static class XuiTrafficAccounting
                 rows.Add(new TrafficDataEntity
                 {
                     Id = today_row.Id,
-                    AccountId = today_row.AccountId,
+                    VpnAccountId = today_row.VpnAccountId,
                     NasId = today_row.NasId,
                     SessionId = today_row.SessionId,
                     StartSession = today_row.StartSession,
@@ -113,9 +113,9 @@ public static class XuiTrafficAccounting
             {
                 rows.Add(new TrafficDataEntity
                 {
-                    AccountId = renewal.AccountId,
+                    VpnAccountId = renewal.VpnAccountId,
                     NasId = nas_id,
-                    SessionId = XuiTrafficRow.SessionId(renewal.AccountId, renewal.Id, day),
+                    SessionId = XuiTrafficRow.SessionId(renewal.VpnAccountId, renewal.Id, day),
                     StartSession = day == today ? now : day,
                     EndSession = day == today ? now : day.AddDays(1),
                     DataIn = data_in,

@@ -51,17 +51,21 @@
 | POST | `/api/account/edit-user` | `?target` + body `EditUserModel` | `AccountController.EditUser` | Y | ویرایش اطلاعات target. |
 | POST | `/api/account/change-pass` | body `ChangePasswordContext` | `AccountController.ChangePassword` | Y | تغییر پسورد لاگین (بر اساس کاربر جاری). |
 | GET | `/api/account/history` | `?target` + query `HistoryContext` | `AccountController.GetHistory` | Y | تاریخچه‌ی target. |
-| POST | `/api/vpn/change-ovpn` | body `ChangeOvpnContext` | `VpnController.ChangeOvpnPassword` | Y | تغییر پسورد OpenVpn؛ نیازمند تأیید پسورد اکانت. |
-| GET | `/api/vpn/send-cert-email` | `?target` | `VpnController.SendCertEmail` | Y | ایمیل کانفیگ/گواهی. |
-| GET | `/api/vpn/config-info` | `?target` | `VpnController.ConfigInfo` | Y | kind دیتاپلین + لینک vless زنده (فقط x-ui). |
-| GET | `/api/vpn/download` | `?target` | `VpnController.DownloadConfig` | Y | دانلود واحد کانفیگ (endpoint جداگانه‌ی `download-cert` حذف شد): x-ui → `{username}.txt` با ساختار عنوان/مقدار دوخطی (قاعده‌ی RTL/LTR) + URLهای برندینگ؛ OpenVPN → `{username}.zip` شامل `config.ovpn` (عین گواهی) + `connection-info.txt`. مقادیر استاتیک از `BrandingOptions` می‌آیند. |
-| GET | `/api/vpn/traffic-data` | `?target` | `VpnController.TrafficData` | Y | داده‌های ترافیک (نمودار). |
+| GET | `/api/vpn/accounts` | `?target` | `VpnController.GetAccounts` | Y | لیست اکانت‌های VPN کاربر (یا زیرمجموعه) — سوییچر اکانت (docs/22 §5). |
+| POST | `/api/vpn/change-ovpn` | body `ChangeOvpnContext` (`AccountId`) | `VpnController.ChangeOvpnPassword` | Y | تغییر پسورد/چرخش UUID اکانت VPN؛ نیازمند تأیید پسورد اکانت. |
+| GET | `/api/vpn/send-cert-email` | `?accountId` | `VpnController.SendCertEmail` | Y | ایمیل کانفیگ/گواهی به مالک اکانت. |
+| GET | `/api/vpn/config-info` | `?accountId` | `VpnController.ConfigInfo` | Y | kind دیتاپلین + لینک vless زنده (فقط x-ui). |
+| GET | `/api/vpn/download` | `?accountId` | `VpnController.DownloadConfig` | Y | دانلود واحد کانفیگ (endpoint جداگانه‌ی `download-cert` حذف شد): x-ui → `{username}.txt` با ساختار عنوان/مقدار دوخطی (قاعده‌ی RTL/LTR) + URLهای برندینگ؛ OpenVPN → `{username}.zip` شامل `config.ovpn` (عین گواهی) + `connection-info.txt`. مقادیر استاتیک از `BrandingOptions` می‌آیند. |
+| GET | `/api/vpn/traffic-data` | `?accountId` | `VpnController.TrafficData` | Y | داده‌های ترافیک (نمودار). |
 | GET | `/api/connection/current-con-state` | `?target` | `ConnectionController.GetCurrentConnectionState` | Y | وضعیت اتصال‌های فعال. |
 | POST | `/api/connection/close-con` | body `CloseConnectionContext` | `ConnectionController.CloseConnection` | Y | بستن کانکشن (`Server` + `SessionId`). |
-| GET | `/api/plan/plan-state` | `?target` | `PlanController.GetPlanState` | Y | وضعیت پلن (از `TotalPlanState`). |
-| GET | `/api/plan/plan-info` | `?target` | `PlanController.GetPlanInfo` | Y | اطلاعات پلن جاری. |
-| POST | `/api/plan/estimate` | body `RenewalContext` | `PlanController.Estimate` | Y | برآورد قیمت تمدید. |
-| POST | `/api/plan/renewal` | body `RenewalContext` | `PlanController.Renewal` | Y | همیشه صدور فاکتور تمدید (خالص‌سازی با کیف پول)؛ اجرای پلن فقط از مسیر تسویه انجام می‌شود. |
+| GET | `/api/plan/realms` | — | `PlanController.GetRealms` | Y | realmهای قابل انتخاب خرید (نام + IsSelectable) — docs/22 D4. |
+| GET | `/api/plan/suggest-username` | — | `PlanController.SuggestUsername` | Y | پیشنهاد سیستم برای یوزرنیم VPN بعدی (D3). |
+| GET | `/api/plan/plan-state` | `?accountId` | `PlanController.GetPlanState` | Y | وضعیت پلن اکانت (از `TotalPlanState`). |
+| GET | `/api/plan/plan-info` | `?accountId` | `PlanController.GetPlanInfo` | Y | اطلاعات پلن جاری + `RequiresRealmChoice` (D6). |
+| POST | `/api/plan/estimate` | body `RenewalContext` (`AccountId`) | `PlanController.Estimate` | Y | برآورد قیمت تمدید. |
+| POST | `/api/plan/renewal` | body `RenewalContext` (`AccountId`, `RealmId?`) | `PlanController.Renewal` | Y | صدور فاکتور تمدید؛ `RealmId` برای اکانت stale الزامی (D6) و با تسویه مهاجرت realm اجرا می‌شود. |
+| POST | `/api/plan/new-account` | body `NewAccountContext` (`Username?`, `RealmId`, پلن) | `PlanController.NewAccount` | Y | خرید اول (D9): فاکتور با اکشن `n|...`؛ تسویه، اکانت VPN + اولین Renewal را اتمیک می‌سازد. |
 | POST | `/api/billing/pay` | body `PayRequest {Value, Target?}` | `BillingController.Pay` | Y | صدور فاکتور TopUp (کد فاکتور برمی‌گرداند؛ bounds ۱..۱۰۰٬۰۰۰). |
 | GET | `/api/billing/get-invoice` | `?code` (int) `&target?` | `BillingController.GetInvoice` | Y | مدل کامل فاکتور: `code, kind, status, totalPrice, walletDeduction, payable, walletBalance, allowWallet, hasReceipt, items[], cardInfo[]`. |
 | POST | `/api/billing/register-receipt` | multipart: `code, target?, file XOR text` | `BillingController.RegisterReceipt` | Y | ثبت رسید (تصویر یا متن) → `Verifying`؛ برای فاکتور Plan، اجرای Renewal. اولین endpoint مولتی‌پارت (سقف درخواست ۳MB؛ فرمت‌های jpg/jpeg/png/webp). |
@@ -74,7 +78,8 @@
 | POST | `/api/user/set-role` | body `{Target, Role}` | `UserController.SetRole` | Y + policy **Admin** | فقط User↔Manager؛ خود/ادمین ممنوع (D9)؛ تنزل مدیرِ دارای زیر دست فعال → 400. |
 | POST | `/api/user/set-owner` | body `{Target, Owner?}` | `UserController.SetOwner` | Y + policy **Admin** | attach (به مدیر فعال، بدون چرخه) / detach (`Owner=null`) + بی‌اعتبارسازی کش دسترسی مالک‌ها. |
 | POST | `/api/user/set-self-service` | body `{Target, Allow}` | `UserController.SetSelfService` | Y + policy **Manager** | فلگ مستقل/وابسته (ادمین: هرکس؛ مدیر: فقط زیر دست خودش). |
-| POST | `/api/user/set-status` | body `{Target, Status}` (`AccountStatus`: 0/1/2) | `UserController.SetStatus` | Y + policy **Manager** | غیرفعال‌سازی دووضعیتی (D13؛ ادمین: هرکس بجز خودش — D9): 1=تعلیق VPN (لاگین آزاد، تمدید مسدود)، 2=بلاک کامل. ترنزیشن آزاد بین هر سه وضعیت؛ sync فوری best-effort روی سرورهای VPN (شکست → لاگ + آشتی sweep ساعتی)؛ تغییرات درگیر `Deactivated` کش target-area را بی‌اعتبار می‌کند. جایگزین `set-active` است. |
+| POST | `/api/user/set-status` | body `{Target, Status}` (`PanelUserStatus`: 0/2) | `UserController.SetStatus` | Y + policy **Manager** | وضعیت سطح کاربر (docs/22 D12؛ ادمین: هرکس بجز خودش — D9): 2=بلاک لاگین. sync فوری best-effort روی همه‌ی اکانت‌های VPN کاربر؛ تغییرات درگیر `Deactivated` کش target-area را بی‌اعتبار می‌کند. |
+| POST | `/api/user/set-account-status` | body `{AccountId, Status}` (`VpnAccountStatus`: 0/1/2) | `UserController.SetAccountStatus` | Y + policy **Manager** | وضعیت سطح اکانت VPN (docs/22 D12): تعلیق/فعال‌سازی per-account، مستقل از وضعیت پنل کاربر. |
 | GET | `/api/server/list` | — | `ServerController.GetList` | Y + policy **Admin** | لیست سرورها (docs/20 فاز ۵/D8): فقط فیلدهای اسکالر + `hasConfig` + نام realm — کانفیگ ذخیره‌شده (متنی یا محافظت‌شده) هرگز در پاسخ نیست. |
 | POST | `/api/server/create` | body `SaveServerModel` | `ServerController.Create` | Y + policy **Admin** | ساخت سرور فعال؛ اعتبارسنجی IPv4/طول نام و دامنه (≤۱۵)/پهنای باند مثبت/OS معتبر/بیت‌های شناخته‌شده‌ی `Features`/realm موجود؛ تکرار IP یا نام یا دامنه → 409؛ کانفیگ JSON ارسالی سمت سرور deserialize و `ServerConfigProtection.Protect` می‌شود (نوشتن بدون خواندن). |
 | POST | `/api/server/update` | body `SaveServerModel` با `Id>0` | `ServerController.Update` | Y + policy **Admin** | به‌روزرسانی کامل فیلدهای اسکالر؛ `config` تهی → blob محافظت‌شده‌ی موجود بدون تغییر حمل می‌شود؛ ارسال config → جایگزینی کامل با Protect تازه (+ گارد طول ۴۰۰۰). |
@@ -91,10 +96,11 @@
 | `TokenContext` | `/auth/token` | `Username`, `Password` |
 | `ResetPasswordContext` | `/auth/forget-pass` | `EmailMobile` |
 | `ChangePasswordContext` | `/auth/reset-pass`, `/account/change-pass` | `Token` (کد/پسورد قدیم), `Password` |
-| `ChangeOvpnContext` | `/vpn/change-ovpn` | `Target`, `Token` (پسورد اکانت), `Password` |
+| `ChangeOvpnContext` | `/vpn/change-ovpn` | `AccountId`, `Target?`, `Token` (پسورد اکانت), `Password?` (x-ui آن را نادیده می‌گیرد) |
 | `CloseConnectionContext` | `/connection/close-con` | `Target`, `Server`, `SessionId` |
 | `HistoryContext` | `/account/history` | `From`, `To` |
-| `RenewalContext` | `/plan/estimate`, `/plan/renewal` | `Target`, `SimultaneousUserCount`, `Days?`, `Gigabytes?` |
+| `RenewalContext` | `/plan/estimate`, `/plan/renewal` | `AccountId`, `Target?`, `SimultaneousUserCount`, `Days?`, `Gigabytes?`, `RealmId?` |
+| `NewAccountContext` | `/plan/new-account` | `Username?`, `RealmId`, `SimultaneousUserCount`, `Days?`, `Gigabytes?` |
 
 مدل‌های دامنه‌ای که به‌عنوان body استفاده می‌شوند:
 - `RegisterModel` (`Domain/Account/Model/RegisterModel.cs`) — `extends EditUserModel`.

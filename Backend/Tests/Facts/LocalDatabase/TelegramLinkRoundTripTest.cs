@@ -33,11 +33,11 @@ public class TelegramLinkRoundTripTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
 
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var account_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
         var link_repo = scope.ServiceProvider.GetRequiredService<ITelegramLinkRepository>();
         var handler = scope.ServiceProvider.GetRequiredService<TelegramLinkHandler>();
 
-        var account = await account_repo.GetAccount("tg-user");
+        var account = await account_repo.GetUser("tg-user");
 
         account.Should().NotBeNull();
 
@@ -65,7 +65,7 @@ public class TelegramLinkRoundTripTest : OutSourceLevelServiceInitializer
         // /start with the live code binds the chat
         await handler.Handle(Update(555, "/start live-code"));
 
-        (await account_repo.GetAccount("tg-user"))!.TelegramChatId.Should().Be(555);
+        (await account_repo.GetUser("tg-user"))!.TelegramChatId.Should().Be(555);
 
         bot.Sent.Should().Contain(message => message.ChatId == 555 && message.Text.Contains("متصل شد"));
 
@@ -78,7 +78,7 @@ public class TelegramLinkRoundTripTest : OutSourceLevelServiceInitializer
         // detaching clears the binding
         await account_repo.SetTelegramChat(account.Id, null);
 
-        (await account_repo.GetAccount("tg-user"))!.TelegramChatId.Should().BeNull();
+        (await account_repo.GetUser("tg-user"))!.TelegramChatId.Should().BeNull();
     }
 
     [Fact]
@@ -87,12 +87,12 @@ public class TelegramLinkRoundTripTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
 
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var account_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
         var link_repo = scope.ServiceProvider.GetRequiredService<ITelegramLinkRepository>();
         var handler = scope.ServiceProvider.GetRequiredService<TelegramLinkHandler>();
 
-        var first = await account_repo.GetAccount("tg-user");
-        var second = await account_repo.GetAccount("tg-user-2");
+        var first = await account_repo.GetUser("tg-user");
+        var second = await account_repo.GetUser("tg-user-2");
 
         await account_repo.SetTelegramChat(first!.Id, 777);
 
@@ -106,7 +106,7 @@ public class TelegramLinkRoundTripTest : OutSourceLevelServiceInitializer
         // the same chat tries to link the second account
         await handler.Handle(Update(777, "/start second-code"));
 
-        (await account_repo.GetAccount("tg-user-2"))!.TelegramChatId.Should().BeNull();
+        (await account_repo.GetUser("tg-user-2"))!.TelegramChatId.Should().BeNull();
         bot.Sent.Should().Contain(message => message.Text.Contains("حساب دیگری"));
 
         // and the plain repository path surfaces the raw unique-index error

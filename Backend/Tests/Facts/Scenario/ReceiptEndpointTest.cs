@@ -27,17 +27,18 @@ public class ReceiptEndpointTest(ProgramLevelInitializer.Factory factory) : Http
 
     /// <summary>
     /// Registers a fresh user and issues a Pending plan invoice with a positive
-    /// payable amount through the real estimate + renewal endpoints.
+    /// payable amount through the real new-account endpoint (docs/22 D9: the
+    /// first purchase issues the invoice whose settlement creates the account).
     /// </summary>
     private async Task<int> NewPendingInvoice(string username, string phone)
     {
         await Register(username, phone);
         await Login(username, "Passw0rd1");
 
-        var renewal = await Renewal(username, 1, 120, 50);
-        Assert.NotNull(renewal["invoiceCode"]);
+        var purchase = await NewAccount(null, 1, 1, 120, 50);
+        Assert.NotNull(purchase["invoiceCode"]);
 
-        return int.Parse(renewal["invoiceCode"]!);
+        return int.Parse(purchase["invoiceCode"]!);
     }
 
     [Fact]

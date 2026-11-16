@@ -13,7 +13,7 @@ namespace PhotonBypass.OutSource;
 /// </summary>
 internal sealed class TelegramLinkHandler(
     ITelegramLinkRepository link_repo,
-    IAccountRepository account_repo,
+    IPanelUserRepository panel_user_repo,
     ITelegramBotClient bot_client,
     IOptions<BrandingOptions> branding_options)
 {
@@ -49,7 +49,7 @@ internal sealed class TelegramLinkHandler(
             return;
         }
 
-        var account = await account_repo.GetActiveAccount(link.AccountId);
+        var account = await panel_user_repo.GetActiveUser(link.AccountId);
 
         if (account == null)
         {
@@ -60,11 +60,11 @@ internal sealed class TelegramLinkHandler(
 
         try
         {
-            await account_repo.SetTelegramChat(link.AccountId, message.Chat.Id);
+            await panel_user_repo.SetTelegramChat(link.AccountId, message.Chat.Id);
         }
         catch (SqlException error) when (error.Number is 2601 or 2627)
         {
-            // UK_Account_TelegramChatId: this chat is already bound elsewhere
+            // UK_PanelUser_TelegramChatId: this chat is already bound elsewhere
             await bot_client.SendMessage(message.Chat.Id,
                 "این گفتگو قبلاً به حساب دیگری متصل است. ابتدا اتصال را از آن حساب قطع کنید.");
 

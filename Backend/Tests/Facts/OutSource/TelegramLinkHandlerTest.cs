@@ -22,11 +22,11 @@ public class TelegramLinkHandlerTest
 
     private readonly TelegramLinkRepositoryMoq link_repo_moq = new();
 
-    private readonly Mock<IAccountRepository> account_repo_moq = new();
+    private readonly Mock<IPanelUserRepository> panel_user_repo_moq = new();
 
     private readonly TelegramBotClientFake bot = new();
 
-    private TelegramLinkHandler Handler => new(link_repo_moq.Object, account_repo_moq.Object, bot, Branding);
+    private TelegramLinkHandler Handler => new(link_repo_moq.Object, panel_user_repo_moq.Object, bot, Branding);
 
     private static TelegramUpdate StartUpdate(long chat_id, string? code)
     {
@@ -34,15 +34,15 @@ public class TelegramLinkHandlerTest
             code == null ? "/start" : $"/start {code}"));
     }
 
-    private static AccountEntity ActiveAccount(int id, string username)
+    private static PanelUserEntity ActiveAccount(int id, string username)
     {
-        return new AccountEntity { Id = id, Username = username, Password = "hash" };
+        return new PanelUserEntity { Id = id, Username = username, Password = "hash" };
     }
 
     [Fact]
     public async Task ValidCode_ConsumesAndConnectsTheChat()
     {
-        link_repo_moq.Object.AddCode(new TelegramLinkEntity
+        await link_repo_moq.Object.AddCode(new TelegramLinkEntity
         {
             AccountId = 5,
             Code = "the-code",
@@ -51,12 +51,12 @@ public class TelegramLinkHandlerTest
 
         var account = ActiveAccount(5, "tg-user");
 
-        account_repo_moq.Setup(repo => repo.GetActiveAccount(5)).ReturnsAsync(account);
+        panel_user_repo_moq.Setup(repo => repo.GetActiveUser(5)).ReturnsAsync(account);
 
         int? bound_account = null;
         long? bound_chat = null;
 
-        account_repo_moq.Setup(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()))
+        panel_user_repo_moq.Setup(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()))
             .Callback<int, long?>((account_id, chat_id) => (bound_account, bound_chat) = (account_id, chat_id))
             .Returns(Task.CompletedTask);
 
@@ -72,42 +72,42 @@ public class TelegramLinkHandlerTest
     [Fact]
     public async Task ExpiredCode_IsRejectedWithoutBinding()
     {
-        link_repo_moq.Object.AddCode(new TelegramLinkEntity
+        await link_repo_moq.Object.AddCode(new TelegramLinkEntity
         {
             AccountId = 5,
             Code = "late-code",
             ExpireDate = DateTime.Now.AddMinutes(-1),
         });
 
-        account_repo_moq.Setup(repo => repo.GetActiveAccount(It.IsAny<int>()))
+        panel_user_repo_moq.Setup(repo => repo.GetActiveUser(It.IsAny<int>()))
             .ReturnsAsync(ActiveAccount(5, "tg-user"));
 
         await Handler.Handle(StartUpdate(555, "late-code"));
 
-        account_repo_moq.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
+        panel_user_repo_moq.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
         bot.Sent.Should().ContainSingle().Which.Text.Should().Contain("منقضی");
     }
 
     [Fact]
     public async Task ReplayedCode_IsAlreadyConsumed()
     {
-        link_repo_moq.Object.AddCode(new TelegramLinkEntity
+        await link_repo_moq.Object.AddCode(new TelegramLinkEntity
         {
             AccountId = 5,
             Code = "once-code",
             ExpireDate = DateTime.Now.AddMinutes(10),
         });
 
-        account_repo_moq.Setup(repo => repo.GetActiveAccount(It.IsAny<int>()))
+        panel_user_repo_moq.Setup(repo => repo.GetActiveUser(It.IsAny<int>()))
             .ReturnsAsync(ActiveAccount(5, "tg-user"));
-        account_repo_moq.Setup(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()))
+        panel_user_repo_moq.Setup(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()))
             .Returns(Task.CompletedTask);
 
         await Handler.Handle(StartUpdate(555, "once-code"));
         await Handler.Handle(StartUpdate(555, "once-code"));
 
         // one bind + one "invalid" reply for the replay; never a second bind
-        account_repo_moq.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Once);
+        panel_user_repo_moq.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Once);
         bot.Sent.Should().HaveCount(2);
         bot.Sent[1].Text.Should().Contain("نامعتبر");
     }
@@ -117,42 +117,42 @@ public class TelegramLinkHandlerTest
     {
         await Handler.Handle(StartUpdate(555, "ghost-code"));
 
-        account_repo_moq.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
+        panel_user_repo_moq.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
         bot.Sent.Should().ContainSingle().Which.Text.Should().Contain("نامعتبر");
     }
 
     [Fact]
     public async Task DeactivatedAccount_IsNotBound()
     {
-        link_repo_moq.Object.AddCode(new TelegramLinkEntity
+        await link_repo_moq.Object.AddCode(new TelegramLinkEntity
         {
             AccountId = 5,
             Code = "dead-account-code",
             ExpireDate = DateTime.Now.AddMinutes(10),
         });
 
-        account_repo_moq.Setup(repo => repo.GetActiveAccount(5)).ReturnsAsync((AccountEntity?)null);
+        panel_user_repo_moq.Setup(repo => repo.GetActiveUser(5)).ReturnsAsync((PanelUserEntity?)null);
 
         await Handler.Handle(StartUpdate(555, "dead-account-code"));
 
-        account_repo_moq.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
+        panel_user_repo_moq.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
         bot.Sent.Should().ContainSingle().Which.Text.Should().Contain("غیرفعال");
     }
 
     [Fact]
     public async Task DuplicateChat_ExplainsTheConflict()
     {
-        link_repo_moq.Object.AddCode(new TelegramLinkEntity
+        await link_repo_moq.Object.AddCode(new TelegramLinkEntity
         {
             AccountId = 5,
             Code = "dup-code",
             ExpireDate = DateTime.Now.AddMinutes(10),
         });
 
-        account_repo_moq.Setup(repo => repo.GetActiveAccount(It.IsAny<int>()))
+        panel_user_repo_moq.Setup(repo => repo.GetActiveUser(It.IsAny<int>()))
             .ReturnsAsync(ActiveAccount(5, "tg-user"));
 
-        account_repo_moq.Setup(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()))
+        panel_user_repo_moq.Setup(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()))
             .ThrowsAsync(CreateDuplicateKeyException());
 
         await Handler.Handle(StartUpdate(555, "dup-code"));

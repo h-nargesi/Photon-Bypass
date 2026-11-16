@@ -11,9 +11,13 @@ public class HistoryEntity : IBaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
+    /// <summary>Panel user the event belongs to (docs/22 D11).</summary>
     public int? Issuer { get; set; }
 
     public int Target { get; init; }
+
+    /// <summary>Optional VPN account the event is about (docs/22 D11); null = user-level event.</summary>
+    public int? VpnAccountId { get; init; }
 
     public EventCategory Category { get; init; }
 

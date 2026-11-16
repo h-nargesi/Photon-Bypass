@@ -46,57 +46,52 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : HttpHand
             Assert.Equal(user[prop.Key].ToString(), prop.Value.ToString());
         }
 
-        // /api/plan/estimate
-        var request = new RenewalContext
+        // /api/plan/new-account — the first purchase creates the VPN account
+        // (docs/22 D9); realm 1 is the scenario realm
+        var username = user["username"].ToString()!;
+
+        response = await Client.PostAsJsonAsync("/api/plan/new-account", new NewAccountContext
         {
-            Target = user["username"].ToString(),
+            RealmId = 1,
             SimultaneousUserCount = 1,
             Days = 120,
             Gigabytes = 50,
-        };
-        response = await Client.PostAsJsonAsync("/api/plan/estimate", request);
-        var estimate = await CheckResponseObject(response);
+        });
+        var purchase = await CheckResponseObject(response);
 
-        Assert.NotNull(estimate);
-        Assert.NotNull(estimate["price"]);
-        Assert.NotNull(estimate["days"]);
-        Assert.NotNull(estimate["gigabytes"]);
-        Assert.NotNull(estimate["simultaneousUserCount"]);
+        Assert.NotNull(purchase["invoiceCode"]);
 
-        // add money
-        await FakeAddMoney(user["username"].ToString()!, int.Parse(estimate["price"].ToString()!));
-
-        // /api/plan/renewal
-        response = await Client.PostAsJsonAsync("/api/plan/renewal", request);
-        var renewal = await CheckResponseObject(response);
-
-        Assert.NotNull(renewal);
-        Assert.Equal(estimate["price"].ToString(), renewal["currentPrice"].ToString());
-        Assert.NotNull(renewal["invoiceCode"]);
-
-        // /api/billing/get-invoice
-        response = await Client.GetAsync($"/api/billing/get-invoice?code={renewal["invoiceCode"]}");
+        // /api/billing/get-invoice — kind only; allowWallet needs the balance
+        response = await Client.GetAsync($"/api/billing/get-invoice?code={purchase["invoiceCode"]}");
         var invoice = await CheckResponseObject(response);
 
         Assert.NotNull(invoice);
         Assert.Equal("2", invoice["kind"].ToString());
-        Assert.Equal(estimate["price"].ToString(), invoice["totalPrice"].ToString());
+
+        // add money
+        await FakeAddMoney(username, int.Parse(invoice["totalPrice"].ToString()!));
+
+        response = await Client.GetAsync($"/api/billing/get-invoice?code={purchase["invoiceCode"]}");
+        invoice = await CheckResponseObject(response);
         Assert.Equal("True", invoice["allowWallet"].ToString());
 
         // /api/billing/settle-wallet
         response = await Client.PostAsJsonAsync("/api/billing/settle-wallet",
-            new { code = int.Parse(renewal["invoiceCode"]!) });
+            new { code = int.Parse(purchase["invoiceCode"]!) });
         await CheckResponse(response);
 
+        // /api/vpn/accounts — the purchased account
+        var account_id = (await VpnAccounts()).Single()["id"];
+
         // /api/plan/plan-info
-        response = await Client.GetAsync("/api/plan/plan-info");
+        response = await Client.GetAsync($"/api/plan/plan-info?accountId={account_id}");
         var plan_info = await CheckResponseObject(response);
 
         Assert.NotNull(plan_info);
-        Assert.Equal(estimate["days"].ToString(), plan_info["days"].ToString());
-        Assert.Equal(estimate["gigabytes"].ToString(), plan_info["gigabytes"].ToString());
-        Assert.Equal(estimate["simultaneousUserCount"].ToString(), plan_info["simultaneousUserCount"].ToString());
-        Assert.Equal(user["username"].ToString(), plan_info["target"].ToString());
+        Assert.Equal("120", plan_info["days"].ToString());
+        Assert.Equal("50", plan_info["gigabytes"].ToString());
+        Assert.Equal("1", plan_info["simultaneousUserCount"].ToString());
+        Assert.Equal(username, plan_info["target"].ToString());
 
         // /api/plan/plan-info
     }

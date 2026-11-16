@@ -606,6 +606,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
         var wallet_moq = scope.ServiceProvider.GetRequiredService<WalletRepositoryMoq>();
         var renewal_moq = scope.ServiceProvider.GetRequiredService<RenewalRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
 
         // User99 (manager) renews User2's plan from its own wallet
@@ -626,7 +627,10 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         var renewals_before = renewal_moq.Data.Count;
 
-        var code = (await plan_app.Renewal("User2", 2, 120, 25)).Data!.InvoiceCode!.Value;
+        // the renewal stacks on User2's VPN account (docs/22 D5)
+        var user2_account_id = vpn_account_moq.Data.Single(account => account.Username == "User2").Id;
+
+        var code = (await plan_app.Renewal(user2_account_id, 2, 120, 25, null)).Data!.InvoiceCode!.Value;
 
         // the payer's invoice is visible only in the payer's own view
         job_context.InjectJobContext(99, "User99", "User99");
@@ -644,7 +648,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         // renewal + plan application stay on the target
         Assert.Equal(renewals_before + 1, renewal_moq.Data.Count);
-        Assert.Contains(renewal_moq.Data, r => r.AccountId == 2 && r.WalletDebit == debit.Id);
+        Assert.Contains(renewal_moq.Data, r => r.VpnAccountId == user2_account_id && r.WalletDebit == debit.Id);
 
         // financial history row on the payer, renewal row on the target
         Assert.Contains(history_moq.Data, h => h.Target == 99 && h.Description == "از حساب کم شد.");

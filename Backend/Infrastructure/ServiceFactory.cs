@@ -24,7 +24,8 @@ public static class ServiceFactory
 
         builder.Services.WireServerConfigProtection();
 
-        builder.Services.AddLazyTransient<IAccountRepository, AccountRepository>();
+        builder.Services.AddLazyTransient<IPanelUserRepository, PanelUserRepository>();
+        builder.Services.AddLazyTransient<IVpnAccountRepository, VpnAccountRepository>();
         builder.Services.AddLazyTransient<IHistoryRepository, HistoryRepository>();
         builder.Services.AddLazyTransient<IResetPassRepository, ResetPassRepository>();
         builder.Services.AddLazyTransient<ITelegramLinkRepository, TelegramLinkRepository>();

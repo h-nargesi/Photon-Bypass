@@ -22,6 +22,10 @@ describe('DashboardComponent', () => {
       main: { username: 'main', fullname: 'Main', email: 'm@t.l' },
       sub1: { username: 'sub1', fullname: 'Sub', email: 's@t.l' },
     },
+    accounts: [
+      { id: 7, username: 'main', realmId: 1, realmName: 'R1', status: 0, created: 0 },
+      { id: 8, username: 'main2', realmId: 2, realmName: 'R2', status: 0, created: 0 },
+    ],
   };
 
   beforeEach(() => {
@@ -76,7 +80,7 @@ describe('DashboardComponent', () => {
       {
         code: 200,
         data: capabilities ?? {
-          target: 'main',
+          accountId: 7,
           days: 120,
           gigabytes: 50,
           simultaneousUserCount: 2,
@@ -143,7 +147,7 @@ describe('DashboardComponent', () => {
   it('hides the ovpn buttons until the plan reports cert support', async () => {
     fixture.detectChanges();
     await flushInitialLoad({
-      target: 'main',
+      accountId: 7,
       kind: 'usermanager',
       supportsOvpnCert: false,
       supportsPasswordChange: true,
@@ -160,7 +164,7 @@ describe('DashboardComponent', () => {
   it('hides the change-password link when the data-plane forbids it', async () => {
     fixture.detectChanges();
     await flushInitialLoad({
-      target: 'main',
+      accountId: 7,
       kind: 'xui',
       supportsOvpnCert: false,
       supportsPasswordChange: false,
@@ -177,7 +181,7 @@ describe('DashboardComponent', () => {
   it('renders the vless link row and rotation entry for xui data-planes', async () => {
     fixture.detectChanges();
     await flushInitialLoad({
-      target: 'main',
+      accountId: 7,
       kind: 'xui',
       supportsOvpnCert: false,
       supportsPasswordChange: false,
@@ -202,7 +206,7 @@ describe('DashboardComponent', () => {
   it('copies the vless link to the clipboard on demand', async () => {
     fixture.detectChanges();
     await flushInitialLoad({
-      target: 'main',
+      accountId: 7,
       kind: 'xui',
       supportsOvpnCert: false,
       supportsPasswordChange: false,
@@ -226,7 +230,7 @@ describe('DashboardComponent', () => {
   it('resets the copy state and reports an error when the clipboard rejects', async () => {
     fixture.detectChanges();
     await flushInitialLoad({
-      target: 'main',
+      accountId: 7,
       kind: 'xui',
       supportsOvpnCert: false,
       supportsPasswordChange: false,

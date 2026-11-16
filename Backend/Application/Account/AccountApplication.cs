@@ -4,6 +4,7 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Domain.Servers;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
@@ -12,7 +13,9 @@ using Serilog;
 namespace PhotonBypass.Application.Account;
 
 class AccountApplication(
-    IAccountRepository account_repo,
+    IPanelUserRepository panel_user_repo,
+    Lazy<IVpnAccountRepository> vpn_account_repo,
+    Lazy<IRealmRepository> realm_repo,
     Lazy<IHistoryRepository> history_repo,
     Lazy<IWalletRepository> wallet_repo,
     Lazy<ITelegramLinkRepository> telegram_link_repo,
@@ -22,18 +25,20 @@ class AccountApplication(
     /// <summary>Lifetime of a Telegram link code (D2: one-time, short-lived).</summary>
     private static readonly TimeSpan TelegramLinkLifetime = TimeSpan.FromMinutes(15);
 
-    private IAccountRepository AccountRepo { get; } = account_repo;
+    private IPanelUserRepository PanelUserRepo { get; } = panel_user_repo;
+    private Lazy<IVpnAccountRepository> VpnAccountRepo { get; } = vpn_account_repo;
+    private Lazy<IRealmRepository> RealmRepo { get; } = realm_repo;
     private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
     private Lazy<IWalletRepository> WalletRepo { get; } = wallet_repo;
     private Lazy<ITelegramLinkRepository> TelegramLinkRepo { get; } = telegram_link_repo;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
-    public async Task<AccountEntity> GetActiveUser(string username)
+    public async Task<PanelUserEntity> GetActiveUser(string username)
     {
-        var account = (await AccountRepo.GetAccount(username)) ??
+        var account = (await PanelUserRepo.GetUser(username)) ??
                       throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{username}");
 
-        if (account.Status == AccountStatus.Deactivated)
+        if (account.Status == PanelUserStatus.Deactivated)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={account.Username}");
         }
@@ -45,7 +50,7 @@ class AccountApplication(
     {
         var account = await GetActiveUser(username);
 
-        var target_area = (await AccountRepo.GetActiveTargetArea(account.Id))
+        var target_area = (await PanelUserRepo.GetActiveTargetArea(account.Id))
             .Select(entity => new TargetModel
             {
                 Username = entity.Username,
@@ -62,6 +67,7 @@ class AccountApplication(
         });
 
         var balance = await WalletRepo.Value.GetBalance(account.Id);
+        var accounts = await LoadVpnAccounts(account.Id);
 
         return ApiResult<UserModel>.Success(new UserModel
         {
@@ -73,6 +79,7 @@ class AccountApplication(
             Role = account.Role,
             AllowSelfService = account.UserType.HasFlag(UserTypes.AllowSelfService),
             TargetArea = target_area,
+            Accounts = accounts,
         });
     }
 
@@ -98,25 +105,25 @@ class AccountApplication(
 
         account.SetFromModel(model);
 
-        await AccountRepo.Save(account);
+        await PanelUserRepo.Save(account);
 
         return ApiResult.Success("ذخیره شد.");
     }
 
     public async Task<ApiResult> ChangePassword(string target, string token, string password)
     {
-        var account = await AccountRepo.GetAccount(target);
+        var account = await PanelUserRepo.GetUser(target);
 
         return await ChangePassword(account, token, password);
     }
 
-    public async Task<ApiResult> ChangePassword(AccountEntity? account, string token, string password)
+    public async Task<ApiResult> ChangePassword(PanelUserEntity? account, string token, string password)
     {
-        if (account is not { Status: not AccountStatus.Deactivated } || !PasswordHasher.Verify(token, account.Password))
+        if (account is not { Status: not PanelUserStatus.Deactivated } || !PasswordHasher.Verify(token, account.Password))
         {
             if (account != null)
             {
-                if (account.Status != AccountStatus.Deactivated)
+                if (account.Status != PanelUserStatus.Deactivated)
                 {
                     await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
                     {
@@ -138,9 +145,9 @@ class AccountApplication(
         return await SetPassword(account, password);
     }
 
-    public async Task<ApiResult> ChangePassword(AccountEntity? account, string password)
+    public async Task<ApiResult> ChangePassword(PanelUserEntity? account, string password)
     {
-        if (account is not { Status: not AccountStatus.Deactivated })
+        if (account is not { Status: not PanelUserStatus.Deactivated })
         {
             throw new UserException("کاربر یافت نشد یا غیرفعال است!",
                 $"Cannot change password, account is null or inactive.");
@@ -149,7 +156,7 @@ class AccountApplication(
         return await SetPassword(account, password);
     }
 
-    private async Task<ApiResult> SetPassword(AccountEntity account, string password)
+    private async Task<ApiResult> SetPassword(PanelUserEntity account, string password)
     {
         // every password-setting path funnels through here (change-pass with
         // the current token, reset-pass codes, admin/manager set-password)
@@ -157,7 +164,7 @@ class AccountApplication(
 
         account.Password = PasswordHasher.Hash(password);
 
-        await AccountRepo.Save(account);
+        await PanelUserRepo.Save(account);
 
         await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
@@ -173,9 +180,11 @@ class AccountApplication(
 
     public async Task<ApiResult<IList<HistoryModel>>> GetHistory(string target, DateTime? from, DateTime? to)
     {
-        var records = await HistoryRepo.Value.GetHistory(target, from, to);
+        var owner = await GetActiveUser(target);
+
+        var records = await HistoryRepo.Value.GetHistory(owner.Id, from, to);
         var issuer_ids = records.Select(h => h.Issuer ?? 0).Where(id => id > 0);
-        var issuers = await AccountRepo.GetUsernamesByAccountId(issuer_ids);
+        var issuers = await PanelUserRepo.GetUsernamesByUserId(issuer_ids);
 
         var result = records.Select(history => new HistoryModel
         {
@@ -244,12 +253,39 @@ class AccountApplication(
 
         if (account.TelegramChatId != null)
         {
-            await AccountRepo.SetTelegramChat(account.Id, null);
+            await PanelUserRepo.SetTelegramChat(account.Id, null);
 
             Log.Information("[user: {0}] Telegram chat detached: account-id={1}",
                 JobContext.Value.Username, account.Id);
         }
 
         return ApiResult.Success("اتصال تلگرام قطع شد.");
+    }
+
+    private async Task<IList<UserVpnAccountModel>> LoadVpnAccounts(int user_id)
+    {
+        var accounts = await VpnAccountRepo.Value.GetVisibleByUser(user_id);
+        var realm_names = await LoadRealmNames(accounts.Select(account => account.RealmId));
+
+        return accounts.Select(account => new UserVpnAccountModel
+        {
+            Id = account.Id,
+            Username = account.Username,
+            RealmId = account.RealmId,
+            RealmName = realm_names.GetValueOrDefault(account.RealmId),
+            Status = (int)account.Status,
+            Created = account.Created,
+        }).ToList();
+    }
+
+    private async Task<Dictionary<int, string>> LoadRealmNames(IEnumerable<int> realm_ids)
+    {
+        var ids = realm_ids.Distinct().ToList();
+
+        if (ids.Count == 0) return [];
+
+        var realms = await RealmRepo.Value.GetByIds(ids);
+
+        return realms.ToDictionary(pair => pair.Key, pair => pair.Value.Name);
     }
 }

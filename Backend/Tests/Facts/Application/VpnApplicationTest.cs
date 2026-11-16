@@ -28,7 +28,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
-        var func = () => vpn_app.ChangeVpnPassword("Invalid Username", "new_password");
+        var func = () => vpn_app.ChangeVpnPassword(123_456, "new_password");
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -38,7 +38,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
-        var func = () => vpn_app.ChangeVpnPassword("InactiveUser7", "new_password");
+        var func = () => vpn_app.ChangeVpnPassword(7, "new_password");
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -48,7 +48,9 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
-        var func = () => vpn_app.ChangeVpnPassword("User6", "new_password");
+
+        // docs/08 contract kept: credential operations require an active plan
+        var func = () => vpn_app.ChangeVpnPassword(6, "new_password");
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -71,12 +73,12 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
             Assert.Equal(new_password, parameters.Where(p => p.Name == "password").Select(p => p.Value).FirstOrDefault());
         };
 
-        AccountEntity? saved_account = null;
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        VpnAccountEntity? saved_account = null;
+        var account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         account_moq.OnSave += account => saved_account = account;
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User99", new_password);
+            .ChangeVpnPassword(99, new_password);
 
         Assert.True(is_saved);
         Assert.Equal(2, data.Code / 100);
@@ -91,10 +93,10 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var is_saved = false;
-        scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>().OnSave += _ => is_saved = true;
+        scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>().OnSave += _ => is_saved = true;
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User99", "");
+            .ChangeVpnPassword(99, "");
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.UserMessage.Should().Contain("کلمه عبور خالی است");
@@ -107,12 +109,16 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var is_saved = false;
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         account_moq.OnSave += _ => is_saved = true;
 
-        // User2 plan is restricted to realm 2 which has no active radius server
+        // the account realm carries no active radius server at all
+        scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>()
+            .Setup(x => x.GetActiveRadiusInRealmOrAll(1))
+            .ReturnsAsync([]);
+
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User2", "new-password");
+            .ChangeVpnPassword(2, "new-password");
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.UserMessage.Should().Contain("تغییر کلمه عبور VPN برای این سرور ممکن نیست");
@@ -129,11 +135,11 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
         api_moq.AddClient("User2", "live-uuid-2", 300, 500);
 
-        AccountEntity? saved_account = null;
-        scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>().OnSave += account => saved_account = account;
+        VpnAccountEntity? saved_account = null;
+        scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>().OnSave += account => saved_account = account;
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User2", "user-supplied-password");
+            .ChangeVpnPassword(2, "user-supplied-password");
 
         Assert.Equal(2, data.Code / 100);
         data.Message.Should().Contain("چرخش شناسه اتصال");
@@ -157,10 +163,10 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         SetupXuiRealm(scope);
 
         var is_saved = false;
-        scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>().OnSave += _ => is_saved = true;
+        scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>().OnSave += _ => is_saved = true;
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User2", "any");
+            .ChangeVpnPassword(2, "any");
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.UserMessage.Should().Contain("شناسه‌ی اتصال شما روی سرور یافت نشد");
@@ -173,14 +179,13 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         SetupXuiRealm(scope);
-        scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>().Data["User2"].LastCredentialRotateTime =
-            DateTime.Now.AddMinutes(-10);
+        GetVpnAccount(scope, 2).LastCredentialRotateTime = DateTime.Now.AddMinutes(-10);
 
         var is_saved = false;
-        scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>().OnSave += _ => is_saved = true;
+        scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>().OnSave += _ => is_saved = true;
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User2", "any");
+            .ChangeVpnPassword(2, "any");
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.UserMessage.Should()
@@ -194,14 +199,13 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         SetupXuiRealm(scope);
-        scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>().Data["User2"].LastCredentialRotateTime =
-            DateTime.Now.AddMinutes(-61);
+        GetVpnAccount(scope, 2).LastCredentialRotateTime = DateTime.Now.AddMinutes(-61);
 
         var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
         api_moq.AddClient("User2", "live-uuid-2", 0, 0);
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User2", "");
+            .ChangeVpnPassword(2, "");
 
         Assert.Equal(2, data.Code / 100);
     }
@@ -214,14 +218,13 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         SetupXuiRealm(scope);
         scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<ManagementOptions>>().Value
             .MinUuidRotationMinutes = 0;
-        scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>().Data["User2"].LastCredentialRotateTime =
-            DateTime.Now.AddMinutes(-1);
+        GetVpnAccount(scope, 2).LastCredentialRotateTime = DateTime.Now.AddMinutes(-1);
 
         var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
         api_moq.AddClient("User2", "live-uuid-2", 0, 0);
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User2", "");
+            .ChangeVpnPassword(2, "");
 
         Assert.Equal(2, data.Code / 100);
     }
@@ -231,7 +234,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
-        var func = () => vpn_app.SendCertEmail("Invalid Username");
+        var func = () => vpn_app.SendCertEmail(123_456);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -241,7 +244,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
-        var func = () => vpn_app.SendCertEmail("InactiveUser7");
+        var func = () => vpn_app.SendCertEmail(7);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -251,7 +254,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
-        var func = () => vpn_app.SendCertEmail("User8");
+        var func = () => vpn_app.SendCertEmail(8);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -261,7 +264,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
-        var func = () => vpn_app.SendCertEmail("User6");
+        var func = () => vpn_app.SendCertEmail(6);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -281,7 +284,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         };
 
         await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .SendCertEmail("User2");
+            .SendCertEmail(2);
 
         Assert.True(is_saved);
     }
@@ -294,8 +297,8 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
 
         // realm 2 NAS without the OVPN capability bit
         server_moq
-            .Setup(x => x.GetActiveNasInRealmOrAll(2))
-            .ReturnsAsync([NewServer(21, 2, features: ServerFeature.Sstp)]);
+            .Setup(x => x.GetActiveNasInRealmOrAll(1))
+            .ReturnsAsync([NewServer(21, 1, features: ServerFeature.Sstp)]);
 
         var email_sent = false;
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += _ => email_sent = true;
@@ -304,7 +307,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>().OnExecute += (_, _) => cert_touched = true;
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .SendCertEmail("User2");
+            .SendCertEmail(2);
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.UserMessage.Should().Contain("کانفیگ اتصال این سرور از نوع OpenVPN نیست");
@@ -320,14 +323,14 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
 
         // OVPN bit is set but the certificate method for Ubuntu NAS is not implemented
         server_moq
-            .Setup(x => x.GetActiveNasInRealmOrAll(2))
-            .ReturnsAsync([NewServer(21, 2, features: ServerFeature.Nas | ServerFeature.Ovpn, os_type: OperatingSystem.Ubuntu)]);
+            .Setup(x => x.GetActiveNasInRealmOrAll(1))
+            .ReturnsAsync([NewServer(21, 1, features: ServerFeature.Nas | ServerFeature.Ovpn, os_type: OperatingSystem.Ubuntu)]);
 
         var email_sent = false;
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += _ => email_sent = true;
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .SendCertEmail("User2");
+            .SendCertEmail(2);
 
         await func.Should().ThrowAsync<UserException>();
         Assert.False(email_sent);
@@ -341,14 +344,16 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         var plan_moq = scope.ServiceProvider.GetRequiredService<PlanStateRepositoryMoq>();
 
         // User8 has no registered email address; the download path must not require one
+        // (the plan row mirrors the account: id 8, owner 8, realm 1)
         plan_moq.Setup(x => x.GetPlanState(8))
             .ReturnsAsync(new PlanStateEntity
             {
                 Id = 8,
                 Username = "User8",
-                Status = AccountStatus.Active,
+                UserId = 8,
+                Status = VpnAccountStatus.Active,
                 SimultaneousUser = 1,
-                RestrictedRealmId = 2,
+                RealmId = 1,
                 TrafficLimit = 1073741824,
                 TimeLimitInDays = 120,
                 ExpirationDate = DateTime.Now.AddDays(111),
@@ -356,7 +361,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
             });
 
         var file = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .DownloadVpnConfig("User8");
+            .DownloadVpnConfig(8);
 
         file.FileName.Should().Be("User8.zip");
         file.ContentType.Should().Be("application/zip");
@@ -370,11 +375,11 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
 
-        AccountEntity? saved_account = null;
-        scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>().OnSave += account => saved_account = account;
+        VpnAccountEntity? saved_account = null;
+        scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>().OnSave += account => saved_account = account;
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User99", "new-password");
+            .ChangeVpnPassword(99, "new-password");
 
         Assert.Equal(2, data.Code / 100);
         Assert.NotNull(saved_account);
@@ -387,11 +392,10 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
 
-        scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>().Data["User99"].LastCredentialRotateTime =
-            DateTime.Now;
+        GetVpnAccount(scope, 99).LastCredentialRotateTime = DateTime.Now;
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User99", "new-password");
+            .ChangeVpnPassword(99, "new-password");
 
         Assert.Equal(2, data.Code / 100);
     }
@@ -403,17 +407,17 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
 
         // realm 2 carrying both an x-ui and a UserManager radius server
         scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>()
-            .Setup(x => x.GetActiveRadiusInRealmOrAll(2))
+            .Setup(x => x.GetActiveRadiusInRealmOrAll(1))
             .ReturnsAsync([
-                NewServer(21, 2, ServerFeature.Xui | ServerFeature.V2ray),
-                NewServer(22, 2, ServerFeature.UserManager),
+                NewServer(21, 1, ServerFeature.Xui | ServerFeature.V2ray),
+                NewServer(22, 1, ServerFeature.UserManager),
             ]);
 
         var is_saved = false;
-        scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>().OnSave += _ => is_saved = true;
+        scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>().OnSave += _ => is_saved = true;
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .ChangeVpnPassword("User2", "new-password");
+            .ChangeVpnPassword(2, "new-password");
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.UserMessage.Should().Contain("تغییر شناسه‌ی اتصال برای این سرور پشتیبانی نمی‌شود");
@@ -431,8 +435,8 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         // certificate section stays hidden (ServerFeature.Nas is a mask
         // that would imply Ovpn)
         scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>()
-            .Setup(x => x.GetActiveNasInRealmOrAll(2))
-            .ReturnsAsync([NewServer(31, 2, features: ServerFeature.Sstp)]);
+            .Setup(x => x.GetActiveNasInRealmOrAll(1))
+            .ReturnsAsync([NewServer(31, 1, features: ServerFeature.Sstp)]);
 
         var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
         api_moq.AddClient("User2", "live-uuid-2", 0, 0);
@@ -446,7 +450,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         };
 
         await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .SendCertEmail("User2");
+            .SendCertEmail(2);
 
         sent_body.Should().Contain("vless://live-uuid-2@");
         sent_body.Should().NotContain("OpenVPN");
@@ -476,7 +480,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         };
 
         await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .SendCertEmail("User2");
+            .SendCertEmail(2);
 
         send_count.Should().Be(1);
         sent_body.Should().Contain("vless://live-uuid-2@");
@@ -495,7 +499,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         api_moq.AddClient("User2", "live-uuid-2", 0, 0);
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .GetConfigInfo("User2");
+            .GetConfigInfo(2);
 
         Assert.Equal(2, data.Code / 100);
         data.Data.Kind.Should().Be("xui");
@@ -508,7 +512,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .GetConfigInfo("User99");
+            .GetConfigInfo(99);
 
         Assert.Equal(2, data.Code / 100);
         data.Data.Kind.Should().Be("usermanager");
@@ -526,7 +530,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         api_moq.AddClient("User2", "live-uuid-2", 0, 0);
 
         var file = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .DownloadVpnConfig("User2");
+            .DownloadVpnConfig(2);
 
         file.FileName.Should().Be("User2.txt");
         file.ContentType.Should().Be("text/plain; charset=utf-8");
@@ -565,7 +569,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         // the link fetch fails (no client on the panel) and must surface as a
         // friendly user-facing error, not a raw infrastructure exception
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .GetConfigInfo("User2");
+            .GetConfigInfo(2);
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.UserMessage.Should().Contain("دریافت کانفیگ اتصال از سرور در حال حاضر ممکن نیست");
@@ -579,7 +583,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         SetupXuiRealm(scope);
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .DownloadVpnConfig("User2");
+            .DownloadVpnConfig(2);
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.UserMessage.Should().Contain("دریافت کانفیگ اتصال از سرور در حال حاضر ممکن نیست");
@@ -599,12 +603,12 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         };
 
         await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .SendCertEmail("User2");
+            .SendCertEmail(2);
 
         emailed_cert.Should().NotBeNull();
 
         var file = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .DownloadVpnConfig("User2");
+            .DownloadVpnConfig(2);
 
         file.FileName.Should().Be("User2.zip");
         file.ContentType.Should().Be("application/zip");
@@ -633,6 +637,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         var download_event = history_moq.Data.SingleOrDefault(h => h.Description == "کانفیگ اتصال دانلود شد.");
         download_event.Should().NotBeNull();
         download_event.Target.Should().Be(2);
+        download_event.VpnAccountId.Should().Be(2);
     }
 
     private static byte[] ReadZipEntry(ZipArchive archive, string entry_name)
@@ -652,7 +657,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .GetConfigInfo("Invalid Username");
+            .GetConfigInfo(123_456);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -663,7 +668,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .GetConfigInfo("User6");
+            .GetConfigInfo(6);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -674,7 +679,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .DownloadVpnConfig("Invalid Username");
+            .DownloadVpnConfig(123_456);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -685,16 +690,22 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var func = () => scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .DownloadVpnConfig("User6");
+            .DownloadVpnConfig(6);
 
         await func.Should().ThrowAsync<UserException>();
+    }
+
+    private static VpnAccountEntity GetVpnAccount(IServiceScope scope, int account_id)
+    {
+        return scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>()
+            .Data.Single(account => account.Id == account_id);
     }
 
     private static void SetupXuiRealm(IServiceScope scope)
     {
         scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>()
-            .Setup(x => x.GetActiveRadiusInRealmOrAll(2))
-            .ReturnsAsync([NewServer(21, 2, ServerFeature.Xui | ServerFeature.V2ray)]);
+            .Setup(x => x.GetActiveRadiusInRealmOrAll(1))
+            .ReturnsAsync([NewServer(21, 1, ServerFeature.Xui | ServerFeature.V2ray)]);
     }
 
     private static ServerEntity NewServer(int id, int realm_id, ServerFeature features,
@@ -720,7 +731,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .TrafficData("User99");
+            .TrafficData(99);
 
         Assert.NotNull(data.Data);
         Assert.Equal(30, data.Data.Labels.Length);
@@ -743,7 +754,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var data = await scope.ServiceProvider.GetRequiredService<IVpnApplication>()
-            .TrafficData("User2");
+            .TrafficData(2);
 
         Assert.NotNull(data.Data);
         Assert.Equal(30, data.Data.Labels.Length);

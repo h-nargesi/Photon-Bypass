@@ -8,6 +8,7 @@ using PhotonBypass.Application.Authentication;
 using PhotonBypass.Application.Vpn;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using Serilog;
 
@@ -20,13 +21,24 @@ public class VpnController(
     IVpnApplication application, IJobContext job, Lazy<IAccessService> access, Lazy<IAuthApplication> auth) :
     ResultHandlerController(job, access)
 {
+    /// <summary>The account switcher list (docs/22 §3.5): my accounts, or a subordinate's.</summary>
+    [HttpGet("accounts")]
+    public async Task<ApiResult> GetAccounts([FromQuery] string? target)
+    {
+        await LoadJobContextAsync(target);
+
+        var result = await application.GetAccounts(target ?? JobContext.Target);
+
+        return SafeApiResult(result);
+    }
+
     // re-validates the portal password → must sit behind the auth throttle,
     // otherwise it is a brute-force bypass of the /api/auth rate limit
     [HttpPost("change-ovpn")]
     [EnableRateLimiting(ServiceFactory.AuthRateLimitPolicy)]
     public async Task<ApiResult> ChangeOvpnPassword([FromBody] ChangeOvpnContext context)
     {
-        await LoadJobContextAsync(context.Target);
+        await LoadJobContextAsync(context.AccountId, context.Target);
 
         if (string.IsNullOrWhiteSpace(context.Token))
         {
@@ -45,47 +57,52 @@ public class VpnController(
             return user;
         }
 
-        var result = await application.ChangeVpnPassword(JobContext.Target, context.Password ?? string.Empty);
+        var result = await application.ChangeVpnPassword(context.AccountId!.Value, context.Password ?? string.Empty);
 
         return SafeApiResult(result);
     }
 
     [HttpGet("send-cert-email")]
-    public async Task<ApiResult> SendCertEmail([FromQuery] string? target)
+    public async Task<ApiResult> SendCertEmail([FromQuery] int? accountId)
     {
-        await LoadJobContextAsync(target);
+        await LoadJobContextAsync(accountId);
 
-        var result = await application.SendCertEmail(JobContext.Target);
+        var result = await application.SendCertEmail(accountId!.Value);
 
         return SafeApiResult(result);
     }
 
     [HttpGet("config-info")]
-    public async Task<ApiResult> ConfigInfo([FromQuery] string? target)
+    public async Task<ApiResult> ConfigInfo([FromQuery] int? accountId)
     {
-        await LoadJobContextAsync(target);
+        await LoadJobContextAsync(accountId);
 
-        var result = await application.GetConfigInfo(JobContext.Target);
+        var result = await application.GetConfigInfo(accountId!.Value);
 
         return SafeApiResult(result);
     }
 
     [HttpGet("download")]
-    public async Task<IActionResult> DownloadConfig([FromQuery] string? target)
+    public async Task<IActionResult> DownloadConfig([FromQuery] int? accountId)
     {
-        await LoadJobContextAsync(target);
+        if (accountId == null)
+        {
+            throw new UserException("شناسه‌ی اکانت VPN ارسال نشده است!", "accountId query parameter is required", 400);
+        }
 
-        var file = await application.DownloadVpnConfig(JobContext.Target);
+        await LoadJobContextAsync(accountId);
+
+        var file = await application.DownloadVpnConfig(accountId!.Value);
 
         return File(file.Content, file.ContentType, file.FileName);
     }
 
     [HttpGet("traffic-data")]
-    public async Task<ApiResult> TrafficData([FromQuery] string? target)
+    public async Task<ApiResult> TrafficData([FromQuery] int? accountId)
     {
-        await LoadJobContextAsync(target);
+        await LoadJobContextAsync(accountId);
 
-        var result = await application.TrafficData(JobContext.Target);
+        var result = await application.TrafficData(accountId!.Value);
 
         return SafeApiResult(result);
     }

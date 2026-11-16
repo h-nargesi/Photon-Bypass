@@ -65,24 +65,53 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
         Assert.Single(prices);
         Assert.Equal(3, prices[0].Count);
 
+        // /api/vpn/accounts — a fresh user owns no VPN account yet (docs/22 D9)
+        Assert.Empty(await VpnAccounts());
+
+        // /api/plan/new-account — the first purchase creates the VPN account
+        var realm_id = int.Parse((await Realms()).Single(realm => realm["isSelectable"] == "True")["id"]!);
+
+        var purchase = await NewAccount(null, realm_id, 1, 120, 50);
+        Assert.NotNull(purchase["invoiceCode"]);
+
+        // /api/billing/get-invoice — before the top-up only the kind is
+        // asserted; allowWallet needs wallet_balance >= totalPrice
+        var invoice = await GetInvoice(int.Parse(purchase["invoiceCode"]!));
+        Assert.NotNull(invoice);
+        Assert.Equal("2", invoice["kind"]);
+
+        // add money
+        await FakeAddMoney(username, int.Parse(invoice["totalPrice"]!));
+
+        // /api/billing/get-invoice — with the balance in place the wallet
+        // settlement becomes available
+        invoice = await GetInvoice(int.Parse(purchase["invoiceCode"]!));
+        Assert.Equal("True", invoice["allowWallet"]);
+
+        // /api/billing/settle-wallet
+        await SettleWallet(int.Parse(purchase["invoiceCode"]!));
+
+        // the account exists now: D3 keeps the panel username for the first one
+        var account_row = (await VpnAccounts()).Single();
+        Assert.Equal(username, account_row["username"]);
+
+        var account_id = int.Parse(account_row["id"]!);
+
         // /api/plan/plan-state
-        var plan_state = await PlanState();
+        var plan_state = await PlanState(account_id);
         Assert.NotNull(plan_state);
-        Assert.Null(plan_state["remainsTitle"]);
-        Assert.Null(plan_state["remainsTrafficPercent"]);
-        Assert.Null(plan_state["remainsTimePercent"]);
-        Assert.Equal("0", plan_state["simultaneousUserCount"]);
+        Assert.Equal("1", plan_state["simultaneousUserCount"]);
 
         // /api/plan/plan-info
-        var plan_info = await PlanInfo();
+        var plan_info = await PlanInfo(account_id);
         Assert.NotNull(plan_info);
-        Assert.Null(plan_info["days"]);
-        Assert.Null(plan_info["gigabytes"]);
-        Assert.Equal("0", plan_info["simultaneousUserCount"]);
+        Assert.Equal("120", plan_info["days"]);
+        Assert.Equal("50", plan_info["gigabytes"]);
+        Assert.Equal("1", plan_info["simultaneousUserCount"]);
         Assert.Equal(username, plan_info["target"]);
 
-        // /api/plan/estimate
-        var estimate = await Estimate(username, 1, 120, 50);
+        // /api/plan/estimate — a renewal estimate for the existing account
+        var estimate = await Estimate(account_id, 1, 120, 50);
         Assert.NotNull(estimate);
         Assert.NotNull(estimate["price"]);
         Assert.NotNull(estimate["days"]);
@@ -92,14 +121,14 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
         // add money
         await FakeAddMoney(username, int.Parse(estimate["price"]!));
 
-        // /api/plan/renewal
-        var renewal = await Renewal(username, 1, 120, 50);
+        // /api/plan/renewal — stacks a second plan on the same account
+        var renewal = await Renewal(account_id, 1, 120, 50);
         Assert.NotNull(renewal);
         Assert.Equal(estimate["price"], renewal["currentPrice"]);
         Assert.NotNull(renewal["invoiceCode"]);
 
         // /api/billing/get-invoice
-        var invoice = await GetInvoice(int.Parse(renewal["invoiceCode"]!));
+        invoice = await GetInvoice(int.Parse(renewal["invoiceCode"]!));
         Assert.NotNull(invoice);
         Assert.Equal("2", invoice["kind"]);
         Assert.Equal(estimate["price"], invoice["totalPrice"]);
@@ -109,7 +138,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
         await SettleWallet(int.Parse(renewal["invoiceCode"]!));
 
         // /api/plan/plan-info
-        plan_info = await PlanInfo();
+        plan_info = await PlanInfo(account_id);
         Assert.NotNull(plan_info);
         Assert.Equal(estimate["days"], plan_info["days"]);
         Assert.Equal(estimate["gigabytes"], plan_info["gigabytes"]);
@@ -117,7 +146,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
         Assert.Equal(username, plan_info["target"]);
 
         // /api/vpn/change-ovpn
-        await ChangeOVpn(username, password, "change-ovp-password");
+        await ChangeOVpn(account_id, password, "change-ovp-password");
 
         // /api/account/history
     }

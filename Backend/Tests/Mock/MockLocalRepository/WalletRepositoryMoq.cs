@@ -14,12 +14,12 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
 {
     public readonly Dictionary<int, List<WalletEntity>> Data;
 
-    public WalletRepositoryMoq(TransactionalMockDbContext db_context, AccountRepositoryMoq account_moq)
-        : this(db_context, account_moq, FilePath)
+    public WalletRepositoryMoq(TransactionalMockDbContext db_context, PanelUserRepositoryMoq panel_user_moq)
+        : this(db_context, panel_user_moq, FilePath)
     {
     }
 
-    protected WalletRepositoryMoq(TransactionalMockDbContext db_context, AccountRepositoryMoq account_moq,
+    protected WalletRepositoryMoq(TransactionalMockDbContext db_context, PanelUserRepositoryMoq panel_user_moq,
         string file_path)
     {
         var raw_text = File.ReadAllText(file_path)
@@ -42,7 +42,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
         Setup(x => x.GetInvoice(It.IsAny<string>(), It.IsAny<int>()))
             .Returns<string, int>((user, code) =>
             {
-                if (!account_moq.Data.TryGetValue(user, out var account))
+                if (!panel_user_moq.Data.TryGetValue(user, out var account))
                 {
                     return Task.FromResult(new List<WalletEntity>());
                 }

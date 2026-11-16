@@ -27,7 +27,7 @@ public class AccountRadiusSyncRadiusDeskService : IInfraAccountRadiusSyncService
         throw new NotImplementedException();
     }
 
-    public Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
+    public Task SyncUserAndActive(ServerEntity radius, VpnAccountEntity account, RenewalEntity renewal)
     {
         throw new NotImplementedException();
     }

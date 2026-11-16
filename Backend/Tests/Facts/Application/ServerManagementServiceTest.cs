@@ -475,32 +475,39 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task GetRealmsCapacityState_UnrestrictedPlan_CountsInEveryRealm()
+    public async Task GetRealmsCapacityState_PlanDemand_CountedOnlyUnderItsRealm()
     {
         using var scope = App.Services.CreateScope();
         var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
 
-        UsePlanStates(scope, NewPlan(realm_id: null, traffic_limit: BytesInGigLong, days: 30));
+        // docs/22 §2: VpnAccount.RealmId is NOT NULL — the unrestricted
+        // bucket-0 fan-out is gone, demand lands on the plan's realm only
+        UsePlanStates(scope, NewPlan(realm_id: 1, traffic_limit: BytesInGigLong, days: 30));
 
         var states = (await manager.GetRealmsCapacityState()).ToDictionary(s => s.RealmId);
 
         Assert.Equal([1, 3, 4], states.Keys.Order().ToArray());
-        Assert.All(states.Values, state => Assert.Equal(BytesInGigLong, state.DemandBytes));
+        Assert.Equal(BytesInGigLong, states[1].DemandBytes);
+        Assert.Equal(0, states[3].DemandBytes);
+        Assert.Equal(0, states[4].DemandBytes);
     }
 
     [Fact]
-    public async Task GetRealmsCapacityState_UnrestrictedAccount_CountedInEveryRealm()
+    public async Task GetRealmsCapacityState_ActiveClient_CountedOnlyUnderItsRealm()
     {
         using var scope = App.Services.CreateScope();
         var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
 
-        // T4-C: the client count fans out exactly like the demand — default server data
-        UsePlanStates(scope, NewPlan(realm_id: null, traffic_limit: BytesInGigLong, days: 30));
+        // T4-C: the client count no longer fans out either — the account is
+        // counted once, under its own realm
+        UsePlanStates(scope, NewPlan(realm_id: 1, traffic_limit: BytesInGigLong, days: 30));
 
         var states = (await manager.GetRealmsCapacityState()).ToDictionary(s => s.RealmId);
 
         Assert.Equal([1, 3, 4], states.Keys.Order().ToArray());
-        Assert.All(states.Values, state => Assert.Equal(1, state.ActiveClients));
+        Assert.Equal(1, states[1].ActiveClients);
+        Assert.Equal(0, states[3].ActiveClients);
+        Assert.Equal(0, states[4].ActiveClients);
     }
 
     [Fact]
@@ -649,9 +656,10 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         Assert.Equal(-1, states[3].Rate);
         Assert.False(states[3].IsEligibleForAssignment);
 
-        // the closed realm loses the assignment to the next candidate (realm 1)
+        // the closed realm is never chosen; with per-realm demand (docs/22 §2 —
+        // bucket-0 spread gone) realm 4 carries no fixture demand and wins
         var realm = await manager.GetAvailableRealm();
-        Assert.Equal(1, realm.Id);
+        Assert.Equal(4, realm.Id);
     }
 
     [Fact]
@@ -802,7 +810,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
             .ReturnsAsync([.. plans]);
     }
 
-    private static PlanStateEntity NewPlan(int? realm_id, long? traffic_limit = null, short? days = null,
+    private static PlanStateEntity NewPlan(int realm_id, long? traffic_limit = null, short? days = null,
         int? rate_limit_meg = null, byte users = 1, bool expired = false, long? traffic_left = null,
         bool inactive = false, string username = "User1", int row_number = 1)
     {
@@ -810,10 +818,10 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         {
             Id = 1,
             Username = username,
-            Status = inactive ? AccountStatus.Deactivated : AccountStatus.Active,
+            Status = inactive ? VpnAccountStatus.Deactivated : VpnAccountStatus.Active,
             RowNumber = row_number,
             SimultaneousUser = users,
-            RestrictedRealmId = realm_id,
+            RealmId = realm_id,
             TrafficLimit = traffic_limit,
             TimeLimitInDays = days,
             RateLimitInMeg = rate_limit_meg,

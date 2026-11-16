@@ -126,6 +126,7 @@ export class DashboardComponent implements OnInit {
     await this.loadCurrentUser();
     this.loadData();
     this.detectTargetChanges();
+    this.detectAccountChanges();
   }
 
   showTagetInUserPanel(): boolean {
@@ -135,19 +136,32 @@ export class DashboardComponent implements OnInit {
     );
   }
 
-  sendCertificateViaEmail(toMe: boolean): void {
+  get currentAccountUsername(): string {
+    return this.user_service.currentAccount?.username ?? this.targetName ?? '';
+  }
+
+  get currentRealmName(): string {
+    return this.user_service.currentAccount?.realmName ?? '';
+  }
+
+  /// docs/22 §3.5: reload the per-account widgets on a switcher change
+  private detectAccountChanges(): void {
+    this.user_service.onAccountChanged
+      .pipe(takeUntilDestroyed(this.destroy_ref))
+      .subscribe(() => this.loadData());
+  }
+
+  sendCertificateViaEmail(): void {
     this.sending_cert_email = true;
     this.service
-      .sendCertificateViaEmail(
-        toMe ? this.current_user?.username : this.user_service.targetName
-      )
+      .sendCertificateViaEmail(this.user_service.accountId)
       .subscribe(() => (this.sending_cert_email = false));
   }
 
   downloadCertificate(): void {
     this.downloading_cert = true;
     this.service
-      .downloadCertificate(this.user_service.targetName)
+      .downloadCertificate(this.user_service.accountId)
       .subscribe({
         next: (response) => {
           this.downloading_cert = false;
@@ -164,13 +178,12 @@ export class DashboardComponent implements OnInit {
     if (!this.connections || this.connections.length < 1) return;
     if (index < 0 || index >= this.connections.length) return;
 
-    const target = this.user_service.targetName;
     const connection = this.connections[index];
 
     connection.closing = true;
 
     this.service
-      .closeConnection(connection.server, connection.sessionId, target)
+      .closeConnection(connection.server, connection.sessionId, this.user_service.accountId)
       .subscribe((result) => {
         if (result.status() >= ResultStatus.warning) return;
 
@@ -265,7 +278,7 @@ export class DashboardComponent implements OnInit {
 
   private loadConnections() {
     this.service
-      .fetchCurrentConnections(this.user_service.targetName)
+      .fetchCurrentConnections(this.user_service.accountId)
       .subscribe((connections) => {
         this.connections = connections;
         this.connection_count = (connections?.length ?? 0).toString();
@@ -278,13 +291,13 @@ export class DashboardComponent implements OnInit {
 
   private loadPlanInfo() {
     this.service
-      .fetchPlanState(this.user_service.targetName)
+      .fetchPlanState(this.user_service.accountId)
       .subscribe((info) => (this.plan_info = info));
   }
 
   private loadPlanCapabilities() {
     this.service
-      .fetchPlanInfo(this.user_service.targetName)
+      .fetchPlanInfo(this.user_service.accountId)
       .subscribe(info => {
         this.plan_capabilities = info;
 
@@ -294,14 +307,14 @@ export class DashboardComponent implements OnInit {
 
   private loadConfigInfo() {
     this.service
-      .fetchConfigInfo(this.user_service.targetName)
+      .fetchConfigInfo(this.user_service.accountId)
       .subscribe(info => (this.config_info = info));
   }
 
   private saveCertificateFile(response: HttpResponse<Blob>): void {
     if (!response.ok || !response.body) return;
 
-    const file_name = this.fileDispositionName(response) ?? `${this.user_service.targetName}.zip`;
+    const file_name = this.fileDispositionName(response) ?? `${this.currentAccountUsername}.zip`;
     const download_url = URL.createObjectURL(response.body);
     const anchor = document.createElement('a');
     anchor.href = download_url;

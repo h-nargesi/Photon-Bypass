@@ -30,4 +30,13 @@ public class ManagementOptions
     /// release. Enabling it later creates independent (self-service) accounts.
     /// </summary>
     public bool AllowRegistration { get; set; }
+
+    /// <summary>
+    /// Inactivity window after which renewing a VPN account requires the user
+    /// to re-pick its realm (docs/22 D6). Keeps the old hardcoded 7-day value
+    /// of <c>PlanApplication</c>; conceptually coupled to — but independent
+    /// from — <see cref="PhotonBypass.Domain.Account.Business.AccountBusiness.MaxDaysDeactivatePlanToDisable"/>.
+    /// </summary>
+    [Range(1, 365)]
+    public int RealmReassignInactivityDays { get; set; } = 7;
 }

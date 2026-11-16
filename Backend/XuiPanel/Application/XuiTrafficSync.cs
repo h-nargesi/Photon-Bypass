@@ -18,7 +18,7 @@ public interface IXuiTrafficSync
 public class XuiTrafficSync(
     Lazy<IXuiApi> api,
     Lazy<IServerRepository> server_repo,
-    Lazy<IAccountRepository> account_repo,
+    Lazy<IVpnAccountRepository> account_repo,
     Lazy<IRenewalRepository> renewal_repo,
     Lazy<ITrafficDataRepository> traffic_data_repo,
     Lazy<IRealmRepository> realm_repo,
@@ -28,7 +28,7 @@ public class XuiTrafficSync(
 
     private Lazy<IXuiApi> Api { get; } = api;
     private Lazy<IServerRepository> ServerRepo { get; } = server_repo;
-    private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
+    private Lazy<IVpnAccountRepository> AccountRepo { get; } = account_repo;
     private Lazy<IRenewalRepository> RenewalRepo { get; } = renewal_repo;
     private Lazy<ITrafficDataRepository> TrafficDataRepo { get; } = traffic_data_repo;
     private Lazy<IRealmRepository> RealmRepo { get; } = realm_repo;

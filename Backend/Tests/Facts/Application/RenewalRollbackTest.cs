@@ -64,8 +64,12 @@ public class SettlementRollbackTest : UnitLevelServiceInitializer
     {
         var moq = new Mock<IAccountRadiusSyncService>();
 
-        moq.Setup(x => x.SyncUserAndActive(It.IsAny<AccountEntity>(), It.IsAny<RenewalEntity>()))
+        moq.Setup(x => x.SyncUserAndActive(It.IsAny<VpnAccountEntity>(), It.IsAny<RenewalEntity>()))
             .ThrowsAsync(new Exception("radius sync down"));
+
+        // the stale target renews through the migration path (docs/22 D6)
+        moq.Setup(x => x.MigrateUserRealm(It.IsAny<VpnAccountEntity>(), It.IsAny<int>(), It.IsAny<RenewalEntity>()))
+            .ThrowsAsync(new Exception("radius migration down"));
 
         moq.Setup(x => x.DeactivateUsers(It.IsAny<IEnumerable<string>>()))
             .Callback(() => deactivated = true)
@@ -107,7 +111,7 @@ public class SettlementRollbackPayerSeparationTest : UnitLevelServiceInitializer
 
         var renewals_before = renewal_moq.Data.Count;
 
-        var code = (await billing_app.IssuePlanInvoice(230, "User3t|2u|120d|75g", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(230, "User3t|2u|120d|75g|1r", "پلن تست")).Data!.Value;
 
         await Assert.ThrowsAsync<UserException>(() => billing_app.SettleWallet(code));
 
@@ -129,8 +133,12 @@ public class SettlementRollbackPayerSeparationTest : UnitLevelServiceInitializer
     {
         var moq = new Mock<IAccountRadiusSyncService>();
 
-        moq.Setup(x => x.SyncUserAndActive(It.IsAny<AccountEntity>(), It.IsAny<RenewalEntity>()))
+        moq.Setup(x => x.SyncUserAndActive(It.IsAny<VpnAccountEntity>(), It.IsAny<RenewalEntity>()))
             .ThrowsAsync(new Exception("radius sync down"));
+
+        // the stale target renews through the migration path (docs/22 D6)
+        moq.Setup(x => x.MigrateUserRealm(It.IsAny<VpnAccountEntity>(), It.IsAny<int>(), It.IsAny<RenewalEntity>()))
+            .ThrowsAsync(new Exception("radius migration down"));
 
         moq.Setup(x => x.DeactivateUsers(It.IsAny<IEnumerable<string>>()))
             .Callback(() => deactivated = true)
@@ -176,8 +184,12 @@ public class SettlementRollbackCompensationFailureTest : UnitLevelServiceInitial
     {
         var moq = new Mock<IAccountRadiusSyncService>();
 
-        moq.Setup(x => x.SyncUserAndActive(It.IsAny<AccountEntity>(), It.IsAny<RenewalEntity>()))
+        moq.Setup(x => x.SyncUserAndActive(It.IsAny<VpnAccountEntity>(), It.IsAny<RenewalEntity>()))
             .ThrowsAsync(new Exception("radius sync down"));
+
+        // the stale target renews through the migration path (docs/22 D6)
+        moq.Setup(x => x.MigrateUserRealm(It.IsAny<VpnAccountEntity>(), It.IsAny<int>(), It.IsAny<RenewalEntity>()))
+            .ThrowsAsync(new Exception("radius migration down"));
 
         moq.Setup(x => x.DeactivateUsers(It.IsAny<IEnumerable<string>>()))
             .ThrowsAsync(new Exception("deactivate also down"));

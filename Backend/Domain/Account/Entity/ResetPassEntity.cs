@@ -10,6 +10,7 @@ public class ResetPassEntity : IBaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
+    /// <summary>Panel user the code was issued for (docs/22 D11).</summary>
     public int AccountId { get; set; }
 
     public DateTime ExpireDate { get; set; }

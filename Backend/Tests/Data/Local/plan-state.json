@@ -4,52 +4,57 @@
     "Username": "User99",
     "Status": 0,
     "SimultaneousUser": 1,
-    "RestrictedRealmId": null,
     "TrafficLimit": 1073741824,
     "TimeLimitInDays": 120,
     "ExpirationDate": "now+111",
-    "TrafficLeft": 1073001004
+    "TrafficLeft": 1073001004,
+    "RealmId": 1,
+    "UserId": 99
   },
   {
     "Id": 2,
     "Username": "User2",
     "Status": 0,
     "SimultaneousUser": 1,
-    "RestrictedRealmId": 2,
     "TrafficLimit": 1073741824,
-    "TimeLimitInDays": 120
+    "TimeLimitInDays": 120,
+    "RealmId": 1,
+    "UserId": 2
   },
   {
     "Id": 3,
     "Username": "User3",
     "Status": 0,
     "SimultaneousUser": 1,
-    "RestrictedRealmId": 3,
     "TrafficLimit": 1073741824,
     "TimeLimitInDays": 120,
     "LastConnectTime": "today-7",
     "ExpirationDate": "now-5",
-    "TrafficLeft": 0
+    "TrafficLeft": 0,
+    "RealmId": 3,
+    "UserId": 3
   },
   {
     "Id": 4,
     "Username": "User4",
     "Status": 0,
     "SimultaneousUser": 1,
-    "RestrictedRealmId": 10,
     "TrafficLimit": 1073741824,
     "TimeLimitInDays": 120,
     "LastConnectTime": "today-40",
     "ExpirationDate": "now-1",
-    "TrafficLeft": 0
+    "TrafficLeft": 0,
+    "RealmId": 1,
+    "UserId": 4
   },
   {
     "Id": 10,
     "Username": "User10",
     "Status": 0,
     "SimultaneousUser": 1,
-    "RestrictedRealmId": 2,
     "TrafficLimit": 1073741824,
-    "TimeLimitInDays": 120
+    "TimeLimitInDays": 120,
+    "RealmId": 1,
+    "UserId": 10
   }
 ]

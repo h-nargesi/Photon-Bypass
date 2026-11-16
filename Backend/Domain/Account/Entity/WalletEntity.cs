@@ -11,6 +11,7 @@ public class WalletEntity : IBaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
+    /// <summary>Panel user the wallet row belongs to (docs/22 D8: payer = panel user).</summary>
     public int AccountId { get; set; }
 
     public int Amount { get; set; }

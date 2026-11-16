@@ -5,6 +5,8 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Business;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Domain.Plan;
+using PhotonBypass.Domain.Servers;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
@@ -13,7 +15,10 @@ using Serilog;
 namespace PhotonBypass.Application.Account;
 
 class UserManagementApplication(
-    IAccountRepository account_repo,
+    IPanelUserRepository panel_user_repo,
+    Lazy<IVpnAccountRepository> vpn_account_repo,
+    Lazy<IRealmRepository> realm_repo,
+    Lazy<IPlanStateRepository> plan_state_repo,
     Lazy<IAccountApplication> account_app,
     Lazy<IHistoryRepository> history_repo,
     Lazy<ISelfServiceGuard> self_service_guard,
@@ -25,7 +30,13 @@ class UserManagementApplication(
 
     private const string ManagementHistoryTitle = "مدیریت";
 
-    private IAccountRepository AccountRepo { get; } = account_repo;
+    private IPanelUserRepository PanelUserRepo { get; } = panel_user_repo;
+
+    private Lazy<IVpnAccountRepository> VpnAccountRepo { get; } = vpn_account_repo;
+
+    private Lazy<IRealmRepository> RealmRepo { get; } = realm_repo;
+
+    private Lazy<IPlanStateRepository> PlanStateRepo { get; } = plan_state_repo;
 
     private Lazy<IAccountApplication> AccountApp { get; } = account_app;
 
@@ -56,7 +67,11 @@ class UserManagementApplication(
         // manager → own subordinates (inactive included); admin → everyone
         int? owner_id = actor.Role == AccountRole.Admin ? null : actor.Id;
 
-        var (rows, total) = await AccountRepo.SearchAccounts(owner_id, search, page, ListPageSize);
+        var (rows, total) = await PanelUserRepo.SearchUsers(owner_id, search, page, ListPageSize);
+
+        // docs/22 §3.6: the VPN accounts nest under their user rows — one
+        // paged query, never per-row
+        var accounts = await VpnAccountRepo.Value.GetAccountsOverview(rows.Select(row => row.Username));
 
         var items = rows.Select(row => new UserRowModel
         {
@@ -70,10 +85,21 @@ class UserManagementApplication(
             Owner = row.Owner,
             Created = row.Created,
             CreatedTitle = row.Created.ToPersianString(),
-            SimultaneousUser = row.SimultaneousUser,
-            ExpirationDate = row.ExpirationDate,
-            TrafficLeft = row.TrafficLeft,
-            LastConnectTime = row.LastConnectTime,
+            Accounts = accounts.Where(account => account.Owner == row.Username)
+                .Select(account => new UserAccountRowModel
+                {
+                    Id = account.AccountId,
+                    Username = account.Username,
+                    RealmId = account.RealmId,
+                    RealmName = account.RealmName,
+                    Status = account.Status,
+                    Created = account.Created,
+                    SimultaneousUser = account.SimultaneousUser,
+                    ExpirationDate = account.ExpirationDate,
+                    TrafficLeft = account.TrafficLeft,
+                    LastConnectTime = account.LastConnectTime,
+                })
+                .ToList(),
         });
 
         return ApiResult<PagedResult<UserRowModel>>.Success(new PagedResult<UserRowModel>
@@ -94,9 +120,9 @@ class UserManagementApplication(
         var actor = await ResolveActor();
 
         var account = AccountBusiness.CreateFromModel(model);
-        var duplicated = await AccountRepo.CheckUniqueData(account.Username, account.Email, account.Mobile);
+        var duplicated = await PanelUserRepo.CheckUniqueData(account.Username, account.Email, account.Mobile);
 
-        // same contract as the unique-index catch in AccountRepository.Save
+        // same contract as the unique-index catch in PanelUserRepository.Save
         // (docs/20 step 17), with friendlier per-field messages
         if ((duplicated & 1) == 1)
         {
@@ -144,10 +170,11 @@ class UserManagementApplication(
             account.UserType |= UserTypes.AllowSelfService;
         }
 
-        account.VpnPassword = HashHandler.GenerateHashCode();
+        // docs/22 D9: a panel user is created bare — its VPN account (and
+        // credentials) arrive with the first purchase
         account.Password = PasswordHasher.Hash(model.Password);
 
-        await AccountRepo.Save(account);
+        await PanelUserRepo.Save(account);
 
         await SaveHistory(account.Id, "کاربر جدید ساخته شد.");
 
@@ -199,7 +226,7 @@ class UserManagementApplication(
         EnsureNotAdmin(account, "نقش حساب ادمین قابل تغییر نیست!");
 
         if (account.Role == AccountRole.Manager && role == AccountRole.User &&
-            await AccountRepo.HasActiveSubordinate(account.Id))
+            await PanelUserRepo.HasActiveSubordinate(account.Id))
         {
             throw new UserException("این مدیر زیر دست فعال دارد؛ ابتدا آنها را جدا یا غیرفعال کنید!",
                 $"Cannot demote a manager with active subordinates (docs/20 §3): target={account.Username}");
@@ -207,7 +234,7 @@ class UserManagementApplication(
 
         account.Role = role;
 
-        await AccountRepo.Save(account);
+        await PanelUserRepo.Save(account);
 
         // the cached target area carries the role — drop it so the next
         // login/checks pick the new one up immediately
@@ -234,7 +261,7 @@ class UserManagementApplication(
 
         account.Owner = new_owner?.Id;
 
-        await AccountRepo.Save(account);
+        await PanelUserRepo.Save(account);
 
         // both target areas changed shape: the detached and the attached manager
         if (old_owner_id.HasValue)
@@ -283,7 +310,7 @@ class UserManagementApplication(
             account.UserType &= ~UserTypes.AllowSelfService;
         }
 
-        await AccountRepo.Save(account);
+        await PanelUserRepo.Save(account);
 
         await SaveHistory(account.Id, allow
             ? "دسترسی مالی (self-service) فعال شد."
@@ -294,7 +321,7 @@ class UserManagementApplication(
         return ApiResult.Success("وضعیت دسترسی مالی کاربر ذخیره شد.");
     }
 
-    public async Task<ApiResult> SetStatus(string target, AccountStatus status)
+    public async Task<ApiResult> SetStatus(string target, PanelUserStatus status)
     {
         var actor = await ResolveActor();
         var account = await GetTarget(target);
@@ -317,7 +344,7 @@ class UserManagementApplication(
         if (!Enum.IsDefined(status))
         {
             throw new UserException("این وضعیت قابل اعمال نیست!",
-                $"Undefined account status (docs/20 D13): {status}");
+                $"Undefined panel-user status (docs/22 D12): {status}");
         }
 
         if (account.Status == status)
@@ -325,29 +352,100 @@ class UserManagementApplication(
             return ApiResult.Success("وضعیت کاربر تغییر نکرد.");
         }
 
-        var was_deactivated = account.Status == AccountStatus.Deactivated;
+        var was_deactivated = account.Status == PanelUserStatus.Deactivated;
 
         account.Status = status;
 
-        await AccountRepo.Save(account);
+        await PanelUserRepo.Save(account);
+
+        // docs/22 D12: panel deactivation carries the VPN accounts with it
+        // (old whole-account semantics), but a manager-suspended account
+        // keeps its suspension across a later reactivation (docs/20 D13)
+        if (status == PanelUserStatus.Deactivated)
+        {
+            await VpnAccountRepo.Value.SetStatus(
+                (await VpnAccountRepo.Value.GetByUser(account.Id)).Select(vpn_account => vpn_account.Id),
+                VpnAccountStatus.Deactivated);
+        }
+        else if (was_deactivated)
+        {
+            var vpn_accounts = await VpnAccountRepo.Value.GetByUser(account.Id);
+
+            await VpnAccountRepo.Value.SetStatus(
+                vpn_accounts.Where(vpn_account => vpn_account.Status == VpnAccountStatus.Deactivated)
+                    .Select(vpn_account => vpn_account.Id),
+                VpnAccountStatus.Active);
+        }
 
         // the cached target area only depends on the Deactivated flag — drop
         // it on transitions crossing that boundary so access rules apply now
-        if (was_deactivated || status == AccountStatus.Deactivated)
+        if (was_deactivated || status == PanelUserStatus.Deactivated)
         {
             Access.Value.InvalidateTargetArea(account.Username);
         }
 
         await SaveHistory(account.Id, PersianStatusHistory(status));
 
-        Log.Information("Account status changed by {0}: target={1}, status={2}", actor.Username, account.Username, status);
+        Log.Information("Panel-user status changed by {0}: target={1}, status={2}", actor.Username, account.Username, status);
 
-        // best-effort immediate VPN sync: adapters skip clients already in
-        // the desired state, and the hourly sweep reconciles any failure —
-        // closing live sessions is the radius server's own job (D-D)
+        // best-effort immediate VPN sync of every account the user owns:
+        // adapters skip clients already in the desired state, and the hourly
+        // sweep reconciles any failure — closing live sessions is the radius
+        // server's own job (D-D)
+        await SyncAccountStatuses(account, status == PanelUserStatus.Active);
+
+        return ApiResult.Success(PersianStatusMessage(status));
+    }
+
+    public async Task<ApiResult> SetAccountStatus(int account_id, VpnAccountStatus status)
+    {
+        var actor = await RequireManager();
+
+        if (!Enum.IsDefined(status))
+        {
+            throw new UserException("این وضعیت قابل اعمال نیست!",
+                $"Undefined VPN-account status (docs/22 D12): {status}");
+        }
+
+        var account = await VpnAccountRepo.Value.GetAccount(account_id)
+                      ?? throw new UserException("اکانت VPN پیدا نشد!", $"VPN account not found: id={account_id}");
+
+        if (actor.Role != AccountRole.Admin)
+        {
+            var owner = await PanelUserRepo.GetActiveUser(account.UserId);
+
+            if (owner is not { Owner: int owner_id } || owner_id != actor.Id)
+            {
+                throw Forbidden("این اکانت VPN متعلق به زیرمجموعهی شما نیست!", actor);
+            }
+        }
+
+        if (account.Status == status)
+        {
+            return ApiResult.Success("وضعیت اکانت تغییر نکرد.");
+        }
+
+        account.Status = status;
+
+        await VpnAccountRepo.Value.Save(account);
+
+        await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
+        {
+            Target = account.UserId,
+            VpnAccountId = account.Id,
+            Category = EventCategory.Action,
+            Type = EventType.Information,
+            Title = ManagementHistoryTitle,
+            Description = PersianAccountStatusHistory(status),
+        });
+
+        Log.Information("VPN-account status changed by {0}: account-id={1}, username={2}, status={3}",
+            actor.Username, account.Id, account.Username, status);
+
+        // best-effort immediate VPN sync; the hourly sweep reconciles (D-D)
         try
         {
-            if (status == AccountStatus.Active)
+            if (status == VpnAccountStatus.Active)
             {
                 await AccountRadiusSrv.Value.ActivateUsers([account.Username]);
             }
@@ -358,19 +456,48 @@ class UserManagementApplication(
         }
         catch (Exception ex)
         {
-            Log.Error(ex, "[set-status] Immediate radius sync failed; the hourly sweep will reconcile: target={0}, status={1}",
-                account.Username, status);
+            Log.Error(ex, "[set-account-status] Immediate radius sync failed; the hourly sweep will reconcile: account-id={0}, status={1}",
+                account.Id, status);
         }
 
-        return ApiResult.Success(PersianStatusMessage(status));
+        return ApiResult.Success(PersianAccountStatusMessage(status));
     }
 
-    private async Task<AccountEntity> ResolveActor()
+    private async Task SyncAccountStatuses(PanelUserEntity account, bool activate)
+    {
+        try
+        {
+            var vpn_accounts = await VpnAccountRepo.Value.GetByUser(account.Id);
+
+            if (vpn_accounts.Count == 0)
+            {
+                return;
+            }
+
+            var usernames = vpn_accounts.Select(vpn_account => vpn_account.Username).ToList();
+
+            if (activate)
+            {
+                await AccountRadiusSrv.Value.ActivateUsers(usernames);
+            }
+            else
+            {
+                await AccountRadiusSrv.Value.DeactivateUsers(usernames);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "[set-status] Immediate radius sync failed; the hourly sweep will reconcile: target={0}",
+                account.Username);
+        }
+    }
+
+    private async Task<PanelUserEntity> ResolveActor()
     {
         return await SelfServiceGuard.Value.ResolveActor();
     }
 
-    private async Task<AccountEntity> RequireAdmin()
+    private async Task<PanelUserEntity> RequireAdmin()
     {
         var actor = await ResolveActor();
 
@@ -382,14 +509,26 @@ class UserManagementApplication(
         return actor;
     }
 
-    private async Task<AccountEntity> GetTarget(string? target)
+    private async Task<PanelUserEntity> RequireManager()
+    {
+        var actor = await ResolveActor();
+
+        if (actor.Role == AccountRole.User)
+        {
+            throw Forbidden("این عملیات فقط برای مدیر و ادمین مجاز است!", actor);
+        }
+
+        return actor;
+    }
+
+    private async Task<PanelUserEntity> GetTarget(string? target)
     {
         if (string.IsNullOrWhiteSpace(target))
         {
             throw new UserException("کاربر هدف مشخص نشده!", "Management endpoints require a target username.");
         }
 
-        return await AccountRepo.GetAccount(target)
+        return await PanelUserRepo.GetUser(target)
                ?? throw new UserException("کاربر پیدا نشد!", $"Account not found. target:{target}");
     }
 
@@ -398,12 +537,12 @@ class UserManagementApplication(
     /// (docs/20 §3 — subordinates hang off managers), never the account being
     /// attached and never through an ownership cycle.
     /// </summary>
-    private async Task<AccountEntity> ResolveManagerOwner(string owner_username, AccountEntity? exclude)
+    private async Task<PanelUserEntity> ResolveManagerOwner(string owner_username, PanelUserEntity? exclude)
     {
-        var owner = await AccountRepo.GetAccount(owner_username)
+        var owner = await PanelUserRepo.GetUser(owner_username)
                     ?? throw new UserException("مدیر جدید پیدا نشد!", $"Owner account not found: {owner_username}");
 
-        if (owner.Status == AccountStatus.Deactivated || owner.Role != AccountRole.Manager)
+        if (owner.Status == PanelUserStatus.Deactivated || owner.Role != AccountRole.Manager)
         {
             throw new UserException("مالک جدید باید یک مدیر فعال باشد!",
                 $"Owner must be an active manager (docs/20 §3): {owner_username}, role={owner.Role}, status={owner.Status}");
@@ -429,7 +568,7 @@ class UserManagementApplication(
                         $"Ownership cycle refused: {owner_username} is already under {exclude.Username}");
                 }
 
-                var next = await AccountRepo.GetActiveAccount(current.Owner.Value);
+                var next = await PanelUserRepo.GetActiveUser(current.Owner.Value);
 
                 if (next == null)
                 {
@@ -443,7 +582,7 @@ class UserManagementApplication(
         return owner;
     }
 
-    private static void EnsureNotSelf(AccountEntity actor, AccountEntity account, string message)
+    private static void EnsureNotSelf(PanelUserEntity actor, PanelUserEntity account, string message)
     {
         if (actor.Id == account.Id)
         {
@@ -452,7 +591,7 @@ class UserManagementApplication(
         }
     }
 
-    private static void EnsureNotAdmin(AccountEntity account, string message)
+    private static void EnsureNotAdmin(PanelUserEntity account, string message)
     {
         if (account.Role == AccountRole.Admin)
         {
@@ -461,7 +600,7 @@ class UserManagementApplication(
         }
     }
 
-    private static void EnsureSubordinate(AccountEntity actor, AccountEntity account)
+    private static void EnsureSubordinate(PanelUserEntity actor, PanelUserEntity account)
     {
         if (account.Owner != actor.Id)
         {
@@ -469,7 +608,7 @@ class UserManagementApplication(
         }
     }
 
-    private static UserException Forbidden(string message, AccountEntity actor)
+    private static UserException Forbidden(string message, PanelUserEntity actor)
     {
         return new UserException(message,
             $"Management operation refused (docs/20 §3): actor={actor.Username}, role={actor.Role}", 403);
@@ -484,29 +623,47 @@ class UserManagementApplication(
         };
     }
 
-    private static string PersianStatusHistory(AccountStatus status)
+    private static string PersianStatusHistory(PanelUserStatus status)
     {
         return status switch
         {
-            AccountStatus.Active => "حساب فعال شد.",
-            AccountStatus.VpnSuspended => "سرویس VPN کاربر غیرفعال شد.",
-            _ => "حساب غیرفعال شد.",
+            PanelUserStatus.Active => "حساب کاربر فعال شد.",
+            _ => "حساب کاربر غیرفعال شد.",
         };
     }
 
-    private static string PersianStatusMessage(AccountStatus status)
+    private static string PersianStatusMessage(PanelUserStatus status)
     {
         return status switch
         {
-            AccountStatus.Active => "حساب کاربر فعال شد.",
-            AccountStatus.VpnSuspended => "سرویس VPN کاربر غیرفعال شد.",
+            PanelUserStatus.Active => "حساب کاربر فعال شد.",
             _ => "حساب کاربر غیرفعال شد.",
+        };
+    }
+
+    private static string PersianAccountStatusHistory(VpnAccountStatus status)
+    {
+        return status switch
+        {
+            VpnAccountStatus.Active => "اکانت VPN فعال شد.",
+            VpnAccountStatus.Suspended => "سرویس VPN اکانت غیرفعال شد.",
+            _ => "اکانت VPN غیرفعال شد.",
+        };
+    }
+
+    private static string PersianAccountStatusMessage(VpnAccountStatus status)
+    {
+        return status switch
+        {
+            VpnAccountStatus.Active => "اکانت VPN فعال شد.",
+            VpnAccountStatus.Suspended => "سرویس VPN اکانت غیرفعال شد.",
+            _ => "اکانت VPN غیرفعال شد.",
         };
     }
 
     private async Task InvalidateOwner(int owner_id)
     {
-        var owner = await AccountRepo.GetActiveAccount(owner_id);
+        var owner = await PanelUserRepo.GetActiveUser(owner_id);
 
         if (owner != null)
         {

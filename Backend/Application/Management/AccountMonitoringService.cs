@@ -14,7 +14,8 @@ using Serilog;
 namespace PhotonBypass.Application.Management;
 
 internal class AccountMonitoringService(
-    IAccountRepository account_repo,
+    Lazy<IPanelUserRepository> panel_user_repo,
+    Lazy<IVpnAccountRepository> vpn_account_repo,
     IHistoryRepository history_repo,
     Lazy<IPlanUsageReader> plan_usage_reader,
     Lazy<IEmailService> email_srv,
@@ -25,7 +26,8 @@ internal class AccountMonitoringService(
     /// <summary>Upper bound of concurrent warning sends (SMTP connections).</summary>
     private const int MaxConcurrentNotifications = 4;
 
-    private IAccountRepository AccountRepo { get; } = account_repo;
+    private Lazy<IPanelUserRepository> PanelUserRepo { get; } = panel_user_repo;
+    private Lazy<IVpnAccountRepository> VpnAccountRepo { get; } = vpn_account_repo;
     private IHistoryRepository HistoryRepo { get; } = history_repo;
     private Lazy<IPlanUsageReader> PlanUsageReader { get; } = plan_usage_reader;
     private Lazy<IEmailService> EmailSrv { get; } = email_srv;
@@ -52,11 +54,14 @@ internal class AccountMonitoringService(
 
         if (abandoned_list.Count < 1) return;
 
-        var accounts = await AccountRepo.GetActiveAccounts(abandoned_list.Select(plan => plan.Id));
+        // docs/22 D12: the abandonment lifecycle is per VPN account — the
+        // owner panel user keeps portal access and can buy a new account
+        var accounts = await VpnAccountRepo.Value.GetActiveAccounts(abandoned_list.Select(plan => plan.Id));
 
         var deactivate_list = new List<string>();
         var remove_list = new List<string>();
         var history_list = new List<HistoryEntity>();
+        var deactivate_account_ids = new List<int>();
         var remove_account_ids = new List<int>();
 
         foreach (var plan in abandoned_list)
@@ -64,7 +69,7 @@ internal class AccountMonitoringService(
             if (!accounts.TryGetValue(plan.Id, out var account))
             {
                 Log.Fatal(
-                    "The account '{0}' is in 'SessionStateRepository.GetAccountFinishingState' but not found in 'AccountRepository'. account-id: {1}",
+                    "The VPN account '{0}' is in the plan-state view but not found in 'VpnAccountRepository'. account-id: {1}",
                     plan.Username, plan.Id);
                 continue;
             }
@@ -81,23 +86,24 @@ internal class AccountMonitoringService(
             if (expired_days > 0)
             {
                 Log.Information(
-                    "The user '{0}' was deleted from radius servers: ExpiredTime={1} days, ExpirationDate={2}, TrafficLimit={3}, TrafficUsed={4}",
+                    "The VPN account '{0}' was deactivated after abandonment: ExpiredTime={1} days, ExpirationDate={2}, TrafficLimit={3}, TrafficUsed={4}",
                     plan.Username, expired_days, plan.ExpirationDate, plan.TrafficLimit, plan.TrafficUsed);
                 remove_list.Add(account.Username);
-
                 remove_account_ids.Add(account.Id);
+
                 continue;
             }
 
             deactivate_list.Add(account.Username);
 
             Log.Information(
-                "The user '{0}' was disabled: ExpiredTime={1} days, ExpirationDate={2}, TrafficLimit={3}, TrafficUsed={4}",
+                "The VPN account '{0}' was suspended after abandonment: ExpiredTime={1} days, ExpirationDate={2}, TrafficLimit={3}, TrafficUsed={4}",
                 plan.Username, expired_days, plan.ExpirationDate, plan.TrafficLimit, plan.TrafficUsed);
 
             history_list.Add(new HistoryEntity
             {
-                Target = plan.Id,
+                Target = plan.UserId,
+                VpnAccountId = plan.Id,
                 Category = EventCategory.Security,
                 Type = EventType.Warning,
                 Title = "غیرفعال",
@@ -109,7 +115,7 @@ internal class AccountMonitoringService(
 
         if (remove_account_ids.Count > 0)
         {
-            await AccountRepo.SetDeactivated(remove_account_ids);
+            await VpnAccountRepo.Value.SetStatus(remove_account_ids, VpnAccountStatus.Deactivated);
         }
 
         var task = HistoryRepo.Save(history_list);
@@ -131,19 +137,31 @@ internal class AccountMonitoringService(
     {
         var plan_state_list = plan_states.Where(plan => plan.IsFinishing()).ToArray();
         var account_ids = plan_state_list.Select(x => x.Id).ToList();
-        var accounts = await AccountRepo.GetActiveAccounts(account_ids);
+        var accounts = await VpnAccountRepo.Value.GetActiveAccounts(account_ids);
+
+        // docs/22 §3.7: the warning channels live on the owner panel user —
+        // one batched lookup, never per-account
+        var owners = await PanelUserRepo.Value.GetActiveUsers(
+            accounts.Values.Select(account => account.UserId).Distinct());
 
         // cap of concurrent SMTP connections: the SMTP server (and the send
         // timeout) must not see one connection per finishing account
         using var throttle = new SemaphoreSlim(MaxConcurrentNotifications);
 
-        var dispatches = new List<(AccountEntity Account, HistoryEntity History, Task Send)>();
+        var dispatches = new List<(VpnAccountEntity Account, PanelUserEntity Owner, HistoryEntity History, Task Send)>();
 
         foreach (var plan in plan_state_list)
         {
             if (!accounts.TryGetValue(plan.Id, out var account))
             {
-                Log.Warning("The id ({0}) not found in accounts; skipped warning for this plan.", plan.Id);
+                Log.Warning("The id ({0}) not found in VPN accounts; skipped warning for this plan.", plan.Id);
+                continue;
+            }
+
+            if (!owners.TryGetValue(account.UserId, out var owner))
+            {
+                Log.Warning("The owner of VPN account {0} (user-id={1}) is not active; skipped warning.",
+                    plan.Username, account.UserId);
                 continue;
             }
 
@@ -154,7 +172,7 @@ internal class AccountMonitoringService(
 
             var remains_title = plan.GetRemainsTitle();
 
-            Log.Information("The user '{0}' is going to finish plan (x{1}, {2})",
+            Log.Information("The VPN account '{0}' is going to finish plan (x{1}, {2})",
                 plan.Username, plan.SimultaneousUser, remains_title);
 
             if (!account.SendWarning)
@@ -166,19 +184,19 @@ internal class AccountMonitoringService(
             // gets the alert there instead of the email below — Supports
             // answers false for the no-op channel, so a fresh install keeps
             // the email path
-            if (SocialSrv.Value.Supports(account))
+            if (SocialSrv.Value.Supports(owner))
             {
-                dispatches.Add((account, WarnHistory(plan, remains_title), Dispatch(
-                    () => SendFinishServiceAlert(account, plan, remains_title))));
+                dispatches.Add((account, owner, WarnHistory(plan, remains_title), Dispatch(
+                    () => SendFinishServiceAlert(owner, plan.Username, plan, remains_title))));
 
                 continue;
             }
 
-            if (account.EmailAddress != null)
+            if (owner.EmailAddress != null)
             {
-                dispatches.Add((account, WarnHistory(plan, remains_title), Dispatch(
+                dispatches.Add((account, owner, WarnHistory(plan, remains_title), Dispatch(
                     () => EmailSrv.Value.FinishServiceAlert(
-                        account.Fullname, plan.Username, account.EmailAddress, plan.GetPlanTitle(), remains_title))));
+                        owner.Fullname, plan.Username, owner.EmailAddress, plan.GetPlanTitle(), remains_title))));
 
                 continue;
             }
@@ -204,7 +222,7 @@ internal class AccountMonitoringService(
         var warned_account_ids = new List<int>();
         var history_list = new List<HistoryEntity>();
 
-        foreach (var (account, history, send) in dispatches)
+        foreach (var (account, owner, history, send) in dispatches)
         {
             if (send.IsCompletedSuccessfully)
             {
@@ -222,7 +240,7 @@ internal class AccountMonitoringService(
 
         if (warned_account_ids.Count > 0)
         {
-            await AccountRepo.UpdateWarningTimes(warned_account_ids);
+            await VpnAccountRepo.Value.UpdateWarningTimes(warned_account_ids);
         }
 
         if (history_list.Count > 0)
@@ -247,25 +265,25 @@ internal class AccountMonitoringService(
 
     /// <summary>
     /// Social-first finish-service alert with a delivery fallback: when the
-    /// social send fails and the account carries a validated email, the same
+    /// social send fails and the owner carries a validated email, the same
     /// warning goes out by email so a dead chat does not silence the account.
     /// Either channel succeeding satisfies the stamp-after-success contract;
     /// both failing leaves the account unstamped for the hourly retry.
     /// </summary>
-    private async Task SendFinishServiceAlert(AccountEntity account, PlanStateEntity plan, string? remains_title)
+    private async Task SendFinishServiceAlert(PanelUserEntity owner, string vpn_username, PlanStateEntity plan, string? remains_title)
     {
         try
         {
-            await SocialSrv.Value.FinishServiceAlert(account, plan.GetPlanTitle(), remains_title ?? string.Empty);
+            await SocialSrv.Value.FinishServiceAlert(owner, plan.GetPlanTitle(), remains_title ?? string.Empty);
         }
         catch (Exception social_error)
         {
-            if (account.EmailAddress == null) throw;
+            if (owner.EmailAddress == null) throw;
 
-            Log.Warning(social_error, "Social finish-service alert failed, falling back to email: account-id={0}", account.Id);
+            Log.Warning(social_error, "Social finish-service alert failed, falling back to email: owner-id={0}", owner.Id);
 
             await EmailSrv.Value.FinishServiceAlert(
-                account.Fullname, plan.Username, account.EmailAddress, plan.GetPlanTitle(), remains_title);
+                owner.Fullname, vpn_username, owner.EmailAddress, plan.GetPlanTitle(), remains_title);
         }
     }
 
@@ -277,7 +295,8 @@ internal class AccountMonitoringService(
         // message goes out)
         return new HistoryEntity
         {
-            Target = plan.Id,
+            Target = plan.UserId,
+            VpnAccountId = plan.Id,
             Category = EventCategory.Renewal,
             Type = EventType.Warning,
             Title = "پایان پلن",
@@ -289,6 +308,7 @@ internal class AccountMonitoringService(
     private static string DayHour(double time)
     {
         if (time == 0) return "هیچ";
+
         var result = string.Empty;
 
         var day = (int)time;

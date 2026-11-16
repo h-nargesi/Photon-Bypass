@@ -5,7 +5,7 @@ namespace PhotonBypass.Domain.Account.Business;
 
 public static class WalletBusiness
 {
-    public static bool CheckMoneyNeed(this AccountEntity account, int balance, int estimate, out int money_need)
+    public static bool CheckMoneyNeed(this PanelUserEntity account, int balance, int estimate, out int money_need)
     {
         if (balance < 0 || !account.UserType.HasFlag(UserTypes.OldUser) && balance < estimate)
         {

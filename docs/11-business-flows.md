@@ -4,7 +4,7 @@
 
 ## 1. Register (ثبت‌نام)
 
-`AuthApplication.Register` → اعتبارسنجی (regex در `AccountBusiness`) → ساخت `AccountEntity` (`CreateFromModel`) → هش پسورد لاگین + `VpnPassword` تصادفی → ذخیره در local DB → هشدار اجتماعی (WhatsApp `#if SOCIAL`).
+`AuthApplication.Register` → اعتبارسنجی (regex در `AccountBusiness`) → ساخت `PanelUserEntity` (`CreateFromModel`) → هش پسورد لاگین → ذخیره در local DB → هشدار اجتماعی. **هیچ یوزرنیم/رمز VPNای ساخته نمی‌شود** — اکانت VPN اول با اولین خرید می‌آید (docs/22 D9؛ اکشن فاکتور `n|...` → `PlanApplication.PurchaseNewAccount`).
 
 ```mermaid
 sequenceDiagram

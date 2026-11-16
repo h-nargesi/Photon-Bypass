@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { firstValueFrom, Observable, Subject } from 'rxjs';
-import { AccountRole, Target, UserModel } from '../../@models';
+import { AccountRole, Target, UserModel, UserVpnAccount } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
 import { ACCOUNT_API_URL } from '../api-services/models/app-api-url';
 import { LocalStorageService } from '../local-storage/local-storage-service';
@@ -14,11 +14,32 @@ export class UserService extends ApiBaseService {
   private observable_user?: Promise<UserModel>;
   private currentTargetUser?: Target;
   private targetUserEventSubject = new Subject<Target | undefined>();
+  private currentAccountId?: number;
+  private accountEventSubject = new Subject<UserVpnAccount | undefined>();
 
   onTargetChanged = this.targetUserEventSubject.asObservable();
+  /// docs/22 §3.5: fires whenever the account switcher picks another VPN
+  /// account; per-account views reload on it.
+  onAccountChanged = this.accountEventSubject.asObservable();
 
   get targetUser(): Target | undefined {
     return this.currentTargetUser;
+  }
+
+  get accounts(): UserVpnAccount[] {
+    return this.current_user?.accounts ?? [];
+  }
+
+  get currentAccount(): UserVpnAccount | undefined {
+    return this.accounts.find((account) => account.id === this.currentAccountId);
+  }
+
+  get accountId(): number | undefined {
+    return this.currentAccount?.id ?? this.accounts[0]?.id;
+  }
+
+  get hasMultipleAccounts(): boolean {
+    return this.accounts.length > 1;
   }
 
   get targetName(): string | undefined {
@@ -65,10 +86,35 @@ export class UserService extends ApiBaseService {
       this.observable_user = undefined;
 
       this.setTraget(LocalStorageService.get(['user', 'target']));
+
+      const stored_account = LocalStorageService.get(['user', 'account']);
+      this.currentAccountId = (this.current_user.accounts ?? []).some(
+        (account) => account.id === stored_account,
+      )
+        ? stored_account ?? undefined
+        : (this.current_user.accounts ?? [])[0]?.id;
+
       this.reload_next_call = false;
     }
 
     return this.current_user;
+  }
+
+  /// docs/22 §3.5: switch the active VPN account; per-account views react
+  /// through onAccountChanged.
+  setAccount(accountId: number | undefined) {
+    if (!accountId || !this.accounts.some((account) => account.id === accountId)) {
+      return;
+    }
+
+    if (this.currentAccountId === accountId) {
+      return;
+    }
+
+    this.currentAccountId = accountId;
+    LocalStorageService.set(['user', 'account'], accountId);
+
+    this.accountEventSubject.next(this.currentAccount);
   }
 
   setTraget(username: string | undefined) {
@@ -121,7 +167,9 @@ export class UserService extends ApiBaseService {
     this.reload_next_call = false;
     this.observable_user = undefined;
     this.current_user = undefined;
+    this.currentAccountId = undefined;
     LocalStorageService.set(['user', 'target'], undefined);
+    LocalStorageService.set(['user', 'account'], undefined);
   }
 
   private fetchUser(): Observable<UserModel> {

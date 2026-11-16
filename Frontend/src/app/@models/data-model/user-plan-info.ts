@@ -5,15 +5,42 @@ export interface PlanState {
   simultaneousUserCount: number;
 }
 
-export interface RenewalContext {
-  target: string;
+/// docs/22 target contract: per-account calls name the VPN account by id;
+/// `target` stays the (optional) username for manager on-behalf flows.
+export interface AccountAction {
+  accountId?: number;
+  target?: string;
+}
+
+export interface RenewalContext extends AccountAction {
+  days: number;
+  gigabytes: number;
+  simultaneousUserCount: number;
+  /// realm re-pick on a stale renewal (docs/22 D6)
+  realmId?: number;
+}
+
+/// First purchase payload (docs/22 D9): realm + username + plan.
+export interface NewAccountContext {
+  username?: string;
+  realmId?: number;
   days: number;
   gigabytes: number;
   simultaneousUserCount: number;
 }
 
+/// One selectable realm of the purchase flow (docs/22 D4).
+export interface RealmChoice {
+  id: number;
+  name: string;
+  isSelectable: boolean;
+}
+
 export interface PlanInfo {
   target: string;
+  accountId: number;
+  realmId: number;
+  requiresRealmChoice: boolean;
   days: number;
   gigabytes: number;
   simultaneousUserCount: number;

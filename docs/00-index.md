@@ -29,6 +29,8 @@
 | 18 | [docs/18-test-coverage.md](18-test-coverage.md) | حاکمیت پوشش تست: دستورات سنجش پوشش، مبنای اندازه‌گیری per-assembly، نقشه‌ی traceability نیازمندی→تست و شکاف‌های شناخته‌شده (جایگزین TestPlan.md). |
 | 19 | [docs/19-deploy-runbook.md](19-deploy-runbook.md) | ران‌بوک اولین انتشار روی هاست Plesk: تولید secretها از صفر، `private/secrets.json` + گارد، نصب دیتابیس از ابتدا، publish با FTP دستی و تأیید. |
 | 20 | [docs/20-admin-panel-roles.md](20-admin-panel-roles.md) | پنل مدیریت: مدل نقش‌ها (D1–D13)، ماتریس دسترسی، نقشه راه ۶ فازه (نقش/auth → تفکیک payer → تراکنش ادمین → مدیریت کاربران → CRUD سرور → فرانت نقش‌دار). |
+| 21 | [docs/21-social-media-telegram-channel.md](21-social-media-telegram-channel.md) | کانال اجتماعی: `ISocialMediaService` خنثی به کانال + انتخاب runtime، اتصال چت تلگرام با کد یک‌بارمصرف، اولویت تلگرام در ریست/هشدار با fallback ایمیل. |
+| 22 | [docs/22-panel-user-vpn-split.md](22-panel-user-vpn-split.md) | تفکیک `Account` به `PanelUser` + `VpnAccount` (D1–D14): چند اکانت VPN برای هر کاربر، قواعد یوزرنیم D3، خرید با انتخاب realm، مهاجرت stale، دو محور وضعیت. |
 
 ## Read this file when…
 
@@ -54,6 +56,7 @@
 | See test coverage status / find coverage gaps / know which tests cover a flow | [18-test-coverage](18-test-coverage.md) |
 | Deploy to the Plesk host / manage production secrets (`private/secrets.json` + guard) | [19-deploy-runbook](19-deploy-runbook.md) |
 | Implement/verify the admin-panel roles roadmap (Role/SelfService, payer separation, wallet adjust, user management, server CRUD) | [20-admin-panel-roles](20-admin-panel-roles.md) |
+| Implement/verify the panel-user ↔ VPN-account split (multi-account, realm choice, per-account status) | [22-panel-user-vpn-split](22-panel-user-vpn-split.md) |
 
 ## Related legacy docs
 

@@ -43,7 +43,7 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
 
         api_moq.AddClient("User3", "uuid-1", 400, 600);
 
-        var renewal = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         renewal.LastSeenCounter = 500;
         renewal.LastPollTime = DateTime.Now.AddMinutes(-5);
         renewal.TrafficUsed = 500;
@@ -53,7 +53,7 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
 
         await scope.ServiceProvider.GetRequiredService<IXuiTrafficSync>().Run();
 
-        var stored = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var stored = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         stored.LastSeenCounter.Should().Be(1000);
         stored.TrafficUsed.Should().Be(1000);
         stored.LastPollTime.Should().NotBeNull();
@@ -62,7 +62,7 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
         traffic_moq.Data.Count.Should().Be(before_rows + 1);
 
         var row = traffic_moq.Data.Last();
-        row.AccountId.Should().Be(3);
+        row.VpnAccountId.Should().Be(3);
         row.NasId.Should().Be(XuiServer.Id);
         row.SessionId.Should().Be(XuiTrafficRow.SessionId(3, 1, DateTime.Now));
         row.TotalData.Should().Be(500);
@@ -81,7 +81,7 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
 
         api_moq.AddClient("User3", "uuid-1", 400, 600);
 
-        var renewal = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         renewal.LastSeenCounter = 500;
         renewal.LastPollTime = DateTime.Now.AddMinutes(-5);
         renewal.TrafficUsed = 500;
@@ -95,7 +95,7 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
 
         traffic_moq.Data.Count.Should().Be(before_rows);
 
-        var stored = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var stored = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         stored.LastSeenCounter.Should().Be(500);
         stored.TrafficUsed.Should().Be(500);
         stored.LastPollTime.Should().Be(renewal.LastPollTime);
@@ -115,7 +115,7 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
 
         api_moq.AddClient("User3", "uuid-1", 400, 600);
 
-        var renewal = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         renewal.LastSeenCounter = 500;
         renewal.LastPollTime = DateTime.Now.AddMinutes(-5);
         renewal.TrafficUsed = 500;
@@ -129,7 +129,7 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
 
         traffic_moq.Data.Count.Should().Be(before_rows);
 
-        var stored = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var stored = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         stored.TrafficUsed.Should().Be(500);
         stored.LastSeenCounter.Should().Be(500);
     }
@@ -147,7 +147,7 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
 
         api_moq.AddClient("GhostClient", "uuid-x", 100, 100);
 
-        var renewal = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         renewal.LastSeenCounter = 500;
         renewal.LastPollTime = DateTime.Now.AddMinutes(-5);
         renewal.TrafficUsed = 500;
@@ -159,7 +159,7 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
         await action.Should().NotThrowAsync();
 
         traffic_moq.Data.Count.Should().Be(before_rows);
-        renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1).TrafficUsed.Should().Be(500);
+        renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1).TrafficUsed.Should().Be(500);
     }
 
     [Fact]
@@ -176,7 +176,7 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
 
         api_moq.AddClient("User3", "uuid-1", 400, 600);
 
-        var renewal = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         renewal.LastSeenCounter = 500;
         renewal.LastPollTime = DateTime.Now.AddMinutes(-5);
         renewal.TrafficUsed = 500;
@@ -189,6 +189,6 @@ public class XuiTrafficSyncTest : UnitLevelServiceInitializer
         await scope.ServiceProvider.GetRequiredService<IXuiTrafficSync>().Run();
 
         traffic_moq.Data.Count.Should().Be(before_rows);
-        renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1).TrafficUsed.Should().Be(500);
+        renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1).TrafficUsed.Should().Be(500);
     }
 }

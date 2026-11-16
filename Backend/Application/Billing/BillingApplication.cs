@@ -90,7 +90,7 @@ class BillingApplication(
         return ApiResult<int?>.Success(code);
     }
 
-    public async Task<ApiResult<int?>> IssuePlanInvoice(int estimate, string action, string title)
+    public async Task<ApiResult<int?>> IssuePlanInvoice(int estimate, string action, string title, int? vpn_account_id = null)
     {
         var account_id = RequireAccountId();
 
@@ -111,6 +111,7 @@ class BillingApplication(
             {
                 Code = code,
                 AccountId = account_id,
+                VpnAccountId = vpn_account_id,
                 Kind = InvoiceKind.Plan,
                 Title = title,
                 TotalPrice = estimate,
@@ -129,8 +130,8 @@ class BillingApplication(
         }
 
         Log.Information(
-            "Plan invoice issued: account-id={0}, code={1}, estimate={2}, balance={3}, deduction={4}, payable={5}, action={6}",
-            account_id, code, estimate, balance, wallet_deduction, payable, action);
+            "Plan invoice issued: account-id={0}, vpn-account-id={1}, code={2}, estimate={3}, balance={4}, deduction={5}, payable={6}, action={7}",
+            account_id, vpn_account_id, code, estimate, balance, wallet_deduction, payable, action);
 
         await SaveIssueHistory(account_id, estimate);
 
@@ -303,7 +304,7 @@ class BillingApplication(
 
         try
         {
-            var renewal_result = await PlanApp.Value.Renewal(invoice.AccountId, null, invoice.Action!, invoice.Code);
+            var renewal_result = await PlanApp.Value.SettlePurchase(invoice.AccountId, null, invoice.Action!, invoice.Code);
 
             if (renewal_result.Code / 100 != 2)
             {
@@ -353,7 +354,7 @@ class BillingApplication(
 
         try
         {
-            var renewal_result = await PlanApp.Value.Renewal(invoice.AccountId, credit.Id, invoice.Action!, invoice.Code);
+            var renewal_result = await PlanApp.Value.SettlePurchase(invoice.AccountId, credit.Id, invoice.Action!, invoice.Code);
 
             if (renewal_result.Code / 100 != 2)
             {

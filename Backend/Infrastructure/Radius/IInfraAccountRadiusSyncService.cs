@@ -14,7 +14,7 @@ public interface IInfraAccountRadiusSyncService
 
     Task ActivateUser(ServerEntity radius, IEnumerable<string> usernames);
 
-    Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal);
+    Task SyncUserAndActive(ServerEntity radius, VpnAccountEntity account, RenewalEntity renewal);
 
     /// <summary>
     /// Applies the credential and returns the effective value: Radius adapters

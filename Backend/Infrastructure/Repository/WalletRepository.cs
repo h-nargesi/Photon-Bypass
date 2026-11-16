@@ -25,9 +25,9 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
         var sql = $"""
                    select w.*
                    from {TableName} w
-                   join {AccountRepository.TableName} a on w.{nameof(WalletEntity.AccountId)} = a.{nameof(AccountEntity.Id)}
+                   join {PanelUserRepository.TableName} a on w.{nameof(WalletEntity.AccountId)} = a.{nameof(PanelUserEntity.Id)}
                    where w.{nameof(WalletEntity.InvoiceCode)} = @code
-                     and a.{nameof(AccountEntity.Username)} = @target
+                     and a.{nameof(PanelUserEntity.Username)} = @target
                    """;
 
         var result = await QueryAsync<WalletEntity>(sql, new { target, code });

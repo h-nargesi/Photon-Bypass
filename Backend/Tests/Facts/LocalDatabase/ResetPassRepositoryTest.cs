@@ -21,12 +21,15 @@ public class ResetPassRepositoryTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
 
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
         var reset_repo = scope.ServiceProvider.GetRequiredService<IResetPassRepository>();
 
-        var ids = await account_repo.GetAccountIdByUsername(["ResetA", "ResetB"]);
+        var reset_a = await user_repo.GetActiveUserId("ResetA");
+        var reset_b = await user_repo.GetActiveUserId("ResetB");
+        Assert.NotNull(reset_a);
+        Assert.NotNull(reset_b);
 
-        await reset_repo.ExpireActiveCodes(ids["ResetA"]);
+        await reset_repo.ExpireActiveCodes(reset_a!.Value);
 
         var after_expire = DateTime.Now;
 

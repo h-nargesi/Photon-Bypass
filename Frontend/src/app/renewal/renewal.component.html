@@ -1,8 +1,20 @@
 <c-row class="g-4 justify-content-lg-center">
     <c-col xl="8">
         <c-card class="mb-auto whatsapp-panel" [cBorder]="{top: {color: color, width: 3}}">
-            <c-card-header>
-                <h5>{{ 'renewal.title' | translate }}</h5>
+            <c-card-header class="d-flex">
+                <h5 class="me-auto">{{ 'renewal.title' | translate }}</h5>
+                @if (hasAccounts) {
+                <div class="btn-group" role="group">
+                    <button cButton size="sm" [color]="mode === 'renew' ? 'primary' : 'secondary'"
+                            (click)="switchMode('renew')">
+                        {{ 'renewal.mode.renew' | translate }}
+                    </button>
+                    <button cButton size="sm" [color]="mode === 'new-account' ? 'primary' : 'secondary'"
+                            (click)="switchMode('new-account')">
+                        {{ 'renewal.mode.new-account' | translate }}
+                    </button>
+                </div>
+                }
             </c-card-header>
             <c-card-body class="d-flex" *ngIf="hasSubUsers">
                 <div class="w-100 mx-5">
@@ -10,6 +22,51 @@
                     <h5 class="ltr">{{ targetName }}</h5>
                 </div>
             </c-card-body>
+            @if (mode === 'renew') {
+            <c-card-body class="d-flex">
+                <div class="w-100 mx-5">
+                    <label>{{ 'renewal.labels.current-account' | translate }}:</label>
+                    <h5 class="ltr">{{ currentAccountUsername }}</h5>
+                </div>
+            </c-card-body>
+            }
+            @if (mode === 'new-account') {
+            <c-card-body>
+                <div class="w-100 mx-5 mb-3">
+                    <label>{{ 'renewal.labels.vpn-username' | translate }}</label>
+                    <input class="ltr" cText [(ngModel)]="newAccount.username!" />
+                </div>
+                <div class="w-100 mx-5">
+                    <label>{{ 'renewal.labels.realm' | translate }}</label>
+                    <select cSelect [(ngModel)]="newAccount.realmId" (change)="selectRealm(newAccount.realmId!)">
+                        <option [value]="undefined">
+                            {{ 'renewal.labels.realm-choise' | translate }}
+                        </option>
+                        @for (realm of realms; track realm.id) {
+                        <option [value]="realm.id" [disabled]="!realm.isSelectable">
+                            {{ realm.name }}
+                        </option>
+                        }
+                    </select>
+                </div>
+            </c-card-body>
+            } @else if (requiresRealmChoice) {
+            <c-card-body>
+                <div class="w-100 mx-5">
+                    <label>{{ 'renewal.labels.realm-repick' | translate }}</label>
+                    <select cSelect [(ngModel)]="renewal.realmId" (change)="selectRealm(renewal.realmId!)">
+                        <option [value]="undefined">
+                            {{ 'renewal.labels.realm-choise' | translate }}
+                        </option>
+                        @for (realm of realms; track realm.id) {
+                        <option [value]="realm.id" [disabled]="!realm.isSelectable">
+                            {{ realm.name }}
+                        </option>
+                        }
+                    </select>
+                </div>
+            </c-card-body>
+            }
             <c-card-body class="d-flex">
                 <div class="w-50">
                     <div class="m-auto p-3 px-5">

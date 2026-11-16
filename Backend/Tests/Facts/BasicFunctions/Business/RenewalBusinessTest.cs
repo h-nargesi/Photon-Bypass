@@ -10,7 +10,7 @@ public class RenewalBusinessTest
     [Fact]
     public void RenewalValidation_EmptyTraffic_NormalUser()
     {
-        var account = new AccountEntity
+        var account = new PanelUserEntity
         {
             UserType = UserTypes.None,
         };
@@ -30,7 +30,7 @@ public class RenewalBusinessTest
     [Fact]
     public void RenewalValidation_UnroundedTraffic_NormalUser()
     {
-        var account = new AccountEntity
+        var account = new PanelUserEntity
         {
             UserType = UserTypes.None,
         };
@@ -50,7 +50,7 @@ public class RenewalBusinessTest
     [Fact]
     public void RenewalValidation_ValidTraffic_NormalUser()
     {
-        var account = new AccountEntity
+        var account = new PanelUserEntity
         {
             UserType = UserTypes.None,
         };
@@ -71,7 +71,7 @@ public class RenewalBusinessTest
     [Fact]
     public void RenewalValidation_EmptyTraffic_AllowMonthlyUser()
     {
-        var account = new AccountEntity
+        var account = new PanelUserEntity
         {
             UserType = UserTypes.AllowMonthly,
         };
@@ -89,7 +89,7 @@ public class RenewalBusinessTest
     [Fact]
     public void RenewalValidation_UnroundedTraffic_AllowMonthlyUser()
     {
-        var account = new AccountEntity
+        var account = new PanelUserEntity
         {
             UserType = UserTypes.AllowMonthly,
         };
@@ -109,7 +109,7 @@ public class RenewalBusinessTest
     [Fact]
     public void RenewalValidation_UnroundedTime_AllowMonthlyUser()
     {
-        var account = new AccountEntity
+        var account = new PanelUserEntity
         {
             UserType = UserTypes.AllowMonthly,
         };
@@ -129,7 +129,7 @@ public class RenewalBusinessTest
     [Fact]
     public void RenewalValidation_ValidTraffic_AllowMonthlyUser()
     {
-        var account = new AccountEntity
+        var account = new PanelUserEntity
         {
             UserType = UserTypes.AllowMonthly,
         };
@@ -204,7 +204,7 @@ public class RenewalBusinessTest
     [Fact]
     public void RenewalValidation_ValidTimes_AllowMonthlyUser()
     {
-        var account = new AccountEntity
+        var account = new PanelUserEntity
         {
             UserType = UserTypes.AllowMonthly,
         };

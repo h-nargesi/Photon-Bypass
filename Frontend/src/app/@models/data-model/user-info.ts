@@ -4,13 +4,28 @@ export enum AccountRole {
   Admin = 2,
 }
 
-/// Two-stage account status (backend `AccountStatus`, docs/20 D13):
-/// VpnSuspended keeps portal access but loses the VPN config everywhere;
-/// Deactivated loses both.
-export enum AccountStatus {
+/// Panel-user status (backend `PanelUserStatus`, docs/22 D12): only the
+/// portal axis — VPN suspension is per VpnAccount.
+export enum PanelUserStatus {
   Active = 0,
-  VpnSuspended = 1,
   Deactivated = 2,
+}
+
+/// VPN-account status (backend `VpnAccountStatus`, docs/22 D12).
+export enum VpnAccountStatus {
+  Active = 0,
+  Suspended = 1,
+  Deactivated = 2,
+}
+
+/// One VPN account of the user (backend `UserVpnAccountModel`, docs/22 D2).
+export interface UserVpnAccount {
+  id: number;
+  username: string;
+  realmId: number;
+  realmName?: string | null;
+  status: number;
+  created: number;
 }
 
 export interface TagetAction {
@@ -29,6 +44,7 @@ export interface UserModel extends Target {
   role: AccountRole;
   allowSelfService: boolean;
   targetArea?: SubUsers;
+  accounts: UserVpnAccount[];
 }
 
 export interface CreateUserModel {

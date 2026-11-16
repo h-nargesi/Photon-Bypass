@@ -132,7 +132,7 @@ public class AccountRadiusSyncUserManagerService(ITik4NetHandler handler, Resour
         }
     }
 
-    public async Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
+    public async Task SyncUserAndActive(ServerEntity radius, VpnAccountEntity account, RenewalEntity renewal)
     {
         using var token = await synchronization.GetToken(radius.Name);
 

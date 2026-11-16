@@ -1,5 +1,6 @@
-using System.Net.Http.Json;
-using PhotonBypass.Portal.Context;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Test.Initializer;
 
 namespace PhotonBypass.Test.Facts.Scenario;
@@ -13,41 +14,58 @@ public class VpnConfigEndpoints(ProgramLevelInitializer.Factory factory) : HttpH
         await Register("usercfg", "80");
         await Login("usercfg", "Passw0rd1");
 
-        // /api/plan/estimate + wallet top-up + /api/plan/renewal
-        var request = new RenewalContext
-        {
-            Target = "usercfg",
-            SimultaneousUserCount = 1,
-            Days = 120,
-            Gigabytes = 25,
-        };
+        // /api/plan/new-account — the first purchase creates the VPN account
+        // (docs/22 D9); realm 1 is the scenario realm
+        var renewal = await NewAccount(null, 1, 1, 120, 25);
+        var code = int.Parse(renewal["invoiceCode"]!);
 
-        var response = await Client.PostAsJsonAsync("/api/plan/estimate", request);
-        var estimate = await CheckResponseObject(response);
+        var invoice = await GetInvoice(code);
+        await FakeAddMoney("usercfg", int.Parse(invoice["totalPrice"]!));
 
-        await FakeAddMoney("usercfg", int.Parse(estimate["price"]!.ToString()!));
+        // /api/billing/settle-wallet
+        await SettleWallet(code);
 
-        response = await Client.PostAsJsonAsync("/api/plan/renewal", request);
-        await CheckResponse(response);
+        var account_id = int.Parse((await VpnAccounts()).Single()["id"]!);
 
         // /api/vpn/config-info — the scenario fleet is UserManager: kind only, no link
-        response = await Client.GetAsync("/api/vpn/config-info");
+        var response = await Client.GetAsync($"/api/vpn/config-info?accountId={account_id}");
         var info = await CheckResponseObject(response);
 
         Assert.Equal("usermanager", info["kind"]);
         Assert.Null(info["vlessLink"]);
 
         // /api/vpn/download — OVPN data-plane: ZIP with cert + connection sheet
-        var download_response = await Client.GetAsync("/api/vpn/download");
+        response = await Client.GetAsync($"/api/vpn/download?accountId={account_id}");
 
-        Assert.Equal("application/zip", download_response.Content.Headers.ContentType?.MediaType);
-        Assert.Equal("attachment", download_response.Content.Headers.ContentDisposition?.DispositionType);
-        Assert.EndsWith(".zip", download_response.Content.Headers.ContentDisposition?.FileName);
-        Assert.NotEmpty(await download_response.Content.ReadAsByteArrayAsync());
+        Assert.Equal("application/zip", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("attachment", response.Content.Headers.ContentDisposition?.DispositionType);
+        Assert.EndsWith(".zip", response.Content.Headers.ContentDisposition?.FileName);
+        Assert.NotEmpty(await response.Content.ReadAsByteArrayAsync());
 
-        // /api/vpn/config-info for a foreign target is rejected by the access gate
+        // /api/vpn/config-info for a foreign account is rejected by the access gate
         await Register("usercfg2", "81");
-        response = await Client.GetAsync("/api/vpn/config-info?target=usercfg2");
-        await CheckResponse(response, 4);
+
+        int foreign_account_id;
+
+        using (var scope = ServiceProvider.CreateScope())
+        {
+            var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
+            var vpn_account_repo = scope.ServiceProvider.GetRequiredService<IVpnAccountRepository>();
+
+            var foreign_id = await panel_user_repo.GetActiveUserId("usercfg2");
+
+            await vpn_account_repo.Save(new VpnAccountEntity
+            {
+                UserId = foreign_id!.Value,
+                RealmId = 1,
+                Username = "usercfg2",
+                VpnPassword = "VpnPassword",
+            });
+
+            foreign_account_id = (await vpn_account_repo.GetAccount("usercfg2"))!.Id;
+        }
+
+        response = await Client.GetAsync($"/api/vpn/config-info?accountId={foreign_account_id}");
+        await CheckResponse(response, 403);
     }
 }

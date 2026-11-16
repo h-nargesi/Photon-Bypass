@@ -14,7 +14,7 @@ internal class InvoiceRepositoryMoq : Mock<IInvoiceRepository>, IUnitLevelServic
 
     public readonly List<InvoiceEntity> Data = [];
 
-    public InvoiceRepositoryMoq(TransactionalMockDbContext db_context, AccountRepositoryMoq account_moq)
+    public InvoiceRepositoryMoq(TransactionalMockDbContext db_context, PanelUserRepositoryMoq panel_user_moq)
     {
         Setup(x => x.GenerateNewInvoiceCode())
             .Returns(() =>
@@ -39,7 +39,7 @@ internal class InvoiceRepositoryMoq : Mock<IInvoiceRepository>, IUnitLevelServic
         Setup(x => x.GetByCodeOwner(It.IsAny<string>(), It.IsAny<int>()))
             .Returns<string, int>((target, code) =>
             {
-                var account = account_moq.Data.Values.FirstOrDefault(a => a.Username == target);
+                var account = panel_user_moq.Data.Values.FirstOrDefault(a => a.Username == target);
 
                 if (account == null)
                 {

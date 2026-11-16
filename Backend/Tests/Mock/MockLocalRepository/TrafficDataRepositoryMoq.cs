@@ -48,7 +48,7 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IUnitLev
             .Returns<int, DateTime>((account_id, from) =>
             {
                 var filtered_list = data_list
-                    .Where(traffic => traffic.StartSession >= from && account_id == traffic.AccountId)
+                    .Where(traffic => traffic.StartSession >= from && account_id == traffic.VpnAccountId)
                     .ToList();
 
                 OnFetch?.Invoke(filtered_list);
@@ -87,9 +87,9 @@ internal class TrafficDataRepositoryMoq : Mock<ITrafficDataRepository>, IUnitLev
                 var mask = account_ids.ToHashSet();
 
                 var result = data_list
-                    .Where(traffic => mask.Contains(traffic.AccountId) &&
+                    .Where(traffic => mask.Contains(traffic.VpnAccountId) &&
                                       traffic.SessionId.StartsWith(session_prefix, StringComparison.Ordinal))
-                    .GroupBy(traffic => traffic.AccountId)
+                    .GroupBy(traffic => traffic.VpnAccountId)
                     .ToDictionary(group => group.Key, group => group.MaxBy(traffic => traffic.Id) is { } last
                         ? last.NasId
                         : 0);

@@ -36,7 +36,7 @@ public static class RenewalBusiness
         return entity.TrafficLimit.HasValue ? Math.Round(entity.TrafficLimit.Value / StaticValues.BytesInGigDouble, 2) : null;
     }
 
-    public static bool RenewalValidation(this RenewalEntity validation, AccountEntity account, out UserException error)
+    public static bool RenewalValidation(this RenewalEntity validation, PanelUserEntity account, out UserException error)
     {
         if (account.UserType.HasFlag(UserTypes.AllowMonthly))
         {

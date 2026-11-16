@@ -129,7 +129,7 @@ public static class UserManagerHelper
         }
     }
 
-    public static bool GetUser(this ITikConnection connection, AccountEntity account, int shared_user,
+    public static bool GetUser(this ITikConnection connection, VpnAccountEntity account, int shared_user,
         out UserModel user)
     {
         var no_need_to_save = true;
@@ -160,7 +160,7 @@ public static class UserManagerHelper
         return no_need_to_save;
     }
 
-    public static void CheckUser(this ITikConnection connection, AccountEntity account, int shared_user)
+    public static void CheckUser(this ITikConnection connection, VpnAccountEntity account, int shared_user)
     {
         if (!connection.GetUser(account, shared_user, out var user))
         {

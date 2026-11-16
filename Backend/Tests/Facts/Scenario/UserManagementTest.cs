@@ -1,4 +1,5 @@
 using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Test.Initializer;
 
@@ -20,14 +21,14 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
         var fixture = new Fixture($"um_mgr{tag}", $"um_sub{tag}", $"um_inactive{tag}");
 
         using var scope = ServiceProvider.CreateScope();
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
 
         await InsertAccount(fixture.Manager, UserTypes.AllowSelfService, AccountRole.Manager);
 
-        var manager_id = (await account_repo.GetAccountIdByUsername([fixture.Manager]))[fixture.Manager];
+        var manager_id = await panel_user_repo.GetActiveUserId(fixture.Manager);
 
         await InsertAccount(fixture.Subordinate, UserTypes.None, owner_id: manager_id);
-        await InsertAccount(fixture.Inactive, UserTypes.None, owner_id: manager_id, status: AccountStatus.Deactivated);
+        await InsertAccount(fixture.Inactive, UserTypes.None, owner_id: manager_id, status: PanelUserStatus.Deactivated);
 
         return fixture;
     }
@@ -110,13 +111,13 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
 
         using (var scope = ServiceProvider.CreateScope())
         {
-            var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+            var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
 
-            var manager = await account_repo.GetAccount(fixture.Manager);
-            var dependent = await account_repo.GetAccount("um_dep45");
-            var independent = await account_repo.GetAccount("um_ind46");
-            var sub_manager = await account_repo.GetAccount("um_submgr49");
-            var owned = await account_repo.GetAccount("um_owned50");
+            var manager = await panel_user_repo.GetUser(fixture.Manager);
+            var dependent = await panel_user_repo.GetUser("um_dep45");
+            var independent = await panel_user_repo.GetUser("um_ind46");
+            var sub_manager = await panel_user_repo.GetUser("um_submgr49");
+            var owned = await panel_user_repo.GetUser("um_owned50");
 
             Assert.Equal(manager!.Id, dependent!.Owner);
             Assert.Equal(AccountRole.User, dependent.Role);
@@ -174,23 +175,23 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
 
         using (var scope = ServiceProvider.CreateScope())
         {
-            var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+            var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
 
-            Assert.Equal(AccountRole.Manager, (await account_repo.GetAccount("um_user56"))!.Role);
+            Assert.Equal(AccountRole.Manager, (await panel_user_repo.GetUser("um_user56"))!.Role);
         }
 
         // …demoting the seeded manager while it still has an active subordinate → refused
         await UserSetRole(fixture.Manager, 0, status: 4);
 
         // after deactivating the subordinate the demotion succeeds (§3 guard)
-        await UserSetStatus(fixture.Subordinate, AccountStatus.Deactivated);
+        await UserSetStatus(fixture.Subordinate, PanelUserStatus.Deactivated);
         await UserSetRole(fixture.Manager, 0);
 
         using (var scope = ServiceProvider.CreateScope())
         {
-            var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+            var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
 
-            Assert.Equal(AccountRole.User, (await account_repo.GetAccount(fixture.Manager))!.Role);
+            Assert.Equal(AccountRole.User, (await panel_user_repo.GetUser(fixture.Manager))!.Role);
         }
     }
 
@@ -224,9 +225,9 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
 
         using (var scope = ServiceProvider.CreateScope())
         {
-            var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+            var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
 
-            Assert.Null((await account_repo.GetAccount("um_user58"))!.Owner);
+            Assert.Null((await panel_user_repo.GetUser("um_user58"))!.Owner);
         }
     }
 
@@ -265,15 +266,38 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
     public async Task SetStatus_Guards()
     {
         var fixture = await SeedManager("61");
+
+        int account_id;
+
+        using (var scope = ServiceProvider.CreateScope())
+        {
+            var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
+            var vpn_account_repo = scope.ServiceProvider.GetRequiredService<IVpnAccountRepository>();
+
+            // D9: a seeded panel user owns no VPN account — give the
+            // subordinate one so the VPN-level status axis is exercisable
+            var subordinate_id = await panel_user_repo.GetActiveUserId(fixture.Subordinate);
+
+            await vpn_account_repo.Save(new VpnAccountEntity
+            {
+                UserId = subordinate_id!.Value,
+                RealmId = 1,
+                Username = fixture.Subordinate,
+                VpnPassword = "VpnPassword",
+            });
+
+            account_id = (await vpn_account_repo.GetAccount(fixture.Subordinate))!.Id;
+        }
+
         await Login(fixture.Manager, "Passw0rd1");
 
         // suspending only the VPN keeps the portal login working (D13)…
-        await UserSetStatus(fixture.Subordinate, AccountStatus.VpnSuspended);
+        await UserSetAccountStatus(account_id, VpnAccountStatus.Suspended);
         await Login(fixture.Subordinate, "Passw0rd1");
 
-        // …while full deactivation blocks it
+        // …while panel deactivation blocks it
         await Login(fixture.Manager, "Passw0rd1");
-        await UserSetStatus(fixture.Subordinate, AccountStatus.Deactivated);
+        await UserSetStatus(fixture.Subordinate, PanelUserStatus.Deactivated);
         await Login(fixture.Subordinate, "Passw0rd1", status: 4);
 
         // …and the account stays visible in the manager's list
@@ -282,13 +306,13 @@ public class UserManagementTest(ProgramLevelInitializer.Factory factory) : HttpH
 
         // outside the area → 403; admin self → 403 (D9/D13)
         await Register("um_user62", "59", "Passw0rd1");
-        await UserSetStatus("um_user62", AccountStatus.Deactivated, http_status: 403);
+        await UserSetStatus("um_user62", PanelUserStatus.Deactivated, http_status: 403);
 
         await Login("admin", "admin");
-        await UserSetStatus("admin", AccountStatus.Deactivated, http_status: 403);
+        await UserSetStatus("admin", PanelUserStatus.Deactivated, http_status: 403);
 
         // the admin reactivates it and the login works again
-        await UserSetStatus(fixture.Subordinate, AccountStatus.Active);
+        await UserSetStatus(fixture.Subordinate, PanelUserStatus.Active);
         await Login(fixture.Subordinate, "Passw0rd1");
     }
 }

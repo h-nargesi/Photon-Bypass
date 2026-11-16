@@ -7,6 +7,7 @@ using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Domain.Static;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.ServerBridge.Services;
@@ -18,44 +19,46 @@ namespace PhotonBypass.Test.Facts.Application;
 
 public class PlanApplicationTest : UnitLevelServiceInitializer
 {
+    // fixtures keep the 1:1:1 mapping panel-user id == vpn-account id == plan id
+
     [Fact]
-    public async Task GetPlanState_InvalidUsername()
+    public async Task GetPlanState_UnknownAccount()
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var func = () => plan_app.GetPlanState("Invalid username");
+        var func = () => plan_app.GetPlanState(12345);
 
         await func.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
-    public async Task Renewal_VpnSuspendedTarget_IsRefusedWithFriendlyMessage()
+    public async Task Renewal_SuspendedVpnAccount_IsRefusedWithFriendlyMessage()
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
 
         // D-A: a VPN-suspended account keeps portal access but renewal is
-        // blocked until a manager reactivates it
-        account_moq.Data["User2"].Status = AccountStatus.VpnSuspended;
+        // blocked until a manager reactivates it (docs/22 D12: per account)
+        vpn_account_moq.Data.First(account => account.Username == "User2").Status = VpnAccountStatus.Suspended;
 
         job_context.InjectJobContext(99, "User99", "User2");
 
-        (await Assert.ThrowsAsync<UserException>(() => plan_app.Renewal(99, null, "User2t|1u|30d|25g")))
+        (await Assert.ThrowsAsync<UserException>(() => plan_app.SettlePurchase(99, null, "User2t|1u|30d|25g")))
             .UserMessage.Should().Contain("سرویس VPN شما توسط مدیریت غیرفعال است");
 
-        Assert.Equal(AccountStatus.VpnSuspended, account_moq.Data["User2"].Status);
+        Assert.Equal(VpnAccountStatus.Suspended, vpn_account_moq.Data.First(account => account.Username == "User2").Status);
     }
 
     [Fact]
-    public async Task GetPlanState_InactiveAccount()
+    public async Task GetPlanState_DeactivatedAccount()
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var func = () => plan_app.GetPlanState("InactiveUser7");
+        var func = () => plan_app.GetPlanState(7);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -66,7 +69,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var plan_state = await plan_app.GetPlanState("User6");
+        var plan_state = await plan_app.GetPlanState(6);
 
         Assert.NotNull(plan_state);
         Assert.Equal(2, plan_state.Code / 100);
@@ -82,7 +85,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
-        var plan_state = await plan_app.GetPlanState("User2");
+        var plan_state = await plan_app.GetPlanState(2);
 
         Assert.NotNull(plan_state);
         Assert.Equal(2, plan_state.Code / 100);
@@ -98,7 +101,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
-        var plan_state = await plan_app.GetPlanState("User99");
+        var plan_state = await plan_app.GetPlanState(99);
 
         Assert.NotNull(plan_state);
         Assert.Equal(2, plan_state.Code / 100);
@@ -109,23 +112,23 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task GetPlanInfo_InvalidUsername()
+    public async Task GetPlanInfo_UnknownAccount()
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var func = () => plan_app.GetPlanInfo("Invalid username");
+        var func = () => plan_app.GetPlanInfo(12345);
 
         await func.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
-    public async Task GetPlanInfo_InactiveAccount()
+    public async Task GetPlanInfo_DeactivatedAccount()
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var func = () => plan_app.GetPlanInfo("InactiveUser7");
+        var func = () => plan_app.GetPlanInfo(7);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -136,12 +139,15 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var plan_state = await plan_app.GetPlanInfo("User6");
+        var plan_state = await plan_app.GetPlanInfo(6);
 
         Assert.NotNull(plan_state);
         Assert.Equal(2, plan_state.Code / 100);
         Assert.NotNull(plan_state.Data);
         Assert.Equal("User6", plan_state.Data.Target);
+        Assert.Equal(6, plan_state.Data.AccountId);
+        Assert.Equal(1, plan_state.Data.RealmId);
+        Assert.False(plan_state.Data.RequiresRealmChoice);
         Assert.Null(plan_state.Data.SimultaneousUserCount);
         Assert.Null(plan_state.Data.Days);
         Assert.Null(plan_state.Data.Gigabytes);
@@ -156,7 +162,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
-        var plan_state = await plan_app.GetPlanInfo("User99");
+        var plan_state = await plan_app.GetPlanInfo(99);
 
         Assert.NotNull(plan_state);
         Assert.Equal(2, plan_state.Code / 100);
@@ -171,6 +177,21 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public async Task GetPlanInfo_StaleAccount_RequiresRealmChoice()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+
+        // User3 last connected exactly one day beyond the 7-day window
+        var plan_state = await plan_app.GetPlanInfo(3);
+
+        Assert.NotNull(plan_state);
+        Assert.Equal(2, plan_state.Code / 100);
+        Assert.NotNull(plan_state.Data);
+        Assert.True(plan_state.Data.RequiresRealmChoice);
+    }
+
+    [Fact]
     public async Task GetPlanInfo_XuiRealm_ReportsCredentialRotationInsteadOfPasswordChange()
     {
         using var scope = App.Services.CreateScope();
@@ -178,24 +199,25 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
 
         server_moq
-            .Setup(x => x.GetActiveRadiusInRealmOrAll(2))
+            .Setup(x => x.GetActiveRadiusInRealmOrAll(1))
             .ReturnsAsync([new ServerEntity
             {
                 Id = 21,
                 IsActive = true,
-                RealmId = 2,
+                RealmId = 1,
                 Name = "XuiServer",
                 IpAddress = "10.0.1.21",
                 DomainName = "srv21.photon-bypass.com",
                 Features = ServerFeature.Xui | ServerFeature.V2ray,
             }]);
 
-        // User2 is restricted to realm 2
-        var plan_state = await plan_app.GetPlanInfo("User2");
+        // User2's VPN account lives on realm 1
+        var plan_state = await plan_app.GetPlanInfo(2);
 
         Assert.NotNull(plan_state);
         Assert.Equal(2, plan_state.Code / 100);
         Assert.NotNull(plan_state.Data);
+        Assert.Equal(1, plan_state.Data.RealmId);
         Assert.Equal("xui", plan_state.Data.Kind);
         Assert.False(plan_state.Data.SupportsPasswordChange);
         Assert.True(plan_state.Data.SupportsCredentialRotation);
@@ -207,8 +229,13 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        // User2 is restricted to realm 2 which has a NAS but no radius server
-        var plan_state = await plan_app.GetPlanInfo("User2");
+        // mock the account realm with a NAS but no radius server
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+        server_moq
+            .Setup(x => x.GetActiveRadiusInRealmOrAll(1))
+            .ReturnsAsync([]);
+
+        var plan_state = await plan_app.GetPlanInfo(2);
 
         Assert.NotNull(plan_state);
         Assert.Equal(2, plan_state.Code / 100);
@@ -219,21 +246,45 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task Renewal_InvalidUsername()
+    public async Task Renewal_UnknownAccount()
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
-        var func = () => plan_app.Renewal("InvalidUser", 2, 10, 20);
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+
+        job_context.InjectJobContext(12345, "UnknownUser", "UnknownUser");
+
+        var func = () => plan_app.Renewal(12345, 2, 10, 20, null);
         await func.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
-    public async Task Renewal_InactiveAccount()
+    public async Task Renewal_DeactivatedAccount()
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
-        var func = () => plan_app.Renewal("InactiveUser7", 2, 10, 20);
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+
+        job_context.InjectJobContext(7, "InactiveUser7", "InactiveUser7");
+
+        var func = () => plan_app.Renewal(7, 2, 10, 20, null);
         await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task Renewal_StaleAccountWithoutRealmChoice_IsRefused()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+
+        // User3's last activity is a day beyond the 7-day window (D6)
+        job_context.InjectJobContext(3, "User3", "User3");
+
+        var func = () => plan_app.Renewal(3, 2, 120, 25, null);
+
+        (await func.Should().ThrowAsync<UserException>())
+            .Which.UserMessage.Should().Contain("سرور");
     }
 
     [Fact]
@@ -245,11 +296,11 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(2, "User2", "User2");
 
-        var estimate = await plan_app.Estimate("User2", 2, 120, 25);
+        var estimate = await plan_app.Estimate(2, 2, 120, 25);
 
         Assert.NotNull(estimate);
 
-        var result = await plan_app.Renewal("User2", 2, 120, 25);
+        var result = await plan_app.Renewal(2, 2, 120, 25, null);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -285,7 +336,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         EmailMessage? sent = null;
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += mail => sent = mail;
 
-        var result = await plan_app.Renewal(99, 1, "User2t|2u|120d|25g");
+        var result = await plan_app.SettlePurchase(99, 1, "User2t|2u|120d|25g");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -325,7 +376,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend +=
             _ => throw new InvalidOperationException("smtp unavailable");
 
-        var result = await plan_app.Renewal(99, 1, "User2t|2u|120d|25g");
+        var result = await plan_app.SettlePurchase(99, 1, "User2t|2u|120d|25g");
 
         // the plan is committed and the money is gone: a failed email must
         // not turn the settled renewal into an error
@@ -341,13 +392,14 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
+        // User3 is stale (D6): the realm re-pick travels with the invoice
         job_context.InjectJobContext(3, "User3", "User3");
 
-        var estimate = await plan_app.Estimate("User3", 2, 120, 25);
+        var estimate = await plan_app.Estimate(3, 2, 120, 25);
 
         Assert.NotNull(estimate);
 
-        var result = await plan_app.Renewal("User3", 2, 120, 25);
+        var result = await plan_app.Renewal(3, 2, 120, 25, 1);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -365,7 +417,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(11, "DependentUser11", "DependentUser11");
 
-        var func = () => plan_app.Renewal("DependentUser11", 2, 120, 25);
+        var func = () => plan_app.Renewal(11, 2, 120, 25, null);
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.HttpCode.Should().Be(403);
@@ -380,7 +432,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(11, "DependentUser11", "DependentUser11");
 
-        var func = () => plan_app.Estimate("DependentUser11", 2, 120, 25);
+        var func = () => plan_app.Estimate(11, 2, 120, 25);
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.HttpCode.Should().Be(403);
@@ -410,9 +462,9 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             },
         ];
 
-        var estimate = (await plan_app.Estimate("User2", 2, 120, 25)).Data!;
+        var estimate = (await plan_app.Estimate(2, 2, 120, 25)).Data!;
 
-        var result = await plan_app.Renewal("User2", 2, 120, 25);
+        var result = await plan_app.Renewal(2, 2, 120, 25, null);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -423,36 +475,37 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         // D4: the invoice belongs to the paying manager, the action keeps the target
         var invoice = invoice_moq.Data.Single(i => i.Code == result.Data.InvoiceCode);
         Assert.Equal(99, invoice.AccountId);
+        Assert.Equal(2, invoice.VpnAccountId);
         Assert.Equal("User2t|2u|120d|25g", invoice.Action);
 
         Assert.Equal(estimate.Price, invoice.TotalPrice);
     }
 
     [Fact]
-    public async Task Renewal_Action_InvalidAction()
+    public async Task SettlePurchase_InvalidAction()
     {
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var func = () => plan_app.Renewal(2, 1, "");
+        var func = () => plan_app.SettlePurchase(2, 1, "");
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.Renewal(2, 1, "10u");
+        func = () => plan_app.SettlePurchase(2, 1, "10u");
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.Renewal(2, 1, "20d");
+        func = () => plan_app.SettlePurchase(2, 1, "20d");
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.Renewal(2, 1, "20g");
+        func = () => plan_app.SettlePurchase(2, 1, "20g");
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.Renewal(2, 1, "10u|20d");
+        func = () => plan_app.SettlePurchase(2, 1, "10u|20d");
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.Renewal(2, 1, "10u|20g");
+        func = () => plan_app.SettlePurchase(2, 1, "10u|20g");
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.Renewal(2, 1, "10d|20g");
+        func = () => plan_app.SettlePurchase(2, 1, "10d|20g");
         await func.Should().ThrowAsync<Exception>();
     }
 
@@ -481,11 +534,11 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             },
         ];
 
-        var estimate = await plan_app.Estimate("User2", 5, 120, 75);
+        var estimate = await plan_app.Estimate(2, 5, 120, 75);
 
         Assert.NotNull(estimate);
 
-        var result = await plan_app.Renewal(99, 1, "User2t|5u|120d|75g");
+        var result = await plan_app.SettlePurchase(99, 1, "User2t|5u|120d|75g");
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -498,7 +551,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             w.Direction == BalanceDirection.Debit && w.Amount == estimate.Data!.Price);
         Assert.DoesNotContain(wallet_moq.Data[2], w => w.Direction == BalanceDirection.Debit);
 
-        var renewal = renewal_moq.Data.Single(r => r.AccountId == 2 && r.SimultaneousUser == 5);
+        var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == 2 && r.SimultaneousUser == 5);
         Assert.Equal(75, renewal.TrafficLimit / StaticValues.BytesInGigLong);
     }
 
@@ -509,7 +562,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
         // payer (99) has no wallet at all: the money-need is judged on the payer
-        var func = () => plan_app.Renewal(99, 1, "User3t|2u|120d|50g");
+        var func = () => plan_app.SettlePurchase(99, 1, "User3t|2u|120d|50g");
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -520,8 +573,195 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var func = () => plan_app.Renewal(777, 1, "User2t|2u|120d|50g");
+        var func = () => plan_app.SettlePurchase(777, 1, "User2t|2u|120d|50g");
 
         await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task NewAccount_IssuesInvoiceWithRealmAndSuggestedUsername()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var invoice_moq = scope.ServiceProvider.GetRequiredService<InvoiceRepositoryMoq>();
+
+        job_context.InjectJobContext(6, "User6", "User6");
+
+        scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>()
+            .Data.RemoveAll(account => account.UserId == 6);
+
+        var result = await plan_app.NewAccount(username: null, realm_id: 1, users: 1, days: 30, gigabytes: 25);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+        Assert.NotNull(result.Data);
+        Assert.NotNull(result.Data.InvoiceCode);
+
+        // D9: the new-account invoice carries the D3 suggestion (bare panel
+        // username — User6 owns no VPN account yet) and the chosen realm
+        var invoice = invoice_moq.Data.Single(i => i.Code == result.Data.InvoiceCode);
+        Assert.Equal(6, invoice.AccountId);
+        Assert.Null(invoice.VpnAccountId);
+        Assert.Equal("n|User6t|User6o|1u|30d|25g|1r", invoice.Action);
+    }
+
+    [Fact]
+    public async Task NewAccount_RejectsForeignUsername()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+
+        job_context.InjectJobContext(6, "User6", "User6");
+
+        // D3: the VPN username must start with the owner's panel username
+        var func = () => plan_app.NewAccount(username: " somebody-else", realm_id: 1, users: 1, days: 30, gigabytes: 25);
+
+        await func.Should().ThrowAsync<UserException>();
+    }
+
+    [Fact]
+    public async Task NewAccount_RejectsTakenUsername()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+
+        job_context.InjectJobContext(6, "User6", "User6");
+
+        // User6 already owns the "User6" VPN username
+        var func = () => plan_app.NewAccount(username: "User6", realm_id: 1, users: 1, days: 30, gigabytes: 25);
+
+        (await func.Should().ThrowAsync<UserException>())
+            .Which.HttpCode.Should().Be(409);
+    }
+
+    [Fact]
+    public async Task NewAccount_DependentSelfUser_IsForbidden()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+
+        job_context.InjectJobContext(11, "DependentUser11", "DependentUser11");
+
+        var func = () => plan_app.NewAccount(username: "DependentUser11", realm_id: 1, users: 1, days: 30, gigabytes: 25);
+
+        (await func.Should().ThrowAsync<UserException>())
+            .Which.HttpCode.Should().Be(403);
+    }
+
+    [Fact]
+    public async Task SettleNewAccount_CreatesVpnAccountAndFirstRenewalAtomically()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var wallet_moq = scope.ServiceProvider.GetRequiredService<WalletRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
+        var renewal_moq = scope.ServiceProvider.GetRequiredService<RenewalRepositoryMoq>();
+
+        job_context.InjectJobContext(6, "User6", "User6");
+
+        scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>()
+            .Data.RemoveAll(account => account.UserId == 6);
+
+        wallet_moq.Data[6] =
+        [
+            new WalletEntity
+            {
+                Id = 903,
+                AccountId = 6,
+                Amount = 2000,
+                Direction = BalanceDirection.Credit,
+                Status = BalanceStatus.Completed,
+                Description = "seed",
+            },
+        ];
+
+        var before = vpn_account_moq.Data.Count;
+
+        var result = await plan_app.SettlePurchase(6, null, "n|User6t|User6o|1u|30d|25g|1r", 555);
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+
+        // D9: the VPN account and its first renewal exist together, pinned to
+        // the chosen realm with the D3 username
+        var account = vpn_account_moq.Data.Single(a => a.Username == "User6");
+        Assert.Equal(6, account.UserId);
+        Assert.Equal(1, account.RealmId);
+        Assert.Equal(VpnAccountStatus.Active, account.Status);
+        Assert.False(string.IsNullOrEmpty(account.VpnPassword));
+
+        var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == account.Id);
+        Assert.Equal(25, renewal.TrafficLimit / StaticValues.BytesInGigLong);
+        // monthly pricing derives the expiry from the traffic share (docs/17):
+        // 25GB/1u → 60 + 30 - 0 = 90 days
+        Assert.Equal((short)90, renewal.TimeLimitInDays);
+        Assert.NotNull(renewal.ExpirationDate);
+        Assert.Equal(25, renewal.CumulativeTrafficLeft / StaticValues.BytesInGigLong);
+
+        // the wallet debit happened on the payer (the radius push itself is
+        // covered by RenewalStackingTest/SettleRenewal below)
+        Assert.Contains(wallet_moq.Data[6], w => w.Direction == BalanceDirection.Debit && w.InvoiceCode == 555);
+    }
+
+    [Fact]
+    public async Task SettleRenewal_StaleAccount_MigratesRealm()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+        var wallet_moq = scope.ServiceProvider.GetRequiredService<WalletRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
+
+        // User3 is stale (last activity one day beyond the 7-day window)
+        job_context.InjectJobContext(99, "User99", "User3");
+
+        wallet_moq.Data[99] =
+        [
+            new WalletEntity
+            {
+                Id = 904,
+                AccountId = 99,
+                Amount = 3000,
+                Direction = BalanceDirection.Credit,
+                Status = BalanceStatus.Completed,
+                Description = "seed",
+            },
+        ];
+
+        var result = await plan_app.SettlePurchase(99, null, "User3t|2u|30d|25g|1r");
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Code / 100);
+
+        // D6: username and stacked state travel to the user-chosen realm —
+        // the real dispatcher pins the new realm before the repo save
+        var account = vpn_account_moq.Data.Single(a => a.Username == "User3");
+        Assert.Equal(1, account.RealmId);
+    }
+
+    [Fact]
+    public async Task SuggestUsername_Scenarios()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+
+        // user with no VPN account yet: the bare panel username
+        job_context.InjectJobContext(6, "User6", "User6");
+
+        scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>()
+            .Data.RemoveAll(account => account.UserId == 6);
+
+        (await plan_app.SuggestUsername()).Data.Should().Be("User6");
+
+        // user whose bare username is taken by their own VPN account: first
+        // free incremental suffix
+        job_context.InjectJobContext(2, "User2", "User2");
+        (await plan_app.SuggestUsername()).Data.Should().Be("User22");
     }
 }

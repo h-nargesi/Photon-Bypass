@@ -1,25 +1,34 @@
 {
-    "title": "تمدید یا تغییر وضعیت پلن",
-    "labels": {
-        "submit": "تایید",
-        "current-user": "کاربر جاری",
-        "monthly": {
-            "title": "زمان:",
-            "choise": "انتخاب مقدار روز",
-            "unit": "روز"
-        },
-        "traffic": {
-            "title": "ترافیک:",
-            "choise": "انتخاب مقدار ترافیک",
-            "unit": "GB"
-        },
-        "simultaneousUsers": {
-            "title": "انتخاب تعداد کاربران:",
-            "choise": "انتخاب تعداد کاربران"
-        },
-        "cost-caption": "هزینه تمدید: {0} تومان"
+  "title": "تمدید یا تغییر وضعیت پلن",
+  "labels": {
+    "submit": "تایید",
+    "current-user": "کاربر جاری",
+    "monthly": {
+      "title": "زمان:",
+      "choise": "انتخاب مقدار روز",
+      "unit": "روز"
     },
-    "price": {
-        "title": "تعرفه‌ها"
-    }
+    "traffic": {
+      "title": "ترافیک:",
+      "choise": "انتخاب مقدار ترافیک",
+      "unit": "GB"
+    },
+    "simultaneousUsers": {
+      "title": "انتخاب تعداد کاربران:",
+      "choise": "انتخاب تعداد کاربران"
+    },
+    "cost-caption": "هزینه تمدید: {0} تومان",
+    "current-account": "اکانت جاری",
+    "vpn-username": "نام کاربری VPN (اختیاری — پیشنهاد سیستم جایگزین می‌شود)",
+    "realm": "سرور (realm):",
+    "realm-choise": "انتخاب سرور",
+    "realm-repick": "اکانت شما مدتی غیرفعال بوده است؛ سرور را دوباره انتخاب کنید:"
+  },
+  "price": {
+    "title": "تعرفه‌ها"
+  },
+  "mode": {
+    "renew": "تمدید اکانت",
+    "new-account": "اکانت جدید"
+  }
 }

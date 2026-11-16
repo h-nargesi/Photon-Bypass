@@ -201,12 +201,13 @@ Full reading order and per-file purpose is in [docs/00-index.md](docs/00-index.m
 - [docs/19-deploy-runbook.md](docs/19-deploy-runbook.md) — first-release Plesk deploy runbook: fresh production secrets, `private/secrets.json` loader + startup guard, DB install from scratch, manual FTP publish and verification
 - [docs/20-admin-panel-roles.md](docs/20-admin-panel-roles.md) — admin-panel roles decision record: D1–D13 (Role/UserTypes.AllowSelfService, payer=actor, admin wallet ledger), access matrix, 6-phase roadmap
 - [docs/21-social-media-telegram-channel.md](docs/21-social-media-telegram-channel.md) — telegram channel record (D1–D6): channel-neutral `ISocialMediaService` + runtime channel selection, one-time-code chat binding, Telegram-first reset/warnings with email fallback
+- [docs/22-panel-user-vpn-split.md](docs/22-panel-user-vpn-split.md) — panel-user/VPN-account split record (D1–D14): `PanelUser` + `VpnAccount` entities, N accounts per user, D3 username rule, realm choice at purchase + stale migration, per-account status axes, `accountId` API contract
 
 ---
 
 ## Known gaps / starting points
 
-The platform is functional for the customer-facing flow (auth, account, plan renewal + card-to-card receipt billing, dual-Radius + x-ui sync, background jobs, email notifications, the Telegram social channel — runtime-selected, see [docs/21-social-media-telegram-channel.md](docs/21-social-media-telegram-channel.md), dynamic pricing, main frontend pages, and the role-based management panel on the single Portal host — see [docs/20-admin-panel-roles.md](docs/20-admin-panel-roles.md)). Incomplete areas:
+The platform is functional for the customer-facing flow (auth, account, plan renewal + card-to-card receipt billing, dual-Radius + x-ui sync, background jobs, email notifications, the Telegram social channel — runtime-selected, see [docs/21-social-media-telegram-channel.md](docs/21-social-media-telegram-channel.md), dynamic pricing, main frontend pages, and the role-based management panel on the single Portal host — see [docs/20-admin-panel-roles.md](docs/20-admin-panel-roles.md), and the panel-user/VPN-account split with multi-account purchase — see [docs/22-panel-user-vpn-split.md](docs/22-panel-user-vpn-split.md)). Incomplete areas:
 
 - **`Backend/Admin` host** — deliberately set aside (docs/20 D7: one Portal host + one Angular app); it stays an empty skeleton (`Program.cs` + empty `AddAdminServices`). The management panel itself is built and lives in Portal (`/api/user/*`, `/api/server/*`, `/api/wallet/*` + frontend `/users`, `/servers`, `/wallet`).
 - **`SetOVpnCertificate`** (`MikrotikRadius/Application/MikrotikDirectService.cs:165`) — throws `NotImplementedException` (deferred to the OpenVPN support phase; gated behind the `ServerFeature.Ovpn` bit).

@@ -21,7 +21,7 @@ public class WalletBusinessTest
     [InlineData(UserTypes.None, 0, 0, 0, false)]
     public void CheckMoneyNeed_Theory(UserTypes user_type, int balance, int estimate, int expected_need, bool expected)
     {
-        var account = new AccountEntity { UserType = user_type };
+        var account = new PanelUserEntity { UserType = user_type };
 
         var result = account.CheckMoneyNeed(balance, estimate, out var money_need);
 

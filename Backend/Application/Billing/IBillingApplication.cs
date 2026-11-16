@@ -7,7 +7,12 @@ public interface IBillingApplication
 {
     Task<ApiResult<int?>> IssueTopUp(int value);
 
-    Task<ApiResult<int?>> IssuePlanInvoice(int estimate, string action, string title);
+    /// <summary>
+    /// Issues a plan invoice; <paramref name="vpn_account_id"/> anchors it to
+    /// the renewed account (docs/22 §2), null on new-account invoices that
+    /// only resolve at settlement.
+    /// </summary>
+    Task<ApiResult<int?>> IssuePlanInvoice(int estimate, string action, string title, int? vpn_account_id = null);
 
     Task<ApiResult<InvoiceModel?>> GetInvoice(int code);
 

@@ -5,14 +5,14 @@ using PhotonBypass.Infra.Repository.DbContext;
 
 namespace PhotonBypass.Infra.Repository;
 
-class HistoryRepository(LocalDbContext context, Lazy<IAccountRepository> account_repo) : EditableRepository<HistoryEntity>(context), IHistoryRepository
+class HistoryRepository(LocalDbContext context, Lazy<IPanelUserRepository> panel_user_repo) : EditableRepository<HistoryEntity>(context), IHistoryRepository
 {
-    public async Task<List<HistoryEntity>> GetHistory(string target, DateTime? from, DateTime? to)
+    public async Task<List<HistoryEntity>> GetHistory(int user_id, DateTime? from, DateTime? to)
     {
         var result = await FindAsync(statement =>
         {
-            statement.Where($"{nameof(HistoryEntity.Target)} = @target")
-                .WithParameters(new { target });
+            statement.Where($"{nameof(HistoryEntity.Target)} = @user_id")
+                .WithParameters(new { user_id });
 
             if (from.HasValue)
             {
@@ -35,7 +35,7 @@ class HistoryRepository(LocalDbContext context, Lazy<IAccountRepository> account
         var sql = $"""
                    select h.*
                    from {TableName} h
-                   join (select {nameof(HistoryEntity.Target)} as AccountId, max({nameof(HistoryEntity.Id)}) as LastId
+                   join (select {nameof(HistoryEntity.Target)} as PanelUserId, max({nameof(HistoryEntity.Id)}) as LastId
                          from {TableName}
                          where {nameof(HistoryEntity.Title)} = @title
                          group by {nameof(HistoryEntity.Target)}) last
@@ -49,7 +49,7 @@ class HistoryRepository(LocalDbContext context, Lazy<IAccountRepository> account
 
     public async Task Save(string issuer_name, HistoryEntity entity)
     {
-        entity.Issuer = await account_repo.Value.GetActiveAccountId(issuer_name);
+        entity.Issuer = await panel_user_repo.Value.GetActiveUserId(issuer_name);
         await Save(entity);
     }
 }

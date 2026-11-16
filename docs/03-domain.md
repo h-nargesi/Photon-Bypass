@@ -8,7 +8,8 @@
 
 | Entity file | DB table | Group | Notes |
 |---|---|---|---|
-| `Domain/Account/Entity/AccountEntity.cs` | `Account` | Account | یوزرنیم یکتا، پسورد هش‌شده، `VpnPassword` جداگانه، `Owner` (FK خود-ارجاع برای زیرمجموعه)، `Status` از نوع `AccountStatus` (ستون `TINYINT`، غیرفعال‌سازی دووضعیتی). |
+| `Domain/Account/Entity/PanelUserEntity.cs` | `PanelUser` | PanelUser | نیمه‌ی پنل از تفکیک `Account` (docs/22 D1): یوزرنیم یکتا، پسورد هش‌شده، `Owner` (FK خود-ارجاع برای زیرمجموعه)، تماس/تلگرام/`CalculationMethod`/`Role`/`UserType`؛ `Status` از نوع `PanelUserStatus` (0/2). |
+| `Domain/Account/Entity/VpnAccountEntity.cs` | `VpnAccount` | VpnAccount | نیمه‌ی VPN: `UserId` (FK به PanelUser)، `RealmId` (NOT NULL)، `Username` یکتای سراسری (قاعده‌ی D3: پیشوند یوزرنیم پنل + پسوند اختیاری، ≤32)، `VpnPassword`، `Status` از نوع `VpnAccountStatus`، مهرهای هشدار/چرخش. |
 | `Domain/Account/Entity/WalletEntity.cs` | `Wallet` | Account | کیف پول؛ `Direction` (Credit/Debit)، `Status`، `InvoiceCode`، `Action` (رشته‌ی تمدید تعویق‌یافته). |
 | `Domain/Account/Entity/HistoryEntity.cs` | `History` | Account | لاگ رویدادها روی یک target. |
 | `Domain/Account/Entity/ResetPassEntity.cs` | `ResetPassword` | Account | توکن فراموشی پسورد. |
@@ -37,7 +38,8 @@
 |---|---|---|---|
 | `UserTypes` | `Domain/Account/Model/UserTypes.cs` | `[Flags] byte` | `None=0`, `OldUser=1`, `AllowMonthly=2` |
 | `AccountRole` | `Domain/Account/Model/AccountRole.cs` | `byte` | `User=0`, `Manager=1`, `Admin=2` (docs/20 D2/D9) |
-| `AccountStatus` | `Domain/Account/Model/AccountStatus.cs` | `byte` | `Active=0`, `VpnSuspended=1`, `Deactivated=2` — غیرفعال‌سازی دووضعیتی (docs/20 D13): ۱ = فقط VPN خاموش (لاگین پنل آزاد، تمدید مسدود)؛ ۲ = لاگین پنل هم بلاک (401). |
+| `PanelUserStatus` | `Domain/Account/Model/PanelUserStatus.cs` | `byte` | `Active=0`, `Deactivated=2` — فقط محور پنل (docs/22 D12): ۲ = بلاک لاگین (401). |
+| `VpnAccountStatus` | `Domain/Account/Model/VpnAccountStatus.cs` | `byte` | `Active=0`, `Suspended=1`, `Deactivated=2` — محور VPN per-account (docs/22 D12): ۱ = فقط VPN خاموش (تمدید همان اکانت مسدود)؛ ۲ = ترمینال (رهاشدگی ۴۰ روزه). |
 | `BalanceDirection` | `Domain/Account/Model/BalanceDirection.cs` | `short` | Credit / Debit |
 | `BalanceStatus` | `Domain/Account/Model/BalanceStatus.cs` | `byte` | وضعیت تراکنش/فاکتور (مثل `Failed`, `Completed`) |
 | `EventCategory` | `Domain/Account/Model/EventCategory.cs` | `byte` | دسته‌ی رویداد تاریخچه (مثل `Transaction`) |
@@ -92,7 +94,7 @@
 
 ### `WalletBusiness` (`Domain/Account/Business/WalletBusiness.cs`)
 
-کمکی‌های کیف پول (موجودی، نیاز به پول برای تمدید). منطق «آیا موجودی کافی است» از طریق `AccountEntity.CheckMoneyNeed(balance, estimate, out money_need)` در جریان تمدید استفاده می‌شود (`docs/11`).
+کمکی‌های کیف پول (موجودی، نیاز به پول برای تمدید). منطق «آیا موجودی کافی است» از طریق `PanelUserEntity.CheckMoneyNeed(balance, estimate, out money_need)` در جریان تمدید استفاده می‌شود (`docs/11`).
 
 ## Repository & service interfaces (اینترفیس‌ها)
 
@@ -100,7 +102,7 @@
 
 - **Repository base**: `IEditableRepository<T>` (دارای `Save`/`Delete`/`DbContext`/`Events`) روی `DapperRepository<T>` در Infrastructure (`docs/05`).
 - **Domain repository interfaces** (`Domain/*/`):
-  - Account: `IAccountRepository`, `IWalletRepository`, `IHistoryRepository`, `IResetPassRepository`
+  - Account: `IPanelUserRepository`, `IVpnAccountRepository`, `IWalletRepository`, `IHistoryRepository`, `IResetPassRepository`
   - Plan: `IRenewalRepository`, `IPlanStateRepository`, `ITrafficDataRepository`
   - Servers: `IServerRepository`, `IRealmRepository`
   - Static: `IPriceRepository`

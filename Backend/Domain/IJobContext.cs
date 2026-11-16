@@ -6,6 +6,7 @@ public interface IJobContext
 
     string Target { get; }
 
+    /// <summary>The VPN account the current request acts on (docs/22 §3); null on user-level calls.</summary>
     int? AccountId { get; }
 
     void InjectJobContext(int account_id);

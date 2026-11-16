@@ -37,7 +37,7 @@ public interface IWalletApplication
 
 class WalletApplication(
     IWalletRepository wallet_repo,
-    Lazy<IAccountRepository> account_repo,
+    Lazy<IPanelUserRepository> panel_user_repo,
     Lazy<IAccountApplication> account_app,
     Lazy<IHistoryRepository> history_repo,
     Lazy<IWalletThresholdService> wallet_threshold_srv,
@@ -54,7 +54,7 @@ class WalletApplication(
 
     private IWalletRepository WalletRepo { get; } = wallet_repo;
 
-    private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
+    private Lazy<IPanelUserRepository> PanelUserRepo { get; } = panel_user_repo;
 
     private Lazy<IAccountApplication> AccountApp { get; } = account_app;
 
@@ -139,7 +139,7 @@ class WalletApplication(
 
         var (rows, total) = await WalletRepo.GetHistory(target.Id, page, HistoryPageSize);
 
-        var actors = await AccountRepo.Value.GetUsernamesByAccountId(
+        var actors = await PanelUserRepo.Value.GetUsernamesByUserId(
             rows.Where(r => r.ActorId.HasValue).Select(r => r.ActorId!.Value));
 
         var items = rows.Select(row => new WalletTransactionModel

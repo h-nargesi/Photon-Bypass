@@ -94,18 +94,18 @@ public class WalletThresholdServiceTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task VpnSuspendedAccount_DeactivatePathIsSkipped()
+    public async Task SuspendedAccount_DeactivatePathIsSkipped()
     {
         using var scope = App.Services.CreateScope();
         var options = scope.ServiceProvider.GetRequiredService<IOptions<ManagementOptions>>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
 
         options.Value.WalletDeactivationThreshold = 0;
 
         // management suspended User3's VPN: the below-threshold path leaves it
         // alone — the account is not a wallet-rule target anymore
-        account_moq.Data["User3"].Status = AccountStatus.VpnSuspended;
+        vpn_account_moq.Data.Single(account => account.Username == "User3").Status = VpnAccountStatus.Suspended;
 
         var service = scope.ServiceProvider.GetRequiredService<IWalletThresholdService>();
 
@@ -116,16 +116,16 @@ public class WalletThresholdServiceTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task VpnSuspendedAccount_ActivatePathIsSkipped()
+    public async Task SuspendedAccount_ActivatePathIsSkipped()
     {
         using var scope = App.Services.CreateScope();
         var options = scope.ServiceProvider.GetRequiredService<IOptions<ManagementOptions>>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
 
         options.Value.WalletDeactivationThreshold = -5000;
 
-        account_moq.Data["User3"].Status = AccountStatus.VpnSuspended;
+        vpn_account_moq.Data.Single(account => account.Username == "User3").Status = VpnAccountStatus.Suspended;
 
         // a previous run deactivated the config and the balance has recovered:
         // the recovery must not re-enable a manager-suspended VPN (D13)

@@ -4,13 +4,14 @@ GO
 CREATE OR ALTER VIEW PlanState AS
 
 SELECT Id
+	, UserId
 	, Status
 	, Username
+	, RealmId
     , Created
     , RowNumber
     -- Plan Info (Latest State)
     , SimultaneousUser
-    , RestrictedRealmId
     , TrafficLimit
     , TimeLimitInDays
     , RateLimitInMeg

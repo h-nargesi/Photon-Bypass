@@ -36,28 +36,8 @@ public class PlanStateRepositoryMoq : Mock<IPlanStateRepository>, IUnitLevelServ
                 return Task.FromResult(state);
             });
 
-        Setup(repository => repository.GetTopRestrictedRealmId(It.IsAny<int>()))
-            .Returns<int>(account_id =>
-            {
-                if (data_dictionary.TryGetValue(account_id, out var plan))
-                {
-                    plan = null;
-                }
-
-                return Task.FromResult(plan?.RestrictedRealmId);
-            });
-
-        Setup(x => x.GetActiveAccountRealmId(It.IsAny<int>()))
-            .Returns<int>(id =>
-            {
-                if (!data_dictionary.TryGetValue(id, out var state))
-                {
-                    return Task.FromResult<(int, int?)?>(null);
-                }
-
-                return Task.FromResult<(int, int?)?>((id, state.RestrictedRealmId));
-            });
     }
+
 
     private const string FilePath = "Data/Local/plan-state.json";
 

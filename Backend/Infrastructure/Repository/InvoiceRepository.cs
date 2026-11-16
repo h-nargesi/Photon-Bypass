@@ -19,16 +19,17 @@ class InvoiceRepository(LocalDbContext context) : DapperRepository<InvoiceEntity
     public Task<int> Insert(InvoiceEntity invoice)
     {
         var sql = $"""
-                   insert into {TableName} ({nameof(InvoiceEntity.Code)}, {nameof(InvoiceEntity.AccountId)}, {nameof(InvoiceEntity.Kind)},
+                   insert into {TableName} ({nameof(InvoiceEntity.Code)}, {nameof(InvoiceEntity.AccountId)}, {nameof(InvoiceEntity.VpnAccountId)}, {nameof(InvoiceEntity.Kind)},
                                               {nameof(InvoiceEntity.Title)}, {nameof(InvoiceEntity.TotalPrice)}, {nameof(InvoiceEntity.WalletDeduction)},
                                               {nameof(InvoiceEntity.Payable)}, {nameof(InvoiceEntity.Action)}, {nameof(InvoiceEntity.Status)})
-                   values (@code, @account_id, @kind, @title, @total_price, @wallet_deduction, @payable, @action, @status)
+                   values (@code, @account_id, @vpn_account_id, @kind, @title, @total_price, @wallet_deduction, @payable, @action, @status)
                    """;
 
         return ExecuteAsync(sql, new
         {
             code = invoice.Code,
             account_id = invoice.AccountId,
+            vpn_account_id = invoice.VpnAccountId,
             kind = invoice.Kind,
             title = invoice.Title,
             total_price = invoice.TotalPrice,
@@ -53,9 +54,9 @@ class InvoiceRepository(LocalDbContext context) : DapperRepository<InvoiceEntity
         var sql = $"""
                    select i.*
                    from {TableName} i
-                   join {AccountRepository.TableName} a on i.{nameof(InvoiceEntity.AccountId)} = a.{nameof(AccountEntity.Id)}
+                   join {PanelUserRepository.TableName} a on i.{nameof(InvoiceEntity.AccountId)} = a.{nameof(PanelUserEntity.Id)}
                    where i.{nameof(InvoiceEntity.Code)} = @code
-                     and a.{nameof(AccountEntity.Username)} = @target
+                     and a.{nameof(PanelUserEntity.Username)} = @target
                    """;
 
         var result = await QueryAsync<InvoiceEntity>(sql, new { target, code });

@@ -1,0 +1,123 @@
+[
+  {
+    "Id": 99,
+    "UserId": 99,
+    "RealmId": 1,
+    "Username": "User99",
+    "VpnPassword": "VpnPassword",
+    "Status": 0,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  },
+  {
+    "Id": 2,
+    "UserId": 2,
+    "RealmId": 1,
+    "Username": "User2",
+    "VpnPassword": "VpnPassword",
+    "Status": 0,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  },
+  {
+    "Id": 3,
+    "UserId": 3,
+    "RealmId": 3,
+    "Username": "User3",
+    "VpnPassword": "VpnPassword",
+    "Status": 0,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  },
+  {
+    "Id": 4,
+    "UserId": 4,
+    "RealmId": 1,
+    "Username": "User4",
+    "VpnPassword": "VpnPassword",
+    "Status": 0,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  },
+  {
+    "Id": 5,
+    "UserId": 5,
+    "RealmId": 1,
+    "Username": "User5",
+    "VpnPassword": "VpnPassword",
+    "Status": 0,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  },
+  {
+    "Id": 6,
+    "UserId": 6,
+    "RealmId": 1,
+    "Username": "User6",
+    "VpnPassword": "VpnPassword",
+    "Status": 0,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  },
+  {
+    "Id": 7,
+    "UserId": 7,
+    "RealmId": 1,
+    "Username": "InactiveUser7",
+    "VpnPassword": "VpnPassword",
+    "Status": 2,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  },
+  {
+    "Id": 8,
+    "UserId": 8,
+    "RealmId": 1,
+    "Username": "User8",
+    "VpnPassword": "VpnPassword",
+    "Status": 0,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  },
+  {
+    "Id": 9,
+    "UserId": 9,
+    "RealmId": 1,
+    "Username": "User9",
+    "VpnPassword": "VpnPassword",
+    "Status": 0,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  },
+  {
+    "Id": 10,
+    "UserId": 10,
+    "RealmId": 1,
+    "Username": "User10",
+    "VpnPassword": "VpnPassword",
+    "Status": 0,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  },
+  {
+    "Id": 11,
+    "UserId": 11,
+    "RealmId": 1,
+    "Username": "DependentUser11",
+    "VpnPassword": "VpnPassword",
+    "Status": 0,
+    "SendWarning": true,
+    "LastWarningTime": null,
+    "LastCredentialRotateTime": null
+  }
+]

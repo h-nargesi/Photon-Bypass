@@ -17,11 +17,16 @@ public class ConnectionController(
     ResultHandlerController(job, access)
 {
     [HttpGet("current-con-state")]
-    public async Task<ApiResult> GetCurrentConnectionState([FromQuery] string? target)
+    public async Task<ApiResult> GetCurrentConnectionState([FromQuery] int? accountId)
     {
-        await LoadJobContextAsync(target);
+        if (accountId == null)
+        {
+            return BadRequestApiResult(message: "شناسه‌ی اکانت VPN ارسال نشده است!");
+        }
 
-        var result = await application.GetCurrentConnectionState(JobContext.Target);
+        await LoadJobContextAsync(accountId);
+
+        var result = await application.GetCurrentConnectionState(accountId.Value);
 
         return SafeApiResult(result);
     }
@@ -29,7 +34,12 @@ public class ConnectionController(
     [HttpPost("close-con")]
     public async Task<ApiResult> CloseConnection([FromBody] CloseConnectionContext context)
     {
-        await LoadJobContextAsync(context.Target);
+        if (context.AccountId == null)
+        {
+            return BadRequestApiResult(message: "شناسه‌ی اکانت VPN ارسال نشده است!");
+        }
+
+        await LoadJobContextAsync(context.AccountId);
 
         if (string.IsNullOrWhiteSpace(context.Server))
         {
@@ -41,7 +51,7 @@ public class ConnectionController(
             return BadRequestApiResult(message: "کد اتصال خالی است!");
         }
 
-        var result = await application.CloseConnection(context.Server, JobContext.Target, context.SessionId);
+        var result = await application.CloseConnection(context.Server, context.AccountId!.Value, context.SessionId);
 
         return SafeApiResult(result);
     }

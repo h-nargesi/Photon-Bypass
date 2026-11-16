@@ -92,12 +92,12 @@
                     <c-spinner color="primary" size="sm" *ngIf="copying_vless_link" />
                 </li>
                 <li cListGroupItem class="icon-btn-group">
-                    <a (click)="sendCertificateViaEmail(false)"
+                    <a (click)="sendCertificateViaEmail()"
                         *ngIf="!sending_cert_email && supportsConfigDelivery" class="icon-btn pointer"
                         [cTooltip]="'dashboard.account.send-cert-via-email' | translate">
                         <svg [cIcon]="icons.cilEnvelopeClosed" class="text-primary"></svg>
                     </a>
-                    <a (click)="sendCertificateViaEmail(true)"
+                    <a (click)="sendCertificateViaEmail()"
                         *ngIf="!sending_cert_email && showTagetInUserPanel() && supportsConfigDelivery"
                         class="icon-btn pointer" [cTooltip]="'dashboard.account.send-cert-via-email-to' | translate">
                         <svg [cIcon]="icons.cilCursor" class="text-primary" cTextColor="warning"></svg>

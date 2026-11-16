@@ -35,7 +35,7 @@ public class PlanUsageReaderTest : UnitLevelServiceInitializer
 
     private static RenewalEntity ReplaceStoredRenewal(RenewalRepositoryMoq renewal_moq, RenewalEntity renewal)
     {
-        renewal_moq.Data.RemoveAll(r => r.AccountId == renewal.AccountId);
+        renewal_moq.Data.RemoveAll(r => r.VpnAccountId == renewal.VpnAccountId);
         renewal_moq.Data.Add(renewal);
 
         return renewal;
@@ -54,7 +54,7 @@ public class PlanUsageReaderTest : UnitLevelServiceInitializer
         ReplaceStoredRenewal(renewal_moq, new RenewalEntity
         {
             Id = 1,
-            AccountId = 3,
+            VpnAccountId = 3,
             TrafficLimit = 25 * StaticValues.BytesInGigLong,
             TimeLimitInDays = 30,
             CumulativeTrafficLeft = 45 * StaticValues.BytesInGigLong,
@@ -88,7 +88,7 @@ public class PlanUsageReaderTest : UnitLevelServiceInitializer
         ReplaceStoredRenewal(renewal_moq, new RenewalEntity
         {
             Id = 1,
-            AccountId = 3,
+            VpnAccountId = 3,
             TrafficLimit = 25 * StaticValues.BytesInGigLong,
             TimeLimitInDays = 30,
             TrafficUsed = 5 * StaticValues.BytesInGigLong,
@@ -102,7 +102,7 @@ public class PlanUsageReaderTest : UnitLevelServiceInitializer
         {
             Id = 3,
             Username = "User3",
-            RestrictedRealmId = 3,
+            RealmId = 3,
             TrafficUsed = 111,
             TrafficLeft = 222,
             LastConnectTime = DateTime.Now.AddDays(-1),
@@ -127,7 +127,7 @@ public class PlanUsageReaderTest : UnitLevelServiceInitializer
         var renewal_moq = scope.ServiceProvider.GetRequiredService<RenewalRepositoryMoq>();
         var plan_moq = scope.ServiceProvider.GetRequiredService<PlanStateRepositoryMoq>();
 
-        var renewal = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         renewal.TrafficUsed = 5 * StaticValues.BytesInGigLong;
         renewal.LastPollTime = null;
         renewal.LastSeenCounter = null;
@@ -184,7 +184,7 @@ public class PlanUsageReaderTest : UnitLevelServiceInitializer
 
         var renewal_moq = scope.ServiceProvider.GetRequiredService<RenewalRepositoryMoq>();
 
-        var renewal = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         renewal.TrafficLimit = null;
         renewal.TimeLimitInDays = 30;
         renewal.TrafficUsed = 5 * StaticValues.BytesInGigLong;
@@ -203,7 +203,7 @@ public class PlanUsageReaderTest : UnitLevelServiceInitializer
 
         var renewal_moq = scope.ServiceProvider.GetRequiredService<RenewalRepositoryMoq>();
 
-        var renewal = renewal_moq.Data.Single(r => r.AccountId == 3 && r.Id == 1);
+        var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == 3 && r.Id == 1);
         renewal.TrafficLimit = 25 * StaticValues.BytesInGigLong;
         renewal.TrafficUsed = 5 * StaticValues.BytesInGigLong;
         renewal.LastPollTime = DateTime.Now.AddMinutes(-5);

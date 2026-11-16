@@ -9,7 +9,7 @@ namespace PhotonBypass.OutSource;
 
 /// <summary>
 /// Telegram adapter for <see cref="ISocialMediaService"/>: user-facing
-/// warnings go to <see cref="AccountEntity.TelegramChatId"/> (a null chat is
+/// warnings go to <see cref="PanelUserEntity.TelegramChatId"/> (a null chat is
 /// a silent no-op), operator alerts to TelegramOptions:OperationsChatId. The
 /// message bodies mirror the plain-text email templates so both channels
 /// carry the same content. A user chat that answers dead (blocked bot /
@@ -20,14 +20,14 @@ internal sealed class TelegramMediaService(
     ITelegramBotClient bot_client,
     IOptions<TelegramOptions> telegram_options,
     IOptions<BrandingOptions> branding_options,
-    Lazy<IAccountRepository> account_repo) : ISocialMediaService
+    Lazy<IPanelUserRepository> panel_user_repo) : ISocialMediaService
 {
-    public bool Supports(AccountEntity account)
+    public bool Supports(PanelUserEntity account)
     {
         return account.TelegramChatId != null;
     }
 
-    public async Task SendResetPasswordLink(AccountEntity account, string hash_code)
+    public async Task SendResetPasswordLink(PanelUserEntity account, string hash_code)
     {
         if (account.TelegramChatId is not long chat_id) return;
 
@@ -47,7 +47,7 @@ internal sealed class TelegramMediaService(
             """);
     }
 
-    public async Task InvalidPasswordAlert(AccountEntity account)
+    public async Task InvalidPasswordAlert(PanelUserEntity account)
     {
         if (account.TelegramChatId is not long chat_id) return;
 
@@ -63,7 +63,7 @@ internal sealed class TelegramMediaService(
             """);
     }
 
-    public async Task FinishServiceAlert(AccountEntity account, string plan_title, string remains_title)
+    public async Task FinishServiceAlert(PanelUserEntity account, string plan_title, string remains_title)
     {
         if (account.TelegramChatId is not long chat_id) return;
 
@@ -83,7 +83,7 @@ internal sealed class TelegramMediaService(
             """);
     }
 
-    public Task NewUserRegistrationAlert(AccountEntity account)
+    public Task NewUserRegistrationAlert(PanelUserEntity account)
     {
         return SendToOperations($"""
             حساب کاربری جدید ساخته شد.
@@ -108,7 +108,7 @@ internal sealed class TelegramMediaService(
     /// next hourly run) takes over. Idempotent by design: two concurrent
     /// sends into the same dead chat may both detach, harmlessly.
     /// </summary>
-    private async Task SendToUserChat(AccountEntity account, long chat_id, string text)
+    private async Task SendToUserChat(PanelUserEntity account, long chat_id, string text)
     {
         try
         {
@@ -118,7 +118,7 @@ internal sealed class TelegramMediaService(
         {
             try
             {
-                await account_repo.Value.SetTelegramChat(account.Id, null);
+                await panel_user_repo.Value.SetTelegramChat(account.Id, null);
             }
             catch (Exception detach_error)
             {

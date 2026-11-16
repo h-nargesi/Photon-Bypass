@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
   AccountRole,
-  AccountStatus,
+  PanelUserStatus,
+  VpnAccountStatus,
   ApiResult,
   CreateUserModel,
   PagedResult,
@@ -43,7 +44,13 @@ export class UsersService extends ApiBaseService {
     return this.job(`${USER_API_URL}/set-self-service`, { target, allow });
   }
 
-  setStatus(target: string, status: AccountStatus): Observable<ApiResult> {
+  /// Panel-level status (docs/22 D12): portal axis only.
+  setStatus(target: string, status: PanelUserStatus): Observable<ApiResult> {
     return this.job(`${USER_API_URL}/set-status`, { target, status });
+  }
+
+  /// VPN-level status (docs/22 D12): per-account suspension/activation.
+  setAccountStatus(accountId: number, status: VpnAccountStatus): Observable<ApiResult> {
+    return this.job(`${USER_API_URL}/set-account-status`, { accountId, status });
   }
 }

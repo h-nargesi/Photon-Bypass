@@ -44,7 +44,8 @@
       "owner": "مدیر",
       "plan": "آخرین پلن",
       "created": "تاریخ ساخت",
-      "actions": "عملیات"
+      "actions": "عملیات",
+      "accounts": "اکانت‌های VPN"
     },
     "plan": {
       "none": "بدون پلن",

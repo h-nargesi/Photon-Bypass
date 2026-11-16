@@ -5,13 +5,16 @@ namespace PhotonBypass.Application.Vpn;
 
 public interface IVpnApplication
 {
-    Task<ApiResult> ChangeVpnPassword(string target, string password);
+    /// <summary>The visible VPN accounts of the request target's area (docs/22 §3.5).</summary>
+    Task<ApiResult<List<VpnAccountSummaryModel>>> GetAccounts(string? target);
 
-    Task<ApiResult> SendCertEmail(string target);
+    Task<ApiResult> ChangeVpnPassword(int account_id, string password);
 
-    Task<ApiResult<VpnConfigInfoModel>> GetConfigInfo(string target);
+    Task<ApiResult> SendCertEmail(int account_id);
 
-    Task<VpnConfigFileModel> DownloadVpnConfig(string target);
+    Task<ApiResult<VpnConfigInfoModel>> GetConfigInfo(int account_id);
 
-    Task<ApiResult<TrafficDataModel>> TrafficData(string target);
+    Task<VpnConfigFileModel> DownloadVpnConfig(int account_id);
+
+    Task<ApiResult<TrafficDataModel>> TrafficData(int account_id);
 }

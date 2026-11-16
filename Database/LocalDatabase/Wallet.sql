@@ -4,9 +4,10 @@ GO
 IF OBJECT_ID('Wallet') IS NULL
 CREATE TABLE Wallet (
 	Id					INT IDENTITY	NOT NULL	CONSTRAINT PK_Wallet_Id PRIMARY KEY,
-	AccountId			INT				NOT NULL	CONSTRAINT FK_Wallet_AccountId FOREIGN KEY REFERENCES Account (Id),
+	-- docs/22 D8: the wallet belongs to the panel user (payer = actor, docs/20 D4).
+	AccountId			INT				NOT NULL	CONSTRAINT FK_Wallet_AccountId FOREIGN KEY REFERENCES PanelUser (Id),
 	Amount				INT				NOT NULL,
-	Direction			SMALLINT		NOT NULL,
+	Direction			SMALLINT			NOT NULL,
 	Status				TINYINT			NOT NULL	CONSTRAINT DF_Wallet_Status DEFAULT 0,
 	Description			NVARCHAR(127)	NOT NULL,
 	InvoiceCode			INT					NULL,
@@ -14,7 +15,7 @@ CREATE TABLE Wallet (
 	Action				VARCHAR(16)			NULL,
 	-- docs/20 D5 (phase 3): admin who issued a manual adjustment; NULL for
 	-- system rows (register/renewal/threshold flows).
-	ActorId				INT					NULL	CONSTRAINT FK_Wallet_ActorId_Account FOREIGN KEY REFERENCES Account (Id),
+	ActorId				INT					NULL	CONSTRAINT FK_Wallet_ActorId_Account FOREIGN KEY REFERENCES PanelUser (Id),
 	Created				DATETIME		NOT NULL	CONSTRAINT DF_Wallet_Created DEFAULT GETDATE()
 )
 GO

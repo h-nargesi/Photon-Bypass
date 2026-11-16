@@ -16,22 +16,21 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
 
-        var account = new AccountEntity
+        var user = new PanelUserEntity
         {
             Name = "Transaction",
             Surname = "Transaction",
             Password = PasswordHasher.Hash("password"),
             Username = "Transaction",
-            VpnPassword = "my-password",
         };
 
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
 
-        await account_repo.DbContext.BeginTransactionAsync();
-        await account_repo.Save(account);
-        await account_repo.DbContext.RollbackAsync();
+        await user_repo.DbContext.BeginTransactionAsync();
+        await user_repo.Save(user);
+        await user_repo.DbContext.RollbackAsync();
 
-        var saved = await account_repo.GetAccount("U0059");
+        var saved = await user_repo.GetUser("U0059");
 
         Assert.Null(saved);
     }
@@ -42,25 +41,24 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
 
-        var account = new AccountEntity
+        var user = new PanelUserEntity
         {
             Name = "SetNewId",
             Surname = "SetNewId",
             Password = PasswordHasher.Hash("password"),
             Username = "SetNewId",
-            VpnPassword = "my-password",
         };
 
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
 
-        await account_repo.Save(account);
+        await user_repo.Save(user);
 
-        Assert.True(account.Id > 0);
+        Assert.True(user.Id > 0);
 
-        var saved = await account_repo.GetActiveAccount(account.Id);
+        var saved = await user_repo.GetActiveUser(user.Id);
 
         Assert.NotNull(saved);
-        Assert.Equal(account.Username, saved.Username);
+        Assert.Equal(user.Username, saved.Username);
     }
 
     [Fact]
@@ -69,7 +67,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
 
-        var accounts = new List<AccountEntity>
+        var users = new List<PanelUserEntity>
         {
             new()
             {
@@ -77,7 +75,6 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
                 Surname = "SetNewIdBulk1",
                 Password = PasswordHasher.Hash("password"),
                 Username = "SetNewIdBulk1",
-                VpnPassword = "my-password",
             },
             new()
             {
@@ -85,25 +82,24 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
                 Surname = "SetNewId",
                 Password = PasswordHasher.Hash("password"),
                 Username = "SetNewIdBulk2",
-                VpnPassword = "my-password",
             }
         };
 
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
 
-        await account_repo.Save(accounts);
+        await user_repo.Save(users);
 
-        foreach (var account in accounts)
+        foreach (var user in users)
         {
-            Assert.True(account.Id > 0);
+            Assert.True(user.Id > 0);
         }
 
-        var saveds = await account_repo.GetActiveAccounts(accounts.Select(a => a.Id));
+        var saveds = await user_repo.GetActiveUsers(users.Select(a => a.Id));
 
-        foreach (var account in accounts)
+        foreach (var user in users)
         {
-            Assert.True(saveds.TryGetValue(account.Id, out var saved));
-            Assert.Equal(account.Username, saved.Username);
+            Assert.True(saveds.TryGetValue(user.Id, out var saved));
+            Assert.Equal(user.Username, saved.Username);
         }
     }
 }

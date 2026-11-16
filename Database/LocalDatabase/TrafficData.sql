@@ -4,10 +4,11 @@ GO
 IF OBJECT_ID('TrafficData') IS NULL
 CREATE TABLE TrafficData (
 	Id					INT IDENTITY	NOT NULL	CONSTRAINT PK_TrafficData_Id PRIMARY KEY,
-	AccountId			INT				NOT NULL	CONSTRAINT FK_TrafficData_AccountId FOREIGN KEY REFERENCES Account (Id)
+	-- docs/22 §2: traffic rows belong to the VPN account.
+	VpnAccountId		INT				NOT NULL	CONSTRAINT FK_TrafficData_VpnAccountId FOREIGN KEY REFERENCES VpnAccount (Id)
 													ON DELETE CASCADE,
 	NasId				INT					NULL	CONSTRAINT FK_TrafficData_NasId_Server FOREIGN KEY REFERENCES [Server] (Id),
-	-- The x-ui collector writes synthetic day rows keyed 'xui:{accountId}:{renewalId}:{yyyyMMdd}'
+	-- The x-ui collector writes synthetic day rows keyed 'xui:{vpnAccountId}:{renewalId}:{yyyyMMdd}'
 	-- (docs/17 D7), so 8 characters are not enough.
 	SessionId			VARCHAR(64)		NOT NULL,
 	StartSession		DATETIME		NOT NULL,

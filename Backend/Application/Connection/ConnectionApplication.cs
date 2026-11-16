@@ -12,37 +12,28 @@ using Serilog;
 namespace PhotonBypass.Application.Connection;
 
 class ConnectionApplication(
-    IAccountRepository account_repo,
+    Lazy<IVpnAccountRepository> vpn_account_repo,
+    Lazy<IPlanStateRepository> plan_state_repo,
     ISessionRadiusSyncService session_radius_srv,
     IServerRepository server_repo,
     Lazy<IHistoryRepository> history_repo,
-    Lazy<IPlanStateRepository> plan_repo,
     Lazy<IJobContext> job_context)
     : IConnectionApplication
 {
-    private IAccountRepository AccountRepo { get; } = account_repo;
+    private Lazy<IVpnAccountRepository> VpnAccountRepo { get; } = vpn_account_repo;
+    private Lazy<IPlanStateRepository> PlanStateRepo { get; } = plan_state_repo;
     private ISessionRadiusSyncService SessionRadiusSrv { get; } = session_radius_srv;
     private IServerRepository ServerRepo { get; } = server_repo;
     private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
-    private Lazy<IPlanStateRepository> PlanRepo { get; } = plan_repo;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
-    public async Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(string target)
+    public async Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(int account_id)
     {
-        var account_id = await AccountRepo.GetActiveAccountId(target);
-        if (!account_id.HasValue)
-        {
-            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
-        }
+        var account = await GetAccount(account_id);
 
-        var target_realm_id = await PlanRepo.Value.GetActiveAccountRealmId(account_id.Value);
+        await EnsureActivePlan(account);
 
-        if (!target_realm_id.HasValue)
-        {
-            throw new UserException("کاربر هیچ پلن فعالی ندارد!", $"There is not any plan for target={target}");
-        }
-
-        var connections = await SessionRadiusSrv.GetActiveConnections(target_realm_id.Value.RealmId, target);
+        var connections = await SessionRadiusSrv.GetActiveConnections(account.RealmId, account.Username);
 
         var result = connections.Select(c => new ConnectionStateModel
             {
@@ -56,37 +47,26 @@ class ConnectionApplication(
         return ApiResult<List<ConnectionStateModel>>.Success(result);
     }
 
-    public async Task<ApiResult> CloseConnection(string ip, string target, string session_id)
+    public async Task<ApiResult> CloseConnection(string ip, int account_id, string session_id)
     {
-        var account_id = await AccountRepo.GetActiveAccountId(target);
-        if (!account_id.HasValue)
-        {
-            throw new UserException("کاربر غیرفعال است!", $"account is inactive: target={target}");
-        }
-
-        var target_realm_id = await PlanRepo.Value.GetActiveAccountRealmId(account_id.Value);
-
-        if (!target_realm_id.HasValue)
-        {
-            throw new UserException("کاربر هیچ پلن فعالی ندارد!", $"There is not any plan for target={target}");
-        }
+        var account = await GetAccount(account_id);
 
         var server = (await ServerRepo.GetActiveNasInfo(ip)) ??
                      throw new UserException("دسترسی غیرمجاز!",
-                         $"Closing connection ip is invalid: ({ip}, {target}, {session_id})");
+                         $"Closing connection ip is invalid: ({ip}, {account.Username}, {session_id})");
 
-        if (target_realm_id.HasValue && server.RealmId != target_realm_id.Value.RealmId)
+        if (server.RealmId != account.RealmId)
         {
             throw new UserException("دسترسی غیرمجاز به سرور!",
-                $"Closing connection ip is invalid: ({ip}, {target}, {session_id}, user-realm-id={target_realm_id})");
+                $"Closing connection ip is invalid: ({ip}, {account.Username}, {session_id}, user-realm-id={account.RealmId})");
         }
 
-        var own_sessions = await SessionRadiusSrv.GetActiveConnections(target_realm_id.Value.RealmId, target);
+        var own_sessions = await SessionRadiusSrv.GetActiveConnections(account.RealmId, account.Username);
 
         if (own_sessions.All(session => session.SessionId != session_id))
         {
             throw new UserException("دسترسی غیرمجاز!",
-                $"Closing connection session does not belong to target: ({ip}, {target}, {session_id})");
+                $"Closing connection session does not belong to target: ({ip}, {account.Username}, {session_id})");
         }
 
         try
@@ -100,7 +80,8 @@ class ConnectionApplication(
 
         await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
-            Target = account_id.Value,
+            Target = account.UserId,
+            VpnAccountId = account.Id,
             Category = EventCategory.Action,
             Type = EventType.Success,
             Title = "کانکشن",
@@ -108,8 +89,27 @@ class ConnectionApplication(
         });
 
         Log.Information("[user: {0}] Connection Closed: ({1}, {2})",
-            JobContext.Value.Username, target, session_id);
+            JobContext.Value.Username, account.Username, session_id);
 
         return ApiResult.Success("کانکشن بسته شد.");
+    }
+
+    /// <summary>Live-session listing requires an active plan (docs/08 contract).</summary>
+    private async Task EnsureActivePlan(VpnAccountEntity account)
+    {
+        var plan = await PlanStateRepo.Value.GetPlanState(account.Id);
+
+        if (plan == null)
+        {
+            throw new UserException("در حال حاضر هیچ پلنی برای این کاربر فعال نیست!",
+                $"There is not ant plan for user {account.Username}");
+        }
+    }
+
+    private async Task<VpnAccountEntity> GetAccount(int account_id)
+    {
+        return await VpnAccountRepo.Value.GetVisibleAccount(account_id)
+               ?? throw new UserException("اکانت VPN پیدا نشد یا غیرفعال است!",
+                   $"VPN account not found or deactivated: id={account_id}");
     }
 }

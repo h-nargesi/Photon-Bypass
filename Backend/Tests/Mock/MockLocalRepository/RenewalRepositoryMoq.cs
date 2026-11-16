@@ -32,8 +32,8 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
             {
                 var mask = account_ids.ToHashSet();
 
-                var result = Data.Where(r => mask.Contains(r.AccountId))
-                    .GroupBy(r => r.AccountId)
+                var result = Data.Where(r => mask.Contains(r.VpnAccountId))
+                    .GroupBy(r => r.VpnAccountId)
                     .ToDictionary(group => group.Key, group => Clone(group.MaxBy(r => r.Id)!));
 
                 return Task.FromResult(result);
@@ -102,8 +102,8 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
         return new RenewalEntity
         {
             Id = renewal.Id,
-            AccountId = renewal.AccountId,
-            RestrictedRealmId = renewal.RestrictedRealmId,
+            VpnAccountId = renewal.VpnAccountId,
+            
             SimultaneousUser = renewal.SimultaneousUser,
             TrafficLimit = renewal.TrafficLimit,
             TimeLimitInDays = renewal.TimeLimitInDays,

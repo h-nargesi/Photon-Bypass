@@ -8,7 +8,7 @@ namespace PhotonBypass.Application.Account;
 
 /// <summary>
 /// Single-point guard for the self-service financial endpoints (docs/20 D4/D6):
-/// the paying actor is always the logged-in account, and a dependent account
+/// the paying actor is always the logged-in panel user, and a dependent user
 /// (no <see cref="UserTypes.AllowSelfService"/>) is refused its own
 /// wallet/renewal operations with 403. Acting on behalf of another user is not
 /// restricted here — target access is already validated by the AccessService
@@ -19,22 +19,22 @@ public interface ISelfServiceGuard
     /// <summary>Throws UserException(403) when the actor is a dependent user in self view.</summary>
     Task EnsureSelfService();
 
-    /// <summary>EnsureSelfService semantics plus resolution of the paying actor account (D4).</summary>
-    Task<AccountEntity> ResolvePayingActor();
+    /// <summary>EnsureSelfService semantics plus resolution of the paying actor (D4).</summary>
+    Task<PanelUserEntity> ResolvePayingActor();
 
     /// <summary>
-    /// Resolves the logged-in active account without any self-service check —
+    /// Resolves the logged-in active user without any self-service check —
     /// for role-based decisions that are independent of the dependent flag
     /// (e.g. wallet history access, docs/20 phase 3).
     /// </summary>
-    Task<AccountEntity> ResolveActor();
+    Task<PanelUserEntity> ResolveActor();
 }
 
 class SelfServiceGuard(
-    Lazy<IAccountRepository> account_repo,
+    Lazy<IPanelUserRepository> panel_user_repo,
     Lazy<IJobContext> job_context) : ISelfServiceGuard
 {
-    private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
+    private Lazy<IPanelUserRepository> PanelUserRepo { get; } = panel_user_repo;
     private Lazy<IJobContext> JobContext { get; } = job_context;
 
     public async Task EnsureSelfService()
@@ -51,7 +51,7 @@ class SelfServiceGuard(
         }
     }
 
-    public async Task<AccountEntity> ResolvePayingActor()
+    public async Task<PanelUserEntity> ResolvePayingActor()
     {
         var context = JobContext.Value;
 
@@ -65,17 +65,17 @@ class SelfServiceGuard(
         return actor;
     }
 
-    public Task<AccountEntity> ResolveActor()
+    public Task<PanelUserEntity> ResolveActor()
     {
         return GetActor(JobContext.Value.Username);
     }
 
-    private async Task<AccountEntity> GetActor(string username)
+    private async Task<PanelUserEntity> GetActor(string username)
     {
-        var actor = await AccountRepo.Value.GetAccount(username)
+        var actor = await PanelUserRepo.Value.GetUser(username)
                     ?? throw new UserException("کاربر پیدا نشد!", $"Account not found. actor:{username}");
 
-        if (actor.Status == AccountStatus.Deactivated)
+        if (actor.Status == PanelUserStatus.Deactivated)
         {
             throw new UserException("کاربر غیرفعال است!", $"account is inactive: actor={actor.Username}");
         }

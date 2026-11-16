@@ -114,6 +114,28 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
     return this.user_service.targetName;
   }
 
+  /// docs/22 §3.5: the account switcher — replaces the target selector for
+  /// the regular user's own VPN accounts
+  get accounts() {
+    return this.user_service.accounts;
+  }
+
+  get hasMultipleAccounts(): boolean {
+    return this.user_service.hasMultipleAccounts;
+  }
+
+  get currentAccountId(): number | undefined {
+    return this.user_service.accountId;
+  }
+
+  switchAccount(accountId: number) {
+    this.user_service.setAccount(accountId);
+  }
+
+  get user_service_currentAccountUsername(): string {
+    return this.user_service.currentAccount?.username ?? '';
+  }
+
   goPayment() {
     if (this.user_service.invoice) {
       this.router.navigate(['payment'], {

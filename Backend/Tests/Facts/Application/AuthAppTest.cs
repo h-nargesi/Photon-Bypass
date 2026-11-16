@@ -65,6 +65,11 @@ public class AuthAppTest : UnitLevelServiceInitializer
         Assert.Equal(3, result.Data.TargetArea.Count);
         Assert.Equal(AccountRole.User, result.Data.Role);
         Assert.True(result.Data.AllowSelfService);
+
+        // docs/22 §3.5: the login answer carries the account list for the switcher
+        var account = Assert.Single(result.Data.Accounts);
+        Assert.Equal("User99", account.Username);
+        Assert.Equal((int)VpnAccountStatus.Active, account.Status);
     }
 
     [Fact]
@@ -89,7 +94,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
 
-        AccountEntity? alerted_account = null;
+        PanelUserEntity? alerted_account = null;
         social_moq.OnInvalidPasswordAlert += account => alerted_account = account;
 
         var result = await auth_app.CheckUserPassword("User99", "invalid password");
@@ -139,7 +144,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
 
@@ -147,7 +152,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         account_repo_moq.Data["User4"].TelegramChatId = 777;
         social_moq.SupportsAccounts = true;
 
-        (AccountEntity? account, string code)? social_send = null;
+        (PanelUserEntity? account, string code)? social_send = null;
         social_moq.OnSendResetPasswordLink += (account, code) => social_send = (account, code);
 
         var email_send_count = 0;
@@ -178,7 +183,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
 
         // no social reach, but a validated email (D6)
@@ -206,7 +211,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
 
@@ -237,7 +242,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
 
@@ -266,7 +271,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
 
@@ -308,7 +313,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var reset_moq = scope.ServiceProvider.GetRequiredService<ResetPassRepositoryMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
 
@@ -470,7 +475,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var email_handler_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
 
         var send_count = 0;
         email_handler_moq.OnSend += _ => send_count++;
@@ -488,12 +493,12 @@ public class AuthAppTest : UnitLevelServiceInitializer
         send_count.Should().Be(0);
 
         // the account appears (registered meanwhile) but its window is spent
-        account_repo_moq.Data["RateUser"] = new AccountEntity
+        account_repo_moq.Data["RateUser"] = new PanelUserEntity
         {
             Id = 3000,
             Username = "RateUser",
             Email = "rate.user@gmail.com",
-            Status = AccountStatus.Active,
+            Status = PanelUserStatus.Active,
         };
 
         var fourth = await auth_app.ForgetPassword("rate.user@gmail.com");
@@ -677,7 +682,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var account_mock = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_mock = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
 
         account_mock.OnSave += (account) => Assert.Equal("+989113456799", account.Mobile);
 
@@ -698,7 +703,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var account_mock = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_mock = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
 
         account_mock.OnSave += account => Assert.True(account.UserType.HasFlag(UserTypes.AllowSelfService));
 
@@ -861,7 +866,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var reset_repo = scope.ServiceProvider.GetRequiredService<IResetPassRepository>();
 
         var account_id = account_repo_moq.Data["User99"].Id;

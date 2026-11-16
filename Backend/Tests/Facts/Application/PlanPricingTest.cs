@@ -19,7 +19,7 @@ public class PlanPricingTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(99, "User99", "User10");
 
-        var estimate = (await plan_app.Estimate("User10", 2, 30, 50)).Data;
+        var estimate = (await plan_app.Estimate(10, 2, 30, 50)).Data;
 
         Assert.NotNull(estimate);
         Assert.Equal(100, estimate.Days);
@@ -41,7 +41,7 @@ public class PlanPricingTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(99, "User99", "User10");
 
-        var estimate = (await plan_app.Estimate("User10", users, 30, 50)).Data;
+        var estimate = (await plan_app.Estimate(10, users, 30, 50)).Data;
 
         Assert.NotNull(estimate);
         Assert.Equal(expected_days, estimate.Days);
@@ -58,8 +58,12 @@ public class PlanPricingTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(10, "User10", "User10");
 
-        var estimate = (await plan_app.Estimate("User10", 2, 30, 50)).Data!;
-        var result = await plan_app.Renewal("User10", 2, 30, 50);
+        var estimate = (await plan_app.Estimate(10, 2, 30, 50)).Data!;
+
+        // fixture User10 has no recorded activity, so the account is stale
+        // (docs/22 D6): the renewal must carry a realm choice; realm 1 is the
+        // fixture's active radius realm
+        var result = await plan_app.Renewal(10, 2, 30, 50, 1);
 
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
@@ -95,7 +99,8 @@ public class PlanPricingTest : UnitLevelServiceInitializer
             },
         ];
 
-        var code = (await plan_app.Renewal("User10", 2, 30, 50)).Data!.InvoiceCode!.Value;
+        // stale account (docs/22 D6): realm 1 is re-selected at renewal
+        var code = (await plan_app.Renewal(10, 2, 30, 50, 1)).Data!.InvoiceCode!.Value;
 
         var invoice = invoice_moq.Data.Single(i => i.Code == code);
         Assert.Equal(260, invoice.TotalPrice);

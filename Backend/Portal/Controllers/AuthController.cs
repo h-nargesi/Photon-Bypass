@@ -48,7 +48,8 @@ public class AuthController(
 
         var token = GenerateToken(result.Data);
 
-        AccessSrv.Value.LoginEvent(result.Data.Username, result.Data.Role, [.. result.Data.TargetArea.Keys]);
+        AccessSrv.Value.LoginEvent(result.Data.Username, result.Data.Role, [.. result.Data.TargetArea.Keys],
+            [.. result.Data.Accounts.Select(account => account.Id)]);
 
         return new ApiResult<object>
         {

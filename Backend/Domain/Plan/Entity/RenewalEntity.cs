@@ -10,9 +10,8 @@ public class RenewalEntity : IRenewalEntity, IBaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    public int AccountId { get; set; }
-
-    public int? RestrictedRealmId { get; set; }
+    /// <summary>VPN account this renewal stacks on (docs/22 D5); realm lives on the account.</summary>
+    public int VpnAccountId { get; set; }
 
     public byte SimultaneousUser { get; set; }
 

@@ -9,13 +9,13 @@ public class SocialMediaServiceMoq : Mock<ISocialMediaService>, IUnitLevelServic
 {
     public event Action<IReadOnlyList<string>>? OnAlarmServerCapacity;
 
-    public event Action<AccountEntity, string>? OnSendResetPasswordLink;
+    public event Action<PanelUserEntity, string>? OnSendResetPasswordLink;
 
-    public event Action<AccountEntity>? OnFinishServiceAlert;
+    public event Action<PanelUserEntity>? OnFinishServiceAlert;
 
-    public event Action<AccountEntity>? OnInvalidPasswordAlert;
+    public event Action<PanelUserEntity>? OnInvalidPasswordAlert;
 
-    public event Action<AccountEntity>? OnNewUserRegistrationAlert;
+    public event Action<PanelUserEntity>? OnNewUserRegistrationAlert;
 
     /// <summary>
     /// Channel switch for <c>Supports</c> — false (the no-op channel) by
@@ -34,27 +34,27 @@ public class SocialMediaServiceMoq : Mock<ISocialMediaService>, IUnitLevelServic
                 return Task.CompletedTask;
             });
 
-        Setup(service => service.Supports(It.IsAny<AccountEntity>()))
-            .Returns<AccountEntity>(account => SupportsAccounts && account.TelegramChatId != null);
+        Setup(service => service.Supports(It.IsAny<PanelUserEntity>()))
+            .Returns<PanelUserEntity>(account => SupportsAccounts && account.TelegramChatId != null);
 
-        Setup(service => service.SendResetPasswordLink(It.IsAny<AccountEntity>(), It.IsAny<string>()))
-            .Returns<AccountEntity, string>((account, hash_code) =>
+        Setup(service => service.SendResetPasswordLink(It.IsAny<PanelUserEntity>(), It.IsAny<string>()))
+            .Returns<PanelUserEntity, string>((account, hash_code) =>
             {
                 OnSendResetPasswordLink?.Invoke(account, hash_code);
 
                 return Task.CompletedTask;
             });
 
-        Setup(service => service.FinishServiceAlert(It.IsAny<AccountEntity>(), It.IsAny<string>(), It.IsAny<string>()))
-            .Callback<AccountEntity, string, string>((account, _, _) => OnFinishServiceAlert?.Invoke(account))
+        Setup(service => service.FinishServiceAlert(It.IsAny<PanelUserEntity>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Callback<PanelUserEntity, string, string>((account, _, _) => OnFinishServiceAlert?.Invoke(account))
             .Returns(Task.CompletedTask);
 
-        Setup(service => service.InvalidPasswordAlert(It.IsAny<AccountEntity>()))
-            .Callback<AccountEntity>(account => OnInvalidPasswordAlert?.Invoke(account))
+        Setup(service => service.InvalidPasswordAlert(It.IsAny<PanelUserEntity>()))
+            .Callback<PanelUserEntity>(account => OnInvalidPasswordAlert?.Invoke(account))
             .Returns(Task.CompletedTask);
 
-        Setup(service => service.NewUserRegistrationAlert(It.IsAny<AccountEntity>()))
-            .Callback<AccountEntity>(account => OnNewUserRegistrationAlert?.Invoke(account))
+        Setup(service => service.NewUserRegistrationAlert(It.IsAny<PanelUserEntity>()))
+            .Callback<PanelUserEntity>(account => OnNewUserRegistrationAlert?.Invoke(account))
             .Returns(Task.CompletedTask);
     }
 

@@ -43,7 +43,7 @@ class PlanUsageReader(
 
         var renewal_dictionary = await RenewalRepo.Value.GetLatestByAccountIds(
             plan_dictionary.Values
-                .Where(plan => IsXuiRealm(plan.RestrictedRealmId, realm_servers))
+                .Where(plan => IsXuiRealm(plan.RealmId, realm_servers))
                 .Select(plan => plan.Id));
 
         return plan_dictionary.Values.ToDictionary(
@@ -53,12 +53,7 @@ class PlanUsageReader(
 
     private async Task<RenewalEntity?> LoadXuiRenewal(PlanStateEntity plan)
     {
-        if (plan.RestrictedRealmId is not { } realm_id)
-        {
-            return null;
-        }
-
-        var realm_servers = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id);
+        var realm_servers = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(plan.RealmId);
 
         if (!realm_servers.Any(server => (server.Features & ServerFeature.Xui) != 0))
         {
@@ -70,10 +65,9 @@ class PlanUsageReader(
         return renewal_dictionary.GetValueOrDefault(plan.Id);
     }
 
-    private static bool IsXuiRealm(int? realm_id, Dictionary<int, ServerEntity> realm_servers)
+    private static bool IsXuiRealm(int realm_id, Dictionary<int, ServerEntity> realm_servers)
     {
-        return realm_id.HasValue &&
-               realm_servers.GetValueOrDefault(realm_id.Value) is { } server &&
+        return realm_servers.GetValueOrDefault(realm_id) is { } server &&
                (server.Features & ServerFeature.Xui) != 0;
     }
 

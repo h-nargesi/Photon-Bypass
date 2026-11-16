@@ -18,7 +18,7 @@ public interface IWalletThresholdService
 class WalletThresholdService(
     IOptions<ManagementOptions> options,
     IWalletRepository wallet_repo,
-    Lazy<IAccountRepository> account_repo,
+    Lazy<IPanelUserRepository> panel_user_repo, Lazy<IVpnAccountRepository> vpn_account_repo,
     Lazy<IHistoryRepository> history_repo,
     Lazy<IAccountRadiusSyncService> account_radius_srv,
     Lazy<IJobContext> job_context) : IWalletThresholdService
@@ -28,7 +28,8 @@ class WalletThresholdService(
 
     private IOptions<ManagementOptions> Options { get; } = options;
     private IWalletRepository WalletRepo { get; } = wallet_repo;
-    private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
+    private Lazy<IPanelUserRepository> PanelUserRepo { get; } = panel_user_repo;
+    private Lazy<IVpnAccountRepository> VpnAccountRepo { get; } = vpn_account_repo;
     private Lazy<IHistoryRepository> HistoryRepo { get; } = history_repo;
     private Lazy<IAccountRadiusSyncService> AccountRadiusSrv { get; } = account_radius_srv;
     private Lazy<IJobContext> JobContext { get; } = job_context;
@@ -65,38 +66,39 @@ class WalletThresholdService(
         }
     }
 
-    private async Task Apply(List<int> account_ids, bool deactivate)
+    private async Task Apply(List<int> user_ids, bool deactivate)
     {
-        var accounts = await AccountRepo.Value.GetActiveAccounts(account_ids);
+        // docs/22 D8: the wallet belongs to the panel user, so the rule sweeps
+        // every Active VPN account of the user (docs/20 D13 semantics per
+        // account); the state history is one row per user per transition —
+        // GetLastByTitle groups by Target, so per-account rows would oscillate
+        // for a multi-account user
+        var accounts = await VpnAccountRepo.Value.GetVisibleByUsers(user_ids);
 
-        foreach (var account in accounts.Values)
+        foreach (var user_accounts in accounts
+                     .Where(account => account.Status == VpnAccountStatus.Active)
+                     .GroupBy(account => account.UserId))
         {
-            // a manager-suspended VPN (VpnSuspended) must not be re-enabled by
-            // the wallet rule — and a fully Active account is the only one the
-            // rule may touch in either direction (docs/20 D13)
-            if (account.Status != AccountStatus.Active)
-            {
-                continue;
-            }
+            var usernames = user_accounts.Select(account => account.Username).ToList();
 
             if (deactivate)
             {
-                Log.Warning("[wallet-threshold] Deactivating radius users: (target:{0}, account-id:{1})",
-                    account.Username, account.Id);
+                Log.Warning("[wallet-threshold] Deactivating radius users: (user-id:{0}, targets:{1})",
+                    user_accounts.Key, string.Join(",", usernames));
 
-                await AccountRadiusSrv.Value.DeactivateUsers([account.Username]);
+                await AccountRadiusSrv.Value.DeactivateUsers(usernames);
             }
             else
             {
-                Log.Information("[wallet-threshold] Activating radius users: (target:{0}, account-id:{1})",
-                    account.Username, account.Id);
+                Log.Information("[wallet-threshold] Activating radius users: (user-id:{0}, targets:{1})",
+                    user_accounts.Key, string.Join(",", usernames));
 
-                await AccountRadiusSrv.Value.ActivateUsers([account.Username]);
+                await AccountRadiusSrv.Value.ActivateUsers(usernames);
             }
 
             await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
             {
-                Target = account.Id,
+                Target = user_accounts.Key,
                 Category = EventCategory.Transaction,
                 Type = EventType.Information,
                 Title = IWalletThresholdService.HistoryTitle,

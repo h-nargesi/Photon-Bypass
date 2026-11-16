@@ -11,15 +11,10 @@ internal class HistoryRepositoryMoq : Mock<IHistoryRepository>, IUnitLevelServic
 
     public HistoryRepositoryMoq(TransactionalMockDbContext db_context)
     {
-        Setup(x => x.GetHistory(It.IsNotNull<string>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>()))
-            .Returns<string, DateTime?, DateTime?>((target, from, to) =>
+        Setup(x => x.GetHistory(It.IsAny<int>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>()))
+            .Returns<int, DateTime?, DateTime?>((user_id, from, to) =>
             {
-                IEnumerable<HistoryEntity> result = Data;
-
-                if (int.TryParse(target, out var account_id))
-                {
-                    result = result.Where(h => h.Target == account_id);
-                }
+                IEnumerable<HistoryEntity> result = Data.Where(h => h.Target == user_id);
 
                 if (from.HasValue)
                 {

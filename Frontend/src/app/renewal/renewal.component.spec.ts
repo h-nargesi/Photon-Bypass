@@ -43,13 +43,9 @@ describe('RenewalComponent', () => {
     const harness = await RouterTestingHarness.create();
     const component = await harness.navigateByUrl('/renewal', RenewalComponent);
 
-    // ngOnInit: load user (blocks the plan-info call behind a microtask), prices load immediately
+    // ngOnInit order: the awaited user load gates the mode decision, then
+    // plan-info (renew mode) with realms/prices racing after it
     const drain = () => new Promise(resolve => setTimeout(resolve, 0));
-
-    http.expectOne('/api/basics/prices').flush(
-      { code: 200, data: [] },
-      { status: 200, statusText: 'OK' },
-    );
 
     http.expectOne('/api/account/get-user').flush(
       {
@@ -60,14 +56,25 @@ describe('RenewalComponent', () => {
           email: 'main@test.local',
           balance: 0,
           targetArea: { main: { username: 'main', fullname: 'Main', email: 'm@t.l' } },
+          accounts: [{ id: 7, username: 'main', realmId: 1, realmName: 'R1', status: 0, created: 0 }],
         },
       },
       { status: 200, statusText: 'OK' },
     );
     await drain();
 
-    http.expectOne('/api/plan/plan-info').flush(
-      { code: 200, data: { target: 'main', simultaneousUserCount: 1, days: 120, gigabytes: 50 } },
+    http.expectOne('/api/plan/plan-info?accountId=7').flush(
+      { code: 200, data: { target: 'main', accountId: 7, realmId: 1, requiresRealmChoice: false, simultaneousUserCount: 1, days: 120, gigabytes: 50 } },
+      { status: 200, statusText: 'OK' },
+    );
+
+    http.expectOne('/api/plan/realms').flush(
+      { code: 200, data: [{ id: 1, name: 'R1', isSelectable: true }] },
+      { status: 200, statusText: 'OK' },
+    );
+
+    http.expectOne('/api/basics/prices').flush(
+      { code: 200, data: [] },
       { status: 200, statusText: 'OK' },
     );
     await drain();
@@ -125,6 +132,7 @@ describe('RenewalComponent', () => {
       gigabytes: 50,
       simultaneousUserCount: 1,
       target: 'main',
+      accountId: 7,
     });
 
     request.flush(

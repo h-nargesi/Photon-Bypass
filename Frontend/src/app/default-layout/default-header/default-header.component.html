@@ -70,6 +70,26 @@
       </div>
     </c-header-nav>
 
+    <c-header-nav class="d-flex" *ngIf="hasMultipleAccounts" placement="start">
+      <c-dropdown variant="nav-item" direction="dropend">
+        <button cDropdownToggle color="secondary" size="sm" cTextColor="light">
+          {{ "global.header.accounts.title" | translate }}:
+          {{ user_service_currentAccountUsername }}
+        </button>
+        <ul cDropdownMenu>
+          @for (account of accounts; track account.id) {
+            <li>
+              <button cDropdownItem [class.active]="account.id === currentAccountId"
+                      (click)="switchAccount(account.id)">
+                {{ account.username }}
+                <small class="text-body-secondary">({{ account.realmName }})</small>
+              </button>
+            </li>
+          }
+        </ul>
+      </c-dropdown>
+    </c-header-nav>
+
     <c-header-nav class="d-flex" *ngIf="canSelectTarget">
       <button [cModalToggle]="userSelector" cButton size="sm" color="info" cTextColor="light">
         {{ targetName }}

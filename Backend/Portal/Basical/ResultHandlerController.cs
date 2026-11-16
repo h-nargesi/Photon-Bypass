@@ -37,6 +37,31 @@ public class ResultHandlerController(IJobContext context, Lazy<IAccessService> a
         }
     }
 
+    /// <summary>
+    /// VPN-account variant of the target contract (docs/22 §3): the request
+    /// names the account it operates by id; access goes through the cached
+    /// account set — never the raw parameter. <paramref name="target"/> stays
+    /// a username for the user-level context (manager on-behalf flows).
+    /// </summary>
+    protected async Task LoadJobContextAsync(int? accountId, string? target = null)
+    {
+        await LoadJobContextAsync(target);
+
+        if (accountId == null) return;
+
+        if (!await access.Value.CheckAccountAccess(Username, accountId.Value))
+        {
+            throw new UserException("شما به این اکانت VPN دسترسی ندارید!",
+                $"VPN-account access denied: ({accountId}, '{Request.GetDisplayUrl()}')",
+                403);
+        }
+
+        if (JobContext is JobContext job)
+        {
+            job.AccountId = accountId;
+        }
+    }
+
     [NonAction]
     public static ApiResult UnauthorizedApiResult([ActionResultObjectValue] string? message = null)
     {

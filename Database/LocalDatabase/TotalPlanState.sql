@@ -3,14 +3,19 @@ GO
 
 CREATE OR ALTER VIEW TotalPlanState AS
 
-SELECT ac.Id
-	, ac.Status
-	, ac.Username
+-- docs/22 §2: the plan-state universe is keyed by VpnAccount — the stacking
+-- windows, the traffic bands and the Id in the result are all per account;
+-- RealmId/UserId/Status join in from VpnAccount (never NULL).
+
+SELECT va.Id
+	, va.UserId
+	, va.Status
+	, va.Username
+	, va.RealmId
     , pl.Created
     -- Plan Info
     , pl.RowNumber
     , pl.SimultaneousUser
-    , pl.RestrictedRealmId
     , pl.TrafficLimit
     , pl.TimeLimitInDays
     , pl.RateLimitInMeg
@@ -20,32 +25,30 @@ SELECT ac.Id
     -- Remains
     , pl.ExpirationDate
     , pl.TrafficLeft
-FROM Account ac
+FROM VpnAccount va
 LEFT JOIN (
-    SELECT rn.AccountId
+    SELECT rn.VpnAccountId
         , rn.RowNumber
         , rn.Created
         -- Plan Info
         , rn.SimultaneousUser
-        , rn.RestrictedRealmId
         , rn.TrafficLimit
         , rn.TimeLimitInDays
         , rn.RateLimitInMeg
         -- Last Usage Info
         , td.LastConnectTime
         , td.TotalTrafficUsed AS TrafficUsed
-        , ROW_NUMBER() OVER(PARTITION BY rn.AccountId, rn.Id ORDER BY td.TotalTrafficUsed DESC) AS TopTrafficData
+        , ROW_NUMBER() OVER(PARTITION BY rn.VpnAccountId, rn.Id ORDER BY td.TotalTrafficUsed DESC) AS TopTrafficData
         -- Remains
         , rn.ExpirationDate
         , rn.TrafficLimitRangeEnd - td.TotalTrafficUsed AS TrafficLeft
     FROM (
         SELECT rn.Id
-            , rn.AccountId
+            , rn.VpnAccountId
             , rn.RowNumber
             , rn.SimultaneousUser
-            , rn.RestrictedRealmId
-            , rn.TimeLimitInDays
             , rn.TrafficLimit
+            , rn.TimeLimitInDays
             , rn.RateLimitInMeg
             , rn.TrafficLimitRangeStart
             , rn.TrafficLimit + rn.TrafficLimitRangeStart AS TrafficLimitRangeEnd
@@ -53,16 +56,15 @@ LEFT JOIN (
             , rn.Created
         FROM (
             SELECT rn.Id
-                , rn.AccountId
-                , ROW_NUMBER() OVER(PARTITION BY rn.AccountId ORDER BY rn.Id) AS RowNumber
+                , rn.VpnAccountId
+                , ROW_NUMBER() OVER(PARTITION BY rn.VpnAccountId ORDER BY rn.Id) AS RowNumber
                 , rn.SimultaneousUser
-                , rn.RestrictedRealmId
-                , rn.TimeLimitInDays
                 , rn.TrafficLimit
+                , rn.TimeLimitInDays
                 , rn.RateLimitInMeg
-                , ISNULL(SUM(TrafficLimit) OVER(PARTITION BY rn.AccountId ORDER BY rn.Id 
+                , ISNULL(SUM(TrafficLimit) OVER(PARTITION BY rn.VpnAccountId ORDER BY rn.Id 
                                                 ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS TrafficLimitRangeStart
-                -- D16: stacked expiry, frozen once at purchase by PlanApplication.Renewal —
+                -- D16: stacked expiry, frozen once at purchase by PlanApplication —
                 -- no longer derived here from Created + TimeLimitInDays.
                 , rn.ExpirationDate
                 , rn.Created
@@ -70,20 +72,20 @@ LEFT JOIN (
         ) rn
     ) rn
     LEFT JOIN (
-        SELECT td.AccountId
+        SELECT td.VpnAccountId
             , td.DataIn + td.DataOut + td.CumulativeTrafficUsed AS TotalTrafficUsed
             , td.CumulativeTrafficUsed
             , td.LastConnectTime
         FROM (
-            SELECT td.AccountId
+            SELECT td.VpnAccountId
                 , td.DataIn
                 , td.DataOut
-                , ISNULL(SUM(DataIn + DataOut) OVER(PARTITION BY td.AccountId ORDER BY td.Id 
+                , ISNULL(SUM(DataIn + DataOut) OVER(PARTITION BY td.VpnAccountId ORDER BY td.Id 
                                                     ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING), 0) AS CumulativeTrafficUsed
-                , MAX(CASE WHEN td.DataIn + td.DataOut > 0 THEN td.StartSession END) OVER(PARTITION BY td.AccountId) AS LastConnectTime
+                , MAX(CASE WHEN td.DataIn + td.DataOut > 0 THEN td.StartSession END) OVER(PARTITION BY td.VpnAccountId) AS LastConnectTime
             FROM TrafficData td
         ) td
     ) td
-    ON td.AccountId = rn.AccountId AND td.CumulativeTrafficUsed >= rn.TrafficLimitRangeStart AND td.CumulativeTrafficUsed < rn.TrafficLimitRangeEnd
-) pl ON pl.AccountId = ac.Id
+    ON td.VpnAccountId = rn.VpnAccountId AND td.CumulativeTrafficUsed >= rn.TrafficLimitRangeStart AND td.CumulativeTrafficUsed < rn.TrafficLimitRangeEnd
+) pl ON pl.VpnAccountId = va.Id
 WHERE ISNULL(pl.TopTrafficData, 1) = 1

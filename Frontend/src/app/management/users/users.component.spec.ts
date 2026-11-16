@@ -8,7 +8,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router, provideRouter } from '@angular/router';
-import { AccountRole, AccountStatus, PagedResult, UserRow } from '../../@models';
+import { AccountRole, PanelUserStatus, VpnAccountStatus, PagedResult, UserRow } from '../../@models';
 import { API_BASE_URL, UserService } from '../../@services';
 import { UsersComponent } from './users.component';
 
@@ -35,13 +35,23 @@ describe('UsersComponent (docs/20 phase 6)', () => {
         email: 's1@t.l',
         role: AccountRole.User,
         allowSelfService: true,
-        status: AccountStatus.Active,
+        status: PanelUserStatus.Active,
         owner: 'main',
         created: 1700000000000,
         createdTitle: '۱۴۰۲/۰۸/۰۱',
-        simultaneousUser: 2,
-        expirationDate: 1893456000000,
-        trafficLeft: 25,
+        accounts: [
+          {
+            id: 51,
+            username: 'sub1',
+            realmId: 1,
+            realmName: 'R1',
+            status: VpnAccountStatus.Active,
+            created: 1700000000000,
+            simultaneousUser: 2,
+            expirationDate: 1893456000000,
+            trafficLeft: 25,
+          },
+        ],
       },
       {
         username: 'sub2',
@@ -50,9 +60,19 @@ describe('UsersComponent (docs/20 phase 6)', () => {
         email: 's2@t.l',
         role: AccountRole.User,
         allowSelfService: false,
-        status: AccountStatus.Deactivated,
+        status: PanelUserStatus.Deactivated,
         created: 1700000000000,
         createdTitle: '۱۴۰۲/۰۸/۰۱',
+        accounts: [
+          {
+            id: 61,
+            username: 'sub2',
+            realmId: 1,
+            realmName: 'R1',
+            status: VpnAccountStatus.Deactivated,
+            created: 1700000000000,
+          },
+        ],
       },
     ],
   };
@@ -257,7 +277,7 @@ describe('UsersComponent (docs/20 phase 6)', () => {
     );
     expect(request.request.body).toEqual({
       target: 'sub2',
-      status: AccountStatus.Active,
+      status: PanelUserStatus.Active,
     });
     request.flush(
       { code: 200, message: 'فعال شد' },
@@ -267,19 +287,20 @@ describe('UsersComponent (docs/20 phase 6)', () => {
     flushList();
   });
 
-  it('toggleVpn suspends an active account via set-status', async () => {
+  it('toggleAccountVpn suspends one VPN account via set-account-status', async () => {
     await primeUser(AccountRole.Manager);
     fixture.detectChanges();
     flushList();
 
-    component.toggleVpn(component.rows[0]);
+    // docs/22 D12: per-account suspension — independent of the panel status
+    component.toggleAccountVpn(component.rows[0].accounts[0]);
 
     const request = http.expectOne(
-      req => req.method === 'POST' && req.url === '/api/user/set-status',
+      req => req.method === 'POST' && req.url === '/api/user/set-account-status',
     );
     expect(request.request.body).toEqual({
-      target: 'sub1',
-      status: AccountStatus.VpnSuspended,
+      accountId: 51,
+      status: VpnAccountStatus.Suspended,
     });
     request.flush(
       { code: 200, message: 'تعلیق شد' },
@@ -289,39 +310,16 @@ describe('UsersComponent (docs/20 phase 6)', () => {
     flushList();
   });
 
-  it('toggleVpn is a no-op for a fully deactivated account', async () => {
+  it('toggleAccountVpn is a no-op for a fully deactivated account', async () => {
     await primeUser(AccountRole.Manager);
     fixture.detectChanges();
     flushList();
 
-    component.toggleVpn(component.rows[1]);
+    component.toggleAccountVpn(component.rows[1].accounts[0]);
 
     http.expectNone(
-      req => req.method === 'POST' && req.url === '/api/user/set-status',
+      req => req.method === 'POST' && req.url === '/api/user/set-account-status',
     );
-  });
-
-  it('toggleActive escalates a VPN-suspended account to full deactivation', async () => {
-    await primeUser(AccountRole.Manager);
-    fixture.detectChanges();
-    flushList();
-
-    const suspended: UserRow = { ...component.rows[0], status: AccountStatus.VpnSuspended };
-    component.toggleActive(suspended);
-
-    const request = http.expectOne(
-      req => req.method === 'POST' && req.url === '/api/user/set-status',
-    );
-    expect(request.request.body).toEqual({
-      target: 'sub1',
-      status: AccountStatus.Deactivated,
-    });
-    request.flush(
-      { code: 200, message: 'غیرفعال شد' },
-      { status: 200, statusText: 'OK' },
-    );
-
-    flushList();
   });
 
   it('set-self-service toggles the independence flag', async () => {

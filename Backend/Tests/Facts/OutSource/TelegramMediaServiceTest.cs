@@ -18,7 +18,7 @@ public class TelegramMediaServiceTest
 
     private readonly TelegramBotClientFake bot = new();
 
-    private readonly Mock<IAccountRepository> account_repo = new();
+    private readonly Mock<IPanelUserRepository> panel_user_repo = new();
 
     private TelegramMediaService CreateService()
     {
@@ -30,12 +30,12 @@ public class TelegramMediaServiceTest
                 SiteUrl = "https://photon-bypass.com",
                 ConnectionGuideUrl = "https://guide.example.com/vpn",
             }),
-            new Lazy<IAccountRepository>(() => account_repo.Object));
+            new Lazy<IPanelUserRepository>(() => panel_user_repo.Object));
     }
 
-    private static AccountEntity Account(long? chat_id)
+    private static PanelUserEntity Account(long? chat_id)
     {
-        return new AccountEntity
+        return new PanelUserEntity
         {
             Id = 5,
             Username = "tg-user",
@@ -120,7 +120,7 @@ public class TelegramMediaServiceTest
 
         await action.Should().ThrowAsync<TelegramBotException>();
 
-        account_repo.Verify(repo => repo.SetTelegramChat(5, null), Times.Once);
+        panel_user_repo.Verify(repo => repo.SetTelegramChat(5, null), Times.Once);
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class TelegramMediaServiceTest
 
         await action.Should().ThrowAsync<TelegramBotException>();
 
-        account_repo.Verify(repo => repo.SetTelegramChat(5, null), Times.Once);
+        panel_user_repo.Verify(repo => repo.SetTelegramChat(5, null), Times.Once);
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public class TelegramMediaServiceTest
 
         await action.Should().ThrowAsync<TelegramBotException>();
 
-        account_repo.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
+        panel_user_repo.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
     }
 
     [Fact]
@@ -156,7 +156,7 @@ public class TelegramMediaServiceTest
 
         await action.Should().ThrowAsync<TelegramBotException>();
 
-        account_repo.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
+        panel_user_repo.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
     }
 
     [Fact]
@@ -169,7 +169,7 @@ public class TelegramMediaServiceTest
         await action.Should().ThrowAsync<TelegramBotException>();
 
         // OperationsChatId is config, not an account record: nothing to detach
-        account_repo.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
+        panel_user_repo.Verify(repo => repo.SetTelegramChat(It.IsAny<int>(), It.IsAny<long?>()), Times.Never);
     }
 
     [Fact]
@@ -177,7 +177,7 @@ public class TelegramMediaServiceTest
     {
         bot.OnSendMessage = (_, _) => throw new TelegramBotException(403, "Forbidden: bot was blocked by the user");
 
-        account_repo.Setup(repo => repo.SetTelegramChat(5, null))
+        panel_user_repo.Setup(repo => repo.SetTelegramChat(5, null))
             .ThrowsAsync(new InvalidOperationException("db down"));
 
         var action = () => CreateService().SendResetPasswordLink(Account(UserChatId), "code");

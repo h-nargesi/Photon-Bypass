@@ -13,7 +13,15 @@ public interface IAccessService
     /// </summary>
     Task<bool> CheckAccess(string username, string target);
 
-    void LoginEvent(string username, AccountRole role, IEnumerable<string>? area);
+    /// <summary>
+    /// Decides whether <paramref name="username"/> may operate the VPN
+    /// account <paramref name="account_id"/> (docs/22 §3): own account,
+    /// a subordinate's account, or — for admins — any account. Same
+    /// rebuild-on-miss contract as <see cref="CheckAccess"/>.
+    /// </summary>
+    Task<bool> CheckAccountAccess(string username, int account_id);
+
+    void LoginEvent(string username, AccountRole role, IEnumerable<string>? area, IEnumerable<int>? accountIds = null);
 
     void LogoutEvent(string username);
 

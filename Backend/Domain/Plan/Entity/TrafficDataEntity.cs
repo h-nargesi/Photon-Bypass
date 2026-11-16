@@ -10,7 +10,8 @@ public class TrafficDataEntity : IBaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    public int AccountId { get; set; }
+    /// <summary>VPN account the traffic belongs to (docs/22 §2).</summary>
+    public int VpnAccountId { get; set; }
 
     public int NasId { get; set; }
 

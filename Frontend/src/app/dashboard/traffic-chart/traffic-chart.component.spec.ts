@@ -33,6 +33,10 @@ describe('TrafficChartComponent', () => {
       main: { username: 'main', fullname: 'Main', email: 'm@t.l' },
       sub1: { username: 'sub1', fullname: 'Sub', email: 's@t.l' },
     },
+    accounts: [
+      { id: 7, username: 'main', realmId: 1, realmName: 'R1', status: 0, created: 0 },
+      { id: 8, username: 'main2', realmId: 2, realmName: 'R2', status: 0, created: 0 },
+    ],
   };
 
   beforeEach(() => {
@@ -57,9 +61,9 @@ describe('TrafficChartComponent', () => {
     localStorage.clear();
   });
 
-  function flushTraffic(target?: string) {
+  function flushTraffic(accountId?: number) {
     const request = http.expectOne(req => req.url === '/api/vpn/traffic-data');
-    if (target) expect(request.request.params.get('target')).toBe(target);
+    if (accountId) expect(request.request.params.get('accountId')).toBe(String(accountId));
     request.flush(
       { code: 200, data: traffic_model },
       { status: 200, statusText: 'OK' },
@@ -96,21 +100,23 @@ describe('TrafficChartComponent', () => {
     user_service.setTraget('sub1');
 
     fixture.detectChanges();
-    flushTraffic('sub1');
+    flushTraffic(7);
     await fixture.whenStable();
 
     expect(component.data?.datasets.length).toBe(3);
   });
 
-  it('reloads the chart when the target user changes', async () => {
+  it('reloads the chart when the account changes', async () => {
     await loadUser();
 
     fixture.detectChanges();
     flushTraffic();
     await fixture.whenStable();
 
-    user_service.setTraget('sub1');
-    flushTraffic('sub1');
+    user_service.setAccount(8);
+    flushTraffic(8);
     await fixture.whenStable();
+
+    expect(component.data?.datasets.length).toBe(3);
   });
 });

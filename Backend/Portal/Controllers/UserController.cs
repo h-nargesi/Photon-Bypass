@@ -44,7 +44,14 @@ public class SetStatusRequest
 {
     public string? Target { get; set; }
 
-    public AccountStatus? Status { get; set; }
+    public PanelUserStatus? Status { get; set; }
+}
+
+public class SetAccountStatusRequest
+{
+    public int? AccountId { get; set; }
+
+    public VpnAccountStatus? Status { get; set; }
 }
 
 /// <summary>
@@ -130,8 +137,8 @@ public class UserController(
     }
 
     /// <summary>
-    /// Two-stage status change (docs/20 D13): Manager may suspend/deactivate
-    /// its own subordinates; the immediate VPN sync is best-effort.
+    /// Panel-level status change (docs/22 D12): Manager may deactivate its own
+    /// subordinates; the immediate radius sync of every VPN account is best-effort.
     /// </summary>
     [Authorize(Policy = ServiceFactory.ManagerPolicy)]
     [HttpPost("set-status")]
@@ -145,6 +152,26 @@ public class UserController(
         }
 
         var result = await application.SetStatus(request.Target!, status);
+
+        return SafeApiResult(result);
+    }
+
+    /// <summary>
+    /// VPN-level status change (docs/22 D12): per-account suspension and
+    /// activation, independent of the owner's portal status.
+    /// </summary>
+    [Authorize(Policy = ServiceFactory.ManagerPolicy)]
+    [HttpPost("set-account-status")]
+    public async Task<ApiResult> SetAccountStatus([FromBody] SetAccountStatusRequest request)
+    {
+        await LoadJobContextAsync();
+
+        if (request.AccountId is not { } account_id || request.Status is not { } status)
+        {
+            throw new UserException("اکانت یا وضعیت مشخص نشده!", "set-account-status requires AccountId and Status values.");
+        }
+
+        var result = await application.SetAccountStatus(account_id, status);
 
         return SafeApiResult(result);
     }

@@ -29,17 +29,17 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
         var account_radius = scope.ServiceProvider.GetRequiredService<IAccountRadiusSyncService>();
         var tik4_net_moq = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
 
-        var account = new AccountEntity
+        var account = new VpnAccountEntity
         {
             Id = 3,
+            RealmId = 3,
             Username = "User3",
             VpnPassword = "VpnPassword",
         };
 
         var renewal = new RenewalEntity
         {
-            AccountId = 3,
-            RestrictedRealmId = 3,
+            VpnAccountId = 3,
             SimultaneousUser = 1,
             TimeLimitInDays = 120,
             TrafficLimit = 25L * 1024 * 1024 * 1024,
@@ -53,38 +53,32 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
 
         var commands = executed.Select(entry => entry.Command).ToArray();
 
-        // the dispatcher first deactivates User3 on every radius realm except
-        // the renewal's realm (seed exposes the user on all servers); the empty
-        // limitation/profile seed then forces creation before the user is bound
+        // the dispatcher provisions only the servers of the account's realm
+        // (realm 3, docs/22 D5); the empty limitation/profile seed then forces
+        // creation before the user is bound
         commands.Should().Equal(
         [
-            "/user-manager/user/set",
-            "/user-manager/user/set",
             "/user-manager/limitation/add",
             "/user-manager/profile/add",
             "/user-manager/profile-limitation/add",
             "/user-manager/user-profile/add",
         ]);
 
-        var deactivations = executed.Take(2).ToArray();
-        Assert.All(deactivations, entry =>
-            Assert.Contains(entry.Parameters, p => p.Name == ".id" && p.Value == "3"));
-
-        var limitation = executed.ElementAt(2);
+        var limitation = executed.ElementAt(0);
         limitation.Parameters.Should().Contain(p => p.Name == "name" && p.Value == "limit-traffic-25G");
         limitation.Parameters.Should().Contain(p => p.Name == "transfer-limit" &&
                                                     p.Value == (25L * 1024 * 1024 * 1024).ToString());
 
-        var profile = executed.ElementAt(3);
+        var profile = executed.ElementAt(1);
         profile.Parameters.Should().Contain(p => p.Name == "name" && p.Value == "profile-25G-120d");
         profile.Parameters.Should().Contain(p => p.Name == "validity" && p.Value == "120d 00:00:00");
         profile.Parameters.Should().Contain(p => p.Name == "name-for-users" && p.Value == "25 Gigabytes 120 Days");
 
-        var assignment = executed.ElementAt(4);
+        var assignment = executed.ElementAt(2);
         assignment.Parameters.Should().Contain(p => p.Name == "profile" && p.Value == "profile-25G-120d");
         assignment.Parameters.Should().Contain(p => p.Name == "limitation" && p.Value == "limit-traffic-25G");
 
-        var user_profile = executed.ElementAt(5);
+        var user_profile = executed.ElementAt(3);
         user_profile.Parameters.Should().Contain(p => p.Name == "user" && p.Value == "User3");
         user_profile.Parameters.Should().Contain(p => p.Name == "profile" && p.Value == "profile-25G-120d");
     }
@@ -96,17 +90,17 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
         var account_radius = scope.ServiceProvider.GetRequiredService<IAccountRadiusSyncService>();
         var tik4_net_moq = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
 
-        var account = new AccountEntity
+        var account = new VpnAccountEntity
         {
             Id = 3,
+            RealmId = 3,
             Username = "User3",
             VpnPassword = "VpnPassword",
         };
 
         var renewal = new RenewalEntity
         {
-            AccountId = 3,
-            RestrictedRealmId = 3,
+            VpnAccountId = 3,
             SimultaneousUser = 2,
             TimeLimitInDays = 120,
             TrafficLimit = 25L * 1024 * 1024 * 1024,
@@ -123,8 +117,8 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
 
         await account_radius.SyncUserAndActive(account, renewal);
 
-        // two realm-exclusion deactivations plus the shared-users update on realm 3
-        user_sets.Should().HaveCount(3);
+        // realm 3 has a single radius server: only the shared-users update runs
+        user_sets.Should().HaveCount(1);
         var shared_update = user_sets.Single(parameters =>
             parameters.Any(p => p.Name == "shared-users"));
         shared_update.Should().Contain(p => p.Name == ".id" && p.Value == "3");
@@ -142,8 +136,10 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
 
         var plan_state_list = await plan_state_repo.GetAll();
 
-        // realms 1 and 4 host active radius servers but have no plan-state rows
-        Assert.DoesNotContain(plan_state_list, plan => plan.RestrictedRealmId is 1 or 4);
+        // realm 4 hosts an active radius server but has no plan-state rows
+        // (every account pins a realm now — docs/22 §2 — so realm 4 has no
+        // valid set at all and its sweep disables every user there)
+        Assert.DoesNotContain(plan_state_list, plan => plan.RealmId is 4);
 
         var user_data_dictionary = tik4_net_moq.GetData<UserModel>()
             .ToDictionary(user => user.Id ?? string.Empty, user => user.Name);
@@ -165,12 +161,14 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
 
         await account_radius.DeactivateInvalidRadiusUsers(plan_state_list);
 
-        // unknown realms (1, 4) deactivate every user on their radius server;
-        // realm 3 keeps its own user plus the unrestricted (realm-less) users
+        // realm 4 (no plan-state rows) deactivates every user on its radius
+        // server; realm 1 keeps only User99 and realm 3 only User3 — an
+        // account is valid exclusively on the realm it is pinned to
+        // (the bucket-0 fan-out is gone, docs/22 §2)
         Assert.Equal(2, disabled_counter.GetValueOrDefault("User99"));
-        Assert.Equal(3, disabled_counter.GetValueOrDefault("User2"));
+        Assert.Equal(2, disabled_counter.GetValueOrDefault("User2"));
         Assert.Equal(2, disabled_counter.GetValueOrDefault("User3"));
-        Assert.Equal(3, disabled_counter.GetValueOrDefault("User4"));
+        Assert.Equal(2, disabled_counter.GetValueOrDefault("User4"));
     }
 
     [Fact]
@@ -187,8 +185,8 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
         // a management-suspended or deactivated account leaves the valid set
         // of its own realm too (docs/20 D13): the hourly sweep is the safety
         // net that disables it everywhere even when the immediate sync failed
-        plan_state_list.Single(plan => plan.Username == "User3").Status = AccountStatus.VpnSuspended;
-        plan_state_list.Single(plan => plan.Username == "User99").Status = AccountStatus.Deactivated;
+        plan_state_list.Single(plan => plan.Username == "User3").Status = VpnAccountStatus.Suspended;
+        plan_state_list.Single(plan => plan.Username == "User99").Status = VpnAccountStatus.Deactivated;
 
         var user_data_dictionary = tik4_net_moq.GetData<UserModel>()
             .ToDictionary(user => user.Id ?? string.Empty, user => user.Name);
@@ -211,8 +209,8 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
         await account_radius.DeactivateInvalidRadiusUsers(plan_state_list);
 
         // baseline with every status Active (see UnknownRealm test above):
-        // User99 and User3 are disabled only on realms 1 and 4 (count 2);
-        // non-Active they now drop out of realm 3's valid set as well (count 3)
+        // User99 and User3 are disabled only on realms 3/4 and 1/4 (count 2);
+        // non-Active they now drop out of their own realm's valid set as well (count 3)
         Assert.Equal(3, disabled_counter.GetValueOrDefault("User99"));
         Assert.Equal(3, disabled_counter.GetValueOrDefault("User3"));
     }

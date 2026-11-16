@@ -29,7 +29,7 @@ partial class ServerManagementService(
     Lazy<IPlanStateRepository> plan_state_repo,
     Lazy<ISessionRadiusSyncService> session_radius_srv,
     Lazy<IServerRepository> server_repo,
-    Lazy<IAccountRepository> account_repo,
+    Lazy<IVpnAccountRepository> vpn_account_repo,
     Lazy<ISocialMediaService> social_srv,
     Lazy<IJobContext> job_context,
     IOptions<ManagementOptions> options)
@@ -46,7 +46,7 @@ partial class ServerManagementService(
     private Lazy<IPlanStateRepository> PlanStateRepo { get; } = plan_state_repo;
     private Lazy<ISessionRadiusSyncService> SessionRadiusSrv { get; } = session_radius_srv;
     private Lazy<IServerRepository> ServerRepo { get; } = server_repo;
-    private Lazy<IAccountRepository> AccountRepo { get; } = account_repo;
+    private Lazy<IVpnAccountRepository> VpnAccountRepo { get; } = vpn_account_repo;
     private Lazy<ISocialMediaService> SocialSrv { get; } = social_srv;
     private Lazy<IJobContext> JobContext { get; } = job_context;
     private IOptions<ManagementOptions> Options { get; } = options;
@@ -245,12 +245,17 @@ partial class ServerManagementService(
         // parallel. The short-lived cache (ServerRepository) keeps this cheap.
         var radius_list = await ServerRepo.Value.GetAllActiveRadius();
 
+        // SQL datetime cannot hold DateTime.MinValue — on a fresh database with
+        // no recorded sync times the lower bound must stay inside the
+        // 1753..9999 window or the query overflows
+        var sql_min = new DateTime(1753, 1, 1);
+
         var from = sync_times.Values.Where(time => time.HasValue)
             .Select(time => time!.Value)
-            .DefaultIfEmpty(DateTime.MinValue)
+            .DefaultIfEmpty(sql_min)
             .Min();
 
-        if (from > DateTime.MinValue) from = from.AddSeconds(-1);
+        if (from > sql_min) from = from.AddSeconds(-1);
 
         var loaded_traffic_task = SessionRadiusSrv.Value.GetTrafficData(radius_list, sync_times);
         var current_traffic_task = TrafficDataRepo.Fetch(from);
@@ -303,7 +308,7 @@ partial class ServerManagementService(
         var now = DateTime.Now;
 
         return (await PlanStateRepo.Value.GetAll())
-            .Where(plan => plan.Status == AccountStatus.Active &&
+            .Where(plan => plan.Status == VpnAccountStatus.Active &&
                            (plan.ExpirationDate == null || plan.ExpirationDate > now) &&
                            (plan.TrafficLeft == null || plan.TrafficLeft > 0))
             .ToList();
@@ -315,24 +320,16 @@ partial class ServerManagementService(
 
         var demand_by_realm = new Dictionary<int, double>();
 
+        // docs/22 §2: every account pins one realm — the unrestricted fan-out
+        // (bucket-0) is gone with NOT NULL VpnAccount.RealmId
         foreach (var plan in active_plans)
         {
-            var plan_demand = GetPlanDemand(plan);
-
-            if (plan.RestrictedRealmId is int realm_id)
+            if (!realm_mask.Contains(plan.RealmId))
             {
-                if (realm_mask.Contains(realm_id))
-                {
-                    demand_by_realm[realm_id] = demand_by_realm.GetValueOrDefault(realm_id) + plan_demand;
-                }
-
                 continue;
             }
 
-            foreach (var realm in realm_mask)
-            {
-                demand_by_realm[realm] = demand_by_realm.GetValueOrDefault(realm) + plan_demand;
-            }
+            demand_by_realm[plan.RealmId] = demand_by_realm.GetValueOrDefault(plan.RealmId) + GetPlanDemand(plan);
         }
 
         return demand_by_realm;
@@ -353,21 +350,11 @@ partial class ServerManagementService(
 
         foreach (var account in active_plans.GroupBy(plan => plan.Username))
         {
-            var realm_id = account.MaxBy(plan => plan.RowNumber)!.RestrictedRealmId;
+            var realm_id = account.MaxBy(plan => plan.RowNumber)!.RealmId;
 
-            if (realm_id is int id)
+            if (realm_mask.Contains(realm_id))
             {
-                if (realm_mask.Contains(id))
-                {
-                    clients_by_realm[id] = clients_by_realm.GetValueOrDefault(id) + 1;
-                }
-
-                continue;
-            }
-
-            foreach (var realm in realm_mask)
-            {
-                clients_by_realm[realm] = clients_by_realm.GetValueOrDefault(realm) + 1;
+                clients_by_realm[realm_id] = clients_by_realm.GetValueOrDefault(realm_id) + 1;
             }
         }
 
@@ -467,7 +454,7 @@ partial class ServerManagementService(
         var new_data = new List<TrafficDataEntity>();
 
         var account_dictionary =
-            await AccountRepo.Value.GetAccountIdByUsername(source.Select(traffic => traffic.Username).ToHashSet());
+            await VpnAccountRepo.Value.GetAccountIdByUsername(source.Select(traffic => traffic.Username).ToHashSet());
 
         var server_dictionary =
             await ServerRepo.Value.GetServerIdByIpAddress(
@@ -505,7 +492,7 @@ partial class ServerManagementService(
 
                 new_data.Add(new TrafficDataEntity
                 {
-                    AccountId = account_id,
+                    VpnAccountId = account_id,
                     NasId = server.Id,
                     SessionId = traffic.SessionId,
                     DataIn = traffic.DataIn,

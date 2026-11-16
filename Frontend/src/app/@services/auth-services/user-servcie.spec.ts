@@ -18,6 +18,7 @@ describe('UserService', () => {
     balance: 100,
     role: AccountRole.Manager,
     allowSelfService: true,
+    accounts: [],
     targetArea: {
       main: { username: 'main', fullname: 'Main User', email: 'main@test.local' },
       sub1: { username: 'sub1', fullname: 'Sub One', email: 'sub1@test.local' },
@@ -123,6 +124,7 @@ describe('UserService', () => {
       balance: 0,
       role: AccountRole.User,
       allowSelfService: true,
+      accounts: [],
     };
 
     await expectAsync(loadUser(plain_user))
@@ -169,6 +171,7 @@ describe('UserService', () => {
       username: 'boss',
       role: AccountRole.Admin,
       allowSelfService: true,
+      accounts: [],
       targetArea: {
         boss: { username: 'boss', fullname: 'Boss', email: 'boss@test.local' },
       },

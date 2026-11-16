@@ -23,12 +23,14 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
     private const long Gig = StaticValues.BytesInGigLong;
 
     private static RenewalEntity? pushed_renewal;
+    private static VpnAccountEntity? migrated_account;
 
     private readonly Mock<IAccountRadiusSyncService> radius_moq = CreateRadiusMoq();
 
     public RenewalStackingTest()
     {
         pushed_renewal = null;
+        migrated_account = null;
     }
 
     protected override void AddClassTestServices(IHostApplicationBuilder builder)
@@ -82,11 +84,12 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
     {
         var renewal = await BuyPlan(CurrentPlan(
             trafficLeft: 20 * Gig, trafficLimit: 25 * Gig,
-            expiration: DateTime.Now.AddDays(10), realm_id: 2, last_connect: DateTime.Now.AddDays(-10)));
+            expiration: DateTime.Now.AddDays(10), realm_id: 2, last_connect: DateTime.Now.AddDays(-10)),
+            migrated_realm: 3);
 
-        // stale activity (older than 7 days) moves the plan to a fresh realm —
-        // the stacked remaining travels with it
-        renewal.RestrictedRealmId.Should().NotBe(2);
+        // stale activity (older than 7 days) moves the plan to the user-chosen
+        // realm — the stacked remaining travels with it
+        migrated_account!.RealmId.Should().Be(3);
         renewal.CumulativeTrafficLeft.Should().Be(45 * Gig);
     }
 
@@ -99,7 +102,7 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
         {
             Id = 2,
             Username = "User2",
-            Status = AccountStatus.Active,
+            Status = VpnAccountStatus.Active,
         });
 
         renewal.CumulativeTrafficLeft.Should().Be(25 * Gig);
@@ -124,9 +127,9 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
         {
             Id = 2,
             Username = "User2",
-            Status = AccountStatus.Active,
+            Status = VpnAccountStatus.Active,
             SimultaneousUser = 1,
-            RestrictedRealmId = realm_id,
+            RealmId = realm_id ?? 1,
             TrafficLimit = trafficLimit,
             TimeLimitInDays = timeLimitInDays,
             LastConnectTime = last_connect,
@@ -135,7 +138,7 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
         };
     }
 
-    private async Task<RenewalEntity> BuyPlan(PlanStateEntity current_plan)
+    private async Task<RenewalEntity> BuyPlan(PlanStateEntity current_plan, int? migrated_realm = null)
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
@@ -162,7 +165,11 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
             .Setup(repository => repository.GetPlanState(2))
             .ReturnsAsync(current_plan);
 
-        var result = await plan_app.Renewal(99, 1, "User2t|2u|120d|25g");
+        var action = migrated_realm.HasValue
+            ? $"User2t|2u|120d|25g|{migrated_realm.Value}r"
+            : "User2t|2u|120d|25g";
+
+        var result = await plan_app.SettlePurchase(99, 1, action);
 
         result.Code.Should().BeGreaterThanOrEqualTo(200);
         result.Code.Should().BeLessThan(300);
@@ -174,8 +181,17 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
     {
         var moq = new Mock<IAccountRadiusSyncService>();
 
-        moq.Setup(x => x.SyncUserAndActive(It.IsAny<AccountEntity>(), It.IsAny<RenewalEntity>()))
-            .Callback<AccountEntity, RenewalEntity>((_, renewal) => pushed_renewal = renewal)
+        moq.Setup(x => x.SyncUserAndActive(It.IsAny<VpnAccountEntity>(), It.IsAny<RenewalEntity>()))
+            .Callback<VpnAccountEntity, RenewalEntity>((_, renewal) => pushed_renewal = renewal)
+            .Returns(Task.CompletedTask);
+
+        moq.Setup(x => x.MigrateUserRealm(It.IsAny<VpnAccountEntity>(), It.IsAny<int>(), It.IsAny<RenewalEntity>()))
+            .Callback<VpnAccountEntity, int, RenewalEntity>((account, new_realm, renewal) =>
+            {
+                account.RealmId = new_realm; // the real service pins the new realm
+                migrated_account = account;
+                pushed_renewal = renewal; // migration path: SyncUserAndActive runs inside it
+            })
             .Returns(Task.CompletedTask);
 
         return moq;

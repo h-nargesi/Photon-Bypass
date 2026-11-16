@@ -17,8 +17,10 @@ import {
   RowComponent,
 } from '@coreui/angular';
 import {
+  NewAccountContext,
   RenewalContext,
   PriceModel,
+  RealmChoice,
   RenewalResult,
   UserModel,
 } from '../@models';
@@ -72,6 +74,13 @@ export class RenewalComponent implements OnInit {
   result?: RenewalResult;
   submitting = false;
 
+  /// docs/22 §3.3: the two explicit purchase paths — renewal of the selected
+  /// account, or a brand-new account (realm + username).
+  mode: 'renew' | 'new-account' = 'renew';
+  realms: RealmChoice[] = [];
+  newAccount = {} as NewAccountContext;
+  requiresRealmChoice = false;
+
   private readonly estimate$ = new Subject<RenewalContext>();
 
   constructor(
@@ -88,13 +97,37 @@ export class RenewalComponent implements OnInit {
     return this.user_service.hasSubUsers;
   }
 
+  get hasAccounts(): boolean {
+    return this.user_service.accounts.length > 0;
+  }
+
+  get currentAccountUsername(): string {
+    return this.user_service.currentAccount?.username ?? '';
+  }
+
   get targetName(): string | undefined {
     return this.user_service.targetName;
   }
 
-  ngOnInit() {
-    this.loadLastPlan();
+  async ngOnInit() {
+    // the account list arrives with the user load — decide the mode after it
+    await this.user_service.user();
+
+    if (this.hasAccounts) {
+      this.mode = 'renew';
+      this.loadLastPlan();
+    } else {
+      this.mode = 'new-account';
+      this.loadNewAccountDefaults();
+    }
+
+    this.service.realms().subscribe((realms) => (this.realms = realms));
     this.loadPrcies();
+    this.user_service.onAccountChanged.subscribe(() => {
+      if (this.mode === 'renew') {
+        this.loadLastPlan();
+      }
+    });
 
     this.estimate$
       .pipe(
@@ -109,6 +142,30 @@ export class RenewalComponent implements OnInit {
       });
   }
 
+  switchMode(mode: 'renew' | 'new-account') {
+    this.mode = mode;
+
+    if (mode === 'new-account') {
+      this.loadNewAccountDefaults();
+    } else {
+      this.loadLastPlan();
+    }
+  }
+
+  private loadNewAccountDefaults() {
+    this.service.suggestUsername().subscribe((username) => {
+      this.newAccount.username = username;
+    });
+  }
+
+  selectRealm(realmId: number) {
+    if (this.mode === 'new-account') {
+      this.newAccount.realmId = realmId;
+    } else {
+      this.renewal.realmId = realmId;
+    }
+  }
+
   submit() {
     if (
       this.submitting ||
@@ -120,8 +177,13 @@ export class RenewalComponent implements OnInit {
 
     this.submitting = true;
 
-    this.renewal.target =
-      this.user_service.targetName ?? this.current_user.username;
+    if (this.mode === 'new-account') {
+      this.submitNewAccount();
+      return;
+    }
+
+    this.renewal.accountId = this.user_service.accountId;
+    this.renewal.target = this.user_service.targetName;
 
     this.service.renewal(this.renewal).subscribe({
       next: async (result) => {
@@ -134,6 +196,38 @@ export class RenewalComponent implements OnInit {
         // The invoice is always issued on the paying account (docs/20 D4), so
         // the payment/receipt page must open in the payer's own view — the
         // renewed target never owns the invoice.
+        if (result.invoiceCode) {
+          this.router.navigate(['payment'], {
+            queryParams: { invoice: result.invoiceCode },
+          });
+        }
+
+        this.submitting = false;
+      },
+      error: () => (this.submitting = false),
+    });
+  }
+
+  /// docs/22 D9: the first purchase carries realm + VPN username; settlement
+  /// (payment modal) creates the account and its first renewal atomically.
+  private submitNewAccount() {
+    this.newAccount.days = this.renewal.days;
+    this.newAccount.gigabytes = this.renewal.gigabytes;
+    this.newAccount.simultaneousUserCount = this.renewal.simultaneousUserCount;
+
+    if (!this.newAccount.realmId) {
+      this.submitting = false;
+      return;
+    }
+
+    this.service.newAccount(this.newAccount).subscribe({
+      next: async (result) => {
+        this.result = result;
+
+        const current_user = await this.user_service.user();
+        current_user.balance = result.currentPrice;
+        this.user_service.reload();
+
         if (result.invoiceCode) {
           this.router.navigate(['payment'], {
             queryParams: { invoice: result.invoiceCode },
@@ -178,14 +272,18 @@ export class RenewalComponent implements OnInit {
       return;
     }
 
+    this.renewal.accountId = this.user_service.accountId;
+
     this.estimate$.next(this.renewal);
   }
 
   private async loadLastPlan() {
     this.current_user = await this.user_service.user();
-    this.service.info(this.user_service.targetName).subscribe((plan) => {
+    this.service.info(this.user_service.accountId).subscribe((plan) => {
       if (!plan) return;
       this.renewal = plan;
+      this.requiresRealmChoice = plan.requiresRealmChoice;
+      this.renewal.realmId = undefined;
 
       if (this.maxUserCounts.includes(plan.simultaneousUserCount)) {
         this.selectedUserCount = plan.simultaneousUserCount;

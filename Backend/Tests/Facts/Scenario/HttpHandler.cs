@@ -120,48 +120,74 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
        return await CheckResponseArray(response, status);
     }
 
-    protected async Task<Dictionary<string, string?>> PlanState(int status = 2)
+    protected async Task<Dictionary<string, string?>[]> Realms(int status = 2)
     {
-       var response = await Client.GetAsync("/api/plan/plan-state");
-       return await CheckResponseObject(response, status);
+        var response = await Client.GetAsync("/api/plan/realms");
+        return await CheckResponseArray(response, status);
     }
 
-    protected async Task<Dictionary<string, string?>> PlanInfo(int status = 2)
+    protected async Task<Dictionary<string, string?>[]> VpnAccounts(string? target = null, int status = 2)
     {
-       var response = await Client.GetAsync("/api/plan/plan-info");
-       return await CheckResponseObject(response, status);
+        var url = "/api/vpn/accounts" + (target != null ? $"?target={target}" : "");
+        var response = await Client.GetAsync(url);
+        return await CheckResponseArray(response, status);
     }
 
-    protected async Task<Dictionary<string, string?>> PlanInfo(string target, int status = 2)
+    protected async Task<Dictionary<string, string?>> PlanState(int account_id, int status = 2)
     {
-       var response = await Client.GetAsync($"/api/plan/plan-info?target={target}");
-       return await CheckResponseObject(response, status);
+        var response = await Client.GetAsync($"/api/plan/plan-state?accountId={account_id}");
+        return await CheckResponseObject(response, status);
     }
 
-    protected async Task<Dictionary<string, string?>> Estimate(string username, byte users, short? days, short? gigs, int status = 2)
+    protected async Task<Dictionary<string, string?>> PlanInfo(int account_id, int status = 2)
     {
-       var request = new RenewalContext
-       {
-           Target = username,
-           SimultaneousUserCount = users,
-           Days = days,
-           Gigabytes = gigs,
-       };
-       var response = await Client.PostAsJsonAsync("/api/plan/estimate", request);
-       return await CheckResponseObject(response, status);
+        var response = await Client.GetAsync($"/api/plan/plan-info?accountId={account_id}");
+        return await CheckResponseObject(response, status);
     }
 
-    protected async Task<Dictionary<string, string?>> Renewal(string username, byte users, short? days, short? gigs, int status = 2)
+    protected async Task<Dictionary<string, string?>> Estimate(int account_id, byte users, short? days, short? gigs, int status = 2)
     {
-       var request = new RenewalContext
-       {
-           Target = username,
-           SimultaneousUserCount = users,
-           Days = days,
-           Gigabytes = gigs,
-       };
-       var response = await Client.PostAsJsonAsync("/api/plan/renewal", request);
-       return await CheckResponseObject(response, status);
+        var request = new RenewalContext
+        {
+            AccountId = account_id,
+            SimultaneousUserCount = users,
+            Days = days,
+            Gigabytes = gigs,
+        };
+        var response = await Client.PostAsJsonAsync("/api/plan/estimate", request);
+        return await CheckResponseObject(response, status);
+    }
+
+    protected async Task<Dictionary<string, string?>> Renewal(int account_id, byte users, short? days, short? gigs,
+        int? realm_id = null, string? target = null, int status = 2)
+    {
+        var request = new RenewalContext
+        {
+            AccountId = account_id,
+            Target = target,
+            SimultaneousUserCount = users,
+            Days = days,
+            Gigabytes = gigs,
+            RealmId = realm_id,
+        };
+        var response = await Client.PostAsJsonAsync("/api/plan/renewal", request);
+        return await CheckResponseObject(response, status);
+    }
+
+    /// <summary>First purchase (docs/22 D9): realm + optional username + plan.</summary>
+    protected async Task<Dictionary<string, string?>> NewAccount(string? username, int realm_id,
+        byte users, short? days, short? gigs, int status = 2)
+    {
+        var request = new NewAccountContext
+        {
+            Username = username,
+            RealmId = realm_id,
+            SimultaneousUserCount = users,
+            Days = days,
+            Gigabytes = gigs,
+        };
+        var response = await Client.PostAsJsonAsync("/api/plan/new-account", request);
+        return await CheckResponseObject(response, status);
     }
 
     protected async Task<Dictionary<string, string?>> GetInvoice(int code, int status = 2)
@@ -278,9 +304,16 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         await CheckResponse(response, status);
     }
 
-    protected async Task UserSetStatus(string target, AccountStatus status, int http_status = 2)
+    protected async Task UserSetStatus(string target, PanelUserStatus status, int http_status = 2)
     {
         var response = await Client.PostAsJsonAsync("/api/user/set-status", new { target, status });
+        await CheckResponse(response, http_status);
+    }
+
+    /// <summary>VPN-level status change (docs/22 D12): 0=Active, 1=Suspended, 2=Deactivated.</summary>
+    protected async Task UserSetAccountStatus(int account_id, VpnAccountStatus status, int http_status = 2)
+    {
+        var response = await Client.PostAsJsonAsync("/api/user/set-account-status", new { accountId = account_id, status });
         await CheckResponse(response, http_status);
     }
 
@@ -318,24 +351,24 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
     }
 
     /// <summary>
-    /// Creates an account straight in the scenario database — register always
+    /// Creates a panel user straight in the scenario database — register always
     /// sets AllowSelfService (D11), so dependent/manager fixtures must be seeded here.
+    /// docs/22 D9: no VPN credentials; the account arrives with the first purchase.
     /// </summary>
     protected async Task InsertAccount(string username, UserTypes user_type,
-        AccountRole role = AccountRole.User, int? owner_id = null, AccountStatus status = AccountStatus.Active)
+        AccountRole role = AccountRole.User, int? owner_id = null, PanelUserStatus status = PanelUserStatus.Active)
     {
         using var scope = ServiceProvider.CreateScope();
 
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
 
         // deterministic per-username mobile (a length-based one collides)
         var seed = Math.Abs(username.Aggregate(17, (current, c) => current * 31 + c));
 
-        await account_repo.Save(new AccountEntity
+        await panel_user_repo.Save(new PanelUserEntity
         {
             Username = username,
             Password = PasswordHasher.Hash("Passw0rd1"),
-            VpnPassword = HashHandler.GenerateHashCode(),
             Email = $"{username}@gmail.com",
             Mobile = $"+9891{seed % 100_000_000:D8}",
             UserType = user_type,
@@ -345,22 +378,13 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         });
     }
 
-    protected async Task Estimate(string username, string token, string password, int status = 2)
-    {
-       var response = await Client.PostAsJsonAsync("/api/vpn/change-ovpn", new ChangeOvpnContext
-       {
-           Target = username,
-           Token = token,
-           Password = password,
-       });
-       await CheckResponseObject(response, status);
-    }
-
-    protected async Task ChangeOVpn(string username, string token, string password, int status = 2)
+    protected async Task ChangeOVpn(int account_id, string token, string password,
+        string? target = null, int status = 2)
     {
         var request = new ChangeOvpnContext
         {
-            Target = username,
+            AccountId = account_id,
+            Target = target,
             Token = token,
             Password = password,
         };
@@ -368,9 +392,9 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         await CheckResponseObject(response, status);
     }
 
-    protected async Task<HttpResponseMessage> DownloadConfig(string? target = null, int status = 2)
+    protected async Task<HttpResponseMessage> DownloadConfig(int? account_id = null, int status = 2)
     {
-        var url = "/api/vpn/download" + (target != null ? $"?target={target}" : "");
+        var url = "/api/vpn/download" + (account_id != null ? $"?accountId={account_id}" : "");
         var response = await Client.GetAsync(url);
 
         if (status != 2)
@@ -387,15 +411,15 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
     {
         using var scope = ServiceProvider.CreateScope();
 
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
         var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
 
-        var account = await account_repo.GetAccount(username);
-        Assert.NotNull(account);
+        var user = await panel_user_repo.GetUser(username);
+        Assert.NotNull(user);
 
         await wallet_repo.Save(new WalletEntity
         {
-            AccountId = account.Id,
+            AccountId = user.Id,
             Amount = value,
             Direction = BalanceDirection.Credit,
             Status = BalanceStatus.Completed,

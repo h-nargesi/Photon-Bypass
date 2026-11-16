@@ -43,9 +43,11 @@ import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../../@icons';
 import {
   AccountRole,
-  AccountStatus,
+  PanelUserStatus,
+  VpnAccountStatus,
   CreateUserModel,
   ResultStatus,
+  UserAccountRow,
   UserRow,
 } from '../../@models';
 import {
@@ -186,28 +188,46 @@ export class UsersComponent implements OnInit {
     );
   }
 
-  statusTitle(status: AccountStatus): string {
+  statusTitle(status: PanelUserStatus): string {
     return this.translation.translate(
       'management.users.status.' +
-        (status === AccountStatus.Active
+        (status === PanelUserStatus.Active ? 'active' : 'inactive'),
+    );
+  }
+
+  statusColor(status: PanelUserStatus): string {
+    return status === PanelUserStatus.Active ? 'success' : 'danger';
+  }
+
+  accountStatusTitle(status: VpnAccountStatus): string {
+    return this.translation.translate(
+      'management.users.status.' +
+        (status === VpnAccountStatus.Active
           ? 'active'
-          : status === AccountStatus.VpnSuspended
+          : status === VpnAccountStatus.Suspended
             ? 'vpn-suspended'
             : 'inactive'),
     );
   }
 
-  statusColor(status: AccountStatus): string {
-    return status === AccountStatus.Active
+  accountStatusColor(status: VpnAccountStatus): string {
+    return status === VpnAccountStatus.Active
       ? 'success'
-      : status === AccountStatus.VpnSuspended
+      : status === VpnAccountStatus.Suspended
         ? 'warning'
         : 'danger';
   }
 
-  expirationTitle(row: UserRow): string {
-    return row.expirationDate
-      ? new Date(row.expirationDate).toLocaleDateString('fa-IR')
+  accountExpirationTitle(account: UserAccountRow): string {
+    return account.expirationDate
+      ? new Date(account.expirationDate).toLocaleDateString('fa-IR')
+      : '';
+  }
+
+  /// docs/22 §3.6: nested account rows under each user row.
+  accountPlanTitle(account: UserAccountRow): string {
+    return account.simultaneousUser
+      ? `${account.simultaneousUser}x`
       : '';
   }
 
@@ -354,27 +374,35 @@ export class UsersComponent implements OnInit {
     });
   }
 
-  /// VPN suspension (0↔1): portal login stays, only the VPN config goes off;
-  /// a fully deactivated account has no VPN to toggle (D13).
-  toggleVpn(row: UserRow): void {
-    if (this.busy || row.status === AccountStatus.Deactivated) return;
-
-    this.setStatus(row, row.status === AccountStatus.VpnSuspended
-      ? AccountStatus.Active
-      : AccountStatus.VpnSuspended);
-  }
-
-  /// Full deactivation (→2) and reactivation (→0): at VpnSuspended the same
-  /// button escalates to a full deactivation.
+  /// Panel deactivation (→2) / reactivation (→0) of the user (docs/22 D12);
+  /// the radius sweep covers every VPN account the user owns.
   toggleActive(row: UserRow): void {
     if (this.busy) return;
 
-    this.setStatus(row, row.status === AccountStatus.Deactivated
-      ? AccountStatus.Active
-      : AccountStatus.Deactivated);
+    this.setStatus(row, row.status === PanelUserStatus.Deactivated
+      ? PanelUserStatus.Active
+      : PanelUserStatus.Deactivated);
   }
 
-  private setStatus(row: UserRow, status: AccountStatus): void {
+  /// VPN suspension (0↔1) of one account (docs/22 D12): portal login and the
+  /// other accounts stay untouched.
+  toggleAccountVpn(account: UserAccountRow): void {
+    if (this.busy || account.status === VpnAccountStatus.Deactivated) return;
+
+    this.busy = true;
+    const next = account.status === VpnAccountStatus.Suspended
+      ? VpnAccountStatus.Active
+      : VpnAccountStatus.Suspended;
+
+    this.service.setAccountStatus(account.id, next).subscribe((result) => {
+      this.busy = false;
+      if (result.status() !== ResultStatus.success) return;
+
+      this.load();
+    });
+  }
+
+  private setStatus(row: UserRow, status: PanelUserStatus): void {
     this.busy = true;
     this.service.setStatus(row.username, status).subscribe((result) => {
       this.busy = false;
@@ -387,7 +415,7 @@ export class UsersComponent implements OnInit {
   // --- act on behalf (docs/20 phase 6 step 21/22) ---
 
   actOnBehalf(row: UserRow): void {
-    if (row.status === AccountStatus.Deactivated) return;
+    if (row.status === PanelUserStatus.Deactivated) return;
 
     if (this.isAdmin) {
       this.user_service.setExternalTarget({

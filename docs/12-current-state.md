@@ -13,7 +13,7 @@
 - **کانال تلگرام (docs/21)**: آداپتور واقعی `ISocialMediaService` با انتخاب runtime کانال (`SocialMediaOptions:Channel`)، اتصال chat با کد یک‌بارمصرف و دیپ‌لینک (`TelegramLink` + poller)، کد بازیابی/هشدارها به chat متصل (تلگرام‌اول، fallback ایمیل)، endpointهای پروفایل `telegram-link` و کارت اتصال فرانت. پیش‌فرض `Channel=None` (no-op) — فعال‌سازی استقرار: docs/19 §۳-الف.
 - **`PriceCalculator`** پویا (Roslyn) با refresh خودکار روی `PriceRepository.OnSave` (`docs/05`).
 - **Frontend**: صفحات اصلی Home/Login/Register/Forgot/Reset/Dashboard/History/Edit/Change-pass/Renewal/Payment + صفحات مدیریتی نقش‌دار `/users` `/servers` `/wallet` (docs/20 فاز ۶).
-- **پنل مدیریت نقش‌دار (docs/20)**: `AccountRole`/`AccountStatus` + policyهای Manager/Admin، مدیریت کاربران، CRUD سرورها، تراکنش شفاف/تاریخچه کیف پول ادمین، غیرفعال‌سازی دووضعیتی — همه روی هاست واحد Portal.
+- **پنل مدیریت نقش‌دار (docs/20)**: `AccountRole` + وضعیت دو-محوری `PanelUserStatus`/`VpnAccountStatus` (docs/22 D12) + policyهای Manager/Admin، مدیریت کاربران، CRUD سرورها، تراکنش شفاف/تاریخچه کیف پول ادمین، غیرفعال‌سازی دووضعیتی — همه روی هاست واحد Portal.
 - **MSSQL schema + `TotalPlanState` view** (`docs/09`).
 
 ## Stub / incomplete (نیمه‌کاره)
@@ -28,7 +28,7 @@
 
 - **تلگرام کامل شد (۲۰۲۶-۱۰-۲۱، docs/21)**: `Backend/OutSource/TelegramMediaService.cs` + `TelegramUpdatePoller`/`TelegramLinkHandler` + کلیدهای DI در `OutSource/ServiceFactory.cs`. استب `SocialMediaService` حذف و با `NoopSocialMediaService` (کانال None) جایگزین شد؛ گیت‌های `#if SOCIAL` از رفته‌اند.
 - **واتساپ باقی است ولی دیگر compile-gate ندارد**: کلید `SocialChannel.WhatsApp` رزرو شده؛ `ForgetPassword` مسیر موبایل را با پیام «موبایل هنوز پشتیبانی نشده است» رد می‌کند تا آداپتور برسد.
-- **نقطه‌ی شروع واتساپ**: `Backend/OutSource/ServiceFactory.cs:55` — آداپتور جدید (الگوی `TelegramMediaService`، گیرنده از `AccountEntity.MobileNumber` بدون فلوی اتصال) + یک خط `AddLazyKeyedTransient`؛ هیچ تغییری در Application لازم نیست (امضاهای کانال‌خنثی).
+- **نقطه‌ی شروع واتساپ**: `Backend/OutSource/ServiceFactory.cs:55` — آداپتور جدید (الگوی `TelegramMediaService`، گیرنده از `PanelUserEntity.MobileNumber` بدون فلوی اتصال) + یک خط `AddLazyKeyedTransient`؛ هیچ تغییری در Application لازم نیست (امضاهای کانال‌خنثی).
 
 ### `SetOVpnCertificate` — `NotImplementedException`
 

@@ -24,7 +24,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
         var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
         var tik4_net_moq = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
 
         var user_data_dictionary = tik4_net_moq.GetData<UserModel>()
             .ToDictionary(user => user.Id ?? string.Empty, user => user.Name);
@@ -95,11 +95,15 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
             }
         };
 
-        account_repo_moq.OnSetDeactivated += account_ids =>
+        // docs/22 D12: the 40-day abandonment deactivates the VPN account —
+        // the owner panel user keeps portal access
+        vpn_account_moq.OnSetStatus += (account_ids, status) =>
         {
             var saved_list = account_ids.ToList();
 
-            if (saved_list.Count != 1 || saved_list[0] != account_repo_moq.Data["User4"].Id)
+            if (status != VpnAccountStatus.Deactivated ||
+                saved_list.Count != 1 ||
+                saved_list[0] != vpn_account_moq.Data.Single(account => account.Username == "User4").Id)
             {
                 other = true;
                 return;
@@ -133,24 +137,28 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
         var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
         var email_service_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
+
+        // docs/22 §3.7: the warning channels live on the owner panel user
+        account_repo_moq.Data["User3"].IsEmailValid = true;
+        account_repo_moq.Data["User4"].IsEmailValid = true;
 
         var plan_state_list = await plan_state_repo.GetAll();
         var finishing_list = plan_state_list.Where(plan => plan.IsFinishing()).ToList();
 
-        var emails = new HashSet<string> { "User99@gmail.com", "User4@gmail.com" };
+        var emails = new HashSet<string> { "user3@gmail.com", "user4@gmail.com" };
         email_service_moq.OnSend += mail =>
         {
             Assert.Contains(mail.ToAddress, emails);
         };
 
-        account_repo_moq.OnUpdateWarningTimes += account_ids =>
+        vpn_account_moq.OnUpdateWarningTimes += account_ids =>
         {
             var expected_ids = new HashSet<int>(
                 finishing_list
-                    .Select(plan => account_repo_moq.Data.GetValueOrDefault(plan.Username))
-                    .Where(account => account is { IsEmailValid: true })
-                    .Select(account => account!.Id));
+                    .Where(plan => account_repo_moq.Data.GetValueOrDefault(plan.Username) is { IsEmailValid: true })
+                    .Select(plan => vpn_account_moq.Data.Single(account => account.Username == plan.Username).Id));
 
             Assert.NotEmpty(account_ids);
             Assert.Subset(expected_ids, account_ids.ToHashSet());
@@ -168,7 +176,8 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
         var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
 
         // D5 priority: User4 owns BOTH a validated email and a connected
@@ -180,7 +189,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
 
         var finishing_list = (await plan_state_repo.GetAll()).Where(plan => plan.IsFinishing()).ToList();
 
-        var alerted_accounts = new List<AccountEntity>();
+        var alerted_accounts = new List<PanelUserEntity>();
         social_moq.OnFinishServiceAlert += account => alerted_accounts.Add(account);
 
         var email_send_count = 0;
@@ -191,7 +200,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         alerted_accounts.Should().Contain(account => account.Username == "User4");
 
         // the social branch keeps the stamp-after-success bookkeeping
-        account_repo_moq.Data["User4"].LastWarningTime.Should().NotBeNull();
+        vpn_account_moq.Data.Single(account => account.Username == "User4").LastWarningTime.Should().NotBeNull();
         history_moq.Data.Should().Contain(history =>
             history.Title == "پایان پلن" && history.Target == account_repo_moq.Data["User4"].Id);
 
@@ -208,7 +217,8 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
         var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
 
         account_repo_moq.Data["User3"].IsEmailValid = true;
         account_repo_moq.Data["User4"].TelegramChatId = 555;
@@ -230,8 +240,8 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
 
         await function.Should().NotThrowAsync();
 
-        var user3 = account_repo_moq.Data["User3"];
-        var user4 = account_repo_moq.Data["User4"];
+        var user3 = vpn_account_moq.Data.Single(account => account.Username == "User3");
+        var user4 = vpn_account_moq.Data.Single(account => account.Username == "User4");
 
         user3.LastWarningTime.Should().NotBeNull("the email account succeeded and must be stamped");
         user4.LastWarningTime.Should().BeNull("the failed social send stays unstamped for the hourly retry");
@@ -246,7 +256,8 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
         var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
         var social_moq = scope.ServiceProvider.GetRequiredService<SocialMediaServiceMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
 
         account_repo_moq.Data["User4"].IsEmailValid = true;
@@ -279,11 +290,11 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         user4_emails.Should().Contain(mail => mail.Subject.Contains("پایان سرویس"),
             "the failed social warning must reach the account by email");
 
-        var user4 = account_repo_moq.Data["User4"];
+        var user4 = vpn_account_moq.Data.Single(account => account.Username == "User4");
 
         user4.LastWarningTime.Should().NotBeNull("the email fallback delivered the warning");
         history_moq.Data.Should().Contain(history =>
-            history.Title == "پایان پلن" && history.Target == user4.Id);
+            history.Title == "پایان پلن" && history.Target == account_repo_moq.Data["User4"].Id);
     }
 
     [Fact]
@@ -293,22 +304,30 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
 
         var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
         var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
 
         var plan_state_list = await plan_state_repo.GetAll();
 
         // User4 finishes its plan and hits the delete-inactivity threshold at the
         // same time: NotifSendServices stamps LastWarningTime while
-        // InactiveAbandonedUsers marks the account Deactivated.
+        // InactiveAbandonedUsers marks the VPN account Deactivated (docs/22 D12 —
+        // the panel user itself stays active).
         account_repo_moq.Data["User4"].IsEmailValid = true;
 
-        var user4_id = account_repo_moq.Data["User4"].Id;
+        var user4_id = vpn_account_moq.Data.Single(account => account.Username == "User4").Id;
 
         var warned_ids = new HashSet<int>();
         var inactive_ids = new HashSet<int>();
 
-        account_repo_moq.OnUpdateWarningTimes += ids => warned_ids.UnionWith(ids);
-        account_repo_moq.OnSetDeactivated += ids => inactive_ids.UnionWith(ids);
+        vpn_account_moq.OnUpdateWarningTimes += ids => warned_ids.UnionWith(ids);
+        vpn_account_moq.OnSetStatus += (ids, status) =>
+        {
+            if (status == VpnAccountStatus.Deactivated)
+            {
+                inactive_ids.UnionWith(ids);
+            }
+        };
 
         await Task.WhenAll(
             monitoring.NotifSendServices(plan_state_list),
@@ -319,8 +338,10 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         Assert.Contains(user4_id, warned_ids);
         Assert.Contains(user4_id, inactive_ids);
 
-        Assert.NotNull(account_repo_moq.Data["User4"].LastWarningTime);
-        Assert.Equal(AccountStatus.Deactivated, account_repo_moq.Data["User4"].Status);
+        var user4 = vpn_account_moq.Data.Single(account => account.Username == "User4");
+
+        Assert.NotNull(user4.LastWarningTime);
+        Assert.Equal(VpnAccountStatus.Deactivated, user4.Status);
     }
 
     [Fact]
@@ -329,9 +350,9 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
 
         var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
 
-        var missing_id = account_repo_moq.Data.Values.Max(account => account.Id) + 1000;
+        var missing_id = vpn_account_moq.Data.Max(account => account.Id) + 1000;
 
         var ghost_plan = new PlanStateEntity
         {
@@ -355,7 +376,8 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
         var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
         var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
 
         account_repo_moq.Data["User3"].IsEmailValid = true;
@@ -377,8 +399,8 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         // a failing send must never fail the whole hourly job
         await function.Should().NotThrowAsync();
 
-        var user3 = account_repo_moq.Data["User3"];
-        var user4 = account_repo_moq.Data["User4"];
+        var user3 = vpn_account_moq.Data.Single(account => account.Username == "User3");
+        var user4 = vpn_account_moq.Data.Single(account => account.Username == "User4");
 
         // stamp-after-success: the delivered warning stamps its account, the
         // failed one stays unstamped so the next hourly run retries it
@@ -390,8 +412,8 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
             .Select(history => history.Target)
             .ToHashSet();
 
-        warn_targets.Should().Contain(user3.Id);
-        warn_targets.Should().NotContain(user4.Id);
+        warn_targets.Should().Contain(account_repo_moq.Data["User3"].Id);
+        warn_targets.Should().NotContain(account_repo_moq.Data["User4"].Id);
     }
 
     [Fact]
@@ -402,7 +424,8 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
         var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
         var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
 
         var plan_state_list = await plan_state_repo.GetAll();
@@ -416,7 +439,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var send_count = 0;
         var stamped = false;
         email_moq.OnSend += _ => send_count++;
-        account_repo_moq.OnUpdateWarningTimes += _ => stamped = true;
+        vpn_account_moq.OnUpdateWarningTimes += _ => stamped = true;
 
         var function = () => monitoring.NotifSendServices(finishing_list);
 
@@ -435,19 +458,20 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
         var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
         var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
 
         // User4 finishes its plan but opted out of the finishing warnings
         account_repo_moq.Data["User4"].IsEmailValid = true;
-        account_repo_moq.Data["User4"].SendWarning = false;
+        vpn_account_moq.Data.Single(account => account.Username == "User4").SendWarning = false;
 
         var finishing_list = (await plan_state_repo.GetAll()).Where(plan => plan.IsFinishing()).ToList();
 
         var send_count = 0;
         var stamped = false;
         email_moq.OnSend += _ => send_count++;
-        account_repo_moq.OnUpdateWarningTimes += _ => stamped = true;
+        vpn_account_moq.OnUpdateWarningTimes += _ => stamped = true;
 
         await monitoring.NotifSendServices(finishing_list);
 
@@ -464,19 +488,20 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var monitoring = scope.ServiceProvider.GetRequiredService<IAccountMonitoringService>();
         var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
         var email_moq = scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
 
         // User4 was warned minutes ago: inside the DelayBetweenWarnings window
         account_repo_moq.Data["User4"].IsEmailValid = true;
-        account_repo_moq.Data["User4"].LastWarningTime = DateTime.Now.AddMinutes(-10);
+        vpn_account_moq.Data.Single(account => account.Username == "User4").LastWarningTime = DateTime.Now.AddMinutes(-10);
 
         var finishing_list = (await plan_state_repo.GetAll()).Where(plan => plan.IsFinishing()).ToList();
 
         var send_count = 0;
         var stamped = false;
         email_moq.OnSend += _ => send_count++;
-        account_repo_moq.OnUpdateWarningTimes += _ => stamped = true;
+        vpn_account_moq.OnUpdateWarningTimes += _ => stamped = true;
 
         await monitoring.NotifSendServices(finishing_list);
 

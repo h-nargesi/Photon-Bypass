@@ -52,7 +52,7 @@ class AccountRadiusSyncService(
 
     public Task DeactivateUsers(IEnumerable<string> usernames)
     {
-        return DeactivateUsers(usernames, []);
+        return DeactivateUsersInRealms(usernames, null);
     }
 
     public async Task ActivateUsers(IEnumerable<string> usernames)
@@ -73,19 +73,12 @@ class AccountRadiusSyncService(
         // VPN-valid reconciliation: only Active accounts belong in the valid
         // set — a suspended or deactivated account is disabled on every realm
         // within one sweep, even when the immediate sync failed (docs/20 D13).
-        // Bucket-zero rows (unrestricted realm) still spread to every realm.
+        // Every account pins exactly one realm (docs/22 §2), so the grouping
+        // is a plain RealmId lookup — the bucket-0 fan-out is gone.
         var realm_user_dictionary = plan_state_list
-            .Where(plan => plan.Status == AccountStatus.Active)
-            .GroupBy(plan => plan.RestrictedRealmId ?? 0)
+            .Where(plan => plan.Status == VpnAccountStatus.Active)
+            .GroupBy(plan => plan.RealmId)
             .ToDictionary(grouping => grouping.Key, grouping => grouping.Select(plan => plan.Username).ToList());
-
-        if (realm_user_dictionary.TryGetValue(0, out var list))
-        {
-            foreach (var pair in realm_user_dictionary.Where(pair => pair.Key != 0))
-            {
-                pair.Value.AddRange(list);
-            }
-        }
 
         await radius_list.RunJob(radius =>
         {
@@ -97,18 +90,15 @@ class AccountRadiusSyncService(
         });
     }
 
-    public async Task SyncUserAndActive(AccountEntity account, RenewalEntity renewal)
+    public async Task SyncUserAndActive(VpnAccountEntity account, RenewalEntity renewal)
     {
-        if (renewal.RestrictedRealmId.HasValue)
-        {
-            await DeactivateUsers([account.Username], [renewal.RestrictedRealmId.Value]);
-        }
-
-        var radius_list = await ServerRepo.Value.GetActiveRadiusInRealmOrAll(renewal.RestrictedRealmId);
+        var radius_list = (await ServerRepo.Value.GetActiveRadiusInRealmOrAll(account.RealmId))
+            .Where(radius => radius.RealmId == account.RealmId)
+            .ToList();
 
         if (radius_list.Count <= 0)
         {
-            throw new Exception($"No radius server found for realm-id: ({renewal.RestrictedRealmId})");
+            throw new Exception($"No radius server found for realm-id: ({account.RealmId})");
         }
 
         await radius_list.RunJob(radius =>
@@ -116,6 +106,21 @@ class AccountRadiusSyncService(
             var sync = ResolveSync(radius);
             return sync == null ? Task.CompletedTask : sync.Value.SyncUserAndActive(radius, account, renewal);
         });
+    }
+
+    public async Task MigrateUserRealm(VpnAccountEntity account, int new_realm_id, RenewalEntity renewal)
+    {
+        if (account.RealmId != new_realm_id)
+        {
+            // D6: the username and the stacked plan state travel to the new
+            // realm — the old realm's copy is disabled first so a live client
+            // cannot keep authenticating against the stale copy.
+            await DeactivateUsersInRealms([account.Username], [account.RealmId]);
+
+            account.RealmId = new_realm_id;
+        }
+
+        await SyncUserAndActive(account, renewal);
     }
 
     public async Task GetOVpnCertificate(int? realm_id, string username, CertContext default_context)
@@ -202,17 +207,16 @@ class AccountRadiusSyncService(
         return credential;
     }
 
-    private async Task DeactivateUsers(IEnumerable<string> usernames, HashSet<int> realm_exceptions)
+    private async Task DeactivateUsersInRealms(IEnumerable<string> usernames, IEnumerable<int>? realm_ids)
     {
-        var radius_list = await ServerRepo.Value.GetAllActiveRadius();
+        var realm_set = realm_ids?.ToHashSet();
+
+        var radius_list = (await ServerRepo.Value.GetAllActiveRadius())
+            .Where(radius => realm_set == null || realm_set.Contains(radius.RealmId))
+            .ToList();
 
         await radius_list.RunJob(radius =>
         {
-            if (realm_exceptions.Contains(radius.RealmId))
-            {
-                return Task.CompletedTask;
-            }
-
             var sync = ResolveSync(radius);
             return sync == null ? Task.CompletedTask : sync.Value.DeactivateUser(radius, usernames);
         });

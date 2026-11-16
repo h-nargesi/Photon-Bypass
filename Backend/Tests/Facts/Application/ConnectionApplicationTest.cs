@@ -13,7 +13,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.GetCurrentConnectionState("Invalid username");
+        var func = () => connection_app.GetCurrentConnectionState(123_456);
 
         return func.Should().ThrowAsync<UserException>();
     }
@@ -23,19 +23,21 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.GetCurrentConnectionState("InactiveUser7");
+        var func = () => connection_app.GetCurrentConnectionState(7);
 
         return func.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
-    public Task GetCurrentConnectionState_NoPlan()
+    public async Task GetCurrentConnectionState_NoPlan()
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.GetCurrentConnectionState("User6");
 
-        return func.Should().ThrowAsync<UserException>();
+        // docs/08 contract kept: live-session listing requires an active plan
+        var func = () => connection_app.GetCurrentConnectionState(6);
+
+        await func.Should().ThrowAsync<UserException>();
     }
 
     [Fact]
@@ -43,7 +45,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var result_list = (await connection_app.GetCurrentConnectionState("User4")).Data;
+        var result_list = (await connection_app.GetCurrentConnectionState(4)).Data;
 
         Assert.NotNull(result_list);
         Assert.Empty(result_list);
@@ -54,7 +56,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var result_list = (await connection_app.GetCurrentConnectionState("User3")).Data;
+        var result_list = (await connection_app.GetCurrentConnectionState(3)).Data;
 
         Assert.NotNull(result_list);
         Assert.Equal(2, result_list.Count);
@@ -65,7 +67,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("ip", "Invalid user name", "session_id");
+        var func = () => connection_app.CloseConnection("ip", 123_456, "session_id");
 
         return func.Should().ThrowAsync<UserException>();
     }
@@ -75,7 +77,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("ip", "InactiveUser7", "session_id");
+        var func = () => connection_app.CloseConnection("ip", 7, "session_id");
 
         return func.Should().ThrowAsync<UserException>();
     }
@@ -85,7 +87,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("ip", "User6", "session_id");
+        var func = () => connection_app.CloseConnection("ip", 6, "session_id");
 
         return func.Should().ThrowAsync<UserException>();
     }
@@ -95,7 +97,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("10.10.10.10", "User4", "session_id");
+        var func = () => connection_app.CloseConnection("10.10.10.10", 4, "session_id");
 
         return func.Should().ThrowAsync<UserException>();
     }
@@ -105,7 +107,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("192.168.125.11", "User4", "session_id");
+        var func = () => connection_app.CloseConnection("192.168.125.11", 4, "session_id");
 
         return func.Should().ThrowAsync<UserException>();
     }
@@ -115,7 +117,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("192.168.125.21", "User2", "session_id");
+        var func = () => connection_app.CloseConnection("192.168.125.21", 2, "session_id");
 
         return func.Should().ThrowAsync<UserException>();
     }
@@ -125,7 +127,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("192.168.125.11", "User99", "invalid session");
+        var func = () => connection_app.CloseConnection("192.168.125.11", 99, "invalid session");
 
         return func.Should().ThrowAsync<UserException>();
     }
@@ -136,7 +138,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
 
-        var func = () => connection_app.CloseConnection("192.168.125.31", "User3", "2036A2");
+        var func = () => connection_app.CloseConnection("192.168.125.31", 3, "2036A2");
 
         (await func.Should().ThrowAsync<UserException>())
             .Where(ex => ex.UserMessage == "دسترسی غیرمجاز!");
@@ -158,7 +160,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
         };
 
         var result = await scope.ServiceProvider.GetRequiredService<IConnectionApplication>()
-            .CloseConnection("192.168.125.31", "User3", "2037B3");
+            .CloseConnection("192.168.125.31", 3, "2037B3");
 
         Assert.Equal(2, result.Code / 100);
         Assert.True(is_closed);
@@ -169,7 +171,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
-        var func = () => connection_app.CloseConnection("192.168.125.11", "User99", "0F52A7");
+        var func = () => connection_app.CloseConnection("192.168.125.11", 99, "0F52A7");
 
         return func.Should().ThrowAsync<UserException>();
     }

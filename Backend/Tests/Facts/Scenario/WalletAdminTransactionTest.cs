@@ -24,22 +24,23 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
         await WalletAdjust(target, (short)BalanceDirection.Credit, 5_000, "پرداخت حضوری");
 
         using var scope = ServiceProvider.CreateScope();
-        var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+        var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
         var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
 
-        var ids = await account_repo.GetAccountIdByUsername(["admin", target]);
+        var admin_id = (await panel_user_repo.GetActiveUserId("admin"))!.Value;
+        var target_id = (await panel_user_repo.GetActiveUserId(target))!.Value;
 
-        var row = Assert.Single(await wallet_repo.GetTransactions(ids[target]), w => w.ActorId != null);
+        var row = Assert.Single(await wallet_repo.GetTransactions(target_id), w => w.ActorId != null);
         Assert.Equal(BalanceStatus.Completed, row.Status);
         Assert.Equal(BalanceDirection.Credit, row.Direction);
         Assert.Equal(5_000, row.Amount);
-        Assert.Equal(ids["admin"], row.ActorId);
-        Assert.Equal(5_000, await wallet_repo.GetBalance(ids[target]));
+        Assert.Equal(admin_id, row.ActorId);
+        Assert.Equal(5_000, await wallet_repo.GetBalance(target_id));
 
         // a debit beyond the balance is allowed — the wallet may go negative (D5)
         await WalletAdjust(target, (short)BalanceDirection.Debit, 6_000, "تصحیح حساب");
 
-        Assert.Equal(-1_000, await wallet_repo.GetBalance(ids[target]));
+        Assert.Equal(-1_000, await wallet_repo.GetBalance(target_id));
     }
 
     [Fact]
@@ -105,11 +106,11 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
 
         using (var scope = ServiceProvider.CreateScope())
         {
-            var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+            var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
 
             await InsertAccount(manager, UserTypes.AllowSelfService, AccountRole.Manager);
 
-            var manager_id = (await account_repo.GetAccountIdByUsername([manager]))[manager];
+            var manager_id = (await panel_user_repo.GetActiveUserId(manager))!.Value;
 
             await InsertAccount(subordinate, UserTypes.None, owner_id: manager_id);
         }
@@ -128,10 +129,10 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
 
         using (var scope = ServiceProvider.CreateScope())
         {
-            var account_repo = scope.ServiceProvider.GetRequiredService<IAccountRepository>();
+            var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
             var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
 
-            var id = (await account_repo.GetAccountIdByUsername([owner]))[owner];
+            var id = (await panel_user_repo.GetActiveUserId(owner))!.Value;
 
             for (var i = 0; i < 23; i++)
             {

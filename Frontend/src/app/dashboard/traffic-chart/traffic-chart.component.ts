@@ -6,6 +6,7 @@ import {
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { merge } from 'rxjs';
 import { ReactiveFormsModule } from '@angular/forms';
 import {
   ButtonDirective,
@@ -72,7 +73,12 @@ export class TrafficChartComponent implements OnInit {
 
   ngOnInit() {
     this.loadTrafficData();
-    this.user_service.onTargetChanged
+
+    // docs/22 §3.5: per-account reload on switcher changes too
+    merge(
+      this.user_service.onTargetChanged,
+      this.user_service.onAccountChanged,
+    )
       .pipe(takeUntilDestroyed(this.destroy_ref))
       .subscribe(() => this.loadTrafficData());
   }
@@ -80,7 +86,7 @@ export class TrafficChartComponent implements OnInit {
   loadTrafficData() {
     this.loading = true;
     this.service
-      .fetchTrafficData(this.user_service.targetName)
+      .fetchTrafficData(this.user_service.accountId)
       .subscribe((data) => {
         this.loading = false;
         this.initMainChart(data);

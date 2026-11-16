@@ -83,7 +83,7 @@ public class AccountRadiusSyncXuiService(
         }
     }
 
-    public async Task SyncUserAndActive(ServerEntity radius, AccountEntity account, RenewalEntity renewal)
+    public async Task SyncUserAndActive(ServerEntity radius, VpnAccountEntity account, RenewalEntity renewal)
     {
         var uuid = string.IsNullOrEmpty(account.VpnPassword)
             ? Guid.NewGuid().ToString()

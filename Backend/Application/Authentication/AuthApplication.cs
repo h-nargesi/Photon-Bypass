@@ -9,6 +9,7 @@ using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.OutSource;
 using PhotonBypass.Domain.OutSource.Model;
+using PhotonBypass.Domain.Servers;
 using PhotonBypass.ErrorHandler;
 using PhotonBypass.Result;
 using PhotonBypass.Tools;
@@ -17,7 +18,9 @@ using Serilog;
 namespace PhotonBypass.Application.Authentication;
 
 class AuthApplication(
-    IAccountRepository account_repo,
+    IPanelUserRepository panel_user_repo,
+    Lazy<IVpnAccountRepository> vpn_account_repo,
+    Lazy<IRealmRepository> realm_repo,
     IHistoryRepository history_repo,
     Lazy<IResetPassRepository> reset_pass_repo,
     ISocialMediaService social_media_srv,
@@ -35,7 +38,9 @@ class AuthApplication(
 
     private static readonly object ResetRateLimitLock = new();
 
-    private IAccountRepository AccountRepo { get; } = account_repo;
+    private IPanelUserRepository PanelUserRepo { get; } = panel_user_repo;
+    private Lazy<IVpnAccountRepository> VpnAccountRepo { get; } = vpn_account_repo;
+    private Lazy<IRealmRepository> RealmRepo { get; } = realm_repo;
     private IHistoryRepository HistoryRepo { get; } = history_repo;
     private Lazy<IResetPassRepository> ResetPassRepo { get; } = reset_pass_repo;
     private ISocialMediaService SocialMediaSrv { get; } = social_media_srv;
@@ -47,11 +52,11 @@ class AuthApplication(
 
     public async Task<ApiResult<UserModel>> CheckUserPassword(string username, string password)
     {
-        var account = await AccountRepo.GetAccount(username);
+        var account = await PanelUserRepo.GetUser(username);
 
-        // portal-accessible: Deactivated is blocked with 401; VpnSuspended
-        // still logs in (docs/20 D13)
-        if (account == null || account.Status == AccountStatus.Deactivated || !PasswordHasher.Verify(password, account.Password))
+        // portal-accessible: Deactivated is blocked with 401 (docs/22 D12 —
+        // VPN suspension is per account and never blocks the panel)
+        if (account == null || account.Status == PanelUserStatus.Deactivated || !PasswordHasher.Verify(password, account.Password))
         {
             if (account == null)
             {
@@ -76,7 +81,7 @@ class AuthApplication(
                     account.Id, account.Username);
             }
 
-            if (account.Status != AccountStatus.Deactivated)
+            if (account.Status != PanelUserStatus.Deactivated)
             {
                 await HistoryRepo.Save(new HistoryEntity
                 {
@@ -98,8 +103,8 @@ class AuthApplication(
         }
 
         var target_list = account.Role == AccountRole.Admin ?
-            await AccountRepo.GetAllActive() :
-            await AccountRepo.GetActiveTargetArea(account.Id);
+            await PanelUserRepo.GetAllActive() :
+            await PanelUserRepo.GetActiveTargetArea(account.Id);
 
         var target_area = target_list
             .Select(user => new TargetModel
@@ -110,7 +115,12 @@ class AuthApplication(
             })
             .ToDictionary(k => k.Username);
 
-        Log.Information("[user: {0}] User logged in", account.Username);
+        // docs/22 §3.5: the account list travels with the login answer so the
+        // frontend can render the account switcher without a second round-trip
+        var vpn_accounts = await VpnAccountRepo.Value.GetVisibleByUser(account.Id);
+        var realm_names = await LoadRealmNames(vpn_accounts.Select(account => account.RealmId));
+
+        Log.Information("[user: {0}] User logged in (vpn-accounts: {1})", account.Username, vpn_accounts.Count);
 
         return new ApiResult<UserModel>
         {
@@ -123,6 +133,15 @@ class AuthApplication(
                 Role = account.Role,
                 AllowSelfService = account.UserType.HasFlag(UserTypes.AllowSelfService),
                 TargetArea = target_area,
+                Accounts = vpn_accounts.Select(vpn_account => new UserVpnAccountModel
+                {
+                    Id = vpn_account.Id,
+                    Username = vpn_account.Username,
+                    RealmId = vpn_account.RealmId,
+                    RealmName = realm_names.GetValueOrDefault(vpn_account.RealmId),
+                    Status = (int)vpn_account.Status,
+                    Created = vpn_account.Created,
+                }).ToList(),
             },
             Message = "وارد شدید.",
         };
@@ -154,9 +173,9 @@ class AuthApplication(
                 };
             }
 
-            var mobile_account = await AccountRepo.GetAccountByMobile(email_mobile);
+            var mobile_account = await PanelUserRepo.GetUserByMobile(email_mobile);
 
-            if (mobile_account is { Status: not AccountStatus.Deactivated })
+            if (mobile_account is { Status: not PanelUserStatus.Deactivated })
             {
                 var mobile_code = await StoreResetCode(mobile_account.Id);
 
@@ -184,9 +203,9 @@ class AuthApplication(
                 return ApiResult.Success("اگر این حساب ثبت شده باشد، ایمیل بازیابی ارسال شد.");
             }
 
-            var account = await AccountRepo.GetAccountByEmail(email_mobile);
+            var account = await PanelUserRepo.GetUserByEmail(email_mobile);
 
-            if (account is { Status: not AccountStatus.Deactivated })
+            if (account is { Status: not PanelUserStatus.Deactivated })
             {
                 await SendResetCodeViaEmail(account, email_mobile);
             }
@@ -211,9 +230,9 @@ class AuthApplication(
             return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
         }
 
-        var account = await AccountRepo.GetAccount(username);
+        var account = await PanelUserRepo.GetUser(username);
 
-        if (account is { Status: not AccountStatus.Deactivated })
+        if (account is { Status: not PanelUserStatus.Deactivated })
         {
             if (SocialMediaSrv.Supports(account))
             {
@@ -294,7 +313,7 @@ class AuthApplication(
         return hash_code;
     }
 
-    private async Task SendResetCodeViaEmail(AccountEntity account, string email)
+    private async Task SendResetCodeViaEmail(PanelUserEntity account, string email)
     {
         var hash_code = await StoreResetCode(account.Id);
 
@@ -373,7 +392,7 @@ class AuthApplication(
             throw new UserException("این کد منقضی شده است! دوباره تلاش کنید.");
         }
         
-        var account = await AccountRepo.GetActiveAccount(reset_pass.AccountId);
+        var account = await PanelUserRepo.GetActiveUser(reset_pass.AccountId);
 
         return await AccountApp.Value.ChangePassword(account, password);
     }
@@ -390,7 +409,7 @@ class AuthApplication(
 
         AccountBusiness.ValidatePassword(model.Password);
 
-        var duplicated = await AccountRepo.CheckUniqueData(account.Username, account.Email, account.Mobile);
+        var duplicated = await PanelUserRepo.CheckUniqueData(account.Username, account.Email, account.Mobile);
 
         if ((duplicated & 1) == 1)
         {
@@ -407,11 +426,10 @@ class AuthApplication(
             throw new UserException("این  شماره همراه قبلا استفاده شده است!");
         }
 
-        account.VpnPassword = HashHandler.GenerateHashCode();
         account.Password = PasswordHasher.Hash(model.Password ?? string.Empty);
         account.UserType |= UserTypes.AllowSelfService;
 
-        await AccountRepo.Save(account);
+        await PanelUserRepo.Save(account);
 
         // best-effort: registration must never fail because of the social
         // alert (same contract as the welcome email below)
@@ -442,5 +460,15 @@ class AuthApplication(
         Log.Information("New User Registered: ({0}, {1})", account.Username, account.Email);
 
         return ApiResult.Success("کاربر شما ساخته شد.");
+    }
+    private async Task<Dictionary<int, string>> LoadRealmNames(IEnumerable<int> realm_ids)
+    {
+        var ids = realm_ids.Distinct().ToList();
+
+        if (ids.Count == 0) return [];
+
+        var realms = await RealmRepo.Value.GetByIds(ids);
+
+        return realms.ToDictionary(pair => pair.Key, pair => pair.Value.Name);
     }
 }

@@ -15,7 +15,7 @@ public class XuiTrafficAccountingTest
         return new RenewalEntity
         {
             Id = 7,
-            AccountId = 3,
+            VpnAccountId = 3,
             TrafficLimit = 25 * StaticValues.BytesInGigLong,
             TimeLimitInDays = 30,
             LastSeenCounter = seen_counter,
@@ -176,7 +176,7 @@ public class XuiTrafficAccountingTest
         var today_row = new PhotonBypass.Domain.Plan.Entity.TrafficDataEntity
         {
             Id = 900,
-            AccountId = 3,
+            VpnAccountId = 3,
             NasId = NasId,
             SessionId = XuiTrafficRow.SessionId(3, 7, now),
             StartSession = new DateTime(2026, 10, 15, 10, 0, 0),

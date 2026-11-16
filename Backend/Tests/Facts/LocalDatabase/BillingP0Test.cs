@@ -12,8 +12,19 @@ public class BillingP0Test : OutSourceLevelServiceInitializer
 
     private static async Task<Dictionary<string, int>> GetTestAccountIds(IServiceProvider provider)
     {
-        return await provider.GetRequiredService<IAccountRepository>()
-            .GetAccountIdByUsername(["Alpha", "Beta"]);
+        var user_repo = provider.GetRequiredService<IPanelUserRepository>();
+
+        var alpha_id = await user_repo.GetActiveUserId("Alpha");
+        var beta_id = await user_repo.GetActiveUserId("Beta");
+
+        Assert.NotNull(alpha_id);
+        Assert.NotNull(beta_id);
+
+        return new Dictionary<string, int>
+        {
+            ["Alpha"] = alpha_id!.Value,
+            ["Beta"] = beta_id!.Value,
+        };
     }
 
     [Fact]

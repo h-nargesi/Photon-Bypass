@@ -16,6 +16,12 @@ public static partial class AccountBusiness
     public const int PasswordMaxLength = 48;
 
     /// <summary>
+    /// Upper bound of a VPN username (docs/22 D3): the 18-char panel pattern
+    /// cannot carry the mandatory prefix plus a readable suffix.
+    /// </summary>
+    public const int VpnUsernameMaxLength = 32;
+
+    /// <summary>
     /// Enforces the portal-password policy server-side. The frontend already
     /// applies the very same contract (register/change-password forms use
     /// <c>PasswordValidators.ValidationPattern</c> with an 8..48 length window);
@@ -39,7 +45,7 @@ public static partial class AccountBusiness
     [GeneratedRegex(@"(?=.*[\d\u06F0-\u06F9])((?=.*[a-z])(?=.*[A-Z])|(?=.*[\u0622-\u0648\u067E-\u06CC])).+")]
     private static partial Regex PasswordPattern();
 
-    public static AccountEntity CreateFromModel(RegisterModel model)
+    public static PanelUserEntity CreateFromModel(RegisterModel model)
     {
         if (string.IsNullOrWhiteSpace(model.Username))
         {
@@ -51,7 +57,7 @@ public static partial class AccountBusiness
             throw new UserException("این نام کاربری غیرمجاز است!", $"Invalid Username: {model.Username}");
         }
 
-        var account = new AccountEntity
+        var account = new PanelUserEntity
         {
             Username = model.Username,
         };
@@ -61,7 +67,7 @@ public static partial class AccountBusiness
         return account;
     }
 
-    public static void SetFromModel(this AccountEntity account, EditUserModel model)
+    public static void SetFromModel(this PanelUserEntity account, EditUserModel model)
     {
         if (string.IsNullOrWhiteSpace(model.Email) && string.IsNullOrWhiteSpace(model.Mobile))
         {
@@ -109,7 +115,7 @@ public static partial class AccountBusiness
         account.Surname = model.Lastname;
     }
 
-    public static double IsReachedMaxInactivityDaysToDisable(this AccountEntity account, DateTime? last_connect_time)
+    public static double IsReachedMaxInactivityDaysToDisable(this VpnAccountEntity account, DateTime? last_connect_time)
     {
         var last_activity = last_connect_time ?? account.Created;
 
@@ -118,7 +124,7 @@ public static partial class AccountBusiness
         return expired_days < 0 ? 0 : expired_days;
     }
 
-    public static double IsReachedMaxInactivityDaysToDelete(this AccountEntity account, DateTime? last_connect_time)
+    public static double IsReachedMaxInactivityDaysToDelete(this VpnAccountEntity account, DateTime? last_connect_time)
     {
         var last_activity = last_connect_time ?? account.Created;
 
@@ -127,15 +133,60 @@ public static partial class AccountBusiness
         return expired_days < 0 ? 0 : expired_days;
     }
 
-    public static bool OverWarningTime(this AccountEntity account)
+    public static bool OverWarningTime(this VpnAccountEntity account)
     {
         return account.LastWarningTime.HasValue &&
                (DateTime.Now - account.LastWarningTime.Value).TotalHours < DelayBetweenWarnings;
     }
 
-    public static void UpdateWarningTime(this AccountEntity account)
+    public static void UpdateWarningTime(this VpnAccountEntity account)
     {
         account.LastWarningTime = DateTime.Now;
+    }
+
+    /// <summary>
+    /// Validates a VPN username against the D3 rule (docs/22): it must start
+    /// with the owner's panel username, the suffix may only use the username
+    /// charset, and the total length stays within <see cref="VpnUsernameMaxLength"/>.
+    /// An empty suffix (VPN username == panel username) is allowed — the first
+    /// account of a user defaults to it.
+    /// </summary>
+    public static void ValidateVpnUsername(string panel_username, string vpn_username)
+    {
+        if (string.IsNullOrWhiteSpace(vpn_username) ||
+            vpn_username.Length > VpnUsernameMaxLength ||
+            !vpn_username.StartsWith(panel_username, StringComparison.Ordinal) ||
+            !VpnUsernameSuffixPattern().Match(vpn_username[panel_username.Length..]).Success)
+        {
+            throw new UserException(
+                $"نام کاربری VPN باید با «{panel_username}» شروع شود، حداکثر {VpnUsernameMaxLength} کاراکتر و فقط شامل حروف انگلیسی، رقم، خط تیره و زیرخط باشد!",
+                $"Invalid VPN username (docs/22 D3): owner={panel_username}, value={vpn_username}");
+        }
+    }
+
+    [GeneratedRegex("^[a-zA-Z0-9_-]*$")]
+    private static partial Regex VpnUsernameSuffixPattern();
+
+    /// <summary>
+    /// D3 system suggestion: the bare panel username first, then the first
+    /// free incremental numeric suffix. The caller re-checks uniqueness at
+    /// insert time — a concurrent claim is settled by the unique index.
+    /// </summary>
+    public static IEnumerable<string> SuggestVpnUsernameSequence(string panel_username)
+    {
+        yield return panel_username;
+
+        for (var suffix = 2; ; suffix++)
+        {
+            var candidate = panel_username + suffix;
+
+            if (candidate.Length > VpnUsernameMaxLength)
+            {
+                yield break;
+            }
+
+            yield return candidate;
+        }
     }
 
     [GeneratedRegex("^[a-zA-Z][a-zA-Z0-9_-]{3,16}[a-zA-Z0-9]$")]

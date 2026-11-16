@@ -151,7 +151,7 @@ public class AccountAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var link_moq = scope.ServiceProvider.GetRequiredService<TelegramLinkRepositoryMoq>();
 
         var expired_account_ids = new List<int>();
@@ -180,7 +180,7 @@ public class AccountAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var link_moq = scope.ServiceProvider.GetRequiredService<TelegramLinkRepositoryMoq>();
 
         account_repo_moq.Data["User99"].TelegramChatId = 555;
@@ -201,7 +201,7 @@ public class AccountAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
 
         (await account_app.GetTelegramLinkStatus("User99")).Data!.Connected.Should().BeFalse();
 
@@ -215,7 +215,7 @@ public class AccountAppTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var account_app = scope.ServiceProvider.GetRequiredService<IAccountApplication>();
-        var account_repo_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
 
         account_repo_moq.Data["User99"].TelegramChatId = 555;
 

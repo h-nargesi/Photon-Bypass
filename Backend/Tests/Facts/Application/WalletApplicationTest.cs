@@ -24,7 +24,7 @@ public class WalletApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var wallet_moq = scope.ServiceProvider.GetRequiredService<WalletRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IWalletApplication>();
 
@@ -47,7 +47,7 @@ public class WalletApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
         var application = scope.ServiceProvider.GetRequiredService<IWalletApplication>();
 
@@ -84,7 +84,7 @@ public class WalletApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IWalletApplication>();
 
         // pathological but guarded: an admin account without the self-service
@@ -104,7 +104,7 @@ public class WalletApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IWalletApplication>();
 
         // self view of an independent account
@@ -138,7 +138,7 @@ public class WalletApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var wallet_moq = scope.ServiceProvider.GetRequiredService<WalletRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IWalletApplication>();
 

@@ -9,13 +9,15 @@ public class PlanStateMoqModel
 
     public string Username { get; set; } = null!;
 
-    public AccountStatus Status { get; set; }
+    public VpnAccountStatus Status { get; set; }
 
     public int RowNumber { get; set; }
 
     public byte SimultaneousUser { get; set; }
 
-    public int? RestrictedRealmId { get; set; }
+    public int RealmId { get; set; }
+
+    public int UserId { get; set; }
 
     public long? TrafficLimit { get; set; }
 
@@ -37,9 +39,10 @@ public class PlanStateMoqModel
             Id = Id,
             Username = Username,
             Status = Status,
+            UserId = UserId,
             RowNumber = RowNumber,
             SimultaneousUser = SimultaneousUser,
-            RestrictedRealmId = RestrictedRealmId,
+            RealmId = RealmId,
             TrafficLimit = TrafficLimit,
             TimeLimitInDays = TimeLimitInDays,
             RateLimitInMeg = RateLimitInMeg,

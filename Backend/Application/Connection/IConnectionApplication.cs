@@ -5,7 +5,7 @@ namespace PhotonBypass.Application.Connection;
 
 public interface IConnectionApplication
 {
-    Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(string target);
+    Task<ApiResult<List<ConnectionStateModel>>> GetCurrentConnectionState(int account_id);
 
-    Task<ApiResult> CloseConnection(string ip, string target, string session_id);
+    Task<ApiResult> CloseConnection(string ip, int account_id, string session_id);
 }

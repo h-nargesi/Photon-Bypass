@@ -13,12 +13,13 @@
 | File | Table | Key / Unique | Notes |
 |---|---|---|---|
 | `Database.sql` | (db creation) | — | ساخت دیتابیس `FastBypass`. |
-| `Account.sql` | `Account` | `PK Id`, `UK_Account_Username`, `UK_Account_Email` (filtered `WHERE Email IS NOT NULL`), `UK_Account_Mobile` (filtered), `FK_Owner→Account`, `FK_CalculationMethod→Price` | اکانت + زیرمجموعه (`Owner`) + `VpnPassword` جدا. ستون‌های `Role` (پنل نقش‌ها، docs/20 D2/D9)، `Status TINYINT DEFAULT 0` (غیرفعال‌سازی دووضعیتی docs/20 D13: 0=فعال، 1=تعلیق VPN، 2=غیرفعال کامل — جایگزین `IsActive BIT`) و `LastCredentialRotateTime` (throttle چرخش UUID x-ui، docs/16 D4) ادغام‌شده. **بدون seed ادمین** — ادمین در زمان دیپلوی ساخته می‌شود (بخش Security note زیر). |
-| `Wallet.sql` | `Wallet` | `PK Id`, `FK ActorId→Account` | کیف پول + `InvoiceCode`. موجودی = `sum(Amount*Direction)` روی `Status in (Completed, Verifying)`. `ActorId` (docs/20 D5/فاز ۳) ادمینِ issuer تراکنش دستی است؛ روی ردیف‌های سیستمی NULL. |
+| `PanelUser.sql` | `PanelUser` | `PK Id`, `UK_PanelUser_Username`, `UK_PanelUser_Email` (filtered), `UK_PanelUser_Mobile` (filtered), `UK_PanelUser_TelegramChatId` (filtered), `FK_Owner→PanelUser`, `FK_CalculationMethod→Price` | نیمه‌ی پنل از تفکیک `Account` (docs/22 D1): لاگین/تماس/نقش‌ها (`Role`، `UserType`) و `Status TINYINT DEFAULT 0` (فقط 0/2 — docs/22 D12). **بدون seed ادمین** — ادمین در زمان دیپلوی ساخته می‌شود (بخش Security note زیر). |
+| `VpnAccount.sql` | `VpnAccount` | `PK Id`, `FK UserId→PanelUser` (CASCADE), `FK RealmId→Realm` NOT NULL, `UK_VpnAccount_Username` (≤32) | نیمه‌ی VPN: هویت per-account، realm پین‌شده (docs/22 D5)، قاعده‌ی یوزرنیم D3، `VpnPassword`، `Status` (0/1/2)، مهرهای هشدار/چرخش UUID. |
+| `Wallet.sql` | `Wallet` | `PK Id`, `FK AccountId→PanelUser`, `FK ActorId→PanelUser` | کیف پول + `InvoiceCode`. موجودی = `sum(Amount*Direction)` روی `Status in (Completed, Verifying)`. `ActorId` (docs/20 D5/فاز ۳) ادمینِ issuer تراکنش دستی است؛ روی ردیف‌های سیستمی NULL. |
 | `History.sql` | `History` | `PK Id` | لاگ رویداد روی `Target`. |
 | `ResetPassword.sql` | `ResetPassword` | — | توکن بازنشانی. |
-| `Renewal.sql` | `Renewal` | `PK Id`, `FK AccountId→Account`, `WalletDebit/WalletCredit` | یک تمدید + ستون‌های وضعیت ترافیک x-ui (docs/17 D6/D14): `LastSeenCounter`, `LastPollTime`, `TrafficUsed`, `LastActiveTime`. |
-| `Invoice.sql` | `Invoice` | `PK Code` (از `InvoiceSequence`، بدون identity), `FK AccountId→Account`, `IX (AccountId, Status)`, `CK` XOR رسید | والد فاکتور: `Kind (1=TopUp,2=Plan)`, `Title`, `TotalPrice`, `WalletDeduction`, `Payable`, `Action nvarchar(400)`, `Status` (هم‌ارزش `BalanceStatus`), `ReceiptImage/ReceiptText/ReceiptAt`. |
+| `Renewal.sql` | `Renewal` | `PK Id`, `FK VpnAccountId→VpnAccount` (CASCADE), `WalletDebit/WalletCredit` | یک تمدید + ستون‌های وضعیت ترافیک x-ui (docs/17 D6/D14): `LastSeenCounter`, `LastPollTime`, `TrafficUsed`, `LastActiveTime`. |
+| `Invoice.sql` | `Invoice` | `PK Code` (از `InvoiceSequence`، بدون identity), `FK AccountId→PanelUser`, `FK VpnAccountId→VpnAccount` (nullable، docs/22 D8), `IX (AccountId, Status)`, `CK` XOR رسید | والد فاکتور: `Kind (1=TopUp,2=Plan)`, `Title`, `TotalPrice`, `WalletDeduction`, `Payable`, `Action nvarchar(400)`, `Status` (هم‌ارزش `BalanceStatus`), `ReceiptImage/ReceiptText/ReceiptAt`. |
 | `PlanState.sql` | `PlanState` | — | **view** mapping (نه جدول پر-شده؛ از `TotalPlanState` خوانده می‌شود). |
 | `TrafficData.sql` | `TrafficData` | `PK Id`, `UK (NasId, SessionId)` inline | رکورد ترافیک دوره‌ای؛ `SessionId VARCHAR(64)` برای کلیدهای مصنوعی روزانه‌ی x-ui (docs/17 D7). |
 | `Server.sql` | `Server` | `PK Id`, `FK RealmId→Realm` | سرور با `Features` (Flags) و `OsType`؛ `Config VARCHAR(4000)` برای payload رمزنگاری‌شده‌ی Data Protection (docs/14 M12). |
@@ -26,7 +27,7 @@
 | `Price.sql` | `Price` | `PK Id` | `CalculatorCode` (کد C#). |
 | `InvoiceSequence.sql` | (sequence) | — | کد فاکتور اتمیک؛ شروع ثابت 10001 روی نصب تازه (docs/14 C4). |
 | `TotalPlanState.sql` | `TotalPlanState` (VIEW) | — | محاسباتی — پایه‌ی `PlanStateEntity`. |
-| `Indexes.sql` | (indexes) | — | ایندکس‌های مسیر داغ (docs/14 H20) روی TrafficData/Renewal/History/Wallet/Account. |
+| `Indexes.sql` | (indexes) | — | ایندکس‌های مسیر داغ (docs/14 H20) روی TrafficData/Renewal/History/Wallet/PanelUser/VpnAccount. |
 
 > ایندکس‌های یکتای فیلترشده: `UK_Account_Email` و `UK_Account_Mobile` فقط روی ردیف‌های NOT NULL اعمال می‌شوند تا چند کاربر با ایمیل/موبایل خالی مجاز باشند (`Account.sql`؛ پنجره‌ی TOCTOU ثبت‌نام را می‌بندد — docs/14 L11).
 
@@ -72,11 +73,12 @@ flowchart TB
 
 ```mermaid
 erDiagram
-    Account ||--o{ Renewal : has
-    Account ||--o{ Wallet : owns
-    Account ||--o{ Invoice : billed
-    Account ||--o{ History : logged
-    Account ||--o{ TrafficData : recorded
+    PanelUser ||--o{ VpnAccount : owns
+    VpnAccount ||--o{ Renewal : has
+    PanelUser ||--o{ Wallet : owns
+    PanelUser ||--o{ Invoice : billed
+    PanelUser ||--o{ History : logged
+    VpnAccount ||--o{ TrafficData : recorded
     Renewal ||--|| Wallet : debit_credit
     Invoice ||--o{ Wallet : "credit/debit rows by InvoiceCode"
     Realm ||--o{ Server : contains

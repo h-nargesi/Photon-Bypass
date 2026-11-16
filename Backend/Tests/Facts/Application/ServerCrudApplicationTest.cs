@@ -55,7 +55,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IServerCrudApplication>();
 
@@ -87,7 +87,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IServerCrudApplication>();
 
@@ -128,7 +128,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IServerCrudApplication>();
 
         account_moq.Data["User99"].Role = AccountRole.Admin;
@@ -153,7 +153,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IServerCrudApplication>();
 
@@ -195,7 +195,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IServerCrudApplication>();
 
@@ -227,7 +227,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IServerCrudApplication>();
 
         account_moq.Data["User99"].Role = AccountRole.Admin;
@@ -246,7 +246,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IServerCrudApplication>();
 

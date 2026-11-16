@@ -13,7 +13,10 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
 
     public string Username { get; set; } = null!;
 
-    public AccountStatus Status { get; set; }
+    /// <summary>Owner panel user (docs/22): the view joins VpnAccount.UserId in.</summary>
+    public int UserId { get; set; }
+
+    public VpnAccountStatus Status { get; set; }
 
     // Renewal ordinal within the account (ROW_NUMBER in TotalPlanState) — the
     // T4 client-count gate assigns an account to its highest passing row.
@@ -22,7 +25,8 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
     // Plan Info (Latest Renewal)
     public byte SimultaneousUser { get; set; }
 
-    public int? RestrictedRealmId { get; set; }
+    /// <summary>Realm of the VPN account (docs/22 §2: NOT NULL — bucket-0 is gone).</summary>
+    public int RealmId { get; set; }
 
     public long? TrafficLimit { get; set; }
 

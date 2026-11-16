@@ -34,18 +34,18 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
         var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
         var renewal_moq = scope.ServiceProvider.GetRequiredService<RenewalRepositoryMoq>();
 
-        var account = new AccountEntity
+        var account = new VpnAccountEntity
         {
             Id = 3,
+            RealmId = Server.RealmId,
             Username = "User3",
-            Password = "x",
             VpnPassword = "4c1f3b2a-1111-2222-3333-444455556666",
         };
 
         var renewal = new RenewalEntity
         {
             Id = 11,
-            AccountId = 3,
+            VpnAccountId = 3,
             SimultaneousUser = 2,
             TrafficLimit = 25 * StaticValues.BytesInGigLong,
             TimeLimitInDays = 30,
@@ -87,18 +87,18 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
 
         var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
 
-        var account = new AccountEntity
+        var account = new VpnAccountEntity
         {
             Id = 3,
+            RealmId = Server.RealmId,
             Username = "User3",
-            Password = "x",
             VpnPassword = null!,
         };
 
         var renewal = new RenewalEntity
         {
             Id = 11,
-            AccountId = 3,
+            VpnAccountId = 3,
             SimultaneousUser = 1,
             TrafficLimit = 25 * StaticValues.BytesInGigLong,
             TimeLimitInDays = null,
@@ -123,11 +123,11 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
 
         var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
 
-        var account = new AccountEntity
+        var account = new VpnAccountEntity
         {
             Id = 3,
+            RealmId = Server.RealmId,
             Username = "User3",
-            Password = "x",
             VpnPassword = "4c1f3b2a-1111-2222-3333-444455556666",
         };
 
@@ -137,7 +137,7 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
         var renewal = new RenewalEntity
         {
             Id = 12,
-            AccountId = 3,
+            VpnAccountId = 3,
             SimultaneousUser = 2,
             TrafficLimit = 25 * StaticValues.BytesInGigLong,
             TimeLimitInDays = 30,
@@ -165,11 +165,11 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
 
         var api_moq = scope.ServiceProvider.GetRequiredService<XuiApiMoq>();
 
-        var account = new AccountEntity
+        var account = new VpnAccountEntity
         {
             Id = 3,
+            RealmId = Server.RealmId,
             Username = "User3",
-            Password = "x",
             VpnPassword = null!,
         };
 
@@ -178,7 +178,7 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
         var renewal = new RenewalEntity
         {
             Id = 13,
-            AccountId = 3,
+            VpnAccountId = 3,
             SimultaneousUser = 1,
             TrafficLimit = null,
             TimeLimitInDays = null,

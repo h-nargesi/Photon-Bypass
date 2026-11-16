@@ -29,11 +29,11 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User5"].Role = AccountRole.Manager;
-        account_moq.Data["User6"].Status = AccountStatus.Deactivated; // deactivated subordinates stay visible
+        account_moq.Data["User6"].Status = PanelUserStatus.Deactivated; // deactivated subordinates stay visible
 
         job_context.InjectJobContext(5, "User5", "User5");
 
@@ -63,13 +63,13 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User5"].Role = AccountRole.Manager;
         job_context.InjectJobContext(5, "User5", "User5");
 
-        AccountEntity? created = null;
+        PanelUserEntity? created = null;
         account_moq.OnSave += account => created = account;
 
         var result = await application.Create(new CreateUserModel
@@ -106,7 +106,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User99"].Role = AccountRole.Admin;
@@ -127,7 +127,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
             Owner = "User4",
         }));
 
-        AccountEntity? created = null;
+        PanelUserEntity? created = null;
         account_moq.OnSave += account => created = account;
 
         var result = await application.Create(new CreateUserModel
@@ -156,7 +156,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User99"].Role = AccountRole.Admin;
@@ -175,9 +175,9 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
         await Assert.ThrowsAsync<UserException>(
             () => application.SetRole("User5", AccountRole.User));
 
-        account_moq.Data["User6"].Status = AccountStatus.Deactivated;
-        account_moq.Data["User8"].Status = AccountStatus.Deactivated;
-        account_moq.Data["User9"].Status = AccountStatus.Deactivated;
+        account_moq.Data["User6"].Status = PanelUserStatus.Deactivated;
+        account_moq.Data["User8"].Status = PanelUserStatus.Deactivated;
+        account_moq.Data["User9"].Status = PanelUserStatus.Deactivated;
 
         var result = await application.SetRole("User5", AccountRole.User);
 
@@ -190,7 +190,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User99"].Role = AccountRole.Admin;
@@ -225,7 +225,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var cache = scope.ServiceProvider.GetRequiredService<IMemoryCache>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
@@ -244,7 +244,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User5"].Role = AccountRole.Manager; // owns 6/8/9, not User2
@@ -259,16 +259,16 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
 
         await Assert.ThrowsAsync<UserException>(() => application.SetPassword("User6", " "));
 
-        (await Assert.ThrowsAsync<UserException>(() => application.SetStatus("User2", AccountStatus.Deactivated)))
+        (await Assert.ThrowsAsync<UserException>(() => application.SetStatus("User2", PanelUserStatus.Deactivated)))
             .HttpCode.Should().Be(403);
 
-        var deactivate = await application.SetStatus("User6", AccountStatus.Deactivated);
+        var deactivate = await application.SetStatus("User6", PanelUserStatus.Deactivated);
 
         Assert.Equal(2, deactivate.Code / 100);
-        Assert.Equal(AccountStatus.Deactivated, account_moq.Data["User6"].Status);
+        Assert.Equal(PanelUserStatus.Deactivated, account_moq.Data["User6"].Status);
 
         // a manager cannot deactivate itself (not its own subordinate either way)
-        (await Assert.ThrowsAsync<UserException>(() => application.SetStatus("User5", AccountStatus.Deactivated)))
+        (await Assert.ThrowsAsync<UserException>(() => application.SetStatus("User5", PanelUserStatus.Deactivated)))
             .HttpCode.Should().Be(403);
     }
 
@@ -277,7 +277,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User5"].Role = AccountRole.Manager;
@@ -298,16 +298,19 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task SetStatus_VpnSuspension_PushesImmediateRadiusDeactivation()
+    public async Task SetAccountStatus_Suspension_PushesImmediateRadiusDeactivation()
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var tik4_net_moq = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User99"].Role = AccountRole.Admin;
         job_context.InjectJobContext(99, "User99", "User99");
+
+        var user3_account_id = vpn_account_moq.Data.Single(account => account.Username == "User3").Id;
 
         var user_data_dictionary = tik4_net_moq.GetData<MikrotikUserModel>()
             .ToDictionary(user => user.Id ?? string.Empty, user => user.Name);
@@ -328,55 +331,66 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
             }
         };
 
-        var result = await application.SetStatus("User3", AccountStatus.VpnSuspended);
+        var result = await application.SetAccountStatus(user3_account_id, VpnAccountStatus.Suspended);
 
         Assert.Equal(2, result.Code / 100);
-        Assert.Equal(AccountStatus.VpnSuspended, account_moq.Data["User3"].Status);
+        Assert.Equal(VpnAccountStatus.Suspended,
+            vpn_account_moq.Data.Single(account => account.Username == "User3").Status);
         Assert.True(suspended, "the VPN suspension must reach the radius adapter immediately");
     }
 
     [Fact]
-    public async Task SetStatus_ImmediateSyncFailure_DoesNotFailTheOperation()
+    public async Task SetAccountStatus_ImmediateSyncFailure_DoesNotFailTheOperation()
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User99"].Role = AccountRole.Admin;
         job_context.InjectJobContext(99, "User99", "User99");
 
+        var user3_account_id = vpn_account_moq.Data.Single(account => account.Username == "User3").Id;
+
         // best-effort contract: the adapter outage is logged, the status still
         // lands and the hourly sweep reconciles the radius side later
         server_moq.Setup(x => x.GetAllActiveRadius())
             .ReturnsAsync(() => throw new Exception("radius down"));
 
-        var result = await application.SetStatus("User3", AccountStatus.VpnSuspended);
+        var result = await application.SetAccountStatus(user3_account_id, VpnAccountStatus.Suspended);
 
         Assert.Equal(2, result.Code / 100);
-        Assert.Equal(AccountStatus.VpnSuspended, account_moq.Data["User3"].Status);
+        Assert.Equal(VpnAccountStatus.Suspended,
+            vpn_account_moq.Data.Single(account => account.Username == "User3").Status);
     }
 
     [Fact]
-    public async Task SetStatus_SameStatus_ShortCircuitsWithoutSideEffects()
+    public async Task SetAccountStatus_SameStatus_ShortCircuitsWithoutSideEffects()
     {
         using var scope = App.Services.CreateScope();
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
-        var account_moq = scope.ServiceProvider.GetRequiredService<AccountRepositoryMoq>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
         var history_moq = scope.ServiceProvider.GetRequiredService<HistoryRepositoryMoq>();
         var application = scope.ServiceProvider.GetRequiredService<IUserManagementApplication>();
 
         account_moq.Data["User99"].Role = AccountRole.Admin;
         job_context.InjectJobContext(99, "User99", "User99");
 
-        AccountEntity? saved = null;
-        account_moq.OnSave += account => saved = account;
+        var user3_account_id = vpn_account_moq.Data.Single(account => account.Username == "User3").Id;
 
-        var result = await application.SetStatus("User3", AccountStatus.Active);
+        VpnAccountEntity? saved = null;
+        PanelUserEntity? saved_panel_user = null;
+        account_moq.OnSave += account => saved_panel_user = account;
+        vpn_account_moq.OnSave += account => saved = account;
+
+        var result = await application.SetAccountStatus(user3_account_id, VpnAccountStatus.Active);
 
         Assert.Equal(2, result.Code / 100);
         Assert.Null(saved);
+        Assert.Null(saved_panel_user);
         Assert.Empty(history_moq.Data.Where(history => history.Target == account_moq.Data["User3"].Id));
     }
 }

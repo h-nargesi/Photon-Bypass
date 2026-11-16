@@ -7,7 +7,7 @@ namespace PhotonBypass.Test.Facts.BasicFunctions.Infrastructure;
 
 public class EventServiceTest : UnitLevelServiceInitializer
 {
-    private static readonly AccountEntity[] Entities =
+    private static readonly PanelUserEntity[] Entities =
     [
         new() { Id = 1 },
         new() { Id = 1 }
@@ -22,7 +22,7 @@ public class EventServiceTest : UnitLevelServiceInitializer
         {
             var event_service = scope.ServiceProvider.GetRequiredService<IEntityEventService>();
 
-            event_service.RegisterOnSave<AccountEntity>((_, e) =>
+            event_service.RegisterOnSave<PanelUserEntity>((_, e) =>
             {
                 touch_event = true;
                 Assert.NotNull(e);
@@ -43,7 +43,7 @@ public class EventServiceTest : UnitLevelServiceInitializer
         {
             var event_service = scope.ServiceProvider.GetRequiredService<IEntityEventService>();
 
-            await event_service.CallOnSave(this, new EntityEventArgs<AccountEntity>(Entities));
+            await event_service.CallOnSave(this, new EntityEventArgs<PanelUserEntity>(Entities));
         }
 
         Assert.True(touch_event);
@@ -53,7 +53,7 @@ public class EventServiceTest : UnitLevelServiceInitializer
     public async Task OnSave_Unregister()
     {
         var touch_event = false;
-        var entities = new AccountEntity[]
+        var entities = new PanelUserEntity[]
         {
             new() { Id = 1 },
             new() { Id = 1 },
@@ -63,21 +63,21 @@ public class EventServiceTest : UnitLevelServiceInitializer
         {
             var event_service = scope.ServiceProvider.GetRequiredService<IEntityEventService>();
 
-            Task FakeDelegate(object? sender, EntityEventArgs<AccountEntity> event_args)
+            Task FakeDelegate(object? sender, EntityEventArgs<PanelUserEntity> event_args)
             {
                 touch_event = true;
                 return Task.CompletedTask;
             }
             
-            event_service.RegisterOnSave<AccountEntity>(FakeDelegate);
-            event_service.UnregisterOnSave<AccountEntity>(FakeDelegate);
+            event_service.RegisterOnSave<PanelUserEntity>(FakeDelegate);
+            event_service.UnregisterOnSave<PanelUserEntity>(FakeDelegate);
         }
 
         using (var scope = App.Services.CreateScope())
         {
             var event_service = scope.ServiceProvider.GetRequiredService<IEntityEventService>();
 
-            await event_service.CallOnSave(this, new EntityEventArgs<AccountEntity>(entities));
+            await event_service.CallOnSave(this, new EntityEventArgs<PanelUserEntity>(entities));
         }
 
         Assert.False(touch_event);
@@ -92,7 +92,7 @@ public class EventServiceTest : UnitLevelServiceInitializer
         {
             var event_service = scope.ServiceProvider.GetRequiredService<IEntityEventService>();
 
-            event_service.RegisterOnDelete<AccountEntity>((_, e) =>
+            event_service.RegisterOnDelete<PanelUserEntity>((_, e) =>
             {
                 touch_event = true;
                 Assert.NotNull(e);
@@ -113,7 +113,7 @@ public class EventServiceTest : UnitLevelServiceInitializer
         {
             var event_service = scope.ServiceProvider.GetRequiredService<IEntityEventService>();
 
-            await event_service.CallOnDelete(this, new EntityEventArgs<AccountEntity>(Entities));
+            await event_service.CallOnDelete(this, new EntityEventArgs<PanelUserEntity>(Entities));
         }
 
         Assert.True(touch_event);
@@ -123,7 +123,7 @@ public class EventServiceTest : UnitLevelServiceInitializer
     public async Task OnDelete_Unregister()
     {
         var touch_event = false;
-        var entities = new AccountEntity[]
+        var entities = new PanelUserEntity[]
         {
             new() { Id = 1 },
             new() { Id = 1 },
@@ -133,21 +133,21 @@ public class EventServiceTest : UnitLevelServiceInitializer
         {
             var event_service = scope.ServiceProvider.GetRequiredService<IEntityEventService>();
 
-            Task FakeDelegate(object? sender, EntityEventArgs<AccountEntity> event_args)
+            Task FakeDelegate(object? sender, EntityEventArgs<PanelUserEntity> event_args)
             {
                 touch_event = true;
                 return Task.CompletedTask;
             }
             
-            event_service.RegisterOnDelete<AccountEntity>(FakeDelegate);
-            event_service.UnregisterOnDelete<AccountEntity>(FakeDelegate);
+            event_service.RegisterOnDelete<PanelUserEntity>(FakeDelegate);
+            event_service.UnregisterOnDelete<PanelUserEntity>(FakeDelegate);
         }
 
         using (var scope = App.Services.CreateScope())
         {
             var event_service = scope.ServiceProvider.GetRequiredService<IEntityEventService>();
 
-            await event_service.CallOnDelete(this, new EntityEventArgs<AccountEntity>(entities));
+            await event_service.CallOnDelete(this, new EntityEventArgs<PanelUserEntity>(entities));
         }
 
         Assert.False(touch_event);

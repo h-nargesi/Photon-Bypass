@@ -23,6 +23,7 @@ describe('role guards (docs/20 phase 6)', () => {
     balance: 0,
     role,
     allowSelfService: allow_self_service,
+    accounts: [],
     targetArea: {
       someone: { username: 'someone', fullname: 'Some One', email: 's@t.l' },
     },

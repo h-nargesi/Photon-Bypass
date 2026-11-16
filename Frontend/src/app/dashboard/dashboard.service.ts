@@ -19,47 +19,47 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService extends ApiBaseService {
-  sendCertificateViaEmail(target?: string): Observable<ApiResult> {
-    return this.call(`${VPN_API_URL}/send-cert-email`, target ? { target } as ApiParam : undefined, {
+  sendCertificateViaEmail(accountId?: number): Observable<ApiResult> {
+    return this.call(`${VPN_API_URL}/send-cert-email`, accountId ? { accountId } as ApiParam : undefined, {
       show_message: ShowMessageCase.success,
     });
   }
 
-  downloadCertificate(target?: string): Observable<HttpResponse<Blob>> {
+  downloadCertificate(accountId?: number): Observable<HttpResponse<Blob>> {
     return this.api.download(
       `${VPN_API_URL}/download`,
-      target ? { target } as ApiParam : undefined,
+      accountId ? { accountId } as ApiParam : undefined,
     );
   }
 
-  fetchConfigInfo(target?: string): Observable<VpnConfigInfo> {
+  fetchConfigInfo(accountId?: number): Observable<VpnConfigInfo> {
     return this.getData<VpnConfigInfo>(
       `${VPN_API_URL}/config-info`,
-      target ? { target } as ApiParam : undefined,
+      accountId ? { accountId } as ApiParam : undefined,
     );
   }
 
-  fetchCurrentConnections(target?: string): Observable<ConnectionStateModel[]> {
+  fetchCurrentConnections(accountId?: number): Observable<ConnectionStateModel[]> {
     const url = `${CONNECTION_API_URL}/current-con-state`;
-    return this.getData<ConnectionStateModel[]>(url, target ? { target } as ApiParam : undefined);
+    return this.getData<ConnectionStateModel[]>(url, accountId ? { accountId } as ApiParam : undefined);
   }
 
   closeConnection(
     server: string,
     sessionId: string,
-    target?: string
+    accountId?: number
   ): Observable<ApiResult> {
     const url = `${CONNECTION_API_URL}/close-con`;
-    return this.job(url, { server, target: target ?? null, sessionId });
+    return this.job(url, { server, accountId: accountId ?? null, sessionId });
   }
 
-  fetchPlanState(target?: string): Observable<PlanState> {
+  fetchPlanState(accountId?: number): Observable<PlanState> {
     const url = `${PLAN_API_URL}/plan-state`;
-    return this.getData<PlanState>(url, target ? { target } as ApiParam : undefined);
+    return this.getData<PlanState>(url, accountId ? { accountId } as ApiParam : undefined);
   }
 
-  fetchPlanInfo(target?: string): Observable<PlanInfo> {
+  fetchPlanInfo(accountId?: number): Observable<PlanInfo> {
     const url = `${PLAN_API_URL}/plan-info`;
-    return this.getData<PlanInfo>(url, target ? { target } as ApiParam : undefined);
+    return this.getData<PlanInfo>(url, accountId ? { accountId } as ApiParam : undefined);
   }
 }

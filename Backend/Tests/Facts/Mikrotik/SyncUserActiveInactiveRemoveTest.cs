@@ -42,8 +42,9 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<MikrotikInitializer>(TestPackage1, this);
 
-        var account = new AccountEntity
+        var account = new VpnAccountEntity
         {
+            RealmId = 1,
             Username = "User01",
             VpnPassword = "User01",
         };
@@ -123,14 +124,16 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<MikrotikInitializer>(TestPackage1, this);
 
-        var account = new AccountEntity
+        var account = new VpnAccountEntity
         {
+            RealmId = 1,
             Username = "User01",
             VpnPassword = "User01",
         };
 
-        var second = new AccountEntity
+        var second = new VpnAccountEntity
         {
+            RealmId = 1,
             Username = "User02",
             VpnPassword = "User02",
         };
@@ -260,8 +263,9 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         await scope.Register<MikrotikInitializer>(TestPackage1, this);
 
-        var account = new AccountEntity
+        var account = new VpnAccountEntity
         {
+            RealmId = 1,
             Username = "User01",
             VpnPassword = "User01",
         };

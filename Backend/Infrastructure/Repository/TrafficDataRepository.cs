@@ -23,7 +23,7 @@ class TrafficDataRepository(LocalDbContext context)
     {
         var result = await FindAsync(statement => statement
             .Where(
-                $"{nameof(TrafficDataEntity.AccountId)} = @account_id and {nameof(TrafficDataEntity.StartSession)} >= @from")
+                $"{nameof(TrafficDataEntity.VpnAccountId)} = @account_id and {nameof(TrafficDataEntity.StartSession)} >= @from")
             .WithParameters(new { account_id, from }));
 
         return [.. result];
@@ -92,21 +92,21 @@ where r.{nameof(RealmEntity.LastTrafficSync)} is null or
         if (id_list.Count == 0) return [];
 
         var sql = $@"
-select ranked.{nameof(TrafficDataEntity.AccountId)} as AccountId
+select ranked.{nameof(TrafficDataEntity.VpnAccountId)} as VpnAccountId
     , ranked.{nameof(TrafficDataEntity.NasId)} as NasId
 from (
-    select {nameof(TrafficDataEntity.AccountId)}
+    select {nameof(TrafficDataEntity.VpnAccountId)}
         , {nameof(TrafficDataEntity.NasId)}
-        , ROW_NUMBER() over (partition by {nameof(TrafficDataEntity.AccountId)}
+        , ROW_NUMBER() over (partition by {nameof(TrafficDataEntity.VpnAccountId)}
                               order by {nameof(TrafficDataEntity.Id)} desc) as RowNumber
     from {TableName}
-    where {nameof(TrafficDataEntity.AccountId)} in @account_ids
+    where {nameof(TrafficDataEntity.VpnAccountId)} in @account_ids
       and {nameof(TrafficDataEntity.SessionId)} like @session_prefix
 ) ranked
 where ranked.RowNumber = 1";
 
-        var result = await QueryAsync<(int AccountId, int NasId)>(sql, new { account_ids = id_list, session_prefix });
+        var result = await QueryAsync<(int VpnAccountId, int NasId)>(sql, new { account_ids = id_list, session_prefix });
 
-        return result.ToDictionary(row => row.AccountId, row => row.NasId);
+        return result.ToDictionary(row => row.VpnAccountId, row => row.NasId);
     }
 }

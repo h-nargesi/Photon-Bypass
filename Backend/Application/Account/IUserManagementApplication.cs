@@ -15,6 +15,7 @@ public interface IUserManagementApplication
 {
     Task<ApiResult<PagedResult<UserRowModel>>> GetList(string? search, int page);
 
+    /// <summary>Creates a panel user only (docs/22 D9): the VPN account arrives with the first purchase.</summary>
     Task<ApiResult> Create(CreateUserModel model);
 
     Task<ApiResult> SetPassword(string target, string password);
@@ -27,10 +28,16 @@ public interface IUserManagementApplication
     Task<ApiResult> SetSelfService(string target, bool allow);
 
     /// <summary>
-    /// Two-stage status change (docs/20 D13): Active = VPN on, VpnSuspended =
-    /// VPN off but portal keeps working (renewal blocked, D-A), Deactivated =
-    /// both off. Free transition between all three states; the immediate
-    /// radius sync is best-effort — the hourly sweep reconciles.
+    /// Panel-level status change (docs/22 D12): Active = portal reachable,
+    /// Deactivated = login blocked. The radius sync covers every VPN account
+    /// of the user and is best-effort — the hourly sweep reconciles.
     /// </summary>
-    Task<ApiResult> SetStatus(string target, AccountStatus status);
+    Task<ApiResult> SetStatus(string target, PanelUserStatus status);
+
+    /// <summary>
+    /// VPN-level status change (docs/22 D12): per-account suspension and
+    /// activation/deactivation. Deactivated is the terminal abandonment
+    /// state; the immediate radius sync is best-effort.
+    /// </summary>
+    Task<ApiResult> SetAccountStatus(int account_id, VpnAccountStatus status);
 }
