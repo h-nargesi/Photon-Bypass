@@ -11,7 +11,7 @@ export enum BalanceStatus {
   Verifying = 4,
 }
 
-/// One row of the wallet history (backend `WalletTransactionModel`, docs/20 phase 3).
+/// One row of the wallet history (backend `WalletTransactionModel`, Docs/20 phase 3).
 export interface WalletTransaction {
   id: number;
   amount: number;

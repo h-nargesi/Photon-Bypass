@@ -87,6 +87,6 @@ public static class ProductionSecretsGuard
             $"these keys still carry committed test values [{string.Join(", ", offenders)}]. " +
             $"Put real production values in a 'secrets.json' inside the Plesk vhost 'private' folder " +
             $"(expected next to the content root as {expected_locations}); " +
-            $"the file overrides appsettings.json per key. See docs/19-deploy-runbook.md.");
+            $"the file overrides appsettings.json per key. See Docs/19-deploy-runbook.md.");
     }
 }

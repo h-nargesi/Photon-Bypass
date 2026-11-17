@@ -6,7 +6,7 @@ using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 namespace PhotonBypass.Application.Management.Model;
 
 /// <summary>
-/// API row of the admin server list (docs/20 phase 5, D8). Scalar fields plus
+/// API row of the admin server list (Docs/20 phase 5, D8). Scalar fields plus
 /// the <see cref="HasConfig"/> flag only — the stored configuration itself is
 /// never exposed (write-without-read).
 /// </summary>

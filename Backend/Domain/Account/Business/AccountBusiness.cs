@@ -16,7 +16,7 @@ public static partial class AccountBusiness
     public const int PasswordMaxLength = 48;
 
     /// <summary>
-    /// Upper bound of a VPN username (docs/22 D3): the 18-char panel pattern
+    /// Upper bound of a VPN username (Docs/22 D3): the 18-char panel pattern
     /// cannot carry the mandatory prefix plus a readable suffix.
     /// </summary>
     public const int VpnUsernameMaxLength = 32;
@@ -145,7 +145,7 @@ public static partial class AccountBusiness
     }
 
     /// <summary>
-    /// Validates a VPN username against the D3 rule (docs/22): it must start
+    /// Validates a VPN username against the D3 rule (Docs/22): it must start
     /// with the owner's panel username, the suffix may only use the username
     /// charset, and the total length stays within <see cref="VpnUsernameMaxLength"/>.
     /// An empty suffix (VPN username == panel username) is allowed — the first
@@ -160,7 +160,7 @@ public static partial class AccountBusiness
         {
             throw new UserException(
                 $"نام کاربری VPN باید با «{panel_username}» شروع شود، حداکثر {VpnUsernameMaxLength} کاراکتر و فقط شامل حروف انگلیسی، رقم، خط تیره و زیرخط باشد!",
-                $"Invalid VPN username (docs/22 D3): owner={panel_username}, value={vpn_username}");
+                $"Invalid VPN username (Docs/22 D3): owner={panel_username}, value={vpn_username}");
         }
     }
 

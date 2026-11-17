@@ -12,7 +12,7 @@ import {
 import { API_BASE_URL } from '../../@services';
 import { WalletComponent } from './wallet.component';
 
-describe('WalletComponent (docs/20 phase 6)', () => {
+describe('WalletComponent (Docs/20 phase 6)', () => {
   let http: HttpTestingController;
   let fixture: ComponentFixture<WalletComponent>;
   let component: WalletComponent;

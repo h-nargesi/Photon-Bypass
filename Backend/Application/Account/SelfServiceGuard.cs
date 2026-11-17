@@ -7,7 +7,7 @@ using PhotonBypass.ErrorHandler;
 namespace PhotonBypass.Application.Account;
 
 /// <summary>
-/// Single-point guard for the self-service financial endpoints (docs/20 D4/D6):
+/// Single-point guard for the self-service financial endpoints (Docs/20 D4/D6):
 /// the paying actor is always the logged-in panel user, and a dependent user
 /// (no <see cref="UserTypes.AllowSelfService"/>) is refused its own
 /// wallet/renewal operations with 403. Acting on behalf of another user is not
@@ -25,7 +25,7 @@ public interface ISelfServiceGuard
     /// <summary>
     /// Resolves the logged-in active user without any self-service check —
     /// for role-based decisions that are independent of the dependent flag
-    /// (e.g. wallet history access, docs/20 phase 3).
+    /// (e.g. wallet history access, Docs/20 phase 3).
     /// </summary>
     Task<PanelUserEntity> ResolveActor();
 }
@@ -86,7 +86,7 @@ class SelfServiceGuard(
     private static UserException CreateForbidden(string actor)
     {
         return new UserException("دسترسی به امکانات مالی برای این حساب فعال نیست!",
-            $"Dependent account cannot run its own wallet/renewal operations (docs/20 D6): actor={actor}",
+            $"Dependent account cannot run its own wallet/renewal operations (Docs/20 D6): actor={actor}",
             403);
     }
 }

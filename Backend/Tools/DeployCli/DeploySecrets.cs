@@ -4,7 +4,7 @@ namespace PhotonBypass.DeployCli;
 
 /// <summary>
 /// Reads <c>LocalDatabaseOptions:ConnectionString</c> from a local copy of the
-/// Plesk <c>private/secrets.json</c> (docs/19). The value is a production
+/// Plesk <c>private/secrets.json</c> (Docs/19). The value is a production
 /// secret: it is returned to the caller and never written to output or logs.
 /// </summary>
 public static class DeploySecrets

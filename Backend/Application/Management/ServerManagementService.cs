@@ -320,7 +320,7 @@ partial class ServerManagementService(
 
         var demand_by_realm = new Dictionary<int, double>();
 
-        // docs/22 §2: every account pins one realm — the unrestricted fan-out
+        // Docs/22 §2: every account pins one realm — the unrestricted fan-out
         // (bucket-0) is gone with NOT NULL VpnAccount.RealmId
         foreach (var plan in active_plans)
         {

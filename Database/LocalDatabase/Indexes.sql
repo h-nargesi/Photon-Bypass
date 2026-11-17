@@ -1,7 +1,7 @@
 USE FastBypass;
 GO
 
--- Hot-path indexes (docs/14 H20, docs/22 §2). The unique TrafficData (NasId,
+-- Hot-path indexes (Docs/14 H20, Docs/22 §2). The unique TrafficData (NasId,
 -- SessionId) key is the inline table constraint in TrafficData.sql. Run after
 -- the table scripts.
 
@@ -23,14 +23,14 @@ CREATE NONCLUSTERED INDEX IX_History_Target_Created
 ON History (Target, Created);
 GO
 
--- History (VpnAccountId): account-scoped event drill-down (docs/22 D11).
+-- History (VpnAccountId): account-scoped event drill-down (Docs/22 D11).
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_History_VpnAccountId')
 CREATE NONCLUSTERED INDEX IX_History_VpnAccountId
 ON History (VpnAccountId)
 WHERE VpnAccountId IS NOT NULL;
 GO
 
--- Wallet-threshold state machine reads (docs/14 M33): GetLastByTitle groups
+-- Wallet-threshold state machine reads (Docs/14 M33): GetLastByTitle groups
 -- History by Target for a fixed Title on every wallet settlement and every
 -- hourly run — without this index each read is a full table scan.
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_History_Title_Target')

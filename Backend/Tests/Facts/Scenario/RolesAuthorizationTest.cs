@@ -13,7 +13,7 @@ using TokenContext = PhotonBypass.Portal.Context.TokenContext;
 namespace PhotonBypass.Test.Facts.Scenario;
 
 /// <summary>
-/// Roles wiring (docs/20 phase 1): role claim in the JWT, role/self-service in
+/// Roles wiring (Docs/20 phase 1): role claim in the JWT, role/self-service in
 /// get-user, and Manager/Admin policy enforcement on a validated principal.
 /// </summary>
 public class RolesAuthorizationTest(ProgramLevelInitializer.Factory factory) : HttpHandler(factory)
@@ -60,7 +60,7 @@ public class RolesAuthorizationTest(ProgramLevelInitializer.Factory factory) : H
         var user_principal = ValidateToken(user_token);
         var admin_principal = ValidateToken(admin_token);
 
-        // admin passes both (Manager policy includes Admin, docs/20 D10)
+        // admin passes both (Manager policy includes Admin, Docs/20 D10)
         (await authorization.AuthorizeAsync(admin_principal, null, ServiceFactory.AdminPolicy))
             .Succeeded.Should().BeTrue();
         (await authorization.AuthorizeAsync(admin_principal, null, ServiceFactory.ManagerPolicy))

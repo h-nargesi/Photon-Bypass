@@ -147,7 +147,7 @@ describe('RenewalComponent', () => {
   });
 
   it('on-behalf renewal opens the payment page in the payer view (no target)', async () => {
-    // manager with a selected dependent target (docs/20 D4: the invoice is
+    // manager with a selected dependent target (Docs/20 D4: the invoice is
     // issued on the manager, so the payment page must not carry the target)
     localStorage.setItem('user|target', JSON.stringify('sub'));
 

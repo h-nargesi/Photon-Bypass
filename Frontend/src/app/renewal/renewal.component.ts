@@ -74,7 +74,7 @@ export class RenewalComponent implements OnInit {
   result?: RenewalResult;
   submitting = false;
 
-  /// docs/22 §3.3: the two explicit purchase paths — renewal of the selected
+  /// Docs/22 §3.3: the two explicit purchase paths — renewal of the selected
   /// account, or a brand-new account (realm + username).
   mode: 'renew' | 'new-account' = 'renew';
   realms: RealmChoice[] = [];
@@ -193,7 +193,7 @@ export class RenewalComponent implements OnInit {
         current_user.balance = result.currentPrice;
         this.user_service.reload();
 
-        // The invoice is always issued on the paying account (docs/20 D4), so
+        // The invoice is always issued on the paying account (Docs/20 D4), so
         // the payment/receipt page must open in the payer's own view — the
         // renewed target never owns the invoice.
         if (result.invoiceCode) {
@@ -208,7 +208,7 @@ export class RenewalComponent implements OnInit {
     });
   }
 
-  /// docs/22 D9: the first purchase carries realm + VPN username; settlement
+  /// Docs/22 D9: the first purchase carries realm + VPN username; settlement
   /// (payment modal) creates the account and its first renewal atomically.
   private submitNewAccount() {
     this.newAccount.days = this.renewal.days;

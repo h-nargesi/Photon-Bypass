@@ -15,7 +15,7 @@ import { UsersComponent } from './users.component';
 @Component({ template: '' })
 class DummyComponent {}
 
-describe('UsersComponent (docs/20 phase 6)', () => {
+describe('UsersComponent (Docs/20 phase 6)', () => {
   let http: HttpTestingController;
   let router: Router;
   let user_service: UserService;
@@ -292,7 +292,7 @@ describe('UsersComponent (docs/20 phase 6)', () => {
     fixture.detectChanges();
     flushList();
 
-    // docs/22 D12: per-account suspension — independent of the panel status
+    // Docs/22 D12: per-account suspension — independent of the panel status
     component.toggleAccountVpn(component.rows[0].accounts[0]);
 
     const request = http.expectOne(

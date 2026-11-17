@@ -1,4 +1,4 @@
-# docs/05-infrastructure.md — Data access & tools
+# Docs/05-infrastructure.md — Data access & tools
 
 > **English summary**: `Infrastructure` implements repositories on a Dapper base (`DapperRepository<T>` + `EditableRepository<T>`), wraps the local MSSQL in `LocalDbContext`, raises entity events (`OnSave`/`OnDelete`), and hosts the Roslyn `PriceCalculator` (compiles C# code stored in the DB). Repositories are registered `AddLazyTransient`; the DB context is Scoped and owns transactions.
 
@@ -33,7 +33,7 @@
 - تنها یک تراکنش همزمان مجاز است (`"A transaction Already opened"`).
 - `CommitAsync`/`RollbackAsync` پس از اجرا `currentTransaction` را null می‌کنند.
 
-همین الگو روی `RadDbContext` (MySQL) نیز پیاده شده (`docs/06`).
+همین الگو روی `RadDbContext` (MySQL) نیز پیاده شده (`Docs/06`).
 
 ## Price calculator (محاسبه‌گر قیمت پویا)
 
@@ -74,7 +74,7 @@ flowchart LR
 | `PriceRepository.cs` | `Price` | `IPriceRepository` |
 
 همچنین در همین پروژه:
-- `AccountRadiusSyncService` و `SessionRadiusSyncService` (dispatchers ردیوس — `docs/06`).
+- `AccountRadiusSyncService` و `SessionRadiusSyncService` (dispatchers ردیوس — `Docs/06`).
 - `PriceCalculator` + `PricePool`.
 - `ServerEntityExtension.RunJob` (اجرای موازی روی لیست سرورها).
 

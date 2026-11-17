@@ -54,7 +54,7 @@ internal class AccountMonitoringService(
 
         if (abandoned_list.Count < 1) return;
 
-        // docs/22 D12: the abandonment lifecycle is per VPN account — the
+        // Docs/22 D12: the abandonment lifecycle is per VPN account — the
         // owner panel user keeps portal access and can buy a new account
         var accounts = await VpnAccountRepo.Value.GetActiveAccounts(abandoned_list.Select(plan => plan.Id));
 
@@ -139,7 +139,7 @@ internal class AccountMonitoringService(
         var account_ids = plan_state_list.Select(x => x.Id).ToList();
         var accounts = await VpnAccountRepo.Value.GetActiveAccounts(account_ids);
 
-        // docs/22 §3.7: the warning channels live on the owner panel user —
+        // Docs/22 §3.7: the warning channels live on the owner panel user —
         // one batched lookup, never per-account
         var owners = await PanelUserRepo.Value.GetActiveUsers(
             accounts.Values.Select(account => account.UserId).Distinct());

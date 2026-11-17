@@ -10,7 +10,7 @@ public class TargetModel
 }
 
 /// <summary>
-/// One VPN account of the logged-in user (docs/22 §3.5): the account
+/// One VPN account of the logged-in user (Docs/22 §3.5): the account
 /// switcher and the purchase flows render this list.
 /// </summary>
 public class UserVpnAccountModel

@@ -25,7 +25,7 @@ class PanelUserRepository(LocalDbContext context) : EditableRepository<PanelUser
         }
     }
 
-    // Status predicate: PanelUser has exactly two states (docs/22 D12) —
+    // Status predicate: PanelUser has exactly two states (Docs/22 D12) —
     // "= 2" marks Deactivated and everything else is portal-accessible, so
     // the fragments below are plain status equality. They are inlined because
     // Dapper.FastCrud renders non-property string arguments as SQL parameters,
@@ -168,7 +168,7 @@ class PanelUserRepository(LocalDbContext context) : EditableRepository<PanelUser
         var where = filters.Count > 0 ? "where " + string.Join(" and ", filters) : string.Empty;
 
         // the count never touches the plan views — the account join only
-        // runs on the requested page (docs/20 phase 4, docs/22 §3.6)
+        // runs on the requested page (Docs/20 phase 4, Docs/22 §3.6)
         var total = await ExecuteScalarAsync<int>($"select count(*) from {TableName} ac {where}", parameters);
 
         var sql = $"""

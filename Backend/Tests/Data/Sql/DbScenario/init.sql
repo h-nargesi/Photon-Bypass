@@ -63,9 +63,9 @@ select Id
 }'
 from Realm
 
--- scenario-only admin fixture (docs/20: Role=2 Admin + UserType=4 AllowSelfService;
+-- scenario-only admin fixture (Docs/20: Role=2 Admin + UserType=4 AllowSelfService;
 -- password 'admin' — same committed PBKDF2 fixture family as CommittedTestSecretFixtures).
--- production never seeds an admin: DeployCli creates it at deploy time (docs/19).
--- docs/22 D9: a panel user is seeded bare — VPN accounts arrive with purchases.
+-- production never seeds an admin: DeployCli creates it at deploy time (Docs/19).
+-- Docs/22 D9: a panel user is seeded bare — VPN accounts arrive with purchases.
 insert into PanelUser (Username, Password, Role, UserType)
 values ('admin', '$PBKDF2$v1$210000$o5kj88mA9pISrUSyKVsJqQ==$Ve055Dx3OaviuxbhfnsnGj/hHb3UFWFYTOrIHbYyN88=', 2, 4)

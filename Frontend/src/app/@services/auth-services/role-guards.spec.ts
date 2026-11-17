@@ -12,7 +12,7 @@ import {
   selfServiceGuard,
 } from './role-guards';
 
-describe('role guards (docs/20 phase 6)', () => {
+describe('role guards (Docs/20 phase 6)', () => {
   let http: HttpTestingController;
   let router: Router;
 

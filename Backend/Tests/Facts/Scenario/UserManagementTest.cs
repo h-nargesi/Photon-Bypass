@@ -6,7 +6,7 @@ using PhotonBypass.Test.Initializer;
 namespace PhotonBypass.Test.Facts.Scenario;
 
 /// <summary>
-/// User list and management endpoints over real HTTP (docs/20 phase 4):
+/// User list and management endpoints over real HTTP (Docs/20 phase 4):
 /// role scoping of the list, the creation matrix (manager vs admin), the
 /// D9/D13 guards, demote/attach rules and cache invalidation effects. Each
 /// test seeds its own manager/subordinate pair (the scenario database is

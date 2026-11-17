@@ -18,7 +18,7 @@ public class ManagementOptions
     public double UnmeteredPlanDemandGigabytes { get; set; } = 25;
 
     /// <summary>
-    /// Minimum spacing between two x-ui UUID rotations per account (docs/16 D4):
+    /// Minimum spacing between two x-ui UUID rotations per account (Docs/16 D4):
     /// each updateClient can restart Xray on the fallback path. Default 60
     /// minutes; 0 disables the throttle.
     /// </summary>
@@ -26,14 +26,14 @@ public class ManagementOptions
     public int MinUuidRotationMinutes { get; set; } = 60;
 
     /// <summary>
-    /// Public self-service registration toggle (docs/20 D11): off for the first
+    /// Public self-service registration toggle (Docs/20 D11): off for the first
     /// release. Enabling it later creates independent (self-service) accounts.
     /// </summary>
     public bool AllowRegistration { get; set; }
 
     /// <summary>
     /// Inactivity window after which renewing a VPN account requires the user
-    /// to re-pick its realm (docs/22 D6). Keeps the old hardcoded 7-day value
+    /// to re-pick its realm (Docs/22 D6). Keeps the old hardcoded 7-day value
     /// of <c>PlanApplication</c>; conceptually coupled to — but independent
     /// from — <see cref="PhotonBypass.Domain.Account.Business.AccountBusiness.MaxDaysDeactivatePlanToDisable"/>.
     /// </summary>

@@ -1,4 +1,4 @@
-# docs/08-portal-api.md — REST API surface
+# Docs/08-portal-api.md — REST API surface
 
 > **English summary**: Seven controllers under `/api/[controller]`. JWT Bearer auth, key/issuer from `appsettings.json` (`Issuer:Code` Base64, `Issuer:Name`), token valid 1 hour (`expires_in=3600`). All controllers extend `ResultHandlerController`, which runs `LoadJobContext(target?)` to validate multi-account access and returns `ApiResult`/`ApiResult<T>`. The table below is verified against `Backend/Portal/Controllers/*.cs`.
 
@@ -51,7 +51,7 @@
 | POST | `/api/account/edit-user` | `?target` + body `EditUserModel` | `AccountController.EditUser` | Y | ویرایش اطلاعات target. |
 | POST | `/api/account/change-pass` | body `ChangePasswordContext` | `AccountController.ChangePassword` | Y | تغییر پسورد لاگین (بر اساس کاربر جاری). |
 | GET | `/api/account/history` | `?target` + query `HistoryContext` | `AccountController.GetHistory` | Y | تاریخچه‌ی target. |
-| GET | `/api/vpn/accounts` | `?target` | `VpnController.GetAccounts` | Y | لیست اکانت‌های VPN کاربر (یا زیرمجموعه) — سوییچر اکانت (docs/22 §5). |
+| GET | `/api/vpn/accounts` | `?target` | `VpnController.GetAccounts` | Y | لیست اکانت‌های VPN کاربر (یا زیرمجموعه) — سوییچر اکانت (Docs/22 §5). |
 | POST | `/api/vpn/change-ovpn` | body `ChangeOvpnContext` (`AccountId`) | `VpnController.ChangeOvpnPassword` | Y | تغییر پسورد/چرخش UUID اکانت VPN؛ نیازمند تأیید پسورد اکانت. |
 | GET | `/api/vpn/send-cert-email` | `?accountId` | `VpnController.SendCertEmail` | Y | ایمیل کانفیگ/گواهی به مالک اکانت. |
 | GET | `/api/vpn/config-info` | `?accountId` | `VpnController.ConfigInfo` | Y | kind دیتاپلین + لینک vless زنده (فقط x-ui). |
@@ -59,7 +59,7 @@
 | GET | `/api/vpn/traffic-data` | `?accountId` | `VpnController.TrafficData` | Y | داده‌های ترافیک (نمودار). |
 | GET | `/api/connection/current-con-state` | `?target` | `ConnectionController.GetCurrentConnectionState` | Y | وضعیت اتصال‌های فعال. |
 | POST | `/api/connection/close-con` | body `CloseConnectionContext` | `ConnectionController.CloseConnection` | Y | بستن کانکشن (`Server` + `SessionId`). |
-| GET | `/api/plan/realms` | — | `PlanController.GetRealms` | Y | realmهای قابل انتخاب خرید (نام + IsSelectable) — docs/22 D4. |
+| GET | `/api/plan/realms` | — | `PlanController.GetRealms` | Y | realmهای قابل انتخاب خرید (نام + IsSelectable) — Docs/22 D4. |
 | GET | `/api/plan/suggest-username` | — | `PlanController.SuggestUsername` | Y | پیشنهاد سیستم برای یوزرنیم VPN بعدی (D3). |
 | GET | `/api/plan/plan-state` | `?accountId` | `PlanController.GetPlanState` | Y | وضعیت پلن اکانت (از `TotalPlanState`). |
 | GET | `/api/plan/plan-info` | `?accountId` | `PlanController.GetPlanInfo` | Y | اطلاعات پلن جاری + `RequiresRealmChoice` (D6). |
@@ -70,20 +70,20 @@
 | GET | `/api/billing/get-invoice` | `?code` (int) `&target?` | `BillingController.GetInvoice` | Y | مدل کامل فاکتور: `code, kind, status, totalPrice, walletDeduction, payable, walletBalance, allowWallet, hasReceipt, items[], cardInfo[]`. |
 | POST | `/api/billing/register-receipt` | multipart: `code, target?, file XOR text` | `BillingController.RegisterReceipt` | Y | ثبت رسید (تصویر یا متن) → `Verifying`؛ برای فاکتور Plan، اجرای Renewal. اولین endpoint مولتی‌پارت (سقف درخواست ۳MB؛ فرمت‌های jpg/jpeg/png/webp). |
 | POST | `/api/billing/settle-wallet` | body `SettleWalletRequest {Code, Target?}` | `BillingController.SettleWallet` | Y | تسویه فاکتور Plan از کیف پول (فقط با موجودی کافی؛ انتقال اتمیک `Pending→Canceled`). |
-| POST | `/api/wallet/adjust` | body `WalletAdjustRequest {Target?, Direction, Amount, Description}` | `WalletController.Adjust` | Y + policy **Admin** | تراکنش شفاف ادمین (docs/20 D5/فاز ۳): ردیف Completed با `ActorId` + اجرای قاعده آستانه؛ `Direction` ∈ {1=Credit, -1=Debit}، `Amount>0`، توضیح اجباری (≤۱۲۷). |
+| POST | `/api/wallet/adjust` | body `WalletAdjustRequest {Target?, Direction, Amount, Description}` | `WalletController.Adjust` | Y + policy **Admin** | تراکنش شفاف ادمین (Docs/20 D5/فاز ۳): ردیف Completed با `ActorId` + اجرای قاعده آستانه؛ `Direction` ∈ {1=Credit, -1=Debit}، `Amount>0`، توضیح اجباری (≤۱۲۷). |
 | GET | `/api/wallet/history` | `?target?&page=1` | `WalletController.GetHistory` | Y | تاریخچه کیف پول target با صفحه‌بندی سمت سرور (۲۰ ردیف، newest-first؛ پاکت `PagedResult {page,pageSize,totalCount,totalPages,items[]}`)؛ فقط خودِ صاحب حساب مستقل یا ادمین — مدیر ۴۰۳. |
 | GET | `/api/user/list` | `?search?&page=1` | `UserController.GetList` | Y + policy **Manager** | لیست صفحه‌بندی‌شده کاربران (مدیر → فقط زیر دست‌ها شامل غیرفعال‌ها؛ ادمین → همه) با خلاصه‌ی آخرین پلن از `TotalPlanState`. |
-| POST | `/api/user/create` | body `CreateUserModel` | `UserController.Create` | Y + policy **Manager** | ساخت کاربر (docs/20 فاز ۴): مدیر → `Owner=self`/`Role=User` اجباری؛ ادمین → `Role` (بجز Admin) و `Owner` (مدیر فعال)؛ پسورد اولیه الزامی؛ تکراری → 409. |
+| POST | `/api/user/create` | body `CreateUserModel` | `UserController.Create` | Y + policy **Manager** | ساخت کاربر (Docs/20 فاز ۴): مدیر → `Owner=self`/`Role=User` اجباری؛ ادمین → `Role` (بجز Admin) و `Owner` (مدیر فعال)؛ پسورد اولیه الزامی؛ تکراری → 409. |
 | POST | `/api/user/set-password` | body `{Target, Password}` | `UserController.SetPassword` | Y + policy **Manager** | بازنشانی پسورد (مدیر → زیر دست خودش؛ ادمین → هرکس بجز خودش). |
 | POST | `/api/user/set-role` | body `{Target, Role}` | `UserController.SetRole` | Y + policy **Admin** | فقط User↔Manager؛ خود/ادمین ممنوع (D9)؛ تنزل مدیرِ دارای زیر دست فعال → 400. |
 | POST | `/api/user/set-owner` | body `{Target, Owner?}` | `UserController.SetOwner` | Y + policy **Admin** | attach (به مدیر فعال، بدون چرخه) / detach (`Owner=null`) + بی‌اعتبارسازی کش دسترسی مالک‌ها. |
 | POST | `/api/user/set-self-service` | body `{Target, Allow}` | `UserController.SetSelfService` | Y + policy **Manager** | فلگ مستقل/وابسته (ادمین: هرکس؛ مدیر: فقط زیر دست خودش). |
-| POST | `/api/user/set-status` | body `{Target, Status}` (`PanelUserStatus`: 0/2) | `UserController.SetStatus` | Y + policy **Manager** | وضعیت سطح کاربر (docs/22 D12؛ ادمین: هرکس بجز خودش — D9): 2=بلاک لاگین. sync فوری best-effort روی همه‌ی اکانت‌های VPN کاربر؛ تغییرات درگیر `Deactivated` کش target-area را بی‌اعتبار می‌کند. |
-| POST | `/api/user/set-account-status` | body `{AccountId, Status}` (`VpnAccountStatus`: 0/1/2) | `UserController.SetAccountStatus` | Y + policy **Manager** | وضعیت سطح اکانت VPN (docs/22 D12): تعلیق/فعال‌سازی per-account، مستقل از وضعیت پنل کاربر. |
-| GET | `/api/server/list` | — | `ServerController.GetList` | Y + policy **Admin** | لیست سرورها (docs/20 فاز ۵/D8): فقط فیلدهای اسکالر + `hasConfig` + نام realm — کانفیگ ذخیره‌شده (متنی یا محافظت‌شده) هرگز در پاسخ نیست. |
+| POST | `/api/user/set-status` | body `{Target, Status}` (`PanelUserStatus`: 0/2) | `UserController.SetStatus` | Y + policy **Manager** | وضعیت سطح کاربر (Docs/22 D12؛ ادمین: هرکس بجز خودش — D9): 2=بلاک لاگین. sync فوری best-effort روی همه‌ی اکانت‌های VPN کاربر؛ تغییرات درگیر `Deactivated` کش target-area را بی‌اعتبار می‌کند. |
+| POST | `/api/user/set-account-status` | body `{AccountId, Status}` (`VpnAccountStatus`: 0/1/2) | `UserController.SetAccountStatus` | Y + policy **Manager** | وضعیت سطح اکانت VPN (Docs/22 D12): تعلیق/فعال‌سازی per-account، مستقل از وضعیت پنل کاربر. |
+| GET | `/api/server/list` | — | `ServerController.GetList` | Y + policy **Admin** | لیست سرورها (Docs/20 فاز ۵/D8): فقط فیلدهای اسکالر + `hasConfig` + نام realm — کانفیگ ذخیره‌شده (متنی یا محافظت‌شده) هرگز در پاسخ نیست. |
 | POST | `/api/server/create` | body `SaveServerModel` | `ServerController.Create` | Y + policy **Admin** | ساخت سرور فعال؛ اعتبارسنجی IPv4/طول نام و دامنه (≤۱۵)/پهنای باند مثبت/OS معتبر/بیت‌های شناخته‌شده‌ی `Features`/realm موجود؛ تکرار IP یا نام یا دامنه → 409؛ کانفیگ JSON ارسالی سمت سرور deserialize و `ServerConfigProtection.Protect` می‌شود (نوشتن بدون خواندن). |
 | POST | `/api/server/update` | body `SaveServerModel` با `Id>0` | `ServerController.Update` | Y + policy **Admin** | به‌روزرسانی کامل فیلدهای اسکالر؛ `config` تهی → blob محافظت‌شده‌ی موجود بدون تغییر حمل می‌شود؛ ارسال config → جایگزینی کامل با Protect تازه (+ گارد طول ۴۰۰۰). |
-| POST | `/api/server/set-active` | body `{Id, Active}` | `ServerController.SetActive` | Y + policy **Admin** | فعال/غیرفعال کردن سرور — toggle دوجهته (به‌جای `deactivate` تک‌جهته‌ی گام ۱۸ docs/20؛ انحراف ثبت‌شده، هم‌ارز فاز ۴). |
+| POST | `/api/server/set-active` | body `{Id, Active}` | `ServerController.SetActive` | Y + policy **Admin** | فعال/غیرفعال کردن سرور — toggle دوجهته (به‌جای `deactivate` تک‌جهته‌ی گام ۱۸ Docs/20؛ انحراف ثبت‌شده، هم‌ارز فاز ۴). |
 
 > توجه: همه‌ی endpoint های `BillingController` دارای `[Authorize]` هستند و `LoadJobContext(target)` را صدا می‌زنند (چنداکانتی). `payment-callback` در فاز P2 حذف شد (درگاه پرداخت وجود ندارد). endpointهای `WalletController` (فاز ۳ پنل) همین الگو را دارند؛ `adjust` علاوه بر آن policy ادمین می‌خواهد. endpointهای `UserController` (فاز ۴ پنل) عمداً target را از `LoadJobContext(target)` عبور نمی‌دهند — رابطه actor→target در application زنده از دیتابیس اعتبارسنجی می‌شود (زیر دستِ تازه‌ساخته در همان نشست قابل مدیریت است). endpointهای `ServerController` (فاز ۵ پنل) همگی policy ادمین دارند و `LoadJobContext()` بدون target صدا می‌زنند؛ نقش ادمین علاوه بر policy در عمق application هم چک می‌شود.
 

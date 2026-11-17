@@ -99,7 +99,7 @@ public class AccountRadiusSyncXuiService(
         {
             // Key by the UUID currently live in the panel: statistics are keyed
             // by email, so the update preserves up/down counters even when the
-            // UUID drifts from the database (docs/17 D13 UUID-rotation branch).
+            // UUID drifts from the database (Docs/17 D13 UUID-rotation branch).
             await Api.Value.UpdateClient(radius, client.Uuid, XuiEncoding.BuildClient(account.Username, uuid, renewal));
         }
 
@@ -121,7 +121,7 @@ public class AccountRadiusSyncXuiService(
                          "شناسه‌ی اتصال شما روی سرور یافت نشد؛ لطفاً با پشتیبانی تماس بگیرید.",
                          $"The x-ui client is missing for credential rotation: (server={radius.Name}, user={username})");
 
-        // Rotation is a patch-only UUID swap (docs/16 D4): the update is keyed by
+        // Rotation is a patch-only UUID swap (Docs/16 D4): the update is keyed by
         // the UUID currently live in the panel (statistics are email-keyed and
         // survive the change), quota/expiry/enable pass through untouched and no
         // traffic reset or renewal-anchor rewrite may happen here.

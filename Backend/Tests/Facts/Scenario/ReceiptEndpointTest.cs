@@ -27,7 +27,7 @@ public class ReceiptEndpointTest(ProgramLevelInitializer.Factory factory) : Http
 
     /// <summary>
     /// Registers a fresh user and issues a Pending plan invoice with a positive
-    /// payable amount through the real new-account endpoint (docs/22 D9: the
+    /// payable amount through the real new-account endpoint (Docs/22 D9: the
     /// first purchase issues the invoice whose settlement creates the account).
     /// </summary>
     private async Task<int> NewPendingInvoice(string username, string phone)

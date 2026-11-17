@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Photon-Bypass first-release deploy script (docs/19-deploy-runbook.md).
+# Photon-Bypass first-release deploy script (Docs/19-deploy-runbook.md).
 #
 # Stages:
 #   db      apply the fresh-install SQL batch to MSSQL, then create the admin
@@ -7,7 +7,7 @@
 #   admin   create/verify the admin account only (later runs)
 #   publish / ftp    reserved for the future file-upload stage (not implemented)
 #
-# Usage: scripts/deploy.sh db|admin [options]
+# Usage: Scripts/deploy.sh db|admin [options]
 #   --server|-S <host>     SQL Server host (env DEPLOY_SQL_SERVER)
 #   --port <n>             port (env DEPLOY_SQL_PORT)
 #   --user|-U <login>      SQL login (env DEPLOY_SQL_USER)
@@ -40,7 +40,7 @@ History.sql ResetPassword.sql TrafficData.sql Renewal.sql Invoice.sql \
 InvoiceSequence.sql Indexes.sql TotalPlanState.sql PlanState.sql"
 
 # Remote paths a future publish/ftp stage must never overwrite or delete
-# (docs/19 §د; full ownership table in Database/LocalDatabase/README.md):
+# (Docs/19 §د; full ownership table in Database/LocalDatabase/README.md):
 #   private/                operator — M29 production secrets (never an FTP target)
 #   data-protection-keys/   app (M12) — loss means re-entering encrypted configs
 #   config/                 operator — default.ovpn / private key
@@ -73,7 +73,7 @@ die() {
 
 usage() {
     cat <<'EOF'
-usage: scripts/deploy.sh <stage> [options]
+usage: Scripts/deploy.sh <stage> [options]
 
 stages:
   db        apply the fresh-install SQL batch, then create the admin if the
@@ -95,9 +95,9 @@ options:
   --yes                    skip the confirmation prompt
 
 examples:
-  scripts/deploy.sh db --secrets ../private/secrets.json
-  scripts/deploy.sh db -S sql.example.com -U fastbypass -P '<password>'
-  DEPLOY_ADMIN_USER=admin DEPLOY_ADMIN_PASSWORD='<password>' scripts/deploy.sh admin \
+  Scripts/deploy.sh db --secrets ../private/secrets.json
+  Scripts/deploy.sh db -S sql.example.com -U fastbypass -P '<password>'
+  DEPLOY_ADMIN_USER=admin DEPLOY_ADMIN_PASSWORD='<password>' Scripts/deploy.sh admin \
       --secrets ../private/secrets.json
 EOF
 }
@@ -188,7 +188,7 @@ guard_manifest() {
         file=${path##*/}
         case " $MANIFEST " in
             *" $file "*) ;;
-            *) die "unlisted script in Database/LocalDatabase: $file — add it to the manifest in scripts/deploy.sh (or remove the file)" ;;
+            *) die "unlisted script in Database/LocalDatabase: $file — add it to the manifest in Scripts/deploy.sh (or remove the file)" ;;
         esac
     done
 }
@@ -280,7 +280,7 @@ run_stage_db() {
     count=$(account_count)
     if [ "$count" -eq 0 ]; then
         if [ "$NO_ADMIN" = true ]; then
-            log "Account table is empty and --no-admin was given — create the admin later with: scripts/deploy.sh admin"
+            log "Account table is empty and --no-admin was given — create the admin later with: Scripts/deploy.sh admin"
         else
             log "Account table is empty — first release, creating the admin account"
             create_and_verify_admin
@@ -375,7 +375,7 @@ main() {
         admin) run_stage_admin ;;
     esac
 
-    log "reminder: back up the data-protection-keys folder after the first app start (docs/14 M12) — losing it forces re-entering encrypted server configs"
+    log "reminder: back up the data-protection-keys folder after the first app start (Docs/14 M12) — losing it forces re-entering encrypted server configs"
     log "OK — stage $STAGE finished (log: $LOG_FILE)"
 }
 

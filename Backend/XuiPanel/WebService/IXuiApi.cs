@@ -8,7 +8,7 @@ namespace PhotonBypass.Xui.WebService;
 /// this panel uses). Client mutations are keyed by the UUID currently live in the
 /// panel (statistics are keyed by email and survive UUID changes); only
 /// resetClientTraffic is keyed by email. The live vm06/vm08 probe
-/// (fetch xui/API/openapi.json, docs/17 §4) gates activation.
+/// (fetch xui/API/openapi.json, Docs/17 §4) gates activation.
 /// </summary>
 public interface IXuiApi
 {

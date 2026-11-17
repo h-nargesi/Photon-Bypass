@@ -29,7 +29,7 @@ public class WalletController(
 {
     private readonly IWalletApplication application = application;
 
-    /// <summary>Manual transparent wallet transaction — admin only (docs/20 D5).</summary>
+    /// <summary>Manual transparent wallet transaction — admin only (Docs/20 D5).</summary>
     [Authorize(Policy = ServiceFactory.AdminPolicy)]
     [HttpPost("adjust")]
     public async Task<ApiResult> Adjust([FromBody] WalletAdjustRequest request)
@@ -43,7 +43,7 @@ public class WalletController(
 
     /// <summary>
     /// Wallet history of the target: the owner itself (independent accounts) or
-    /// the admin — managers have no access to subordinate wallets (docs/20 §3).
+    /// the admin — managers have no access to subordinate wallets (Docs/20 §3).
     /// </summary>
     [Authorize]
     [HttpGet("history")]

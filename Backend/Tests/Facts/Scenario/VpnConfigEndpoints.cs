@@ -15,7 +15,7 @@ public class VpnConfigEndpoints(ProgramLevelInitializer.Factory factory) : HttpH
         await Login("usercfg", "Passw0rd1");
 
         // /api/plan/new-account — the first purchase creates the VPN account
-        // (docs/22 D9); realm 1 is the scenario realm
+        // (Docs/22 D9); realm 1 is the scenario realm
         var renewal = await NewAccount(null, 1, 1, 120, 25);
         var code = int.Parse(renewal["invoiceCode"]!);
 

@@ -17,9 +17,9 @@ using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 namespace PhotonBypass.Application.Management;
 
 /// <summary>
-/// Admin server CRUD (docs/20 phase 5, D8). The list returns scalar fields
+/// Admin server CRUD (Docs/20 phase 5, D8). The list returns scalar fields
 /// plus a has-config flag — the stored (protected) config never leaves the
-/// server (write-without-read). Boundary of docs/16: nothing here touches the
+/// server (write-without-read). Boundary of Docs/16: nothing here touches the
 /// keyed dispatch, adapters or <see cref="ServerFeature"/> itself.
 /// </summary>
 public interface IServerCrudApplication
@@ -137,7 +137,7 @@ class ServerCrudApplication(
         server.Features = model.Features;
 
         // null config keeps the stored protected blob byte-for-byte — it is
-        // never decrypted or returned (docs/20 phase 5: write-without-read)
+        // never decrypted or returned (Docs/20 phase 5: write-without-read)
         ApplyConfig(server, model.Config);
 
         await ServerRepo.Save(server);
@@ -172,13 +172,13 @@ class ServerCrudApplication(
 
     private async Task RequireAdmin()
     {
-        // defense in depth behind the Admin policy (same as docs/20 phase 4)
+        // defense in depth behind the Admin policy (same as Docs/20 phase 4)
         var actor = await SelfServiceGuard.Value.ResolveActor();
 
         if (actor.Role != AccountRole.Admin)
         {
             throw new UserException("مدیریت سرورها فقط برای ادمین مجاز است!",
-                $"Server CRUD is admin-only (docs/20 §3): actor={actor.Username}, role={actor.Role}", 403);
+                $"Server CRUD is admin-only (Docs/20 §3): actor={actor.Username}, role={actor.Role}", 403);
         }
     }
 
@@ -247,7 +247,7 @@ class ServerCrudApplication(
     {
         // duplicates would break the singleton lookups (GetServerIdByIpAddress)
         // and silently collapse per-realm NAS selection — same 409 contract as
-        // the account unique fields (docs/20 phase 4)
+        // the account unique fields (Docs/20 phase 4)
         var conflicts = await ServerRepo.FindConflicts(model.IpAddress, model.Name, model.DomainName, exclude_id);
 
         if (conflicts.Count < 1) return;

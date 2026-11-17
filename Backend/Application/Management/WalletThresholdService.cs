@@ -68,8 +68,8 @@ class WalletThresholdService(
 
     private async Task Apply(List<int> user_ids, bool deactivate)
     {
-        // docs/22 D8: the wallet belongs to the panel user, so the rule sweeps
-        // every Active VPN account of the user (docs/20 D13 semantics per
+        // Docs/22 D8: the wallet belongs to the panel user, so the rule sweeps
+        // every Active VPN account of the user (Docs/20 D13 semantics per
         // account); the state history is one row per user per transition —
         // GetLastByTitle groups by Target, so per-account rows would oscillate
         // for a multi-account user

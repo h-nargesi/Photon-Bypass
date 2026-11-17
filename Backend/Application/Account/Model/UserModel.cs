@@ -14,6 +14,6 @@ public class UserModel : TargetModel
 
     public IDictionary<string, TargetModel> TargetArea { get; set; } = null!;
 
-    /// <summary>VPN accounts owned by the user (docs/22 D2).</summary>
+    /// <summary>VPN accounts owned by the user (Docs/22 D2).</summary>
     public IList<UserVpnAccountModel> Accounts { get; set; } = [];
 }

@@ -1,4 +1,4 @@
-# docs/09-database.md — Database
+# Docs/09-database.md — Database
 
 > **English summary**: Two databases. Local MSSQL (`FastBypass`, scenario `FastBypass_DbScenario`) holds accounts, wallet, history, renewals, traffic, servers, realms, prices — its heart is the `TotalPlanState` view that computes current plan state from cumulative traffic windows. The Radius MySQL DB (RadiusDesk) is read via `RadDbContext`. Schema scripts live in `Database/LocalDatabase/`; test seed data in `Backend/Tests/Data/`. Sensitive values are referenced by config key only.
 
@@ -13,27 +13,27 @@
 | File | Table | Key / Unique | Notes |
 |---|---|---|---|
 | `Database.sql` | (db creation) | — | ساخت دیتابیس `FastBypass`. |
-| `PanelUser.sql` | `PanelUser` | `PK Id`, `UK_PanelUser_Username`, `UK_PanelUser_Email` (filtered), `UK_PanelUser_Mobile` (filtered), `UK_PanelUser_TelegramChatId` (filtered), `FK_Owner→PanelUser`, `FK_CalculationMethod→Price` | نیمه‌ی پنل از تفکیک `Account` (docs/22 D1): لاگین/تماس/نقش‌ها (`Role`، `UserType`) و `Status TINYINT DEFAULT 0` (فقط 0/2 — docs/22 D12). **بدون seed ادمین** — ادمین در زمان دیپلوی ساخته می‌شود (بخش Security note زیر). |
-| `VpnAccount.sql` | `VpnAccount` | `PK Id`, `FK UserId→PanelUser` (CASCADE), `FK RealmId→Realm` NOT NULL, `UK_VpnAccount_Username` (≤32) | نیمه‌ی VPN: هویت per-account، realm پین‌شده (docs/22 D5)، قاعده‌ی یوزرنیم D3، `VpnPassword`، `Status` (0/1/2)، مهرهای هشدار/چرخش UUID. |
-| `Wallet.sql` | `Wallet` | `PK Id`, `FK AccountId→PanelUser`, `FK ActorId→PanelUser` | کیف پول + `InvoiceCode`. موجودی = `sum(Amount*Direction)` روی `Status in (Completed, Verifying)`. `ActorId` (docs/20 D5/فاز ۳) ادمینِ issuer تراکنش دستی است؛ روی ردیف‌های سیستمی NULL. |
+| `PanelUser.sql` | `PanelUser` | `PK Id`, `UK_PanelUser_Username`, `UK_PanelUser_Email` (filtered), `UK_PanelUser_Mobile` (filtered), `UK_PanelUser_TelegramChatId` (filtered), `FK_Owner→PanelUser`, `FK_CalculationMethod→Price` | نیمه‌ی پنل از تفکیک `Account` (Docs/22 D1): لاگین/تماس/نقش‌ها (`Role`، `UserType`) و `Status TINYINT DEFAULT 0` (فقط 0/2 — Docs/22 D12). **بدون seed ادمین** — ادمین در زمان دیپلوی ساخته می‌شود (بخش Security note زیر). |
+| `VpnAccount.sql` | `VpnAccount` | `PK Id`, `FK UserId→PanelUser` (CASCADE), `FK RealmId→Realm` NOT NULL, `UK_VpnAccount_Username` (≤32) | نیمه‌ی VPN: هویت per-account، realm پین‌شده (Docs/22 D5)، قاعده‌ی یوزرنیم D3، `VpnPassword`، `Status` (0/1/2)، مهرهای هشدار/چرخش UUID. |
+| `Wallet.sql` | `Wallet` | `PK Id`, `FK AccountId→PanelUser`, `FK ActorId→PanelUser` | کیف پول + `InvoiceCode`. موجودی = `sum(Amount*Direction)` روی `Status in (Completed, Verifying)`. `ActorId` (Docs/20 D5/فاز ۳) ادمینِ issuer تراکنش دستی است؛ روی ردیف‌های سیستمی NULL. |
 | `History.sql` | `History` | `PK Id` | لاگ رویداد روی `Target`. |
 | `ResetPassword.sql` | `ResetPassword` | — | توکن بازنشانی. |
-| `Renewal.sql` | `Renewal` | `PK Id`, `FK VpnAccountId→VpnAccount` (CASCADE), `WalletDebit/WalletCredit` | یک تمدید + ستون‌های وضعیت ترافیک x-ui (docs/17 D6/D14): `LastSeenCounter`, `LastPollTime`, `TrafficUsed`, `LastActiveTime`. |
-| `Invoice.sql` | `Invoice` | `PK Code` (از `InvoiceSequence`، بدون identity), `FK AccountId→PanelUser`, `FK VpnAccountId→VpnAccount` (nullable، docs/22 D8), `IX (AccountId, Status)`, `CK` XOR رسید | والد فاکتور: `Kind (1=TopUp,2=Plan)`, `Title`, `TotalPrice`, `WalletDeduction`, `Payable`, `Action nvarchar(400)`, `Status` (هم‌ارزش `BalanceStatus`), `ReceiptImage/ReceiptText/ReceiptAt`. |
+| `Renewal.sql` | `Renewal` | `PK Id`, `FK VpnAccountId→VpnAccount` (CASCADE), `WalletDebit/WalletCredit` | یک تمدید + ستون‌های وضعیت ترافیک x-ui (Docs/17 D6/D14): `LastSeenCounter`, `LastPollTime`, `TrafficUsed`, `LastActiveTime`. |
+| `Invoice.sql` | `Invoice` | `PK Code` (از `InvoiceSequence`، بدون identity), `FK AccountId→PanelUser`, `FK VpnAccountId→VpnAccount` (nullable، Docs/22 D8), `IX (AccountId, Status)`, `CK` XOR رسید | والد فاکتور: `Kind (1=TopUp,2=Plan)`, `Title`, `TotalPrice`, `WalletDeduction`, `Payable`, `Action nvarchar(400)`, `Status` (هم‌ارزش `BalanceStatus`), `ReceiptImage/ReceiptText/ReceiptAt`. |
 | `PlanState.sql` | `PlanState` | — | **view** mapping (نه جدول پر-شده؛ از `TotalPlanState` خوانده می‌شود). |
-| `TrafficData.sql` | `TrafficData` | `PK Id`, `UK (NasId, SessionId)` inline | رکورد ترافیک دوره‌ای؛ `SessionId VARCHAR(64)` برای کلیدهای مصنوعی روزانه‌ی x-ui (docs/17 D7). |
-| `Server.sql` | `Server` | `PK Id`, `FK RealmId→Realm` | سرور با `Features` (Flags) و `OsType`؛ `Config VARCHAR(4000)` برای payload رمزنگاری‌شده‌ی Data Protection (docs/14 M12). |
+| `TrafficData.sql` | `TrafficData` | `PK Id`, `UK (NasId, SessionId)` inline | رکورد ترافیک دوره‌ای؛ `SessionId VARCHAR(64)` برای کلیدهای مصنوعی روزانه‌ی x-ui (Docs/17 D7). |
+| `Server.sql` | `Server` | `PK Id`, `FK RealmId→Realm` | سرور با `Features` (Flags) و `OsType`؛ `Config VARCHAR(4000)` برای payload رمزنگاری‌شده‌ی Data Protection (Docs/14 M12). |
 | `Realm.sql` | `Realm` | `PK Id` | گروه سرور + `BandWidth` + `CapacityOverrideBytes` (بازنویسی ظرفیت دستی، T3). |
 | `Price.sql` | `Price` | `PK Id` | `CalculatorCode` (کد C#). |
-| `InvoiceSequence.sql` | (sequence) | — | کد فاکتور اتمیک؛ شروع ثابت 10001 روی نصب تازه (docs/14 C4). |
+| `InvoiceSequence.sql` | (sequence) | — | کد فاکتور اتمیک؛ شروع ثابت 10001 روی نصب تازه (Docs/14 C4). |
 | `TotalPlanState.sql` | `TotalPlanState` (VIEW) | — | محاسباتی — پایه‌ی `PlanStateEntity`. |
-| `Indexes.sql` | (indexes) | — | ایندکس‌های مسیر داغ (docs/14 H20) روی TrafficData/Renewal/History/Wallet/PanelUser/VpnAccount. |
+| `Indexes.sql` | (indexes) | — | ایندکس‌های مسیر داغ (Docs/14 H20) روی TrafficData/Renewal/History/Wallet/PanelUser/VpnAccount. |
 
-> ایندکس‌های یکتای فیلترشده: `UK_Account_Email` و `UK_Account_Mobile` فقط روی ردیف‌های NOT NULL اعمال می‌شوند تا چند کاربر با ایمیل/موبایل خالی مجاز باشند (`Account.sql`؛ پنجره‌ی TOCTOU ثبت‌نام را می‌بندد — docs/14 L11).
+> ایندکس‌های یکتای فیلترشده: `UK_Account_Email` و `UK_Account_Mobile` فقط روی ردیف‌های NOT NULL اعمال می‌شوند تا چند کاربر با ایمیل/موبایل خالی مجاز باشند (`Account.sql`؛ پنجره‌ی TOCTOU ثبت‌نام را می‌بندد — Docs/14 L11).
 
 ### Security note: admin account (بدون seed)
 
-`Account.sql` دیگر **هیچ ادمین پیش‌فرضی seed نمی‌کند**. ادمین اولین انتشار با پسورد واقعی اپراتور و `Role=Admin` + `UserType=AllowSelfService` در زمان درج ساخته می‌شود: `Backend/Tools/DeployCli` (`create-admin`/`verify`) که از `scripts/deploy.sh` صدا زده می‌شود (ران‌بوک: docs/19 §ج). گاردها: username تکراری بدون بازنویسی رد می‌شود و وجود هر ادمین دیگر، درج ادمین دوم را بلاک می‌کند (docs/20 D9: تک‌ادمین). تنها fixture ادمین با پسورد تستی، seed داده‌ی سناریوی تست است (`Backend/Tests/Data/Sql/DbScenario/init.sql`) که هرگز روی پروداکشن اجرا نمی‌شود.
+`Account.sql` دیگر **هیچ ادمین پیش‌فرضی seed نمی‌کند**. ادمین اولین انتشار با پسورد واقعی اپراتور و `Role=Admin` + `UserType=AllowSelfService` در زمان درج ساخته می‌شود: `Backend/Tools/DeployCli` (`create-admin`/`verify`) که از `Scripts/deploy.sh` صدا زده می‌شود (ران‌بوک: Docs/19 §ج). گاردها: username تکراری بدون بازنویسی رد می‌شود و وجود هر ادمین دیگر، درج ادمین دوم را بلاک می‌کند (Docs/20 D9: تک‌ادمین). تنها fixture ادمین با پسورد تستی، seed داده‌ی سناریوی تست است (`Backend/Tests/Data/Sql/DbScenario/init.sql`) که هرگز روی پروداکشن اجرا نمی‌شود.
 
 ## `TotalPlanState` view (نمایش کلیدی)
 

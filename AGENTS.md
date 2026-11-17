@@ -29,7 +29,8 @@ flowchart LR
     Root --> Database["Database/ (MSSQL scripts)"]
     Root --> Architecture["Architecture/ (legacy design notes)"]
     Root --> Design["Design/ (page mockups)"]
-    Root --> Docs["docs/ (generated agent docs)"]
+    Root --> Docs["Docs/ (generated agent docs)"]
+    Root --> Scripts["Scripts/ (deploy tooling)"]
 ```
 
 | Path | Role |
@@ -39,7 +40,8 @@ flowchart LR
 | `Database/LocalDatabase/` | MSSQL schema + seed + key view (`TotalPlanState.sql`) |
 | `Architecture/` | Original Persian design docs (`structure.md`, `analyse.md`, `TODO.md`) |
 | `Design/` | Page mockup images |
-| `docs/` | **This documentation set** (generated, agent-focused) |
+| `Docs/` | **This documentation set** (generated, agent-focused) |
+| `Scripts/` | First-release deploy script (`deploy.sh`: ordered DB install + `DeployCli` admin bootstrap); logs under `Scripts/logs/` (gitignored) |
 
 > Note: `Backend/Administration/` exists on disk but is **not** part of the solution (orphan folder, empty controllers). `Backend/Tik4net/` holds the vendored `tik4net` library (solution folder `Tik4net`), not `ThirdParty/`.
 
@@ -84,7 +86,7 @@ dotnet test Backend/Photon-Bypass.sln        # xUnit + Moq + FluentAssertions
 cd Frontend && yarn test                      # Karma + Jasmine
 ```
 
-**Coverage** (report-only, no threshold — commands, baseline and traceability matrix live in [docs/18-test-coverage.md](docs/18-test-coverage.md)):
+**Coverage** (report-only, no threshold — commands, baseline and traceability matrix live in [Docs/18-test-coverage.md](Docs/18-test-coverage.md)):
 
 ```bash
 # backend (coverlet + reportgenerator, pinned via .config/dotnet-tools.json)
@@ -100,9 +102,9 @@ dotnet reportgenerator \
 cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverage
 ```
 
-> Governance: any PR that adds/changes tests or introduces a new flow/decision updates its row in `docs/18-test-coverage.md` (§4 matrix) in the same PR.
+> Governance: any PR that adds/changes tests or introduces a new flow/decision updates its row in `Docs/18-test-coverage.md` (§4 matrix) in the same PR.
 
-> App secrets and the JWT signing key are committed in `Backend/Portal/appsettings.json` (`Issuer:Code`, connection strings) — these are confirmed test values and stay in the repo. Production values live in `private/secrets.json` in the Plesk vhost (loaded per-key over appsettings by `AddPleskPrivateSecrets`; `ProductionSecretsGuard` blocks non-Development startup while any test value is still active — [docs/19-deploy-runbook.md](docs/19-deploy-runbook.md)). Do not copy secret values into docs or logs; reference by config key name only. See [docs/12-current-state.md](docs/12-current-state.md) for the security TODOs.
+> App secrets and the JWT signing key are committed in `Backend/Portal/appsettings.json` (`Issuer:Code`, connection strings) — these are confirmed test values and stay in the repo. Production values live in `private/secrets.json` in the Plesk vhost (loaded per-key over appsettings by `AddPleskPrivateSecrets`; `ProductionSecretsGuard` blocks non-Development startup while any test value is still active — [Docs/19-deploy-runbook.md](Docs/19-deploy-runbook.md)). Do not copy secret values into docs or logs; reference by config key name only. See [Docs/12-current-state.md](Docs/12-current-state.md) for the security TODOs.
 
 ---
 
@@ -171,47 +173,47 @@ Every change — analysis, design, and code — must meet a fully professional s
 | Throw a user-facing error | `throw new UserException(message, detail, httpCode)` — the message is shown to the user; `detail` is dev-only. |
 | Add a background task | Hook into `Application/Management/JobInterval.cs` (Quartz, 60-min) or register a new Quartz job. |
 | Talk to Radius | Go through `IAccountRadiusSyncService` / `ISessionRadiusSyncService` (Infrastructure dispatchers). Never instantiate `RadDbContext` or `tik4net` directly in Application code. |
-| Change pricing | Code lives in the DB (`PriceEntity.CalculatorCode`) and is Roslyn-compiled into a `Calculator.Compute(users, days, gigabytes)` method. See [docs/05-infrastructure.md](docs/05-infrastructure.md). |
-| Run scripts on a NAS | Use `IProcessService` with a `ProcessContext` (shared variable bag). Variables are injected via `{key}` and validated against `^[ \-\.\w\d]+$`. See [docs/07-server-bridge.md](docs/07-server-bridge.md). |
+| Change pricing | Code lives in the DB (`PriceEntity.CalculatorCode`) and is Roslyn-compiled into a `Calculator.Compute(users, days, gigabytes)` method. See [Docs/05-infrastructure.md](Docs/05-infrastructure.md). |
+| Run scripts on a NAS | Use `IProcessService` with a `ProcessContext` (shared variable bag). Variables are injected via `{key}` and validated against `^[ \-\.\w\d]+$`. See [Docs/07-server-bridge.md](Docs/07-server-bridge.md). |
 
 ---
 
 ## Index
 
-Full reading order and per-file purpose is in [docs/00-index.md](docs/00-index.md). Quick map:
+Full reading order and per-file purpose is in [Docs/00-index.md](Docs/00-index.md). Quick map:
 
-- [docs/01-overview.md](docs/01-overview.md) — product overview, external resources, phases
-- [docs/02-architecture.md](docs/02-architecture.md) — projects, dependencies, DI composition
-- [docs/03-domain.md](docs/03-domain.md) — entities, enums, business rules
-- [docs/04-application.md](docs/04-application.md) — application services and `JobInterval`
-- [docs/05-infrastructure.md](docs/05-infrastructure.md) — repositories, Dapper, Roslyn pricing
-- [docs/06-radius-integration.md](docs/06-radius-integration.md) — dual-Radius dispatch
-- [docs/07-server-bridge.md](docs/07-server-bridge.md) — SSH/Process/Script engine
-- [docs/08-portal-api.md](docs/08-portal-api.md) — REST API surface (all endpoints)
-- [docs/09-database.md](docs/09-database.md) — MSSQL schema + `TotalPlanState` view + Radius DB
-- [docs/10-frontend.md](docs/10-frontend.md) — Angular app summary
-- [docs/11-business-flows.md](docs/11-business-flows.md) — end-to-end scenarios
-- [docs/12-current-state.md](docs/12-current-state.md) — implemented vs stub, starting points
-- [docs/13-xray-integration.md](docs/13-xray-integration.md) — Simorgh / x-ui integration plan (adapter replacement, traffic model)
-- [docs/14-defects-audit.md](docs/14-defects-audit.md) — prioritized defect/security/performance audit of issues **not** in `Architecture/TODO.md` (fix tracking lives there)
-- [docs/15-payment-p2.md](docs/15-payment-p2.md) — P2 payment design: card-to-card + receipt + wallet (decisions, data model, API contract)
-- [docs/16-multi-server-panel.md](docs/16-multi-server-panel.md) — multi-server admin panel decision record: FreeRadius→RadiusDesk rename, x-ui dispatch/identity/UUID-rotation decisions, open items + probe checklist
-- [docs/17-xui-traffic.md](docs/17-xui-traffic.md) — x-ui traffic model & enforcement decision record (D5–D14): delta-row TrafficData, Renewal-hosted anchor/decision columns, server-side enforcement, collector + probe matrix
-- [docs/18-test-coverage.md](docs/18-test-coverage.md) — test coverage governance: coverage commands, measured baseline, requirement→test traceability matrix, known gaps (replaces the deleted `TestPlan.md`)
-- [docs/19-deploy-runbook.md](docs/19-deploy-runbook.md) — first-release Plesk deploy runbook: fresh production secrets, `private/secrets.json` loader + startup guard, DB install from scratch, manual FTP publish and verification
-- [docs/20-admin-panel-roles.md](docs/20-admin-panel-roles.md) — admin-panel roles decision record: D1–D13 (Role/UserTypes.AllowSelfService, payer=actor, admin wallet ledger), access matrix, 6-phase roadmap
-- [docs/21-social-media-telegram-channel.md](docs/21-social-media-telegram-channel.md) — telegram channel record (D1–D6): channel-neutral `ISocialMediaService` + runtime channel selection, one-time-code chat binding, Telegram-first reset/warnings with email fallback
-- [docs/22-panel-user-vpn-split.md](docs/22-panel-user-vpn-split.md) — panel-user/VPN-account split record (D1–D14): `PanelUser` + `VpnAccount` entities, N accounts per user, D3 username rule, realm choice at purchase + stale migration, per-account status axes, `accountId` API contract
+- [Docs/01-overview.md](Docs/01-overview.md) — product overview, external resources, phases
+- [Docs/02-architecture.md](Docs/02-architecture.md) — projects, dependencies, DI composition
+- [Docs/03-domain.md](Docs/03-domain.md) — entities, enums, business rules
+- [Docs/04-application.md](Docs/04-application.md) — application services and `JobInterval`
+- [Docs/05-infrastructure.md](Docs/05-infrastructure.md) — repositories, Dapper, Roslyn pricing
+- [Docs/06-radius-integration.md](Docs/06-radius-integration.md) — dual-Radius dispatch
+- [Docs/07-server-bridge.md](Docs/07-server-bridge.md) — SSH/Process/Script engine
+- [Docs/08-portal-api.md](Docs/08-portal-api.md) — REST API surface (all endpoints)
+- [Docs/09-database.md](Docs/09-database.md) — MSSQL schema + `TotalPlanState` view + Radius DB
+- [Docs/10-frontend.md](Docs/10-frontend.md) — Angular app summary
+- [Docs/11-business-flows.md](Docs/11-business-flows.md) — end-to-end scenarios
+- [Docs/12-current-state.md](Docs/12-current-state.md) — implemented vs stub, starting points
+- [Docs/13-xray-integration.md](Docs/13-xray-integration.md) — Simorgh / x-ui integration plan (adapter replacement, traffic model)
+- [Docs/14-defects-audit.md](Docs/14-defects-audit.md) — prioritized defect/security/performance audit of issues **not** in `Architecture/TODO.md` (fix tracking lives there)
+- [Docs/15-payment-p2.md](Docs/15-payment-p2.md) — P2 payment design: card-to-card + receipt + wallet (decisions, data model, API contract)
+- [Docs/16-multi-server-panel.md](Docs/16-multi-server-panel.md) — multi-server admin panel decision record: FreeRadius→RadiusDesk rename, x-ui dispatch/identity/UUID-rotation decisions, open items + probe checklist
+- [Docs/17-xui-traffic.md](Docs/17-xui-traffic.md) — x-ui traffic model & enforcement decision record (D5–D14): delta-row TrafficData, Renewal-hosted anchor/decision columns, server-side enforcement, collector + probe matrix
+- [Docs/18-test-coverage.md](Docs/18-test-coverage.md) — test coverage governance: coverage commands, measured baseline, requirement→test traceability matrix, known gaps (replaces the deleted `TestPlan.md`)
+- [Docs/19-deploy-runbook.md](Docs/19-deploy-runbook.md) — first-release Plesk deploy runbook: fresh production secrets, `private/secrets.json` loader + startup guard, DB install from scratch, manual FTP publish and verification
+- [Docs/20-admin-panel-roles.md](Docs/20-admin-panel-roles.md) — admin-panel roles decision record: D1–D13 (Role/UserTypes.AllowSelfService, payer=actor, admin wallet ledger), access matrix, 6-phase roadmap
+- [Docs/21-social-media-telegram-channel.md](Docs/21-social-media-telegram-channel.md) — telegram channel record (D1–D6): channel-neutral `ISocialMediaService` + runtime channel selection, one-time-code chat binding, Telegram-first reset/warnings with email fallback
+- [Docs/22-panel-user-vpn-split.md](Docs/22-panel-user-vpn-split.md) — panel-user/VPN-account split record (D1–D14): `PanelUser` + `VpnAccount` entities, N accounts per user, D3 username rule, realm choice at purchase + stale migration, per-account status axes, `accountId` API contract
 
 ---
 
 ## Known gaps / starting points
 
-The platform is functional for the customer-facing flow (auth, account, plan renewal + card-to-card receipt billing, dual-Radius + x-ui sync, background jobs, email notifications, the Telegram social channel — runtime-selected, see [docs/21-social-media-telegram-channel.md](docs/21-social-media-telegram-channel.md), dynamic pricing, main frontend pages, and the role-based management panel on the single Portal host — see [docs/20-admin-panel-roles.md](docs/20-admin-panel-roles.md), and the panel-user/VPN-account split with multi-account purchase — see [docs/22-panel-user-vpn-split.md](docs/22-panel-user-vpn-split.md)). Incomplete areas:
+The platform is functional for the customer-facing flow (auth, account, plan renewal + card-to-card receipt billing, dual-Radius + x-ui sync, background jobs, email notifications, the Telegram social channel — runtime-selected, see [Docs/21-social-media-telegram-channel.md](Docs/21-social-media-telegram-channel.md), dynamic pricing, main frontend pages, and the role-based management panel on the single Portal host — see [Docs/20-admin-panel-roles.md](Docs/20-admin-panel-roles.md), and the panel-user/VPN-account split with multi-account purchase — see [Docs/22-panel-user-vpn-split.md](Docs/22-panel-user-vpn-split.md)). Incomplete areas:
 
-- **`Backend/Admin` host** — deliberately set aside (docs/20 D7: one Portal host + one Angular app); it stays an empty skeleton (`Program.cs` + empty `AddAdminServices`). The management panel itself is built and lives in Portal (`/api/user/*`, `/api/server/*`, `/api/wallet/*` + frontend `/users`, `/servers`, `/wallet`).
+- **`Backend/Admin` host** — deliberately set aside (Docs/20 D7: one Portal host + one Angular app); it stays an empty skeleton (`Program.cs` + empty `AddAdminServices`). The management panel itself is built and lives in Portal (`/api/user/*`, `/api/server/*`, `/api/wallet/*` + frontend `/users`, `/servers`, `/wallet`).
 - **`SetOVpnCertificate`** (`MikrotikRadius/Application/MikrotikDirectService.cs:165`) — throws `NotImplementedException` (deferred to the OpenVPN support phase; gated behind the `ServerFeature.Ovpn` bit).
 - **WhatsApp** — future adapter on the channel-neutral `ISocialMediaService` (one class + one keyed registration in `OutSource/ServiceFactory.cs`; `SocialChannel.WhatsApp` is reserved). No compile-time gates anymore.
 - **Google Auth** — listed as phase 5 in `README.md`.
 
-See [docs/12-current-state.md](docs/12-current-state.md) for the full list and where to start for each, and `Architecture/TODO.md` for the original backlog.
+See [Docs/12-current-state.md](Docs/12-current-state.md) for the full list and where to start for each, and `Architecture/TODO.md` for the original backlog.

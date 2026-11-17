@@ -40,10 +40,10 @@ public static class ServiceFactory
         ResetRateLimitPolicy, CaptchaRateLimitPolicy,
     ];
 
-    /// <summary>Role-gated endpoints for managers and the admin (docs/20 D10).</summary>
+    /// <summary>Role-gated endpoints for managers and the admin (Docs/20 D10).</summary>
     public const string ManagerPolicy = "Manager";
 
-    /// <summary>Role-gated endpoints for the single admin account (docs/20 D9).</summary>
+    /// <summary>Role-gated endpoints for the single admin account (Docs/20 D9).</summary>
     public const string AdminPolicy = "Admin";
 
     public static TBuilder AddPortalServices<TBuilder>(this TBuilder builder) where TBuilder : IHostApplicationBuilder

@@ -403,5 +403,5 @@ FodyWeavers.xsd
 **/private/secrets.json
 appsettings.Production.json
 
-# Deploy script logs (scripts/deploy.sh)
-scripts/logs/
+# Deploy script logs (Scripts/deploy.sh)
+Scripts/logs/

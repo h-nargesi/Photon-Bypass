@@ -55,7 +55,7 @@ public class SetAccountStatusRequest
 }
 
 /// <summary>
-/// Manager/admin user management (docs/20 phase 4). Note: these endpoints
+/// Manager/admin user management (Docs/20 phase 4). Note: these endpoints
 /// never route <c>target</c> through <see cref="ResultHandlerController.LoadJobContextAsync(string?)"/>'s
 /// cached access check — the application validates the actor→target
 /// relationship live against the database, so freshly created or attached
@@ -137,7 +137,7 @@ public class UserController(
     }
 
     /// <summary>
-    /// Panel-level status change (docs/22 D12): Manager may deactivate its own
+    /// Panel-level status change (Docs/22 D12): Manager may deactivate its own
     /// subordinates; the immediate radius sync of every VPN account is best-effort.
     /// </summary>
     [Authorize(Policy = ServiceFactory.ManagerPolicy)]
@@ -157,7 +157,7 @@ public class UserController(
     }
 
     /// <summary>
-    /// VPN-level status change (docs/22 D12): per-account suspension and
+    /// VPN-level status change (Docs/22 D12): per-account suspension and
     /// activation, independent of the owner's portal status.
     /// </summary>
     [Authorize(Policy = ServiceFactory.ManagerPolicy)]

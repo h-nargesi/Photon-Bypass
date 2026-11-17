@@ -172,7 +172,7 @@ class VpnAccountRepository(LocalDbContext context) : EditableRepository<VpnAccou
         }
 
         throw new UserException("ظرفیت نام کاربری برای این کاربر تکمیل است!",
-            $"No free VPN username suggestion within the length cap (docs/22 D3): owner={panel_username}");
+            $"No free VPN username suggestion within the length cap (Docs/22 D3): owner={panel_username}");
     }
 
     public Task UpdateWarningTimes(IEnumerable<int> account_ids)

@@ -11,7 +11,7 @@ public class WalletEntity : IBaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    /// <summary>Panel user the wallet row belongs to (docs/22 D8: payer = panel user).</summary>
+    /// <summary>Panel user the wallet row belongs to (Docs/22 D8: payer = panel user).</summary>
     public int AccountId { get; set; }
 
     public int Amount { get; set; }
@@ -28,7 +28,7 @@ public class WalletEntity : IBaseEntity
 
     public string? Action { get; set; }
 
-    /// <summary>Admin who issued this manual adjustment (docs/20 D5); null on system rows.</summary>
+    /// <summary>Admin who issued this manual adjustment (Docs/20 D5); null on system rows.</summary>
     public int? ActorId { get; set; }
 
     public DateTime Created { get; init; } = DateTime.Now;

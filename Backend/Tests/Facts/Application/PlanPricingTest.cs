@@ -61,7 +61,7 @@ public class PlanPricingTest : UnitLevelServiceInitializer
         var estimate = (await plan_app.Estimate(10, 2, 30, 50)).Data!;
 
         // fixture User10 has no recorded activity, so the account is stale
-        // (docs/22 D6): the renewal must carry a realm choice; realm 1 is the
+        // (Docs/22 D6): the renewal must carry a realm choice; realm 1 is the
         // fixture's active radius realm
         var result = await plan_app.Renewal(10, 2, 30, 50, 1);
 
@@ -99,7 +99,7 @@ public class PlanPricingTest : UnitLevelServiceInitializer
             },
         ];
 
-        // stale account (docs/22 D6): realm 1 is re-selected at renewal
+        // stale account (Docs/22 D6): realm 1 is re-selected at renewal
         var code = (await plan_app.Renewal(10, 2, 30, 50, 1)).Data!.InvoiceCode!.Value;
 
         var invoice = invoice_moq.Data.Single(i => i.Code == code);

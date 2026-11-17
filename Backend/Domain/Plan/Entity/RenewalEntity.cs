@@ -10,7 +10,7 @@ public class RenewalEntity : IRenewalEntity, IBaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    /// <summary>VPN account this renewal stacks on (docs/22 D5); realm lives on the account.</summary>
+    /// <summary>VPN account this renewal stacks on (Docs/22 D5); realm lives on the account.</summary>
     public int VpnAccountId { get; set; }
 
     public byte SimultaneousUser { get; set; }
@@ -35,7 +35,7 @@ public class RenewalEntity : IRenewalEntity, IBaseEntity
 
     public DateTime? LastActiveTime { get; set; }
 
-    // Stacked plan state (docs/17 D16): frozen once at purchase time by
+    // Stacked plan state (Docs/17 D16): frozen once at purchase time by
     // PlanApplication.Renewal — the sole writer; NULL = no limit.
     public DateTime? ExpirationDate { get; set; }
 

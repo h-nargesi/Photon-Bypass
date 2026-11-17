@@ -285,7 +285,7 @@ class VpnApplication(
 
         // The dispatcher generates one UUID per request and applies it to every
         // x-ui server of the realm; the returned value is the effective
-        // credential and the only thing allowed into VpnPassword (docs/16 D4).
+        // credential and the only thing allowed into VpnPassword (Docs/16 D4).
         var uuid = await AccountRadiusSrv.Value.ChangeVpnPassword(account.RealmId, account.Username, string.Empty);
 
         account.VpnPassword = uuid;
@@ -365,7 +365,7 @@ class VpnApplication(
         return (account, owner, account.RealmId, info);
     }
 
-    /// <summary>Credential/connection operations require an active plan (docs/08 contract).</summary>
+    /// <summary>Credential/connection operations require an active plan (Docs/08 contract).</summary>
     private async Task EnsureActivePlan(VpnAccountEntity account)
     {
         var plan = await PlanStateRepo.Value.GetPlanState(account.Id);

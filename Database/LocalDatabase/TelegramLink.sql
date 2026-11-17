@@ -4,7 +4,7 @@ GO
 IF OBJECT_ID('TelegramLink') IS NULL
 CREATE TABLE TelegramLink (
 	Id					INT IDENTITY	NOT NULL	CONSTRAINT PK_TelegramLink_Id PRIMARY KEY,
-	-- docs/22 D11: the deep link binds the chat to a panel user.
+	-- Docs/22 D11: the deep link binds the chat to a panel user.
 	AccountId			INT				NOT NULL	CONSTRAINT FK_TelegramLink_AccountId FOREIGN KEY REFERENCES PanelUser (Id)
 													ON DELETE CASCADE,
 	ExpireDate			DATETIME		NOT NULL,

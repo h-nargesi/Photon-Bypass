@@ -15,7 +15,7 @@ using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 namespace PhotonBypass.Test.Facts.Application;
 
 /// <summary>
-/// Admin server CRUD contract (docs/20 phase 5, D8): validation matrix
+/// Admin server CRUD contract (Docs/20 phase 5, D8): validation matrix
 /// (ip/name/domain/bandwidth/os/features/realm), the 409 duplicate guard on
 /// identity fields, write-without-read config handling and the admin-only
 /// defense in depth. The list never carries the stored config — only scalars

@@ -54,7 +54,7 @@ class AuthApplication(
     {
         var account = await PanelUserRepo.GetUser(username);
 
-        // portal-accessible: Deactivated is blocked with 401 (docs/22 D12 —
+        // portal-accessible: Deactivated is blocked with 401 (Docs/22 D12 —
         // VPN suspension is per account and never blocks the panel)
         if (account == null || account.Status == PanelUserStatus.Deactivated || !PasswordHasher.Verify(password, account.Password))
         {
@@ -115,7 +115,7 @@ class AuthApplication(
             })
             .ToDictionary(k => k.Username);
 
-        // docs/22 §3.5: the account list travels with the login answer so the
+        // Docs/22 §3.5: the account list travels with the login answer so the
         // frontend can render the account switcher without a second round-trip
         var vpn_accounts = await VpnAccountRepo.Value.GetVisibleByUser(account.Id);
         var realm_names = await LoadRealmNames(vpn_accounts.Select(account => account.RealmId));

@@ -10,7 +10,7 @@ public interface IWalletRepository : IEditableRepository<WalletEntity>
     Task<List<WalletEntity>> GetInvoice(string target, int code);
 
     /// <summary>
-    /// Newest-first wallet ledger page for one account (docs/20 phase 3):
+    /// Newest-first wallet ledger page for one account (Docs/20 phase 3):
     /// server-side paging over the append-only rows.
     /// </summary>
     Task<(List<WalletEntity> Rows, int TotalCount)> GetHistory(int account_id, int page, int page_size);

@@ -14,7 +14,7 @@ using PhotonBypass.Tools;
 namespace PhotonBypass.Test.Facts.Application;
 
 /// <summary>
-/// D16 (docs/17) — renewal stacking: expiry = max(now, current expiry) + days,
+/// D16 (Docs/17) — renewal stacking: expiry = max(now, current expiry) + days,
 /// traffic quota = clamped cumulative remaining + the new share. Both values
 /// are frozen once on the renewal row and handed to the radius push unchanged.
 /// </summary>

@@ -1,4 +1,4 @@
-# docs/07-server-bridge.md — Server bridge (SSH/Process/Script)
+# Docs/07-server-bridge.md — Server bridge (SSH/Process/Script)
 
 > **English summary**: `ServerBridge` is the adapter layer to NAS/Mikrotik hardware. It exposes four handlers (SSH, Tik4Net, Api, Email) and the `ProcessService` engine that runs a `ProcessEntity` (a bundle of `ScriptEntity`) over SSH against a server, using a shared `ProcessContext` (`Dictionary<string,string>`) to inject variables (`{key}`) and parse output (`#regex#index:name` or `return`). Variable values are validated against `^[ \-\.\w\d]+$` before injection.
 
@@ -106,4 +106,4 @@ sequenceDiagram
 
 - **`MikrotikDirectService`** (ساخت/پخش گواهی OpenVpn، اعمال تغییرات روی NAS).
 - **فرآیندهای مدیر** روی سرورها (فعال/غیرفعال تانل‌ها، راه‌اندازی) — `README.md:18-20`.
-- پنل مدیریت سرورها هنوز ساخته نشده (`docs/12`)؛ فعلاً بیشتر فرآیندها از طریق کد/مستقیماً اجرا می‌شوند.
+- پنل مدیریت سرورها هنوز ساخته نشده (`Docs/12`)؛ فعلاً بیشتر فرآیندها از طریق کد/مستقیماً اجرا می‌شوند.

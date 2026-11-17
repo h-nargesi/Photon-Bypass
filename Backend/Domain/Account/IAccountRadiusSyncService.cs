@@ -13,7 +13,7 @@ public interface IAccountRadiusSyncService
     Task ActivateUsers(IEnumerable<string> usernames);
 
     /// <summary>
-    /// VPN-valid reconciliation over plan states (per VPN account, docs/22):
+    /// VPN-valid reconciliation over plan states (per VPN account, Docs/22):
     /// only Active accounts belong in the valid set of their own realm —
     /// the bucket-0 realm fan-out is gone because every account pins one realm.
     /// </summary>
@@ -37,7 +37,7 @@ public interface IAccountRadiusSyncService
     /// <summary>
     /// Applies a credential change on every active radius server of the realm and
     /// returns the effective credential: for x-ui data-planes the input is ignored
-    /// and one freshly generated UUID is applied to all servers (docs/16 D4);
+    /// and one freshly generated UUID is applied to all servers (Docs/16 D4);
     /// for Radius data-planes the (already applied) password comes back.
     /// </summary>
     Task<string> ChangeVpnPassword(int? realm_id, string username, string password);

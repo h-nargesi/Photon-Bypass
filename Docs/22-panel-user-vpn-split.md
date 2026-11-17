@@ -1,7 +1,7 @@
-# docs/22 — Panel-User / VPN-Account Split Decision Record
+# Docs/22 — Panel-User / VPN-Account Split Decision Record
 
 > Status: **implemented** (schema, backend, frontend, tests).
-> Source plan: `docs/plans/panel-user-vpn-account-split.md`.
+> Source plan: `Docs/plans/panel-user-vpn-account-split.md` (plan folder removed; see git history).
 > Persian summary: تفکیک موجودیت `Account` به `PanelUser` (ورود پنل، کیف پول) و `VpnAccount` (هویت VPN روی یک realm) — یک کاربر پنل می‌تواند چند اکانت VPN داشته باشد.
 
 ---
@@ -28,7 +28,7 @@ identity (username, realm, credentials, warning stamps). That coupling forced
 | D5 | `Renewal` stacks **in place**: same username, same realm (realm truth = `VpnAccount.RealmId`, NOT NULL). `Renewal.RestrictedRealmId` deleted. |
 | D6 | Renewing a **stale** account (recorded last activity older than `ManagementOptions.RealmReassignInactivityDays`, default 7) requires an explicit realm re-pick; settlement migrates via `IAccountRadiusSyncService.MigrateUserRealm` (deactivate old realm → pin new → re-provision). No recorded activity is **not** stale — the abandonment sweep owns never-used accounts. |
 | D7 | History anchors to `PanelUser` (`Target`/`Issuer` = user ids) with optional `VpnAccountId` for account-scoped events. |
-| D8 | Wallet/Invoice belong to the **panel user** (docs/20 payer=actor); plan invoices additionally carry nullable `Invoice.VpnAccountId` (null on topups and on new-account invoices that resolve only at settlement). |
+| D8 | Wallet/Invoice belong to the **panel user** (Docs/20 payer=actor); plan invoices additionally carry nullable `Invoice.VpnAccountId` (null on topups and on new-account invoices that resolve only at settlement). |
 | D9 | A VPN account is created **only together with its first renewal** (`PlanApplication.PurchaseNewAccount`, one transaction incl. radius sync). Registration creates a bare `PanelUser` (no VPN credentials). |
 | D10 | Price calculation (`CalculationMethod`) stays on the panel user — realm-independent. |
 | D11 | Telegram link, reset-pass codes anchor to `PanelUser`; warning channels (email/telegram) resolve through the owner. |
@@ -67,6 +67,6 @@ identity (username, realm, credentials, warning stamps). That coupling forced
 
 ## 7. Traceability
 
-- Plan: `docs/plans/panel-user-vpn-account-split.md` (§ decisions, phases).
+- Plan: `Docs/plans/panel-user-vpn-account-split.md` (removed; git history) (§ decisions, phases).
 - Review fixes folded in: phase-merging (D13), suffix TOCTOU + empty-suffix rule (D3), 40-day semantics (D12), admin create-user path (D9), `UpdateTrafficData`/`CheckUserServerBalance` consumers, filtered unique indexes on PanelUser, derived-on-miss access cache (D14), separate `accountId` param (D14).
-- Tests: `docs/18-test-coverage.md` §4 rows tagged `docs/22`.
+- Tests: `Docs/18-test-coverage.md` §4 rows tagged `Docs/22`.

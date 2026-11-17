@@ -44,7 +44,7 @@ public class RateLimitTest(RateLimitTest.LowRateFactory factory)
 }
 
 /// <summary>
-/// docs/14 M34: the password-revalidating endpoints (vpn/change-ovpn,
+/// Docs/14 M34: the password-revalidating endpoints (vpn/change-ovpn,
 /// account/change-pass) must sit behind the shared auth rate-limit policy —
 /// without the attribute they form an unthrottled brute-force oracle for the
 /// portal password. Separate class → separate app instance → a fresh limiter

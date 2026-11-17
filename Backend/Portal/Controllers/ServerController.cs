@@ -19,7 +19,7 @@ public class ServerSetActiveRequest
 }
 
 /// <summary>
-/// Admin server CRUD (docs/20 phase 5, D8). The list never carries the stored
+/// Admin server CRUD (Docs/20 phase 5, D8). The list never carries the stored
 /// config — only a has-config flag; create/update accept a plain config JSON
 /// which is protected server-side (write-without-read).
 /// </summary>

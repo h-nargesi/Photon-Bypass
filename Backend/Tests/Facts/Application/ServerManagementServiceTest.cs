@@ -480,7 +480,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
 
-        // docs/22 §2: VpnAccount.RealmId is NOT NULL — the unrestricted
+        // Docs/22 §2: VpnAccount.RealmId is NOT NULL — the unrestricted
         // bucket-0 fan-out is gone, demand lands on the plan's realm only
         UsePlanStates(scope, NewPlan(realm_id: 1, traffic_limit: BytesInGigLong, days: 30));
 
@@ -656,7 +656,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         Assert.Equal(-1, states[3].Rate);
         Assert.False(states[3].IsEligibleForAssignment);
 
-        // the closed realm is never chosen; with per-realm demand (docs/22 §2 —
+        // the closed realm is never chosen; with per-realm demand (Docs/22 §2 —
         // bucket-0 spread gone) realm 4 carries no fixture demand and wins
         var realm = await manager.GetAvailableRealm();
         Assert.Equal(4, realm.Id);

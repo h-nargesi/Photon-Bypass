@@ -13,7 +13,7 @@ insert into PanelUser (Username, Password, Owner)
 select 'User21', 'password', Id from PanelUser where Username = 'User2' union
 select 'User22', 'password', Id from PanelUser where Username = 'User2';
 
--- docs/22: VPN identities live on VpnAccount (RealmId NOT NULL, username
+-- Docs/22: VPN identities live on VpnAccount (RealmId NOT NULL, username
 -- starts with the owner's panel username). User99 carries the one the
 -- GetAccountId lookup resolves.
 insert into Realm (Name)

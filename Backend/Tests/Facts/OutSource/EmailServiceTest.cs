@@ -309,7 +309,7 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         email_handler_moq.OnSend += _ => send_count++;
 
         // same cache key on both attempts: the logo file is created between
-        // them, proving the faulted task was evicted (docs/14 M36) instead of
+        // them, proving the faulted task was evicted (Docs/14 M36) instead of
         // staying cached until a restart
         var temp_logo = Path.Combine(Path.GetTempPath(), $"pb-logo-{Guid.NewGuid():N}.png");
         branding.Value.LogoPath = temp_logo;

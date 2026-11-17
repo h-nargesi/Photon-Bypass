@@ -5,7 +5,7 @@ namespace PhotonBypass.Application.Vpn;
 
 public interface IVpnApplication
 {
-    /// <summary>The visible VPN accounts of the request target's area (docs/22 §3.5).</summary>
+    /// <summary>The visible VPN accounts of the request target's area (Docs/22 §3.5).</summary>
     Task<ApiResult<List<VpnAccountSummaryModel>>> GetAccounts(string? target);
 
     Task<ApiResult> ChangeVpnPassword(int account_id, string password);

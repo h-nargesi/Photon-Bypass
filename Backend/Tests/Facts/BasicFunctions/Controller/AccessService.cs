@@ -100,7 +100,7 @@ public class AccessService : UnitLevelServiceInitializer
         var access_service = scope.ServiceProvider.GetRequiredService<IAccessService>();
 
         // no LoginEvent at all: this is the restart / second-instance path
-        // (docs/14 M32). User5 owns the seeded subordinates 6/8/9, so the
+        // (Docs/14 M32). User5 owns the seeded subordinates 6/8/9, so the
         // rebuilt area must grant those targets and nothing else
         Assert.True(await access_service.CheckAccess("User5", "User6"));
         Assert.False(await access_service.CheckAccess("User5", "User2"));

@@ -14,7 +14,7 @@ using Serilog;
 namespace PhotonBypass.Application.Billing;
 
 /// <summary>
-/// Admin wallet operations (docs/20 phase 3, D5): transparent manual
+/// Admin wallet operations (Docs/20 phase 3, D5): transparent manual
 /// adjustments (append-only ledger row with the acting admin) and the
 /// per-account wallet history with server-side paging.
 /// </summary>
@@ -30,7 +30,7 @@ public interface IWalletApplication
     /// <summary>
     /// Wallet history of the request target: the account owner itself (with
     /// AllowSelfService) or the admin — a manager never sees a subordinate's
-    /// wallet (docs/20 §3).
+    /// wallet (Docs/20 §3).
     /// </summary>
     Task<ApiResult<PagedResult<WalletTransactionModel>>> GetHistory(int page);
 }
@@ -80,7 +80,7 @@ class WalletApplication(
 
         if (string.IsNullOrWhiteSpace(description))
         {
-            throw new UserException("توضیح تراکنش الزامی است!", "Manual wallet adjustments require a description (docs/20 D5).");
+            throw new UserException("توضیح تراکنش الزامی است!", "Manual wallet adjustments require a description (Docs/20 D5).");
         }
 
         description = description.Trim();
@@ -176,13 +176,13 @@ class WalletApplication(
         }
 
         // On-behalf view: only the admin may read another account's wallet —
-        // even a manager is refused a subordinate's wallet (docs/20 §3).
+        // even a manager is refused a subordinate's wallet (Docs/20 §3).
         var actor = await SelfServiceGuard.Value.ResolveActor();
 
         if (actor.Role != AccountRole.Admin)
         {
             throw new UserException("مشاهده کیف پول کاربر دیگر مجاز نیست!",
-                $"Wallet history of another account is admin-only (docs/20 phase 3): actor={actor.Username}, target={context.Target}",
+                $"Wallet history of another account is admin-only (Docs/20 phase 3): actor={actor.Username}, target={context.Target}",
                 403);
         }
     }

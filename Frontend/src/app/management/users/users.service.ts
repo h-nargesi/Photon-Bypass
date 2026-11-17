@@ -11,7 +11,7 @@ import {
 } from '../../@models';
 import { ApiBaseService, ApiParam, USER_API_URL } from '../../@services';
 
-/// Manager/admin user management API (docs/20 phase 4).
+/// Manager/admin user management API (Docs/20 phase 4).
 @Injectable({ providedIn: 'root' })
 export class UsersService extends ApiBaseService {
   list(search?: string, page: number = 1): Observable<PagedResult<UserRow>> {
@@ -44,12 +44,12 @@ export class UsersService extends ApiBaseService {
     return this.job(`${USER_API_URL}/set-self-service`, { target, allow });
   }
 
-  /// Panel-level status (docs/22 D12): portal axis only.
+  /// Panel-level status (Docs/22 D12): portal axis only.
   setStatus(target: string, status: PanelUserStatus): Observable<ApiResult> {
     return this.job(`${USER_API_URL}/set-status`, { target, status });
   }
 
-  /// VPN-level status (docs/22 D12): per-account suspension/activation.
+  /// VPN-level status (Docs/22 D12): per-account suspension/activation.
   setAccountStatus(accountId: number, status: VpnAccountStatus): Observable<ApiResult> {
     return this.job(`${USER_API_URL}/set-account-status`, { accountId, status });
   }

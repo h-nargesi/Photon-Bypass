@@ -27,7 +27,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         var vpn_repo = scope.ServiceProvider.GetRequiredService<IVpnAccountRepository>();
         var realm_repo = scope.ServiceProvider.GetRequiredService<IRealmRepository>();
 
-        // VpnAccount.RealmId is NOT NULL with an FK to Realm (docs/22 D5)
+        // VpnAccount.RealmId is NOT NULL with an FK to Realm (Docs/22 D5)
         var realm = new RealmEntity { Name = "SimpleRealm" };
         await realm_repo.Save(realm);
 
@@ -296,7 +296,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         await server_repo.Save(nas);
 
         // one VPN account per subordinate; the inactive user's account mirrors
-        // its deactivated state at account level (docs/22 D12)
+        // its deactivated state at account level (Docs/22 D12)
         var planned_account = new VpnAccountEntity
         {
             UserId = sub_active.Id,
@@ -345,7 +345,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         var unplanned_row = Assert.Single(rows, row => row.Username == "SchSubTwo");
         Assert.Equal(PanelUserStatus.Deactivated, unplanned_row.Status);
 
-        // the plan summary nests under each VPN account (docs/22 §3.6)
+        // the plan summary nests under each VPN account (Docs/22 §3.6)
         var overview = await vpn_repo.GetAccountsOverview(["SchSubOne", "SchSubTwo"]);
 
         var planned = Assert.Single(overview, row => row.Owner == "SchSubOne");

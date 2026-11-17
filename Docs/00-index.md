@@ -1,0 +1,66 @@
+# Docs/00-index.md — Documentation map
+
+> **English summary**: This index lists every file in the `Docs/` set with a one-line purpose and a "read this when…" table. Start here to pick the right file. Files are numbered to suggest a reading order (overview → deep technical → flows → state).
+
+هر فایل این پوشه با یک عنوان انگلیسی و توضیحات فارسی نگاشته شده است. اگر برای بار اول مستندات را می‌خوانید، به‌ترتیب شماره‌ها پیش بروید. جدول «برای چه کاری این فایل را بخوان» به شما می‌گوید هر فایل را کِی باز کنید.
+
+## Files
+
+| # | File | One-line purpose |
+|---|---|---|
+| 00 | [Docs/00-index.md](00-index.md) | This map. |
+| 01 | [Docs/01-overview.md](01-overview.md) | نگاه محصول: دو وب‌سایت، نقش‌ها، منابع خارجی، فازبندی. |
+| 02 | [Docs/02-architecture.md](02-architecture.md) | پروژه‌های سولوشن، وابستگی‌ها، و ریشه‌ی DI. |
+| 03 | [Docs/03-domain.md](03-domain.md) | Entityها، enumها، و قواعد کسب‌وکار (Business). |
+| 04 | [Docs/04-application.md](04-application.md) | سرویس‌های Application، تراکنش‌ها، و `JobInterval`. |
+| 05 | [Docs/05-infrastructure.md](05-infrastructure.md) | Repositoryها، Dapper، Entity events، و PriceCalculator. |
+| 06 | [Docs/06-radius-integration.md](06-radius-integration.md) | همگام‌سازی Radius دوگانه (RadiusDesk + UserManager). |
+| 07 | [Docs/07-server-bridge.md](07-server-bridge.md) | موتور SSH/Process/Script روی سرورها. |
+| 08 | [Docs/08-portal-api.md](08-portal-api.md) | جدول کامل endpointهای REST. |
+| 09 | [Docs/09-database.md](09-database.md) | اسکیمای MSSQL، view کلیدی `TotalPlanState`، و دیتابیس Radius. |
+| 10 | [Docs/10-frontend.md](10-frontend.md) | خلاصه‌ی اپ Angular 19. |
+| 11 | [Docs/11-business-flows.md](11-business-flows.md) | سناریوهای end-to-end (ثبت‌نام، تمدید، ترافیک و …). |
+| 12 | [Docs/12-current-state.md](12-current-state.md) | پیاده‌سازی‌شده در برابر نیمه‌کاره + نقطه‌های شروع. |
+| 13 | [Docs/13-xray-integration.md](13-xray-integration.md) | ادغام با Simorgh/x-ui: adapter جدید، منبع حقیقت، مدل ترافیک. |
+| 14 | [Docs/14-defects-audit.md](14-defects-audit.md) | ممیزی نواقص/امنیت/پرفورمنس خارج از TODO با اولویت‌بندی P0–P5. |
+| 15 | [Docs/15-payment-p2.md](15-payment-p2.md) | طراحی فاز P2: پرداخت کارت‌به‌کارت + رسید + کیف پول (تصمیمات، مدل داده، قرارداد API). |
+| 16 | [Docs/16-multi-server-panel.md](16-multi-server-panel.md) | ثبت تصمیمات پنل چند-سرور: رنیم FreeRadius→RadiusDesk، الگوی dispatch کلید سوم x-ui، نگاشت هویت، چرخش UUID؛ بازها و probe. |
+| 17 | [Docs/17-xui-traffic.md](17-xui-traffic.md) | بستن T1/T2 پنل چند-سرور: مدل ترافیک دلتای x-ui (D5–D8)، لنگر/حقیقت تصمیم روی Renewal (D6/D14)، enforcement سمت سرور (D13)، کلکتور و ماتریس probe. |
+| 18 | [Docs/18-test-coverage.md](18-test-coverage.md) | حاکمیت پوشش تست: دستورات سنجش پوشش، مبنای اندازه‌گیری per-assembly، نقشه‌ی traceability نیازمندی→تست و شکاف‌های شناخته‌شده (جایگزین TestPlan.md). |
+| 19 | [Docs/19-deploy-runbook.md](19-deploy-runbook.md) | ران‌بوک اولین انتشار روی هاست Plesk: تولید secretها از صفر، `private/secrets.json` + گارد، نصب دیتابیس از ابتدا، publish با FTP دستی و تأیید. |
+| 20 | [Docs/20-admin-panel-roles.md](20-admin-panel-roles.md) | پنل مدیریت: مدل نقش‌ها (D1–D13)، ماتریس دسترسی، نقشه راه ۶ فازه (نقش/auth → تفکیک payer → تراکنش ادمین → مدیریت کاربران → CRUD سرور → فرانت نقش‌دار). |
+| 21 | [Docs/21-social-media-telegram-channel.md](21-social-media-telegram-channel.md) | کانال اجتماعی: `ISocialMediaService` خنثی به کانال + انتخاب runtime، اتصال چت تلگرام با کد یک‌بارمصرف، اولویت تلگرام در ریست/هشدار با fallback ایمیل. |
+| 22 | [Docs/22-panel-user-vpn-split.md](22-panel-user-vpn-split.md) | تفکیک `Account` به `PanelUser` + `VpnAccount` (D1–D14): چند اکانت VPN برای هر کاربر، قواعد یوزرنیم D3، خرید با انتخاب realm، مهاجرت stale، دو محور وضعیت. |
+
+## Read this file when…
+
+| You want to… | Read |
+|---|---|
+| Understand the product in plain terms | [01-overview](01-overview.md) |
+| Add/rename a project or wire a new DI registration | [02-architecture](02-architecture.md) |
+| Add/change an entity, enum, or business rule | [03-domain](03-domain.md) |
+| Add a use-case or a background job | [04-application](04-application.md) |
+| Add a repository or change data access | [05-infrastructure](05-infrastructure.md) |
+| Work with RadiusDesk or Mikrotik UserManager | [06-radius-integration](06-radius-integration.md) |
+| Write/debug a NAS script or SSH command | [07-server-bridge](07-server-bridge.md) |
+| Add/verify an HTTP endpoint | [08-portal-api](08-portal-api.md) |
+| Change the DB schema or understand plan-state math | [09-database](09-database.md) |
+| Change a frontend page/route | [10-frontend](10-frontend.md) |
+| Trace a real user journey (register → renew → warn) | [11-business-flows](11-business-flows.md) |
+| Find a stub to implement | [12-current-state](12-current-state.md) |
+| Understand the Xray/x-ui integration plan (Simorgh reuse) | [13-xray-integration](13-xray-integration.md) |
+| Find/prioritize a defect, security, or performance issue | [14-defects-audit](14-defects-audit.md) |
+| Implement/verify the P2 payment flow (card-to-card, receipt, wallet) | [15-payment-p2](15-payment-p2.md) |
+| Continue the multi-server panel / x-ui adapter work (D1-D4 decisions, open T1-T5) | [16-multi-server-panel](16-multi-server-panel.md) |
+| Implement/verify the x-ui traffic model, collector, per-dataplane decision reads (D5-D14) | [17-xui-traffic](17-xui-traffic.md) |
+| See test coverage status / find coverage gaps / know which tests cover a flow | [18-test-coverage](18-test-coverage.md) |
+| Deploy to the Plesk host / manage production secrets (`private/secrets.json` + guard) | [19-deploy-runbook](19-deploy-runbook.md) |
+| Implement/verify the admin-panel roles roadmap (Role/SelfService, payer separation, wallet adjust, user management, server CRUD) | [20-admin-panel-roles](20-admin-panel-roles.md) |
+| Implement/verify the panel-user ↔ VPN-account split (multi-account, realm choice, per-account status) | [22-panel-user-vpn-split](22-panel-user-vpn-split.md) |
+
+## Related legacy docs
+
+- `Architecture/structure.md` — original DDD layer sketch (cross-linked to `Docs/02`).
+- `Architecture/analyse.md` — original page-by-page external-resource analysis (cross-linked to `Docs/08`/`Docs/11`).
+- `Architecture/TODO.md` — original backlog (mapped in `Docs/12`).
+- `README.md` — original Persian feature list and phase plan.

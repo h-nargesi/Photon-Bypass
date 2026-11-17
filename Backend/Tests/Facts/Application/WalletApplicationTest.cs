@@ -12,7 +12,7 @@ using PhotonBypass.Test.Mock.MockLocalRepository;
 namespace PhotonBypass.Test.Facts.Application;
 
 /// <summary>
-/// Admin wallet adjustments and wallet history access (docs/20 phase 3, D5):
+/// Admin wallet adjustments and wallet history access (Docs/20 phase 3, D5):
 /// append-only Completed rows carrying the acting admin, negative balance
 /// allowed, and the history access matrix (owner with AllowSelfService or
 /// admin — a manager never reads a subordinate's wallet).
@@ -121,7 +121,7 @@ public class WalletApplicationTest : UnitLevelServiceInitializer
         (await Assert.ThrowsAsync<UserException>(() => application.GetHistory(1)))
             .HttpCode.Should().Be(403);
 
-        // on-behalf view of a manager over its own subordinate: still refused (docs/20 §3)
+        // on-behalf view of a manager over its own subordinate: still refused (Docs/20 §3)
         account_moq.Data["User5"].Role = AccountRole.Manager;
         job_context.InjectJobContext(5, "User5", "User6");
         (await Assert.ThrowsAsync<UserException>(() => application.GetHistory(1)))

@@ -1,7 +1,7 @@
 namespace PhotonBypass.Domain.Vpn;
 
 /// <summary>
-/// Builds the live client connection link for x-ui data-planes (docs/16 D4):
+/// Builds the live client connection link for x-ui data-planes (Docs/16 D4):
 /// transport parameters are read live from the panel (listInbounds) and never
 /// copied into the local server configuration. Implemented by the XuiPanel
 /// adapter slice and consumed by the application layer through DI, like

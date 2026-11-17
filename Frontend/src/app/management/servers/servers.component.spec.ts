@@ -7,7 +7,7 @@ import { OperatingSystem, ServerFeature, ServerRow } from '../../@models';
 import { API_BASE_URL } from '../../@services';
 import { ServersComponent } from './servers.component';
 
-describe('ServersComponent (docs/20 phase 6)', () => {
+describe('ServersComponent (Docs/20 phase 6)', () => {
   let http: HttpTestingController;
   let fixture: ComponentFixture<ServersComponent>;
   let component: ServersComponent;

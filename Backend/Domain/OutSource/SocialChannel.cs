@@ -11,6 +11,6 @@ public enum SocialChannel
 
     Telegram = 1,
 
-    /// <summary>Reserved seam for the future WhatsApp adapter (docs/16 style decision record).</summary>
+    /// <summary>Reserved seam for the future WhatsApp adapter (Docs/16 style decision record).</summary>
     WhatsApp = 2,
 }

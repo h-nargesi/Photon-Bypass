@@ -8,7 +8,7 @@ namespace PhotonBypass.Test.Facts.BasicFunctions.Business;
 public class WalletBusinessTest
 {
     [Theory]
-    // negative balance always needs money, even for an old user (docs/15)
+    // negative balance always needs money, even for an old user (Docs/15)
     [InlineData(UserTypes.None, -5, 10, 15, true)]
     [InlineData(UserTypes.OldUser, -5, 10, 15, true)]
     // new user below the estimate must pay the difference; old user is trusted

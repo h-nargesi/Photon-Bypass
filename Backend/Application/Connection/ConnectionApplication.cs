@@ -94,7 +94,7 @@ class ConnectionApplication(
         return ApiResult.Success("کانکشن بسته شد.");
     }
 
-    /// <summary>Live-session listing requires an active plan (docs/08 contract).</summary>
+    /// <summary>Live-session listing requires an active plan (Docs/08 contract).</summary>
     private async Task EnsureActivePlan(VpnAccountEntity account)
     {
         var plan = await PlanStateRepo.Value.GetPlanState(account.Id);

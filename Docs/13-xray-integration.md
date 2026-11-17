@@ -1,6 +1,6 @@
-# docs/13-xray-integration.md — Simorgh / x-ui integration
+# Docs/13-xray-integration.md — Simorgh / x-ui integration
 
-> **English summary**: Photon-Bypass will be reused as the customer panel for an Xray/x-ui data plane (the Simorgh infrastructure) instead of Radius. The local-MSSQL-as-source-of-truth pattern stays; a new x-ui adapter replaces the two Radius adapters behind the existing keyed-DI sync contracts. Traffic accounting moves from session rows to cumulative per-client counters: quota = counter minus a per-renewal baseline, and daily/30-day charts are derived from poll deltas. Renewal starts traffic-only (monthly stays disabled). Target host: Windows Server + IIS inside Iran. Prerequisite: probe the exact x-ui (alireza0) v1.12.0 API on the live server before writing the adapter. Decision record on the Simorgh side: `docs/panel/README.md` in the Simorgh repo (`~/Developing/Simorgh`).
+> **English summary**: Photon-Bypass will be reused as the customer panel for an Xray/x-ui data plane (the Simorgh infrastructure) instead of Radius. The local-MSSQL-as-source-of-truth pattern stays; a new x-ui adapter replaces the two Radius adapters behind the existing keyed-DI sync contracts. Traffic accounting moves from session rows to cumulative per-client counters: quota = counter minus a per-renewal baseline, and daily/30-day charts are derived from poll deltas. Renewal starts traffic-only (monthly stays disabled). Target host: Windows Server + IIS inside Iran. Prerequisite: probe the exact x-ui (alireza0) v1.12.0 API on the live server before writing the adapter. Decision record on the Simorgh side: `Docs/panel/README.md` in the Simorgh repo (`~/Developing/Simorgh`).
 
 ## تصمیم (2026-10-02)
 
@@ -14,7 +14,7 @@
 
 زیرساخت مقصد (Simorgh): سرور داخل vm01.ir.arvan با x-ui (alireza0) v1.12.0 و Xray-core؛ یک inbound کاربر на 443 (VLESS + XHTTP + REALITY)؛ هر کاربر یک client UUID در همان inbound؛ پنل x-ui فقط روی loopback پشت nftables قابل دسترسی است.
 
-> **به‌روزرسانی ناوگان ۱۴۰۵/۰۷/۲۴ (۲۰۲۶-۱۰-۱۵):** vm01 اجرایی نیست. ناوگان زنده: **vm06.ir.parssafe** و **vm08.ir.parssafe** (ادامه‌ی state(vm07))، هر دو x-ui **v1.14.0**. قرارداد adapter (`XuiApiService`) دوباره از سورس v1.14.0 کد-تأیید شد — مسیرها و رفتار همه‌ی endpoint های مصرفی با v1.12.0 یکسان است (جزئیات: docs/17 §4). هدف probe و ثبت سرور: vm06/vm08.
+> **به‌روزرسانی ناوگان ۱۴۰۵/۰۷/۲۴ (۲۰۲۶-۱۰-۱۵):** vm01 اجرایی نیست. ناوگان زنده: **vm06.ir.parssafe** و **vm08.ir.parssafe** (ادامه‌ی state(vm07))، هر دو x-ui **v1.14.0**. قرارداد adapter (`XuiApiService`) دوباره از سورس v1.14.0 کد-تأیید شد — مسیرها و رفتار همه‌ی endpoint های مصرفی با v1.12.0 یکسان است (جزئیات: Docs/17 §4). هدف probe و ثبت سرور: vm06/vm08.
 
 نگاشت مفاهیم برای adapter جدید:
 
@@ -28,7 +28,7 @@
 | بستن کانکشن میکروتیک | رفتار دقیق باید probe شود (حذف کلاینت، اتصال‌های جاری) |
 | `UpdateTrafficData` از radacct (ردیف سشن) | poll شمارنده‌های تجمعی per-client از x-ui |
 
-نقطه‌ی ورود فنی: همان قراردادهای `IInfraAccountRadiusSyncService` / `IInfraSessionRadiusSyncService` با keyed DI (الگوی `docs/06`)؛ پروژه‌های `RadiusDesk` و `MikrotikRadius` در این مسیر کنار می‌روند و یک adapter جدید (کلید سوم یا جایگزین) ساخته می‌شود. متدهای Radius هرگز مستقیم در Application صدا زده نمی‌شوند — همین قاعده برای adapter جدید هم برقرار است.
+نقطه‌ی ورود فنی: همان قراردادهای `IInfraAccountRadiusSyncService` / `IInfraSessionRadiusSyncService` با keyed DI (الگوی `Docs/06`)؛ پروژه‌های `RadiusDesk` و `MikrotikRadius` در این مسیر کنار می‌روند و یک adapter جدید (کلید سوم یا جایگزین) ساخته می‌شود. متدهای Radius هرگز مستقیم در Application صدا زده نمی‌شوند — همین قاعده برای adapter جدید هم برقرار است.
 
 ## منبع حقیقت
 
@@ -63,5 +63,5 @@
 
 ## ارجاع متقابل
 
-- سمت Simorgh: `docs/panel/README.md` در `~/Developing/Simorgh` (تصمیم‌ها، D-های باز، ترتیب اجرا).
+- سمت Simorgh: `Docs/panel/README.md` در `~/Developing/Simorgh` (تصمیم‌ها، D-های باز، ترتیب اجرا).
 - قواعد دامنه و دسترسی: `registry/domains.md` و `servers/vm01.ir.arvan/panel-access.md` در Simorgh.

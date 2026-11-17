@@ -92,7 +92,7 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
   }
 
   /// target selector: managers pick from their targetArea, the admin picks
-  /// from the full user list (docs/20 phase 6 step 22)
+  /// from the full user list (Docs/20 phase 6 step 22)
   get canSelectTarget(): boolean {
     return this.hasSubUsers || this.user_service.isAdmin;
   }
@@ -114,7 +114,7 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
     return this.user_service.targetName;
   }
 
-  /// docs/22 §3.5: the account switcher — replaces the target selector for
+  /// Docs/22 §3.5: the account switcher — replaces the target selector for
   /// the regular user's own VPN accounts
   get accounts() {
     return this.user_service.accounts;

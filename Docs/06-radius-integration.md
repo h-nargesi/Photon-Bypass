@@ -1,4 +1,4 @@
-# docs/06-radius-integration.md — Dual-Radius sync
+# Docs/06-radius-integration.md — Dual-Radius sync
 
 > **English summary**: The backend can talk to two Radius backends simultaneously — RadiusDesk (FreeRADIUS/MySQL + Web API) and Mikrotik UserManager (tik4net + SSH). The Infrastructure dispatchers (`AccountRadiusSyncService`, `SessionRadiusSyncService`) resolve the right adapter per server via keyed DI (`RadiusType.RadiusDesk` / `RadiusType.UserManager`) and a `switch` on `server.Features & ServerFeature.Radius`. Operations fan out in parallel over all active Radius servers in a realm using `RunJob`.
 
@@ -132,5 +132,5 @@ sequenceDiagram
 
 ## Current gaps (نیمه‌کاره‌ها)
 
-- `SetOVpnCertificate` در `MikrotikDirectService` فعلاً `NotImplementedException` پرتاب می‌کند (`docs/12`).
+- `SetOVpnCertificate` در `MikrotikDirectService` فعلاً `NotImplementedException` پرتاب می‌کند (`Docs/12`).
 - خواندن/نوشتن ردیوس برای برخی صفحات هنوز در حال تکمیل است — مرجع صفحه‌به‌صفحه در `Architecture/analyse.md:314-365`.

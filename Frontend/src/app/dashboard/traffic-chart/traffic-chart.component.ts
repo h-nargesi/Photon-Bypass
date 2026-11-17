@@ -74,7 +74,7 @@ export class TrafficChartComponent implements OnInit {
   ngOnInit() {
     this.loadTrafficData();
 
-    // docs/22 §3.5: per-account reload on switcher changes too
+    // Docs/22 §3.5: per-account reload on switcher changes too
     merge(
       this.user_service.onTargetChanged,
       this.user_service.onAccountChanged,

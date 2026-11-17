@@ -144,7 +144,7 @@ export class DashboardComponent implements OnInit {
     return this.user_service.currentAccount?.realmName ?? '';
   }
 
-  /// docs/22 §3.5: reload the per-account widgets on a switcher change
+  /// Docs/22 §3.5: reload the per-account widgets on a switcher change
   private detectAccountChanges(): void {
     this.user_service.onAccountChanged
       .pipe(takeUntilDestroyed(this.destroy_ref))

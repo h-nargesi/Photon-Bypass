@@ -72,8 +72,8 @@ class AccountRadiusSyncService(
 
         // VPN-valid reconciliation: only Active accounts belong in the valid
         // set — a suspended or deactivated account is disabled on every realm
-        // within one sweep, even when the immediate sync failed (docs/20 D13).
-        // Every account pins exactly one realm (docs/22 §2), so the grouping
+        // within one sweep, even when the immediate sync failed (Docs/20 D13).
+        // Every account pins exactly one realm (Docs/22 §2), so the grouping
         // is a plain RealmId lookup — the bucket-0 fan-out is gone.
         var realm_user_dictionary = plan_state_list
             .Where(plan => plan.Status == VpnAccountStatus.Active)
@@ -179,7 +179,7 @@ class AccountRadiusSyncService(
         if (is_xui && is_radius)
         {
             // Defensive gate before the fan-out: a mixed realm has no single
-            // credential semantics (docs/17 §5 open item) and RunJob only surfaces
+            // credential semantics (Docs/17 §5 open item) and RunJob only surfaces
             // failures after every server already applied its change.
             throw new UserException(
                 "تغییر شناسه‌ی اتصال برای این سرور پشتیبانی نمی‌شود؛ لطفاً با پشتیبانی تماس بگیرید.",
@@ -187,7 +187,7 @@ class AccountRadiusSyncService(
         }
 
         // One credential per request: for x-ui data-planes it is a freshly
-        // generated UUID applied to every server (docs/16 D4 — the dispatcher
+        // generated UUID applied to every server (Docs/16 D4 — the dispatcher
         // owns generation, adapters only apply and return); Radius servers
         // apply the caller-supplied password.
         var credential = is_xui ? Guid.NewGuid().ToString() : password;

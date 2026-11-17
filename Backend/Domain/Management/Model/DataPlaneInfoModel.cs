@@ -10,7 +10,7 @@ public class DataPlaneInfoModel
 
     /// <summary>
     /// True for x-ui data-planes, where the credential-change path is an
-    /// automatic UUID rotation (docs/16 D4) instead of a password change.
+    /// automatic UUID rotation (Docs/16 D4) instead of a password change.
     /// </summary>
     public bool SupportsCredentialRotation { get; init; }
 }

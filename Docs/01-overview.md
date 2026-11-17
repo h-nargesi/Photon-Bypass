@@ -1,4 +1,4 @@
-# docs/01-overview.md — Product overview
+# Docs/01-overview.md — Product overview
 
 > **English summary**: Photon-Bypass sells and manages VPN accounts from one backend that serves two sites — a public Home (ads/plans) and a logged-in Profile. Three actor types (customer, manager-with-subusers, system/background) interact with five external resources: local MSSQL DB, Radius server (read via rad-db, write via rad-api), Mikrotik routers over SSH, Telegram (social channel — runtime-selected, WhatsApp adapter later), and an email server. Phasing comes from `README.md`.
 
@@ -12,8 +12,8 @@
 ## Three actor types (سه نقش)
 
 - **Customer (مشتری)**: ثبت‌نام، مشاهده‌ی وضعیت/مصرف، دریافت کانفیگ، تمدید، افزایش موجودی.
-- **Manager (مدیر با زیرمجموعه)**: همان مشتری است اما `UserTypes` پرچم‌دار است و می‌تواند روی `target` (زیرمجموعه) عمل کند. منطق دسترسی در `IAccessService` و `LoadJobContext` (`docs/08`).
-- **System / Background (سیستم)**: کارهای دوره‌ای Quartz (`JobInterval`) مثل pull ترافیک، هشدار پایان، غیرفعال‌سازی اکانت‌های رهاشده و بررسی ظرفیت سرور (`docs/04`).
+- **Manager (مدیر با زیرمجموعه)**: همان مشتری است اما `UserTypes` پرچم‌دار است و می‌تواند روی `target` (زیرمجموعه) عمل کند. منطق دسترسی در `IAccessService` و `LoadJobContext` (`Docs/08`).
+- **System / Background (سیستم)**: کارهای دوره‌ای Quartz (`JobInterval`) مثل pull ترافیک، هشدار پایان، غیرفعال‌سازی اکانت‌های رهاشده و بررسی ظرفیت سرور (`Docs/04`).
 
 > نکته‌ی مهم: پسورد لاگین اکانت در وب‌سایت با پسورد اتصال به سرورها (OpenVpn/Radius) متفاوت است؛ در ابتدا یکی هستند ولی از دو مسیر جدا تغییر می‌کنند (تغییر اکانت در `local db`، تغییر OpenVpn در `rad api`). (`README.md:117,201`)
 
@@ -24,9 +24,9 @@
 | Resource | Purpose | Access mode |
 |---|---|---|
 | **Local DB** (`local db`) | اکانت، کیف پول، تاریخچه، تمدید، پلن، سرورها، قیمت | مستقیم MSSQL (`LocalDbContext`) |
-| **Radius server** | وضعیت/اتصال کاربران VPN | **rad-db** (read، MySQL) و **rad-api** (write، Web API) — دو حالت RadiusDesk یا Mikrotik UserManager (`docs/06`) |
-| **Mikrotik routers** (`mikrotik ssh`) | بستن کانکشن، ساخت گواهی، اسکریپت | SSH مستقیم (`ServerBridge/Ssh`) و tik4net (`docs/07`) |
-| **Telegram** (Bot API از طریق پروکسی) | کد بازیابی، هشدار پایان سرویس/پسورد اشتباه به chat متصل + هشدار اپراتور | کانال runtime با `SocialMediaOptions:Channel` (`docs/21`)؛ واتساپ بعداً = آداپتور روی همین اینترفیس |
+| **Radius server** | وضعیت/اتصال کاربران VPN | **rad-db** (read، MySQL) و **rad-api** (write، Web API) — دو حالت RadiusDesk یا Mikrotik UserManager (`Docs/06`) |
+| **Mikrotik routers** (`mikrotik ssh`) | بستن کانکشن، ساخت گواهی، اسکریپت | SSH مستقیم (`ServerBridge/Ssh`) و tik4net (`Docs/07`) |
+| **Telegram** (Bot API از طریق پروکسی) | کد بازیابی، هشدار پایان سرویس/پسورد اشتباه به chat متصل + هشدار اپراتور | کانال runtime با `SocialMediaOptions:Channel` (`Docs/21`)؛ واتساپ بعداً = آداپتور روی همین اینترفیس |
 | **Email server** | فراموشی پسورد، گواهی، هشدار پایان (fallback کانال اجتماعی) | SmtpClient (`EmailHandler`) |
 
 قاعده‌ی مهم Radius: **خواندن از دیتابیس ردیوس (rad-db)** و **نوشتن از طریق API (rad-api)** انجام می‌شود تا بار روی ردیوس کمتر شود (`analyse.md:308`).
@@ -49,7 +49,7 @@ flowchart TB
     API --> Email[Email Server]
     Job --> RadDB
     Job --> Email
-    Job --> Telegram[Telegram Bot - docs/21]
+    Job --> Telegram[Telegram Bot - Docs/21]
     Job --> LocalDB
 ```
 
@@ -60,16 +60,16 @@ flowchart TB
 1. **Web Site Core** — هسته‌ی وب (Unit Test، Cloudflare Human Test، پنل چنداکانت، FAQ).
 2. **MySql Performance** — بهینه‌سازی MySQL.
 3. **Fake Website** — نماد، ساماندهی، درگاه پرداخت جعلی.
-4. **Send WhatsApp Notif** — دکمه‌ی feedback و نوتیفیکیشن؛ کانال اجتماعی با تلگرام فعال شد (`docs/21`)، واتساپ بعداً = آداپتور.
+4. **Send WhatsApp Notif** — دکمه‌ی feedback و نوتیفیکیشن؛ کانال اجتماعی با تلگرام فعال شد (`Docs/21`)، واتساپ بعداً = آداپتور.
 5. **Google Auth** — ورود با گوگل.
 6. **Other features**.
 
-وضعیت جاری هر فاز در `docs/12-current-state.md` نگاشت شده است.
+وضعیت جاری هر فاز در `Docs/12-current-state.md` نگاشت شده است.
 
 ## Key constraints & notes (محدودیت‌ها و نکات کلیدی)
 
 - **API rate limit** در یک بازه‌ی زمانی (`analyse.md:5`) — فعلاً پیاده‌سازی صریح دیده نمی‌شود؛ نقطه‌ی شروع در TODO.
-- **Cache اطلاعات کاربر در فرانت** (`analyse.md:6`) — `UserService` اکانت را در حافظه و `target` را در `localStorage` نگه می‌دارد (`docs/10`).
-- **محدودیت ارسال ایمیل** در یک بازه‌ی زمانی (`analyse.md:7`)؛ هشدارها با `DelayBetweenWarnings` (۲۰ ساعت) throttle می‌شوند (`docs/03`).
-- **گواهی open-vpn**: اگر وجود نداشته باشد باید ساخته شود (`analyse.md:8`)؛ `SetOVpnCertificate` هنوز `NotImplementedException` می‌اندازد (`docs/12`).
+- **Cache اطلاعات کاربر در فرانت** (`analyse.md:6`) — `UserService` اکانت را در حافظه و `target` را در `localStorage` نگه می‌دارد (`Docs/10`).
+- **محدودیت ارسال ایمیل** در یک بازه‌ی زمانی (`analyse.md:7`)؛ هشدارها با `DelayBetweenWarnings` (۲۰ ساعت) throttle می‌شوند (`Docs/03`).
+- **گواهی open-vpn**: اگر وجود نداشته باشد باید ساخته شود (`analyse.md:8`)؛ `SetOVpnCertificate` هنوز `NotImplementedException` می‌اندازد (`Docs/12`).
 - **اتصال یک کاربر به فقط یک سرور** و **محاسبه‌ی جای خالی** برای تمدید جدید (`README.md:49,260`) — از طریق `RestrictedRealmId` و ظرفیت realm.

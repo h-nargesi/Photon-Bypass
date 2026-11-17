@@ -83,7 +83,7 @@ export class WalletComponent implements OnInit {
   page = 1;
   loading = false;
 
-  // adjust form (docs/20 D5)
+  // adjust form (Docs/20 D5)
   direction: BalanceDirection = BalanceDirection.Credit;
   amount?: number;
   description = '';

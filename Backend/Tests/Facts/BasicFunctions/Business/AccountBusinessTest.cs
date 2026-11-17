@@ -127,7 +127,7 @@ public class AccountBusinessTest
     [Fact]
     public void ValidateVpnUsername_AcceptsPanelUsernameWithCharsetSuffix()
     {
-        // docs/22 D3: bare panel username (first account) and readable suffixes
+        // Docs/22 D3: bare panel username (first account) and readable suffixes
         AccountBusiness.ValidateVpnUsername("hamed", "hamed");
         AccountBusiness.ValidateVpnUsername("hamed", "hamed2");
         AccountBusiness.ValidateVpnUsername("hamed", "hamed_x-1");

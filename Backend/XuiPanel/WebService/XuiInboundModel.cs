@@ -7,7 +7,7 @@ namespace PhotonBypass.Xui.WebService;
 /// alireza0/x-ui v1.12.0/v1.14.0 inbound payload: `port` and `protocol` are
 /// plain fields while `streamSettings` is itself a JSON string inside the
 /// payload. The stream string is parsed by the vless link builder, never
-/// copied into the local server configuration (docs/16 D4 live-read rule).
+/// copied into the local server configuration (Docs/16 D4 live-read rule).
 /// </summary>
 public class XuiInboundModel
 {

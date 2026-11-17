@@ -41,7 +41,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
 
         // D-A: a VPN-suspended account keeps portal access but renewal is
-        // blocked until a manager reactivates it (docs/22 D12: per account)
+        // blocked until a manager reactivates it (Docs/22 D12: per account)
         vpn_account_moq.Data.First(account => account.Username == "User2").Status = VpnAccountStatus.Suspended;
 
         job_context.InjectJobContext(99, "User99", "User2");
@@ -697,7 +697,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == account.Id);
         Assert.Equal(25, renewal.TrafficLimit / StaticValues.BytesInGigLong);
-        // monthly pricing derives the expiry from the traffic share (docs/17):
+        // monthly pricing derives the expiry from the traffic share (Docs/17):
         // 25GB/1u → 60 + 30 - 0 = 90 days
         Assert.Equal((short)90, renewal.TimeLimitInDays);
         Assert.NotNull(renewal.ExpirationDate);

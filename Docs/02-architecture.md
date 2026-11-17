@@ -1,4 +1,4 @@
-# docs/02-architecture.md — Architecture & layers
+# Docs/02-architecture.md — Architecture & layers
 
 > **English summary**: Layered DDD over a single .NET 8 solution. The DI composition root (`ServiceFactoryHandler.AddAppServices`) chains six `ServiceFactory` registrations in a fixed order; each host (`Portal`/`Admin`) then layers JWT/MVC/Access on top. Dependencies flow inward (Domain has no outward refs); `Lazy<T>` and keyed DI break cycles and select the Radius backend at runtime.
 
@@ -118,7 +118,7 @@ flowchart LR
 
 ### Keyed DI for dual Radius
 
-دو پیاده‌سازی ردیوس همزمان با کلیدهای ثابت `"RadiusDesk"` و `"UserManager"` (`Infrastructure/Radius/RadiusType.cs`) ثبت می‌شوند و سرویس‌های dispatch در `Infrastructure` با `[FromKeyedServices(...)]` آن‌ها را بر اساس پرچم `ServerFeature` انتخاب می‌کنند. جزئیات در `docs/06-radius-integration.md`.
+دو پیاده‌سازی ردیوس همزمان با کلیدهای ثابت `"RadiusDesk"` و `"UserManager"` (`Infrastructure/Radius/RadiusType.cs`) ثبت می‌شوند و سرویس‌های dispatch در `Infrastructure` با `[FromKeyedServices(...)]` آن‌ها را بر اساس پرچم `ServerFeature` انتخاب می‌کنند. جزئیات در `Docs/06-radius-integration.md`.
 
 ## Request → DI flow (جریان یک درخواست)
 

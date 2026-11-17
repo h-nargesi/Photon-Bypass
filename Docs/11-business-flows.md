@@ -1,10 +1,10 @@
-# docs/11-business-flows.md — End-to-end scenarios
+# Docs/11-business-flows.md — End-to-end scenarios
 
 > **English summary**: Step-by-step walkthroughs of the common user journeys and the periodic background behaviors: Register, Login, Dashboard/traffic, Renewal (with invoice), traffic sync, capacity management, deactivation cascade, and multi-account delegation. Each has a short Mermaid sequence diagram and the key code anchors.
 
 ## 1. Register (ثبت‌نام)
 
-`AuthApplication.Register` → اعتبارسنجی (regex در `AccountBusiness`) → ساخت `PanelUserEntity` (`CreateFromModel`) → هش پسورد لاگین → ذخیره در local DB → هشدار اجتماعی. **هیچ یوزرنیم/رمز VPNای ساخته نمی‌شود** — اکانت VPN اول با اولین خرید می‌آید (docs/22 D9؛ اکشن فاکتور `n|...` → `PlanApplication.PurchaseNewAccount`).
+`AuthApplication.Register` → اعتبارسنجی (regex در `AccountBusiness`) → ساخت `PanelUserEntity` (`CreateFromModel`) → هش پسورد لاگین → ذخیره در local DB → هشدار اجتماعی. **هیچ یوزرنیم/رمز VPNای ساخته نمی‌شود** — اکانت VPN اول با اولین خرید می‌آید (Docs/22 D9؛ اکشن فاکتور `n|...` → `PlanApplication.PurchaseNewAccount`).
 
 ```mermaid
 sequenceDiagram
@@ -22,7 +22,7 @@ sequenceDiagram
     APP-->>U: success
 ```
 
-> در طراحی اولیه قرار بود کاربر هم‌زمان در ردیوس ثبت شود (`analyse.md:325`)؛ وضعیت فعلی را در کد بررسی کنید (`docs/12`).
+> در طراحی اولیه قرار بود کاربر هم‌زمان در ردیوس ثبت شود (`analyse.md:325`)؛ وضعیت فعلی را در کد بررسی کنید (`Docs/12`).
 
 ## 2. Login (ورود)
 
@@ -51,7 +51,7 @@ sequenceDiagram
 ## 3. Dashboard / traffic (داشبورد و مصرف)
 
 - `UpdateTrafficData` (در `JobInterval`) به‌صورت دوره‌ای ترافیک را از radius pull می‌کند و در `TrafficData` ذخیره می‌کند.
-- صفحه‌ی داشبورد `GET /api/plan/plan-state` را می‌زند که از view `TotalPlanState` وضعیت جاری را می‌خواند (`docs/09`).
+- صفحه‌ی داشبورد `GET /api/plan/plan-state` را می‌زند که از view `TotalPlanState` وضعیت جاری را می‌خواند (`Docs/09`).
 - نمودار ۳۰ روزه از `GET /api/vpn/traffic-data` سرو می‌شود.
 
 ```mermaid
@@ -150,7 +150,7 @@ flowchart TB
     C -->|update LastWarningTime| TH[throttle 20h]
 ```
 
-## 7b. Two-stage deactivation (غیرفعال‌سازی دووضعیتی — docs/20 D13)
+## 7b. Two-stage deactivation (غیرفعال‌سازی دووضعیتی — Docs/20 D13)
 
 `POST /api/user/set-status` وضعیت سه‌مقداری `AccountStatus` را تنظیم می‌کند (جایگزین `set-active`):
 

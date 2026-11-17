@@ -1,11 +1,11 @@
 namespace PhotonBypass.Domain.Account.Model;
 
 /// <summary>
-/// Cached login context of a user (docs/20 D2, docs/22 §3): the role for
+/// Cached login context of a user (Docs/20 D2, Docs/22 §3): the role for
 /// authorization checks, the usernames the user may act on behalf of and the
 /// VPN account ids the user may operate. The account set is only trusted
 /// after a repository rebuild — the login snapshot can go stale the moment
-/// the user buys another account (docs/22 D9), so <see cref="AccountIds"/>
+/// the user buys another account (Docs/22 D9), so <see cref="AccountIds"/>
 /// from <c>LoginEvent</c> is a warm start, never the truth.
 /// </summary>
 public class TargetAreaModel

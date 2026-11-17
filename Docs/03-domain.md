@@ -1,4 +1,4 @@
-# docs/03-domain.md — Domain model & rules
+# Docs/03-domain.md — Domain model & rules
 
 > **English summary**: The `Domain` project holds entities (mapped to MSSQL tables), enums (mostly `[Flags]`), pure-static business helpers (`AccountBusiness`, `RenewalBusiness`, `PlanStateBusiness`, `WalletBusiness`), and stable repository/service interfaces. It references nothing outward. This file is the reference for entity↔table, enum values, and the exact business rules (traffic multiples of 25, time multiples of 30, deactivation thresholds 7/40 days).
 
@@ -8,7 +8,7 @@
 
 | Entity file | DB table | Group | Notes |
 |---|---|---|---|
-| `Domain/Account/Entity/PanelUserEntity.cs` | `PanelUser` | PanelUser | نیمه‌ی پنل از تفکیک `Account` (docs/22 D1): یوزرنیم یکتا، پسورد هش‌شده، `Owner` (FK خود-ارجاع برای زیرمجموعه)، تماس/تلگرام/`CalculationMethod`/`Role`/`UserType`؛ `Status` از نوع `PanelUserStatus` (0/2). |
+| `Domain/Account/Entity/PanelUserEntity.cs` | `PanelUser` | PanelUser | نیمه‌ی پنل از تفکیک `Account` (Docs/22 D1): یوزرنیم یکتا، پسورد هش‌شده، `Owner` (FK خود-ارجاع برای زیرمجموعه)، تماس/تلگرام/`CalculationMethod`/`Role`/`UserType`؛ `Status` از نوع `PanelUserStatus` (0/2). |
 | `Domain/Account/Entity/VpnAccountEntity.cs` | `VpnAccount` | VpnAccount | نیمه‌ی VPN: `UserId` (FK به PanelUser)، `RealmId` (NOT NULL)، `Username` یکتای سراسری (قاعده‌ی D3: پیشوند یوزرنیم پنل + پسوند اختیاری، ≤32)، `VpnPassword`، `Status` از نوع `VpnAccountStatus`، مهرهای هشدار/چرخش. |
 | `Domain/Account/Entity/WalletEntity.cs` | `Wallet` | Account | کیف پول؛ `Direction` (Credit/Debit)، `Status`، `InvoiceCode`، `Action` (رشته‌ی تمدید تعویق‌یافته). |
 | `Domain/Account/Entity/HistoryEntity.cs` | `History` | Account | لاگ رویدادها روی یک target. |
@@ -37,9 +37,9 @@
 | Enum | File | Kind | Values |
 |---|---|---|---|
 | `UserTypes` | `Domain/Account/Model/UserTypes.cs` | `[Flags] byte` | `None=0`, `OldUser=1`, `AllowMonthly=2` |
-| `AccountRole` | `Domain/Account/Model/AccountRole.cs` | `byte` | `User=0`, `Manager=1`, `Admin=2` (docs/20 D2/D9) |
-| `PanelUserStatus` | `Domain/Account/Model/PanelUserStatus.cs` | `byte` | `Active=0`, `Deactivated=2` — فقط محور پنل (docs/22 D12): ۲ = بلاک لاگین (401). |
-| `VpnAccountStatus` | `Domain/Account/Model/VpnAccountStatus.cs` | `byte` | `Active=0`, `Suspended=1`, `Deactivated=2` — محور VPN per-account (docs/22 D12): ۱ = فقط VPN خاموش (تمدید همان اکانت مسدود)؛ ۲ = ترمینال (رهاشدگی ۴۰ روزه). |
+| `AccountRole` | `Domain/Account/Model/AccountRole.cs` | `byte` | `User=0`, `Manager=1`, `Admin=2` (Docs/20 D2/D9) |
+| `PanelUserStatus` | `Domain/Account/Model/PanelUserStatus.cs` | `byte` | `Active=0`, `Deactivated=2` — فقط محور پنل (Docs/22 D12): ۲ = بلاک لاگین (401). |
+| `VpnAccountStatus` | `Domain/Account/Model/VpnAccountStatus.cs` | `byte` | `Active=0`, `Suspended=1`, `Deactivated=2` — محور VPN per-account (Docs/22 D12): ۱ = فقط VPN خاموش (تمدید همان اکانت مسدود)؛ ۲ = ترمینال (رهاشدگی ۴۰ روزه). |
 | `BalanceDirection` | `Domain/Account/Model/BalanceDirection.cs` | `short` | Credit / Debit |
 | `BalanceStatus` | `Domain/Account/Model/BalanceStatus.cs` | `byte` | وضعیت تراکنش/فاکتور (مثل `Failed`, `Completed`) |
 | `EventCategory` | `Domain/Account/Model/EventCategory.cs` | `byte` | دسته‌ی رویداد تاریخچه (مثل `Transaction`) |
@@ -50,7 +50,7 @@
 | `ConnectionState` | `Domain/Plan/Model/UserConnectionBinding.cs` | — | وضعیت اتصال کاربر |
 | `PriceStates` | `Domain/Static/PriceEntity.cs` | — | وضعیت آیتم قیمت |
 
-> نکته‌ی کلیدی: انتخاب سرور Radius با `radius.Features & ServerFeature.Radius` و سپس تطبیق با `ServerFeature.UserManager` / `ServerFeature.RadiusDesk` انجام می‌شود (`docs/06`).
+> نکته‌ی کلیدی: انتخاب سرور Radius با `radius.Features & ServerFeature.Radius` و سپس تطبیق با `ServerFeature.UserManager` / `ServerFeature.RadiusDesk` انجام می‌شود (`Docs/06`).
 
 ## Business rules (قواعد کسب‌وکار)
 
@@ -94,13 +94,13 @@
 
 ### `WalletBusiness` (`Domain/Account/Business/WalletBusiness.cs`)
 
-کمکی‌های کیف پول (موجودی، نیاز به پول برای تمدید). منطق «آیا موجودی کافی است» از طریق `PanelUserEntity.CheckMoneyNeed(balance, estimate, out money_need)` در جریان تمدید استفاده می‌شود (`docs/11`).
+کمکی‌های کیف پول (موجودی، نیاز به پول برای تمدید). منطق «آیا موجودی کافی است» از طریق `PanelUserEntity.CheckMoneyNeed(balance, estimate, out money_need)` در جریان تمدید استفاده می‌شود (`Docs/11`).
 
 ## Repository & service interfaces (اینترفیس‌ها)
 
 پایه‌ی دسترسی داده در `Domain/Repository` و لایه‌های دیگر:
 
-- **Repository base**: `IEditableRepository<T>` (دارای `Save`/`Delete`/`DbContext`/`Events`) روی `DapperRepository<T>` در Infrastructure (`docs/05`).
+- **Repository base**: `IEditableRepository<T>` (دارای `Save`/`Delete`/`DbContext`/`Events`) روی `DapperRepository<T>` در Infrastructure (`Docs/05`).
 - **Domain repository interfaces** (`Domain/*/`):
   - Account: `IPanelUserRepository`, `IVpnAccountRepository`, `IWalletRepository`, `IHistoryRepository`, `IResetPassRepository`
   - Plan: `IRenewalRepository`, `IPlanStateRepository`, `ITrafficDataRepository`
@@ -113,7 +113,7 @@
 ## Cross-cutting (سرویس‌های سراسری دامنه)
 
 - **`IJobContext`** (`Domain/IJobContext.cs`): `Username`، `Target`، `AccountId` به‌علاوه‌ی `InjectJobContext(...)` برای تنظیم زمینه‌ی درخواست/تراکنش. پیاده‌سازی Scoped در `Portal/Basical/JobContext.cs`.
-- **`IAccessService`** (`Domain/Account/IAccessService.cs`): `CheckAccess(username, target)`، `LoginEvent(username, area)`، `LogoutEvent(username)`. چنداکانتی را با کش `TargetArea|{username}` مدیریت می‌کند (`docs/08`).
+- **`IAccessService`** (`Domain/Account/IAccessService.cs`): `CheckAccess(username, target)`، `LoginEvent(username, area)`، `LogoutEvent(username)`. چنداکانتی را با کش `TargetArea|{username}` مدیریت می‌کند (`Docs/08`).
 
 ## ER sketch (نمودار ER نهادها)
 
@@ -132,4 +132,4 @@ erDiagram
     Account }o--|| Price : "CalculationMethod"
 ```
 
-> `PlanState` و `TotalPlanState` محاسباتی هستند و نه جدول ساده — منطق آن در `docs/09-database.md`.
+> `PlanState` و `TotalPlanState` محاسباتی هستند و نه جدول ساده — منطق آن در `Docs/09-database.md`.

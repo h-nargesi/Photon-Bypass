@@ -13,7 +13,7 @@ using PhotonBypass.Xui.WebService;
 namespace PhotonBypass.Test.Facts.Xui;
 
 /// <summary>
-/// Fixture-driven tests for the vless link builder (docs/16 D4): the stream
+/// Fixture-driven tests for the vless link builder (Docs/16 D4): the stream
 /// settings below mirror the alireza0/x-ui v1.14.0 inbound payload shapes,
 /// where `streamSettings` is a nested JSON string. The parser accepts both the
 /// camelCase keys of the panel payload and the PascalCase variants seen in

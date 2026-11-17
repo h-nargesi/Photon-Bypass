@@ -4,21 +4,21 @@ export enum AccountRole {
   Admin = 2,
 }
 
-/// Panel-user status (backend `PanelUserStatus`, docs/22 D12): only the
+/// Panel-user status (backend `PanelUserStatus`, Docs/22 D12): only the
 /// portal axis — VPN suspension is per VpnAccount.
 export enum PanelUserStatus {
   Active = 0,
   Deactivated = 2,
 }
 
-/// VPN-account status (backend `VpnAccountStatus`, docs/22 D12).
+/// VPN-account status (backend `VpnAccountStatus`, Docs/22 D12).
 export enum VpnAccountStatus {
   Active = 0,
   Suspended = 1,
   Deactivated = 2,
 }
 
-/// One VPN account of the user (backend `UserVpnAccountModel`, docs/22 D2).
+/// One VPN account of the user (backend `UserVpnAccountModel`, Docs/22 D2).
 export interface UserVpnAccount {
   id: number;
   username: string;

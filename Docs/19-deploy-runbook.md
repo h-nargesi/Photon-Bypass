@@ -1,6 +1,6 @@
-# docs/19-deploy-runbook.md — ران‌بوک اولین انتشار روی هاست Plesk (FTP دستی + secrets.json)
+# Docs/19-deploy-runbook.md — ران‌بوک اولین انتشار روی هاست Plesk (FTP دستی + secrets.json)
 
-> **English summary**: First-release deployment runbook. This panel has **never been deployed** — no production tokens exist to revoke, no live data needs migration, and every production secret is generated fresh at this release. Flow: (1) generate all production secrets from scratch; (2) create `private/secrets.json` in the Plesk vhost (outside the web root; loaded per-key over `appsettings.json` by `AddPleskPrivateSecrets`, enforced against committed test values by `ProductionSecretsGuard`); (3) install the MSSQL database from scratch and create the admin account with the operator's real password via `scripts/deploy.sh db` (DeployCli — no seeded admin exists); (4) stop the site from the Plesk panel, publish to `httpdocs/` via manual FTP — the `private/` folder is never overwritten — then restart it from the panel; (5) verify: site boots = guard green; a guard message = a secret was left behind. Scope: manual FTP + manual Plesk stop/start only (no CI/CD, no Git deploy, no vault, no scripted app pool control).
+> **English summary**: First-release deployment runbook. This panel has **never been deployed** — no production tokens exist to revoke, no live data needs migration, and every production secret is generated fresh at this release. Flow: (1) generate all production secrets from scratch; (2) create `private/secrets.json` in the Plesk vhost (outside the web root; loaded per-key over `appsettings.json` by `AddPleskPrivateSecrets`, enforced against committed test values by `ProductionSecretsGuard`); (3) install the MSSQL database from scratch and create the admin account with the operator's real password via `Scripts/deploy.sh db` (DeployCli — no seeded admin exists); (4) stop the site from the Plesk panel, publish to `httpdocs/` via manual FTP — the `private/` folder is never overwritten — then restart it from the panel; (5) verify: site boots = guard green; a guard message = a secret was left behind. Scope: manual FTP + manual Plesk stop/start only (no CI/CD, no Git deploy, no vault, no scripted app pool control).
 
 > **فارسی**: ران‌بوک انتشار اول. این پنل هنوز منتشر نشده است؛ بنابراین هیچ چرخش/ابطال توکن و هیچ migration داده‌ای در کار نیست و همه secretهای پروداکشن در همین انتشار از صفر تولید می‌شوند.
 
@@ -8,7 +8,7 @@
 
 - مقادیر تستی فعلی در repo می‌مانند (کاربر تأیید کرد تستی‌اند)؛ گارد `ProductionSecretsGuard` مانع بالا آمدن پروداکشن با آن‌ها می‌شود.
 - مکانیزم ذخیره‌ی secret: فایل `secrets.json` در پوشه‌ی استاندارد `private` کنار `httpdocs` در vhost پلسک — خارج از web root، غیرقابل دانلود با URL، دست‌نخورده توسط deploy.
-- روش deploy: آپلود دستی FTP + نصب دیتابیس و ساخت ادمین با `scripts/deploy.sh` (فریم‌ورک migration وجود ندارد). توقف/راه‌اندازی سایت دستی از پنل Plesk.
+- روش deploy: آپلود دستی FTP + نصب دیتابیس و ساخت ادمین با `Scripts/deploy.sh` (فریم‌ورک migration وجود ندارد). توقف/راه‌اندازی سایت دستی از پنل Plesk.
 - **اولین انتشار است**: دیتابیس از ابتدا با اجرای کل اسکریپت‌ها ساخته می‌شود؛ همه credentialها (کلید JWT، DB/Radius/ایمیل) تازه تولید می‌شوند.
 
 ## ۲. مکانیزم کانفیگ (چطور کار می‌کند)
@@ -50,9 +50,9 @@
 2. **دیتابیس محلی MSSQL** (`LocalDatabaseOptions:ConnectionString`): دیتابیس `FastBypass` را با کاربر اختصاصی و پسورد قوی بسازید (نه کاربر تستی repo).
 3. **Radius**: connection string دیتابیس Radius (`RadDapperOptions:ConnectionString`) و credential وب‌سرویس RadiusDesk (`RadiusServiceOptions`) با مقادیر واقعی سرور.
 4. **ایمیل** (`EmailOptions`): **الزامی** — کانال پیش‌فرض بازیابی/هشدار است (تلگرام اختیاری است و جایگزین اجباری ایمیل نمی‌شود)؛ پروداکشن بدون `Enabled: true` و credential صندوق واقعی بوت نمی‌شود (گارد).
-5. **SSH/ServerBridge**: در صورت وجود credential پیش‌فرض در `ServerBridgeOptions`. (credential تک‌تک سرورها در جدول `Server` ذخیره می‌شود و از پنل وارد می‌شود؛ رمزنگاری at-rest آن: docs/14 M12.)
+5. **SSH/ServerBridge**: در صورت وجود credential پیش‌فرض در `ServerBridgeOptions`. (credential تک‌تک سرورها در جدول `Server` ذخیره می‌شود و از پنل وارد می‌شود؛ رمزنگاری at-rest آن: Docs/14 M12.)
 6. **پرداخت/OVPN** (در صورت استفاده): `ManagementOptions:PaymentCards` (شماره کارت‌های واقعی) و `ManagementOptions:DefaultPrivateKeyOVpn`.
-7. **تلگرام** (در صورت فعال‌سازی کانال — docs/21): bot token واقعی از @BotFather، `BotUsername` بدون `@`، `OperationsChatId` (chat اپراتور — با `/start` گفتگو با بات به دست می‌آید) و `Proxy:Address` (+ Username/Password اختیاری؛ Bot API از سرور بدون پروکسی خروجی در دسترس نیست). توکن تستی کامیت‌شده در appsettings توسط گارد بلاک می‌شود؛ کلیدها فقط با نام در مستندات می‌آیند.
+7. **تلگرام** (در صورت فعال‌سازی کانال — Docs/21): bot token واقعی از @BotFather، `BotUsername` بدون `@`، `OperationsChatId` (chat اپراتور — با `/start` گفتگو با بات به دست می‌آید) و `Proxy:Address` (+ Username/Password اختیاری؛ Bot API از سرور بدون پروکسی خروجی در دسترس نیست). توکن تستی کامیت‌شده در appsettings توسط گارد بلاک می‌شود؛ کلیدها فقط با نام در مستندات می‌آیند.
 
 ### (ب) ساخت `private/secrets.json`
 
@@ -99,21 +99,21 @@
 }
 ```
 
-در صورت نیاز بخش‌های `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند؛ `EmailOptions` عمداً در `appsettings.json` کامیت نمی‌شود و کامل در `secrets.json` می‌آید (`Enabled: true` + credential). کلید عملیاتی `EmailOptions:MaxSendsPerHour` (سقف لغزان یک‌ساعته‌ی سراسری ارسال — پیش‌فرض ۵۰۰، صفر/منفی = نامحدود؛ شیر ایمنی در برابر فال‌بک انبوه به ایمیل هنگام قطع کانال سوشال) secret نیست و اگر سرور SMTP شما سقف ساعتی دیگری دارد، همین‌جا override کنید. بلوک تلگرام فقط اگر کانال فعال می‌شود لازم است: با `Channel: "Telegram"` گارد پروداکشن کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (docs/21 §فعال‌سازی)؛ بدون آن کانال `None` می‌ماند (no-op) و بلوک لازم نیست.
+در صورت نیاز بخش‌های `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند؛ `EmailOptions` عمداً در `appsettings.json` کامیت نمی‌شود و کامل در `secrets.json` می‌آید (`Enabled: true` + credential). کلید عملیاتی `EmailOptions:MaxSendsPerHour` (سقف لغزان یک‌ساعته‌ی سراسری ارسال — پیش‌فرض ۵۰۰، صفر/منفی = نامحدود؛ شیر ایمنی در برابر فال‌بک انبوه به ایمیل هنگام قطع کانال سوشال) secret نیست و اگر سرور SMTP شما سقف ساعتی دیگری دارد، همین‌جا override کنید. بلوک تلگرام فقط اگر کانال فعال می‌شود لازم است: با `Channel: "Telegram"` گارد پروداکشن کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (Docs/21 §فعال‌سازی)؛ بدون آن کانال `None` می‌ماند (no-op) و بلوک لازم نیست.
 
 ### (ج) نصب دیتابیس از ابتدا + ساخت ادمین (پیش از بالا آوردن app)
 
-روی MSSQL پروداکشن، `scripts/deploy.sh` کل batch را با ترتیب وابستگی FK و fail-fast اجرا می‌کند و در اولین اجرا ساخت ادمین را هم پیش می‌برد:
+روی MSSQL پروداکشن، `Scripts/deploy.sh` کل batch را با ترتیب وابستگی FK و fail-fast اجرا می‌کند و در اولین اجرا ساخت ادمین را هم پیش می‌برد:
 
 ```bash
-scripts/deploy.sh db --secrets /path/to/secrets.json   # کپی محلی private/secrets.json
+Scripts/deploy.sh db --secrets /path/to/secrets.json   # کپی محلی private/secrets.json
 # یا با پارامترهای صریح:
-scripts/deploy.sh db -S <mssql-host> -U <login> -P '<password>'
+Scripts/deploy.sh db -S <mssql-host> -U <login> -P '<password>'
 ```
 
 1. `Database.sql` ابتدا بدون initial-catalog اجرا می‌شود (بافت master برای `CREATE DATABASE`؛ ساخت دیتابیس `FastBypass`)؛ ۱۴ اسکریپت بعدی هرکدام با هدر `USE FastBypass` می‌آیند. ترتیب در `MANIFEST` داخل اسکریپت ثابت است و **گارد manifest** هر فایل `.sql` فهرست‌نشده در `Database/LocalDatabase/` را با نام فایل abort می‌کند.
 2. مجموعه **fresh-install** و idempotent است: اسکریپت‌های migration/ALTER قدیمی در همین `CREATE TABLE` ها ادغام و حذف شده‌اند — داده‌ی legacy وجود ندارد و هر release همان batch را دوباره اجرا می‌کند (جزئیات و ترتیب کامل: `Database/LocalDatabase/README.md`). ویوی `TotalPlanState` (منبع حقیقت وضعیت پلن‌ها) جزو همان مجموعه ساخته می‌شود.
-3. **ساخت ادمین** — seed ادمین وجود ندارد؛ ادمین با پسورد واقعی اپراتور در زمان درج ساخته می‌شود: بعد از batch، اگر جدول `Account` خالی بود اسکریپت username (پیش‌فرض `admin`) و پسورد مخفی می‌پرسد و `DeployCli create-admin` را صدا می‌زند (`Role=Admin` + `UserType=AllowSelfService`؛ گاردهای username تکراری و تک‌ادمینی D9 در خود CLI). سپس `verify` همان credential را smoke-check می‌کند. غیرتعاملی: `--admin-user`/`--admin-password` یا env `DEPLOY_ADMIN_USER`/`DEPLOY_ADMIN_PASSWORD`. برای اجراهای بعدی: `scripts/deploy.sh admin`.
+3. **ساخت ادمین** — seed ادمین وجود ندارد؛ ادمین با پسورد واقعی اپراتور در زمان درج ساخته می‌شود: بعد از batch، اگر جدول `Account` خالی بود اسکریپت username (پیش‌فرض `admin`) و پسورد مخفی می‌پرسد و `DeployCli create-admin` را صدا می‌زند (`Role=Admin` + `UserType=AllowSelfService`؛ گاردهای username تکراری و تک‌ادمینی D9 در خود CLI). سپس `verify` همان credential را smoke-check می‌کند. غیرتعاملی: `--admin-user`/`--admin-password` یا env `DEPLOY_ADMIN_USER`/`DEPLOY_ADMIN_PASSWORD`. برای اجراهای بعدی: `Scripts/deploy.sh admin`.
 4. اگر هاست به کاربر اجازه‌ی `CREATE DATABASE` نمی‌دهد، دیتابیس را از پنل Plesk بسازید — `Database.sql` با گارد `IF NOT EXISTS` no-op رد می‌شود و بقیه‌ی batch عادی ادامه می‌یابد.
 
 ### (د) publish و آپلود FTP (توقف/راه‌اندازی دستی از پنل Plesk)
@@ -137,11 +137,11 @@ dotnet publish Backend/Portal -c Release -o publish/Portal
 
 ## ۴. نکات عملیاتی اولین انتشار
 
-- **بکاپ `data-protection-keys`**: پوشه‌ی کلیدهای Data Protection (docs/14 M12) باید در بکاپ vhost باشد؛ گم‌شدنش = ورود دوباره‌ی کانفیگ رمزنگاری‌شده‌ی سرورها.
-- **ادمین**: seed پیش‌فرض حذف شده است؛ ادمین در گام (ج) با پسورد واقعی اپراتور ساخته و verify می‌شود (`scripts/deploy.sh db`/`admin` → `DeployCli`) — پسورد پیش‌فرضی برای تعویض پس از نصب وجود ندارد.
+- **بکاپ `data-protection-keys`**: پوشه‌ی کلیدهای Data Protection (Docs/14 M12) باید در بکاپ vhost باشد؛ گم‌شدنش = ورود دوباره‌ی کانفیگ رمزنگاری‌شده‌ی سرورها.
+- **ادمین**: seed پیش‌فرض حذف شده است؛ ادمین در گام (ج) با پسورد واقعی اپراتور ساخته و verify می‌شود (`Scripts/deploy.sh db`/`admin` → `DeployCli`) — پسورد پیش‌فرضی برای تعویض پس از نصب وجود ندارد.
 - **خطای گارد در لاگ‌های هاست** چیزی مخفی نمی‌کند؛ پیام فقط کلیدها و مسیرها را می‌گوید، نه مقادیر.
 - **poller تلگرام با کانال فعال**: همان پیش‌نیاز چرخه‌حیات Quartz `JobInterval` را دارد (recycle مدام = offset از دست می‌رود ولی دوباره-delivery بی‌ضرر است — کدها تک‌مصرف‌اند)؛ حلقه‌ی ~۲۵ ثانیه‌ای `getUpdates` خودش درخواست‌های درحال‌انجام نگه می‌دارد و keep-alive است. خطای 409 در لاگ یعنی یک poller دوم (هاست/نسخه‌ی همزمان دیگر) دارد poll می‌کند.
-- Admin host فعلاً skeleton است؛ لودر/گارد برایش وصل شده تا در آینده بدون تغییر مکانیزم آماده باشد (docs/12).
+- Admin host فعلاً skeleton است؛ لودر/گارد برایش وصل شده تا در آینده بدون تغییر مکانیزم آماده باشد (Docs/12).
 
 ## ۵. خارج از دامنه
 

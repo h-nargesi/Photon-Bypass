@@ -1,7 +1,7 @@
 namespace PhotonBypass.Application.Vpn.Model;
 
 /// <summary>
-/// One row of the account switcher (docs/22 §3.5): the visible VPN accounts
+/// One row of the account switcher (Docs/22 §3.5): the visible VPN accounts
 /// of the acting user (or of a manager's subordinate).
 /// </summary>
 public class VpnAccountSummaryModel

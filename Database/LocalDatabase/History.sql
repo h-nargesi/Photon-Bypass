@@ -4,7 +4,7 @@ GO
 IF OBJECT_ID('History') IS NULL
 CREATE TABLE History (
 	Id					INT IDENTITY	NOT NULL	CONSTRAINT PK_History_Id PRIMARY KEY,
-	-- docs/22 D11: events anchor to the panel user (Target/Issuer) with an
+	-- Docs/22 D11: events anchor to the panel user (Target/Issuer) with an
 	-- optional VpnAccountId for account-scoped events.
 	Issuer				INT					NULL	CONSTRAINT FK_History_Issuer_Account FOREIGN KEY REFERENCES PanelUser (Id),
 	Target				INT				NOT NULL	CONSTRAINT FK_History_Target_Account FOREIGN KEY REFERENCES PanelUser (Id),

@@ -5,7 +5,7 @@ using PhotonBypass.Domain.Repository;
 namespace PhotonBypass.Domain.Account;
 
 /// <summary>
-/// VPN-account persistence (docs/22 D1/D2): per-realm VPN identities owned by
+/// VPN-account persistence (Docs/22 D1/D2): per-realm VPN identities owned by
 /// panel users. The username is globally unique and always starts with the
 /// owner's panel username (D3).
 /// </summary>
@@ -13,7 +13,7 @@ public interface IVpnAccountRepository : IEditableRepository<VpnAccountEntity>
 {
     Task<List<VpnAccountEntity>> GetByUser(int user_id);
 
-    /// <summary>Accounts not Deactivated (portal-visible set, docs/22 D12).</summary>
+    /// <summary>Accounts not Deactivated (portal-visible set, Docs/22 D12).</summary>
     Task<List<VpnAccountEntity>> GetVisibleByUser(int user_id);
 
     Task<List<VpnAccountEntity>> GetVisibleByUsers(IEnumerable<int> user_ids);
@@ -29,13 +29,13 @@ public interface IVpnAccountRepository : IEditableRepository<VpnAccountEntity>
 
     Task<Dictionary<int, string>> GetUsernamesByAccountId(IEnumerable<int> ids);
 
-    /// <summary>Active accounts keyed by id — the radius-valid set (docs/22 D12).</summary>
+    /// <summary>Active accounts keyed by id — the radius-valid set (Docs/22 D12).</summary>
     Task<Dictionary<int, VpnAccountEntity>> GetActiveAccounts(IEnumerable<int> account_ids);
 
     Task<List<VpnAccountEntity>> GetAll();
 
     /// <summary>
-    /// The nested account rows of the management user list (docs/22 §3.6):
+    /// The nested account rows of the management user list (Docs/22 §3.6):
     /// per-account scalars plus the latest plan summary from TotalPlanState.
     /// </summary>
     Task<List<UserAccountOverviewModel>> GetAccountsOverview(IEnumerable<string> panel_usernames);

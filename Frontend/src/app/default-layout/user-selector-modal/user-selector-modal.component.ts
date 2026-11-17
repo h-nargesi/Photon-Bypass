@@ -42,7 +42,7 @@ export class UserSelectorModalComponent {
   usernameList?: string[];
 
   /// admins pick from the whole user list, not just their own targetArea
-  /// (docs/20 phase 6 step 22)
+  /// (Docs/20 phase 6 step 22)
   admin = false;
   loading = false;
   admin_names: { [username: string]: string } = {};

@@ -7,10 +7,10 @@ namespace PhotonBypass.DeployCli;
 
 /// <summary>
 /// Seeds the single first-release admin account. The structure scripts carry no
-/// admin seed anymore (docs/09): the admin is created at deploy time with the
+/// admin seed anymore (Docs/09): the admin is created at deploy time with the
 /// operator's real password, with the exact flags of the former seed —
-/// Role = Admin (full access bypass, docs/20 D2) and UserType = AllowSelfService
-/// (wallet/renewal gates, docs/20 D11). Exactly one admin is allowed (docs/20 D9).
+/// Role = Admin (full access bypass, Docs/20 D2) and UserType = AllowSelfService
+/// (wallet/renewal gates, Docs/20 D11). Exactly one admin is allowed (Docs/20 D9).
 /// </summary>
 public static class AdminSeeder
 {

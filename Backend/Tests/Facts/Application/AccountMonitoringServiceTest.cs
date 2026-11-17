@@ -95,7 +95,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
             }
         };
 
-        // docs/22 D12: the 40-day abandonment deactivates the VPN account —
+        // Docs/22 D12: the 40-day abandonment deactivates the VPN account —
         // the owner panel user keeps portal access
         vpn_account_moq.OnSetStatus += (account_ids, status) =>
         {
@@ -140,7 +140,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
         var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
         var vpn_account_moq = scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>();
 
-        // docs/22 §3.7: the warning channels live on the owner panel user
+        // Docs/22 §3.7: the warning channels live on the owner panel user
         account_repo_moq.Data["User3"].IsEmailValid = true;
         account_repo_moq.Data["User4"].IsEmailValid = true;
 
@@ -311,7 +311,7 @@ public class AccountMonitoringServiceTest : UnitLevelServiceInitializer
 
         // User4 finishes its plan and hits the delete-inactivity threshold at the
         // same time: NotifSendServices stamps LastWarningTime while
-        // InactiveAbandonedUsers marks the VPN account Deactivated (docs/22 D12 —
+        // InactiveAbandonedUsers marks the VPN account Deactivated (Docs/22 D12 —
         // the panel user itself stays active).
         account_repo_moq.Data["User4"].IsEmailValid = true;
 

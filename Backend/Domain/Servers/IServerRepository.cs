@@ -6,7 +6,7 @@ namespace PhotonBypass.Domain.Servers;
 
 public interface IServerRepository : IEditableRepository<ServerEntity>
 {
-    /// <summary>All servers ordered by id — admin CRUD list, inactive included (docs/20 phase 5).</summary>
+    /// <summary>All servers ordered by id — admin CRUD list, inactive included (Docs/20 phase 5).</summary>
     Task<List<ServerEntity>> GetAllServers();
 
     Task<ServerEntity?> GetServerById(int id);

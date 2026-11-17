@@ -65,7 +65,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
         Assert.Single(prices);
         Assert.Equal(3, prices[0].Count);
 
-        // /api/vpn/accounts — a fresh user owns no VPN account yet (docs/22 D9)
+        // /api/vpn/accounts — a fresh user owns no VPN account yet (Docs/22 D9)
         Assert.Empty(await VpnAccounts());
 
         // /api/plan/new-account — the first purchase creates the VPN account

@@ -1,4 +1,4 @@
-# docs/10-frontend.md — Angular frontend (summary)
+# Docs/10-frontend.md — Angular frontend (summary)
 
 > **English summary**: Angular 19 standalone app using CoreUI 5 layout, Angular Material, and Chart.js (`@coreui/angular-chartjs`). Dev server proxies `/api` → `localhost:5226` (`proxy.conf.json`). An injected `API_BASE_URL = 'api'` token is prepended to all API URLs. Routes: public Home/Register/Login/Forgot + a `DefaultLayoutComponent` shell with children (dashboard, history, edit info, change password/ovpn, renewal, payment). The `UserService` manages multi-account `target` and caches it in `localStorage`.
 
@@ -85,7 +85,7 @@ flowchart LR
 
 ## Result contract
 
-`ApiResult` در فرانت با `code` و تابع `status()` که نمایش (toast/dialog) را تعیین می‌کند. `MessageMethod` هم روش نمایش (مثلاً `toaster`) را کنترل می‌کند. این قرارداد با `ApiResult` بک‌اند (`docs/08`) هم‌خوان است.
+`ApiResult` در فرانت با `code` و تابع `status()` که نمایش (toast/dialog) را تعیین می‌کند. `MessageMethod` هم روش نمایش (مثلاً `toaster`) را کنترل می‌کند. این قرارداد با `ApiResult` بک‌اند (`Docs/08`) هم‌خوان است.
 
 ## Design references
 

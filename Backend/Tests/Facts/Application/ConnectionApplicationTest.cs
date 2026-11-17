@@ -34,7 +34,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var connection_app = scope.ServiceProvider.GetRequiredService<IConnectionApplication>();
 
-        // docs/08 contract kept: live-session listing requires an active plan
+        // Docs/08 contract kept: live-session listing requires an active plan
         var func = () => connection_app.GetCurrentConnectionState(6);
 
         await func.Should().ThrowAsync<UserException>();

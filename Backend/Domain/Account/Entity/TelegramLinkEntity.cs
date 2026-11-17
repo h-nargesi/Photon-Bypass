@@ -15,7 +15,7 @@ public class TelegramLinkEntity : IBaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    /// <summary>Panel user the code binds the chat to (docs/22 D11).</summary>
+    /// <summary>Panel user the code binds the chat to (Docs/22 D11).</summary>
     public int AccountId { get; set; }
 
     public DateTime ExpireDate { get; set; }

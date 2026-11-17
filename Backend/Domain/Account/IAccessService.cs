@@ -15,7 +15,7 @@ public interface IAccessService
 
     /// <summary>
     /// Decides whether <paramref name="username"/> may operate the VPN
-    /// account <paramref name="account_id"/> (docs/22 §3): own account,
+    /// account <paramref name="account_id"/> (Docs/22 §3): own account,
     /// a subordinate's account, or — for admins — any account. Same
     /// rebuild-on-miss contract as <see cref="CheckAccess"/>.
     /// </summary>

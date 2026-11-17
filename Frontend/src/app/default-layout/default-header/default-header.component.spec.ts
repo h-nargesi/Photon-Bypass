@@ -123,7 +123,7 @@ describe('DefaultHeaderComponent', () => {
     expect(element.querySelector('a[routerLink="/servers"]')).not.toBeNull();
     expect(element.querySelector('a[routerLink="/wallet"]')).not.toBeNull();
 
-    // the admin always reaches the user-list selector (docs/20 step 22)
+    // the admin always reaches the user-list selector (Docs/20 step 22)
     expect(component.canSelectTarget).toBeTrue();
   });
 });

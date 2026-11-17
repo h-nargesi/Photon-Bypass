@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace PhotonBypass.Application.Account.Model;
 
-/// <summary>API row of the management user list (docs/20 phase 4, docs/22 §3.6).</summary>
+/// <summary>API row of the management user list (Docs/20 phase 4, Docs/22 §3.6).</summary>
 public class UserRowModel
 {
     public string Username { get; set; } = null!;
@@ -28,11 +28,11 @@ public class UserRowModel
 
     public string CreatedTitle { get; set; } = null!;
 
-    /// <summary>VPN accounts of the user (docs/22 D2), nested under the row.</summary>
+    /// <summary>VPN accounts of the user (Docs/22 D2), nested under the row.</summary>
     public IList<UserAccountRowModel> Accounts { get; set; } = [];
 }
 
-/// <summary>One VPN account nested under a management user row (docs/22 D12).</summary>
+/// <summary>One VPN account nested under a management user row (Docs/22 D12).</summary>
 public class UserAccountRowModel
 {
     public int Id { get; set; }

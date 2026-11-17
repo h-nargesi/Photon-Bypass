@@ -17,7 +17,7 @@ using MikrotikUserModel = PhotonBypass.Mikrotik.Radius.Model.UserModel;
 namespace PhotonBypass.Test.Facts.Application;
 
 /// <summary>
-/// User-management decision matrix (docs/20 phase 4, §3): manager scoping and
+/// User-management decision matrix (Docs/20 phase 4, §3): manager scoping and
 /// forcing, D9 invariants (no admin creation/promotion/self-operations), the
 /// demote-guard for managers with active subordinates, and owner
 /// attach/detach validation including cycles and access-cache invalidation.
@@ -87,7 +87,7 @@ public class UserManagementApplicationTest : UnitLevelServiceInitializer
         Assert.Equal(AccountRole.User, created.Role);
         Assert.True(created.UserType.HasFlag(UserTypes.AllowSelfService));
 
-        // a manager cannot pick a role or an owner (docs/20 §3)
+        // a manager cannot pick a role or an owner (Docs/20 §3)
         await Assert.ThrowsAsync<UserException>(() => application.Create(new CreateUserModel
         {
             Username = "new_sub2", Password = "Passw0rd1", Email = "n2@gmail.com", Mobile = "+989120000002",

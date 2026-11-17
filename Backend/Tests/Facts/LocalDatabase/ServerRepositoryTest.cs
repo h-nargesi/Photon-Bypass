@@ -7,7 +7,7 @@ namespace PhotonBypass.Test.Facts.LocalDatabase;
 
 /// <summary>
 /// Real-SQL regression tests for the raw-SQL lookups of <c>ServerRepository</c>
-/// that used to be covered by mocks only (docs/14 H21–H23): three live bugs —
+/// that used to be covered by mocks only (Docs/14 H21–H23): three live bugs —
 /// the realm filter concatenated without a separator, the bare-list Dapper
 /// parameter and the stray quote in the close-connection lookup — escaped the
 /// mocked unit tests and only exploded on a real database.

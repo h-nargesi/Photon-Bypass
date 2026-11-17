@@ -47,7 +47,7 @@ public class ConnectAndCheck(ProgramLevelInitializer.Factory factory) : HttpHand
         }
 
         // /api/plan/new-account — the first purchase creates the VPN account
-        // (docs/22 D9); realm 1 is the scenario realm
+        // (Docs/22 D9); realm 1 is the scenario realm
         var username = user["username"].ToString()!;
 
         response = await Client.PostAsJsonAsync("/api/plan/new-account", new NewAccountContext

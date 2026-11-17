@@ -8,7 +8,7 @@ using PhotonBypass.Xui.WebService;
 namespace PhotonBypass.Xui.Application;
 
 /// <summary>
-/// vless link builder for x-ui data-planes (docs/16 D4). Transport parameters
+/// vless link builder for x-ui data-planes (Docs/16 D4). Transport parameters
 /// (address/port/protocol/stream) are read live from the panel; the local
 /// server row only contributes the connection address. The stream-settings
 /// parser accepts both the camelCase keys of the x-ui payload and the
@@ -30,7 +30,7 @@ public class VlessLinkService(
 
     public async Task<string> GetVlessLink(int? realm_id, string username)
     {
-        // One x-ui server per realm is the operational invariant (docs/17 §3);
+        // One x-ui server per realm is the operational invariant (Docs/17 §3);
         // the collector applies the same first-of-realm selection.
         var server = (await ServerRepo.Value.GetActiveRadiusInRealmOrAll(realm_id))
             .FirstOrDefault(server => server.GetSyncKey() == RadiusType.Xui)

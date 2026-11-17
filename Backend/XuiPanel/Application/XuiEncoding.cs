@@ -4,7 +4,7 @@ using PhotonBypass.Xui.WebService;
 namespace PhotonBypass.Xui.Application;
 
 /// <summary>
-/// Field encodings for the x-ui client payload (docs/16 D13, docs/17 D16):
+/// Field encodings for the x-ui client payload (Docs/16 D13, Docs/17 D16):
 /// each enforcement push carries the stacked quota with a counter reset.
 /// Contract code-verified from alireza0/x-ui v1.12.0 and v1.14.0 source:
 /// `totalGB` is bytes (0 = unlimited), `expiryTime` is a unix-ms epoch where

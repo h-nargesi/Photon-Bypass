@@ -6,7 +6,7 @@ using PhotonBypass.Domain.Account.Model;
 namespace PhotonBypass.Domain.Account.Entity;
 
 /// <summary>
-/// Panel-user half of the old <c>Account</c> split (docs/22 D1): portal
+/// Panel-user half of the old <c>Account</c> split (Docs/22 D1): portal
 /// login, identity and wallet live here; every VPN identity lives on a
 /// <see cref="VpnAccountEntity"/> owned by this user.
 /// </summary>
@@ -17,14 +17,14 @@ public class PanelUserEntity : IBaseEntity
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
 
-    /// <summary>Portal-only status (docs/22 D12): 0=Active, 2=Deactivated (login blocked).</summary>
+    /// <summary>Portal-only status (Docs/22 D12): 0=Active, 2=Deactivated (login blocked).</summary>
     public PanelUserStatus Status { get; set; } = PanelUserStatus.Active;
 
     public string Username { get; init; } = null!;
 
     public string Password { get; set; } = null!;
 
-    /// <summary>Manager this user is a subordinate of (docs/20 §3); null = independent.</summary>
+    /// <summary>Manager this user is a subordinate of (Docs/20 §3); null = independent.</summary>
     public int? Owner { get; set; }
 
     public DateTime Created { get; init; } = DateTime.Now;
@@ -62,7 +62,7 @@ public class PanelUserEntity : IBaseEntity
 
     // Profile Info
 
-    /// <summary>Price calculation method (docs/22 D10: realm-independent, user-level).</summary>
+    /// <summary>Price calculation method (Docs/22 D10: realm-independent, user-level).</summary>
     public int? CalculationMethod { get; set; }
 
     public AccountRole Role { get; set; }

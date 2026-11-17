@@ -224,14 +224,14 @@ export class UsersComponent implements OnInit {
       : '';
   }
 
-  /// docs/22 §3.6: nested account rows under each user row.
+  /// Docs/22 §3.6: nested account rows under each user row.
   accountPlanTitle(account: UserAccountRow): string {
     return account.simultaneousUser
       ? `${account.simultaneousUser}x`
       : '';
   }
 
-  // --- create (docs/20 phase 6 step 21; admin extras per phase 4) ---
+  // --- create (Docs/20 phase 6 step 21; admin extras per phase 4) ---
 
   openCreate(): void {
     this.create_form.reset();
@@ -374,7 +374,7 @@ export class UsersComponent implements OnInit {
     });
   }
 
-  /// Panel deactivation (→2) / reactivation (→0) of the user (docs/22 D12);
+  /// Panel deactivation (→2) / reactivation (→0) of the user (Docs/22 D12);
   /// the radius sweep covers every VPN account the user owns.
   toggleActive(row: UserRow): void {
     if (this.busy) return;
@@ -384,7 +384,7 @@ export class UsersComponent implements OnInit {
       : PanelUserStatus.Deactivated);
   }
 
-  /// VPN suspension (0↔1) of one account (docs/22 D12): portal login and the
+  /// VPN suspension (0↔1) of one account (Docs/22 D12): portal login and the
   /// other accounts stay untouched.
   toggleAccountVpn(account: UserAccountRow): void {
     if (this.busy || account.status === VpnAccountStatus.Deactivated) return;
@@ -412,7 +412,7 @@ export class UsersComponent implements OnInit {
     });
   }
 
-  // --- act on behalf (docs/20 phase 6 step 21/22) ---
+  // --- act on behalf (Docs/20 phase 6 step 21/22) ---
 
   actOnBehalf(row: UserRow): void {
     if (row.status === PanelUserStatus.Deactivated) return;

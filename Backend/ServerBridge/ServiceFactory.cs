@@ -21,7 +21,7 @@ public static class ServiceFactory
         builder.Services.AddOptions<EmailOptions>()
             .BindConfiguration(nameof(EmailOptions))
             .Validate(EmailOptionsValidation.IsValid,
-                "EmailOptions: when Enabled is true, Address, Password and Host must be set. See docs/19-deploy-runbook.md.")
+                "EmailOptions: when Enabled is true, Address, Password and Host must be set. See Docs/19-deploy-runbook.md.")
             .ValidateOnStart();
 
         builder.Services.AddLazyScoped<IApiHandler, ApiHandler>();

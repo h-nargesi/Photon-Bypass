@@ -6,7 +6,7 @@ using PhotonBypass.Test.Initializer;
 namespace PhotonBypass.Test.Facts.Scenario;
 
 /// <summary>
-/// Admin wallet transaction and wallet history over real HTTP (docs/20 phase
+/// Admin wallet transaction and wallet history over real HTTP (Docs/20 phase
 /// 3, D5): the admin-only adjust endpoint records an append-only Completed
 /// row with the acting admin, negative balances are allowed, and history is
 /// visible only to the owner (independent) or the admin — never a manager.
@@ -55,7 +55,7 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
         await WalletAdjust(null, (short)BalanceDirection.Credit, 100, new string('d', 200), status: 4);
         await WalletAdjust("wal_ghost02", (short)BalanceDirection.Credit, 100, "d", status: 4);
 
-        // adjust is admin-only (docs/20 §3): a plain user is refused by policy
+        // adjust is admin-only (Docs/20 §3): a plain user is refused by policy
         await Register("wal_user03", "62", "Passw0rd1");
         await Login("wal_user03", "Passw0rd1");
 
@@ -100,7 +100,7 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
         await WalletHistory(target, status: 403);
 
         // …and a manager passes target access but is still refused the wallet
-        // itself (docs/20 §3: managers never see a subordinate's wallet)
+        // itself (Docs/20 §3: managers never see a subordinate's wallet)
         var manager = "wal_manager06";
         var subordinate = "wal_sub07";
 

@@ -40,7 +40,7 @@ class PlanApplication(
     IOptions<ManagementOptions> options)
     : IPlanApplication
 {
-    /// <summary>Leading marker of a new-account invoice action (docs/22 D9).</summary>
+    /// <summary>Leading marker of a new-account invoice action (Docs/22 D9).</summary>
     private const string NewAccountActionPrefix = "n|";
 
     private Lazy<IRenewalRepository> RenewalRepo { get; } = renewal_repo;
@@ -177,7 +177,7 @@ class PlanApplication(
         if (stale && realm_id == null)
         {
             throw new UserException("اکانت شما مدتی غیرفعال بوده است؛ برای تمدید ابتدا سرور (realm) را انتخاب کنید!",
-                $"Realm re-selection is required for a stale account (docs/22 D6): account-id={account.Id}, user={account.Username}");
+                $"Realm re-selection is required for a stale account (Docs/22 D6): account-id={account.Id}, user={account.Username}");
         }
 
         var renewal = new RenewalEntity
@@ -227,8 +227,8 @@ class PlanApplication(
     {
         var payer = await SelfServiceGuard.Value.ResolvePayingActor();
 
-        // docs/20 on-behalf: the account belongs to the target user, the
-        // invoice to the paying actor (docs/22 D8)
+        // Docs/20 on-behalf: the account belongs to the target user, the
+        // invoice to the paying actor (Docs/22 D8)
         var owner = string.IsNullOrWhiteSpace(target)
             ? payer
             : await GetOwnerUser(target);
@@ -505,7 +505,7 @@ class PlanApplication(
         if (account.Status == VpnAccountStatus.Suspended)
         {
             throw new UserException("سرویس VPN شما توسط مدیریت غیرفعال است؛ برای تمدید ابتدا با مدیر خود تماس بگیرید!",
-                $"Renewal refused for a suspended VPN account (docs/20 D13): target={account.Username}");
+                $"Renewal refused for a suspended VPN account (Docs/20 D13): target={account.Username}");
         }
 
         var current_state = await PlanRepo.Value.GetPlanState(account.Id);
@@ -525,7 +525,7 @@ class PlanApplication(
         if (stale && realm_id == null)
         {
             throw new UserException("اکانت شما مدتی غیرفعال بوده است؛ برای تمدید ابتدا سرور (realm) را انتخاب کنید!",
-                $"Realm re-selection is required for a stale account (docs/22 D6): account-id={account.Id}, user={account.Username}");
+                $"Realm re-selection is required for a stale account (Docs/22 D6): account-id={account.Id}, user={account.Username}");
         }
 
         if (stale && realm_id.HasValue)
@@ -545,7 +545,7 @@ class PlanApplication(
 
         if (current_state != null)
         {
-            // D16 (docs/17): stacked plan state — both values are computed once,
+            // D16 (Docs/17): stacked plan state — both values are computed once,
             // right here, and stored on the renewal; the x-ui push and the usage
             // reader only read them. Expiry stacks on the still-running plan, the
             // traffic quota on the cumulative remaining (view TrafficLeft of the
@@ -753,7 +753,7 @@ class PlanApplication(
         try
         {
             // the confirmation goes to the plan owner, not necessarily the payer
-            // (docs/20 payer=actor)
+            // (Docs/20 payer=actor)
             if (payer.EmailAddress != null)
             {
                 await EmailSrv.Value.SendRenewalSuccessEmail(payer.Fullname, payer.EmailAddress,
@@ -799,7 +799,7 @@ class PlanApplication(
         if (account.Status == VpnAccountStatus.Suspended)
         {
             throw new UserException("سرویس VPN شما توسط مدیریت غیرفعال است!",
-                $"VPN account is suspended (docs/20 D13): id={account_id}, user={account.Username}");
+                $"VPN account is suspended (Docs/20 D13): id={account_id}, user={account.Username}");
         }
 
         return account;
@@ -842,7 +842,7 @@ class PlanApplication(
         if (await VpnAccountRepo.Value.GetAccount(username) != null)
         {
             throw new UserException("این نام کاربری VPN قبلا استفاده شده است!",
-                $"VPN username already taken (docs/22 D3): {username}", 409);
+                $"VPN username already taken (Docs/22 D3): {username}", 409);
         }
 
         return username;
@@ -856,7 +856,7 @@ class PlanApplication(
         if (realm is not { IsSelectableForAssignment: true })
         {
             throw new UserException("این سرور در حال حاضر قابل انتخاب نیست؛ لطفاً سرور دیگری انتخاب کنید!",
-                $"Realm is not selectable (docs/22 D4): realm-id={realm_id}");
+                $"Realm is not selectable (Docs/22 D4): realm-id={realm_id}");
         }
     }
 
@@ -886,7 +886,7 @@ class PlanApplication(
     /// <summary>
     /// New-account action with the on-behalf owner token: the VPN username
     /// alone cannot identify the owner across prefix overlaps (user "al" vs
-    /// "ali" both matching "ali1…", docs/22 D3).
+    /// "ali" both matching "ali1…", Docs/22 D3).
     /// </summary>
     private static string BuildNewAccountAction(string vpn_username, byte count, short days, int gigabytes,
         int realm_id, string owner_username)
@@ -906,7 +906,7 @@ class PlanApplication(
     }
 
     /// <summary>
-    /// D16 (docs/17): the traffic quota carried into the new renewal — the
+    /// D16 (Docs/17): the traffic quota carried into the new renewal — the
     /// cumulative remaining of the current band (view TrafficLeft; a NULL on a
     /// limited band means "no usage recorded yet", i.e. the full quota) plus
     /// this renewal's share, clamped at zero for overdrawn plans. A NULL

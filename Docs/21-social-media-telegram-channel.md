@@ -1,4 +1,4 @@
-# docs/21-social-media-telegram-channel.md — کانال تلگرام با معماری آداپتور قابل‌تعویض (D1–D6)
+# Docs/21-social-media-telegram-channel.md — کانال تلگرام با معماری آداپتور قابل‌تعویض (D1–D6)
 
 > **English summary**: Telegram is the first real `ISocialMediaService` channel, shipped behind a channel-neutral adapter architecture: method signatures are `AccountEntity`-based, each adapter resolves its own recipient field (Telegram → `AccountEntity.TelegramChatId`, a future WhatsApp → `MobileNumber`), and the active channel is selected at **runtime** via `SocialMediaOptions:Channel` — the compile-time `#if SOCIAL` gates are gone. Chat binding uses a one-time Base64Url code delivered through the `t.me/{bot}?start={code}` deep link and consumed by a long-poll `BackgroundService`. `ForgetPassword` now accepts usernames (code → connected chat, else email fallback, else neutral), and a failing social send falls back to email too (same stored reset code); a dead user chat (403 blocked / 400 chat-not-found) is auto-detached and rethrown so the fallback takes over. WhatsApp later = one adapter + one keyed registration line.
 
@@ -39,12 +39,12 @@
 1. `appsettings.json` مقادیر تست دارد (عرف repo). پروداکشن: `private/secrets.json` با per-key override (لودر `AddPleskPrivateSecrets`) — کلیدها: `TelegramOptions:BotToken` (الزامی — گارد فیکسچر کامیت‌شده را می‌بندد)، `BotUsername`، `OperationsChatId`، `Proxy:Address` (+ Username/Password اختیاری).
 2. `SocialMediaOptions:Channel` را `"Telegram"` بگذارید؛ گارد پروداکشن در این حالت کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (`ProductionSecretsGuard.cs:43-65`).
 3. `OperationsChatId` = chat اپراتور (هشدار ثبت‌نام + ظرفیت) — از `/start` گفتگو با بات به دست می‌آید.
-4. IIS/Plesk: poller همان پیش‌نیاز چرخه‌حیات Quartz `JobInterval` را دارد؛ حلقه‌ی ~۲۵ ثانیه‌ای خودش keep-alive است (docs/19 §۴).
+4. IIS/Plesk: poller همان پیش‌نیاز چرخه‌حیات Quartz `JobInterval` را دارد؛ حلقه‌ی ~۲۵ ثانیه‌ای خودش keep-alive است (Docs/19 §۴).
 5. Enumeration: پاسخ ForgetPassword روی هر سه مسیر خنثی است و limiter موجود (۳/ساعت) روی username هم اعمال می‌شود.
 
 ## تست‌ها
 
-ردیف‌های کامل در `docs/18-test-coverage.md` §۴ (جدول docs/21). خلاصه: `TelegramLinkHandlerTest` (کد معتبر/منقضی/replay/حساب غیرفعال/چت تکراری با `SqlException` واقعی/`/start` خالی/ترافیک غیر-start)، `TelegramMediaServiceTest` (chat مقصد کاربر/اپراتور + no-op بدون chat + detach چت مرده: 403/400-chat-not-found → detach یک‌بار + rethrow، 400 دیگر و 429 بدون detach، شکست OperationsChatId بدون detach هیچ حسابی، شکست خود detach → rethrow اصل)، `TelegramLinkRoundTripTest` (روی DB سناریو با ریپوهای واقعی + ایندکس یکتا)، شاخه‌های username در ForgetPassword (متصل/fallback/خنثی/limiter/شکست ارسال/فال‌بک ایمیل با همان کد/شکست هر دو کانال)، تقدم social-first در `NotifSendServices` (+ stamp-after-success و ایزوله‌سازی خطا و فال‌بک ایمیل هنگام شکست سوشال)، `AccountAppTest` (صدور کد/وضعیت/قطع)، `ProductionSecretsGuardTest` (قواعد تلگرام)، و specهای فرانت (کارت اتصال + ورودی username).
+ردیف‌های کامل در `Docs/18-test-coverage.md` §۴ (جدول Docs/21). خلاصه: `TelegramLinkHandlerTest` (کد معتبر/منقضی/replay/حساب غیرفعال/چت تکراری با `SqlException` واقعی/`/start` خالی/ترافیک غیر-start)، `TelegramMediaServiceTest` (chat مقصد کاربر/اپراتور + no-op بدون chat + detach چت مرده: 403/400-chat-not-found → detach یک‌بار + rethrow، 400 دیگر و 429 بدون detach، شکست OperationsChatId بدون detach هیچ حسابی، شکست خود detach → rethrow اصل)، `TelegramLinkRoundTripTest` (روی DB سناریو با ریپوهای واقعی + ایندکس یکتا)، شاخه‌های username در ForgetPassword (متصل/fallback/خنثی/limiter/شکست ارسال/فال‌بک ایمیل با همان کد/شکست هر دو کانال)، تقدم social-first در `NotifSendServices` (+ stamp-after-success و ایزوله‌سازی خطا و فال‌بک ایمیل هنگام شکست سوشال)، `AccountAppTest` (صدور کد/وضعیت/قطع)، `ProductionSecretsGuardTest` (قواعد تلگرام)، و specهای فرانت (کارت اتصال + ورودی username).
 
 ## ریسک‌ها / نکته‌های باز
 

@@ -1,4 +1,4 @@
-# docs/15-payment-p2.md — طراحی فاز P2: پرداخت کارت‌به‌کارت و کیف پول
+# Docs/15-payment-p2.md — طراحی فاز P2: پرداخت کارت‌به‌کارت و کیف پول
 
 > **English summary**: Final design and implementation spec for audit phase P2, replacing the original "fix frontend payment contract" scope with the product owner's design (`Architecture/peyment-P2.md`). Two payment paths (wallet top-up, direct plan payment), manual card-to-card with receipt registration as the only money-in channel (no gateway, no OCR in P2), a `Verifying` transaction state whose credit counts immediately, invoice netting against wallet balance, and a backend-only wallet-threshold deactivation rule. Admin approval/rejection is deferred to the (not-yet-started) admin panel phase. All findings below were verified against code on 1405/07 (2026-10).
 >
@@ -10,13 +10,13 @@
 |---|---|
 | `Architecture/peyment-P2.md` | سند طراحی اولیه صاحب محصول (متن اصلی + تصمیمات جلسه ۱۴۰۵/۰۷ در انتهای آن) |
 | این فایل | مشخصات فنی قابل اجرا + تصمیمات قطعی + یافته‌های راستی‌آزمایی‌شده |
-| `docs/14-defects-audit.md` | فاز P0–P5 ممیزی؛ آیتم‌های C3 و M25 داخل همین فاز حل می‌شوند |
+| `Docs/14-defects-audit.md` | فاز P0–P5 ممیزی؛ آیتم‌های C3 و M25 داخل همین فاز حل می‌شوند |
 
 ## تصمیمات قطعی (جلسه ۱۴۰۵/۰۷)
 
 | موضوع | تصمیم |
 |---|---|
-| درگاه پرداخت آنلاین | **وجود ندارد**؛ کانال ورود پول فقط کارت‌به‌کارت است. سوال باز P2 در `docs/14` (طراحی `payment-request`/redirect) منسوخ شد. |
+| درگاه پرداخت آنلاین | **وجود ندارد**؛ کانال ورود پول فقط کارت‌به‌کارت است. سوال باز P2 در `Docs/14` (طراحی `payment-request`/redirect) منسوخ شد. |
 | مسیرهای پرداخت | ۱) افزایش موجودی کیف پول ۲) پرداخت مستقیم پلن (بعد از تایید پلن، صفحه فاکتور با انتخاب روش: کیف پول / کارت‌به‌کارت) |
 | صفحه فاکتور | **همیشه** بعد از تایید پلن نمایش داده می‌شود؛ اجرای فوریِ مسیر موجودی-کافی حذف می‌شود و «پرداخت از کیف پول» با دکمه تایید روی فاکتور انجام می‌شود |
 | خالص‌سازی (netting) | اگر موجودی کافی نباشد، مبلغ کیف پول از فاکتور کسر و «مبلغ قابل پرداخت» نشان داده می‌شود؛ `payable = قیمت − موجودی` (موجودی منفی بدهی را اضافه می‌کند) |
@@ -143,7 +143,7 @@ Canceled  → تسویه از کیف پول (پول بیرونی وارد نشد
 
 - تا قبل از فاز ادمین، رسید جعلی اعتبار دائمی دارد (مدل اعتمادِ طرح صاحب محصول؛ قاعده آستانه پادزهر عملیاتی آن است).
 - OldUser های با مانده منفی، به‌محض فعال‌شدن تنظیم آستانه، غیرفعال می‌شوند — تنظیم باید آگاهانه روشن شود.
-- `docs/08-portal-api.md` و `docs/09-database.md` بعد از پیاده‌سازی این فاز باید به‌روز شوند.
+- `Docs/08-portal-api.md` و `Docs/09-database.md` بعد از پیاده‌سازی این فاز باید به‌روز شوند.
 
 ## ثبت پیاده‌سازی (۱۴۰۵/۰۷)
 

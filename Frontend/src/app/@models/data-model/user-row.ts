@@ -1,7 +1,7 @@
 import { AccountRole, PanelUserStatus, VpnAccountStatus } from './user-info';
 
-/// One row of the management user list (backend `UserRowModel`, docs/20
-/// phase 4 + docs/22 §3.6): panel-user scalars with nested VPN accounts.
+/// One row of the management user list (backend `UserRowModel`, Docs/20
+/// phase 4 + Docs/22 §3.6): panel-user scalars with nested VPN accounts.
 export interface UserRow {
   username: string;
   name?: string;

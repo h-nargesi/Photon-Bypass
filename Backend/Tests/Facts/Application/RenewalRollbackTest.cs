@@ -67,7 +67,7 @@ public class SettlementRollbackTest : UnitLevelServiceInitializer
         moq.Setup(x => x.SyncUserAndActive(It.IsAny<VpnAccountEntity>(), It.IsAny<RenewalEntity>()))
             .ThrowsAsync(new Exception("radius sync down"));
 
-        // the stale target renews through the migration path (docs/22 D6)
+        // the stale target renews through the migration path (Docs/22 D6)
         moq.Setup(x => x.MigrateUserRealm(It.IsAny<VpnAccountEntity>(), It.IsAny<int>(), It.IsAny<RenewalEntity>()))
             .ThrowsAsync(new Exception("radius migration down"));
 
@@ -136,7 +136,7 @@ public class SettlementRollbackPayerSeparationTest : UnitLevelServiceInitializer
         moq.Setup(x => x.SyncUserAndActive(It.IsAny<VpnAccountEntity>(), It.IsAny<RenewalEntity>()))
             .ThrowsAsync(new Exception("radius sync down"));
 
-        // the stale target renews through the migration path (docs/22 D6)
+        // the stale target renews through the migration path (Docs/22 D6)
         moq.Setup(x => x.MigrateUserRealm(It.IsAny<VpnAccountEntity>(), It.IsAny<int>(), It.IsAny<RenewalEntity>()))
             .ThrowsAsync(new Exception("radius migration down"));
 
@@ -187,7 +187,7 @@ public class SettlementRollbackCompensationFailureTest : UnitLevelServiceInitial
         moq.Setup(x => x.SyncUserAndActive(It.IsAny<VpnAccountEntity>(), It.IsAny<RenewalEntity>()))
             .ThrowsAsync(new Exception("radius sync down"));
 
-        // the stale target renews through the migration path (docs/22 D6)
+        // the stale target renews through the migration path (Docs/22 D6)
         moq.Setup(x => x.MigrateUserRealm(It.IsAny<VpnAccountEntity>(), It.IsAny<int>(), It.IsAny<RenewalEntity>()))
             .ThrowsAsync(new Exception("radius migration down"));
 

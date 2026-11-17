@@ -13,7 +13,7 @@ export enum ServerFeature {
   V2ray = 0x800,
 }
 
-/// API row of the admin server list (backend `ServerRowModel`, docs/20 phase 5).
+/// API row of the admin server list (backend `ServerRowModel`, Docs/20 phase 5).
 /// The stored config itself never leaves the server — only the has-config flag.
 export interface ServerRow {
   id: number;
@@ -33,7 +33,7 @@ export interface ServerRow {
   createdTitle: string;
 }
 
-/// Admin server create/update payload (backend `SaveServerModel`, docs/20 phase 5).
+/// Admin server create/update payload (backend `SaveServerModel`, Docs/20 phase 5).
 /// Id = 0 means create; a null config on update keeps the stored protected blob.
 export interface SaveServer {
   id: number;

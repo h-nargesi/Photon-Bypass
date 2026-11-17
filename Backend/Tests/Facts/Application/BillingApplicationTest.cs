@@ -627,7 +627,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         var renewals_before = renewal_moq.Data.Count;
 
-        // the renewal stacks on User2's VPN account (docs/22 D5)
+        // the renewal stacks on User2's VPN account (Docs/22 D5)
         var user2_account_id = vpn_account_moq.Data.Single(account => account.Username == "User2").Id;
 
         var code = (await plan_app.Renewal(user2_account_id, 2, 120, 25, null)).Data!.InvoiceCode!.Value;

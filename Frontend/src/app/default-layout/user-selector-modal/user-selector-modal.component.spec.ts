@@ -155,7 +155,7 @@ describe('UserSelectorModalComponent', () => {
     component.visible = true;
     component.setTargetIndex('far-user');
 
-    // outside the targetArea, yet selected — the admin bypass (docs/20 step 22)
+    // outside the targetArea, yet selected — the admin bypass (Docs/20 step 22)
     expect(user_service.targetName).toBe('far-user');
     expect(component.visible).toBeFalse();
   });

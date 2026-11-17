@@ -18,7 +18,7 @@ public class PlanController(
 {
     private readonly IPlanApplication application = application;
 
-    /// <summary>Selectable realms for the purchase flow (docs/22 D4).</summary>
+    /// <summary>Selectable realms for the purchase flow (Docs/22 D4).</summary>
     [HttpGet("realms")]
     public async Task<ApiResult> GetRealms()
     {
@@ -113,7 +113,7 @@ public class PlanController(
     }
 
     /// <summary>
-    /// First purchase (docs/22 D9): realm + VPN username + plan, settled
+    /// First purchase (Docs/22 D9): realm + VPN username + plan, settled
     /// through the same invoice flow as renewals.
     /// </summary>
     [HttpPost("new-account")]

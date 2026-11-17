@@ -5,7 +5,7 @@ using OperatingSystem = PhotonBypass.Domain.Servers.Types.OperatingSystem;
 namespace PhotonBypass.Application.Management.Model;
 
 /// <summary>
-/// Admin server create/update payload (docs/20 phase 5, D8). Id = 0 means
+/// Admin server create/update payload (Docs/20 phase 5, D8). Id = 0 means
 /// create. <see cref="Config"/> is sent as plain JSON and protected server-side
 /// (<c>ServerConfigProtection.Protect</c>); on update a null config keeps the
 /// stored protected blob untouched (write-without-read — it is never read back).

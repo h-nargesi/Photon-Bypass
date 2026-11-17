@@ -8,7 +8,7 @@ import {
 } from '../../@models';
 import { ApiBaseService, ApiParam, WALLET_API_URL } from '../../@services';
 
-/// Admin wallet adjust + history API (docs/20 phase 3, D5).
+/// Admin wallet adjust + history API (Docs/20 phase 3, D5).
 @Injectable({ providedIn: 'root' })
 export class WalletService extends ApiBaseService {
   adjust(

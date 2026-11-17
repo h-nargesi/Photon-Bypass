@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import { ApiResult, SaveServer, ServerRow } from '../../@models';
 import { ApiBaseService, SERVER_API_URL } from '../../@services';
 
-/// Admin server CRUD API (docs/20 phase 5, D8).
+/// Admin server CRUD API (Docs/20 phase 5, D8).
 @Injectable({ providedIn: 'root' })
 export class ServersService extends ApiBaseService {
   list(): Observable<ServerRow[]> {

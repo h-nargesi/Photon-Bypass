@@ -13,7 +13,7 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
 
     public string Username { get; set; } = null!;
 
-    /// <summary>Owner panel user (docs/22): the view joins VpnAccount.UserId in.</summary>
+    /// <summary>Owner panel user (Docs/22): the view joins VpnAccount.UserId in.</summary>
     public int UserId { get; set; }
 
     public VpnAccountStatus Status { get; set; }
@@ -25,7 +25,7 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
     // Plan Info (Latest Renewal)
     public byte SimultaneousUser { get; set; }
 
-    /// <summary>Realm of the VPN account (docs/22 §2: NOT NULL — bucket-0 is gone).</summary>
+    /// <summary>Realm of the VPN account (Docs/22 §2: NOT NULL — bucket-0 is gone).</summary>
     public int RealmId { get; set; }
 
     public long? TrafficLimit { get; set; }

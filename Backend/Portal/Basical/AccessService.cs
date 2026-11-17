@@ -26,7 +26,7 @@ internal class AccessService(IMemoryCache cache, Lazy<IPanelUserRepository> pane
         if (!area.AccountIdsTrusted)
         {
             // the login snapshot can miss an account bought seconds ago —
-            // rebuild from the repositories before deciding (docs/22 D9)
+            // rebuild from the repositories before deciding (Docs/22 D9)
             area = await RebuildTargetArea(username) ?? area;
 
             if (area.Role != AccountRole.Admin)
@@ -61,8 +61,8 @@ internal class AccessService(IMemoryCache cache, Lazy<IPanelUserRepository> pane
 
     /// <summary>
     /// A cache miss is not a denial: the login area is rebuilt from the
-    /// repositories with the same rules the login path applies (docs/14 M32,
-    /// docs/22 §3) — the account set is derived, not snapshotted, so a VPN
+    /// repositories with the same rules the login path applies (Docs/14 M32,
+    /// Docs/22 §3) — the account set is derived, not snapshotted, so a VPN
     /// account bought seconds ago is targetable without any invalidation.
     /// Admins cover every portal-accessible user and every account; everyone
     /// else exactly their own accounts plus their active subordinates'.

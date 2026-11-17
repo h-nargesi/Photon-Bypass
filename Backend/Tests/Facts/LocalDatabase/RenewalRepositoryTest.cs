@@ -8,7 +8,7 @@ namespace PhotonBypass.Test.Facts.LocalDatabase;
 
 /// <summary>
 /// Real-SQL regression test for the latest-renewal lookup used by the x-ui
-/// collector on every cycle (docs/14 M31): the ROW_NUMBER rewrite must return
+/// collector on every cycle (Docs/14 M31): the ROW_NUMBER rewrite must return
 /// exactly one row per account — the newest by identity.
 /// </summary>
 public class RenewalRepositoryTest : OutSourceLevelServiceInitializer

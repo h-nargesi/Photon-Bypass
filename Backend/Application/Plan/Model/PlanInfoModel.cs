@@ -1,6 +1,6 @@
 ﻿namespace PhotonBypass.Application.Plan.Model;
 
-/// <summary>One selectable realm of the purchase flow (docs/22 D4, open item 3).</summary>
+/// <summary>One selectable realm of the purchase flow (Docs/22 D4, open item 3).</summary>
 public class RealmChoiceModel
 {
     public int Id { get; init; }
@@ -19,7 +19,7 @@ public class PlanInfoModel
 
     public int RealmId { get; init; }
 
-    /// <summary>True when the account is stale and renewal needs a realm re-pick (docs/22 D6).</summary>
+    /// <summary>True when the account is stale and renewal needs a realm re-pick (Docs/22 D6).</summary>
     public bool RequiresRealmChoice { get; init; }
 
     public int? Days { get; init; }

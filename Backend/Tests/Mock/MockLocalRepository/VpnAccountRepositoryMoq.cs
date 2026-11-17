@@ -136,7 +136,7 @@ internal class VpnAccountRepositoryMoq : Mock<IVpnAccountRepository>, IUnitLevel
                 }
 
                 throw new PhotonBypass.ErrorHandler.UserException("ظرفیت نام کاربری برای این کاربر تکمیل است!",
-                    $"No free VPN username suggestion within the length cap (docs/22 D3): owner={panel_username}");
+                    $"No free VPN username suggestion within the length cap (Docs/22 D3): owner={panel_username}");
             });
 
         Setup(x => x.Save(It.IsAny<VpnAccountEntity>()))

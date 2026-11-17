@@ -34,7 +34,7 @@ public class AccountRadiusSyncRadiusDeskService : IInfraAccountRadiusSyncService
 
     public Task<string> ChangeVpnPassword(ServerEntity radius, string username, string password)
     {
-        // Deferred with the rest of the RadiusDesk adapter (docs/14 L8): echo the
+        // Deferred with the rest of the RadiusDesk adapter (Docs/14 L8): echo the
         // effective-credential contract instead of throwing a landmine, so the
         // dispatcher path stays uniform the day the adapter is implemented.
         return Task.FromResult(password);

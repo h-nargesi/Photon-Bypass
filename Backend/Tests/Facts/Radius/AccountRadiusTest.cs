@@ -54,7 +54,7 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
         var commands = executed.Select(entry => entry.Command).ToArray();
 
         // the dispatcher provisions only the servers of the account's realm
-        // (realm 3, docs/22 D5); the empty limitation/profile seed then forces
+        // (realm 3, Docs/22 D5); the empty limitation/profile seed then forces
         // creation before the user is bound
         commands.Should().Equal(
         [
@@ -137,7 +137,7 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
         var plan_state_list = await plan_state_repo.GetAll();
 
         // realm 4 hosts an active radius server but has no plan-state rows
-        // (every account pins a realm now — docs/22 §2 — so realm 4 has no
+        // (every account pins a realm now — Docs/22 §2 — so realm 4 has no
         // valid set at all and its sweep disables every user there)
         Assert.DoesNotContain(plan_state_list, plan => plan.RealmId is 4);
 
@@ -164,7 +164,7 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
         // realm 4 (no plan-state rows) deactivates every user on its radius
         // server; realm 1 keeps only User99 and realm 3 only User3 — an
         // account is valid exclusively on the realm it is pinned to
-        // (the bucket-0 fan-out is gone, docs/22 §2)
+        // (the bucket-0 fan-out is gone, Docs/22 §2)
         Assert.Equal(2, disabled_counter.GetValueOrDefault("User99"));
         Assert.Equal(2, disabled_counter.GetValueOrDefault("User2"));
         Assert.Equal(2, disabled_counter.GetValueOrDefault("User3"));
@@ -183,7 +183,7 @@ public class AccountRadiusTest : UnitLevelServiceInitializer
         var plan_state_list = await plan_state_repo.GetAll();
 
         // a management-suspended or deactivated account leaves the valid set
-        // of its own realm too (docs/20 D13): the hourly sweep is the safety
+        // of its own realm too (Docs/20 D13): the hourly sweep is the safety
         // net that disables it everywhere even when the immediate sync failed
         plan_state_list.Single(plan => plan.Username == "User3").Status = VpnAccountStatus.Suspended;
         plan_state_list.Single(plan => plan.Username == "User99").Status = VpnAccountStatus.Deactivated;

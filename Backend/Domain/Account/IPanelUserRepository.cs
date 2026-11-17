@@ -5,7 +5,7 @@ using PhotonBypass.Domain.Repository;
 namespace PhotonBypass.Domain.Account;
 
 /// <summary>
-/// Panel-user persistence (docs/22 D1): everything the old
+/// Panel-user persistence (Docs/22 D1): everything the old
 /// <c>IAccountRepository</c> did for portal identity, wallet anchoring and
 /// manager subordination — minus the VPN fields that moved to
 /// <see cref="IVpnAccountRepository"/>.
@@ -35,7 +35,7 @@ public interface IPanelUserRepository : IEditableRepository<PanelUserEntity>
     Task<int> CheckUniqueData(string username, string? email, string? mobile);
 
     /// <summary>
-    /// Paged user list for the management panel (docs/20 phase 4): inactive
+    /// Paged user list for the management panel (Docs/20 phase 4): inactive
     /// users included; <paramref name="owner_id"/> scopes to one manager's
     /// subordinates (null = every user — the admin view);
     /// <paramref name="term"/> filters username/name/surname/email.
@@ -44,7 +44,7 @@ public interface IPanelUserRepository : IEditableRepository<PanelUserEntity>
 
     /// <summary>
     /// Whether the user still has at least one active subordinate — the
-    /// guard that blocks demoting such a manager (docs/20 §3).
+    /// guard that blocks demoting such a manager (Docs/20 §3).
     /// </summary>
     Task<bool> HasActiveSubordinate(int manager_id);
 

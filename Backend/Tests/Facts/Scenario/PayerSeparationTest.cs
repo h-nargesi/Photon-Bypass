@@ -6,7 +6,7 @@ using PhotonBypass.Test.Initializer;
 namespace PhotonBypass.Test.Facts.Scenario;
 
 /// <summary>
-/// Payer separation in the money path (docs/20 phase 2, D4/D6): the invoice,
+/// Payer separation in the money path (Docs/20 phase 2, D4/D6): the invoice,
 /// wallet credit/debit and balance always belong to the paying actor, the
 /// renewed plan belongs to the target, and a dependent account (!AllowSelfService)
 /// is refused its own financial endpoints with a user-friendly 403.
@@ -22,7 +22,7 @@ public class PayerSeparationTest(ProgramLevelInitializer.Factory factory) : Http
 
         await InsertAccount(username, UserTypes.None);
 
-        // the dependent owns a VPN account (docs/22 D9): the refusals below
+        // the dependent owns a VPN account (Docs/22 D9): the refusals below
         // come from the D6 self-service guard, not from a missing account
         using (var scope = ServiceProvider.CreateScope())
         {
@@ -61,7 +61,7 @@ public class PayerSeparationTest(ProgramLevelInitializer.Factory factory) : Http
 
         await InsertAccount(target, UserTypes.None);
 
-        // docs/22 D9: the first purchase is always actor-scoped, so the
+        // Docs/22 D9: the first purchase is always actor-scoped, so the
         // target's account is seeded directly (realm 1 = the scenario realm)
         using (var scope = ServiceProvider.CreateScope())
         {

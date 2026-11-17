@@ -69,7 +69,7 @@ class UserManagementApplication(
 
         var (rows, total) = await PanelUserRepo.SearchUsers(owner_id, search, page, ListPageSize);
 
-        // docs/22 §3.6: the VPN accounts nest under their user rows — one
+        // Docs/22 §3.6: the VPN accounts nest under their user rows — one
         // paged query, never per-row
         var accounts = await VpnAccountRepo.Value.GetAccountsOverview(rows.Select(row => row.Username));
 
@@ -113,7 +113,7 @@ class UserManagementApplication(
 
     public async Task<ApiResult> Create(CreateUserModel model)
     {
-        // same policy as self-service registration (docs/20 D12: the creator
+        // same policy as self-service registration (Docs/20 D12: the creator
         // sets the initial password — it must satisfy the portal policy)
         AccountBusiness.ValidatePassword(model.Password);
 
@@ -123,7 +123,7 @@ class UserManagementApplication(
         var duplicated = await PanelUserRepo.CheckUniqueData(account.Username, account.Email, account.Mobile);
 
         // same contract as the unique-index catch in PanelUserRepository.Save
-        // (docs/20 step 17), with friendlier per-field messages
+        // (Docs/20 step 17), with friendlier per-field messages
         if ((duplicated & 1) == 1)
         {
             throw new UserException("این نام کاربری قبلا استفاده شده است!", $"Duplicate username: {account.Username}", 409);
@@ -154,7 +154,7 @@ class UserManagementApplication(
             if (model.Role == AccountRole.Admin)
             {
                 throw new UserException("ساخت حساب ادمین مجاز نیست!",
-                    "Admin creation is refused (docs/20 D9: exactly one admin, no promotion path).");
+                    "Admin creation is refused (Docs/20 D9: exactly one admin, no promotion path).");
             }
 
             account.Role = model.Role ?? AccountRole.User;
@@ -170,7 +170,7 @@ class UserManagementApplication(
             account.UserType |= UserTypes.AllowSelfService;
         }
 
-        // docs/22 D9: a panel user is created bare — its VPN account (and
+        // Docs/22 D9: a panel user is created bare — its VPN account (and
         // credentials) arrive with the first purchase
         account.Password = PasswordHasher.Hash(model.Password);
 
@@ -217,7 +217,7 @@ class UserManagementApplication(
         if (!Enum.IsDefined(role) || role == AccountRole.Admin)
         {
             throw new UserException("این نقش قابل اعمال نیست!",
-                $"Role must be User or Manager — Admin has no promotion path (docs/20 D9): {role}");
+                $"Role must be User or Manager — Admin has no promotion path (Docs/20 D9): {role}");
         }
 
         var account = await GetTarget(target);
@@ -229,7 +229,7 @@ class UserManagementApplication(
             await PanelUserRepo.HasActiveSubordinate(account.Id))
         {
             throw new UserException("این مدیر زیر دست فعال دارد؛ ابتدا آنها را جدا یا غیرفعال کنید!",
-                $"Cannot demote a manager with active subordinates (docs/20 §3): target={account.Username}");
+                $"Cannot demote a manager with active subordinates (Docs/20 §3): target={account.Username}");
         }
 
         account.Role = role;
@@ -290,7 +290,7 @@ class UserManagementApplication(
 
         if (actor.Role == AccountRole.Admin)
         {
-            // the admin may flip anyone (docs/20 §3)
+            // the admin may flip anyone (Docs/20 §3)
         }
         else if (actor.Role == AccountRole.Manager)
         {
@@ -344,7 +344,7 @@ class UserManagementApplication(
         if (!Enum.IsDefined(status))
         {
             throw new UserException("این وضعیت قابل اعمال نیست!",
-                $"Undefined panel-user status (docs/22 D12): {status}");
+                $"Undefined panel-user status (Docs/22 D12): {status}");
         }
 
         if (account.Status == status)
@@ -358,9 +358,9 @@ class UserManagementApplication(
 
         await PanelUserRepo.Save(account);
 
-        // docs/22 D12: panel deactivation carries the VPN accounts with it
+        // Docs/22 D12: panel deactivation carries the VPN accounts with it
         // (old whole-account semantics), but a manager-suspended account
-        // keeps its suspension across a later reactivation (docs/20 D13)
+        // keeps its suspension across a later reactivation (Docs/20 D13)
         if (status == PanelUserStatus.Deactivated)
         {
             await VpnAccountRepo.Value.SetStatus(
@@ -404,7 +404,7 @@ class UserManagementApplication(
         if (!Enum.IsDefined(status))
         {
             throw new UserException("این وضعیت قابل اعمال نیست!",
-                $"Undefined VPN-account status (docs/22 D12): {status}");
+                $"Undefined VPN-account status (Docs/22 D12): {status}");
         }
 
         var account = await VpnAccountRepo.Value.GetAccount(account_id)
@@ -534,7 +534,7 @@ class UserManagementApplication(
 
     /// <summary>
     /// The attach target of <c>set-owner</c>/<c>create</c>: an active manager
-    /// (docs/20 §3 — subordinates hang off managers), never the account being
+    /// (Docs/20 §3 — subordinates hang off managers), never the account being
     /// attached and never through an ownership cycle.
     /// </summary>
     private async Task<PanelUserEntity> ResolveManagerOwner(string owner_username, PanelUserEntity? exclude)
@@ -545,7 +545,7 @@ class UserManagementApplication(
         if (owner.Status == PanelUserStatus.Deactivated || owner.Role != AccountRole.Manager)
         {
             throw new UserException("مالک جدید باید یک مدیر فعال باشد!",
-                $"Owner must be an active manager (docs/20 §3): {owner_username}, role={owner.Role}, status={owner.Status}");
+                $"Owner must be an active manager (Docs/20 §3): {owner_username}, role={owner.Role}, status={owner.Status}");
         }
 
         if (exclude != null)
@@ -587,7 +587,7 @@ class UserManagementApplication(
         if (actor.Id == account.Id)
         {
             throw new UserException(message,
-                $"Self-operation refused (docs/20 D9): actor={actor.Username}", 403);
+                $"Self-operation refused (Docs/20 D9): actor={actor.Username}", 403);
         }
     }
 
@@ -596,7 +596,7 @@ class UserManagementApplication(
         if (account.Role == AccountRole.Admin)
         {
             throw new UserException(message,
-                $"The single admin account is out of scope for management operations (docs/20 D9): {account.Username}");
+                $"The single admin account is out of scope for management operations (Docs/20 D9): {account.Username}");
         }
     }
 
@@ -611,7 +611,7 @@ class UserManagementApplication(
     private static UserException Forbidden(string message, PanelUserEntity actor)
     {
         return new UserException(message,
-            $"Management operation refused (docs/20 §3): actor={actor.Username}, role={actor.Role}", 403);
+            $"Management operation refused (Docs/20 §3): actor={actor.Username}, role={actor.Role}", 403);
     }
 
     private static string PersianRole(AccountRole role)

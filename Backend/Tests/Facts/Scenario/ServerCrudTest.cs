@@ -8,7 +8,7 @@ using System.Net.Http.Json;
 namespace PhotonBypass.Test.Facts.Scenario;
 
 /// <summary>
-/// Admin server CRUD endpoints over real HTTP (docs/20 phase 5, D8): the
+/// Admin server CRUD endpoints over real HTTP (Docs/20 phase 5, D8): the
 /// list carries scalars + has-config only (neither plaintext nor protected
 /// config ever leaves the server), create/update protect the sent config
 /// JSON server-side (write-without-read), duplicates on identity fields are
@@ -60,7 +60,7 @@ public class ServerCrudTest(ProgramLevelInitializer.Factory factory) : HttpHandl
     [Fact]
     public async Task List_AdminOnly_ReturnsScalarsWithoutConfig()
     {
-        // plain user and manager are refused by the Admin policy (docs/20 §3)
+        // plain user and manager are refused by the Admin policy (Docs/20 §3)
         await Register("srv_user77", "77", "Passw0rd1");
         await Login("srv_user77", "Passw0rd1");
         await ServerList(status: 403);

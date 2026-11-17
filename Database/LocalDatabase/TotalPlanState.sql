@@ -3,7 +3,7 @@ GO
 
 CREATE OR ALTER VIEW TotalPlanState AS
 
--- docs/22 §2: the plan-state universe is keyed by VpnAccount — the stacking
+-- Docs/22 §2: the plan-state universe is keyed by VpnAccount — the stacking
 -- windows, the traffic bands and the Id in the result are all per account;
 -- RealmId/UserId/Status join in from VpnAccount (never NULL).
 

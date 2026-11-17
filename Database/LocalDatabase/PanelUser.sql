@@ -4,7 +4,7 @@ GO
 IF OBJECT_ID('PanelUser') IS NULL BEGIN
 	CREATE TABLE PanelUser (
 		Id					INT IDENTITY	NOT NULL	CONSTRAINT PK_PanelUser_Id PRIMARY KEY,
-		-- Panel-only status (docs/22 D12): 0=Active, 2=Deactivated (login blocked).
+		-- Panel-only status (Docs/22 D12): 0=Active, 2=Deactivated (login blocked).
 		-- VPN suspension is per-account on the VPN table, never here.
 		Status				TINYINT			NOT NULL	CONSTRAINT DF_PanelUser_Status DEFAULT 0,
 		Username			VARCHAR(255)	NOT NULL	CONSTRAINT UK_PanelUser_Username UNIQUE,
@@ -17,24 +17,24 @@ IF OBJECT_ID('PanelUser') IS NULL BEGIN
 		Email				VARCHAR(320)		NULL,
 		IsMobileValid		BIT				NOT NULL	CONSTRAINT DF_PanelUser_IsMobileValid DEFAULT 0,
 		IsEmailValid		BIT				NOT NULL	CONSTRAINT DF_PanelUser_IsEmailValid DEFAULT 0,
-		-- docs/22 D10: price calculation stays on the panel user (realm-independent).
+		-- Docs/22 D10: price calculation stays on the panel user (realm-independent).
 		CalculationMethod	INT					NULL	CONSTRAINT FK_PanelUser_CalculationMethod_Price FOREIGN KEY REFERENCES Price (Id),
 		UserType			INT				NOT NULL	CONSTRAINT DF_PanelUser_UserType DEFAULT 0,
-		-- docs/20 D2/D9: 0=User, 1=Manager, 2=Admin
+		-- Docs/20 D2/D9: 0=User, 1=Manager, 2=Admin
 		Role				TINYINT			NOT NULL	CONSTRAINT DF_PanelUser_Role DEFAULT 0,
 		-- Telegram deep-link binding; the connection itself is the proof of
 		-- validity, so no IsXxxValid flag exists for this column
 		TelegramChatId		BIGINT				NULL
 	)
 	-- No admin seed: the first-release admin is created at deploy time with a
-	-- real password by DeployCli (scripts/deploy.sh — see docs/19-deploy-runbook.md).
+	-- real password by DeployCli (Scripts/deploy.sh — see Docs/19-deploy-runbook.md).
 	-- The test-only admin/admin fixture lives in Backend/Tests/Data/Sql/DbScenario/init.sql.
 END
 GO
 
 -- Filtered (NULLs excluded): Email and Mobile are optional, and an unfiltered
 -- unique index would allow only one NULL row. These close the registration
--- CheckUniqueData -> INSERT TOCTOU window (docs/14 L11).
+-- CheckUniqueData -> INSERT TOCTOU window (Docs/14 L11).
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'UK_PanelUser_Email')
 CREATE UNIQUE NONCLUSTERED INDEX UK_PanelUser_Email
 ON PanelUser(Email) WHERE Email IS NOT NULL;

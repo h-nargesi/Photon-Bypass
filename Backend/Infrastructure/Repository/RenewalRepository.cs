@@ -24,7 +24,7 @@ class RenewalRepository(LocalDbContext context) : EditableRepository<RenewalEnti
 
         // a window function keeps the read O(1) rows per account: loading the
         // whole renewal history and reducing it in memory ran on every
-        // collector cycle (docs/14 M31)
+        // collector cycle (Docs/14 M31)
         var sql = $"""
                    select *
                    from (

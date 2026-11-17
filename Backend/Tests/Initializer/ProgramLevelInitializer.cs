@@ -95,7 +95,7 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
                 builder.UseSetting($"RateLimitOptions:{policy}:WindowSeconds", "60");
             }
             // scenario tests drive the register → buy journey; the production
-            // default (off, docs/20 D11) must not disable them
+            // default (off, Docs/20 D11) must not disable them
             builder.UseSetting("ManagementOptions:AllowRegistration", "true");
 
             builder.ConfigureServices(services =>

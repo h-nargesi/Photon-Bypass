@@ -174,7 +174,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         return await CheckResponseObject(response, status);
     }
 
-    /// <summary>First purchase (docs/22 D9): realm + optional username + plan.</summary>
+    /// <summary>First purchase (Docs/22 D9): realm + optional username + plan.</summary>
     protected async Task<Dictionary<string, string?>> NewAccount(string? username, int realm_id,
         byte users, short? days, short? gigs, int status = 2)
     {
@@ -310,7 +310,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         await CheckResponse(response, http_status);
     }
 
-    /// <summary>VPN-level status change (docs/22 D12): 0=Active, 1=Suspended, 2=Deactivated.</summary>
+    /// <summary>VPN-level status change (Docs/22 D12): 0=Active, 1=Suspended, 2=Deactivated.</summary>
     protected async Task UserSetAccountStatus(int account_id, VpnAccountStatus status, int http_status = 2)
     {
         var response = await Client.PostAsJsonAsync("/api/user/set-account-status", new { accountId = account_id, status });
@@ -353,7 +353,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
     /// <summary>
     /// Creates a panel user straight in the scenario database — register always
     /// sets AllowSelfService (D11), so dependent/manager fixtures must be seeded here.
-    /// docs/22 D9: no VPN credentials; the account arrives with the first purchase.
+    /// Docs/22 D9: no VPN credentials; the account arrives with the first purchase.
     /// </summary>
     protected async Task InsertAccount(string username, UserTypes user_type,
         AccountRole role = AccountRole.User, int? owner_id = null, PanelUserStatus status = PanelUserStatus.Active)

@@ -7,7 +7,7 @@ namespace PhotonBypass.Test.Facts.LocalDatabase;
 
 /// <summary>
 /// Real-SQL regression test for the raw UPDATE behind the reset-code
-/// invalidation (docs/14 M44): only the still-active codes of the target
+/// invalidation (Docs/14 M44): only the still-active codes of the target
 /// account may be expired — other accounts and already-expired rows stay
 /// exactly as they were.
 /// </summary>

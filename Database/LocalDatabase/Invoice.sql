@@ -4,9 +4,9 @@ GO
 IF OBJECT_ID('Invoice') IS NULL
 CREATE TABLE Invoice (
 	Code				INT				NOT NULL	CONSTRAINT PK_Invoice_Code PRIMARY KEY,
-	-- docs/22 D8: the invoice belongs to the paying panel user.
+	-- Docs/22 D8: the invoice belongs to the paying panel user.
 	AccountId			INT				NOT NULL	CONSTRAINT FK_Invoice_AccountId FOREIGN KEY REFERENCES PanelUser (Id),
-	-- docs/22 §2: the VPN account a plan invoice renews; NULL on wallet-topup
+	-- Docs/22 §2: the VPN account a plan invoice renews; NULL on wallet-topup
 	-- invoices and on new-account invoices that only resolve at settlement.
 	VpnAccountId		INT					NULL	CONSTRAINT FK_Invoice_VpnAccountId FOREIGN KEY REFERENCES VpnAccount (Id),
 	Kind				TINYINT			NOT NULL	CONSTRAINT DF_Invoice_Kind DEFAULT 0,

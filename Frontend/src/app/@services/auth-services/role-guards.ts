@@ -15,7 +15,7 @@ async function loadUser(): Promise<UserModel | undefined> {
   }
 }
 
-/// Manager-area pages (user management) — Manager or Admin (docs/20 §3).
+/// Manager-area pages (user management) — Manager or Admin (Docs/20 §3).
 export const managerGuard: CanActivateFn = async (_route, state) => {
   const router = inject(Router);
   const user = await loadUser();
@@ -31,7 +31,7 @@ export const managerGuard: CanActivateFn = async (_route, state) => {
     : router.createUrlTree(['/dashboard']);
 };
 
-/// Admin-only pages (server CRUD, wallet adjust) — docs/20 §3.
+/// Admin-only pages (server CRUD, wallet adjust) — Docs/20 §3.
 export const adminGuard: CanActivateFn = async (_route, state) => {
   const router = inject(Router);
   const user = await loadUser();

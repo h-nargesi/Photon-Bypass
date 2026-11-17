@@ -66,7 +66,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         Assert.Equal(AccountRole.User, result.Data.Role);
         Assert.True(result.Data.AllowSelfService);
 
-        // docs/22 §3.5: the login answer carries the account list for the switcher
+        // Docs/22 §3.5: the login answer carries the account list for the switcher
         var account = Assert.Single(result.Data.Accounts);
         Assert.Equal("User99", account.Username);
         Assert.Equal((int)VpnAccountStatus.Active, account.Status);

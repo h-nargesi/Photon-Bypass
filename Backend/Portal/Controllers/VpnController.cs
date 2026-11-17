@@ -21,7 +21,7 @@ public class VpnController(
     IVpnApplication application, IJobContext job, Lazy<IAccessService> access, Lazy<IAuthApplication> auth) :
     ResultHandlerController(job, access)
 {
-    /// <summary>The account switcher list (docs/22 §3.5): my accounts, or a subordinate's.</summary>
+    /// <summary>The account switcher list (Docs/22 §3.5): my accounts, or a subordinate's.</summary>
     [HttpGet("accounts")]
     public async Task<ApiResult> GetAccounts([FromQuery] string? target)
     {

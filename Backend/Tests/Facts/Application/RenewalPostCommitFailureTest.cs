@@ -13,7 +13,7 @@ using PhotonBypass.Tools;
 namespace PhotonBypass.Test.Facts.Application;
 
 /// <summary>
-/// Post-commit resilience of the renewal executor (docs/14 H24): once the
+/// Post-commit resilience of the renewal executor (Docs/14 H24): once the
 /// wallet debit, the renewal row and the radius sync are committed, a failure
 /// in the follow-up steps (connection close / history / capacity check) must
 /// not surface — the settlement caller would revert the invoice to pending

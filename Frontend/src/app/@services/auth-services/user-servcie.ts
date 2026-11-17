@@ -18,7 +18,7 @@ export class UserService extends ApiBaseService {
   private accountEventSubject = new Subject<UserVpnAccount | undefined>();
 
   onTargetChanged = this.targetUserEventSubject.asObservable();
-  /// docs/22 §3.5: fires whenever the account switcher picks another VPN
+  /// Docs/22 §3.5: fires whenever the account switcher picks another VPN
   /// account; per-account views reload on it.
   onAccountChanged = this.accountEventSubject.asObservable();
 
@@ -63,7 +63,7 @@ export class UserService extends ApiBaseService {
   }
 
   /// D6 gate: only independent accounts (AllowSelfService) reach the
-  /// self financial flows — the server enforces the same matrix (docs/20 §3).
+  /// self financial flows — the server enforces the same matrix (Docs/20 §3).
   get isSelfService(): boolean {
     return this.current_user?.allowSelfService === true;
   }
@@ -100,7 +100,7 @@ export class UserService extends ApiBaseService {
     return this.current_user;
   }
 
-  /// docs/22 §3.5: switch the active VPN account; per-account views react
+  /// Docs/22 §3.5: switch the active VPN account; per-account views react
   /// through onAccountChanged.
   setAccount(accountId: number | undefined) {
     if (!accountId || !this.accounts.some((account) => account.id === accountId)) {
@@ -141,7 +141,7 @@ export class UserService extends ApiBaseService {
     this.targetUserEventSubject.next(this.currentTargetUser);
   }
 
-  /// On-behalf target chosen from the admin user list (docs/20 phase 6):
+  /// On-behalf target chosen from the admin user list (Docs/20 phase 6):
   /// the admin's targetArea only holds its own subordinates, while the
   /// server-side access check bypasses every target for the admin role.
   setExternalTarget(target: Target): boolean {

@@ -1,8 +1,8 @@
 namespace PhotonBypass.DeployCli;
 
 /// <summary>
-/// First-release deploy tool (docs/19). Two commands:
-///   create-admin — insert the single admin account (docs/20 D2/D9/D11) with a
+/// First-release deploy tool (Docs/19). Two commands:
+///   create-admin — insert the single admin account (Docs/20 D2/D9/D11) with a
 ///                  real password; refuses to overwrite usernames or add a second admin.
 ///   verify       — smoke-check the stored hash against a password.
 /// Connection: --secrets &lt;path&gt; (local copy of private/secrets.json) or the
@@ -145,7 +145,7 @@ internal static class Program
                 return ExitFailure;
             default:
                 Console.Error.WriteLine(
-                    "error: an admin account already exists — exactly one admin is allowed (docs/20 D9)");
+                    "error: an admin account already exists — exactly one admin is allowed (Docs/20 D9)");
                 return ExitFailure;
         }
     }

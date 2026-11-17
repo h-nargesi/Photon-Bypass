@@ -2,7 +2,7 @@ namespace PhotonBypass.Application.Model;
 
 /// <summary>
 /// Server-side paging envelope shared by the paged admin endpoints
-/// (wallet history, user list — docs/20 phases 3/4).
+/// (wallet history, user list — Docs/20 phases 3/4).
 /// </summary>
 public class PagedResult<T>
 {

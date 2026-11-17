@@ -251,7 +251,7 @@ public class XuiAccountSyncTest : UnitLevelServiceInitializer
 
         var result = await service.ChangeVpnPassword(Server, "User3", "4c1f3b2a-1111-2222-3333-444455556666");
 
-        // the rotation returns the applied credential (docs/16 D4 contract)
+        // the rotation returns the applied credential (Docs/16 D4 contract)
         result.Should().Be("4c1f3b2a-1111-2222-3333-444455556666");
 
         // patch-only: a single update keyed by the OLD live uuid, no traffic

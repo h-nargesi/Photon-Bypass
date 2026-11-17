@@ -2,7 +2,7 @@
 
 public class CloseConnectionContext
 {
-    /// <summary>VPN account the connection belongs to (docs/22 target contract).</summary>
+    /// <summary>VPN account the connection belongs to (Docs/22 target contract).</summary>
     public int? AccountId { get; set; }
 
     public string? Target { get; set; }

@@ -1,7 +1,7 @@
 namespace PhotonBypass.Domain.Account.Model;
 
 /// <summary>
-/// One row of the manager/admin user list (docs/20 phase 4, docs/22 D7):
+/// One row of the manager/admin user list (Docs/20 phase 4, Docs/22 D7):
 /// panel-user scalars (inactive users included). The VPN accounts of each
 /// user load separately and nest under the row.
 /// </summary>
@@ -28,7 +28,7 @@ public class UserOverviewModel
 }
 
 /// <summary>
-/// One VPN-account row nested under a user row (docs/22 §3.6): account
+/// One VPN-account row nested under a user row (Docs/22 §3.6): account
 /// scalars plus the latest plan summary joined from <c>TotalPlanState</c>.
 /// </summary>
 public class UserAccountOverviewModel

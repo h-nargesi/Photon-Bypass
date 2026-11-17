@@ -49,7 +49,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var vpn_app = scope.ServiceProvider.GetRequiredService<IVpnApplication>();
 
-        // docs/08 contract kept: credential operations require an active plan
+        // Docs/08 contract kept: credential operations require an active plan
         var func = () => vpn_app.ChangeVpnPassword(6, "new_password");
 
         await func.Should().ThrowAsync<UserException>();
