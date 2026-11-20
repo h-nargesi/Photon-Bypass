@@ -38,6 +38,12 @@
 
 **نقطه‌ی شروع**: همان فایل + `MikrotikDirectService.GetOVpnCertificate` (که گواهی را می‌سازد) به‌عنوان الگو برای SSH/`ProcessService`. همراه با `Architecture/TODO.md:64` (throttle گواهی) و `:61` (مدیریت گواهی‌های قدیمی) در همان فاز انجام شود.
 
+### تست اینتگریشن x-ui — VM لوکال تستی (Docs/23)
+
+تمام تست‌های x-ui امروز mock هستند (`XuiApiMoq`/`ScriptedHandler` — لایه‌ی قرارداد). طبق Docs/23 (۱۴۰۵/۰۸/۲۹) هیچ تستی به سرور زنده وصل نمی‌شود و تنها مقصد اینتگریشن، VM لوکال VirtualBox با پنل تستی x-ui است.
+
+**کار باقی‌مانده**: ران‌بوک ساخت یک‌باره‌ی VM + اسنپ‌شات `clean-test-state`، `XuiPanelInitializer` قرینه‌ی `MikrotikInitializer` (با چک آماده‌بودن HTTP)، و لایه‌ی تست با `IXuiApi` واقعی به VM. دستور کار کامل: Docs/23 §4؛ ردیابی در Docs/18 §۵.۱۰.
+
 ### Google Auth — فاز ۵
 
 در `README.md:298` به‌عنوان فاز ۵ لیست شده؛ در دکمه‌ی Login اشاره شده (`README.md:103`). هنوز پیاده‌سازی نشده.

@@ -21,7 +21,7 @@
 | 10 | [Docs/10-frontend.md](10-frontend.md) | خلاصه‌ی اپ Angular 19. |
 | 11 | [Docs/11-business-flows.md](11-business-flows.md) | سناریوهای end-to-end (ثبت‌نام، تمدید، ترافیک و …). |
 | 12 | [Docs/12-current-state.md](12-current-state.md) | پیاده‌سازی‌شده در برابر نیمه‌کاره + نقطه‌های شروع. |
-| 13 | [Docs/13-xray-integration.md](13-xray-integration.md) | ادغام با Simorgh/x-ui: adapter جدید، منبع حقیقت، مدل ترافیک. |
+| 13 | [Docs/13-xray-integration.md](13-xray-integration.md) | ادغام با دیتاپلین x-ui: adapter جدید، منبع حقیقت، مدل ترافیک. |
 | 14 | [Docs/14-defects-audit.md](14-defects-audit.md) | ممیزی نواقص/امنیت/پرفورمنس خارج از TODO با اولویت‌بندی P0–P5. |
 | 15 | [Docs/15-payment-p2.md](15-payment-p2.md) | طراحی فاز P2: پرداخت کارت‌به‌کارت + رسید + کیف پول (تصمیمات، مدل داده، قرارداد API). |
 | 16 | [Docs/16-multi-server-panel.md](16-multi-server-panel.md) | ثبت تصمیمات پنل چند-سرور: رنیم FreeRadius→RadiusDesk، الگوی dispatch کلید سوم x-ui، نگاشت هویت، چرخش UUID؛ بازها و probe. |
@@ -31,6 +31,7 @@
 | 20 | [Docs/20-admin-panel-roles.md](20-admin-panel-roles.md) | پنل مدیریت: مدل نقش‌ها (D1–D13)، ماتریس دسترسی، نقشه راه ۶ فازه (نقش/auth → تفکیک payer → تراکنش ادمین → مدیریت کاربران → CRUD سرور → فرانت نقش‌دار). |
 | 21 | [Docs/21-social-media-telegram-channel.md](21-social-media-telegram-channel.md) | کانال اجتماعی: `ISocialMediaService` خنثی به کانال + انتخاب runtime، اتصال چت تلگرام با کد یک‌بارمصرف، اولویت تلگرام در ریست/هشدار با fallback ایمیل. |
 | 22 | [Docs/22-panel-user-vpn-split.md](22-panel-user-vpn-split.md) | تفکیک `Account` به `PanelUser` + `VpnAccount` (D1–D14): چند اکانت VPN برای هر کاربر، قواعد یوزرنیم D3، خرید با انتخاب realm، مهاجرت stale، دو محور وضعیت. |
+| 23 | [Docs/23-xui-local-test-vm.md](23-xui-local-test-vm.md) | انزوای تست (D1–D5): ممنوعیت قطعی تست روی سرور زنده، حذف ارجاع به زیرساخت اجرایی، تنها مقصد اینتگریشن x-ui = VM لوکال VirtualBox با پنل تستی + دستور کار اجرا. |
 
 ## Read this file when…
 
@@ -48,7 +49,7 @@
 | Change a frontend page/route | [10-frontend](10-frontend.md) |
 | Trace a real user journey (register → renew → warn) | [11-business-flows](11-business-flows.md) |
 | Find a stub to implement | [12-current-state](12-current-state.md) |
-| Understand the Xray/x-ui integration plan (Simorgh reuse) | [13-xray-integration](13-xray-integration.md) |
+| Understand the Xray/x-ui data-plane integration plan | [13-xray-integration](13-xray-integration.md) |
 | Find/prioritize a defect, security, or performance issue | [14-defects-audit](14-defects-audit.md) |
 | Implement/verify the P2 payment flow (card-to-card, receipt, wallet) | [15-payment-p2](15-payment-p2.md) |
 | Continue the multi-server panel / x-ui adapter work (D1-D4 decisions, open T1-T5) | [16-multi-server-panel](16-multi-server-panel.md) |
@@ -57,6 +58,7 @@
 | Deploy to the Plesk host / manage production secrets (`private/secrets.json` + guard) | [19-deploy-runbook](19-deploy-runbook.md) |
 | Implement/verify the admin-panel roles roadmap (Role/SelfService, payer separation, wallet adjust, user management, server CRUD) | [20-admin-panel-roles](20-admin-panel-roles.md) |
 | Implement/verify the panel-user ↔ VPN-account split (multi-account, realm choice, per-account status) | [22-panel-user-vpn-split](22-panel-user-vpn-split.md) |
+| Build/extend the local x-ui test VM and its integration tests, or check what test targets are allowed | [23-xui-local-test-vm](23-xui-local-test-vm.md) |
 
 ## Related legacy docs
 

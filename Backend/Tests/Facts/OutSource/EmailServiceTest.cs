@@ -109,12 +109,12 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         await email_service.SendConnectionEmail("User Two", "two@test.com", new ConnectionEmailContext
         {
             Username = "User2",
-            Link = "vless://4c1f3b2a-1111-2222-3333-444455556666@vm06.ir.parssafe:443?type=ws",
+            Link = "vless://4c1f3b2a-1111-2222-3333-444455556666@xui.test.local:443?type=ws",
         });
 
         Assert.Equal("two@test.com", sent_to);
         Assert.Contains("User2", sent_body);
-        Assert.Contains("vless://4c1f3b2a-1111-2222-3333-444455556666@vm06.ir.parssafe:443?type=ws", sent_body);
+        Assert.Contains("vless://4c1f3b2a-1111-2222-3333-444455556666@xui.test.local:443?type=ws", sent_body);
 
         // sections the account does not own are stripped from the merged template
         Assert.DoesNotContain("Password:", sent_body);
@@ -194,7 +194,7 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         {
             Username = "User2",
             Password = "vpn-pass-123",
-            Link = "vless://4c1f3b2a-1111-2222-3333-444455556666@vm06.ir.parssafe:443?type=ws",
+            Link = "vless://4c1f3b2a-1111-2222-3333-444455556666@xui.test.local:443?type=ws",
             PrivateKeyOvpn = "key-pass-456",
             CertFile = [1, 2, 3],
         });
@@ -202,7 +202,7 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         // one request, one email, every owned artifact inside
         Assert.Equal(1, send_count);
         var body = sent_bodies.Single();
-        Assert.Contains("vless://4c1f3b2a-1111-2222-3333-444455556666@vm06.ir.parssafe:443?type=ws", body);
+        Assert.Contains("vless://4c1f3b2a-1111-2222-3333-444455556666@xui.test.local:443?type=ws", body);
         Assert.Contains("vpn-pass-123", body);
         Assert.Contains("key-pass-456", body);
     }
@@ -346,13 +346,13 @@ public class EmailServiceTest : UnitLevelServiceInitializer
         await email_service.SendConnectionEmail("User Two", "two@test.com", new ConnectionEmailContext
         {
             Username = "User2",
-            Link = "vless://4c1f3b2a-1111-2222-3333-444455556666@vm06.ir.parssafe:443?type=ws",
+            Link = "vless://4c1f3b2a-1111-2222-3333-444455556666@xui.test.local:443?type=ws",
         });
 
         // the plain-text view carries the same conditional rendering: the
         // password and OpenVPN sections never reach the recipient
         sent_text.Should().Contain("User2");
-        sent_text.Should().Contain("vless://4c1f3b2a-1111-2222-3333-444455556666@vm06.ir.parssafe:443?type=ws");
+        sent_text.Should().Contain("vless://4c1f3b2a-1111-2222-3333-444455556666@xui.test.local:443?type=ws");
         sent_text.Should().NotContain("Password:");
         sent_text.Should().NotContain("OpenVPN");
         sent_text.Should().NotContain("<!--if:");

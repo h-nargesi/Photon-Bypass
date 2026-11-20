@@ -164,7 +164,7 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 | تصمیم | مرجع | تست‌ها | وضعیت | یادداشت |
 |---|---|---|---|---|
 | dispatch مرکزی Features→کلید keyed DI | Docs/16 D2، Docs/17 §6 | `AccountRadiusTest`، `SessionRadiusTest`، `XuiAccountSyncTest` | ✅ | |
-| قرارداد API x-ui (v1.12/v1.14) | Docs/17 §4 | `XuiApiTransportTest` | ✅ | probe زنده‌ی vm06/vm08 اجرا شد (۱۴۰۵/۰۷/۲۴؛ ۱۴/۱۴ PASS هر دو، بدون ری‌استارت — Simorgh `Docs/methods/xui-panel-api-probe.md`) |
+| قرارداد API x-ui (v1.12/v1.14) | Docs/17 §4، Docs/23 | `XuiApiTransportTest` (ترنسپورت mock)؛ تأیید زنده فقط یک اجرای تاریخی یک‌باره (۱۴۰۵/۰۷/۲۴؛ ۱۴/۱۴ PASS، بدون ری‌استارت — رکورد در سمت زیرساخت، ارجاع حذف شد Docs/23) | ✅/⚠️ | تست اینتگریشن تکرارشونده روی VM لوکال تستی — کار آتی (Docs/23 §4، شکاف §۵.۱۰) |
 | sync اکانت x-ui + enforcement سمت سرور (Encoding A) | Docs/17 D13، D16 | `XuiAccountSyncTest.SyncUserAndActive_*` (پوش تجمعی `StackedRenewal`/نامحدود `UnlimitedStack` + fallback سطرهای پیش از D16 در تست‌های قبلی) | ✅ | totalGB = `CumulativeTrafficLeft ?? TrafficLimit ?? 0`؛ انقضا از ستون ذخیره‌شده |
 | حسابداری ترافیک x-ui (دلتا/epoch/گپ/ردیف صفر/یکتایی SessionId) | Docs/17 D5–D8 | `XuiTrafficAccountingTest` | ✅ | |
 | sole-writer: ردیف‌های TrafficData + ستون‌های Renewal در یک tx | Docs/17 D14 | `XuiTrafficSyncTest` | ✅ | rollback هر دو را برمی‌گرداند |
@@ -220,6 +220,7 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 7. **جریان دیپلوی (`Scripts/deploy.sh` + `DeployCli`)** — فقط validation دستی، بدون تست خودکار (ردیف §۴-دیپلوی): smoke روی MSSQL محلی با اجرای همان batch ساختار + `create-admin`/`verify` انجام شد؛ خودِ `sqlcmd` روی آن ماشین نصب نبود، پس مسیر sqlcmd (fail-fast `-b`، تایماوت، codepage) هنوز روی هاست واقعی آزمایش نشده — اولین اجرای پروداکشن با دقت دنبال شود (Docs/19 §هـ).
 8. **تداخل موازی کلاس‌های سناریو روی `FastBypass_DbScenario` مشترک (۲۰۲۶-۱۰-۱۷، از قبل موجود)** — هر کلاس سناریو Factory خودش را دارد که در ساخت، همان یک دیتابیس را DROP/CREATE می‌کند؛ با اجرای موازی کلاس‌ها (پیش‌فرض xUnit) بازسازی وسطِ اجرای کلاس دیگر رخ می‌دهد و خطاهای تکراری‌شدن موبایل/یوزرنیم *متغیر و زمان‌بندی‌محور* می‌سازد (مشاهده‌شده: `UserManagementTest.SetOwner_AttachDetachAndGuards` به‌طور پیوسته و یک‌بار `ConnectAndCheck.Test` در اجرای کامل سوئیت؛ هر دو در اجرای تنها کاملاً سبز؛ روی baseline بدون تغییرات فاز ۵ پنل هم بازتولید شد — ارتباطی با آن تغییرات ندارد). درمان کاندید: `[Collection]` مشترک برای کلاس‌های `Facts/Scenario` یا خاموش کردن `parallelizeTestCollections` — کار آتی جدا.
 9. **لکه‌ی اشتراک `OnSend` در `EmailHandlerMoq` (۲۰۲۶-۱۰-۱۸، pre-existing روی baseline ویندوز)** — `HttpHandler.ForgetPass` به `EmailHandlerMoq.OnSend` لامبدای خواندن بدنه‌ی ایمیل وصل می‌کند اما هرگز آن را detach نمی‌کند؛ دومین ایمیل forget-pass در همان host، لامبدای کهنه را روی `MailMessage` ای اجرا می‌کند که بعد از send قبلی dispose شده → «Stream was not readable» → ۵۰۰. `RegisterAndBuy.Simple` تنها سبز است و `Twice` به‌طور قطعی می‌شکند (بازتولید روی baseline بدون تغییرات D16). درمان: unsubscribe در انتهای `ForgetPass` یا reset رویداد پیش از اشتراک — کار آتی جدا.
+10. **تست اینتگریشن x-ui روی پنل واقعی (۱۴۰۵/۰۸/۲۹ — Docs/23)** — همه‌ی تست‌های x-ui امروز mock هستند (`XuiApiMoq`/`ScriptedHandler`). طبق Docs/23 تنها مقصد مجاز اینتگریشن، VM لوکال VirtualBox با پنل تستی x-ui است؛ کار آتی: ران‌بوک ساخت VM + `XuiPanelInitializer` قرینه‌ی `MikrotikInitializer` + لایه‌ی تست با `IXuiApi` واقعی (دستور کار کامل: Docs/23 §4).
 
 نوشتن تست برای این فهرست **کار آتی جدا** است (خارج از دامنه‌ی سند حاکمیت).
 
@@ -236,5 +237,6 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 ## ۷. قاعده‌ی حاکمیت
 
 - هر PR که **تست اضافه/تغییر می‌دهد** یا **جریان/تصمیم جدیدی می‌سازد**، ردیف مربوط در §۴ همین سند را **در همان PR** به‌روز می‌کند (ستون تست‌ها/وضعیت) و در صورت لزوم شکاف تازه به §۵ اضافه می‌شود.
+- **قاعده‌ی انزوای تست (Docs/23، ۱۴۰۵/۰۸/۲۹)**: هیچ تستی — خودکار یا دستی — به سرورهای زنده/در حال سرویس‌دهی وصل نمی‌شود؛ تست اینتگریشن دیتاپلین فقط روی زیرساخت لوکال تست (VM تستی) اجرا می‌شود و از این ریپو ارجاعی به ریپوی زیرساخت اجرایی یا نام میزبان‌های زنده نگه داشته نمی‌شود.
 - **مبنای پوشش (§۳)** به‌صورت موردی و هنگام تغییرهای ساختاری (پروژه‌ی جدید، تغییر پشته‌ی تست) بازسنجی می‌شود؛ نه در هر PR.
 - شکاف‌های پوشش فقط اینجا (§۵) دنبال می‌شوند — نه در `Architecture/TODO.md` (آنجا محل کارهای تصمیم‌شده است).

@@ -30,7 +30,7 @@ public class VlessLinkServiceTest : UnitLevelServiceInitializer
         RealmId = 2,
         Name = "XuiServer",
         IpAddress = "10.0.0.50",
-        DomainName = "vm06.ir.parssafe",
+        DomainName = "xui.test.local",
         Features = ServerFeature.Xui | ServerFeature.V2ray,
     };
 
@@ -44,17 +44,17 @@ public class VlessLinkServiceTest : UnitLevelServiceInitializer
             Protocol = "vless",
             StreamSettings = """
                 {"network":"ws","security":"tls",
-                 "tlsSettings":{"serverName":"vm06.ir.parssafe","fingerprint":"chrome","alpn":["h2","http/1.1"]},
-                 "wsSettings":{"path":"/vpnv","headers":{"Host":"vm06.ir.parssafe"}}}
+                 "tlsSettings":{"serverName":"xui.test.local","fingerprint":"chrome","alpn":["h2","http/1.1"]},
+                 "wsSettings":{"path":"/vpnv","headers":{"Host":"xui.test.local"}}}
                 """,
         };
 
         var link = VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
 
         link.Should().Be(
-            $"vless://{ClientUuid}@vm06.ir.parssafe:443" +
-            "?encryption=none&type=ws&security=tls&sni=vm06.ir.parssafe&fp=chrome" +
-            "&path=%2Fvpnv&host=vm06.ir.parssafe#User3");
+            $"vless://{ClientUuid}@xui.test.local:443" +
+            "?encryption=none&type=ws&security=tls&sni=xui.test.local&fp=chrome" +
+            "&path=%2Fvpnv&host=xui.test.local#User3");
     }
 
     [Fact]
@@ -75,7 +75,7 @@ public class VlessLinkServiceTest : UnitLevelServiceInitializer
         var link = VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
 
         link.Should().Be(
-            $"vless://{ClientUuid}@vm06.ir.parssafe:8443" +
+            $"vless://{ClientUuid}@xui.test.local:8443" +
             "?encryption=none&type=tcp&security=reality" +
             "&sni=www.example.com&fp=chrome&pbk=pbk-value&sid=sid-value#User3");
     }
@@ -90,7 +90,7 @@ public class VlessLinkServiceTest : UnitLevelServiceInitializer
             Protocol = "vless",
             StreamSettings = """
                 {"network":"grpc","security":"tls",
-                 "tlsSettings":{"serverName":"vm06.ir.parssafe","fingerprint":"firefox"},
+                 "tlsSettings":{"serverName":"xui.test.local","fingerprint":"firefox"},
                  "grpcSettings":{"serviceName":"vpn grpc/service"}}
                 """,
         };
@@ -98,8 +98,8 @@ public class VlessLinkServiceTest : UnitLevelServiceInitializer
         var link = VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
 
         link.Should().Be(
-            $"vless://{ClientUuid}@vm06.ir.parssafe:443" +
-            "?encryption=none&type=grpc&security=tls&sni=vm06.ir.parssafe&fp=firefox" +
+            $"vless://{ClientUuid}@xui.test.local:443" +
+            "?encryption=none&type=grpc&security=tls&sni=xui.test.local&fp=firefox" +
             "&serviceName=vpn%20grpc%2Fservice#User3");
     }
 
@@ -127,7 +127,7 @@ public class VlessLinkServiceTest : UnitLevelServiceInitializer
 
         var link = VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
 
-        link.Should().Be($"vless://{ClientUuid}@vm06.ir.parssafe:1080?encryption=none&type=tcp&security=none#User3");
+        link.Should().Be($"vless://{ClientUuid}@xui.test.local:1080?encryption=none&type=tcp&security=none#User3");
     }
 
     [Fact]
@@ -249,7 +249,7 @@ public class VlessLinkServiceTest : UnitLevelServiceInitializer
             Id = 3,
             Port = 443,
             Protocol = "vless",
-            StreamSettings = """{"network":"ws","security":"tls","tlsSettings":{"serverName":"vm06.ir.parssafe"},"wsSettings":{"path":"/vpnv"}}""",
+            StreamSettings = """{"network":"ws","security":"tls","tlsSettings":{"serverName":"xui.test.local"},"wsSettings":{"path":"/vpnv"}}""",
         };
 
         var service = scope.ServiceProvider.GetRequiredService<IVpnLinkService>();
@@ -257,8 +257,8 @@ public class VlessLinkServiceTest : UnitLevelServiceInitializer
         var link = await service.GetVlessLink(2, "User3");
 
         // keyed by the UUID currently live in the panel, not the database copy
-        link.Should().StartWith("vless://drifted-live-uuid@vm06.ir.parssafe:443?");
-        link.Should().Contain("type=ws&security=tls&sni=vm06.ir.parssafe&path=%2Fvpnv");
+        link.Should().StartWith("vless://drifted-live-uuid@xui.test.local:443?");
+        link.Should().Contain("type=ws&security=tls&sni=xui.test.local&path=%2Fvpnv");
     }
 
     [Fact]

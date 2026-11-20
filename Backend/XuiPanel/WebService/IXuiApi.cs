@@ -7,8 +7,9 @@ namespace PhotonBypass.Xui.WebService;
 /// and v1.14.0 source (identical route tables and handlers for everything
 /// this panel uses). Client mutations are keyed by the UUID currently live in the
 /// panel (statistics are keyed by email and survive UUID changes); only
-/// resetClientTraffic is keyed by email. The live vm06/vm08 probe
-/// (fetch xui/API/openapi.json, Docs/17 §4) gates activation.
+/// resetClientTraffic is keyed by email. A one-time live probe (2026-10-16,
+/// Docs/17 §4) verified the contract on the production fleet; repeated
+/// verification runs against the local test VM only (Docs/23).
 /// </summary>
 public interface IXuiApi
 {

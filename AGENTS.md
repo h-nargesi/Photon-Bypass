@@ -194,7 +194,7 @@ Full reading order and per-file purpose is in [Docs/00-index.md](Docs/00-index.m
 - [Docs/10-frontend.md](Docs/10-frontend.md) — Angular app summary
 - [Docs/11-business-flows.md](Docs/11-business-flows.md) — end-to-end scenarios
 - [Docs/12-current-state.md](Docs/12-current-state.md) — implemented vs stub, starting points
-- [Docs/13-xray-integration.md](Docs/13-xray-integration.md) — Simorgh / x-ui integration plan (adapter replacement, traffic model)
+- [Docs/13-xray-integration.md](Docs/13-xray-integration.md) — x-ui data-plane integration plan (adapter replacement, traffic model)
 - [Docs/14-defects-audit.md](Docs/14-defects-audit.md) — prioritized defect/security/performance audit of issues **not** in `Architecture/TODO.md` (fix tracking lives there)
 - [Docs/15-payment-p2.md](Docs/15-payment-p2.md) — P2 payment design: card-to-card + receipt + wallet (decisions, data model, API contract)
 - [Docs/16-multi-server-panel.md](Docs/16-multi-server-panel.md) — multi-server admin panel decision record: FreeRadius→RadiusDesk rename, x-ui dispatch/identity/UUID-rotation decisions, open items + probe checklist
@@ -204,6 +204,7 @@ Full reading order and per-file purpose is in [Docs/00-index.md](Docs/00-index.m
 - [Docs/20-admin-panel-roles.md](Docs/20-admin-panel-roles.md) — admin-panel roles decision record: D1–D13 (Role/UserTypes.AllowSelfService, payer=actor, admin wallet ledger), access matrix, 6-phase roadmap
 - [Docs/21-social-media-telegram-channel.md](Docs/21-social-media-telegram-channel.md) — telegram channel record (D1–D6): channel-neutral `ISocialMediaService` + runtime channel selection, one-time-code chat binding, Telegram-first reset/warnings with email fallback
 - [Docs/22-panel-user-vpn-split.md](Docs/22-panel-user-vpn-split.md) — panel-user/VPN-account split record (D1–D14): `PanelUser` + `VpnAccount` entities, N accounts per user, D3 username rule, realm choice at purchase + stale migration, per-account status axes, `accountId` API contract
+- [Docs/23-xui-local-test-vm.md](Docs/23-xui-local-test-vm.md) — test-isolation record (D1–D5): no test ever touches live servers, no references to the upstream production-infrastructure repo, the only sanctioned x-ui integration target is a local VirtualBox test panel; includes the ready work order
 
 ---
 
@@ -214,6 +215,7 @@ The platform is functional for the customer-facing flow (auth, account, plan ren
 - **`Backend/Admin` host** — deliberately set aside (Docs/20 D7: one Portal host + one Angular app); it stays an empty skeleton (`Program.cs` + empty `AddAdminServices`). The management panel itself is built and lives in Portal (`/api/user/*`, `/api/server/*`, `/api/wallet/*` + frontend `/users`, `/servers`, `/wallet`).
 - **`SetOVpnCertificate`** (`MikrotikRadius/Application/MikrotikDirectService.cs:165`) — throws `NotImplementedException` (deferred to the OpenVPN support phase; gated behind the `ServerFeature.Ovpn` bit).
 - **WhatsApp** — future adapter on the channel-neutral `ISocialMediaService` (one class + one keyed registration in `OutSource/ServiceFactory.cs`; `SocialChannel.WhatsApp` is reserved). No compile-time gates anymore.
+- **x-ui integration tests (local test VM)** — all current x-ui tests are mock-based (`XuiApiMoq` / scripted transport). Per Docs/23, no test may ever touch a live server; the only sanctioned integration target is a local VirtualBox test panel (`XuiPanelInitializer` mirroring `MikrotikInitializer` — open work, work order in Docs/23 §4).
 - **Google Auth** — listed as phase 5 in `README.md`.
 
 See [Docs/12-current-state.md](Docs/12-current-state.md) for the full list and where to start for each, and `Architecture/TODO.md` for the original backlog.
