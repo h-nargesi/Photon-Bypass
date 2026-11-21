@@ -48,9 +48,11 @@
 
 ## ۴. کارهای باقی‌مانده (دستور کار آماده‌ی جلسه‌ی اجرا)
 
-1. ران‌بوک/اسکریپت ساخت یک‌باره‌ی VM (§۳) — در `Scripts/` یا پیوست همین سند.
+1. ~~ران‌بوک/اسکریپت ساخت یک‌باره‌ی VM (§۳)~~ — ✅ اجرا شد (جلسه ۱۴۰۵/۰۸/۲۹): دو اسکریپت در `Scripts/` به سبک `Scripts/deploy.sh` (زیرفرمان‌های `setup|reset|start|stop|status|clean`، پارامترها با env + پیش‌فرض‌های جدول §۳، احترام به `https_proxy`، آرتیفکت‌ها در `~/.cache/photon-bypass/<script>/`):
+   - `Scripts/xui-test-vm.sh` — ساخت `Xui-Test`: ایمیج Debian 12 genericcloud پین‌شده (+verify SHA512) → VDI، seed ISO ابری NoCloud (کلید SSH تولیدی، IP ثابت روی NIC دوم)، نصب x-ui alireza0 v1.14.0 پین‌شده (+verify SHA256)، پیکربندی غیرتعاملی پنل (CLI با fallback روی `x-ui.db`)، ساخت inbound تستی (VLESS+ws) و read-back `InboundId`، سپس اسنپ‌شات `clean-test-state`.
+   - `Scripts/mikrotik-test-vms.sh` — ساخت `Mikrotik-Base`/`Mikrotik-Scenario`: ایمیج رسمی CHR RouterOS (پین‌شده، لایسنس free دائمی — فقط کنترل‌پلین تست می‌شود) → VDI، بوت‌استرپ سریال headless، `/import` فایل export کاربر (`show-sensitive`؛ تنها مرجع کانفیگ — fixtureهای تستی commit شده در `Scripts/mikrotik-base.rsc`/`Scripts/mikrotik-scenario.rsc` به تصمیم مالک: مقادیر کاملاً تستی، قرارداد اعتبارهای تستی همین ریپو؛ خروجی import هرگز در log چاپ نمی‌شود)، سناریو به‌صورت clone از Base (قرینه‌ی `MikrotikInitializer`)، verify (SSH/api 8728/`user-manager` خالی — کاربران باقی‌مانده‌ی export قبل از snapshot پاک می‌شوند) و اسنپ‌شات.
 2. `XuiPanelInitializer` + سیم‌کشی در زیرساخت `OutSourceManager`/سطح سرویس تست.
-3. بند کانفیگ تست برای VM در `Backend/Tests/appsettings.json`.
+3. بند کانفیگ تست برای VM در `Backend/Tests/appsettings.json` — بخش `TestVmOptions` (کلید = نام VM؛ Ip/Username/Password/ApiPort یا Port/InboundId) با accessor استاتیکِ `TestVmOptions.Get(key)` از همین جلسه اضافه شده و `MikrotikInitializer.GetIp`/`Check` و fixture قرارداد میکروتیک از آن می‌خوانند (بازنویسی env با `TestVmOptions__<VM>__Ip=…`؛ VMهای فعلی بدون هیچ تغییری کار می‌کنند). مقدار `Xui-Test` فعلاً placeholder است؛ مصرف‌کننده‌اش بند ۴ همین فهرست است.
 4. لایه‌ی تست اینتگریشن (`IXuiApi` واقعی → VM): قرارداد transport زنده (login/envelope/کوکی/هدر AJAX/401→re-login)، چرخه‌ی کامل کلاینت (add → update با چرخش UUID → reset traffic → del + حذف ردیف stats)، `onlines`، و حسابداری ترافیک با شمارنده‌ی واقعی (دلتا/epoch روی داده‌ی زنده‌ی پنل تستی).
 5. به‌روزرسانی سطر مربوط در `Docs/18` §4 در همان PR (قاعده‌ی حاکمیت Docs/18 §7).
 6. ~~خنثی‌سازی ارجاع‌های مستندات + fixtureها + کامنت `IXuiApi`~~ — ✅ اجرا شد در همین جلسه (D2).

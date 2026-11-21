@@ -9,15 +9,9 @@ internal class MikrotikInitializer(IConfiguration configuration) : IOutSourceIni
 {
     private const int TimeoutSeconds = 120;
 
-    private static readonly Dictionary<string, string> HostIps = new()
-    {
-        { "Mikrotik-Base", "192.168.56.11" },
-        { "Mikrotik-Scenario", "192.168.56.12" }
-    };
-
     public static string GetIp(string key)
     {
-        return HostIps[key];
+        return TestVmOptions.Get(key).Ip;
     }
 
     public async Task Initialize(string key)
@@ -29,6 +23,7 @@ internal class MikrotikInitializer(IConfiguration configuration) : IOutSourceIni
 
     public async Task Check(string key)
     {
+        var vm = TestVmOptions.Get(key);
         var start = DateTime.UtcNow;
         await Task.Delay(5000);
 
@@ -36,7 +31,7 @@ internal class MikrotikInitializer(IConfiguration configuration) : IOutSourceIni
         {
             try
             {
-                using var client = new SshClient(GetIp(key), "admin", "admin");
+                using var client = new SshClient(vm.Ip, vm.Username, vm.Password);
                 await client.ConnectAsync(CancellationToken.None);
 
                 if (client.IsConnected)

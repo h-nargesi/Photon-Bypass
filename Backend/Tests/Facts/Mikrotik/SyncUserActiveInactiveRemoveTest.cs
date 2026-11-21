@@ -18,19 +18,21 @@ public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
 {
     private const string TestPackage1 = "Mikrotik-Base";
 
+    private static readonly TestVmEndpoint Vm = TestVmOptions.Get(TestPackage1);
+
     private static readonly ServerEntity Server = new()
     {
         Name = "TestServer",
-        IpAddress = MikrotikInitializer.GetIp(TestPackage1),
+        IpAddress = Vm.Ip,
         OsType = Domain.Servers.Types.OperatingSystem.Mikrotik,
         Config = new ServerConfiguration
         {
             WebApiConfig = new WebApiConfig
             {
-                HostName = MikrotikInitializer.GetIp(TestPackage1),
-                Username = "admin",
-                Password = "admin",
-                Port = 8728,
+                HostName = Vm.Ip,
+                Username = Vm.Username,
+                Password = Vm.Password,
+                Port = Vm.Port,
                 Ssl = false,
             }
         }
