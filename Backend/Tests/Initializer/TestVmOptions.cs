@@ -32,7 +32,9 @@ internal static class TestVmOptions
     {
         ["Mikrotik-Base"] = new() { Ip = "192.168.56.11", Port = 8728 },
         ["Mikrotik-Scenario"] = new() { Ip = "192.168.56.12", Port = 8728 },
-        ["Xui-Test"] = new() { Ip = "192.168.56.13", Port = 2087, Password = "xui.test.123456", InboundId = 0 },
+        // InboundId 1 = the id the factory script reads back on a fresh panel
+        // (first inbound; Scripts/xui-test-vm.sh, live-validated — Docs/23 s4.1)
+        ["Xui-Test"] = new() { Ip = "192.168.56.13", Port = 2087, Password = "xui.test.123456", InboundId = 1 },
     };
 
     public static TestVmEndpoint Get(string key)

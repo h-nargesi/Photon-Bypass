@@ -401,18 +401,24 @@ panel_post() { # $1=path, $2=json-body
 }
 
 create_test_inbound() { # prints the created inbound id
-    local settings stream payload response
+    # settings / streamSettings / sniffing are JSON *strings* inside the add
+    # payload, not nested objects — the panel rejects an inline object with
+    # "json: cannot unmarshal object into Go struct field Inbound.sniffing of
+    # type string" (verified live, alireza0 v1.14.0; same rule as
+    # XuiInboundModel.StreamSettings in this repo)
+    local settings stream sniffing payload response
     settings=$(jq -nc '{clients: [], decryption: "none"}')
     stream=$(jq -nc --arg path "$XUI_INBOUND_PATH" \
         '{network: "ws", security: "none", wsSettings: {path: $path}}')
+    sniffing=$(jq -nc '{enabled: true, destOverride: ["http", "tls", "quic"]}')
     payload=$(jq -nc \
         --argjson port "$XUI_INBOUND_PORT" \
         --arg settings "$settings" \
         --arg stream "$stream" \
+        --arg sniffing "$sniffing" \
         '{up: 0, down: 0, total: 0, remark: "test-inbound", enable: true, expiryTime: 0,
           listen: "0.0.0.0", port: $port, protocol: "vless",
-          settings: $settings, streamSettings: $stream,
-          sniffing: {enabled: true, destOverride: ["http", "tls", "quic"]}}')
+          settings: $settings, streamSettings: $stream, sniffing: $sniffing}')
 
     note "creating the test inbound (VLESS+ws, port $XUI_INBOUND_PORT, path $XUI_INBOUND_PATH)"
     response=$(panel_post 'xui/API/inbounds/add' "$payload")
