@@ -28,8 +28,7 @@ public static class UserManagerHelper
         return limitations;
     }
 
-    public static bool GetProfile(this ITikConnection connection, int? days, long? traffic, int? rate,
-        out ProfileModel profile)
+    public static bool GetProfile(this ITikConnection connection, int? days, long? traffic, int? rate, out ProfileModel profile)
     {
         var profile_name = "profile";
 
@@ -61,8 +60,7 @@ public static class UserManagerHelper
         }
 
         profile = connection.LoadList<ProfileModel>(
-                TikParam.Equal<ProfileModel>(nameof(ProfileModel.Name),
-                    profile_name))?
+                TikParam.Equal<ProfileModel>(nameof(ProfileModel.Name), profile_name))?
             .FirstOrDefault()!;
 
         if (profile != null)
@@ -90,8 +88,7 @@ public static class UserManagerHelper
         return profile.Name;
     }
 
-    public static void GetLimitationAssignment(this ITikConnection connection, string profile_name,
-        HashSet<string> limitations,
+    public static void GetLimitationAssignment(this ITikConnection connection, string profile_name, HashSet<string> limitations,
         out List<ProfileLimitationModel> adding_list, out List<ProfileLimitationModel> removing_list)
     {
         var profile_field_filter =
@@ -113,8 +110,7 @@ public static class UserManagerHelper
             .ToList();
     }
 
-    public static void CheckLimitationAssignment(this ITikConnection connection, string profile_name,
-        HashSet<string> limitations)
+    public static void CheckLimitationAssignment(this ITikConnection connection, string profile_name, HashSet<string> limitations)
     {
         connection.GetLimitationAssignment(profile_name, limitations, out var adding_list, out var removing_list);
 
