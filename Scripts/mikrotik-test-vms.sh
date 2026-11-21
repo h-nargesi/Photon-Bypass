@@ -5,7 +5,7 @@
 # SyncUserActiveInactiveRemoveTest / ProgramLevelInitializer scenario suite):
 #
 #   Mikrotik-Base      192.168.56.11  host-only vboxnet0  snapshot clean-test-state
-#   Mikrotik-Scenario  192.168.56.12  clone of Base       snapshot clean-test-state
+#   Mikrotik-Scenario  192.168.56.12  own build + own export fixture
 #
 # Stages:
 #   setup                 build Base + Scenario, import the reference exports,
@@ -33,8 +33,11 @@
 #                                of the current Base VM (default: the committed test
 #                                fixture Scripts/mikrotik-base.rsc — confirmed test
 #                                values, same convention as Backend/Tests credentials)
-#   MIKROTIK_SCENARIO_EXPORT    (optional) separate export for Scenario; when absent,
-#                                Scenario is cloned from Base and only its IP changes
+#   MIKROTIK_SCENARIO_EXPORT    export fixture for Scenario (default: the committed
+#                               Scripts/mikrotik-scenario.rsc; built from the same
+#                               pristine CHR image as Base — NOT a clone: a cloned
+#                               NIC gets a new MAC and RouterOS renames ether1 to
+#                               ether2, invalidating every imported binding)
 #   ROUTEROS_VERSION            pinned RouterOS release (default below). The image
 #                               is the official CHR (Cloud Hosted Router) raw disk
 #                               from download.mikrotik.com, converted to VDI with
@@ -44,6 +47,12 @@
 #   MIKROTIK_IMAGE_PATH         local copy of the CHR .img.zip (or extracted .img /
 #                               ready .vdi) instead of downloading
 #   MIKROTIK_IMAGE_SHA256       optional sha256 of the downloaded image (verified when set)
+#   ROUTEROS_EXTRA_URL          pinned extra-packages archive that carries the
+#                               user-manager package (CHR images do not bundle it)
+#   MIKROTIK_EXTRA_PATH         local copy of the extra-packages .zip instead of
+#                               downloading
+#   MIKROTIK_INSTALL_USERMANAGER  set to false only when the export fixtures do
+#                               not use /user-manager (default true)
 #   VBOXMANAGE                  VBoxManage path (default: VBoxManage)
 #
 # Network notes:
@@ -55,13 +64,23 @@
 #     serial bootstrap fails, the manual fallback is documented under
 #     "SERIAL CONSOLE FALLBACK" in the usage text below.
 #
+# Windows hosts (running from WSL against the Windows VirtualBox):
+#   - Set/keep VBOXMANAGE=VBoxManage.exe (auto-selected when the Linux VBoxManage is
+#     absent but VBoxManage.exe is resolvable through WSL interop).
+#   - Put the cache on a Windows-visible path, e.g. XDG_CACHE_HOME=/mnt/d/.cache
+#     (WSL-only paths are not reachable by the Windows VirtualBox).
+#   - Path arguments given to VBoxManage are translated with wslpath automatically.
+#   - The serial bootstrap uses VBox tcpserver mode (SERIAL_TCP_PORT, default 4771):
+#     socat connects to the Windows host — the WSL default gateway — instead of a
+#     local UNIX socket. Named-pipe mode is not reachable from WSL.
+#
 # Serial console fallback (manual, always available):
 #   1. MIKROTIK_BASE_EXPORT=... Scripts/mikrotik-test-vms.sh clean   (if needed)
 #   2. Start the VM with a GUI window instead of headless:
 #        VBoxManage startvm "Mikrotik-Base" --type gui
-#   3. In the window log in as admin (empty password) and type the three bootstrap
-#      commands yourself (replace the values with yours):
-#        /user set admin password="admin"
+#   3. In the window log in as admin (empty password), accept the license default,
+#      answer the forced first-login password change (enter the admin password
+#      twice) and type the two bootstrap commands yourself (replace the values):
 #        /ip address add address=192.168.56.250/24 interface=ether1
 #        /ip service enable ssh,api
 #   4. Re-run setup — it will abort (VM exists). Instead continue manually from the
@@ -97,20 +116,49 @@ HOSTONLY_NETMASK=${HOSTONLY_NETMASK:-255.255.255.0}
 HOSTONLY_CIDR=${HOSTONLY_CIDR:-192.168.56.}
 ROUTEROS_VERSION=${ROUTEROS_VERSION:-7.20.6}
 ROUTEROS_URL=${ROUTEROS_URL:-"https://download.mikrotik.com/routeros/$ROUTEROS_VERSION/chr-$ROUTEROS_VERSION.img.zip"}
+ROUTEROS_EXTRA_URL=${ROUTEROS_EXTRA_URL:-"https://download.mikrotik.com/routeros/$ROUTEROS_VERSION/all_packages-x86-$ROUTEROS_VERSION.zip"}
 MIKROTIK_IMAGE_PATH=${MIKROTIK_IMAGE_PATH:-}
 MIKROTIK_IMAGE_SHA256=${MIKROTIK_IMAGE_SHA256:-}
+MIKROTIK_EXTRA_PATH=${MIKROTIK_EXTRA_PATH:-}
+MIKROTIK_INSTALL_USERMANAGER=${MIKROTIK_INSTALL_USERMANAGER:-true}
 VBOXMANAGE=${VBOXMANAGE:-VBoxManage}
 VM_CPUS=${VM_CPUS:-2}
 VM_MEMORY_MB=${VM_MEMORY_MB:-512}
 SNAPSHOT=${SNAPSHOT:-clean-test-state}
 API_PORT=${API_PORT:-8728}
 
-# serial bootstrap timings (seconds)
-SERIAL_LOGIN_WAIT=${SERIAL_LOGIN_WAIT:-60}
-SERIAL_STEP_WAIT=${SERIAL_STEP_WAIT:-3}
-SERIAL_TOTAL_TIMEOUT=${SERIAL_TOTAL_TIMEOUT:-240}
+# serial bootstrap: the first-login dialog is keyed — the driver answers each
+# observed prompt (login, license, forced password change, command prompt) —
+# with this per-prompt wait in seconds
+SERIAL_STEP_TIMEOUT=${SERIAL_STEP_TIMEOUT:-240}
+# serial-over-TCP port for Windows hosts (VBox uartmode tcpserver)
+SERIAL_TCP_PORT=${SERIAL_TCP_PORT:-4771}
 
 SSH_TIMEOUT_SECONDS=${SSH_TIMEOUT_SECONDS:-120}
+
+# --- Windows-host (WSL) support -----------------------------------------------------
+
+# When running from WSL against the Windows VirtualBox, VBoxManage is the Windows
+# executable: file arguments must be Windows paths and serial-over-UNIX-socket does
+# not exist (named pipe + PowerShell driver instead). Auto-detected, or forced with
+# VBOX_ON_WINDOWS=1/0.
+if ! command -v "$VBOXMANAGE" >/dev/null 2>&1 && command -v VBoxManage.exe >/dev/null 2>&1; then
+    VBOXMANAGE=VBoxManage.exe
+fi
+if [ -z "${VBOX_ON_WINDOWS:-}" ]; then
+    case "$VBOXMANAGE" in
+        *.exe) VBOX_ON_WINDOWS=true ;;
+        *)     VBOX_ON_WINDOWS=false ;;
+    esac
+fi
+
+wp() { # translates a path argument for the Windows VBoxManage (no-op on Linux hosts)
+    if [ "$VBOX_ON_WINDOWS" = true ]; then
+        wslpath -w "$1"
+    else
+        printf '%s\n' "$1"
+    fi
+}
 
 STAGE=""
 SCOPE=""
@@ -144,10 +192,14 @@ vbox() {
 }
 
 vbox_quiet() {
-    "$VBOXMANAGE" "$@" 2>>"$LOG_FILE"
+    # tr -d '\r': VBoxManage.exe emits CRLF line endings, which would corrupt
+    # awk/sed parsing of its output on Windows hosts
+    "$VBOXMANAGE" "$@" 2>>"$LOG_FILE" | tr -d '\r'
 }
 
-ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=10)
+# ServerAlive*: the address-removal step drops the connection the session rides
+# on; without keepalives ssh would hang until the TCP timeout
+ssh_opts=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=10 -o ServerAliveInterval=5 -o ServerAliveCountMax=3)
 
 ssh_run() { # $1=ip, $2=password, rest=remote command
     local ip=$1 password=$2
@@ -155,9 +207,9 @@ ssh_run() { # $1=ip, $2=password, rest=remote command
     SSHPASS="$password" sshpass -e ssh "${ssh_opts[@]}" "$MIKROTIK_SSH_USER@$ip" "$@"
 }
 
-scp_to() { # $1=ip, $2=password, $3=local file
-    local ip=$1 password=$2 file=$3
-    SSHPASS="$password" sshpass -e scp "${ssh_opts[@]}" "$file" "$MIKROTIK_SSH_USER@$ip:"
+scp_to() { # $1=ip, $2=password, $3=local file, $4=remote name
+    local ip=$1 password=$2 file=$3 remote=$4
+    SSHPASS="$password" sshpass -e scp "${ssh_opts[@]}" "$file" "$MIKROTIK_SSH_USER@$ip:$remote"
 }
 
 require_tools() {
@@ -166,15 +218,7 @@ require_tools() {
     command -v ssh >/dev/null 2>&1 || die "ssh not found"
     command -v scp >/dev/null 2>&1 || die "scp not found"
     command -v qemu-img >/dev/null 2>&1 || die "qemu-img not found (Debian/Ubuntu: apt-get install qemu-utils)"
-    if command -v socat >/dev/null 2>&1; then
-        # shellcheck disable=SC2317
-        serial_connect() { timeout "$1" socat - "UNIX-CONNECT:$2"; }
-    elif nc -U /dev/null >/dev/null 2>&1 </dev/null; then
-        # shellcheck disable=SC2317
-        serial_connect() { timeout "$1" nc -U "$2"; }
-    else
-        die "neither socat nor 'nc -U' (netcat-openbsd) found — one of them is required for the serial bootstrap"
-    fi
+    command -v python3 >/dev/null 2>&1 || die "python3 not found — required for the keyed serial bootstrap"
 }
 
 # --- VirtualBox helpers -----------------------------------------------------------
@@ -204,8 +248,10 @@ poweroff_vm() {
 
 ensure_hostonly_network() { # prints the interface name
     local existing
+    # Windows host-only names contain spaces ("VirtualBox Host-Only Ethernet
+    # Adapter"), so capture the whole value, not just the second field
     existing=$(vbox_quiet list hostonlyifs | awk -v ip="$HOSTONLY_SUBNET_IP" '
-        /^Name:/            { name = $2 }
+        /^Name:/            { name = $0; sub(/^Name:[[:space:]]*/, "", name) }
         /^IPAddress:/       { if ($2 == ip) print name }')
     if [ -n "$existing" ]; then
         note "host-only network found: $existing ($HOSTONLY_SUBNET_IP)"
@@ -215,7 +261,7 @@ ensure_hostonly_network() { # prints the interface name
 
     note "creating host-only network $HOSTONLY_SUBNET_IP/$HOSTONLY_NETMASK"
     local created
-    created=$(vbox_quiet hostonlyif create 2>>"$LOG_FILE" | sed -n "s/.*'\(vboxnet[0-9]*\).*/\1/p")
+    created=$(vbox_quiet hostonlyif create 2>>"$LOG_FILE" | sed -n "s/.*'\([^']*\)'.*/\1/p")
     [ -n "$created" ] || die "could not create a host-only interface"
     "$VBOXMANAGE" hostonlyif ipconfig "$created" --ip "$HOSTONLY_SUBNET_IP" --netmask "$HOSTONLY_NETMASK" >>"$LOG_FILE" 2>&1 \
         || die "hostonlyif ipconfig failed for $created"
@@ -276,36 +322,188 @@ pristine_vdi() { # ensures the pristine CHR disk exists as VDI in the cache; pri
     printf '%s\n' "$image_vdi"
 }
 
+# --- extra packages -----------------------------------------------------------------
+
+usermanager_npk() { # prints the path of the user-manager package for ROUTEROS_VERSION
+    local npk="$CACHE_DIR/user-manager-$ROUTEROS_VERSION.npk"
+
+    if [ -f "$npk" ]; then
+        printf '%s\n' "$npk"
+        return
+    fi
+
+    local zip="$CACHE_DIR/all_packages-x86-$ROUTEROS_VERSION.zip"
+    if [ -n "$MIKROTIK_EXTRA_PATH" ]; then
+        zip="$MIKROTIK_EXTRA_PATH"
+        [ -f "$zip" ] || die "MIKROTIK_EXTRA_PATH not found: $zip"
+    elif [ ! -f "$zip" ]; then
+        note "downloading RouterOS extra packages $ROUTEROS_VERSION (honors https_proxy)"
+        command -v curl >/dev/null 2>&1 || die "curl not found — or set MIKROTIK_EXTRA_PATH to a local copy"
+        curl -fsSL --retry 3 --output "$zip.part" "$ROUTEROS_EXTRA_URL" || die "download failed: $ROUTEROS_EXTRA_URL"
+        mv "$zip.part" "$zip"
+    fi
+
+    command -v unzip >/dev/null 2>&1 || die "unzip not found"
+    unzip -o -j "$zip" "user-manager-$ROUTEROS_VERSION.npk" -d "$CACHE_DIR" >/dev/null
+    [ -f "$npk" ] || die "user-manager-$ROUTEROS_VERSION.npk not inside $zip"
+    printf '%s\n' "$npk"
+}
+
+install_usermanager() { # $1=vm, $2=ip, $3=password — CHR ships without user-manager
+    local vm=$1 ip=$2 password=$3
+    local npk npk_name
+    npk=$(usermanager_npk)
+    npk_name=$(basename "$npk")
+
+    log "installing the user-manager package on $vm (not bundled with CHR images)"
+    scp_to "$ip" "$password" "$npk" "$npk_name" || die "scp of the user-manager package failed"
+
+    # RouterOS installs packages placed in the root file store at boot time
+    log "rebooting $vm for the package activation"
+    printf 'y\n' | SSHPASS="$password" sshpass -e ssh "${ssh_opts[@]}" \
+        "$MIKROTIK_SSH_USER@$ip" '/system reboot' >/dev/null 2>&1 || true
+    if ! wait_ssh "$vm" "$ip" "$password" 240; then
+        die "$vm did not come back after the user-manager install reboot"
+    fi
+    ssh_run "$ip" "$password" '/user-manager user print' >/dev/null 2>&1 \
+        || die "/user-manager is still unavailable on $vm after the package install"
+    log "user-manager is active on $vm"
+}
+
 # --- serial bootstrap -------------------------------------------------------------
 
-serial_bootstrap() { # $1=vm-name, $2=bootstrap-ip — types the 3 bootstrap commands
+serial_dialog() { # $1=address(tcp:HOST:PORT|unix:PATH) $2=admin-password $3=bootstrap-ip $4=log — keyed first-login conversation
+    python3 - "$1" "$2" "$3" "$4" "$SERIAL_STEP_TIMEOUT" <<'PYEOF'
+import re
+import socket
+import sys
+import time
+
+address, password, bootstrap_ip, log_path, step_timeout = sys.argv[1:6]
+step_timeout = int(step_timeout)
+
+# The console may already sit at a prompt without printing anything on connect;
+# an empty line makes RouterOS re-print the current prompt.
+WAKE_TIMEOUT = 20
+
+connect_deadline = time.time() + 60
+sock = None
+while sock is None and time.time() < connect_deadline:
+    try:
+        if address.startswith('tcp:'):
+            host, port = address[4:].rsplit(':', 1)
+            sock = socket.create_connection((host, int(port)), timeout=5)
+        else:
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            sock.connect(address[5:])
+    except OSError:
+        time.sleep(0.5)
+if sock is None:
+    sys.exit('could not connect to the serial console: ' + address)
+sock.settimeout(1.0)
+
+log = open(log_path, 'wb', 0)  # unbuffered
+buf = b''
+
+
+def pump(seconds):
+    global buf
+    end = time.time() + seconds
+    while time.time() < end:
+        try:
+            data = sock.recv(4096)
+            if data:
+                log.write(data)
+                buf += data
+        except socket.timeout:
+            pass
+        except OSError:
+            sys.exit('serial connection closed unexpectedly')
+
+
+def visible():
+    # strip ANSI/VT control sequences so prompts match as contiguous text
+    cleaned = re.sub(rb'\x1b\[[0-9;?]*[a-zA-Z]', b'', buf)
+    return re.sub(rb'\x1b[=>]', b'', cleaned)
+
+
+def send(line):
+    sock.sendall(line.encode('ascii') + b'\r')
+
+
+def wait_for(pattern, timeout_seconds):
+    global buf
+    rx = re.compile(pattern)
+    started = time.time()
+    end = started + timeout_seconds
+    last_wake = 0.0
+    while time.time() < end:
+        if rx.search(visible()):
+            return True
+        pump(1.0)
+        # the console can sit at a prompt without printing anything on connect;
+        # nudge it with an empty line while waiting for the very first prompt
+        if not buf and started + WAKE_TIMEOUT > time.time() > last_wake + 5:
+            send('')
+            last_wake = time.time()
+    return False
+
+
+# First login on a fresh RouterOS disk: console login with the empty password,
+# the software-license question, the forced password-change dialog (new +
+# repeat; the dialog consumes it before any command prompt), then the admin
+# command prompt for the two bootstrap commands.
+STEPS = [
+    (rb'MikroTik Login:', 'admin'),
+    (rb'Password:', ''),
+    (rb'\[Y/n\]:', 'n'),                                  # license question: skip the EULA text
+    (rb'new password>', password),
+    (rb'repeat new password>', password),
+    (rb'\[admin@[^\]]*\] *>', '/ip address add address=%s/24 interface=ether1' % bootstrap_ip),
+    (rb'\[admin@[^\]]*\] *>', '/ip service enable ssh,api'),
+    (rb'\[admin@[^\]]*\] *>', '/ip service set ssh,api disabled=no'),
+    (rb'\[admin@[^\]]*\] *>', 'quit'),
+]
+
+for pattern, response in STEPS:
+    if not wait_for(pattern, step_timeout):
+        sys.exit('serial bootstrap timed out waiting for: %s (last output: %r)'
+                 % (pattern.decode('ascii'), visible()[-200:]))
+    send(response)
+    buf = b''
+    pump(1.0)
+
+sock.close()
+log.close()
+PYEOF
+}
+
+serial_bootstrap() { # $1=vm-name, $2=bootstrap-ip — runs the keyed first-login conversation
     local vm=$1 ip=$2
-    local socket="$CACHE_DIR/$vm.serial"
     local serial_log="$CACHE_DIR/$vm.serial.log"
+    local address
 
-    vbox modifyvm "$vm" --uart1 0x3F8 4 --uartmode1 server "$socket"
-    vbox startvm "$vm" --type headless
+    if [ "$VBOX_ON_WINDOWS" = true ]; then
+        # VBox on Windows offers the serial console as a named pipe or a TCP server;
+        # only TCP is reachable from WSL, through the Windows host (the WSL default
+        # gateway). The uart is switched off again after the setup (see setup_vm_base)
+        # so concurrently running clones cannot collide on the port.
+        local host_ip
+        host_ip=$(ip route show default | awk '{print $3; exit}')
+        [ -n "$host_ip" ] || die "could not determine the WSL default gateway (Windows host) for the serial TCP connection"
+        vbox modifyvm "$vm" --uart1 0x3F8 4 --uartmode1 tcpserver "$SERIAL_TCP_PORT"
+        vbox startvm "$vm" --type headless
+        address="tcp:$host_ip:$SERIAL_TCP_PORT"
+    else
+        local socket="$CACHE_DIR/$vm.serial"
+        vbox modifyvm "$vm" --uart1 0x3F8 4 --uartmode1 server "$socket"
+        vbox startvm "$vm" --type headless
+        address="unix:$socket"
+    fi
 
-    log "typing bootstrap over serial console (log: $serial_log — kept out of the repo; it echoes the bootstrap password)"
-    {
-        sleep "$SERIAL_LOGIN_WAIT"
-        printf '\r'
-        sleep "$SERIAL_STEP_WAIT"
-        printf 'admin\r'
-        sleep "$SERIAL_STEP_WAIT"
-        printf '\r'
-        sleep "$SERIAL_STEP_WAIT"
-        printf '/user set admin password="%s"\r' "$MIKROTIK_ADMIN_PASSWORD"
-        sleep "$SERIAL_STEP_WAIT"
-        printf '/ip address add address=%s/24 interface=ether1\r' "$ip"
-        sleep "$SERIAL_STEP_WAIT"
-        printf '/ip service enable ssh,api\r'
-        sleep "$SERIAL_STEP_WAIT"
-        printf '/ip service set ssh,api disabled=no\r'
-        sleep "$SERIAL_STEP_WAIT"
-        printf 'quit\r'
-        sleep "$SERIAL_STEP_WAIT"
-    } | serial_connect "$SERIAL_TOTAL_TIMEOUT" "$socket" >"$serial_log" 2>&1 || true
+    log "typing bootstrap over serial console ($address; log: $serial_log — kept out of the repo; it echoes the bootstrap password)"
+    serial_dialog "$address" "$MIKROTIK_ADMIN_PASSWORD" "$ip" "$serial_log" \
+        || die "serial bootstrap conversation failed — see $serial_log, or use the manual GUI fallback documented in '$0 --help'"
 
     # Authoritative check is SSH below; the serial log is only for debugging.
     if ! wait_ssh "$vm" "$ip" "$MIKROTIK_ADMIN_PASSWORD" 60; then
@@ -347,11 +545,20 @@ import_export() { # $1=vm, $2=export-file, $3=current-ip, $4=current-password, $
     local vm=$1 export_file=$2 ip=$3 password=$4 final_ip=$5
     local remote_name="import-$vm.rsc"
     local import_log="$CACHE_DIR/import-$vm.log"
+    local copy="$CACHE_DIR/$remote_name"
 
     [ -f "$export_file" ] || die "export file not found: $export_file"
 
+    # pristine CHR images (and the Base clone) already carry a dhcp-client on
+    # ether1; the export re-adds it — drop the pre-existing one so /import is clean
+    ssh_run "$ip" "$password" '/ip dhcp-client remove [find]' >/dev/null 2>&1 || true
+
+    # normalize to LF — a CRLF checkout (e.g. core.autocrlf on Windows) would
+    # otherwise break /import on the router
+    tr -d '\r' <"$export_file" >"$copy"
+
     log "copying export to $vm ($ip)"
-    scp_to "$ip" "$password" "$export_file" || die "scp of the export failed"
+    scp_to "$ip" "$password" "$copy" "$remote_name" || die "scp of the export failed"
 
     log "importing export on $vm"
     local output
@@ -416,52 +623,61 @@ EOF
 
 # --- stages -----------------------------------------------------------------------
 
-setup_vm_base() {
-    local hostonly_if disk
+create_chr_vm() { # $1=vm-name — fresh VM from the pristine CHR disk, host-only NIC
+    local vm=$1 hostonly_if disk
     hostonly_if=$(ensure_hostonly_network)
 
-    log "creating VM $MIKROTIK_BASE_NAME ($MIKROTIK_BASE_IP)"
-    disk="$CACHE_DIR/$MIKROTIK_BASE_NAME-disk.vdi"
-    vbox clonemedium disk "$(pristine_vdi)" "$disk" --format VDI
-    vbox createvm --name "$MIKROTIK_BASE_NAME" --ostype Other_64 --register
-    vbox modifyvm "$MIKROTIK_BASE_NAME" --cpus "$VM_CPUS" --memory "$VM_MEMORY_MB" --ioapic on \
+    disk="$CACHE_DIR/$vm-disk.vdi"
+    vbox clonemedium disk "$(wp "$(pristine_vdi)")" "$(wp "$disk")" --format VDI
+    vbox createvm --name "$vm" --ostype Other_64 --register
+    vbox modifyvm "$vm" --cpus "$VM_CPUS" --memory "$VM_MEMORY_MB" --ioapic on \
         --nic1 hostonly --hostonlyadapter1 "$hostonly_if" --nictype1 82540EM
-    vbox storagectl "$MIKROTIK_BASE_NAME" --name SATA --add sata --bootable on
-    vbox storageattach "$MIKROTIK_BASE_NAME" --storagectl SATA --port 0 --device 0 --type hdd --medium "$disk"
+    vbox storagectl "$vm" --name SATA --add sata --bootable on
+    vbox storageattach "$vm" --storagectl SATA --port 0 --device 0 --type hdd --medium "$(wp "$disk")"
+}
+
+snapshot_clean_state() { # $1=vm-name — poweroff, detach the serial console, snapshot
+    local vm=$1
+    poweroff_vm "$vm"
+    # the scenario build and later concurrent runs must not collide on the serial
+    # socket/TCP port — the console is not needed once the bootstrap has succeeded
+    vbox modifyvm "$vm" --uart1 off
+    vbox snapshot "$vm" take "$SNAPSHOT"
+    log "snapshot '$SNAPSHOT' taken for $vm"
+}
+
+setup_vm_base() {
+    log "creating VM $MIKROTIK_BASE_NAME ($MIKROTIK_BASE_IP)"
+    create_chr_vm "$MIKROTIK_BASE_NAME"
 
     serial_bootstrap "$MIKROTIK_BASE_NAME" "$MIKROTIK_BOOTSTRAP_IP"
+    if [ "$MIKROTIK_INSTALL_USERMANAGER" = true ]; then
+        install_usermanager "$MIKROTIK_BASE_NAME" "$MIKROTIK_BOOTSTRAP_IP" "$MIKROTIK_ADMIN_PASSWORD"
+    fi
     import_export "$MIKROTIK_BASE_NAME" "$MIKROTIK_BASE_EXPORT" "$MIKROTIK_BOOTSTRAP_IP" "$MIKROTIK_ADMIN_PASSWORD" "$MIKROTIK_BASE_IP"
     verify_vm "$MIKROTIK_BASE_NAME" "$MIKROTIK_BASE_IP"
 
-    poweroff_vm "$MIKROTIK_BASE_NAME"
-    vbox snapshot "$MIKROTIK_BASE_NAME" take "$SNAPSHOT"
-    log "snapshot '$SNAPSHOT' taken for $MIKROTIK_BASE_NAME"
+    snapshot_clean_state "$MIKROTIK_BASE_NAME"
 }
 
 setup_vm_scenario() {
+    # NOT a clone of Base: cloning assigns a new MAC, RouterOS then renames the
+    # interface (ether1 -> ether2) and every address/service binding imported on
+    # Base turns INVALID. Build from the same pristine disk + own fixture instead.
+    [ -f "$MIKROTIK_SCENARIO_EXPORT" ] || die "scenario export not found: $MIKROTIK_SCENARIO_EXPORT (set MIKROTIK_SCENARIO_EXPORT or build Base first)"
     vm_exists "$MIKROTIK_BASE_NAME" || die "$MIKROTIK_BASE_NAME must be set up first"
 
-    log "cloning $MIKROTIK_BASE_NAME -> $MIKROTIK_SCENARIO_NAME"
-    vbox clonevm "$MIKROTIK_BASE_NAME" --name "$MIKROTIK_SCENARIO_NAME" --register
-    vbox startvm "$MIKROTIK_SCENARIO_NAME" --type headless
+    log "creating VM $MIKROTIK_SCENARIO_NAME ($MIKROTIK_SCENARIO_IP)"
+    create_chr_vm "$MIKROTIK_SCENARIO_NAME"
 
-    if [ -n "$MIKROTIK_SCENARIO_EXPORT" ]; then
-        sleep 10
-        wait_ssh "$MIKROTIK_SCENARIO_NAME" "$MIKROTIK_BASE_IP" "$MIKROTIK_SSH_PASSWORD" "$SSH_TIMEOUT_SECONDS" \
-            || die "cloned scenario VM did not come up on $MIKROTIK_BASE_IP"
-        import_export "$MIKROTIK_SCENARIO_NAME" "$MIKROTIK_SCENARIO_EXPORT" "$MIKROTIK_BASE_IP" "$MIKROTIK_SSH_PASSWORD" "$MIKROTIK_SCENARIO_IP"
-    else
-        sleep 10
-        wait_ssh "$MIKROTIK_SCENARIO_NAME" "$MIKROTIK_BASE_IP" "$MIKROTIK_SSH_PASSWORD" "$SSH_TIMEOUT_SECONDS" \
-            || die "cloned scenario VM did not come up on $MIKROTIK_BASE_IP"
-        ensure_address "$MIKROTIK_BASE_IP" "$MIKROTIK_SSH_PASSWORD" "$MIKROTIK_SCENARIO_IP"
+    serial_bootstrap "$MIKROTIK_SCENARIO_NAME" "$MIKROTIK_BOOTSTRAP_IP"
+    if [ "$MIKROTIK_INSTALL_USERMANAGER" = true ]; then
+        install_usermanager "$MIKROTIK_SCENARIO_NAME" "$MIKROTIK_BOOTSTRAP_IP" "$MIKROTIK_ADMIN_PASSWORD"
     fi
-
+    import_export "$MIKROTIK_SCENARIO_NAME" "$MIKROTIK_SCENARIO_EXPORT" "$MIKROTIK_BOOTSTRAP_IP" "$MIKROTIK_ADMIN_PASSWORD" "$MIKROTIK_SCENARIO_IP"
     verify_vm "$MIKROTIK_SCENARIO_NAME" "$MIKROTIK_SCENARIO_IP"
 
-    poweroff_vm "$MIKROTIK_SCENARIO_NAME"
-    vbox snapshot "$MIKROTIK_SCENARIO_NAME" take "$SNAPSHOT"
-    log "snapshot '$SNAPSHOT' taken for $MIKROTIK_SCENARIO_NAME"
+    snapshot_clean_state "$MIKROTIK_SCENARIO_NAME"
 }
 
 run_stage_setup() {
@@ -489,7 +705,7 @@ scope_vms() {
 run_stage_reset() {
     require_tools
     local vm
-    while IFS= read -r vm; do
+    for vm in $(scope_vms); do
         vm_exists "$vm" || die "VM '$vm' is not registered"
         log "resetting $vm: poweroff -> snapshot '$SNAPSHOT' -> start headless"
         poweroff_vm "$vm"
@@ -501,33 +717,33 @@ run_stage_reset() {
         fi
         wait_ssh "$vm" "$ip" "$MIKROTIK_SSH_PASSWORD" "$SSH_TIMEOUT_SECONDS" \
             || die "$vm did not become SSH-reachable on $ip after the snapshot restore"
-    done < <(scope_vms)
+    done
     log "reset finished"
 }
 
 run_stage_start() {
     local vm
-    while IFS= read -r vm; do
+    for vm in $(scope_vms); do
         vm_exists "$vm" || die "VM '$vm' is not registered"
         if vm_running "$vm"; then
             log "$vm is already running"
             continue
         fi
         vbox startvm "$vm" --type headless
-    done < <(scope_vms)
+    done
 }
 
 run_stage_stop() {
     local vm
-    while IFS= read -r vm; do
+    for vm in $(scope_vms); do
         vm_exists "$vm" || die "VM '$vm' is not registered"
         poweroff_vm "$vm"
-    done < <(scope_vms)
+    done
 }
 
 run_stage_status() {
     local vm ip
-    while IFS= read -r vm; do
+    for vm in $(scope_vms); do
         if ! vm_exists "$vm"; then
             log "$vm: not registered"
             continue
@@ -543,7 +759,7 @@ run_stage_status() {
         local snapshots
         snapshots=$(vbox_quiet snapshot "$vm" list --machinereadable 2>/dev/null | grep -c "^SnapshotName=" || true)
         log "$vm: $state, expected-ip: $ip, snapshots: $snapshots"
-    done < <(scope_vms)
+    done
 }
 
 run_stage_clean() {
@@ -557,7 +773,7 @@ run_stage_clean() {
         [ "$answer" = "$MIKROTIK_BASE_NAME" ] || die "aborted by user"
     }
     local vm
-    while IFS= read -r vm; do
+    for vm in $(scope_vms); do
         if vm_exists "$vm"; then
             poweroff_vm "$vm"
             vbox unregistervm "$vm" --delete
@@ -565,7 +781,7 @@ run_stage_clean() {
         else
             log "$vm: not registered"
         fi
-    done < <(scope_vms)
+    done
 }
 
 # --- argument parsing ---------------------------------------------------------------

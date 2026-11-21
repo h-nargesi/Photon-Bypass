@@ -8,8 +8,11 @@
 #             panel http://192.168.56.13:2087  (no web base path)
 #             test inbound: VLESS+ws, no TLS, port 10000, path /testws
 #
-# Image: Debian 12 "genericcloud" qcow2 (pinned snapshot + SHA512 verify) turned
-# into a VDI, booted once against a NoCloud seed ISO (cloud-init) for zero-GUI setup.
+# Image: Debian 12 "generic" qcow2 (pinned snapshot + SHA512 verify) turned into
+# a VDI, booted once against a NoCloud seed ISO (cloud-init) for zero-GUI setup.
+# The "generic" flavor (standard kernel), not "genericcloud" (cloud kernel): the
+# cloud kernel latches onto KVM paravirtual interfaces and panics under
+# VirtualBox's NEM fallback execution on hosts where Hyper-V owns hardware VT.
 # x-ui: alireza0 v1.14.0 (pinned release tarball + SHA256 verify).
 #
 # Stages:
@@ -31,7 +34,9 @@
 #   XUI_TARBALL_URL / XUI_TARBALL_SHA256    pinned x-ui release (defaults below)
 #   XUI_TARBALL_PATH                local tarball copy instead of downloading
 #   VBOXMANAGE                      VBoxManage path (default: VBoxManage)
-#   VM_CPUS / VM_MEMORY_MB / VM_DISK_MB    VM sizing (default 2 / 1024 / 8192)
+#   VM_CPUS / VM_MEMORY_MB          VM sizing (default 1 / 1024; the disk keeps
+#                                   the image's native 3GB — resizing it breaks
+#                                   the boot on some VirtualBox hosts)
 #
 # Notes:
 #   - Downloads honor https_proxy / http_proxy; the local-file *_PATH overrides exist
@@ -39,14 +44,21 @@
 #   - The host-only network 192.168.56.1/24 (vboxnet0 or equivalent) is created in
 #     preflight when missing — the same network as the Mikrotik test VMs.
 #   - The seed ISO embeds the generated SSH public key and the console password; the
-#     private key lives in the cache directory (~/.cache/photon-bypass/xui-test-vm),
-#     outside the repo, and is reused across runs.
+#     private key lives outside the repo (XDG data dir) and is reused across runs.
+#   - Windows hosts (running from WSL against the Windows VirtualBox): keep
+#     VBOXMANAGE=VBoxManage.exe (auto-selected via WSL interop) and put the cache on
+#     a Windows-visible path (e.g. XDG_CACHE_HOME=/mnt/d/.cache). Path arguments are
+#     translated with wslpath automatically; SSH/curl to the VM go over the host-only
+#     network, which WSL reaches through the Windows host.
 set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
 LOG_DIR="$SCRIPT_DIR/logs"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/photon-bypass/xui-test-vm"
+# SSH keys live outside the cache on purpose: on Windows hosts the cache sits on a
+# drvfs mount (/mnt/...) where every file is 0777 and ssh refuses the private key
+KEY_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/photon-bypass/xui-test-vm"
 
 # --- defaults ---------------------------------------------------------------------
 
@@ -63,24 +75,49 @@ XUI_TARBALL_URL=${XUI_TARBALL_URL:-"https://github.com/alireza0/x-ui/releases/do
 XUI_TARBALL_SHA256=${XUI_TARBALL_SHA256:-fe733b30c4d6dec538406b8f2e3e2d4eda506684b93d89865ceef7b10acb2dd6}
 XUI_TARBALL_PATH=${XUI_TARBALL_PATH:-}
 DEBIAN_SNAPSHOT=${DEBIAN_SNAPSHOT:-20261117-2665}
-DEBIAN_IMAGE_URL=${DEBIAN_IMAGE_URL:-"https://cloud.debian.org/images/cloud/bookworm/$DEBIAN_SNAPSHOT/debian-12-genericcloud-amd64-$DEBIAN_SNAPSHOT.qcow2"}
-DEBIAN_IMAGE_SHA512=${DEBIAN_IMAGE_SHA512:-946b917a37882f16e5b3b0b2cbe5744637d0cd36190b5b53cbb21d14a54557d5b45e9e523021b8f52c1707dbe470489f3515458e0680ded76ee2574b4a8daf1b}
+DEBIAN_IMAGE_URL=${DEBIAN_IMAGE_URL:-"https://cloud.debian.org/images/cloud/bookworm/$DEBIAN_SNAPSHOT/debian-12-generic-amd64-$DEBIAN_SNAPSHOT.qcow2"}
+DEBIAN_IMAGE_SHA512=${DEBIAN_IMAGE_SHA512:-d597a8b422a0fa7f7cf1a0477d23be7f7514f32e57ccb8d0c69156e1be4a7e1712fb64aee6298520d70aa573b801d0cfe3392ab5de39829728760c0cf99ef4ec}
 DEBIAN_IMAGE_PATH=${DEBIAN_IMAGE_PATH:-}
 HOSTONLY_SUBNET_IP=${HOSTONLY_SUBNET_IP:-192.168.56.1}
 HOSTONLY_NETMASK=${HOSTONLY_NETMASK:-255.255.255.0}
 VBOXMANAGE=${VBOXMANAGE:-VBoxManage}
-VM_CPUS=${VM_CPUS:-2}
+# default 1 vCPU: the Debian guest panics in the initramfs init with more than
+# one vCPU under VirtualBox's NEM execution (hosts where Hyper-V owns hardware
+# VT, e.g. WSL2); the test panel does not need more
+VM_CPUS=${VM_CPUS:-1}
 VM_MEMORY_MB=${VM_MEMORY_MB:-1024}
-VM_DISK_MB=${VM_DISK_MB:-8192}
 SNAPSHOT=${SNAPSHOT:-clean-test-state}
 SSH_USER=${SSH_USER:-debian}
-SSH_TIMEOUT_SECONDS=${SSH_TIMEOUT_SECONDS:-180}
+SSH_TIMEOUT_SECONDS=${SSH_TIMEOUT_SECONDS:-600}
 LOGIN_TIMEOUT_SECONDS=${LOGIN_TIMEOUT_SECONDS:-120}
 
 STAGE=""
 ASSUME_YES=false
 FAILED=false
 LOG_FILE=""
+
+# --- Windows-host (WSL) support -----------------------------------------------------
+
+# When running from WSL against the Windows VirtualBox, VBoxManage is the Windows
+# executable and file arguments must be Windows paths. Auto-detected, or forced
+# with VBOX_ON_WINDOWS=1/0. See the Windows-hosts note in the header.
+if ! command -v "$VBOXMANAGE" >/dev/null 2>&1 && command -v VBoxManage.exe >/dev/null 2>&1; then
+    VBOXMANAGE=VBoxManage.exe
+fi
+if [ -z "${VBOX_ON_WINDOWS:-}" ]; then
+    case "$VBOXMANAGE" in
+        *.exe) VBOX_ON_WINDOWS=true ;;
+        *)     VBOX_ON_WINDOWS=false ;;
+    esac
+fi
+
+wp() { # translates a path argument for the Windows VBoxManage (no-op on Linux hosts)
+    if [ "$VBOX_ON_WINDOWS" = true ]; then
+        wslpath -w "$1"
+    else
+        printf '%s\n' "$1"
+    fi
+}
 
 log() { printf '%s\n' "$*" | tee -a "$LOG_FILE"; }
 
@@ -107,7 +144,9 @@ vbox() {
 }
 
 vbox_quiet() {
-    "$VBOXMANAGE" "$@" 2>>"$LOG_FILE"
+    # tr -d '\r': VBoxManage.exe emits CRLF line endings, which would corrupt
+    # awk/sed parsing of its output on Windows hosts
+    "$VBOXMANAGE" "$@" 2>>"$LOG_FILE" | tr -d '\r'
 }
 
 iso_tool() { # prints the mkisofs-compatible invocation prefix
@@ -153,8 +192,10 @@ abort_if_registered() {
 
 ensure_hostonly_network() {
     local existing
+    # Windows host-only names contain spaces ("VirtualBox Host-Only Ethernet
+    # Adapter"), so capture the whole value, not just the second field
     existing=$(vbox_quiet list hostonlyifs | awk -v ip="$HOSTONLY_SUBNET_IP" '
-        /^Name:/      { name = $2 }
+        /^Name:/      { name = $0; sub(/^Name:[[:space:]]*/, "", name) }
         /^IPAddress:/ { if ($2 == ip) print name }')
     if [ -n "$existing" ]; then
         note "host-only network found: $existing ($HOSTONLY_SUBNET_IP)"
@@ -164,7 +205,7 @@ ensure_hostonly_network() {
 
     note "creating host-only network $HOSTONLY_SUBNET_IP/$HOSTONLY_NETMASK"
     local created
-    created=$(vbox_quiet hostonlyif create 2>>"$LOG_FILE" | sed -n "s/.*'\(vboxnet[0-9]*\).*/\1/p")
+    created=$(vbox_quiet hostonlyif create 2>>"$LOG_FILE" | sed -n "s/.*'\([^']*\)'.*/\1/p")
     [ -n "$created" ] || die "could not create a host-only interface"
     "$VBOXMANAGE" hostonlyif ipconfig "$created" --ip "$HOSTONLY_SUBNET_IP" --netmask "$HOSTONLY_NETMASK" >>"$LOG_FILE" 2>&1 \
         || die "hostonlyif ipconfig failed for $created"
@@ -202,7 +243,10 @@ download_file() { # $1=url, $2=destination, $3=reason
 }
 
 debian_qcow2() { # prints the path of the pinned Debian cloud image
-    local target="$CACHE_DIR/debian-12-genericcloud-amd64-$DEBIAN_SNAPSHOT.qcow2"
+    local image_name target
+    image_name=$(basename "$DEBIAN_IMAGE_URL")
+    [ -n "$image_name" ] || die "DEBIAN_IMAGE_URL has no file name"
+    target="$CACHE_DIR/$image_name"
 
     if [ -n "$DEBIAN_IMAGE_PATH" ]; then
         [ -f "$DEBIAN_IMAGE_PATH" ] || die "DEBIAN_IMAGE_PATH not found: $DEBIAN_IMAGE_PATH"
@@ -211,7 +255,7 @@ debian_qcow2() { # prints the path of the pinned Debian cloud image
     fi
 
     download_file "$DEBIAN_IMAGE_URL" "$target" "Debian $DEBIAN_SNAPSHOT genericcloud image"
-    printf '%s  %s\n' "$DEBIAN_IMAGE_SHA512" "$target" | sha512sum -c - \
+    printf '%s  %s\n' "$DEBIAN_IMAGE_SHA512" "$target" | sha512sum -c - >/dev/null \
         || die "Debian image checksum mismatch — update DEBIAN_SNAPSHOT/DEBIAN_IMAGE_SHA512 or use DEBIAN_IMAGE_PATH"
     printf '%s\n' "$target"
 }
@@ -226,21 +270,26 @@ xui_tarball() { # prints the path of the pinned x-ui release tarball
     fi
 
     download_file "$XUI_TARBALL_URL" "$target" "x-ui $XUI_VERSION release tarball"
-    printf '%s  %s\n' "$XUI_TARBALL_SHA256" "$target" | sha256sum -c - \
+    printf '%s  %s\n' "$XUI_TARBALL_SHA256" "$target" | sha256sum -c - >/dev/null \
         || die "x-ui tarball checksum mismatch — update XUI_TARBALL_SHA256 or use XUI_TARBALL_PATH"
     printf '%s\n' "$target"
 }
 
 ensure_ssh_key() {
-    local key="$CACHE_DIR/xui-test-vm-key"
+    local key="$KEY_DIR/xui-test-vm-key"
+    mkdir -p "$KEY_DIR"
     if [ ! -f "$key" ]; then
-        note "generating SSH keypair for the VM (kept in the cache dir)"
+        note "generating SSH keypair for the VM (kept in $KEY_DIR)"
         ssh-keygen -q -t ed25519 -N '' -f "$key"
     fi
     printf '%s\n' "$key"
 }
 
 # --- seed ISO ---------------------------------------------------------------------
+
+mac_with_colons() { # VBoxManage prints MACs without separators; netplan requires XX:XX:...
+    printf '%s' "$1" | sed -E 's/(..)/\1:/g; s/:$//' | tr 'A-F' 'a-f'
+}
 
 build_seed_iso() { # $1=vm, $2=ssh-key-path, $3=mac-nat, $4=mac-hostonly -> prints iso path
     local seed_dir="$CACHE_DIR/$1-seed"
@@ -271,18 +320,19 @@ chpasswd:
 EOF
     chmod 600 "$seed_dir/user-data"
 
+    # No set-name here and colon-separated MACs: netplan (the renderer on Debian)
+    # rejects dash-less MACs ("Invalid MAC address ... must be XX:XX:..."), which
+    # fails 'netplan generate' and leaves the VM without any network at all.
     cat >"$seed_dir/network-config" <<EOF
 version: 2
 ethernets:
   nic-nat:
     match:
-      macaddress: "$3"
-    set-name: nic-nat
+      macaddress: "$(mac_with_colons "$3")"
     dhcp4: true
   nic-hostonly:
     match:
-      macaddress: "$4"
-    set-name: nic-hostonly
+      macaddress: "$(mac_with_colons "$4")"
     dhcp4: false
     addresses:
       - $XUI_VM_IP/24
@@ -299,7 +349,7 @@ EOF
 # --- VM access --------------------------------------------------------------------
 
 vm_ssh() { # rest = remote command
-    ssh -i "$CACHE_DIR/xui-test-vm-key" -o IdentitiesOnly=yes \
+    ssh -i "$KEY_DIR/xui-test-vm-key" -o IdentitiesOnly=yes \
         -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \
         -o ConnectTimeout=10 "$SSH_USER@$XUI_VM_IP" "$@"
 }
@@ -488,26 +538,38 @@ run_stage_setup() {
     tarball=$(xui_tarball)
     disk="$CACHE_DIR/$XUI_VM_NAME-disk.vdi"
 
-    log "converting the Debian image to VDI and resizing to ${VM_DISK_MB}MB"
+    log "converting the Debian image to VDI (native 3GB size)"
     rm -f "$disk"
+    # direct conversion, no resize: a resized disk (qemu or VBoxManage) makes the
+    # guest panic in the initramfs init under some VirtualBox hosts (NEM). The
+    # image's native 3GB leaves ~1.3GB free — plenty for the test panel.
     qemu-img convert -f qcow2 -O vdi "$(debian_qcow2)" "$disk"
-    vbox modifymedium disk "$disk" --resize "$VM_DISK_MB"
 
     log "creating VM $XUI_VM_NAME ($XUI_VM_IP)"
     vbox createvm --name "$XUI_VM_NAME" --ostype Debian_64 --register
+    # --paravirt-provider minimal: the Debian cloud kernel latches onto the KVM
+    # paravirtual interfaces VBox presents (kvm-clock/async-pf) and panics under
+    # VBox's NEM fallback execution (hosts where Hyper-V owns hardware VT, e.g.
+    # WSL2). Minimal keeps the guest on native timers.
     vbox modifyvm "$XUI_VM_NAME" --cpus "$VM_CPUS" --memory "$VM_MEMORY_MB" --vram 16 --ioapic on \
+        --paravirt-provider minimal \
         --nic1 nat --nictype1 virtio \
         --nic2 hostonly --nictype2 virtio --hostonlyadapter2 "$hostonly_if"
-    vbox storagectl "$XUI_VM_NAME" --name SATA --add sata --bootable on
+    # Debian cloud images are built for virtio: their initramfs carries the
+    # virtio drivers but not AHCI, and the PIIX IDE disk path panics this kernel
+    # under VirtualBox without hardware VT (NEM). The root disk goes on a
+    # virtio-scsi controller; the NoCloud seed ISO stays on IDE, which only
+    # needs the CD drivers.
+    vbox storagectl "$XUI_VM_NAME" --name VIO --add virtio-scsi --bootable on
     vbox storagectl "$XUI_VM_NAME" --name IDE --add ide
-    vbox storageattach "$XUI_VM_NAME" --storagectl SATA --port 0 --device 0 --type hdd --medium "$disk"
+    vbox storageattach "$XUI_VM_NAME" --storagectl VIO --port 0 --device 0 --type hdd --medium "$(wp "$disk")"
 
     mac_nat=$(vbox_quiet showvminfo "$XUI_VM_NAME" --machinereadable | awk -F'"' '/^macaddress1=/{print $2}')
     mac_hostonly=$(vbox_quiet showvminfo "$XUI_VM_NAME" --machinereadable | awk -F'"' '/^macaddress2=/{print $2}')
     [ -n "$mac_nat" ] && [ -n "$mac_hostonly" ] || die "could not read the NIC MAC addresses"
 
     seed_iso=$(build_seed_iso "$XUI_VM_NAME" "$ssh_key" "$mac_nat" "$mac_hostonly")
-    vbox storageattach "$XUI_VM_NAME" --storagectl IDE --port 1 --device 0 --type dvddrive --medium "$seed_iso"
+    vbox storageattach "$XUI_VM_NAME" --storagectl IDE --port 1 --device 0 --type dvddrive --medium "$(wp "$seed_iso")"
 
     log "starting $XUI_VM_NAME headless (first boot runs cloud-init)"
     vbox startvm "$XUI_VM_NAME" --type headless
@@ -547,7 +609,7 @@ OK — x-ui test VM ready.
 
   panel:      http://$XUI_VM_IP:$XUI_PANEL_PORT  ($XUI_PANEL_USER / $XUI_PANEL_PASSWORD)
   inbound:    id=$inbound_id  VLESS+ws  port $XUI_INBOUND_PORT  path $XUI_INBOUND_PATH
-  ssh:        $SSH_USER@$XUI_VM_IP with key $CACHE_DIR/xui-test-vm-key
+  ssh:        $SSH_USER@$XUI_VM_IP with key $KEY_DIR/xui-test-vm-key
   console:    VirtualBox console, $SSH_USER / XUI_CONSOLE_PASSWORD (env at setup time)
 
 TestVmOptions snippet for Backend/Tests/appsettings.json:
