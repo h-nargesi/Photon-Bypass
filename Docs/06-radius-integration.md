@@ -64,7 +64,7 @@ flowchart TB
 
 پروژه‌ی `RadiusDesk` (`Backend/RadiusDesk/`؛ تا ۱۴۰۵/۰۷/۲۴ با نام `FreeRadius`):
 
-- **`RadDbContext`** (MySQL، `MySql.Data`) — context read. با options `RadDapperOptions`.
+- **`RadDbContext`** (MySQL، `MySql.Data`) — context read. با options `RadDapperOptions`. توجه: بلوک سراسری `RadDapperOptions` از appsettings و گارد پروداکشن حذف شده است؛ این options هیچ‌جا bind نمی‌شود و مسیر dormant است — فعال‌سازی آینده باید per-server از `Server.Config.DataBaseInfo` (Docs/16) سیم‌کشی شود، نه connection string سراسری.
 - **Repositories**: `CloudRepository`, `NasRepository`, `PermanentUsersRepository`, `ProfileRepository`, `RadAcctRepository`, `RealmRepository`, `TopUpRepository`, `UserPlanStateRepository`.
 - **`RadiusDeskService`** (`IRadiusService`) — Web API با `HttpClient` کلیددار `"radius-desk"` و BaseAddress `cake4/rd_cake`.
 - **Account/Session sync**: `AccountRadiusSyncRadiusDeskService`, `SessionRadiusSyncRadiusDeskService` (پیاده‌سازی keyed RadiusDesk).

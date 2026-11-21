@@ -14,13 +14,9 @@ public static class CommittedTestSecretFixtures
         "bnZlbnRlZGJlY29tZXRoZW1zZWx2ZXNhbmltYWxzb3RpbnlmYWxsZW5mcm9udHJlY2VudGdlbnRseXNvZnRseWdyZXdwaXRjaGdy" +
         "YXNzYmFnc2xhdmVlbGVwaGFudGdyYW5kZmF0aGVyZGl2aWRlZW5qb3lkZXRhaWxuZXN0c3Bpcml0Y291bnQ=";
 
-    public const string RadiusServicePassword = "jt8GRBX5wbuQJY6hZN9MCnHqpFTcPykveAUxSgr3";
-
     public const string TelegramBotToken = "0000000000:TEST-TELEGRAM-BOT-TOKEN-FIXTURE-0000000000";
 
     public const string LocalDatabaseMarker = "FastBypass_DbScenario";
-
-    public const string RadDatabaseMarker = "Database=rd;";
 }
 
 public static class ProductionSecretsGuard
@@ -29,8 +25,6 @@ public static class ProductionSecretsGuard
     [
         ("Issuer:Code", value => value == CommittedTestSecretFixtures.JwtSigningKey),
         ("LocalDatabaseOptions:ConnectionString", value => value?.Contains(CommittedTestSecretFixtures.LocalDatabaseMarker) == true),
-        ("RadDapperOptions:ConnectionString", value => value?.Contains(CommittedTestSecretFixtures.RadDatabaseMarker) == true),
-        ("RadiusServiceOptions:Password", value => value == CommittedTestSecretFixtures.RadiusServicePassword),
 
         // email is the main recovery channel while the social channel is off,
         // so an enabled, fully configured transport is mandatory in production

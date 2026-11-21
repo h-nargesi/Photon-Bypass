@@ -36,14 +36,14 @@ public class PleskSecretsTest : IDisposable
         var app_root = CreateAppRoot("vhost/httpdocs/app");
         WriteJson(Path.Combine(temp_root, "vhost", "private", "secrets.json"), new Dictionary<string, object?>
         {
-            ["RadiusServiceOptions:Password"] = "nested-secret"
+            ["Issuer:Code"] = "nested-secret"
         });
 
         var builder = CreateBuilder(app_root);
 
         builder.AddPleskPrivateSecrets();
 
-        builder.Configuration["RadiusServiceOptions:Password"].Should().Be("nested-secret");
+        builder.Configuration["Issuer:Code"].Should().Be("nested-secret");
     }
 
     [Fact]

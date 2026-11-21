@@ -20,8 +20,6 @@ public class ProductionSecretsGuardTest
         var exception = act.Should().Throw<InvalidOperationException>().Which;
         exception.Message.Should().Contain("Issuer:Code");
         exception.Message.Should().Contain("LocalDatabaseOptions:ConnectionString");
-        exception.Message.Should().Contain("RadDapperOptions:ConnectionString");
-        exception.Message.Should().Contain("RadiusServiceOptions:Password");
         exception.Message.Should().Contain("TelegramOptions:BotToken");
         exception.Message.Should().Contain("private/secrets.json");
     }
@@ -62,8 +60,6 @@ public class ProductionSecretsGuardTest
         var exception = act.Should().Throw<InvalidOperationException>().Which;
         exception.Message.Should().Contain("Issuer:Code");
         exception.Message.Should().NotContain("LocalDatabaseOptions:ConnectionString");
-        exception.Message.Should().NotContain("RadDapperOptions:ConnectionString");
-        exception.Message.Should().NotContain("RadiusServiceOptions:Password");
         exception.Message.Should().NotContain("EmailOptions");
     }
 
@@ -190,8 +186,6 @@ public class ProductionSecretsGuardTest
         {
             ["Issuer:Code"] = CommittedTestSecretFixtures.JwtSigningKey,
             ["LocalDatabaseOptions:ConnectionString"] = $"Server=.; Database={CommittedTestSecretFixtures.LocalDatabaseMarker}; User Id=test; Password=abc.123456; Encrypt=False;",
-            ["RadDapperOptions:ConnectionString"] = $"Server=localhost;{CommittedTestSecretFixtures.RadDatabaseMarker}User=rd;Password=rd;",
-            ["RadiusServiceOptions:Password"] = CommittedTestSecretFixtures.RadiusServicePassword,
 
             // a well-formed email transport: the email rules enforce
             // presence/enabled, they have no committed-fixture detection
@@ -207,8 +201,6 @@ public class ProductionSecretsGuardTest
         {
             ["Issuer:Code"] = "cHJvZHVjdGlvbi1vbmx5LXNpZ25pbmcta2V5LW5vdC1hLXRlc3QtZml4dHVyZQ==",
             ["LocalDatabaseOptions:ConnectionString"] = "Server=prod-sql; Database=FastBypass; User Id=svc_bypass; Password=strong-secret; Encrypt=True;",
-            ["RadDapperOptions:ConnectionString"] = "Server=prod-radius-db;Database=production_radius;User=radius;Password=strong-secret;",
-            ["RadiusServiceOptions:Password"] = "a-real-radius-api-password",
             ["EmailOptions:Enabled"] = "true",
             ["EmailOptions:Address"] = "mail@example.com",
             ["EmailOptions:Password"] = "real-secret",

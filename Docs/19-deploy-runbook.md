@@ -9,7 +9,7 @@
 - مقادیر تستی فعلی در repo می‌مانند (کاربر تأیید کرد تستی‌اند)؛ گارد `ProductionSecretsGuard` مانع بالا آمدن پروداکشن با آن‌ها می‌شود.
 - مکانیزم ذخیره‌ی secret: فایل `secrets.json` در پوشه‌ی استاندارد `private` کنار `httpdocs` در vhost پلسک — خارج از web root، غیرقابل دانلود با URL، دست‌نخورده توسط deploy.
 - روش deploy: آپلود دستی FTP + نصب دیتابیس و ساخت ادمین با `Scripts/deploy.sh` (فریم‌ورک migration وجود ندارد). توقف/راه‌اندازی سایت دستی از پنل Plesk.
-- **اولین انتشار است**: دیتابیس از ابتدا با اجرای کل اسکریپت‌ها ساخته می‌شود؛ همه credentialها (کلید JWT، DB/Radius/ایمیل) تازه تولید می‌شوند.
+- **اولین انتشار است**: دیتابیس از ابتدا با اجرای کل اسکریپت‌ها ساخته می‌شود؛ همه credentialها (کلید JWT، DB/ایمیل) تازه تولید می‌شوند.
 
 ## ۲. مکانیزم کانفیگ (چطور کار می‌کند)
 
@@ -18,7 +18,7 @@
 | لودر `AddPleskPrivateSecrets` | `Backend/Portal/Basical/PleskSecrets.cs`، فراخوان در `Program.cs` هر دو host (Portal/Admin) اولِ chain | اولین فایل موجود از `../private/secrets.json` یا `../../private/secrets.json` (نسبت به ContentRootPath) را با `AddJsonFile` اضافه می‌کند؛ **per-key روی appsettings.json اولویت می‌گیرد** و hierarchy جزئی کافی است (فایل فقط کلیدهای secret را داشته باشد). نبود هر دو = no-op (Development به appsettings برمی‌گردد). |
 | گارد `ProductionSecretsGuard` | `Backend/Portal/Basical/ProductionSecretsGuard.cs`، فراخوان در `AddPortalServices` (`Backend/Portal/ServiceFactory.cs`) | در environment غیر Development، اگر هر secret همچنان مقدار تستی کامیت‌شده باشد، startup با `InvalidOperationException` متوقف می‌شود؛ پیام، کلید(های) مقصر + مسیرهای مورد انتظار `secrets.json` را می‌دهد. |
 | ثابت‌های نشانگر | `CommittedTestSecretFixtures` (همان فایل گارد) | fixture تستی‌اند، نه secret واقعی؛ در مستندات فقط کلید کانفیگ ارجاع داده می‌شود، نه مقدار. |
-| تست | `Backend/Tests/Facts/Portal/ProductionSecretsGuardTest.cs` و `Backend/Tests/Facts/Portal/PleskSecretsTest.cs` | گارد: هر ۴ کلید تستی → throw با نام‌بردن همه؛ Development → عبور؛ override کامل → عبور؛ فقط یک کلید → throw فقط با نام همان؛ کلید غایب → عبور (گارد مقادیر تستی را می‌گیرد نه غیبت مقدار) + wiring: `AddPortalServices` در Production با مقادیر تستی throw می‌کند و در Development ثبت را کامل می‌کند. لودر: override با per-key و hierarchy جزئی؛ کاندید دوم برای app تودرتو؛ تقدم کاندید اول؛ no-op وقتی هیچ فایلی نیست. |
+| تست | `Backend/Tests/Facts/Portal/ProductionSecretsGuardTest.cs` و `Backend/Tests/Facts/Portal/PleskSecretsTest.cs` | گارد: هر ۳ کلید تستی → throw با نام‌بردن همه؛ Development → عبور؛ override کامل → عبور؛ فقط یک کلید → throw فقط با نام همان؛ کلید غایب → عبور (گارد مقادیر تستی را می‌گیرد نه غیبت مقدار) + wiring: `AddPortalServices` در Production با مقادیر تستی throw می‌کند و در Development ثبت را کامل می‌کند. لودر: override با per-key و hierarchy جزئی؛ کاندید دوم برای app تودرتو؛ تقدم کاندید اول؛ no-op وقتی هیچ فایلی نیست. |
 
 نشانگرهای گارد (کلید ← شرط تطبیق):
 
@@ -26,8 +26,6 @@
 |---|---|
 | `Issuer:Code` | تساوی دقیق با مقدار تستی کامیت‌شده |
 | `LocalDatabaseOptions:ConnectionString` | شامل نام دیتابیس سناریوی تستی (`FastBypass_DbScenario`) |
-| `RadDapperOptions:ConnectionString` | شامل نام دیتابیس تستی Radius |
-| `RadiusServiceOptions:Password` | تساوی دقیق با مقدار تستی کامیت‌شده |
 | `EmailOptions:Enabled` | نبودن مقدار یا `false` بودن |
 | `EmailOptions:Address` | خالی/فاصله بودن |
 | `EmailOptions:Password` | خالی/فاصله بودن |
@@ -48,7 +46,7 @@
    ```
    خروجی را یک‌جا (بدون شکستن خط) در `Issuer:Code` بگذارید.
 2. **دیتابیس محلی MSSQL** (`LocalDatabaseOptions:ConnectionString`): دیتابیس `FastBypass` را با کاربر اختصاصی و پسورد قوی بسازید (نه کاربر تستی repo).
-3. **Radius**: connection string دیتابیس Radius (`RadDapperOptions:ConnectionString`) و credential وب‌سرویس RadiusDesk (`RadiusServiceOptions`) با مقادیر واقعی سرور.
+3. **Radius**: secret سراسری لازم ندارد — مسیر RadiusDesk فعلاً dormant است (غیراجرایی؛ Docs/16). هنگام فعال‌سازی واقعی، کانفیگ به‌صورت per-server از جدول `Server` (ستون رمزنگاری‌شده‌ی `Config`) سیم‌کشی می‌شود، نه از `secrets.json`.
 4. **ایمیل** (`EmailOptions`): **الزامی** — کانال پیش‌فرض بازیابی/هشدار است (تلگرام اختیاری است و جایگزین اجباری ایمیل نمی‌شود)؛ پروداکشن بدون `Enabled: true` و credential صندوق واقعی بوت نمی‌شود (گارد).
 5. **SSH/ServerBridge**: در صورت وجود credential پیش‌فرض در `ServerBridgeOptions`. (credential تک‌تک سرورها در جدول `Server` ذخیره می‌شود و از پنل وارد می‌شود؛ رمزنگاری at-rest آن: Docs/14 M12.)
 6. **پرداخت/OVPN** (در صورت استفاده): `ManagementOptions:PaymentCards` (شماره کارت‌های واقعی) و `ManagementOptions:DefaultPrivateKeyOVpn`.
@@ -56,48 +54,9 @@
 
 ### (ب) ساخت `private/secrets.json`
 
-در vhost پلسک (کنار `httpdocs`) پوشه‌ی `private` را بسازید (در اولین deploy وجودش را تأیید کنید؛ استاندارد پلسک است ولی اگر میزبان نساخته بود، با FTP همان‌جا بسازید) و فایل را **فقط با کلیدهای حاوی credential** بنویسید — الگوی زیر با placeholder؛ مقادیر واقعی هرگز در repo/مستندات نمی‌آیند:
+در vhost پلسک (کنار `httpdocs`) پوشه‌ی `private` را بسازید (در اولین deploy وجودش را تأیید کنید؛ استاندارد پلسک است ولی اگر میزبان نساخته بود، با FTP همان‌جا بسازید) و فایل را **فقط با کلیدهای حاوی credential** بنویسید.
 
-```json
-{
-  "Issuer": {
-    "Code": "<base64 from step a-1>"
-  },
-  "LocalDatabaseOptions": {
-    "ConnectionString": "Server=<mssql-host>; Database=FastBypass; User Id=<user>; Password=<password>; Encrypt=True; TrustServerCertificate=True;"
-  },
-  "RadDapperOptions": {
-    "ConnectionString": "Server=<radius-db-host>;Database=<radius-db>;User=<user>;Password=<password>;"
-  },
-  "RadiusServiceOptions": {
-    "BaseUrl": "<radiusdesk-host>",
-    "Username": "<user>",
-    "Password": "<password>"
-  },
-  "EmailOptions": {
-    "Enabled": true,
-    "FullName": "<display name>",
-    "Address": "<mailbox address>",
-    "Password": "<mailbox password or app password>",
-    "Host": "<smtp-host>",
-    "Port": 587,
-    "EnableSsl": true
-  },
-  "SocialMediaOptions": {
-    "Channel": "Telegram"
-  },
-  "TelegramOptions": {
-    "BotToken": "<real bot token from @BotFather>",
-    "BotUsername": "<bot username without @>",
-    "OperationsChatId": "<operator chat id>",
-    "Proxy": {
-      "Address": "<outbound proxy, e.g. http://127.0.0.1:9050>",
-      "Username": "<optional>",
-      "Password": "<optional>"
-    }
-  }
-}
-```
+**منبع واحد قالب**: [`private/secrets.example.json`](../private/secrets.example.json) در repo — الگوی placeholder را از همان فایل کپی و مقادیر واقعی را جای‌گزین کنید؛ مقادیر واقعی هرگز در repo/مستندات نمی‌آیند و فقط در `private/secrets.json` واقعی می‌نشینند (که با الگوی `**/private/secrets.json` در `.gitignore` بسته شده است). هر تغییر آینده‌ی قالب باید همین فایل نمونه را ویرایش کند؛ این سند دیگر کپی inline نگه نمی‌دارد تا drift تکرار نشود.
 
 در صورت نیاز بخش‌های `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند؛ `EmailOptions` عمداً در `appsettings.json` کامیت نمی‌شود و کامل در `secrets.json` می‌آید (`Enabled: true` + credential). کلید عملیاتی `EmailOptions:MaxSendsPerHour` (سقف لغزان یک‌ساعته‌ی سراسری ارسال — پیش‌فرض ۵۰۰، صفر/منفی = نامحدود؛ شیر ایمنی در برابر فال‌بک انبوه به ایمیل هنگام قطع کانال سوشال) secret نیست و اگر سرور SMTP شما سقف ساعتی دیگری دارد، همین‌جا override کنید. بلوک تلگرام فقط اگر کانال فعال می‌شود لازم است: با `Channel: "Telegram"` گارد پروداکشن کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (Docs/21 §فعال‌سازی)؛ بدون آن کانال `None` می‌ماند (no-op) و بلوک لازم نیست.
 
