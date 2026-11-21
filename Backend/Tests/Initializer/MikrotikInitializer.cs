@@ -1,11 +1,9 @@
-using System.Diagnostics;
-using Microsoft.Extensions.Configuration;
 using PhotonBypass.Test.Initializer.OutSourceManager;
 using Renci.SshNet;
 
 namespace PhotonBypass.Test.Initializer;
 
-internal class MikrotikInitializer(IConfiguration configuration) : IOutSourceInitializer, IOutSourceLevelService
+internal class MikrotikInitializer(VirtualBoxManager vbox) : IOutSourceInitializer, IOutSourceLevelService
 {
     private const int TimeoutSeconds = 120;
 
@@ -17,7 +15,7 @@ internal class MikrotikInitializer(IConfiguration configuration) : IOutSourceIni
     public async Task Initialize(string key)
     {
         await Clear(key);
-        await Start(key);
+        await vbox.StartHeadless(key);
         await Check(key);
     }
 
@@ -50,57 +48,19 @@ internal class MikrotikInitializer(IConfiguration configuration) : IOutSourceIni
 
     public async Task Clear(string key)
     {
-        await PowerOff(key);
-        await RestoreSnapshot(key);
+        await vbox.PowerOff(key);
+        await vbox.RestoreSnapshot(key);
     }
 
-    private Task<string> List() => Run($"list vms");
+    private Task<string> List() => vbox.Run($"list vms");
 
-    private Task<string> Start(string key) => Run($"startvm \"{key}\" --type headless");
+    private Task<string> Clone(string key) => vbox.Run($"clonevm Mikrotik-Base --name \"{key}\" --register");
 
-    private Task<string> RestoreSnapshot(string key) => Run($"snapshot \"{key}\" restore clean-test-state");
-
-    private Task<string> Clone(string key) => Run($"clonevm Mikrotik-Base --name \"{key}\" --register");
-
-    private Task<string> PowerOff(string key) => Run($"controlvm \"{key}\" poweroff", "is not currently running");
-
-    private Task<string> Drop(string key) => Run($"unregistervm \"{key}\" --delete", "Could not find a registered machine named");
-
-    private async Task<string> Run(string args, params string[] ignores)
-    {
-        var vbox_manage_path = configuration["VirtualBoxOptions:AppPath"]
-            ?? throw new Exception("VirtualBoxOptions:AppPath was not set.");
-        
-        var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = vbox_manage_path,
-                Arguments = args,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            }
-        };
-
-        process.Start();
-        await process.WaitForExitAsync();
-
-        if (process.ExitCode != 0)
-        {
-            var error = await process.StandardError.ReadToEndAsync();
-            if (!ignores.Any(error.Contains))
-            {
-                throw new Exception(error);
-            }
-        }
-
-        return await process.StandardOutput.ReadToEndAsync();
-    }
+    private Task<string> Drop(string key) => vbox.Run($"unregistervm \"{key}\" --delete", "Could not find a registered machine named");
 
     public static void CreateInstance(IServiceCollection services)
     {
+        VirtualBoxManager.CreateInstance(services);
         services.AddTransient<MikrotikInitializer>();
     }
 }
