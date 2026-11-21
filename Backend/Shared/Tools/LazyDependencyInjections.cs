@@ -65,10 +65,22 @@ public static class LazyDependencyInjections
         services.AddKeyedTransient(key, (provider, key) => new Lazy<TService>(() => provider.GetRequiredKeyedService<TService>(key)));
     }
 
+    /// <summary>
+    /// Binds from the section named after the options class. Prefer the
+    /// explicit-section overload when the class name and the config section
+    /// diverge (e.g. <c>LocalDapperOptions</c> bound from
+    /// <c>LocalDatabaseOptions</c>).
+    /// </summary>
     public static void BindValidateReturn<TOptions>(this IServiceCollection services) where TOptions : class
     {
+        services.BindValidateReturn<TOptions>(typeof(TOptions).Name);
+    }
+
+    public static void BindValidateReturn<TOptions>(this IServiceCollection services, string sectionName)
+        where TOptions : class
+    {
         services.AddOptions<TOptions>()
-            .BindConfiguration(typeof(TOptions).Name)
+            .BindConfiguration(sectionName)
             .ValidateDataAnnotations()
             .ValidateOnStart();
     }

@@ -84,7 +84,7 @@ public static class ServiceFactory
                 };
             });
 
-        ProductionSecretsGuard.Validate(builder.Configuration, builder.Environment);
+        RequiredSettingsGuard.Validate(builder.Configuration, builder.Environment);
 
         builder.Services.AddAuthorization(options =>
         {

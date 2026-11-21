@@ -3,9 +3,11 @@ using System.ComponentModel.DataAnnotations;
 namespace PhotonBypass.OutSource;
 
 /// <summary>
-/// Telegram Bot API wiring (bound from the <c>TelegramOptions</c> section).
-/// Committed values are test fixtures — production overrides them per key
-/// from <c>private/secrets.json</c> (ProductionSecretsGuard enforces it).
+/// Telegram Bot API wiring (bound from the <c>TelegramOptions</c> section;
+/// test fixtures live in <c>appsettings.Development.json</c>). Strict
+/// validation applies only while <c>SocialMediaOptions:Channel == Telegram</c>
+/// (registration-time check in <c>OutSource/ServiceFactory.cs</c>);
+/// production overrides the keys per key from <c>private/secrets.json</c>.
 /// </summary>
 public class TelegramOptions
 {

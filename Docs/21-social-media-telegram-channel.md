@@ -36,15 +36,15 @@
 
 ## فعال‌سازی در استقرار
 
-1. `appsettings.json` مقادیر تست دارد (عرف repo). پروداکشن: `private/secrets.json` با per-key override (لودر `AddPleskPrivateSecrets`) — کلیدها: `TelegramOptions:BotToken` (الزامی — گارد فیکسچر کامیت‌شده را می‌بندد)، `BotUsername`، `OperationsChatId`، `Proxy:Address` (+ Username/Password اختیاری).
-2. `SocialMediaOptions:Channel` را `"Telegram"` بگذارید؛ گارد پروداکشن در این حالت کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (`ProductionSecretsGuard.cs:43-65`).
+1. فایل پایه‌ی `appsettings.json` بلوک تلگرام ندارد؛ فیکسچرهای تستی فقط در `appsettings.Development.json` هستند. پروداکشن: `private/secrets.json` با per-key override (لودر `AddPleskPrivateSecrets`) — کلیدها: `TelegramOptions:BotToken`، `BotUsername`، `OperationsChatId`، `Proxy:Address` (+ Username/Password اختیاری).
+2. `SocialMediaOptions:Channel` را `"Telegram"` بگذارید؛ ثبت شرطی در `OutSource/ServiceFactory.cs` فقط در این حالت اعتبارسنجی سخت‌گیرانه‌ی `TelegramOptions` (DataAnnotations + `Proxy:Address` + `ValidateOnStart`) را فعال می‌کند و کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را در startup الزام می‌کند — با کانال خاموش بایند ساده بدون validation اجرا می‌شود (feature-flag).
 3. `OperationsChatId` = chat اپراتور (هشدار ثبت‌نام + ظرفیت) — از `/start` گفتگو با بات به دست می‌آید.
 4. IIS/Plesk: poller همان پیش‌نیاز چرخه‌حیات Quartz `JobInterval` را دارد؛ حلقه‌ی ~۲۵ ثانیه‌ای خودش keep-alive است (Docs/19 §۴).
 5. Enumeration: پاسخ ForgetPassword روی هر سه مسیر خنثی است و limiter موجود (۳/ساعت) روی username هم اعمال می‌شود.
 
 ## تست‌ها
 
-ردیف‌های کامل در `Docs/18-test-coverage.md` §۴ (جدول Docs/21). خلاصه: `TelegramLinkHandlerTest` (کد معتبر/منقضی/replay/حساب غیرفعال/چت تکراری با `SqlException` واقعی/`/start` خالی/ترافیک غیر-start)، `TelegramMediaServiceTest` (chat مقصد کاربر/اپراتور + no-op بدون chat + detach چت مرده: 403/400-chat-not-found → detach یک‌بار + rethrow، 400 دیگر و 429 بدون detach، شکست OperationsChatId بدون detach هیچ حسابی، شکست خود detach → rethrow اصل)، `TelegramLinkRoundTripTest` (روی DB سناریو با ریپوهای واقعی + ایندکس یکتا)، شاخه‌های username در ForgetPassword (متصل/fallback/خنثی/limiter/شکست ارسال/فال‌بک ایمیل با همان کد/شکست هر دو کانال)، تقدم social-first در `NotifSendServices` (+ stamp-after-success و ایزوله‌سازی خطا و فال‌بک ایمیل هنگام شکست سوشال)، `AccountAppTest` (صدور کد/وضعیت/قطع)، `ProductionSecretsGuardTest` (قواعد تلگرام)، و specهای فرانت (کارت اتصال + ورودی username).
+ردیف‌های کامل در `Docs/18-test-coverage.md` §۴ (جدول Docs/21). خلاصه: `TelegramLinkHandlerTest` (کد معتبر/منقضی/replay/حساب غیرفعال/چت تکراری با `SqlException` واقعی/`/start` خالی/ترافیک غیر-start)، `TelegramMediaServiceTest` (chat مقصد کاربر/اپراتور + no-op بدون chat + detach چت مرده: 403/400-chat-not-found → detach یک‌بار + rethrow، 400 دیگر و 429 بدون detach، شکست OperationsChatId بدون detach هیچ حسابی، شکست خود detach → rethrow اصل)، `TelegramLinkRoundTripTest` (روی DB سناریو با ریپوهای واقعی + ایندکس یکتا)، شاخه‌های username در ForgetPassword (متصل/fallback/خنثی/limiter/شکست ارسال/فال‌بک ایمیل با همان کد/شکست هر دو کانال)، تقدم social-first در `NotifSendServices` (+ stamp-after-success و ایزوله‌سازی خطا و فال‌بک ایمیل هنگام شکست سوشال)، `AccountAppTest` (صدور کد/وضعیت/قطع)، `OutSourceServiceFactoryTest` (ثبت شرطی تلگرام — بازطراحی‌شده از قواعد تلگرام گارد قبلی)، و specهای فرانت (کارت اتصال + ورودی username).
 
 ## ریسک‌ها / نکته‌های باز
 

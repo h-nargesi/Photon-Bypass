@@ -5,7 +5,8 @@ public class EmailOptions
     /// <summary>
     /// Master switch. False (the default) turns every send into a logged
     /// no-op so a Development environment without SMTP never throws —
-    /// production must set it to true (ProductionSecretsGuard enforces it).
+    /// production must set it to true (RequiredSettingsGuard enforces it
+    /// outside Development).
     /// </summary>
     public bool Enabled { get; set; }
 

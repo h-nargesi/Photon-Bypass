@@ -17,12 +17,30 @@ public static class ServiceFactory
     {
         builder.Services.BindValidateReturn<BrandingOptions>();
         builder.Services.BindValidateReturn<SocialMediaOptions>();
-        builder.Services.BindValidateReturn<TelegramOptions>();
 
-        builder.Services.AddOptions<TelegramOptions>()
-            .Validate(options => !string.IsNullOrWhiteSpace(options.Proxy?.Address),
-                "TelegramOptions:Proxy:Address must be set — the Bot API is unreachable from the server without an outbound proxy.")
-            .ValidateOnStart();
+        // feature-flag pattern (Docs/21): strict telegram validation applies
+        // only when the channel is actually enabled — with the channel off
+        // nothing resolves the adapter (keyed DI None → Noop, poller idles,
+        // telegram HttpClient is lazy), so an absent block must not block
+        // startup. Same registration-time string read the channel dispatcher
+        // binds from.
+        var telegram_channel_enabled =
+            builder.Configuration["SocialMediaOptions:Channel"] == nameof(SocialChannel.Telegram);
+
+        if (telegram_channel_enabled)
+        {
+            builder.Services.BindValidateReturn<TelegramOptions>();
+
+            builder.Services.AddOptions<TelegramOptions>()
+                .Validate(options => !string.IsNullOrWhiteSpace(options.Proxy?.Address),
+                    "TelegramOptions:Proxy:Address must be set — the Bot API is unreachable from the server without an outbound proxy.")
+                .ValidateOnStart();
+        }
+        else
+        {
+            builder.Services.AddOptions<TelegramOptions>()
+                .BindConfiguration(nameof(TelegramOptions));
+        }
 
         builder.Services.AddHttpClient(HttpClientName)
             .ConfigurePrimaryHttpMessageHandler(provider =>

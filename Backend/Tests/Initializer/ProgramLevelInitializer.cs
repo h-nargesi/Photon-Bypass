@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using PhotonBypass.Result;
 using PhotonBypass.Test.Initializer.OutSourceManager;
 using System.Net.Http.Headers;
@@ -97,6 +98,22 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
             // scenario tests drive the register → buy journey; the production
             // default (off, Docs/20 D11) must not disable them
             builder.UseSetting("ManagementOptions:AllowRegistration", "true");
+
+            // this host's content root is the Portal project, so the
+            // test-only keys (moved out of the base appsettings into
+            // Tests/appsettings.json) must be fed in explicitly — values
+            // come from that file to keep a single source of truth
+            var test_settings = new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: false)
+                .Build();
+
+            builder.UseSetting("LocalDatabaseOptions:StructureFilesPath",
+                test_settings["LocalDatabaseOptions:StructureFilesPath"]);
+            builder.UseSetting("LocalDatabaseOptions:DataFilesPath",
+                test_settings["LocalDatabaseOptions:DataFilesPath"]);
+            builder.UseSetting("VirtualBoxOptions:AppPath",
+                test_settings["VirtualBoxOptions:AppPath"]);
 
             builder.ConfigureServices(services =>
             {

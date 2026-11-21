@@ -18,7 +18,7 @@ public static class ServiceFactory
         where TBuilder : IHostApplicationBuilder
     {
         builder.Services.AddSingleton<IEntityEventService, EntityEventService>();
-        builder.Services.BindValidateReturn<LocalDapperOptions>();
+        builder.Services.BindValidateReturn<LocalDapperOptions>("LocalDatabaseOptions");
         builder.Services.AddMemoryCache();
         builder.Services.AddScoped<LocalDbContext>();
 

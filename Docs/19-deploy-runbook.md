@@ -1,12 +1,12 @@
 # Docs/19-deploy-runbook.md — ران‌بوک اولین انتشار روی هاست Plesk (FTP دستی + secrets.json)
 
-> **English summary**: First-release deployment runbook. This panel has **never been deployed** — no production tokens exist to revoke, no live data needs migration, and every production secret is generated fresh at this release. Flow: (1) generate all production secrets from scratch; (2) create `private/secrets.json` in the Plesk vhost (outside the web root; loaded per-key over `appsettings.json` by `AddPleskPrivateSecrets`, enforced against committed test values by `ProductionSecretsGuard`); (3) install the MSSQL database from scratch and create the admin account with the operator's real password via `Scripts/deploy.sh db` (DeployCli — no seeded admin exists); (4) stop the site from the Plesk panel, publish to `httpdocs/` via manual FTP — the `private/` folder is never overwritten — then restart it from the panel; (5) verify: site boots = guard green; a guard message = a secret was left behind. Scope: manual FTP + manual Plesk stop/start only (no CI/CD, no Git deploy, no vault, no scripted app pool control).
+> **English summary**: First-release deployment runbook. This panel has **never been deployed** — no production tokens exist to revoke, no live data needs migration, and every production secret is generated fresh at this release. Flow: (1) generate all production secrets from scratch; (2) create `private/secrets.json` in the Plesk vhost (outside the web root; loaded per-key over `appsettings.json` by `AddPleskPrivateSecrets`, required-key presence enforced in every environment by `RequiredSettingsGuard`); (3) install the MSSQL database from scratch and create the admin account with the operator's real password via `Scripts/deploy.sh db` (DeployCli — no seeded admin exists); (4) stop the site from the Plesk panel, publish to `httpdocs/` via manual FTP — the `private/` folder is never overwritten — then restart it from the panel; (5) verify: site boots = guard green; a guard message = a required key is missing. Scope: manual FTP + manual Plesk stop/start only (no CI/CD, no Git deploy, no vault, no scripted app pool control).
 
 > **فارسی**: ران‌بوک انتشار اول. این پنل هنوز منتشر نشده است؛ بنابراین هیچ چرخش/ابطال توکن و هیچ migration داده‌ای در کار نیست و همه secretهای پروداکشن در همین انتشار از صفر تولید می‌شوند.
 
 ## ۱. قاب‌بندی (تصمیم‌های تأییدشده)
 
-- مقادیر تستی فعلی در repo می‌مانند (کاربر تأیید کرد تستی‌اند)؛ گارد `ProductionSecretsGuard` مانع بالا آمدن پروداکشن با آن‌ها می‌شود.
+- فایل پایه‌ی `appsettings.json` دیگر هیچ secretی ندارد؛ فیکسچرهای تستی فقط در `appsettings.Development.json` (و `Backend/Tests/appsettings.json` برای هاست تست) می‌مانند. گارد `RequiredSettingsGuard` حضور کلیدهای الزامی را در **همه‌ی environmentها** چک می‌کند (matching مقدار فیکسچر حذف شد — fixture کهنه باعث مرگ بی‌صدا‌ی rule می‌شد).
 - مکانیزم ذخیره‌ی secret: فایل `secrets.json` در پوشه‌ی استاندارد `private` کنار `httpdocs` در vhost پلسک — خارج از web root، غیرقابل دانلود با URL، دست‌نخورده توسط deploy.
 - روش deploy: آپلود دستی FTP + نصب دیتابیس و ساخت ادمین با `Scripts/deploy.sh` (فریم‌ورک migration وجود ندارد). توقف/راه‌اندازی سایت دستی از پنل Plesk.
 - **اولین انتشار است**: دیتابیس از ابتدا با اجرای کل اسکریپت‌ها ساخته می‌شود؛ همه credentialها (کلید JWT، DB/ایمیل) تازه تولید می‌شوند.
@@ -16,21 +16,22 @@
 | جزء | مکان | رفتار |
 |---|---|---|
 | لودر `AddPleskPrivateSecrets` | `Backend/Portal/Basical/PleskSecrets.cs`، فراخوان در `Program.cs` هر دو host (Portal/Admin) اولِ chain | اولین فایل موجود از `../private/secrets.json` یا `../../private/secrets.json` (نسبت به ContentRootPath) را با `AddJsonFile` اضافه می‌کند؛ **per-key روی appsettings.json اولویت می‌گیرد** و hierarchy جزئی کافی است (فایل فقط کلیدهای secret را داشته باشد). نبود هر دو = no-op (Development به appsettings برمی‌گردد). |
-| گارد `ProductionSecretsGuard` | `Backend/Portal/Basical/ProductionSecretsGuard.cs`، فراخوان در `AddPortalServices` (`Backend/Portal/ServiceFactory.cs`) | در environment غیر Development، اگر هر secret همچنان مقدار تستی کامیت‌شده باشد، startup با `InvalidOperationException` متوقف می‌شود؛ پیام، کلید(های) مقصر + مسیرهای مورد انتظار `secrets.json` را می‌دهد. |
-| ثابت‌های نشانگر | `CommittedTestSecretFixtures` (همان فایل گارد) | fixture تستی‌اند، نه secret واقعی؛ در مستندات فقط کلید کانفیگ ارجاع داده می‌شود، نه مقدار. |
-| تست | `Backend/Tests/Facts/Portal/ProductionSecretsGuardTest.cs` و `Backend/Tests/Facts/Portal/PleskSecretsTest.cs` | گارد: هر ۳ کلید تستی → throw با نام‌بردن همه؛ Development → عبور؛ override کامل → عبور؛ فقط یک کلید → throw فقط با نام همان؛ کلید غایب → عبور (گارد مقادیر تستی را می‌گیرد نه غیبت مقدار) + wiring: `AddPortalServices` در Production با مقادیر تستی throw می‌کند و در Development ثبت را کامل می‌کند. لودر: override با per-key و hierarchy جزئی؛ کاندید دوم برای app تودرتو؛ تقدم کاندید اول؛ no-op وقتی هیچ فایلی نیست. |
+| گارد `RequiredSettingsGuard` | `Backend/Portal/Basical/RequiredSettingsGuard.cs`، فراخوان در `AddPortalServices` (`Backend/Portal/ServiceFactory.cs`) | presence-based، بدون تطبیق مقدار: در **همه‌ی environmentها** حضور `Issuer:Code` و `LocalDatabaseOptions:ConnectionString` الزامی است؛ بیرون Development سه rule ایمیل هم فعال می‌شود. startup با یک `InvalidOperationException` تجمعی متوقف می‌شود؛ پیام، کلید(های) مفقود + راه‌حل متناسب با environment (Development → `appsettings.Development.json`؛ غیر از آن → مسیرهای مورد انتظار `secrets.json`) را می‌دهد. |
+| بایند دیتابیس | `BindValidateReturn<LocalDapperOptions>("LocalDatabaseOptions")` در `Backend/Infrastructure/ServiceFactory.cs` | کلاس `LocalDapperOptions` از سکشن یکپارچه‌ی `LocalDatabaseOptions` بایند می‌شود (قبلاً از نام کلاس می‌خواند و کلید `secrets.json` هرگز به options نمی‌رسید). `DeployCli`/`deploy.sh` همان نام کلید را می‌خوانند — بدون تغییر. |
+| تلگرام شرطی | `Backend/OutSource/ServiceFactory.cs` | اعتبارسنجی سخت‌گیرانه‌ی `TelegramOptions` (DataAnnotations + `Proxy:Address`) فقط وقتی `SocialMediaOptions:Channel == Telegram` با `ValidateOnStart` اجرا می‌شود؛ کانال خاموش ⇒ بایند ساده بدون validation — بلوک غایب بوت را نمی‌شکند. |
+| تست | `Backend/Tests/Facts/Portal/RequiredSettingsGuardTest.cs` و `Backend/Tests/Facts/Portal/PleskSecretsTest.cs` | گارد: کلیدهای الزامی غایب → throw با نام‌بردن همه + راه‌حل؛ همه حاضر → عبور؛ ایمیل غایب در Development → عبور؛ ایمیل غایب/غیرفعال/خالی در Production → نام‌بردن `EmailOptions:*` + wiring: `AddPortalServices` در Production با کانفیگ خالی throw می‌کند و در Development ثبت را کامل می‌کند. لودر: override با per-key و hierarchy جزئی؛ کاندید دوم برای app تودرتو؛ تقدم کاندید اول؛ no-op وقتی هیچ فایلی نیست. |
 
-نشانگرهای گارد (کلید ← شرط تطبیق):
+کلیدهای گارد (کلید ← شرط):
 
-| کلید کانفیگ | شرط |
-|---|---|
-| `Issuer:Code` | تساوی دقیق با مقدار تستی کامیت‌شده |
-| `LocalDatabaseOptions:ConnectionString` | شامل نام دیتابیس سناریوی تستی (`FastBypass_DbScenario`) |
-| `EmailOptions:Enabled` | نبودن مقدار یا `false` بودن |
-| `EmailOptions:Address` | خالی/فاصله بودن |
-| `EmailOptions:Password` | خالی/فاصله بودن |
+| کلید کانفیگ | محدوده‌ی environment | شرط |
+|---|---|---|
+| `Issuer:Code` | همه | نبودن/خالی بودن مقدار |
+| `LocalDatabaseOptions:ConnectionString` | همه | نبودن/خالی بودن مقدار |
+| `EmailOptions:Enabled` | فقط غیر Development | نبودن مقدار یا `false` بودن |
+| `EmailOptions:Address` | فقط غیر Development | خالی/فاصله بودن |
+| `EmailOptions:Password` | فقط غیر Development | خالی/فاصله بودن |
 
-نکته‌ی environment: اگر `ASPNETCORE_ENVIRONMENT` ست نشود، پیش‌فرض **Production** است و گارد فعال می‌شود. تست‌های xUnit هاست را با `ASPNETCORE_ENVIRONMENT=Development` بوت می‌کنند (`Backend/Tests/Initializer/ServiceInitializer.cs`) و `WebApplicationFactory` هم به‌طور پیش‌فرض Development است.
+نکته‌ی environment: گارد presence در همه‌ی environmentها فعال است؛ ruleهای ایمیل فقط بیرون Development. اگر `ASPNETCORE_ENVIRONMENT` ست نشود، پیش‌فرض **Production** است و ruleهای ایمیل هم اجرا می‌شوند. تست‌های xUnit هاست را با `ASPNETCORE_ENVIRONMENT=Development` بوت می‌کنند (`Backend/Tests/Initializer/ServiceInitializer.cs`) و `WebApplicationFactory` هم به‌طور پیش‌فرض Development است.
 
 ## ۳. گام‌های انتشار
 
@@ -50,7 +51,7 @@
 4. **ایمیل** (`EmailOptions`): **الزامی** — کانال پیش‌فرض بازیابی/هشدار است (تلگرام اختیاری است و جایگزین اجباری ایمیل نمی‌شود)؛ پروداکشن بدون `Enabled: true` و credential صندوق واقعی بوت نمی‌شود (گارد).
 5. **SSH/ServerBridge**: در صورت وجود credential پیش‌فرض در `ServerBridgeOptions`. (credential تک‌تک سرورها در جدول `Server` ذخیره می‌شود و از پنل وارد می‌شود؛ رمزنگاری at-rest آن: Docs/14 M12.)
 6. **پرداخت/OVPN** (در صورت استفاده): `ManagementOptions:PaymentCards` (شماره کارت‌های واقعی) و `ManagementOptions:DefaultPrivateKeyOVpn`.
-7. **تلگرام** (در صورت فعال‌سازی کانال — Docs/21): bot token واقعی از @BotFather، `BotUsername` بدون `@`، `OperationsChatId` (chat اپراتور — با `/start` گفتگو با بات به دست می‌آید) و `Proxy:Address` (+ Username/Password اختیاری؛ Bot API از سرور بدون پروکسی خروجی در دسترس نیست). توکن تستی کامیت‌شده در appsettings توسط گارد بلاک می‌شود؛ کلیدها فقط با نام در مستندات می‌آیند.
+7. **تلگرام** (در صورت فعال‌سازی کانال — Docs/21): bot token واقعی از @BotFather، `BotUsername` بدون `@`، `OperationsChatId` (chat اپراتور — با `/start` گفتگو با بات به دست می‌آید) و `Proxy:Address` (+ Username/Password اختیاری؛ Bot API از سرور بدون پروکسی خروجی در دسترس نیست). فیکسچرهای تستی فقط در `appsettings.Development.json` هستند؛ در پروداکشن با `Channel: "Telegram"` اعتبارسنجی شرطی `ValidateOnStart` کامل بودن کلیدها را الزام می‌کند (Docs/21 §فعال‌سازی)؛ کلیدها فقط با نام در مستندات می‌آیند.
 
 ### (ب) ساخت `private/secrets.json`
 
@@ -58,7 +59,7 @@
 
 **منبع واحد قالب**: [`private/secrets.example.json`](../private/secrets.example.json) در repo — الگوی placeholder را از همان فایل کپی و مقادیر واقعی را جای‌گزین کنید؛ مقادیر واقعی هرگز در repo/مستندات نمی‌آیند و فقط در `private/secrets.json` واقعی می‌نشینند (که با الگوی `**/private/secrets.json` در `.gitignore` بسته شده است). هر تغییر آینده‌ی قالب باید همین فایل نمونه را ویرایش کند؛ این سند دیگر کپی inline نگه نمی‌دارد تا drift تکرار نشود.
 
-در صورت نیاز بخش‌های `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند؛ `EmailOptions` عمداً در `appsettings.json` کامیت نمی‌شود و کامل در `secrets.json` می‌آید (`Enabled: true` + credential). کلید عملیاتی `EmailOptions:MaxSendsPerHour` (سقف لغزان یک‌ساعته‌ی سراسری ارسال — پیش‌فرض ۵۰۰، صفر/منفی = نامحدود؛ شیر ایمنی در برابر فال‌بک انبوه به ایمیل هنگام قطع کانال سوشال) secret نیست و اگر سرور SMTP شما سقف ساعتی دیگری دارد، همین‌جا override کنید. بلوک تلگرام فقط اگر کانال فعال می‌شود لازم است: با `Channel: "Telegram"` گارد پروداکشن کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (Docs/21 §فعال‌سازی)؛ بدون آن کانال `None` می‌ماند (no-op) و بلوک لازم نیست.
+در صورت نیاز بخش‌های `ServerBridgeOptions` و `ManagementOptions` (فقط فیلدهای credential) را به همان شکل اضافه کنید. بقیه‌ی کلیدها از `appsettings.json` منتشرشده خوانده می‌شوند؛ `EmailOptions` عمداً در `appsettings.json` کامیت نمی‌شود و کامل در `secrets.json` می‌آید (`Enabled: true` + credential). کلید عملیاتی `EmailOptions:MaxSendsPerHour` (سقف لغزان یک‌ساعته‌ی سراسری ارسال — پیش‌فرض ۵۰۰، صفر/منفی = نامحدود؛ شیر ایمنی در برابر فال‌بک انبوه به ایمیل هنگام قطع کانال سوشال) secret نیست و اگر سرور SMTP شما سقف ساعتی دیگری دارد، همین‌جا override کنید. بلوک تلگرام فقط اگر کانال فعال می‌شود لازم است: با `Channel: "Telegram"` اعتبارسنجی شرطی startup کامل بودن `BotToken/BotUsername/Proxy:Address/OperationsChatId` را الزام می‌کند (Docs/21 §فعال‌سازی)؛ بدون آن کانال `None` می‌ماند (no-op) و بلوک لازم نیست.
 
 ### (ج) نصب دیتابیس از ابتدا + ساخت ادمین (پیش از بالا آوردن app)
 
@@ -91,8 +92,8 @@ dotnet publish Backend/Portal -c Release -o publish/Portal
 
 ### (هـ) تأیید
 
-- سایت بالا بیاید = گارد سبز = همه‌ی secretهای تستی override شده‌اند.
-- اگر پیام `ProductionSecretsGuard` دیدید، secret جا مانده — نام کلید مقصر و مسیر مورد انتظار فایل در خود پیام است.
+- سایت بالا بیاید = گارد سبز = همه‌ی کلیدهای الزامی حاضرند.
+- اگر پیام `RequiredSettingsGuard` دیدید، کلیدی جا مانده — نام کلید مقصر و راه‌حل متناسب با environment در خود پیام است.
 
 ## ۴. نکات عملیاتی اولین انتشار
 

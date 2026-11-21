@@ -45,8 +45,9 @@ InvoiceSequence.sql Indexes.sql TotalPlanState.sql PlanState.sql"
 #   data-protection-keys/   app (M12) — loss means re-entering encrypted configs
 #   config/                 operator — default.ovpn / private key
 #   events-*.log            app (Serilog) — rolling logs
-# appsettings.json is deploy-managed (committed test values; production values
-# arrive per-key from private/secrets.json — M29).
+# appsettings.json is deploy-managed (base file carries no secrets; test
+# fixtures live in appsettings.Development.json; production values arrive
+# per-key from private/secrets.json — M29).
 PRESERVE="private/ data-protection-keys/ config/ events-*.log"
 
 STAGE=""
