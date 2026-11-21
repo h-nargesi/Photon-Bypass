@@ -7,6 +7,7 @@ using PhotonBypass.Xui.WebService;
 
 namespace PhotonBypass.Test.Facts.Xui;
 
+[Collection(XuiPanelTestCollection.Name)]
 public class XuiPanelSmokeTest : OutSourceLevelServiceInitializer
 {
     private static readonly TestVmEndpoint Vm = TestVmOptions.Get(XuiPanelInitializer.VmKey);
@@ -41,6 +42,11 @@ public class XuiPanelSmokeTest : OutSourceLevelServiceInitializer
         var inbound = await api.Value.GetInbound(server);
 
         inbound.Id.Should().Be(Vm.InboundId);
-        (await api.Value.ListClients(server)).Should().BeEmpty();
+
+        // the freshly restored snapshot has no clients; during a shared run the
+        // suite's carrier (XuiPanelCarrier — the panel refuses deleting the
+        // last client) is the only allowed occupant
+        (await api.Value.ListClients(server))
+            .Should().NotContain(client => client.Email != XuiPanelCarrier.Email);
     }
 }

@@ -436,6 +436,26 @@ create_test_inbound() { # prints the created inbound id
     printf '%s\n' "$inbound_id"
 }
 
+configure_freedom_allow() { # $1 = host-only subnet cidr (e.g. 192.168.56.0/24)
+    # xray >= 25.x ships a default safety policy on the freedom outbound: proxy
+    # inbound traffic to private/reserved targets is blackholed
+    # ("proxy/freedom: blocked target ... blackholing"). The data-plane
+    # integration tests (Backend/Tests/Facts/Xui, Docs/23 §4.4) tunnel to the
+    # panel/sshd on this same VM over the host-only network, so the direct
+    # outbound needs an explicit finalRules allow for that subnet + loopback
+    # (verified live on x-ui v1.14.0 / xray 26.10.10, 2026-11-21).
+    local rules
+    rules=$(printf '[{"action":"allow","ip":["%s","127.0.0.0/8"]}]' "$1")
+
+    note "allowing $1 + loopback on the direct freedom outbound (finalRules)"
+    vm_ssh sudo sqlite3 /etc/x-ui/x-ui.db \
+        "UPDATE outbounds SET settings = json_set(settings, '\$.finalRules', '$rules') WHERE tag = 'direct';" \
+        || die "could not patch the direct outbound finalRules"
+    vm_ssh sudo systemctl restart x-ui
+
+    wait_panel_login || die "the panel did not come back after the freedom-allow patch"
+}
+
 # --- provisioning -----------------------------------------------------------------
 
 write_provision_script() { # $1=tarball-file-name -> prints script path
@@ -598,6 +618,8 @@ run_stage_setup() {
 
     local inbound_id
     inbound_id=$(create_test_inbound)
+
+    configure_freedom_allow "${HOSTONLY_SUBNET_IP%.*}.0/24"
 
     log "powering off for the snapshot"
     vm_ssh 'sudo systemctl poweroff' >/dev/null 2>&1 || true
