@@ -11,7 +11,7 @@ CREATE TABLE Renewal (
 	SimultaneousUser	TINYINT			NOT NULL,
 	TrafficLimit		BIGINT				NULL,
 	TimeLimitInDays		SMALLINT			NULL,
-	RateLimitInMeg		TINYINT			NULL,
+	RateLimitInMeg		TINYINT				NULL,
 	WalletDebit			INT				NOT NULL	CONSTRAINT FK_Renewal_WalletDebit FOREIGN KEY REFERENCES Wallet (Id),
 	WalletCredit		INT					NULL	CONSTRAINT FK_Renewal_WalletCredit FOREIGN KEY REFERENCES Wallet (Id),
 	Comment				NVARCHAR(255)		NULL,

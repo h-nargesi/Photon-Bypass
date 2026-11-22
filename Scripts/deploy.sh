@@ -18,6 +18,10 @@
 #   --admin-user <name>    non-interactive admin creation (env DEPLOY_ADMIN_USER)
 #   --admin-password <s>   non-interactive admin password (env DEPLOY_ADMIN_PASSWORD)
 #   --no-admin             skip admin creation in the db stage
+#   --database <name>      target database name (env DEPLOY_DATABASE; default
+#                          FastBypass, or the Database= value from --secrets) —
+#                          substituted into USE/CREATE like the test host does
+#   --no-create-db         skip Database.sql (the database must already exist)
 #   --yes                  no confirmation prompt
 #
 # Secrets hygiene: passwords travel via environment variables (SQLCMDPASSWORD,
@@ -35,9 +39,9 @@ LOG_DIR="$SCRIPT_DIR/logs"
 # in the master context, every other file starts with USE FastBypass).
 # The guard below aborts on any .sql in Database/LocalDatabase that is not
 # listed here, so new scripts cannot silently miss production deploys.
-MANIFEST="Database.sql Realm.sql Price.sql Account.sql Server.sql Wallet.sql \
-History.sql ResetPassword.sql TrafficData.sql Renewal.sql Invoice.sql \
-InvoiceSequence.sql Indexes.sql TotalPlanState.sql PlanState.sql"
+MANIFEST="Database.sql Realm.sql Price.sql PanelUser.sql Server.sql VpnAccount.sql \
+Wallet.sql History.sql ResetPassword.sql TelegramLink.sql TrafficData.sql Renewal.sql \
+Invoice.sql InvoiceSequence.sql Indexes.sql TotalPlanState.sql PlanState.sql"
 
 # Remote paths a future publish/ftp stage must never overwrite or delete
 # (Docs/19 §د; full ownership table in Database/LocalDatabase/README.md):
@@ -58,6 +62,9 @@ SQL_PASSWORD=${DEPLOY_SQL_PASSWORD:-}
 SECRETS_PATH=""
 ASSUME_YES=false
 NO_ADMIN=false
+NO_CREATE_DB=false
+DEPLOY_DATABASE=${DEPLOY_DATABASE:-}
+SECRETS_DB=""
 ADMIN_USER=${DEPLOY_ADMIN_USER:-}
 ADMIN_PASSWORD=${DEPLOY_ADMIN_PASSWORD:-}
 
@@ -78,7 +85,7 @@ usage: Scripts/deploy.sh <stage> [options]
 
 stages:
   db        apply the fresh-install SQL batch, then create the admin if the
-            Account table is empty (first release)
+            PanelUser table is empty (first release)
   admin     create/verify the admin account only
   publish   reserved for the future upload stage (not implemented yet)
   ftp       reserved for the future upload stage (not implemented yet)
@@ -93,11 +100,15 @@ options:
   --admin-user <name>      admin username, non-interactive (env DEPLOY_ADMIN_USER)
   --admin-password <s>     admin password, non-interactive (env DEPLOY_ADMIN_PASSWORD)
   --no-admin               skip admin creation in the db stage
+  --database <name>        target database name (env DEPLOY_DATABASE; default
+                           FastBypass, or the Database= value from --secrets)
+  --no-create-db           skip Database.sql — the database must already exist
   --yes                    skip the confirmation prompt
 
 examples:
   Scripts/deploy.sh db --secrets ../private/secrets.json
   Scripts/deploy.sh db -S sql.example.com -U fastbypass -P '<password>'
+  Scripts/deploy.sh db -S localhost -U test -P '<password>' --database MyPanel --no-create-db
   DEPLOY_ADMIN_USER=admin DEPLOY_ADMIN_PASSWORD='<password>' Scripts/deploy.sh admin \
       --secrets ../private/secrets.json
 EOF
@@ -129,6 +140,7 @@ load_secrets() {
                 SQL_SERVER=${value#tcp:} ;;
             "user id" | uid | user) SQL_USER=$value ;;
             password | pwd) SQL_PASSWORD=$value ;;
+            database | "initial catalog") SECRETS_DB=$value ;;
         esac
     done
     IFS=$saved_ifs
@@ -138,6 +150,21 @@ resolve_connection() {
     if [ -n "$SECRETS_PATH" ]; then
         load_secrets
     fi
+
+    # Effective target database: explicit --database wins; otherwise the
+    # Database= value from --secrets; otherwise the default. An explicit name
+    # that contradicts --secrets fails fast instead of splitting the run
+    # between two databases (sqlcmd -d vs the DeployCli connection string).
+    if [ -n "$DEPLOY_DATABASE" ] && [ -n "$SECRETS_DB" ] && [ "$DEPLOY_DATABASE" != "$SECRETS_DB" ]; then
+        die "database name mismatch: --database='$DEPLOY_DATABASE' but the --secrets connection string targets '$SECRETS_DB'"
+    fi
+    DEPLOY_DATABASE=${DEPLOY_DATABASE:-${SECRETS_DB:-FastBypass}}
+    case "$DEPLOY_DATABASE" in
+        '' | *[!A-Za-z0-9_]*)
+            die "invalid database name '$DEPLOY_DATABASE' — only letters, digits and underscore are allowed" ;;
+        [0-9]*)
+            die "invalid database name '$DEPLOY_DATABASE' — must start with a letter or underscore" ;;
+    esac
 
     if [ -z "$SQL_PASSWORD" ] && [ -t 0 ]; then
         printf 'SQL password for %s: ' "${SQL_USER:-<login>}"
@@ -158,14 +185,14 @@ resolve_connection() {
     # Production should use --secrets (the raw production string is kept above);
     # the composed fallback mirrors the committed dev values of appsettings.json.
     if [ -z "${DEPLOY_CONNECTION_STRING:-}" ]; then
-        export DEPLOY_CONNECTION_STRING="Server=$SQLCMD_SERVER; Database=FastBypass; User Id=$SQL_USER; Password=$SQL_PASSWORD; Encrypt=False; TrustServerCertificate=True;"
+        export DEPLOY_CONNECTION_STRING="Server=$SQLCMD_SERVER; Database=$DEPLOY_DATABASE; User Id=$SQL_USER; Password=$SQL_PASSWORD; Encrypt=False; TrustServerCertificate=True;"
     fi
 }
 
 # --- preflight ----------------------------------------------------------------
 
 require_sqlcmd() {
-    if ! command -v sqlcmd >/dev/null 2>&1; then
+    if ! command -v sqlcmd >/dev/null 2>&1 && ! command -v sqlcmd.exe >/dev/null 2>&1; then
         die "sqlcmd not found — install it first:
   Ubuntu/Debian: sudo apt-get install sqlcmd   (Microsoft apt repo)
   Windows/winget: winget install SQLcmd        (also works in Git Bash)
@@ -196,21 +223,60 @@ guard_manifest() {
 
 # --- sqlcmd helpers ------------------------------------------------------------
 
+# Paths handed to the native Windows sqlcmd must be Windows-form: the MSYS
+# auto-conversion does not survive the winget sqlcmd launcher shim, and the
+# POSIX /d/... path degrades to a bare drive ("Access is denied" on file D:).
+# Same pattern as the wp()/wslpath translation in Scripts/xui-test-vm.sh.
+native_path() { # POSIX path -> Windows form when the Windows sqlcmd is in use
+    local resolved
+    resolved=$(command -v sqlcmd 2>/dev/null || command -v sqlcmd.exe 2>/dev/null || printf '%s' sqlcmd)
+    case "$(uname -s):$resolved" in
+        MSYS*:* | MINGW*:*) ;;              # Git Bash: sqlcmd is the Windows binary
+        *:*.exe | *:*.EXE) ;;               # WSL/Linux invoking sqlcmd.exe explicitly
+        *) printf '%s\n' "$1"; return 0 ;;  # native sqlcmd: POSIX path as-is
+    esac
+    if command -v cygpath >/dev/null 2>&1; then
+        cygpath -w "$1"
+    elif command -v wslpath >/dev/null 2>&1; then
+        wslpath -w "$1"
+    else
+        printf '%s\n' "$1"
+    fi
+}
+
 run_sql_file() {
-    local file=$1
+    local file=$1 apply_file
+    # Every file is staged in a temp copy behind a standard ANSI prelude:
+    # go-sqlcmd may open the session with QUOTED_IDENTIFIER OFF, which fails
+    # the filtered unique indexes with Msg 1934, while the SQL set itself is
+    # caller-agnostic (the test host's SqlClient connects with these ON).
+    # With a custom database name the token FastBypass is rewritten in the
+    # same pass — the same global replace the test host performs
+    # (DatabaseScriptPrepare.ReplaceDatabaseName); the name was validated to
+    # [A-Za-z0-9_] so it is safe inside both the sed replacement and the SQL.
+    apply_file=$(mktemp "${TMPDIR:-/tmp}/photon-bypass-deploy-XXXXXX.sql")
+    {
+        printf 'SET QUOTED_IDENTIFIER ON;\nSET ANSI_NULLS ON;\nSET ANSI_PADDING ON;\nSET ANSI_WARNINGS ON;\nSET CONCAT_NULL_YIELDS_NULL ON;\nSET ARITHABORT ON;\nGO\n'
+        if [ "$DEPLOY_DATABASE" != "FastBypass" ]; then
+            sed "s/FastBypass/$DEPLOY_DATABASE/g" "$file"
+        else
+            cat "$file"
+        fi
+    } > "$apply_file"
     log "applying $file"
     if ! SQLCMDPASSWORD="$SQL_PASSWORD" sqlcmd -b -t 600 -f 65001 \
-            -S "$SQLCMD_SERVER" -U "$SQL_USER" -i "$file" 2>&1 | tee -a "$LOG_FILE"; then
+            -S "$SQLCMD_SERVER" -U "$SQL_USER" -i "$(native_path "$apply_file")" 2>&1 | tee -a "$LOG_FILE"; then
         die "sqlcmd failed on $file (see $LOG_FILE)"
     fi
+    rm -f "$apply_file"
 }
 
 account_count() {
     local raw
     if ! raw=$(SQLCMDPASSWORD="$SQL_PASSWORD" sqlcmd -b -t 600 -f 65001 \
-            -S "$SQLCMD_SERVER" -U "$SQL_USER" -d FastBypass \
-            -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM dbo.Account" 2>>"$LOG_FILE" | tee -a "$LOG_FILE"); then
-        die "could not count Account rows (see $LOG_FILE)"
+            -S "$SQLCMD_SERVER" -U "$SQL_USER" -d "$DEPLOY_DATABASE" \
+            -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM dbo.PanelUser" 2>>"$LOG_FILE" | tee -a "$LOG_FILE"); then
+        die "could not count PanelUser rows (see $LOG_FILE)"
     fi
     raw=$(printf '%s' "$raw" | tr -cd '0-9')
     case "$raw" in
@@ -247,6 +313,10 @@ prompt_admin() {
 }
 
 run_cli() {
+    # ADMIN_PASSWORD is filled by --admin-password, the interactive prompt, or
+    # the DEPLOY_ADMIN_PASSWORD env default; DeployCli reads the env var of the
+    # same name — bridge it here so the password never travels on a command line.
+    DEPLOY_ADMIN_PASSWORD=$ADMIN_PASSWORD
     export DEPLOY_CONNECTION_STRING DEPLOY_ADMIN_PASSWORD
     dotnet run --project "$CLI_PROJECT" -- "$@"
 }
@@ -268,26 +338,32 @@ run_stage_db() {
     require_sqlcmd
     require_dotnet
     confirm
-    log "stage db — server: $SQLCMD_SERVER, user: $SQL_USER, database: FastBypass"
+    log "stage db — server: $SQLCMD_SERVER, user: $SQL_USER, database: $DEPLOY_DATABASE"
 
     # Database.sql runs in the login's default context (master) because
     # CREATE DATABASE cannot be issued inside USE FastBypass; every other
-    # file switches with its own USE FastBypass header.
+    # file switches with its own USE FastBypass header. With --no-create-db
+    # it is skipped entirely — the database must already exist (e.g. created
+    # from the hosting panel when the login lacks CREATE DATABASE rights).
     local file count=0
     for file in $MANIFEST; do
+        if [ "$NO_CREATE_DB" = true ] && [ "$file" = "Database.sql" ]; then
+            log "skipping Database.sql (--no-create-db) — '$DEPLOY_DATABASE' must already exist"
+            continue
+        fi
         run_sql_file "$SQL_DIR/$file"
     done
 
     count=$(account_count)
     if [ "$count" -eq 0 ]; then
         if [ "$NO_ADMIN" = true ]; then
-            log "Account table is empty and --no-admin was given — create the admin later with: Scripts/deploy.sh admin"
+            log "PanelUser table is empty and --no-admin was given — create the admin later with: Scripts/deploy.sh admin"
         else
-            log "Account table is empty — first release, creating the admin account"
+            log "PanelUser table is empty — first release, creating the admin account"
             create_and_verify_admin
         fi
     else
-        log "Account table has $count row(s) — skipping admin creation (use the admin stage to manage it)"
+        log "PanelUser table has $count row(s) — skipping admin creation (use the admin stage to manage it)"
     fi
 }
 
@@ -339,6 +415,10 @@ parse_args() {
                 [ $# -ge 2 ] || { printf 'error: missing value for %s\n' "$1" >&2; exit 1; }
                 ADMIN_PASSWORD=$2; shift ;;
             --no-admin) NO_ADMIN=true ;;
+            --database)
+                [ $# -ge 2 ] || { printf 'error: missing value for %s\n' "$1" >&2; exit 1; }
+                DEPLOY_DATABASE=$2; shift ;;
+            --no-create-db) NO_CREATE_DB=true ;;
             --yes | -y) ASSUME_YES=true ;;
             --help | -h)
                 usage; exit 0 ;;

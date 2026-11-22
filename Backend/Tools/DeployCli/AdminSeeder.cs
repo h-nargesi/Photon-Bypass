@@ -29,13 +29,13 @@ public static class AdminSeeder
         using var command = connection.CreateCommand();
         command.CommandText = """
             DECLARE @status varchar(30);
-            IF EXISTS (SELECT 1 FROM dbo.Account WHERE Username = @username)
+            IF EXISTS (SELECT 1 FROM dbo.PanelUser WHERE Username = @username)
                 SET @status = 'duplicate-username';
-            ELSE IF EXISTS (SELECT 1 FROM dbo.Account WHERE Role = @role)
+            ELSE IF EXISTS (SELECT 1 FROM dbo.PanelUser WHERE Role = @role)
                 SET @status = 'admin-exists';
             ELSE
             BEGIN
-                INSERT INTO dbo.Account (Username, Password, Role, UserType)
+                INSERT INTO dbo.PanelUser (Username, Password, Role, UserType)
                 VALUES (@username, @hash, @role, @userType);
                 SET @status = 'created';
             END
@@ -61,7 +61,7 @@ public static class AdminSeeder
         connection.Open();
 
         using var command = connection.CreateCommand();
-        command.CommandText = "SELECT Password FROM dbo.Account WHERE Username = @username;";
+        command.CommandText = "SELECT Password FROM dbo.PanelUser WHERE Username = @username;";
         command.Parameters.Add(new SqlParameter("@username", SqlDbType.VarChar, 255) { Value = username });
 
         return command.ExecuteScalar() as string is { } stored && PasswordHasher.Verify(password, stored);

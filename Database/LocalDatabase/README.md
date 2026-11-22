@@ -13,18 +13,20 @@
 | 1 | `Database.sql` | database `FastBypass` | بدون `USE` — در بافت master اجرا می‌شود |
 | 2 | `Realm.sql` | `Realm` | |
 | 3 | `Price.sql` | `Price` | کد Roslyn قیمت‌گذاری در `CalculatorCode` |
-| 4 | `Account.sql` | `Account` | بدون seed؛ `Role` و `LastCredentialRotateTime` ادغام‌شده |
+| 4 | `PanelUser.sql` | `PanelUser` | سابق `Account.sql` (Docs/22 D1)؛ بدون seed؛ `Role`/`UserType`/`TelegramChatId` ادغام‌شده |
 | 5 | `Server.sql` | `Server` | `Config VARCHAR(4000)` |
-| 6 | `Wallet.sql` | `Wallet` | |
-| 7 | `History.sql` | `History` | |
-| 8 | `ResetPassword.sql` | `ResetPassword` | |
-| 9 | `TrafficData.sql` | `TrafficData` | دلتا-ردیف؛ UK inline روی `SessionId` |
-| 10 | `Renewal.sql` | `Renewal` | ستون‌های x-ui (Docs/17 D6/D14) ادغام‌شده |
-| 11 | `Invoice.sql` | `Invoice` | سابق `PaymentP2.sql` |
-| 12 | `InvoiceSequence.sql` | sequence | start ثابت ۱۰۰۰۱؛ بدون وابستگی به Wallet |
-| 13 | `Indexes.sql` | indexes | مسیرهای داغ (Docs/14 H20) |
-| 14 | `TotalPlanState.sql` | view | منبع حقیقت وضعیت پلن‌ها |
-| 15 | `PlanState.sql` | view | |
+| 6 | `VpnAccount.sql` | `VpnAccount` | اکانت VPN (Docs/22 D1) |
+| 7 | `Wallet.sql` | `Wallet` | |
+| 8 | `History.sql` | `History` | |
+| 9 | `ResetPassword.sql` | `ResetPassword` | |
+| 10 | `TelegramLink.sql` | `TelegramLink` | Docs/21 D2 |
+| 11 | `TrafficData.sql` | `TrafficData` | دلتا-ردیف؛ UK inline روی `SessionId` |
+| 12 | `Renewal.sql` | `Renewal` | ستون‌های x-ui (Docs/17 D6/D14) ادغام‌شده |
+| 13 | `Invoice.sql` | `Invoice` | سابق `PaymentP2.sql` |
+| 14 | `InvoiceSequence.sql` | sequence | start ثابت ۱۰۰۰۱؛ بدون وابستگی به Wallet |
+| 15 | `Indexes.sql` | indexes | مسیرهای داغ (Docs/14 H20) |
+| 16 | `TotalPlanState.sql` | view | منبع حقیقت وضعیت پلن‌ها |
+| 17 | `PlanState.sql` | view | |
 
 گارد manifest در `deploy.sh` هر فایل `.sql` جدید این پوشه را که در لیست نیست abort می‌کند — فایل جدید را حتماً به `MANIFEST` اضافه کنید تا از release بعدی جا نماند.
 
@@ -36,6 +38,11 @@ Scripts/deploy.sh db --secrets /path/to/private/secrets.json
 
 # با پارامترهای صریح
 Scripts/deploy.sh db -S <host> -U <login> -P '<password>'
+
+# دیتابیس با نام دلخواه (توکن FastBypass در USE/CREATE بازنویسی می‌شود — همان
+# جایگزینی global که هاست تست با ReplaceDatabaseName انجام می‌دهد) + رد شدن از
+# Database.sql وقتی دیتابیس از قبل ساخته شده (مثلاً از پنل هاستینگ):
+Scripts/deploy.sh db -S <host> -U <login> -P '<password>' --database MyPanel --no-create-db
 
 # فقط ساخت/تأیید ادمین (اجراهای بعدی)
 Scripts/deploy.sh admin --secrets /path/to/private/secrets.json
@@ -69,6 +76,6 @@ Scripts/deploy.sh admin --secrets /path/to/private/secrets.json
 
 ## Warnings
 
-- `../AddLogin.sql` و `../DropAll.sql` (پوشه‌ی والد `Database/`) **فقط dev** هستند — هرگز روی پروداکشن اجرا نشوند (`DropAll` همه‌ی آبجکت‌ها را می‌اندازد؛ `AddLogin` لاگین تستی sysadmin می‌سازد).
+- `../DropAll.sql` (پوشه‌ی والد `Database/`) **فقط dev** است — هرگز روی پروداکشن اجرا نشود (همه‌ی آبجکت‌ها را می‌اندازد).
 - تست‌ها از همین پوشه دیتابیس سناریو می‌سازند (`StructureFilesPath` در `appsettings.json`) — تغییر این فایل‌ها رفتار تست را تغییر می‌دهد.
 - ران‌بوک کامل انتشار: [Docs/19-deploy-runbook.md](../../Docs/19-deploy-runbook.md).
