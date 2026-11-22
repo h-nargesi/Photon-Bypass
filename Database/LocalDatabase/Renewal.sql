@@ -8,7 +8,16 @@ CREATE TABLE Renewal (
 	-- VpnAccount.RealmId (the old RestrictedRealmId snapshot column is gone).
 	VpnAccountId		INT				NOT NULL	CONSTRAINT FK_Renewal_VpnAccountId FOREIGN KEY REFERENCES VpnAccount (Id)
 													ON DELETE CASCADE,
-	SimultaneousUser	TINYINT			NOT NULL,
+	-- Docs/24 §2: NULL = unlimited concurrent connections (x-ui limitIp 0 /
+	-- UM shared-users 0).
+	SimultaneousUser	TINYINT			NULL,
+	-- Docs/24 §2: the purchased product; NOT NULL (fresh-install set — every
+	-- renewal is born from a Plan).
+	-- (structure-sort dependency: Plan)
+	PlanId				INT				NOT NULL	CONSTRAINT FK_Renewal_PlanId_Plans FOREIGN KEY REFERENCES Plans (Id),
+	-- Docs/24 §2: who executed the purchase (audit; differs from the wallet
+	-- owner exactly when an admin bought on behalf, D7).
+	ActorId				INT				NULL	CONSTRAINT FK_Renewal_ActorId_PanelUser FOREIGN KEY REFERENCES PanelUser (Id),
 	TrafficLimit		BIGINT				NULL,
 	TimeLimitInDays		SMALLINT			NULL,
 	RateLimitInMeg		TINYINT				NULL,

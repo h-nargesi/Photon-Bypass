@@ -1,6 +1,6 @@
-insert into PanelUser (Username, Password, UserType)
-values ('ResetA', 'password', 4)
-    , ('ResetB', 'password', 4)
+insert into PanelUser (Username, Password, UserType, UserGroupId)
+values ('ResetA', 'password', 4, 1)
+    , ('ResetB', 'password', 4, 1)
 
 -- ResetA: two live codes and one already-expired code
 insert into ResetPassword (AccountId, HashCode, ExpireDate)

@@ -16,4 +16,11 @@ public class CreateUserModel : RegisterModel
 
     /// <summary>Requested role (admin only; Admin is refused — D9 has no promotion path).</summary>
     public AccountRole? Role { get; set; }
+
+    /// <summary>
+    /// Docs/24 D6: explicit pricing-group override (admin only). Without it the
+    /// group resolves from the attach rules — the manager's group, or the
+    /// default group for independent users.
+    /// </summary>
+    public int? GroupId { get; set; }
 }

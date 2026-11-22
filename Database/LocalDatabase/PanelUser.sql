@@ -17,8 +17,10 @@ IF OBJECT_ID('PanelUser') IS NULL BEGIN
 		Email				VARCHAR(320)		NULL,
 		IsMobileValid		BIT				NOT NULL	CONSTRAINT DF_PanelUser_IsMobileValid DEFAULT 0,
 		IsEmailValid		BIT				NOT NULL	CONSTRAINT DF_PanelUser_IsEmailValid DEFAULT 0,
-		-- Docs/22 D10: price calculation stays on the panel user (realm-independent).
-		CalculationMethod	INT					NULL	CONSTRAINT FK_PanelUser_CalculationMethod_Price FOREIGN KEY REFERENCES Price (Id),
+		-- Docs/24 D6: pricing group membership (replaces the per-user calculator
+		-- pointer). NOT NULL — every creation path resolves a group (own manager's,
+		-- or the default one).
+		UserGroupId		INT					NOT NULL	CONSTRAINT FK_PanelUser_UserGroupId_UserGroup FOREIGN KEY REFERENCES UserGroup (Id),
 		UserType			INT				NOT NULL	CONSTRAINT DF_PanelUser_UserType DEFAULT 0,
 		-- Docs/20 D2/D9: 0=User, 1=Manager, 2=Admin
 		Role				TINYINT			NOT NULL	CONSTRAINT DF_PanelUser_Role DEFAULT 0,

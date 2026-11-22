@@ -33,6 +33,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         var user = new PanelUserEntity
         {
+            UserGroupId = 1, // Docs/24 D6: the default group (structure seed)
             Name = "Ali",
             Surname = "Mor",
             Password = PasswordHasher.Hash("password"),
@@ -151,6 +152,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         var user = new PanelUserEntity
         {
+            UserGroupId = 1, // Docs/24 D6: the default group (structure seed)
             Name = "Rotate",
             Surname = "Stamp",
             Password = PasswordHasher.Hash("password"),
@@ -238,8 +240,23 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         var renewal_repo = scope.ServiceProvider.GetRequiredService<IRenewalRepository>();
         var traffic_repo = scope.ServiceProvider.GetRequiredService<ITrafficDataRepository>();
 
+        // Docs/24 §3: the renewal references a plan — seed a minimal one
+        var plan_repo = scope.ServiceProvider.GetRequiredService<IPlanRepository>();
+        var plan = new PlanEntity
+        {
+            Name = "SchPlan",
+            Title = "test-plan",
+            IsActive = true,
+            GroupId = 1,
+            UsersBase = 1,
+            UsersCap = 6,
+            CalculatorCode = "public class Calculator { }",
+        };
+        await plan_repo.Save(plan);
+
         var manager = new PanelUserEntity
         {
+            UserGroupId = 1, // Docs/24 D6: the default group (structure seed)
             Username = "SchMgr",
             Password = PasswordHasher.Hash("password"),
             Email = "sch-mgr@mail.com",
@@ -249,6 +266,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
 
         var sub_active = new PanelUserEntity
         {
+            UserGroupId = 1, // Docs/24 D6: the default group (structure seed)
             Username = "SchSubOne",
             Password = PasswordHasher.Hash("password"),
             Owner = manager.Id,
@@ -257,6 +275,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         };
         var sub_inactive = new PanelUserEntity
         {
+            UserGroupId = 1, // Docs/24 D6: the default group (structure seed)
             Username = "SchSubTwo",
             Password = PasswordHasher.Hash("password"),
             Owner = manager.Id,
@@ -317,6 +336,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         await renewal_repo.Save(new RenewalEntity
         {
             VpnAccountId = planned_account.Id,
+            PlanId = plan.Id,
             SimultaneousUser = 3,
             TrafficLimit = 25,
             TimeLimitInDays = 120,

@@ -45,7 +45,7 @@ public class RenewalPostCommitFailureTest : UnitLevelServiceInitializer
 
         // "0u" < the seeded SimultaneousUser of 1 forces the post-commit
         // close-connections branch to run for this renewal
-        var code = (await billing_app.IssuePlanInvoice(160, "User2t|0u|120d|50g", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(160, "User2t|3p|0u|120d|50g", "پلن تست")).Data!.Value;
 
         var result = await billing_app.SettleWallet(code);
 

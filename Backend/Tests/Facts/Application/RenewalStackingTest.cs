@@ -166,10 +166,10 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
             .ReturnsAsync(current_plan);
 
         var action = migrated_realm.HasValue
-            ? $"User2t|2u|120d|25g|{migrated_realm.Value}r"
-            : "User2t|2u|120d|25g";
+            ? $"User2t|3p|2u|120d|25g|{migrated_realm.Value}r"
+            : "User2t|3p|2u|120d|25g";
 
-        var result = await plan_app.SettlePurchase(99, 1, action);
+        var result = await plan_app.SettlePurchase(99, 1, action, 100);
 
         result.Code.Should().BeGreaterThanOrEqualTo(200);
         result.Code.Should().BeLessThan(300);

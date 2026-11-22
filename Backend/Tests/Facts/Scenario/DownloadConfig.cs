@@ -19,7 +19,7 @@ public class DownloadConfig(ProgramLevelInitializer.Factory factory) : HttpHandl
 
         // /api/plan/new-account — the first purchase creates the VPN account
         // (Docs/22 D9); realm 1 is the scenario realm
-        var renewal = await NewAccount(null, 1, 1, 120, 25);
+        var renewal = await NewAccount(null, 1, 1, 1, 120, 25);
         var code = int.Parse(renewal["invoiceCode"]!);
 
         var invoice = await GetInvoice(code);

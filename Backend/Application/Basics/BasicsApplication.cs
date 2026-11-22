@@ -1,27 +1,36 @@
 ﻿using Microsoft.Extensions.Options;
 using PhotonBypass.Application.Basics.Model;
 using PhotonBypass.Application.Management.Model;
-using PhotonBypass.Domain.Static;
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Plan;
 using PhotonBypass.Result;
 
 namespace PhotonBypass.Application.Basics;
 
-class BasicsApplication(IPriceRepository price_repo, IOptions<ManagementOptions> options) : IBasicsApplication
+class BasicsApplication(IPlanRepository plan_repo, IUserGroupRepository group_repo, IOptions<ManagementOptions> options)
+    : IBasicsApplication
 {
-    private IPriceRepository PriceRepo { get; } = price_repo;
+    private IPlanRepository PlanRepo { get; } = plan_repo;
+
+    private IUserGroupRepository GroupRepo { get; } = group_repo;
+
     private IOptions<ManagementOptions> Options { get; } = options;
 
     public async Task<ApiResult<IList<PriceModel>>> GetPrices()
     {
-        var prices = await PriceRepo.GetVisibles()
-            ?? throw new Exception("Prices are not set!");
+        // Docs/24 D1: the public home page serves the marketing cards of the
+        // default group's website plans only — private-group plans are never
+        // disclosed (no title/price probing).
+        var default_group = await GroupRepo.GetDefault();
 
-        var result = prices
+        var plans = await PlanRepo.GetWebsitePlans(default_group.Id);
+
+        var result = plans
             .Select(x => new PriceModel
             {
                 Title = x.Title,
-                Caption = x.Caption,
-                Description = x.Description.Split('\n'),
+                Caption = x.Caption ?? string.Empty,
+                Description = (x.Description ?? string.Empty).Split('\n'),
             })
             .ToList();
 

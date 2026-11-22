@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using PhotonBypass.Application.Billing;
 using PhotonBypass.Application.Management;
 using PhotonBypass.Application.Management.Model;
@@ -70,7 +70,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(3, "User3", "User3");
 
-        var negative_balance = await billing_app.IssuePlanInvoice(500, "User3t|2u|120d|50g", "پلن تست");
+        var negative_balance = await billing_app.IssuePlanInvoice(500, "User3t|3p|2u|120d|50g", "پلن تست");
 
         var negative_invoice = invoice_moq.Data.Single(i => i.Code == negative_balance.Data);
         Assert.Equal(InvoiceKind.Plan, negative_invoice.Kind);
@@ -79,7 +79,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(2, "User2", "User2");
 
-        var rich = await billing_app.IssuePlanInvoice(800, "User2t|2u|120d|50g", "پلن تست");
+        var rich = await billing_app.IssuePlanInvoice(800, "User2t|3p|2u|120d|50g", "پلن تست");
 
         var rich_invoice = invoice_moq.Data.Single(i => i.Code == rich.Data);
         Assert.Equal(800, rich_invoice.WalletDeduction);
@@ -96,7 +96,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(2, "User2", "User2");
 
-        var code = (await billing_app.IssuePlanInvoice(800, "User2t|2u|120d|50g", "پلن تست")).Data;
+        var code = (await billing_app.IssuePlanInvoice(800, "User2t|3p|2u|120d|50g", "پلن تست")).Data;
 
         var invoice = (await billing_app.GetInvoice(code!.Value)).Data;
 
@@ -215,7 +215,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(99, "User99", "User99");
 
-        var code = (await billing_app.IssuePlanInvoice(180, "User99t|2u|120d|50g", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(180, "User99t|3p|2u|120d|50g", "پلن تست")).Data!.Value;
 
         var result = await billing_app.RegisterReceipt(code, null, null, null, "receipt text");
 
@@ -249,7 +249,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(2, "User2", "User2");
 
-        var code = (await billing_app.IssuePlanInvoice(180, "User2t|2u|120d|50g", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(180, "User2t|3p|2u|120d|50g", "پلن تست")).Data!.Value;
 
         var result = await billing_app.SettleWallet(code);
 
@@ -280,7 +280,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(3, "User3", "User3");
 
-        var code = (await billing_app.IssuePlanInvoice(500, "User3t|2u|120d|50g", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(500, "User3t|3p|2u|120d|50g", "پلن تست")).Data!.Value;
 
         await Assert.ThrowsAsync<UserException>(() => billing_app.SettleWallet(code));
 
@@ -299,7 +299,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         job_context.InjectJobContext(2, "User2", "User2");
 
         // 30 gigabytes is not a multiple of 25 → executor validation fails (throws) after the CAS.
-        var code = (await billing_app.IssuePlanInvoice(140, "User2t|2u|120d|30g", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(140, "User2t|3p|2u|120d|30g", "پلن تست")).Data!.Value;
 
         await Assert.ThrowsAsync<UserException>(() => billing_app.SettleWallet(code));
 
@@ -312,7 +312,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         Assert.Equal(1500, await wallet_repo.GetBalance(2));
 
         // After revert the user can fix the request: a valid invoice settles fine.
-        var valid_code = (await billing_app.IssuePlanInvoice(180, "User2t|2u|120d|50g", "پلن تست")).Data!.Value;
+        var valid_code = (await billing_app.IssuePlanInvoice(180, "User2t|3p|2u|120d|50g", "پلن تست")).Data!.Value;
 
         var result = await billing_app.SettleWallet(valid_code);
 
@@ -346,7 +346,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(2, "User2", "User2");
 
-        var code = (await billing_app.IssuePlanInvoice(180, "User2t|2u|120d|50g", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(180, "User2t|3p|2u|120d|50g", "پلن تست")).Data!.Value;
 
         job_context.InjectJobContext(3, "User3", "User3");
 
@@ -382,8 +382,8 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
             },
         ];
 
-        var first = (await billing_app.IssuePlanInvoice(230, "User2t|2u|120d|75g", "پلن تست")).Data!.Value;
-        var second = (await billing_app.IssuePlanInvoice(230, "User2t|2u|120d|75g", "پلن تست")).Data!.Value;
+        var first = (await billing_app.IssuePlanInvoice(230, "User2t|3p|2u|120d|75g", "پلن تست")).Data!.Value;
+        var second = (await billing_app.IssuePlanInvoice(230, "User2t|3p|2u|120d|75g", "پلن تست")).Data!.Value;
 
         // issuing the second invoice canceled the first one; bring it back to Pending
         await invoice_repo.TransitionStatus(first, BalanceStatus.Canceled, BalanceStatus.Pending);
@@ -464,7 +464,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         job_context.InjectJobContext(2, "User2", "User2");
 
         // Plan invoice fully covered by wallet (payable <= 0) must not take a receipt.
-        var covered_code = (await billing_app.IssuePlanInvoice(180, "User2t|2u|120d|50g", "پلن تست")).Data!.Value;
+        var covered_code = (await billing_app.IssuePlanInvoice(180, "User2t|3p|2u|120d|50g", "پلن تست")).Data!.Value;
 
         await Assert.ThrowsAsync<UserException>(() =>
             billing_app.RegisterReceipt(covered_code, null, null, null, "receipt"));
@@ -508,9 +508,10 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(99, "User99", "User99");
 
-        // Issue with an estimate lower than the real price (180): receipt credit (100) stays
-        // below the money-need → renewal throws → credit must be kept as Verifying.
-        var code = (await billing_app.IssuePlanInvoice(100, "User99t|2u|120d|50g", "پلن تست")).Data!.Value;
+        // Docs/24 D9: the settlement applies the frozen invoice price, so the
+        // money-need can no longer diverge from the estimate — the failure
+        // path is exercised through an unknown target account instead
+        var code = (await billing_app.IssuePlanInvoice(100, "NoSuchUserXt|3p|2u|120d|50g", "پلن تست")).Data!.Value;
 
         await Assert.ThrowsAsync<UserException>(() =>
             billing_app.RegisterReceipt(code, null, null, null, "receipt text"));
@@ -575,7 +576,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(2, "User2", "User2");
 
-        var code = (await billing_app.IssuePlanInvoice(800, "User2t|2u|120d|50g", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(800, "User2t|3p|2u|120d|50g", "پلن تست")).Data!.Value;
 
         // manager view of the target's invoice: wallet fields must stay empty
         job_context.InjectJobContext(99, "User99", "User2");
@@ -630,7 +631,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
         // the renewal stacks on User2's VPN account (Docs/22 D5)
         var user2_account_id = vpn_account_moq.Data.Single(account => account.Username == "User2").Id;
 
-        var code = (await plan_app.Renewal(user2_account_id, 2, 120, 25, null)).Data!.InvoiceCode!.Value;
+        var code = (await plan_app.Renewal(user2_account_id, new PhotonBypass.Application.Plan.Model.PurchaseRequest { PlanId = 3, SimultaneousUserCount = 2, Days = 120, Gigabytes = 25 })).Data!.InvoiceCode!.Value;
 
         // the payer's invoice is visible only in the payer's own view
         job_context.InjectJobContext(99, "User99", "User99");

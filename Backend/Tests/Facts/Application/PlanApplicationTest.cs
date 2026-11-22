@@ -1,6 +1,7 @@
-﻿using FluentAssertions;
+using FluentAssertions;
 using Moq;
 using PhotonBypass.Application.Plan;
+using PhotonBypass.Application.Plan.Model;
 using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
@@ -20,6 +21,19 @@ namespace PhotonBypass.Test.Facts.Application;
 public class PlanApplicationTest : UnitLevelServiceInitializer
 {
     // fixtures keep the 1:1:1 mapping panel-user id == vpn-account id == plan id
+
+    /// <summary>The all-axes fixture plan (users 1|6, days 30|180, traffic 25|200 — Data/Local/plan.json).</summary>
+    private static PurchaseRequest CompletePlan(byte users, short days, int gigs, int? realm = null)
+    {
+        return new PurchaseRequest
+        {
+            PlanId = 3,
+            SimultaneousUserCount = users,
+            Days = days,
+            Gigabytes = gigs,
+            RealmId = realm,
+        };
+    }
 
     [Fact]
     public async Task GetPlanState_UnknownAccount()
@@ -46,7 +60,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(99, "User99", "User2");
 
-        (await Assert.ThrowsAsync<UserException>(() => plan_app.SettlePurchase(99, null, "User2t|1u|30d|25g")))
+        (await Assert.ThrowsAsync<UserException>(() => plan_app.SettlePurchase(99, null, "User2t|3p|1u|30d|25g", 100)))
             .UserMessage.Should().Contain("سرویس VPN شما توسط مدیریت غیرفعال است");
 
         Assert.Equal(VpnAccountStatus.Suspended, vpn_account_moq.Data.First(account => account.Username == "User2").Status);
@@ -254,7 +268,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(12345, "UnknownUser", "UnknownUser");
 
-        var func = () => plan_app.Renewal(12345, 2, 10, 20, null);
+        var func = () => plan_app.Renewal(12345, CompletePlan(2, 30, 25));
         await func.Should().ThrowAsync<UserException>();
     }
 
@@ -267,7 +281,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(7, "InactiveUser7", "InactiveUser7");
 
-        var func = () => plan_app.Renewal(7, 2, 10, 20, null);
+        var func = () => plan_app.Renewal(7, CompletePlan(2, 30, 25));
         await func.Should().ThrowAsync<UserException>();
     }
 
@@ -281,7 +295,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         // User3's last activity is a day beyond the 7-day window (D6)
         job_context.InjectJobContext(3, "User3", "User3");
 
-        var func = () => plan_app.Renewal(3, 2, 120, 25, null);
+        var func = () => plan_app.Renewal(3, CompletePlan(2, 120, 25));
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.UserMessage.Should().Contain("سرور");
@@ -296,11 +310,11 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(2, "User2", "User2");
 
-        var estimate = await plan_app.Estimate(2, 2, 120, 25);
+        var estimate = await plan_app.Estimate(2, CompletePlan(2, 120, 25));
 
         Assert.NotNull(estimate);
 
-        var result = await plan_app.Renewal(2, 2, 120, 25, null);
+        var result = await plan_app.Renewal(2, CompletePlan(2, 120, 25));
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -336,7 +350,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         EmailMessage? sent = null;
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend += mail => sent = mail;
 
-        var result = await plan_app.SettlePurchase(99, 1, "User2t|2u|120d|25g");
+        var result = await plan_app.SettlePurchase(99, 1, "User2t|3p|2u|120d|25g", 200);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -376,7 +390,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         scope.ServiceProvider.GetRequiredService<EmailHandlerMoq>().OnSend +=
             _ => throw new InvalidOperationException("smtp unavailable");
 
-        var result = await plan_app.SettlePurchase(99, 1, "User2t|2u|120d|25g");
+        var result = await plan_app.SettlePurchase(99, 1, "User2t|3p|2u|120d|25g", 200);
 
         // the plan is committed and the money is gone: a failed email must
         // not turn the settled renewal into an error
@@ -395,11 +409,11 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         // User3 is stale (D6): the realm re-pick travels with the invoice
         job_context.InjectJobContext(3, "User3", "User3");
 
-        var estimate = await plan_app.Estimate(3, 2, 120, 25);
+        var estimate = await plan_app.Estimate(3, CompletePlan(2, 120, 25));
 
         Assert.NotNull(estimate);
 
-        var result = await plan_app.Renewal(3, 2, 120, 25, 1);
+        var result = await plan_app.Renewal(3, CompletePlan(2, 120, 25, realm: 1));
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -417,7 +431,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(11, "DependentUser11", "DependentUser11");
 
-        var func = () => plan_app.Renewal(11, 2, 120, 25, null);
+        var func = () => plan_app.Renewal(11, CompletePlan(2, 120, 25));
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.HttpCode.Should().Be(403);
@@ -432,7 +446,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(11, "DependentUser11", "DependentUser11");
 
-        var func = () => plan_app.Estimate(11, 2, 120, 25);
+        var func = () => plan_app.Estimate(11, CompletePlan(2, 120, 25));
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.HttpCode.Should().Be(403);
@@ -462,9 +476,9 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             },
         ];
 
-        var estimate = (await plan_app.Estimate(2, 2, 120, 25)).Data!;
+        var estimate = (await plan_app.Estimate(2, CompletePlan(2, 120, 25))).Data!;
 
-        var result = await plan_app.Renewal(2, 2, 120, 25, null);
+        var result = await plan_app.Renewal(2, CompletePlan(2, 120, 25));
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -476,7 +490,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         var invoice = invoice_moq.Data.Single(i => i.Code == result.Data.InvoiceCode);
         Assert.Equal(99, invoice.AccountId);
         Assert.Equal(2, invoice.VpnAccountId);
-        Assert.Equal("User2t|2u|120d|25g", invoice.Action);
+        Assert.Equal("User2t|3p|2u|120d|25g", invoice.Action);
 
         Assert.Equal(estimate.Price, invoice.TotalPrice);
     }
@@ -487,25 +501,25 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var func = () => plan_app.SettlePurchase(2, 1, "");
+        var func = () => plan_app.SettlePurchase(2, 1, "", 100);
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.SettlePurchase(2, 1, "10u");
+        func = () => plan_app.SettlePurchase(2, 1, "10u", 100);
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.SettlePurchase(2, 1, "20d");
+        func = () => plan_app.SettlePurchase(2, 1, "20d", 100);
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.SettlePurchase(2, 1, "20g");
+        func = () => plan_app.SettlePurchase(2, 1, "20g", 100);
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.SettlePurchase(2, 1, "10u|20d");
+        func = () => plan_app.SettlePurchase(2, 1, "10u|20d", 100);
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.SettlePurchase(2, 1, "10u|20g");
+        func = () => plan_app.SettlePurchase(2, 1, "10u|20g", 100);
         await func.Should().ThrowAsync<Exception>();
 
-        func = () => plan_app.SettlePurchase(2, 1, "10d|20g");
+        func = () => plan_app.SettlePurchase(2, 1, "10d|20g", 100);
         await func.Should().ThrowAsync<Exception>();
     }
 
@@ -534,11 +548,11 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             },
         ];
 
-        var estimate = await plan_app.Estimate(2, 5, 120, 75);
+        var estimate = await plan_app.Estimate(2, CompletePlan(5, 120, 75));
 
         Assert.NotNull(estimate);
 
-        var result = await plan_app.SettlePurchase(99, 1, "User2t|5u|120d|75g");
+        var result = await plan_app.SettlePurchase(99, 1, "User2t|3p|5u|120d|75g", estimate.Data!.Price);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -562,7 +576,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
         // payer (99) has no wallet at all: the money-need is judged on the payer
-        var func = () => plan_app.SettlePurchase(99, 1, "User3t|2u|120d|50g");
+        var func = () => plan_app.SettlePurchase(99, 1, "User3t|3p|2u|120d|50g", 400);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -573,7 +587,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
 
-        var func = () => plan_app.SettlePurchase(777, 1, "User2t|2u|120d|50g");
+        var func = () => plan_app.SettlePurchase(777, 1, "User2t|3p|2u|120d|50g", 400);
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -591,7 +605,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         scope.ServiceProvider.GetRequiredService<VpnAccountRepositoryMoq>()
             .Data.RemoveAll(account => account.UserId == 6);
 
-        var result = await plan_app.NewAccount(username: null, realm_id: 1, users: 1, days: 30, gigabytes: 25);
+        var result = await plan_app.NewAccount(new NewAccountRequest { Username = null, RealmId = 1, PlanId = 3, SimultaneousUserCount = 1, Days = 30, Gigabytes = 25 });
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -603,7 +617,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         var invoice = invoice_moq.Data.Single(i => i.Code == result.Data.InvoiceCode);
         Assert.Equal(6, invoice.AccountId);
         Assert.Null(invoice.VpnAccountId);
-        Assert.Equal("n|User6t|User6o|1u|30d|25g|1r", invoice.Action);
+        Assert.Equal("n|User6t|User6o|3p|1u|30d|25g|1r", invoice.Action);
     }
 
     [Fact]
@@ -616,7 +630,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         job_context.InjectJobContext(6, "User6", "User6");
 
         // D3: the VPN username must start with the owner's panel username
-        var func = () => plan_app.NewAccount(username: " somebody-else", realm_id: 1, users: 1, days: 30, gigabytes: 25);
+        var func = () => plan_app.NewAccount(new NewAccountRequest { Username = " somebody-else", RealmId = 1, PlanId = 3, SimultaneousUserCount = 1, Days = 30, Gigabytes = 25 });
 
         await func.Should().ThrowAsync<UserException>();
     }
@@ -631,7 +645,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         job_context.InjectJobContext(6, "User6", "User6");
 
         // User6 already owns the "User6" VPN username
-        var func = () => plan_app.NewAccount(username: "User6", realm_id: 1, users: 1, days: 30, gigabytes: 25);
+        var func = () => plan_app.NewAccount(new NewAccountRequest { Username = "User6", RealmId = 1, PlanId = 3, SimultaneousUserCount = 1, Days = 30, Gigabytes = 25 });
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.HttpCode.Should().Be(409);
@@ -646,7 +660,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         job_context.InjectJobContext(11, "DependentUser11", "DependentUser11");
 
-        var func = () => plan_app.NewAccount(username: "DependentUser11", realm_id: 1, users: 1, days: 30, gigabytes: 25);
+        var func = () => plan_app.NewAccount(new NewAccountRequest { Username = "DependentUser11", RealmId = 1, PlanId = 3, SimultaneousUserCount = 1, Days = 30, Gigabytes = 25 });
 
         (await func.Should().ThrowAsync<UserException>())
             .Which.HttpCode.Should().Be(403);
@@ -682,7 +696,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         var before = vpn_account_moq.Data.Count;
 
-        var result = await plan_app.SettlePurchase(6, null, "n|User6t|User6o|1u|30d|25g|1r", 555);
+        var result = await plan_app.SettlePurchase(6, null, "n|User6t|User6o|3p|1u|30d|25g|1r", price: 300, invoice_code: 555);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -697,9 +711,8 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         var renewal = renewal_moq.Data.Single(r => r.VpnAccountId == account.Id);
         Assert.Equal(25, renewal.TrafficLimit / StaticValues.BytesInGigLong);
-        // monthly pricing derives the expiry from the traffic share (Docs/17):
-        // 25GB/1u → 60 + 30 - 0 = 90 days
-        Assert.Equal((short)90, renewal.TimeLimitInDays);
+        // Docs/24 D9: the action froze the days at issuance — settlement applies them as-is
+        Assert.Equal((short)30, renewal.TimeLimitInDays);
         Assert.NotNull(renewal.ExpirationDate);
         Assert.Equal(25, renewal.CumulativeTrafficLeft / StaticValues.BytesInGigLong);
 
@@ -733,7 +746,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             },
         ];
 
-        var result = await plan_app.SettlePurchase(99, null, "User3t|2u|30d|25g|1r");
+        var result = await plan_app.SettlePurchase(99, null, "User3t|3p|2u|30d|25g|1r", 300);
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Code / 100);
@@ -765,3 +778,5 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         (await plan_app.SuggestUsername()).Data.Should().Be("User22");
     }
 }
+
+

@@ -145,11 +145,13 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         return await CheckResponseObject(response, status);
     }
 
-    protected async Task<Dictionary<string, string?>> Estimate(int account_id, byte users, short? days, short? gigs, int status = 2)
+    protected async Task<Dictionary<string, string?>> Estimate(int account_id, int plan_id, byte? users, short? days,
+        int? gigs, int status = 2)
     {
         var request = new RenewalContext
         {
             AccountId = account_id,
+            PlanId = plan_id,
             SimultaneousUserCount = users,
             Days = days,
             Gigabytes = gigs,
@@ -158,13 +160,14 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         return await CheckResponseObject(response, status);
     }
 
-    protected async Task<Dictionary<string, string?>> Renewal(int account_id, byte users, short? days, short? gigs,
-        int? realm_id = null, string? target = null, int status = 2)
+    protected async Task<Dictionary<string, string?>> Renewal(int account_id, int plan_id, byte? users, short? days,
+        int? gigs, int? realm_id = null, string? target = null, int status = 2)
     {
         var request = new RenewalContext
         {
             AccountId = account_id,
             Target = target,
+            PlanId = plan_id,
             SimultaneousUserCount = users,
             Days = days,
             Gigabytes = gigs,
@@ -175,13 +178,14 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
     }
 
     /// <summary>First purchase (Docs/22 D9): realm + optional username + plan.</summary>
-    protected async Task<Dictionary<string, string?>> NewAccount(string? username, int realm_id,
-        byte users, short? days, short? gigs, int status = 2)
+    protected async Task<Dictionary<string, string?>> NewAccount(string? username, int realm_id, int plan_id,
+        byte? users, short? days, int? gigs, int status = 2)
     {
         var request = new NewAccountContext
         {
             Username = username,
             RealmId = realm_id,
+            PlanId = plan_id,
             SimultaneousUserCount = users,
             Days = days,
             Gigabytes = gigs,
@@ -361,6 +365,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
         using var scope = ServiceProvider.CreateScope();
 
         var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
+        var group_repo = scope.ServiceProvider.GetRequiredService<IUserGroupRepository>();
 
         // deterministic per-username mobile (a length-based one collides)
         var seed = Math.Abs(username.Aggregate(17, (current, c) => current * 31 + c));
@@ -375,6 +380,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
             Role = role,
             Owner = owner_id,
             Status = status,
+            UserGroupId = (await group_repo.GetDefault()).Id,
         });
     }
 

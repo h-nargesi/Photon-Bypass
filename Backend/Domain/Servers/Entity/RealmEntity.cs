@@ -14,6 +14,9 @@ public class RealmEntity : IBaseEntity
 
     public string Name { get; set; } = null!;
 
+    /// <summary>User-facing display title (Persian); null falls back to <see cref="Name"/> (Docs/24 D8).</summary>
+    public string? DisplayName { get; set; }
+
     public DateTime? LastTrafficSync { get; set; }
 
     public long? CapacityOverrideBytes { get; set; }

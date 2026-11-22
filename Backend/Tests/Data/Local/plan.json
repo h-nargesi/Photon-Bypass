@@ -1,0 +1,45 @@
+[
+  {
+    "Id": 1,
+    "Name": "Trafiki",
+    "Title": "ترافیکی",
+    "Caption": "پلن ترافیکی وب سایت",
+    "Description": "فضای مشخص با مرز زمانی هوشمند",
+    "ShowOnWebsite": true,
+    "IsActive": true,
+    "GroupId": 1,
+    "TrafficBase": 25,
+    "TrafficCap": 300,
+    "CalculatorCode": "using System; using PhotonBypass.Domain.Static; public class Calculator { public static PriceCalculationOutput Compute(PriceCalculationInput input) { if (input.Gigabytes is not int gigabytes || gigabytes <= 0) throw new Exception(\"Invalid gigabytes value.\"); int packages = gigabytes / 25; return new PriceCalculationOutput { Price = 60 + packages * 50, Users = null, Days = (short)(60 + packages * 30) }; } }"
+  },
+  {
+    "Id": 2,
+    "Name": "TrafikiEconomy",
+    "Title": "ترافیکی اقتصادی",
+    "Caption": "",
+    "Description": "",
+    "ShowOnWebsite": false,
+    "IsActive": true,
+    "GroupId": 1,
+    "TrafficBase": 25,
+    "TrafficCap": 300,
+    "CalculatorCode": "using System; using PhotonBypass.Domain.Static; public class Calculator { public static PriceCalculationOutput Compute(PriceCalculationInput input) { if (input.Gigabytes is not int gigabytes || gigabytes <= 0) throw new Exception(\"Invalid gigabytes value.\"); int packages = gigabytes / 25; return new PriceCalculationOutput { Price = 40 + packages * 40, Users = 2, Days = (short)(60 + packages * 30) }; } }"
+  },
+  {
+    "Id": 3,
+    "Name": "Complete",
+    "Title": "کامل",
+    "Caption": "",
+    "Description": "",
+    "ShowOnWebsite": false,
+    "IsActive": true,
+    "GroupId": 1,
+    "UsersBase": 1,
+    "UsersCap": 6,
+    "DaysBase": 30,
+    "DaysCap": 180,
+    "TrafficBase": 25,
+    "TrafficCap": 200,
+    "CalculatorCode": "using System; using PhotonBypass.Domain.Static; public class Calculator { public static PriceCalculationOutput Compute(PriceCalculationInput input) { int users = input.Users ?? 1; short days = input.Days ?? 30; int gigabytes = input.Gigabytes ?? 25; return new PriceCalculationOutput { Price = 30 + users * 5 + days * 2 + (gigabytes / 25) * 10, Users = (byte)users, Days = days, Gigabytes = gigabytes }; } }"
+  }
+]

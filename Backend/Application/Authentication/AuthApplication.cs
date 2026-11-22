@@ -21,6 +21,7 @@ class AuthApplication(
     IPanelUserRepository panel_user_repo,
     Lazy<IVpnAccountRepository> vpn_account_repo,
     Lazy<IRealmRepository> realm_repo,
+    Lazy<IUserGroupRepository> group_repo,
     IHistoryRepository history_repo,
     Lazy<IResetPassRepository> reset_pass_repo,
     ISocialMediaService social_media_srv,
@@ -41,6 +42,7 @@ class AuthApplication(
     private IPanelUserRepository PanelUserRepo { get; } = panel_user_repo;
     private Lazy<IVpnAccountRepository> VpnAccountRepo { get; } = vpn_account_repo;
     private Lazy<IRealmRepository> RealmRepo { get; } = realm_repo;
+    private Lazy<IUserGroupRepository> GroupRepo { get; } = group_repo;
     private IHistoryRepository HistoryRepo { get; } = history_repo;
     private Lazy<IResetPassRepository> ResetPassRepo { get; } = reset_pass_repo;
     private ISocialMediaService SocialMediaSrv { get; } = social_media_srv;
@@ -428,6 +430,9 @@ class AuthApplication(
 
         account.Password = PasswordHasher.Hash(model.Password ?? string.Empty);
         account.UserType |= UserTypes.AllowSelfService;
+
+        // Docs/24 D6: self-registration lands in the default «وب سایت» group
+        account.UserGroupId = (await GroupRepo.Value.GetDefault()).Id;
 
         await PanelUserRepo.Save(account);
 

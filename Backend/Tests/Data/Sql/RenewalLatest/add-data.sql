@@ -1,6 +1,11 @@
-insert into PanelUser (Username, Password, UserType)
-values ('RenewA', 'password', 4)
-    , ('RenewB', 'password', 4)
+insert into PanelUser (Username, Password, UserGroupId)
+values ('RenewA', 'password', 1)
+    , ('RenewB', 'password', 1)
+
+-- Docs/24: renewals reference their plan (NOT NULL FK) — one fixture plan.
+insert into Plans (Name, Title, IsActive, GroupId, UsersBase, UsersCap, DaysBase, DaysCap, TrafficBase, TrafficCap, CalculatorCode)
+values ('RenewLatest-Fixture', 'تست', 1, 1, 1, 6, 30, 180, 25, 200,
+        'using System; using PhotonBypass.Domain.Static; public class Calculator { public static PriceCalculationOutput Compute(PriceCalculationInput input) => new PriceCalculationOutput { Price = 100, Users = input.Users, Days = input.Days, Gigabytes = input.Gigabytes }; }')
 
 -- Docs/22: renewals stack per VpnAccount (RealmId NOT NULL, username = the
 -- owner's panel username — D3 empty suffix)
@@ -20,17 +25,20 @@ select Id, 500, -1, 1, 'T-renew-debit-a2' from PanelUser where Username = 'Renew
 select Id, 500, -1, 1, 'T-renew-debit-b1' from PanelUser where Username = 'RenewB'
 
 -- separate statements so the identity order (old < new) is deterministic
-insert into Renewal (VpnAccountId, SimultaneousUser, WalletDebit, Comment)
-select va.Id, 1, w.Id, 'T-renew-a-old'
+insert into Renewal (VpnAccountId, PlanId, SimultaneousUser, WalletDebit, Comment)
+select va.Id, p.Id, 1, w.Id, 'T-renew-a-old'
 from VpnAccount va join Wallet w on w.AccountId = va.UserId and w.Description = 'T-renew-debit-a1'
-where va.Username = 'RenewA'
+    cross join Plans p
+where va.Username = 'RenewA' and p.Name = 'RenewLatest-Fixture'
 
-insert into Renewal (VpnAccountId, SimultaneousUser, WalletDebit, Comment)
-select va.Id, 2, w.Id, 'T-renew-a-new'
+insert into Renewal (VpnAccountId, PlanId, SimultaneousUser, WalletDebit, Comment)
+select va.Id, p.Id, 2, w.Id, 'T-renew-a-new'
 from VpnAccount va join Wallet w on w.AccountId = va.UserId and w.Description = 'T-renew-debit-a2'
-where va.Username = 'RenewA'
+    cross join Plans p
+where va.Username = 'RenewA' and p.Name = 'RenewLatest-Fixture'
 
-insert into Renewal (VpnAccountId, SimultaneousUser, WalletDebit, Comment)
-select va.Id, 1, w.Id, 'T-renew-b-only'
+insert into Renewal (VpnAccountId, PlanId, SimultaneousUser, WalletDebit, Comment)
+select va.Id, p.Id, 1, w.Id, 'T-renew-b-only'
 from VpnAccount va join Wallet w on w.AccountId = va.UserId and w.Description = 'T-renew-debit-b1'
-where va.Username = 'RenewB'
+    cross join Plans p
+where va.Username = 'RenewB' and p.Name = 'RenewLatest-Fixture'

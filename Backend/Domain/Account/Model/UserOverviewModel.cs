@@ -24,6 +24,9 @@ public class UserOverviewModel
     /// <summary>Username of the owning manager; null when independent.</summary>
     public string? Owner { get; set; }
 
+    /// <summary>Docs/24 §2: pricing group title — the divergence report of the snapshot rule.</summary>
+    public string? GroupTitle { get; set; }
+
     public DateTime Created { get; set; }
 }
 

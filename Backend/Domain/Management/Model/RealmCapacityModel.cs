@@ -6,6 +6,9 @@ public class RealmCapacityModel
 
     public string Name { get; init; } = null!;
 
+    /// <summary>Docs/24 D8: user-facing display title (falls back to <c>Name</c>).</summary>
+    public string DisplayName { get; init; } = null!;
+
     public long ComputedCapacityBytes { get; init; }
 
     public long? OverrideBytes { get; init; }

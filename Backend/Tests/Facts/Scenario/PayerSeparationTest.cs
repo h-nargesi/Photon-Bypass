@@ -44,8 +44,8 @@ public class PayerSeparationTest(ProgramLevelInitializer.Factory factory) : Http
 
         await Login(username, "Passw0rd1");
 
-        await Renewal(account_id, 1, 120, 50, status: 403);
-        await Estimate(account_id, 1, 120, 50, status: 403);
+        await Renewal(account_id, 1, 1, 120, 50, status: 403);
+        await Estimate(account_id, 1, 1, 120, 50, status: 403);
         await Pay(50_000, status: 403);
         await GetInvoice(999_999, status: 403);
         await RegisterReceipt(999_999, text: "receipt", status: 403);
@@ -84,12 +84,12 @@ public class PayerSeparationTest(ProgramLevelInitializer.Factory factory) : Http
         await Login("admin", "admin");
 
         // on-behalf estimate is allowed (D6 gates only the self view)
-        var estimate = await Estimate(account_id, 1, 120, 50);
+        var estimate = await Estimate(account_id, 1, 1, 120, 50);
         var price = int.Parse(estimate["price"]!);
 
         await FakeAddMoney("admin", price);
 
-        var renewal = await Renewal(account_id, 1, 120, 50);
+        var renewal = await Renewal(account_id, 1, 1, 120, 50);
         var code = int.Parse(renewal["invoiceCode"]!);
 
         // the payer's invoice opens in the admin's own view (no target)

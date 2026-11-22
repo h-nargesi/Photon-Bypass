@@ -35,7 +35,7 @@ public class ReceiptEndpointTest(ProgramLevelInitializer.Factory factory) : Http
         await Register(username, phone);
         await Login(username, "Passw0rd1");
 
-        var purchase = await NewAccount(null, 1, 1, 120, 50);
+        var purchase = await NewAccount(null, 1, 1, 1, 120, 50);
         Assert.NotNull(purchase["invoiceCode"]);
 
         return int.Parse(purchase["invoiceCode"]!);

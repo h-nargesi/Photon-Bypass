@@ -180,9 +180,11 @@ class PanelUserRepository(LocalDbContext context) : EditableRepository<PanelUser
                           , case when ac.{nameof(PanelUserEntity.UserType)} & 4 /* UserTypes.AllowSelfService */ <> 0 then 1 else 0 end as {nameof(UserOverviewModel.AllowSelfService)}
                            , ac.{nameof(PanelUserEntity.Status)}
                           , owner.{nameof(PanelUserEntity.Username)} as {nameof(UserOverviewModel.Owner)}
+                          , grp.{nameof(UserGroupEntity.Title)} as {nameof(UserOverviewModel.GroupTitle)}
                           , ac.{nameof(PanelUserEntity.Created)}
                    from {TableName} ac
                    left join {TableName} owner on ac.{nameof(PanelUserEntity.Owner)} = owner.{nameof(PanelUserEntity.Id)}
+                   left join {UserGroupRepository.TableName} grp on ac.{nameof(PanelUserEntity.UserGroupId)} = grp.{nameof(UserGroupEntity.Id)}
                    {where}
                    order by ac.{nameof(PanelUserEntity.Username)}
                    offset @skip rows fetch next @take rows only

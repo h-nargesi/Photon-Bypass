@@ -25,6 +25,7 @@ public static class ServiceFactory
         builder.Services.WireServerConfigProtection();
 
         builder.Services.AddLazyTransient<IPanelUserRepository, PanelUserRepository>();
+        builder.Services.AddLazyTransient<IUserGroupRepository, UserGroupRepository>();
         builder.Services.AddLazyTransient<IVpnAccountRepository, VpnAccountRepository>();
         builder.Services.AddLazyTransient<IHistoryRepository, HistoryRepository>();
         builder.Services.AddLazyTransient<IResetPassRepository, ResetPassRepository>();
@@ -34,7 +35,7 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IServerRepository, ServerRepository>();
         builder.Services.AddLazyTransient<IPlanStateRepository, PlanStateRepository>();
         builder.Services.AddLazyTransient<IRealmRepository, RealmRepository>();
-        builder.Services.AddLazyTransient<IPriceRepository, PriceRepository>();
+        builder.Services.AddLazyTransient<IPlanRepository, PlanRepository>();
         builder.Services.AddLazyTransient<IWalletRepository, WalletRepository>();
         builder.Services.AddLazyTransient<IInvoiceRepository, InvoiceRepository>();
         builder.Services.AddLazyTransient<IAccountRadiusSyncService, AccountRadiusSyncService>();

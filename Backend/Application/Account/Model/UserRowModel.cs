@@ -23,6 +23,9 @@ public class UserRowModel
 
     public string? Owner { get; set; }
 
+    /// <summary>Docs/24 §2: pricing-group title — surfaces manager/group divergence.</summary>
+    public string? GroupTitle { get; set; }
+
     [JsonConverter(typeof(UnixTimestampConverter))]
     public DateTime Created { get; set; }
 

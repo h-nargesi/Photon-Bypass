@@ -54,6 +54,13 @@ public class SetAccountStatusRequest
     public VpnAccountStatus? Status { get; set; }
 }
 
+public class SetGroupRequest
+{
+    public string? Target { get; set; }
+
+    public int? GroupId { get; set; }
+}
+
 /// <summary>
 /// Manager/admin user management (Docs/20 phase 4). Note: these endpoints
 /// never route <c>target</c> through <see cref="ResultHandlerController.LoadJobContextAsync(string?)"/>'s
@@ -77,6 +84,24 @@ public class UserController(
         await LoadJobContextAsync();
 
         var result = await application.GetList(search, page);
+
+        return SafeApiResult(result);
+    }
+
+    /// <summary>
+    /// Docs/24 §5: flat VPN-account report — every account with its latest
+    /// plan band, sortable (unlimited sorts last) and searchable, server-side
+    /// paged. Manager scope = subordinates, admin = everyone.
+    /// </summary>
+    [Authorize(Policy = ServiceFactory.ManagerPolicy)]
+    [HttpGet("account-report")]
+    public async Task<ApiResult> GetAccountReport(
+        [FromQuery] string? search, [FromQuery] string? sort, [FromQuery] bool desc = false,
+        [FromQuery] int page = 1)
+    {
+        await LoadJobContextAsync();
+
+        var result = await application.GetAccountReport(search, page, sort, desc);
 
         return SafeApiResult(result);
     }
@@ -121,6 +146,23 @@ public class UserController(
         await LoadJobContextAsync();
 
         var result = await application.SetOwner(request.Target!, request.Owner);
+
+        return SafeApiResult(result);
+    }
+
+    /// <summary>Docs/24 D6: direct pricing-group move (admin only).</summary>
+    [Authorize(Policy = ServiceFactory.AdminPolicy)]
+    [HttpPost("set-group")]
+    public async Task<ApiResult> SetGroup([FromBody] SetGroupRequest request)
+    {
+        await LoadJobContextAsync();
+
+        if (request.GroupId is not { } group_id)
+        {
+            throw new UserException("گروه کاربری مشخص نشده!", "set-group requires a GroupId value.");
+        }
+
+        var result = await application.SetGroup(request.Target!, group_id);
 
         return SafeApiResult(result);
     }

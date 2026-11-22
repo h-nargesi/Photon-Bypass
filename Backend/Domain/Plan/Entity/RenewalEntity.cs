@@ -13,7 +13,14 @@ public class RenewalEntity : IRenewalEntity, IBaseEntity
     /// <summary>VPN account this renewal stacks on (Docs/22 D5); realm lives on the account.</summary>
     public int VpnAccountId { get; set; }
 
-    public byte SimultaneousUser { get; set; }
+    /// <summary>NULL = unlimited concurrent connections (Docs/24 §2).</summary>
+    public byte? SimultaneousUser { get; set; }
+
+    /// <summary>The purchased product (Docs/24 §2).</summary>
+    public int PlanId { get; set; }
+
+    /// <summary>Who executed the purchase; differs from the wallet owner exactly on admin on-behalf (Docs/24 D7).</summary>
+    public int? ActorId { get; set; }
 
     public long? TrafficLimit { get; set; }
 

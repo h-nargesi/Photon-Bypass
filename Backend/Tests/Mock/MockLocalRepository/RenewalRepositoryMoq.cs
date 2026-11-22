@@ -103,7 +103,8 @@ internal class RenewalRepositoryMoq : Mock<IRenewalRepository>, IUnitLevelServic
         {
             Id = renewal.Id,
             VpnAccountId = renewal.VpnAccountId,
-            
+            PlanId = renewal.PlanId,
+            ActorId = renewal.ActorId,
             SimultaneousUser = renewal.SimultaneousUser,
             TrafficLimit = renewal.TrafficLimit,
             TimeLimitInDays = renewal.TimeLimitInDays,

@@ -70,3 +70,10 @@ IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_VpnAccount_RealmId')
 CREATE NONCLUSTERED INDEX IX_VpnAccount_RealmId
 ON VpnAccount (RealmId);
 GO
+
+-- Plans (GroupId): the purchase catalog filters by the acting group.
+-- (structure-sort dependency: Plan)
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Plan_GroupId')
+CREATE NONCLUSTERED INDEX IX_Plan_GroupId
+ON Plans (GroupId);
+GO

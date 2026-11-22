@@ -211,6 +211,7 @@ partial class ServerManagementService(
             {
                 RealmId = state.Realm.Id,
                 Name = state.Realm.Name,
+                DisplayName = state.Realm.DisplayName ?? state.Realm.Name,
                 ComputedCapacityBytes = state.ComputedCapacityBytes,
                 OverrideBytes = state.OverrideBytes,
                 EffectiveCapacityBytes = state.EffectiveCapacityBytes,
@@ -386,7 +387,7 @@ partial class ServerManagementService(
 
         double? rate_bound = plan.RateLimitInMeg.HasValue
             ? (double)plan.RateLimitInMeg.Value * BytesPerMegabitPerSecond * CapacityWindowSeconds *
-              Math.Max((int)plan.SimultaneousUser, 1)
+              Math.Max((int?)plan.SimultaneousUser ?? 1, 1)
             : null;
 
         return (quota_bound, rate_bound) switch

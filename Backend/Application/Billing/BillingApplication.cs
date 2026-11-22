@@ -304,7 +304,8 @@ class BillingApplication(
 
         try
         {
-            var renewal_result = await PlanApp.Value.SettlePurchase(invoice.AccountId, null, invoice.Action!, invoice.Code);
+            var renewal_result = await PlanApp.Value.SettlePurchase(invoice.AccountId, null, invoice.Action!,
+                invoice.TotalPrice, invoice.Code);
 
             if (renewal_result.Code / 100 != 2)
             {
@@ -354,7 +355,8 @@ class BillingApplication(
 
         try
         {
-            var renewal_result = await PlanApp.Value.SettlePurchase(invoice.AccountId, credit.Id, invoice.Action!, invoice.Code);
+            var renewal_result = await PlanApp.Value.SettlePurchase(invoice.AccountId, credit.Id, invoice.Action!,
+                invoice.TotalPrice, invoice.Code);
 
             if (renewal_result.Code / 100 != 2)
             {

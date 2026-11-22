@@ -19,6 +19,7 @@ class UserManagementApplication(
     Lazy<IVpnAccountRepository> vpn_account_repo,
     Lazy<IRealmRepository> realm_repo,
     Lazy<IPlanStateRepository> plan_state_repo,
+    Lazy<IUserGroupRepository> group_repo,
     Lazy<IAccountApplication> account_app,
     Lazy<IHistoryRepository> history_repo,
     Lazy<ISelfServiceGuard> self_service_guard,
@@ -37,6 +38,8 @@ class UserManagementApplication(
     private Lazy<IRealmRepository> RealmRepo { get; } = realm_repo;
 
     private Lazy<IPlanStateRepository> PlanStateRepo { get; } = plan_state_repo;
+
+    private Lazy<IUserGroupRepository> GroupRepo { get; } = group_repo;
 
     private Lazy<IAccountApplication> AccountApp { get; } = account_app;
 
@@ -83,6 +86,7 @@ class UserManagementApplication(
             AllowSelfService = row.AllowSelfService,
             Status = row.Status,
             Owner = row.Owner,
+            GroupTitle = row.GroupTitle,
             Created = row.Created,
             CreatedTitle = row.Created.ToPersianString(),
             Accounts = accounts.Where(account => account.Owner == row.Username)
@@ -141,13 +145,14 @@ class UserManagementApplication(
 
         if (actor.Role == AccountRole.Manager)
         {
-            if (model.Role is not (null or AccountRole.User) || !string.IsNullOrWhiteSpace(model.Owner))
+            if (model.Role is not (null or AccountRole.User) || !string.IsNullOrWhiteSpace(model.Owner) || model.GroupId.HasValue)
             {
-                throw new UserException("تعیین نقش یا مالک فقط برای ادمین مجاز است!",
-                    $"Manager tried to create with role/owner: role={model.Role}, owner={model.Owner}, actor={actor.Username}");
+                throw new UserException("تعیین نقش، مالک یا گروه فقط برای ادمین مجاز است!",
+                    $"Manager tried to create with role/owner/group: role={model.Role}, owner={model.Owner}, group={model.GroupId}, actor={actor.Username}");
             }
 
             account.Owner = actor.Id;
+            account.UserGroupId = await ResolveCreationGroup(actor, model);
         }
         else
         {
@@ -161,7 +166,13 @@ class UserManagementApplication(
 
             if (!string.IsNullOrWhiteSpace(model.Owner))
             {
-                account.Owner = (await ResolveManagerOwner(model.Owner, exclude: null)).Id;
+                var owner = await ResolveManagerOwner(model.Owner, exclude: null);
+                account.Owner = owner.Id;
+                account.UserGroupId = owner.UserGroupId;
+            }
+            else
+            {
+                account.UserGroupId = await ResolveCreationGroup(actor, model);
             }
         }
 
@@ -261,6 +272,14 @@ class UserManagementApplication(
 
         account.Owner = new_owner?.Id;
 
+        // Docs/24 D6: attaching to a manager propagates that manager's current
+        // group to the subordinate (snapshot — later manager moves never
+        // re-group members)
+        if (new_owner != null)
+        {
+            account.UserGroupId = new_owner.UserGroupId;
+        }
+
         await PanelUserRepo.Save(account);
 
         // both target areas changed shape: the detached and the attached manager
@@ -319,6 +338,90 @@ class UserManagementApplication(
         Log.Information("Self-service flag changed by {0}: target={1}, allow={2}", actor.Username, account.Username, allow);
 
         return ApiResult.Success("وضعیت دسترسی مالی کاربر ذخیره شد.");
+    }
+
+    /// <summary>
+    /// Docs/24 D6: direct group move (admin only) — the explicit lever the
+    /// snapshot rule needs, since manager group changes never cascade.
+    /// </summary>
+    public async Task<ApiResult> SetGroup(string target, int group_id)
+    {
+        var actor = await RequireAdmin();
+
+        var account = await GetTarget(target);
+
+        EnsureNotAdmin(account, "گروه حساب ادمین قابل تغییر نیست!");
+
+        var group = await GroupRepo.Value.Find(group_id)
+                    ?? throw new UserException("گروه کاربری مورد نظر پیدا نشد!", $"Group not found: id={group_id}");
+
+        if (account.UserGroupId == group.Id)
+        {
+            return ApiResult.Success("گروه کاربر تغییر نکرد.");
+        }
+
+        account.UserGroupId = group.Id;
+
+        await PanelUserRepo.Save(account);
+
+        await SaveHistory(account.Id, $"گروه کاربری به «{group.Title}» تغییر کرد.");
+
+        Log.Information("Group changed by {0}: target={1}, group={2}", actor.Username, account.Username, group.Title);
+
+        return ApiResult.Success("گروه کاربر تغییر کرد.");
+    }
+
+    /// <summary>
+    /// Docs/24 §5: flat VPN-account report over the plan-state universe —
+    /// manager sees the subordinates' accounts, admin sees everyone; server-
+    /// side paging, whitelisted sort, username/owner search.
+    /// </summary>
+    public async Task<ApiResult<PagedResult<VpnAccountReportRowModel>>> GetAccountReport(string? search, int page,
+        string? sort, bool descending)
+    {
+        if (page < 1)
+        {
+            throw new UserException("شماره صفحه نامعتبر است!", $"Invalid account report page: {page}");
+        }
+
+        var actor = await ResolveActor();
+
+        if (actor.Role == AccountRole.User)
+        {
+            throw Forbidden("مشاهده گزارش اکانت‌ها مجاز نیست!", actor);
+        }
+
+        // same scoping as the user list (Docs/20 §3): manager → subordinates, admin → all
+        int? owner_id = actor.Role == AccountRole.Admin ? null : actor.Id;
+
+        var (rows, total) = await PlanStateRepo.Value.SearchAccountReport(owner_id, search, sort, descending, page, ListPageSize);
+
+        var items = rows.Select(row => new VpnAccountReportRowModel
+        {
+            AccountId = row.AccountId,
+            Username = row.Username,
+            OwnerUsername = row.OwnerUsername,
+            OwnerFullname = (row.OwnerName + " " + row.OwnerSurname).Trim(),
+            RealmId = row.RealmId,
+            RealmName = row.RealmDisplayName ?? row.RealmName,
+            Status = row.Status,
+            SimultaneousUser = row.SimultaneousUser,
+            TimeLimitInDays = row.TimeLimitInDays,
+            TrafficLimit = row.TrafficLimit,
+            RateLimitInMeg = row.RateLimitInMeg,
+            ExpirationDate = row.ExpirationDate,
+            TrafficLeft = row.TrafficLeft,
+            LastConnectTime = row.LastConnectTime,
+            GroupTitle = row.GroupTitle,
+        });
+
+        return ApiResult<PagedResult<VpnAccountReportRowModel>>.Success(new PagedResult<VpnAccountReportRowModel>
+        {
+            Page = page,
+            PageSize = ListPageSize,
+            TotalCount = total,
+            Items = [.. items],
+        });
     }
 
     public async Task<ApiResult> SetStatus(string target, PanelUserStatus status)
@@ -580,6 +683,32 @@ class UserManagementApplication(
         }
 
         return owner;
+    }
+
+    /// <summary>
+    /// Docs/24 D6 creation-group rule for users without an attached manager:
+    /// a manager creating its own subordinate carries the manager's group; an
+    /// admin may override explicitly, everyone else lands in the default
+    /// «وب سایت» group (the same one self-registration uses).
+    /// </summary>
+    private async Task<int> ResolveCreationGroup(PanelUserEntity actor, CreateUserModel model)
+    {
+        if (actor.Role != AccountRole.Admin)
+        {
+            return actor.UserGroupId;
+        }
+
+        if (model.GroupId is int group_id)
+        {
+            if (await GroupRepo.Value.Find(group_id) == null)
+            {
+                throw new UserException("گروه کاربری مورد نظر پیدا نشد!", $"Creation group not found: id={group_id}");
+            }
+
+            return group_id;
+        }
+
+        return (await GroupRepo.Value.GetDefault()).Id;
     }
 
     private static void EnsureNotSelf(PanelUserEntity actor, PanelUserEntity account, string message)

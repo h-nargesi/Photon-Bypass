@@ -22,8 +22,8 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
     // T4 client-count gate assigns an account to its highest passing row.
     public int RowNumber { get; set; }
 
-    // Plan Info (Latest Renewal)
-    public byte SimultaneousUser { get; set; }
+    // Plan Info (Latest Renewal) — NULL SimultaneousUser = unlimited (Docs/24 §2)
+    public byte? SimultaneousUser { get; set; }
 
     /// <summary>Realm of the VPN account (Docs/22 §2: NOT NULL — bucket-0 is gone).</summary>
     public int RealmId { get; set; }

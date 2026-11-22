@@ -62,8 +62,11 @@ public class PanelUserEntity : IBaseEntity
 
     // Profile Info
 
-    /// <summary>Price calculation method (Docs/22 D10: realm-independent, user-level).</summary>
-    public int? CalculationMethod { get; set; }
+    /// <summary>
+    /// Pricing group membership (Docs/24 D6): decides which plans the user can
+    /// purchase. Replaces the old per-user calculator pointer.
+    /// </summary>
+    public int UserGroupId { get; set; }
 
     public AccountRole Role { get; set; }
 

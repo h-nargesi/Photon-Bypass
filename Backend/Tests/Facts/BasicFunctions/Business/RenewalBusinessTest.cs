@@ -1,223 +1,205 @@
-using PhotonBypass.Domain.Account.Entity;
-using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Plan.Business;
 using PhotonBypass.Domain.Plan.Entity;
 
 namespace PhotonBypass.Test.Facts.BasicFunctions.Business;
 
+/// <summary>
+/// Docs/24 §2/§6: the multiple-of-25/30 rules and the days-derivation are
+/// gone — choices are validated against the plan's base|cap axes, undefined
+/// axes must stay null, and a composed purchase needs at least one limit.
+/// </summary>
 public class RenewalBusinessTest
 {
-    [Fact]
-    public void RenewalValidation_EmptyTraffic_NormalUser()
+    private static PlanEntity CompletePlan()
     {
-        var account = new PanelUserEntity
+        return new PlanEntity
         {
-            UserType = UserTypes.None,
+            Name = "Complete",
+            Title = "کامل",
+            UsersBase = 1,
+            UsersCap = 6,
+            DaysBase = 30,
+            DaysCap = 180,
+            TrafficBase = 25,
+            TrafficCap = 200,
         };
+    }
 
-        var renewal = new RenewalEntity
+    private static PlanEntity TrafficOnlyPlan()
+    {
+        return new PlanEntity
         {
-            TrafficLimit = null,
-            SimultaneousUser = 1,
+            Name = "Trafiki",
+            Title = "ترافیکی",
+            TrafficBase = 25,
+            TrafficCap = 300,
         };
+    }
 
-        var has_error = renewal.RenewalValidation(account, out var user_exception);
+    [Fact]
+    public void ValidateChoices_DefinedAxisWithoutChoice_Fails()
+    {
+        var plan = TrafficOnlyPlan();
+
+        var has_error = plan.ValidateChoices(null, null, null, null, out var user_exception);
 
         Assert.True(has_error);
         Assert.NotNull(user_exception);
     }
 
     [Fact]
-    public void RenewalValidation_UnroundedTraffic_NormalUser()
+    public void ValidateChoices_ChoiceNotAMultipleOfBase_Fails()
     {
-        var account = new PanelUserEntity
-        {
-            UserType = UserTypes.None,
-        };
+        var plan = TrafficOnlyPlan();
 
-        var renewal = new RenewalEntity
-        {
-            TrafficLimit = 23 * (long)StaticValues.BytesInGigDouble,
-            SimultaneousUser = 1,
-        };
-
-        var has_error = renewal.RenewalValidation(account, out var user_exception);
+        var has_error = plan.ValidateChoices(null, null, 23, null, out var user_exception);
 
         Assert.True(has_error);
         Assert.NotNull(user_exception);
     }
 
     [Fact]
-    public void RenewalValidation_ValidTraffic_NormalUser()
+    public void ValidateChoices_ChoiceAboveCap_Fails()
     {
-        var account = new PanelUserEntity
-        {
-            UserType = UserTypes.None,
-        };
+        var plan = TrafficOnlyPlan();
 
-        var renewal = new RenewalEntity
-        {
-            TrafficLimit = 25 * (long)StaticValues.BytesInGigDouble,
-            SimultaneousUser = 1,
-        };
+        var has_error = plan.ValidateChoices(null, null, 325, null, out var user_exception);
 
-        var has_error = renewal.RenewalValidation(account, out var user_exception);
+        Assert.True(has_error);
+        Assert.NotNull(user_exception);
+    }
+
+    [Fact]
+    public void ValidateChoices_ChoiceOnUndefinedAxis_Fails()
+    {
+        var plan = TrafficOnlyPlan();
+
+        var has_error = plan.ValidateChoices(null, 60, 50, null, out var user_exception);
+
+        Assert.True(has_error);
+        Assert.NotNull(user_exception);
+    }
+
+    [Fact]
+    public void ValidateChoices_ValidMultipleWithinRange_Passes()
+    {
+        var plan = TrafficOnlyPlan();
+
+        var has_error = plan.ValidateChoices(null, null, 75, null, out var user_exception);
 
         Assert.False(has_error);
         Assert.Null(user_exception);
-        Assert.Equal(90, (int?)renewal.TimeLimitInDays);
     }
 
     [Fact]
-    public void RenewalValidation_EmptyTraffic_AllowMonthlyUser()
+    public void ValidateChoices_AllDefinedAxesValid_Passes()
     {
-        var account = new PanelUserEntity
-        {
-            UserType = UserTypes.AllowMonthly,
-        };
+        var plan = CompletePlan();
 
-        var renewal = new RenewalEntity
-        {
-            TrafficLimit = null,
-            TimeLimitInDays = null,
-            SimultaneousUser = 1,
-        };
+        var has_error = plan.ValidateChoices(2, 120, 50, null, out var user_exception);
 
-        var has_error = renewal.RenewalValidation(account, out var user_exception);
+        Assert.False(has_error);
+        Assert.Null(user_exception);
     }
 
     [Fact]
-    public void RenewalValidation_UnroundedTraffic_AllowMonthlyUser()
+    public void ValidateChoices_BaseMultipleBelowBase_Fails()
     {
-        var account = new PanelUserEntity
-        {
-            UserType = UserTypes.AllowMonthly,
-        };
+        var plan = CompletePlan();
 
-        var renewal = new RenewalEntity
-        {
-            TrafficLimit = 23 * (long)StaticValues.BytesInGigDouble,
-            SimultaneousUser = 1,
-        };
-
-        var has_error = renewal.RenewalValidation(account, out var user_exception);
+        // 0 is technically a multiple — but below the base
+        var has_error = plan.ValidateChoices(0, 120, 50, null, out var user_exception);
 
         Assert.True(has_error);
         Assert.NotNull(user_exception);
     }
 
     [Fact]
-    public void RenewalValidation_UnroundedTime_AllowMonthlyUser()
+    public void ValidateDefinition_RequiresAtLeastOneAxis()
     {
-        var account = new PanelUserEntity
-        {
-            UserType = UserTypes.AllowMonthly,
-        };
+        var plan = new PlanEntity { Name = "Empty", Title = "خالی" };
 
-        var renewal = new RenewalEntity
-        {
-            TimeLimitInDays = 25,
-            SimultaneousUser = 1,
-        };
-
-        var has_error = renewal.RenewalValidation(account, out var user_exception);
+        var has_error = plan.ValidateDefinition(out var user_exception);
 
         Assert.True(has_error);
         Assert.NotNull(user_exception);
     }
 
     [Fact]
-    public void RenewalValidation_ValidTraffic_AllowMonthlyUser()
+    public void ValidateDefinition_RejectsBaseWithoutCap()
     {
-        var account = new PanelUserEntity
-        {
-            UserType = UserTypes.AllowMonthly,
-        };
+        var plan = new PlanEntity { Name = "Half", Title = "نیمه", UsersBase = 1 };
 
-        var table = new (byte Users, int Traffic, int Days)[]
-        {
-            (1, 25, 3 * 30),
-            (1, 50, 4 * 30),
-            (1, 75, 5 * 30),
-            (1, 100, 6 * 30),
-            (1, 150, 8 * 30),
-            (1, 200, 10 * 30),
-            (1, 300, 14 * 30),
+        var has_error = plan.ValidateDefinition(out var user_exception);
 
-            (2, 25, 3 * 30 - 20),
-            (2, 50, 4 * 30 - 20),
-            (2, 75, 5 * 30 - 20),
-            (2, 100, 6 * 30 - 20),
-            (2, 150, 8 * 30 - 20),
-            (2, 200, 10 * 30 - 20),
-            (2, 300, 14 * 30 - 20),
-
-            (3, 25, 3 * 30 - 30),
-            (3, 50, 4 * 30 - 30),
-            (3, 75, 5 * 30 - 30),
-            (3, 100, 6 * 30 - 30),
-            (3, 150, 8 * 30 - 30),
-            (3, 200, 10 * 30 - 30),
-            (3, 300, 14 * 30 - 30),
-
-            (4, 25, 3 * 30 - 35),
-            (4, 50, 4 * 30 - 35),
-            (4, 75, 5 * 30 - 35),
-            (4, 100, 6 * 30 - 35),
-            (4, 150, 8 * 30 - 35),
-            (4, 200, 10 * 30 - 35),
-            (4, 300, 14 * 30 - 35),
-
-            (5, 25, 3 * 30 - 40),
-            (5, 50, 4 * 30 - 40),
-            (5, 75, 5 * 30 - 40),
-            (5, 100, 6 * 30 - 40),
-            (5, 150, 8 * 30 - 40),
-            (5, 200, 10 * 30 - 40),
-            (5, 300, 14 * 30 - 40),
-
-            (6, 25, 3 * 30 - 45),
-            (6, 50, 4 * 30 - 45),
-            (6, 75, 5 * 30 - 45),
-            (6, 100, 6 * 30 - 45),
-            (6, 150, 8 * 30 - 45),
-            (6, 200, 10 * 30 - 45),
-            (6, 300, 14 * 30 - 45),
-        };
-
-        foreach (var (Users, Traffic, Days) in table)
-        {
-            var renewal = new RenewalEntity
-            {
-                TrafficLimit = Traffic * (long)StaticValues.BytesInGigDouble,
-                SimultaneousUser = Users,
-            };
-
-            var has_error = renewal.RenewalValidation(account, out var user_exception);
-
-            Assert.False(has_error);
-            Assert.Null(user_exception);
-            Assert.Equal(Days, (int?)renewal.TimeLimitInDays);
-        }
+        Assert.True(has_error);
+        Assert.NotNull(user_exception);
     }
 
     [Fact]
-    public void RenewalValidation_ValidTimes_AllowMonthlyUser()
+    public void ValidateDefinition_RejectsCapBelowBase()
     {
-        var account = new PanelUserEntity
-        {
-            UserType = UserTypes.AllowMonthly,
-        };
+        var plan = new PlanEntity { Name = "Inverted", Title = "وارونه", UsersBase = 5, UsersCap = 2 };
 
+        var has_error = plan.ValidateDefinition(out var user_exception);
+
+        Assert.True(has_error);
+        Assert.NotNull(user_exception);
+    }
+
+    [Fact]
+    public void HasNoLimit_AllUnlimitedFails()
+    {
+        var has_error = RenewalBusiness.HasNoLimit(null, null, null, null, out var user_exception);
+
+        Assert.True(has_error);
+        Assert.NotNull(user_exception);
+    }
+
+    [Fact]
+    public void HasNoLimit_AnyLimitedAxisPasses()
+    {
+        Assert.False(RenewalBusiness.HasNoLimit(null, 30, null, null, out var e1));
+        Assert.Null(e1);
+
+        Assert.False(RenewalBusiness.HasNoLimit(2, null, null, null, out var e2));
+        Assert.Null(e2);
+
+        Assert.False(RenewalBusiness.HasNoLimit(null, null, 25 * StaticValues.BytesInGigLong, null, out var e3));
+        Assert.Null(e3);
+
+        Assert.False(RenewalBusiness.HasNoLimit(null, null, null, 8, out var e4));
+        Assert.Null(e4);
+    }
+
+    [Fact]
+    public void GetPlanTitle_NullUsers_ShowsUnlimited()
+    {
         var renewal = new RenewalEntity
         {
+            TrafficLimit = 25 * StaticValues.BytesInGigLong,
             TimeLimitInDays = 90,
-            SimultaneousUser = 1,
+            SimultaneousUser = null,
         };
 
-        var has_error = renewal.RenewalValidation(account, out var user_exception);
+        var title = renewal.GetPlanTitle();
 
-        Assert.False(has_error);
-        Assert.Null(user_exception);
+        Assert.DoesNotContain("کاربره", title);
+        Assert.Contains("نامحدود", title);
+    }
+
+    [Fact]
+    public void GetPlanTitle_LimitedUsers_ShowsTheCount()
+    {
+        var renewal = new RenewalEntity
+        {
+            TrafficLimit = 25 * StaticValues.BytesInGigLong,
+            TimeLimitInDays = 90,
+            SimultaneousUser = 2,
+        };
+
+        var title = renewal.GetPlanTitle();
+
+        Assert.Contains("2 کاربره", title);
     }
 }

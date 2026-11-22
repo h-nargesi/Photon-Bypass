@@ -1,10 +1,10 @@
 using FluentAssertions;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Moq;
+using Microsoft.Extensions.Options;
 using PhotonBypass.Application.Basics;
 using PhotonBypass.Application.Management.Model;
-using PhotonBypass.Domain.Static;
+using PhotonBypass.Domain.Plan.Entity;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Mock.MockLocalRepository;
 
@@ -14,32 +14,35 @@ public class BasicsApplicationTest : UnitLevelServiceInitializer
 {
     protected override void AddClassTestServices(IHostApplicationBuilder builder)
     {
-        // the default PriceRepositoryMoq is transient, so a setup made on the
-        // instance resolved by the test would not be visible to BasicsApplication;
-        // re-registering it as scoped makes both share one mock per scope
-        builder.Services.AddScoped<PriceRepositoryMoq>();
+        // the default moqs are transient, so a setup made on the instance
+        // resolved by the test would not be visible to BasicsApplication;
+        // re-registering them as scoped makes both share one mock per scope
+        builder.Services.AddScoped<PlanRepositoryMoq>();
+        builder.Services.AddScoped<UserGroupRepositoryMoq>();
     }
 
     [Fact]
-    public async Task GetPrices_MapsVisiblePrices_WithSplitDescriptionLines()
+    public async Task GetPrices_MapsWebsitePlansOfTheDefaultGroup_WithSplitDescriptionLines()
     {
         using var scope = App.Services.CreateScope();
         var basics = scope.ServiceProvider.GetRequiredService<IBasicsApplication>();
-        var price_moq = scope.ServiceProvider.GetRequiredService<PriceRepositoryMoq>();
+        var plan_moq = scope.ServiceProvider.GetRequiredService<PlanRepositoryMoq>();
 
-        price_moq.Setup(repo => repo.GetVisibles()).ReturnsAsync(
+        plan_moq.Setup(repo => repo.GetWebsitePlans(It.IsAny<int>())).ReturnsAsync(
         [
-            new PriceEntity
+            new PlanEntity
             {
                 Title = "Plan A",
                 Caption = "Best value",
                 Description = "line one\nline two",
+                ShowOnWebsite = true,
             },
-            new PriceEntity
+            new PlanEntity
             {
                 Title = "Plan B",
                 Caption = "Cheap",
                 Description = "single line",
+                ShowOnWebsite = true,
             },
         ]);
 
@@ -57,13 +60,13 @@ public class BasicsApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
-    public async Task GetPrices_WithoutVisiblePrices_ReturnsEmptyList()
+    public async Task GetPrices_WithoutWebsitePlans_ReturnsEmptyList()
     {
         using var scope = App.Services.CreateScope();
         var basics = scope.ServiceProvider.GetRequiredService<IBasicsApplication>();
-        var price_moq = scope.ServiceProvider.GetRequiredService<PriceRepositoryMoq>();
+        var plan_moq = scope.ServiceProvider.GetRequiredService<PlanRepositoryMoq>();
 
-        price_moq.Setup(repo => repo.GetVisibles()).ReturnsAsync([]);
+        plan_moq.Setup(repo => repo.GetWebsitePlans(It.IsAny<int>())).ReturnsAsync([]);
 
         var result = await basics.GetPrices();
 

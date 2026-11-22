@@ -18,6 +18,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
 
         var user = new PanelUserEntity
         {
+            UserGroupId = 1, // Docs/24 D6: the default group (structure seed)
             Name = "Transaction",
             Surname = "Transaction",
             Password = PasswordHasher.Hash("password"),
@@ -43,6 +44,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
 
         var user = new PanelUserEntity
         {
+            UserGroupId = 1, // Docs/24 D6: the default group (structure seed)
             Name = "SetNewId",
             Surname = "SetNewId",
             Password = PasswordHasher.Hash("password"),
@@ -71,6 +73,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
         {
             new()
             {
+                UserGroupId = 1, // Docs/24 D6: the default group (structure seed)
                 Name = "SetNewId",
                 Surname = "SetNewIdBulk1",
                 Password = PasswordHasher.Hash("password"),
@@ -78,6 +81,7 @@ public class DatabaseGlobalTest : OutSourceLevelServiceInitializer
             },
             new()
             {
+                UserGroupId = 1, // Docs/24 D6: the default group (structure seed)
                 Name = "SetNewId",
                 Surname = "SetNewId",
                 Password = PasswordHasher.Hash("password"),

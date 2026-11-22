@@ -42,13 +42,16 @@ internal sealed class XuiLiveAccount : IAsyncDisposable
     private readonly IWalletRepository wallet_repo;
     private readonly IVpnAccountRepository account_repo;
     private readonly IRenewalRepository renewal_repo;
+    private readonly IPlanRepository plan_repo;
 
     private PanelUserEntity user = null!;
     private WalletEntity wallet = null!;
+    private PlanEntity plan = null!;
 
     private XuiLiveAccount(
         IRealmRepository realm_repo, IServerRepository server_repo, IPanelUserRepository user_repo,
-        IWalletRepository wallet_repo, IVpnAccountRepository account_repo, IRenewalRepository renewal_repo)
+        IWalletRepository wallet_repo, IVpnAccountRepository account_repo, IRenewalRepository renewal_repo,
+        IPlanRepository plan_repo)
     {
         this.realm_repo = realm_repo;
         this.server_repo = server_repo;
@@ -56,6 +59,7 @@ internal sealed class XuiLiveAccount : IAsyncDisposable
         this.wallet_repo = wallet_repo;
         this.account_repo = account_repo;
         this.renewal_repo = renewal_repo;
+        this.plan_repo = plan_repo;
     }
 
     public RealmEntity Realm { get; private set; } = null!;
@@ -74,7 +78,8 @@ internal sealed class XuiLiveAccount : IAsyncDisposable
             services.GetRequiredService<IPanelUserRepository>(),
             services.GetRequiredService<IWalletRepository>(),
             services.GetRequiredService<IVpnAccountRepository>(),
-            services.GetRequiredService<IRenewalRepository>());
+            services.GetRequiredService<IRenewalRepository>(),
+            services.GetRequiredService<IPlanRepository>());
 
         // unique realm per test: LastTrafficSync NULL = the collector's sync
         // lock is guaranteed acquirable no matter how fresh the previous test
@@ -86,7 +91,15 @@ internal sealed class XuiLiveAccount : IAsyncDisposable
         fixture.Server = XuiPanelTestServer.BuildDbRow(fixture.Realm.Id);
         await fixture.server_repo.Save(fixture.Server);
 
-        fixture.user = new PanelUserEntity { Username = email, Password = "T-xui-live" };
+        // Docs/24 D6: the member joins the default group (structure-seeded)
+        var group_repo = services.GetRequiredService<IUserGroupRepository>();
+
+        fixture.user = new PanelUserEntity
+        {
+            Username = email,
+            Password = "T-xui-live",
+            UserGroupId = (await group_repo.GetDefault()).Id,
+        };
         await fixture.user_repo.Save(fixture.user);
 
         // one debit wallet row anchors the renewal's NOT NULL WalletDebit FK
@@ -109,9 +122,25 @@ internal sealed class XuiLiveAccount : IAsyncDisposable
         };
         await fixture.account_repo.Save(fixture.Account);
 
+        // Docs/24 §3: renewals carry a NOT NULL plan reference — a minimal
+        // fixture plan per test (the harness DB is structure-only)
+        fixture.plan = new PlanEntity
+        {
+            Name = $"T-xui-live-{suffix}",
+            Title = "T-xui-live",
+            IsActive = true,
+            GroupId = fixture.user.UserGroupId,
+            UsersBase = 1,
+            UsersCap = 6,
+            CalculatorCode =
+                "using PhotonBypass.Domain.Static; public class Calculator { public static PriceCalculationOutput Compute(PriceCalculationInput input) => new PriceCalculationOutput { Price = 1 }; }",
+        };
+        await fixture.plan_repo.Save(fixture.plan);
+
         fixture.Renewal = new RenewalEntity
         {
             VpnAccountId = fixture.Account.Id,
+            PlanId = fixture.plan.Id,
             SimultaneousUser = 1,
             WalletDebit = fixture.wallet.Id,
             Comment = "T-xui-live",
@@ -132,6 +161,10 @@ internal sealed class XuiLiveAccount : IAsyncDisposable
     {
         await renewal_repo.Delete(Renewal);
         await account_repo.Delete(Account);
+
+        // the renewal is gone — the plan row is unreferenced and follows it
+        await plan_repo.Delete(plan);
+
         await wallet_repo.Delete(wallet);
         await user_repo.Delete(user);
         await server_repo.Delete(Server);

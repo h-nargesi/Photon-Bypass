@@ -1,6 +1,7 @@
 [
   {
     "Id": 99,
+    "UserGroupId": 1,
     "Status": 0,
     "Username": "User99",
     "Mobile": "+989113456789",
@@ -11,6 +12,7 @@
   },
   {
     "Id": 2,
+    "UserGroupId": 1,
     "Status": 0,
     "Username": "User2",
     "Mobile": "0912",
@@ -21,6 +23,7 @@
   },
   {
     "Id": 3,
+    "UserGroupId": 1,
     "Status": 0,
     "Username": "User3",
     "Mobile": "0913",
@@ -30,6 +33,7 @@
   },
   {
     "Id": 4,
+    "UserGroupId": 1,
     "Status": 0,
     "Username": "User4",
     "Mobile": "0914",
@@ -40,6 +44,7 @@
   },
   {
     "Id": 5,
+    "UserGroupId": 1,
     "Status": 0,
     "Username": "User5",
     "Mobile": "0915",
@@ -49,6 +54,7 @@
   },
   {
     "Id": 6,
+    "UserGroupId": 1,
     "Status": 0,
     "Username": "User6",
     "Mobile": "0916",
@@ -58,6 +64,7 @@
   },
   {
     "Id": 7,
+    "UserGroupId": 1,
     "Status": 2,
     "Username": "InactiveUser7",
     "Mobile": "0916",
@@ -66,6 +73,7 @@
   },
   {
     "Id": 8,
+    "UserGroupId": 1,
     "Status": 0,
     "Username": "User8",
     "Mobile": "0916",
@@ -75,6 +83,7 @@
   },
   {
     "Id": 9,
+    "UserGroupId": 1,
     "Status": 0,
     "Username": "User9",
     "Mobile": "09166",
@@ -84,16 +93,17 @@
   },
   {
     "Id": 10,
+    "UserGroupId": 1,
     "Status": 0,
     "Username": "User10",
     "Mobile": "0910",
     "Email": "user10@gmail.com",
     "Owner": null,
-    "CalculationMethod": 3,
-    "UserType": 4
+        "UserType": 4
   },
   {
     "Id": 11,
+    "UserGroupId": 1,
     "Status": 0,
     "Username": "DependentUser11",
     "Mobile": "0917",

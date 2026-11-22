@@ -25,7 +25,8 @@ public static class XuiEncoding
             // a limited TrafficLimit) fall back to their own share; 0 = unlimited.
             TotalTrafficBytes = renewal.CumulativeTrafficLeft ?? renewal.TrafficLimit ?? 0,
             ExpiryTime = ToExpiryTime(renewal),
-            LimitIp = renewal.SimultaneousUser,
+            // Docs/24 §2: NULL count = unlimited; x-ui encodes unlimited as 0
+            LimitIp = renewal.SimultaneousUser ?? 0,
         };
     }
 

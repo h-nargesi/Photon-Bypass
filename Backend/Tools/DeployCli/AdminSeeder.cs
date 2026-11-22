@@ -35,8 +35,9 @@ public static class AdminSeeder
                 SET @status = 'admin-exists';
             ELSE
             BEGIN
-                INSERT INTO dbo.PanelUser (Username, Password, Role, UserType)
-                VALUES (@username, @hash, @role, @userType);
+                INSERT INTO dbo.PanelUser (Username, Password, Role, UserType, UserGroupId)
+                VALUES (@username, @hash, @role, @userType,
+                        (SELECT TOP 1 Id FROM dbo.UserGroup WHERE IsDefault = 1));
                 SET @status = 'created';
             END
             SELECT @status;

@@ -45,7 +45,7 @@ public class SettlementRollbackTest : UnitLevelServiceInitializer
 
         var renewals_before = renewal_moq.Data.Count;
 
-        var code = (await billing_app.IssuePlanInvoice(230, "User2t|2u|120d|75g", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(230, "User2t|3p|2u|120d|75g", "پلن تست")).Data!.Value;
 
         await Assert.ThrowsAsync<UserException>(() => billing_app.SettleWallet(code));
 
@@ -111,7 +111,7 @@ public class SettlementRollbackPayerSeparationTest : UnitLevelServiceInitializer
 
         var renewals_before = renewal_moq.Data.Count;
 
-        var code = (await billing_app.IssuePlanInvoice(230, "User3t|2u|120d|75g|1r", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(230, "User3t|3p|2u|120d|75g|1r", "پلن تست")).Data!.Value;
 
         await Assert.ThrowsAsync<UserException>(() => billing_app.SettleWallet(code));
 
@@ -169,7 +169,7 @@ public class SettlementRollbackCompensationFailureTest : UnitLevelServiceInitial
 
         job_context.InjectJobContext(2, "User2", "User2");
 
-        var code = (await billing_app.IssuePlanInvoice(230, "User2t|2u|120d|75g", "پلن تست")).Data!.Value;
+        var code = (await billing_app.IssuePlanInvoice(230, "User2t|3p|2u|120d|75g", "پلن تست")).Data!.Value;
 
         await Assert.ThrowsAsync<UserException>(() => billing_app.SettleWallet(code));
 

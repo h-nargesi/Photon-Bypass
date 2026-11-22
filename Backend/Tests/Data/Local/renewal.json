@@ -3,44 +3,51 @@
     "Id": 1,
     "TrafficLimit": 10,
     "WalletDebit": 3,
-    "VpnAccountId": 3
+    "VpnAccountId": 3,
+    "PlanId": 3
   },
   {
     "Id": 2,
     "TrafficLimit": 10,
     "WalletDebit": 15,
-    "VpnAccountId": 4
+    "VpnAccountId": 4,
+    "PlanId": 3
   },
   {
     "Id": 3,
     "TrafficLimit": 10,
     "WalletDebit": 16,
-    "VpnAccountId": 5
+    "VpnAccountId": 5,
+    "PlanId": 3
   },
   {
     "Id": 4,
     "TrafficLimit": 10,
     "WalletDebit": 8,
-    "VpnAccountId": 6
+    "VpnAccountId": 6,
+    "PlanId": 3
   },
   {
     "Id": 5,
     "TrafficLimit": 10,
     "WalletDebit": 9,
-    "VpnAccountId": 6
+    "VpnAccountId": 6,
+    "PlanId": 3
   },
   {
     "Id": 6,
     "TrafficLimit": 10,
     "WalletDebit": 11,
     "WalletCredit": 13,
-    "VpnAccountId": 8
+    "VpnAccountId": 8,
+    "PlanId": 3
   },
   {
     "Id": 7,
     "TrafficLimit": 10,
     "WalletDebit": 12,
     "WalletCredit": 14,
-    "VpnAccountId": 9
+    "VpnAccountId": 9,
+    "PlanId": 3
   }
 ]

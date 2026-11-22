@@ -125,7 +125,7 @@ public static class UserManagerHelper
         }
     }
 
-    public static bool GetUser(this ITikConnection connection, VpnAccountEntity account, int shared_user,
+    public static bool GetUser(this ITikConnection connection, VpnAccountEntity account, int? shared_users,
         out UserModel user)
     {
         var no_need_to_save = true;
@@ -147,18 +147,20 @@ public static class UserManagerHelper
             no_need_to_save = false;
         }
 
-        if (user.SharedUsers != shared_user)
+        // Docs/24 §2: NULL = unlimited; User Manager encodes unlimited as 0
+        // (same convention as the x-ui limitIp mapping)
+        if (user.SharedUsers != (shared_users ?? 0))
         {
-            user.SharedUsers = shared_user;
+            user.SharedUsers = shared_users ?? 0;
             no_need_to_save = false;
         }
 
         return no_need_to_save;
     }
 
-    public static void CheckUser(this ITikConnection connection, VpnAccountEntity account, int shared_user)
+    public static void CheckUser(this ITikConnection connection, VpnAccountEntity account, int? shared_users)
     {
-        if (!connection.GetUser(account, shared_user, out var user))
+        if (!connection.GetUser(account, shared_users, out var user))
         {
             connection.Save(user);
         }

@@ -71,7 +71,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
         // /api/plan/new-account — the first purchase creates the VPN account
         var realm_id = int.Parse((await Realms()).Single(realm => realm["isSelectable"] == "True")["id"]!);
 
-        var purchase = await NewAccount(null, realm_id, 1, 120, 50);
+        var purchase = await NewAccount(null, realm_id, 1, 1, 120, 50);
         Assert.NotNull(purchase["invoiceCode"]);
 
         // /api/billing/get-invoice — before the top-up only the kind is
@@ -111,7 +111,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
         Assert.Equal(username, plan_info["target"]);
 
         // /api/plan/estimate — a renewal estimate for the existing account
-        var estimate = await Estimate(account_id, 1, 120, 50);
+        var estimate = await Estimate(account_id, 1, 1, 120, 50);
         Assert.NotNull(estimate);
         Assert.NotNull(estimate["price"]);
         Assert.NotNull(estimate["days"]);
@@ -122,7 +122,7 @@ public partial class RegisterAndBuy(ProgramLevelInitializer.Factory factory) : H
         await FakeAddMoney(username, int.Parse(estimate["price"]!));
 
         // /api/plan/renewal — stacks a second plan on the same account
-        var renewal = await Renewal(account_id, 1, 120, 50);
+        var renewal = await Renewal(account_id, 1, 1, 120, 50);
         Assert.NotNull(renewal);
         Assert.Equal(estimate["price"], renewal["currentPrice"]);
         Assert.NotNull(renewal["invoiceCode"]);

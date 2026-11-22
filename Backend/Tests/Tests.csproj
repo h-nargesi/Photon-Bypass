@@ -78,12 +78,15 @@
 		<None Update="Data\Local\plan-state.json">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
-		<None Update="Data\Local\price.json">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
-		<None Update="Data\Local\realms.json">
-		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-		</None>
+        <None Update="Data\Local\plan.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="Data\Local\user-group.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        <None Update="Data\Local\realms.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
 		<None Update="Data\Local\server.json">
 		  <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>

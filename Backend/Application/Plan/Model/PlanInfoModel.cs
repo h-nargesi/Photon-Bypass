@@ -7,6 +7,9 @@ public class RealmChoiceModel
 
     public string Name { get; init; } = null!;
 
+    /// <summary>Docs/24 D8: user-facing title (falls back to <c>Name</c>).</summary>
+    public string DisplayName { get; init; } = null!;
+
     /// <summary>False when the realm has no free capacity or client slots (T4-E).</summary>
     public bool IsSelectable { get; init; }
 }
