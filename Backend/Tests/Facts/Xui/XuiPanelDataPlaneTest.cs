@@ -61,26 +61,33 @@ public class XuiPanelDataPlaneTest : OutSourceLevelServiceInitializer
 
         await api.Value.AddClient(server, new XuiClientModel { Email = email, Uuid = uuid });
 
-        var inbound = await api.Value.GetInbound(server);
-        var path = System.Text.Json.JsonDocument.Parse(inbound.StreamSettings!).RootElement
-            .GetProperty("wsSettings").GetProperty("path").GetString()!;
-        var host = XuiPanelTestServer.Vm.Ip;
-
-        // sshd as the tunnel destination: it waits on the pre-auth version
-        // line, so the tunnel stays open for the whole poll without the panel
-        // closing an idle HTTP connection
-        await using var tunnel = await VlessWsClient.ConnectAsync(
-            host, inbound.Port, path, uuid, host, 22);
-
+        // everything from here on is inside the try: a failure between the
+        // add and the tunnel connect would otherwise leak the client into the
+        // shared-collection state (the panel keeps it until the next run's
+        // snapshot restore)
+        VlessWsClient? tunnel = null;
         try
         {
+            var inbound = await api.Value.GetInbound(server);
+            var path = System.Text.Json.JsonDocument.Parse(inbound.StreamSettings!).RootElement
+                .GetProperty("wsSettings").GetProperty("path").GetString()!;
+            var host = XuiPanelTestServer.Vm.Ip;
+
+            // sshd as the tunnel destination: it waits on the pre-auth version
+            // line, so the tunnel stays open for the whole poll without the panel
+            // closing an idle HTTP connection
+            tunnel = await VlessWsClient.ConnectAsync(
+                host, inbound.Port, path, uuid, host, 22);
+
             // the online set is refreshed asynchronously: keep the tunnel
-            // minimally active while waiting for the panel to list it
+            // minimally active while waiting for the panel to list it. The cap
+            // accommodates slow virtualization hosts (e.g. VirtualBox NEM),
+            // where the panel's online refresh can take minutes
             await XuiPanelTrafficProbe.PollUntilAsync(async () =>
             {
                 await tunnel.NudgeAsync();
                 return (await api.Value.ListOnlineClients(server)).Any(online => online.Email == email);
-            }, $"the connected client '{email}' to appear in onlines", cap: TimeSpan.FromSeconds(120));
+            }, $"the connected client '{email}' to appear in onlines", cap: TimeSpan.FromSeconds(300));
 
             var entry = (await api.Value.ListOnlineClients(server)).Single(online => online.Email == email);
 
@@ -88,7 +95,10 @@ public class XuiPanelDataPlaneTest : OutSourceLevelServiceInitializer
         }
         finally
         {
-            await tunnel.DisposeAsync();
+            if (tunnel is not null)
+            {
+                await tunnel.DisposeAsync();
+            }
             await api.Value.RemoveClient(server, uuid);
         }
     }

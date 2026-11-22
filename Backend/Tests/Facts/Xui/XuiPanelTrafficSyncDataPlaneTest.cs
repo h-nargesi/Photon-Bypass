@@ -168,7 +168,17 @@ public class XuiPanelTrafficSyncDataPlaneTest : OutSourceLevelServiceInitializer
         }
         finally
         {
-            await api.Value.RemoveClient(server, new_uuid);
+            // the rotation may not have happened when the failure hit: the
+            // client then still carries the old uuid and removing the new one
+            // would fail (and leak it into the shared-collection state)
+            try
+            {
+                await api.Value.RemoveClient(server, new_uuid);
+            }
+            catch
+            {
+                await api.Value.RemoveClient(server, old_uuid);
+            }
         }
     }
 

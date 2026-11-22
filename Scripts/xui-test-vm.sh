@@ -348,6 +348,19 @@ EOF
 
 # --- VM access --------------------------------------------------------------------
 
+wait_inbound_port() { # xray must actually run the test inbound, not just boot the panel
+    local start
+    start=$(date +%s)
+    log "waiting for the test inbound port $XUI_INBOUND_PORT (xray startup, timeout: ${LOGIN_TIMEOUT_SECONDS}s)"
+    while [ $(( $(date +%s) - start )) -lt "$LOGIN_TIMEOUT_SECONDS" ]; do
+        if timeout 3 bash -c "</dev/tcp/$XUI_VM_IP/$XUI_INBOUND_PORT" 2>/dev/null; then
+            return 0
+        fi
+        sleep 3
+    done
+    return 1
+}
+
 vm_ssh() { # rest = remote command
     ssh -i "$KEY_DIR/xui-test-vm-key" -o IdentitiesOnly=yes \
         -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \
@@ -371,7 +384,9 @@ wait_ssh() {
 # --- panel API --------------------------------------------------------------------
 
 panel_login() { # prints the login response body; cookie jar at $CACHE_DIR/panel.cookies
-    curl -s --max-time 10 -c "$CACHE_DIR/panel.cookies" \
+    # --noproxy: the panel is link-local — with a corporate proxy in http_proxy
+    # the request would be intercepted and the login contract never seen
+    curl -s --max-time 10 --noproxy '*' -c "$CACHE_DIR/panel.cookies" \
         -H 'Content-Type: application/json' \
         -d "{\"username\":\"$XUI_PANEL_USER\",\"password\":\"$XUI_PANEL_PASSWORD\"}" \
         "http://$XUI_VM_IP:$XUI_PANEL_PORT/login"
@@ -395,7 +410,7 @@ wait_panel_login() {
 }
 
 panel_post() { # $1=path, $2=json-body
-    curl -s --max-time 15 -b "$CACHE_DIR/panel.cookies" \
+    curl -s --max-time 15 --noproxy '*' -b "$CACHE_DIR/panel.cookies" \
         -H 'Content-Type: application/json' -H 'X-Requested-With: XMLHttpRequest' \
         -d "$2" "http://$XUI_VM_IP:$XUI_PANEL_PORT/$1"
 }
@@ -426,7 +441,7 @@ create_test_inbound() { # prints the created inbound id
         || die "inbound add failed: $(printf '%s' "$response" | jq -c '{success, msg}' 2>/dev/null || printf 'unparseable response')"
 
     local list inbound_id
-    list=$(curl -s --max-time 15 -b "$CACHE_DIR/panel.cookies" \
+    list=$(curl -s --max-time 15 --noproxy '*' -b "$CACHE_DIR/panel.cookies" \
         -H 'X-Requested-With: XMLHttpRequest' \
         "http://$XUI_VM_IP:$XUI_PANEL_PORT/xui/API/inbounds/")
     inbound_id=$(printf '%s' "$list" | jq -r --argjson port "$XUI_INBOUND_PORT" \
@@ -448,12 +463,18 @@ configure_freedom_allow() { # $1 = host-only subnet cidr (e.g. 192.168.56.0/24)
     rules=$(printf '[{"action":"allow","ip":["%s","127.0.0.0/8"]}]' "$1")
 
     note "allowing $1 + loopback on the direct freedom outbound (finalRules)"
-    vm_ssh sudo sqlite3 /etc/x-ui/x-ui.db \
-        "UPDATE outbounds SET settings = json_set(settings, '\$.finalRules', '$rules') WHERE tag = 'direct';" \
+    # the SQL travels over stdin: its double quotes would otherwise terminate the
+    # remote shell quoting, and json() matters — without it sqlite stores the
+    # array as a JSON *string* and xray refuses to start ("cannot unmarshal
+    # string into Go struct field FreedomConfig.finalRules")
+    printf "UPDATE outbounds SET settings = json_set(settings, '\$.finalRules', json('%s')) WHERE tag = 'direct';\n" "$rules" \
+        | vm_ssh sudo sqlite3 /etc/x-ui/x-ui.db \
         || die "could not patch the direct outbound finalRules"
     vm_ssh sudo systemctl restart x-ui
 
     wait_panel_login || die "the panel did not come back after the freedom-allow patch"
+    wait_inbound_port || die "the test inbound (port $XUI_INBOUND_PORT) is not reachable — xray may have failed to start; check 'journalctl -u x-ui' on the VM"
+    log "inbound port $XUI_INBOUND_PORT is answering (xray up)"
 }
 
 # --- provisioning -----------------------------------------------------------------
