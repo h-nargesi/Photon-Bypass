@@ -22,6 +22,7 @@ IF OBJECT_ID('PanelUser') IS NULL BEGIN
 		UserType			INT				NOT NULL	CONSTRAINT DF_PanelUser_UserType DEFAULT 0,
 		-- Docs/20 D2/D9: 0=User, 1=Manager, 2=Admin
 		Role				TINYINT			NOT NULL	CONSTRAINT DF_PanelUser_Role DEFAULT 0,
+		Description			VARCHAR(255)		NULL,
 		-- Telegram deep-link binding; the connection itself is the proof of
 		-- validity, so no IsXxxValid flag exists for this column
 		TelegramChatId		BIGINT				NULL
