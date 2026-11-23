@@ -23,7 +23,8 @@ public class TestAppSettingsHostTest : IDisposable
             ["RateLimitOptions:PermitLimit"] = "100000",
         });
         actual["LocalDatabaseOptions:ConnectionString"].Should().Contain("User Id=test");
-        actual["LocalDatabaseOptions:PackageDatabase"].Should().Be("FastBypass_DbScenario");
+        actual["LocalDatabaseOptions:PackageDatabase"].Should().Be(portal.PackageDatabase);
+        portal.PackageDatabase.Should().MatchRegex("^FastBypass_DbS[0-9a-f]{32}$");
         var issuer = actual["Issuer:Code"];
         issuer.Should().NotBeNullOrEmpty();
         var decode = () => Convert.FromBase64String(issuer!);

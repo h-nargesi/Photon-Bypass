@@ -55,8 +55,8 @@ public class PasswordEndpointRateLimitTest(RateLimitTest.LowRateFactory factory)
     [Fact]
     public async Task ChangeOvpnPassword_RepeatedWrongTokens_Gets429()
     {
-        // unique mobile suffix — scenario classes run in parallel against the
-        // shared scenario database, a duplicate mobile fails registration
+        // unique mobile suffix — this class shares its database across its
+        // own methods, so a repeated mobile fails registration
         var username = "rate_user02";
         await Register(username, "99");
         await Login(username, "Passw0rd1");

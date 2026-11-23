@@ -183,7 +183,11 @@ export class RenewalComponent implements OnInit {
     }
 
     this.renewal.accountId = this.user_service.accountId;
-    this.renewal.target = this.user_service.targetName;
+    // First load leaves the switcher unset (UserService). Keep the plan's
+    // target until the user actually picks another account.
+    if (this.user_service.targetName) {
+      this.renewal.target = this.user_service.targetName;
+    }
 
     this.service.renewal(this.renewal).subscribe({
       next: async (result) => {
@@ -281,9 +285,17 @@ export class RenewalComponent implements OnInit {
     this.current_user = await this.user_service.user();
     this.service.info(this.user_service.accountId).subscribe((plan) => {
       if (!plan) return;
-      this.renewal = plan;
+      // PlanInfo carries display-only fields (requiresRealmChoice, realmId).
+      // The renewal POST is a RenewalContext: realmId stays absent until a
+      // stale account re-picks a realm.
+      this.renewal = {
+        days: plan.days,
+        gigabytes: plan.gigabytes,
+        simultaneousUserCount: plan.simultaneousUserCount,
+        target: plan.target,
+        accountId: plan.accountId,
+      };
       this.requiresRealmChoice = plan.requiresRealmChoice;
-      this.renewal.realmId = undefined;
 
       if (this.maxUserCounts.includes(plan.simultaneousUserCount)) {
         this.selectedUserCount = plan.simultaneousUserCount;

@@ -76,10 +76,21 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 
     public class Factory : WebApplicationFactory<PortalProgram>
     {
+        // One catalog per class fixture. xUnit runs the methods of a class
+        // one after another, and runs classes in parallel; a shared catalog
+        // is what made ALTER/DROP collide.
+        private readonly string packageKey = "DbS" + Guid.NewGuid().ToString("N");
+        private string? dropConnectionString;
+        private int dropped;
+
+        public string PackageDatabase => "FastBypass_" + packageKey;
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             base.ConfigureWebHost(builder);
             ApplyTestConfiguration(builder);
+            dropConnectionString = TestAppSettings.Read()["LocalDatabaseOptions:ConnectionString"]
+                                   ?? throw new Exception("LocalDatabaseOptions:ConnectionString was not set.");
 
             builder.ConfigureServices(services =>
             {
@@ -95,12 +106,32 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
 
                 var init_mikrotik = scope.Register<MikrotikInitializer>(TestPackageMikrotik, this);
 
-                // The outsource pool builds a key once per process. Scenario
-                // classes share FastBypass_DbScenario and each one assumes the
-                // seed (admin only). Rebuild it here; the Mikrotik VM stays pooled.
+                // Fresh seed (admin only) for this class. The Mikrotik VM
+                // stays pooled; only the database is per fixture.
                 var database = scope.ServiceProvider.GetRequiredService<LocalDatabaseInitializer>();
-                Task.WaitAll(init_mikrotik, database.Initialize(TestPackageDatabase));
+                Task.WaitAll(init_mikrotik, database.Initialize(TestPackageDatabase, packageKey));
             });
+        }
+
+        public override async ValueTask DisposeAsync()
+        {
+            await base.DisposeAsync();
+            await DropScenarioDatabaseAsync();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            if (disposing)
+                DropScenarioDatabaseAsync().GetAwaiter().GetResult();
+        }
+
+        private async Task DropScenarioDatabaseAsync()
+        {
+            if (dropConnectionString == null || Interlocked.Exchange(ref dropped, 1) != 0)
+                return;
+
+            await LocalDatabaseInitializer.DropIfExists(dropConnectionString, PackageDatabase);
         }
 
         /// <summary>
@@ -143,8 +174,9 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
             settings["ManagementOptions:AllowRegistration"] = "true";
 
             // The initializer drops and recreates this catalog. The host must
-            // use the same name; otherwise repositories stay on FastBypass.
-            settings["LocalDatabaseOptions:PackageDatabase"] = "FastBypass_" + TestPackageDatabase;
+            // use the same name; otherwise repositories stay on the connection
+            // string's database.
+            settings["LocalDatabaseOptions:PackageDatabase"] = PackageDatabase;
         }
     }
 }

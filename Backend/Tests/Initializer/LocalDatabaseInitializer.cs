@@ -13,9 +13,20 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options, IConfigur
 {
     private readonly string rawConnectionString = options.RawConnectionString;
 
-    public async Task Initialize(string key)
+    public Task Initialize(string key) => Initialize(key, key);
+
+    /// <param name="key">Seed folder under <c>Data/Sql</c>. Also the catalog suffix when <paramref name="catalogSuffix"/> is omitted.</param>
+    /// <param name="catalogSuffix">
+    /// Catalog name after <c>FastBypass_</c>. Scenario fixtures pass a unique
+    /// suffix so parallel classes do not share a database, while still loading
+    /// the <c>DbScenario</c> seed.
+    /// </param>
+    public async Task Initialize(string key, string catalogSuffix)
     {
-        _ = Check(key);
+        if (string.IsNullOrWhiteSpace(catalogSuffix))
+            throw new Exception("Catalog suffix was not set.");
+
+        options.Database = "FastBypass_" + catalogSuffix;
 
         var structure_files_path = configuration["LocalDatabaseOptions:StructureFilesPath"]
                                    ?? throw new Exception("LocalDatabaseOptions:StructureFilesPath was not set.");
@@ -39,7 +50,7 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options, IConfigur
         // DROP fails when this session is standing in the catalog being dropped.
         LeavePackageDatabase(connection);
 
-        var structures = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_structure_files);
+        var structures = DatabaseScriptPrepare.ReplaceDatabaseName(catalogSuffix, await loading_structure_files);
         if (structures.Count == 0)
             throw new Exception($"No structure scripts in {structure_dir}.");
 
@@ -53,7 +64,7 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options, IConfigur
         connection.ChangeDatabase(options.Database
                                   ?? throw new Exception("Test database name was not set."));
 
-        var data = DatabaseScriptPrepare.ReplaceDatabaseName(key, await SqlFileDependencyHelper.GetSortedFiles(data_dir));
+        var data = DatabaseScriptPrepare.ReplaceDatabaseName(catalogSuffix, await SqlFileDependencyHelper.GetSortedFiles(data_dir));
 
         foreach (var sql in data.Where(s => !string.IsNullOrWhiteSpace(s)))
             await connection.ExecuteAsync(sql);
@@ -113,18 +124,44 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options, IConfigur
     private async Task DropPackageDatabase(SqlConnection connection)
     {
         var name = options.Database ?? throw new Exception("Test database name was not set.");
-        if (name.Any(ch => !char.IsAsciiLetterOrDigit(ch) && ch != '_'))
-            throw new Exception("Refusing to drop a database with an unexpected name.");
+        ValidateDatabaseName(name);
 
         LeavePackageDatabase(connection);
-        await connection.ExecuteAsync($"""
-            IF DB_ID(N'{name}') IS NOT NULL
-            BEGIN
-                ALTER DATABASE [{name}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                DROP DATABASE [{name}];
-            END
-            """);
+        await connection.ExecuteAsync(DropScript(name));
     }
+
+    /// <summary>
+    /// Drops a package catalog from a fresh session on <c>master</c>.
+    /// Used when the fixture host is already gone and its scoped initializer
+    /// can no longer be resolved.
+    /// </summary>
+    internal static async Task DropIfExists(string connectionString, string databaseName)
+    {
+        ValidateDatabaseName(databaseName);
+
+        var builder = new SqlConnectionStringBuilder(connectionString)
+        {
+            InitialCatalog = "master"
+        };
+
+        await using var connection = new SqlConnection(builder.ConnectionString);
+        await connection.OpenAsync();
+        await connection.ExecuteAsync(DropScript(databaseName));
+    }
+
+    private static void ValidateDatabaseName(string name)
+    {
+        if (name.Any(ch => !char.IsAsciiLetterOrDigit(ch) && ch != '_'))
+            throw new Exception("Refusing to drop a database with an unexpected name.");
+    }
+
+    private static string DropScript(string name) => $"""
+        IF DB_ID(N'{name}') IS NOT NULL
+        BEGIN
+            ALTER DATABASE [{name}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+            DROP DATABASE [{name}];
+        END
+        """;
 
     private void LeavePackageDatabase(SqlConnection connection)
     {
