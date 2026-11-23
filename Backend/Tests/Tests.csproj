@@ -36,6 +36,7 @@
         <ProjectReference Include="../Infrastructure/Infrastructure.csproj" />
 		<ProjectReference Include="../Shared/Shared.csproj" />
 		<ProjectReference Include="../Domain/Domain.csproj" />
+		<ProjectReference Include="../Tools/DeployCli/DeployCli.csproj" />
 	</ItemGroup>
 
     <ItemGroup>

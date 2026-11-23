@@ -1,13 +1,17 @@
+using System.Text;
+
 namespace PhotonBypass.DeployCli;
 
 /// <summary>
-/// First-release deploy tool (Docs/19). Two commands:
-///   create-admin — insert the single admin account (Docs/20 D2/D9/D11) with a
-///                  real password; refuses to overwrite usernames or add a second admin.
-///   verify       — smoke-check the stored hash against a password.
-/// Connection: --secrets &lt;path&gt; (local copy of private/secrets.json) or the
-/// DEPLOY_CONNECTION_STRING environment variable. Password: --password or the
-/// DEPLOY_ADMIN_PASSWORD environment variable. Secrets are never printed.
+/// First-release deploy tool (Docs/19). Three commands:
+///   create-admin   — insert the single admin account (Docs/20 D2/D9/D11) with a
+///                    real password; refuses to overwrite usernames or add a second admin.
+///   verify         — smoke-check the stored hash against a password.
+///   hash-passwords — hash a text file of passwords to stdout. Offline: no database.
+/// Connection (create-admin/verify only): --secrets &lt;path&gt; (local copy of
+/// private/secrets.json) or the DEPLOY_CONNECTION_STRING environment variable.
+/// Password: --password or the DEPLOY_ADMIN_PASSWORD environment variable.
+/// Secrets and plaintext passwords are never printed.
 /// </summary>
 internal static class Program
 {
@@ -19,18 +23,27 @@ internal static class Program
         usage: DeployCli <command> [options]
 
         commands:
-          create-admin   insert the first-release admin account (exactly one is allowed)
-          verify         verify an admin username/password against the stored hash
+          create-admin    insert the first-release admin account (exactly one is allowed)
+          verify          verify an admin username/password against the stored hash
+          hash-passwords  hash a UTF-8 password file to stdout (no database)
 
-        options:
+        options for create-admin and verify:
           --username <name>     account username (required)
           --password <value>    account password (alternative: env DEPLOY_ADMIN_PASSWORD)
           --secrets <path>      read LocalDatabaseOptions:ConnectionString from this
                                 local copy of private/secrets.json (alternative:
                                 env DEPLOY_CONNECTION_STRING)
 
+        options for hash-passwords:
+          --file <path>         one password per line. Blank lines stay blank so
+                                line numbers match. Hashes are written to stdout;
+                                the input file is not modified.
+
         exit codes: 0 = ok, 1 = usage error, 2 = failure
         """;
+
+    private static readonly Encoding PasswordFileEncoding = new UTF8Encoding(
+        encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
     private static int Main(string[] args)
     {
@@ -50,6 +63,11 @@ internal static class Program
         if (args.Length == 0)
         {
             return Usage("missing command");
+        }
+
+        if (args[0] == "hash-passwords")
+        {
+            return HashPasswords(args[1..]);
         }
 
         if (args[0] is not ("create-admin" or "verify"))
@@ -128,6 +146,84 @@ internal static class Program
     private static string? Next(string[] args, ref int index)
     {
         return ++index < args.Length ? args[index] : null;
+    }
+
+    private static int HashPasswords(string[] args)
+    {
+        var path = ParseFileOption(args);
+        if (path is null)
+        {
+            return ExitUsage;
+        }
+
+        if (!File.Exists(path))
+        {
+            Console.Error.WriteLine($"error: password file not found: {path}");
+            return ExitFailure;
+        }
+
+        string[] lines;
+        try
+        {
+            lines = File.ReadAllLines(path, PasswordFileEncoding);
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException or DecoderFallbackException)
+        {
+            Console.Error.WriteLine($"error: {exception.Message}");
+            return ExitFailure;
+        }
+
+        var batch = PasswordListHasher.Hash(lines);
+        if (!batch.Succeeded)
+        {
+            if (batch.InvalidLines.Count == 0)
+            {
+                Console.Error.WriteLine("error: password file has no passwords");
+            }
+            else
+            {
+                foreach (var invalid in batch.InvalidLines)
+                {
+                    Console.Error.WriteLine($"error: line {invalid.LineNumber}: {invalid.Message}");
+                }
+            }
+
+            return ExitFailure;
+        }
+
+        foreach (var hash in batch.Hashes)
+        {
+            Console.WriteLine(hash ?? string.Empty);
+        }
+
+        return ExitOk;
+    }
+
+    private static string? ParseFileOption(string[] args)
+    {
+        var path = null as string;
+
+        for (var i = 0; i < args.Length; i++)
+        {
+            switch (args[i])
+            {
+                case "--file" when Next(args, ref i) is { } value:
+                    path = value;
+                    break;
+                default:
+                    Usage($"unknown or incomplete option '{args[i]}'");
+                    return null;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            Usage("--file is required");
+            return null;
+        }
+
+        return path;
     }
 
     private static int CreateAdmin(Resolved options)
