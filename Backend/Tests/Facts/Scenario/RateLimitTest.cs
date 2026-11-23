@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Hosting;
 using PhotonBypass.Test.Initializer;
 using System.Net;
 using System.Net.Http.Json;
@@ -27,17 +26,17 @@ public class RateLimitTest(RateLimitTest.LowRateFactory factory)
 
     public class LowRateFactory : ProgramLevelInitializer.Factory
     {
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        protected override void ConfigureHostOverrides(IDictionary<string, string?> settings)
         {
-            base.ConfigureWebHost(builder);
+            base.ConfigureHostOverrides(settings);
 
             // one permit per policy per window: the endpoint buckets are
             // separate (register ≠ auth), so each helper call survives but
             // the very next hit on the same policy is throttled
             foreach (var policy in PhotonBypass.Portal.ServiceFactory.AllRateLimitPolicies)
             {
-                builder.UseSetting($"RateLimitOptions:{policy}:PermitLimit", PermitLimit.ToString());
-                builder.UseSetting($"RateLimitOptions:{policy}:WindowSeconds", "60");
+                settings[$"RateLimitOptions:{policy}:PermitLimit"] = PermitLimit.ToString();
+                settings[$"RateLimitOptions:{policy}:WindowSeconds"] = "60";
             }
         }
     }

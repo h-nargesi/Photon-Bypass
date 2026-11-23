@@ -23,25 +23,71 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options, IConfigur
         var data_files_path = configuration["LocalDatabaseOptions:DataFilesPath"]
                               ?? throw new Exception("LocalDatabaseOptions:DataFilesPath was not set.");
 
+        // The configured path is relative to the test output. Walk parents too,
+        // so a run whose working directory is the repo still finds the scripts.
+        var structure_dir = ResolveSqlDirectory(structure_files_path);
+        // Some packages (DbTest2, XuiLive) create the schema and insert from
+        // the test itself. A missing seed folder is an empty script list.
+        var data_dir = TryResolveSqlDirectory(data_files_path + key);
+
         var loading_structure_files =
-            SqlFileDependencyHelper.GetSortedFiles(structure_files_path);
+            SqlFileDependencyHelper.GetSortedFiles(structure_dir);
 
         await using var connection = new SqlConnection(rawConnectionString);
 
         await connection.OpenAsync();
+        // DROP fails when this session is standing in the catalog being dropped.
+        LeavePackageDatabase(connection);
+
         var structures = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_structure_files);
+        if (structures.Count == 0)
+            throw new Exception($"No structure scripts in {structure_dir}.");
 
-        var loading_data_files =
-            SqlFileDependencyHelper.GetSortedFiles(data_files_path + key);
-
-        await connection.ExecuteAsync("DROP DATABASE IF EXISTS " + options.Database);
+        await DropPackageDatabase(connection);
         foreach (var script in structures.SelectMany(x => x.Split("GO")).Where(s => !string.IsNullOrWhiteSpace(s)))
             await connection.ExecuteAsync(script);
 
-        var data = DatabaseScriptPrepare.ReplaceDatabaseName(key, await loading_data_files);
+        if (data_dir == null)
+            return;
+
+        connection.ChangeDatabase(options.Database
+                                  ?? throw new Exception("Test database name was not set."));
+
+        var data = DatabaseScriptPrepare.ReplaceDatabaseName(key, await SqlFileDependencyHelper.GetSortedFiles(data_dir));
 
         foreach (var sql in data.Where(s => !string.IsNullOrWhiteSpace(s)))
             await connection.ExecuteAsync(sql);
+    }
+
+    /// <summary>
+    /// Resolves a configured SQL directory. Relative paths are tried at the
+    /// current directory and at <see cref="AppContext.BaseDirectory"/>, then
+    /// at each parent, so the same appsettings value works from the test
+    /// project and from <c>bin/Debug/net8.0</c>.
+    /// </summary>
+    internal static string ResolveSqlDirectory(string configured) =>
+        TryResolveSqlDirectory(configured) ?? throw new Exception($"SQL path not found: {configured}");
+
+    private static string? TryResolveSqlDirectory(string configured)
+    {
+        if (string.IsNullOrWhiteSpace(configured))
+            throw new Exception("SQL path was not set.");
+
+        if (Path.IsPathRooted(configured) && Directory.Exists(configured))
+            return Path.GetFullPath(configured);
+
+        var starts = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+        foreach (var start in starts.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            for (var dir = new DirectoryInfo(start); dir != null; dir = dir.Parent)
+            {
+                var candidate = Path.GetFullPath(Path.Combine(dir.FullName, configured));
+                if (Directory.Exists(candidate))
+                    return candidate;
+            }
+        }
+
+        return null;
     }
 
     public Task Check(string key)
@@ -56,7 +102,34 @@ internal class LocalDatabaseInitializer(LocalDapperOptionsMoq options, IConfigur
 
         await using var connection = new SqlConnection(rawConnectionString);
         await connection.OpenAsync();
-        await connection.ExecuteAsync("DROP DATABASE IF EXISTS " + options.Database);
+        await DropPackageDatabase(connection);
+    }
+
+    /// <summary>
+    /// Other hosts (the previous scenario class, or a killed test process)
+    /// keep pooled sessions in the package catalog. A plain DROP then fails
+    /// with "currently in use". Single-user rolls those sessions back first.
+    /// </summary>
+    private async Task DropPackageDatabase(SqlConnection connection)
+    {
+        var name = options.Database ?? throw new Exception("Test database name was not set.");
+        if (name.Any(ch => !char.IsAsciiLetterOrDigit(ch) && ch != '_'))
+            throw new Exception("Refusing to drop a database with an unexpected name.");
+
+        LeavePackageDatabase(connection);
+        await connection.ExecuteAsync($"""
+            IF DB_ID(N'{name}') IS NOT NULL
+            BEGIN
+                ALTER DATABASE [{name}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+                DROP DATABASE [{name}];
+            END
+            """);
+    }
+
+    private void LeavePackageDatabase(SqlConnection connection)
+    {
+        if (string.Equals(connection.Database, options.Database, StringComparison.OrdinalIgnoreCase))
+            connection.ChangeDatabase("master");
     }
 
     public static void CreateInstance(IServiceCollection services)

@@ -18,7 +18,11 @@ public class ServiceInitializer
     {
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Development");
 
-        var builder = WebApplication.CreateBuilder()
+        var builder = WebApplication.CreateBuilder();
+        // Development json (Portal's, copied into this output) is already loaded.
+        // The test file must land after it, before options and the startup guard read config.
+        TestAppSettings.Apply(builder.Configuration);
+        builder
             .AddAppServices()
             .AddPortalServices()
             .AddAdminServices();

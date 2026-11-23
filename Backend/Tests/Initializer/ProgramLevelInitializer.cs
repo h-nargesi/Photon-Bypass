@@ -79,41 +79,7 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             base.ConfigureWebHost(builder);
-
-            // scenario classes share one Factory + IMemoryCache + client IP:
-            // a failed-login test would trip the adaptive captcha gate for
-            // every later test in the class — captcha stays off here and is
-            // covered by the dedicated CaptchaTest factory
-            builder.UseSetting("CaptchaOptions:Enabled", "false");
-
-            // raise every endpoint policy in one sweep (per-policy keys in
-            // appsettings.json would otherwise win over the global fallback)
-            builder.UseSetting("RateLimitOptions:PermitLimit", "100000");
-            builder.UseSetting("RateLimitOptions:WindowSeconds", "60");
-            foreach (var policy in PhotonBypass.Portal.ServiceFactory.AllRateLimitPolicies)
-            {
-                builder.UseSetting($"RateLimitOptions:{policy}:PermitLimit", "100000");
-                builder.UseSetting($"RateLimitOptions:{policy}:WindowSeconds", "60");
-            }
-            // scenario tests drive the register → buy journey; the production
-            // default (off, Docs/20 D11) must not disable them
-            builder.UseSetting("ManagementOptions:AllowRegistration", "true");
-
-            // this host's content root is the Portal project, so the
-            // test-only keys (moved out of the base appsettings into
-            // Tests/appsettings.json) must be fed in explicitly — values
-            // come from that file to keep a single source of truth
-            var test_settings = new ConfigurationBuilder()
-                .SetBasePath(AppContext.BaseDirectory)
-                .AddJsonFile("appsettings.json", optional: false)
-                .Build();
-
-            builder.UseSetting("LocalDatabaseOptions:StructureFilesPath",
-                test_settings["LocalDatabaseOptions:StructureFilesPath"]);
-            builder.UseSetting("LocalDatabaseOptions:DataFilesPath",
-                test_settings["LocalDatabaseOptions:DataFilesPath"]);
-            builder.UseSetting("VirtualBoxOptions:AppPath",
-                test_settings["VirtualBoxOptions:AppPath"]);
+            ApplyTestConfiguration(builder);
 
             builder.ConfigureServices(services =>
             {
@@ -128,10 +94,57 @@ public abstract class ProgramLevelInitializer(Factory factory) : IClassFixture<F
                 using var scope = sp.CreateScope();
 
                 var init_mikrotik = scope.Register<MikrotikInitializer>(TestPackageMikrotik, this);
-                var init_database = scope.Register<LocalDatabaseInitializer>(TestPackageDatabase, this);
 
-                Task.WaitAll(init_mikrotik, init_database);
+                // The outsource pool builds a key once per process. Scenario
+                // classes share FastBypass_DbScenario and each one assumes the
+                // seed (admin only). Rebuild it here; the Mikrotik VM stays pooled.
+                var database = scope.ServiceProvider.GetRequiredService<LocalDatabaseInitializer>();
+                Task.WaitAll(init_mikrotik, database.Initialize(TestPackageDatabase));
             });
+        }
+
+        /// <summary>
+        /// Content root stays the Portal project. Every key in the test
+        /// project's own appsettings is applied after that file, then the
+        /// harness overrides (captcha, rate limit, registration) so a
+        /// subclass can replace them by overriding <see cref="ConfigureHostOverrides"/>.
+        /// </summary>
+        protected void ApplyTestConfiguration(IWebHostBuilder builder)
+        {
+            builder.ConfigureAppConfiguration((_, configuration) =>
+            {
+                TestAppSettings.Apply(configuration);
+                var harness = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+                ConfigureHostOverrides(harness);
+                configuration.AddInMemoryCollection(harness);
+            });
+        }
+
+        protected virtual void ConfigureHostOverrides(IDictionary<string, string?> settings)
+        {
+            // scenario classes share one Factory + IMemoryCache + client IP:
+            // a failed-login test would trip the adaptive captcha gate for
+            // every later test in the class — captcha stays off here and is
+            // covered by the dedicated CaptchaTest factory
+            settings["CaptchaOptions:Enabled"] = "false";
+
+            // raise every endpoint policy in one sweep (per-policy keys in
+            // Portal appsettings.json would otherwise win over the global fallback)
+            settings["RateLimitOptions:PermitLimit"] = "100000";
+            settings["RateLimitOptions:WindowSeconds"] = "60";
+            foreach (var policy in PhotonBypass.Portal.ServiceFactory.AllRateLimitPolicies)
+            {
+                settings[$"RateLimitOptions:{policy}:PermitLimit"] = "100000";
+                settings[$"RateLimitOptions:{policy}:WindowSeconds"] = "60";
+            }
+
+            // scenario tests drive the register → buy journey; the production
+            // default (off, Docs/20 D11) must not disable them
+            settings["ManagementOptions:AllowRegistration"] = "true";
+
+            // The initializer drops and recreates this catalog. The host must
+            // use the same name; otherwise repositories stay on FastBypass.
+            settings["LocalDatabaseOptions:PackageDatabase"] = "FastBypass_" + TestPackageDatabase;
         }
     }
 }

@@ -1,5 +1,4 @@
 using FluentAssertions;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.Application.Authentication.Model;
 using PhotonBypass.Domain.Account.Model;
@@ -208,14 +207,14 @@ public class CaptchaTest(CaptchaTest.CaptchaFactory factory)
 
     public class CaptchaFactory : ProgramLevelInitializer.Factory
     {
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
+        protected override void ConfigureHostOverrides(IDictionary<string, string?> settings)
         {
-            base.ConfigureWebHost(builder);
+            base.ConfigureHostOverrides(settings);
 
             // base disables captcha (shared-class contamination) — re-enable
             // with a low threshold so the gate trips after two failures
-            builder.UseSetting("CaptchaOptions:Enabled", "true");
-            builder.UseSetting("CaptchaOptions:FailureThreshold", Threshold.ToString());
+            settings["CaptchaOptions:Enabled"] = "true";
+            settings["CaptchaOptions:FailureThreshold"] = Threshold.ToString();
         }
     }
 }
