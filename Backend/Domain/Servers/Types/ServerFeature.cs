@@ -13,4 +13,5 @@ public enum ServerFeature
     Sstp = 0x200,
     Ovpn = 0x400,
     V2ray = 0x800,
+    L2tp = 0x1000,
 }
