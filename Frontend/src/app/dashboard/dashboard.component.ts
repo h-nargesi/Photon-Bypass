@@ -107,6 +107,21 @@ export class DashboardComponent implements OnInit {
     return this.user_service.targetUser;
   }
 
+  /// Docs/22 D2: a panel user owns no VPN account until the first purchase
+  /// (D9); the per-account widgets, which all need an account id (D14),
+  /// show their empty state meanwhile.
+  get hasAccount(): boolean {
+    return this.user_service.accountId !== undefined;
+  }
+
+  get offersFirstPurchase(): boolean {
+    return (
+      !this.hasAccount &&
+      this.user_service.isSelfService &&
+      this.targetName === this.current_user?.username
+    );
+  }
+
   get supportsCredentialRotation(): boolean {
     return this.plan_capabilities?.supportsCredentialRotation === true;
   }
@@ -239,6 +254,14 @@ export class DashboardComponent implements OnInit {
   }
 
   private loadData() {
+    // Docs/22 D2 + D14: without a VPN account there is nothing per-account
+    // to load — every account-scoped endpoint needs an account id
+    if (!this.hasAccount) {
+      this.clearData();
+      this.connections = [];
+      return;
+    }
+
     this.loadConnections();
     this.loadPlanInfo();
     this.loadPlanCapabilities();

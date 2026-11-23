@@ -71,8 +71,14 @@ export class TrafficChartComponent implements OnInit {
 
   private readonly destroy_ref = inject(DestroyRef);
 
-  ngOnInit() {
-    this.loadTrafficData();
+  /// Docs/22 D2: no VPN account (until the first purchase, D9) → nothing to chart
+  get hasAccount(): boolean {
+    return this.user_service.accountId !== undefined;
+  }
+
+  async ngOnInit() {
+    // the account id is only known once the user is loaded
+    await this.user_service.user();
 
     // Docs/22 §3.5: per-account reload on switcher changes too
     merge(
@@ -81,9 +87,18 @@ export class TrafficChartComponent implements OnInit {
     )
       .pipe(takeUntilDestroyed(this.destroy_ref))
       .subscribe(() => this.loadTrafficData());
+
+    this.loadTrafficData();
   }
 
   loadTrafficData() {
+    if (!this.hasAccount) {
+      this.loading = false;
+      this.data = undefined;
+      this.title = undefined;
+      return;
+    }
+
     this.loading = true;
     this.service
       .fetchTrafficData(this.user_service.accountId)

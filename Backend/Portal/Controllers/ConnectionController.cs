@@ -21,7 +21,7 @@ public class ConnectionController(
     {
         if (accountId == null)
         {
-            return BadRequestApiResult(message: "شناسه‌ی اکانت VPN ارسال نشده است!");
+            return BadRequestApiResult(message: MissingAccountIdMessage);
         }
 
         await LoadJobContextAsync(accountId);
@@ -36,7 +36,7 @@ public class ConnectionController(
     {
         if (context.AccountId == null)
         {
-            return BadRequestApiResult(message: "شناسه‌ی اکانت VPN ارسال نشده است!");
+            return BadRequestApiResult(message: MissingAccountIdMessage);
         }
 
         await LoadJobContextAsync(context.AccountId);

@@ -5,7 +5,7 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { API_BASE_URL } from '../@services/api-services/models/app-base-path';
 import { PlanInfo } from '../@models';
-import { LocalStorageService } from '../@services';
+import { LocalStorageService, TranslationService } from '../@services';
 import { DashboardComponent } from './dashboard.component';
 
 describe('DashboardComponent', () => {
@@ -58,6 +58,9 @@ describe('DashboardComponent', () => {
       { status: 200, statusText: 'OK' },
     );
     await drain();
+    // the account is known now: the dashboard creates the traffic chart
+    fixture.detectChanges();
+    await drain();
 
     http.expectOne(req => req.url === '/api/connection/current-con-state').flush(
       {
@@ -106,13 +109,14 @@ describe('DashboardComponent', () => {
       );
     }
 
-    // the dashboard embeds the traffic chart (it fires one plain and one targeted load)
-    for (const request of http.match(req => req.url === '/api/vpn/traffic-data')) {
-      request.flush(
-        { code: 200, data: { title: 't', labels: [], collections: [] } },
-        { status: 200, statusText: 'OK' },
-      );
-    }
+    // the embedded traffic chart waits for the user: one targeted load, never
+    // an id-less one (the account-scoped endpoints reject a missing accountId)
+    const traffic = http.expectOne(req => req.url === '/api/vpn/traffic-data');
+    expect(traffic.request.params.get('accountId')).toBe('7');
+    traffic.flush(
+      { code: 200, data: { title: 't', labels: [], collections: [] } },
+      { status: 200, statusText: 'OK' },
+    );
     await drain();
   }
 
@@ -361,5 +365,39 @@ describe('DashboardComponent', () => {
     expect(component.connections?.length).toBe(1);
     expect(component.connections![0].sessionId).toBe('B2');
     expect(component.connection_count).toBe('1');
+  });
+
+  async function loadUserWithoutAccounts(user: Record<string, unknown>) {
+    const drain = () => new Promise(resolve => setTimeout(resolve, 0));
+
+    fixture.detectChanges();
+    http.expectOne(req => req.url === '/api/account/get-user').flush(
+      { code: 200, data: user },
+      { status: 200, statusText: 'OK' },
+    );
+    await drain();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  }
+
+  it('loads nothing per-account and offers the first purchase without any VPN account', async () => {
+    await loadUserWithoutAccounts({ ...user, accounts: [], allowSelfService: true });
+
+    http.expectNone(req => /\/api\/(vpn|plan|connection)\//.test(req.url));
+    expect(component.hasAccount).toBeFalse();
+    expect(component.plan_info).toBeUndefined();
+    expect(component.connections).toEqual([]);
+
+    const buy = fixture.nativeElement.querySelector('[routerlink="/renewal"]');
+    expect(buy?.textContent).toContain(TranslationService.translate('dashboard.balance.buy'));
+    expect(fixture.nativeElement.querySelector('.placeholder')).toBeNull();
+    expect(fixture.nativeElement.querySelector('c-spinner')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-traffic-chart')).toBeNull();
+  });
+
+  it('offers no purchase to a dependent user without any VPN account', async () => {
+    await loadUserWithoutAccounts({ ...user, accounts: [] });
+
+    expect(fixture.nativeElement.querySelector('[routerlink="/renewal"]')).toBeNull();
   });
 });

@@ -1,6 +1,8 @@
+using System.Net.Http.Json;
 using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
+using PhotonBypass.Portal.Basical;
 using PhotonBypass.Test.Initializer;
 
 namespace PhotonBypass.Test.Facts.Scenario;
@@ -67,5 +69,49 @@ public class VpnConfigEndpoints(ProgramLevelInitializer.Factory factory) : HttpH
 
         response = await Client.GetAsync($"/api/vpn/config-info?accountId={foreign_account_id}");
         await CheckResponse(response, 403);
+    }
+
+    /// <summary>
+    /// Docs/22 D14: every account-scoped endpoint names its VPN account by id,
+    /// and a panel user owns none until the first purchase (D2/D9). An omitted
+    /// id must get the user-facing 400 — never the 500 of a nullable unwrap.
+    /// </summary>
+    [Fact]
+    public async Task AccountScopedEndpoints_WithoutAccountId_AnswerBadRequest()
+    {
+        // /api/auth/register + /api/auth/token
+        await Register("usernoacc", "90");
+        await Login("usernoacc", "Passw0rd1");
+
+        Assert.Empty(await VpnAccounts());
+
+        foreach (var url in new[]
+                 {
+                     "/api/vpn/traffic-data",
+                     "/api/vpn/config-info",
+                     "/api/vpn/send-cert-email",
+                     "/api/vpn/download",
+                     "/api/plan/plan-state",
+                     "/api/plan/plan-info",
+                     "/api/connection/current-con-state",
+                 })
+        {
+            var result = await CheckResponse(await Client.GetAsync(url), 400);
+
+            Assert.True(result!.Message == ResultHandlerController.MissingAccountIdMessage, $"{url}: {result.Message}");
+        }
+
+        foreach (var url in new[]
+                 {
+                     "/api/vpn/change-ovpn",
+                     "/api/plan/estimate",
+                     "/api/plan/renewal",
+                     "/api/connection/close-con",
+                 })
+        {
+            var result = await CheckResponse(await Client.PostAsJsonAsync(url, new { }), 400);
+
+            Assert.True(result!.Message == ResultHandlerController.MissingAccountIdMessage, $"{url}: {result.Message}");
+        }
     }
 }

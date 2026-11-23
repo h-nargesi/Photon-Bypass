@@ -43,6 +43,11 @@ public class PlanController(
     [HttpGet("plan-state")]
     public async Task<ApiResult> GetPlanState([FromQuery] int? accountId)
     {
+        if (accountId == null)
+        {
+            return BadRequestApiResult(message: MissingAccountIdMessage);
+        }
+
         await LoadJobContextAsync(accountId);
 
         var result = await application.GetPlanState(accountId!.Value);
@@ -53,6 +58,11 @@ public class PlanController(
     [HttpGet("plan-info")]
     public async Task<ApiResult> GetPlanInfo([FromQuery] int? accountId)
     {
+        if (accountId == null)
+        {
+            return BadRequestApiResult(message: MissingAccountIdMessage);
+        }
+
         await LoadJobContextAsync(accountId);
 
         var result = await application.GetPlanInfo(accountId!.Value);
@@ -65,7 +75,7 @@ public class PlanController(
     {
         if (context.AccountId == null)
         {
-            return BadRequestApiResult(message: "شناسه‌ی اکانت VPN ارسال نشده است!");
+            return BadRequestApiResult(message: MissingAccountIdMessage);
         }
 
         await LoadJobContextAsync(context.AccountId);
@@ -91,7 +101,7 @@ public class PlanController(
     {
         if (context.AccountId == null)
         {
-            return BadRequestApiResult(message: "شناسه‌ی اکانت VPN ارسال نشده است!");
+            return BadRequestApiResult(message: MissingAccountIdMessage);
         }
 
         await LoadJobContextAsync(context.AccountId);

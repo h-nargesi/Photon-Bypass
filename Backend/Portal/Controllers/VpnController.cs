@@ -38,6 +38,11 @@ public class VpnController(
     [EnableRateLimiting(ServiceFactory.AuthRateLimitPolicy)]
     public async Task<ApiResult> ChangeOvpnPassword([FromBody] ChangeOvpnContext context)
     {
+        if (context.AccountId == null)
+        {
+            return BadRequestApiResult(message: MissingAccountIdMessage);
+        }
+
         await LoadJobContextAsync(context.AccountId, context.Target);
 
         if (string.IsNullOrWhiteSpace(context.Token))
@@ -65,6 +70,11 @@ public class VpnController(
     [HttpGet("send-cert-email")]
     public async Task<ApiResult> SendCertEmail([FromQuery] int? accountId)
     {
+        if (accountId == null)
+        {
+            return BadRequestApiResult(message: MissingAccountIdMessage);
+        }
+
         await LoadJobContextAsync(accountId);
 
         var result = await application.SendCertEmail(accountId!.Value);
@@ -75,6 +85,11 @@ public class VpnController(
     [HttpGet("config-info")]
     public async Task<ApiResult> ConfigInfo([FromQuery] int? accountId)
     {
+        if (accountId == null)
+        {
+            return BadRequestApiResult(message: MissingAccountIdMessage);
+        }
+
         await LoadJobContextAsync(accountId);
 
         var result = await application.GetConfigInfo(accountId!.Value);
@@ -87,7 +102,7 @@ public class VpnController(
     {
         if (accountId == null)
         {
-            throw new UserException("شناسه‌ی اکانت VPN ارسال نشده است!", "accountId query parameter is required", 400);
+            throw new UserException(MissingAccountIdMessage, "accountId query parameter is required", 400);
         }
 
         await LoadJobContextAsync(accountId);
@@ -100,6 +115,11 @@ public class VpnController(
     [HttpGet("traffic-data")]
     public async Task<ApiResult> TrafficData([FromQuery] int? accountId)
     {
+        if (accountId == null)
+        {
+            return BadRequestApiResult(message: MissingAccountIdMessage);
+        }
+
         await LoadJobContextAsync(accountId);
 
         var result = await application.TrafficData(accountId!.Value);

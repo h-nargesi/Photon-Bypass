@@ -26,17 +26,22 @@
                 <span [cTooltip]="getPlanInfoTooltip(plan_info)" class="d-inline-block">
                     <svg [cIcon]="getPlanInfoIcon(plan_info)" height="36"></svg>
                 </span>
-                <c-spinner color="secondary" *ngIf="!plan_info" />
+                <c-spinner color="secondary" *ngIf="hasAccount && !plan_info" />
             </ng-template>
             <ng-template cTemplateId="widgetProgressTemplate">
-                <div *ngIf="!plan_info" cPlaceholderAnimation="glow">
+                <div *ngIf="hasAccount && !plan_info" cPlaceholderAnimation="glow">
                     <span cCol="4" cPlaceholder class="me-1"></span>
                     <div class="text-secondary">{{ 'dashboard.balance.title' | translate }}</div>
                 </div>
-                <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsTimePercent ?? 0" />
-                <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsTrafficPercent ?? 0" />
-                <button cButton routerLink="/renewal" color="dark" class="mt-3" *ngIf="plan_info">
-                    {{ "dashboard.balance.renewal" | translate }}
+                <ng-container *ngIf="hasAccount">
+                    <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsTimePercent ?? 0" />
+                    <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsTrafficPercent ?? 0" />
+                    <button cButton routerLink="/renewal" color="dark" class="mt-3" *ngIf="plan_info">
+                        {{ "dashboard.balance.renewal" | translate }}
+                    </button>
+                </ng-container>
+                <button cButton routerLink="/renewal" color="dark" class="mt-3" *ngIf="offersFirstPurchase">
+                    {{ "dashboard.balance.buy" | translate }}
                 </button>
             </ng-template>
         </c-widget-stat-c>
@@ -151,7 +156,7 @@
         </c-card>
     </c-col>
 
-    <c-col>
+    <c-col *ngIf="hasAccount">
         <app-traffic-chart></app-traffic-chart>
     </c-col>
 </c-row>

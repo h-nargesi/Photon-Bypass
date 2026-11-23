@@ -70,17 +70,26 @@ describe('TrafficChartComponent', () => {
     );
   }
 
-  async function loadUser() {
+  const drain = () => new Promise(resolve => setTimeout(resolve, 0));
+
+  /// ngOnInit awaits the user before its first load
+  async function openChart() {
+    fixture.detectChanges();
+    await drain();
+  }
+
+  async function loadUser(payload = user_payload) {
     const promise = user_service.user();
     http.expectOne('/api/account/get-user').flush(
-      { code: 200, data: user_payload },
+      { code: 200, data: payload },
       { status: 200, statusText: 'OK' },
     );
     await promise;
   }
 
   it('maps each traffic collection to a chart series with its daily labels (M11)', async () => {
-    fixture.detectChanges();
+    await loadUser();
+    await openChart();
     flushTraffic();
     await fixture.whenStable();
 
@@ -99,7 +108,7 @@ describe('TrafficChartComponent', () => {
     await loadUser();
     user_service.setTraget('sub1');
 
-    fixture.detectChanges();
+    await openChart();
     flushTraffic(7);
     await fixture.whenStable();
 
@@ -109,7 +118,7 @@ describe('TrafficChartComponent', () => {
   it('reloads the chart when the account changes', async () => {
     await loadUser();
 
-    fixture.detectChanges();
+    await openChart();
     flushTraffic();
     await fixture.whenStable();
 
@@ -118,5 +127,26 @@ describe('TrafficChartComponent', () => {
     await fixture.whenStable();
 
     expect(component.data?.datasets.length).toBe(3);
+  });
+
+  it('waits for the user instead of requesting without an account id', async () => {
+    fixture.detectChanges();
+    http.expectNone(req => req.url === '/api/vpn/traffic-data');
+
+    await loadUser();
+    await drain();
+    flushTraffic(7);
+    await fixture.whenStable();
+
+    expect(component.data?.datasets.length).toBe(3);
+  });
+
+  it('requests nothing when the user owns no VPN account', async () => {
+    await loadUser({ ...user_payload, accounts: [] });
+    await openChart();
+
+    http.expectNone(req => req.url === '/api/vpn/traffic-data');
+    expect(component.loading).toBeFalse();
+    expect(component.data).toBeUndefined();
   });
 });

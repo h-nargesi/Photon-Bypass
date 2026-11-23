@@ -11,6 +11,12 @@ namespace PhotonBypass.Portal.Basical;
 
 public class ResultHandlerController(IJobContext context, Lazy<IAccessService> access) : ControllerBase
 {
+    /// <summary>
+    /// Rejection of an account-scoped request (Docs/22 D14) that names no VPN
+    /// account: a panel user may own zero accounts (D2) until the first purchase.
+    /// </summary>
+    public const string MissingAccountIdMessage = "شناسه‌ی اکانت VPN ارسال نشده است!";
+
     protected IJobContext JobContext => context;
 
     protected string Username => User.Identity?.Name ?? string.Empty;
