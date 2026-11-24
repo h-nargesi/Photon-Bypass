@@ -66,8 +66,9 @@ describe('HistoryComponent', () => {
   it('loads history without date filters by default', async () => {
     fixture.detectChanges();
 
-    http.expectOne(req => req.url === '/api/account/history')
-      .flush({ code: 200, data: [] }, { status: 200, statusText: 'OK' });
+    const request = http.expectOne(req => req.url === '/api/account/history');
+    expect(request.request.params.keys()).toEqual([]);
+    request.flush({ code: 200, data: [] }, { status: 200, statusText: 'OK' });
     await fixture.whenStable();
 
     expect(component.dataSource).toBeDefined();
@@ -84,6 +85,7 @@ describe('HistoryComponent', () => {
     component.loadWithFilter();
 
     const request = http.expectOne(req => req.url === '/api/account/history');
+    expect(request.request.params.keys()).toEqual(['from', 'to']);
     expect(Number(request.request.params.get('from'))).toBe(
       new Date(2026, 0, 10).getTime(),
     );
@@ -100,6 +102,7 @@ describe('HistoryComponent', () => {
 
     fixture.detectChanges();
     const request = http.expectOne(req => req.url === '/api/account/history');
+    expect(request.request.params.keys()).toEqual(['target']);
     expect(request.request.params.get('target')).toBe('sub1');
 
     request.flush({ code: 200, data: [] }, { status: 200, statusText: 'OK' });

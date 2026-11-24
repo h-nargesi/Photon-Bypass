@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HistoryRecord } from '../@models';
-import { ACCOUNT_API_URL, ApiBaseService, ApiParam } from '../@services';
+import { ACCOUNT_API_URL, ApiBaseService } from '../@services';
 
 @Injectable({ providedIn: 'root' })
 export class HistoryService extends ApiBaseService {
@@ -10,7 +10,6 @@ export class HistoryService extends ApiBaseService {
     from?: number,
     to?: number
   ): Observable<HistoryRecord[]> {
-    const params = { target: target ?? null, from, to } as ApiParam;
-    return this.getData<HistoryRecord[]>(`${ACCOUNT_API_URL}/history`, params);
+    return this.getData<HistoryRecord[]>(`${ACCOUNT_API_URL}/history`, { target, from, to });
   }
 }

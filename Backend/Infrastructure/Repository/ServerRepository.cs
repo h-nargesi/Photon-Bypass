@@ -81,20 +81,13 @@ class ServerRepository(LocalDbContext context, IMemoryCache cache) : EditableRep
 
     public async Task<List<ServerEntity>> GetActiveNasInRealmOrAll(int? realm_id)
     {
-        var result = await FindAsync(statement =>
-        {
-            statement
-                .Where($"{nameof(ServerEntity.IsActive)} = 1 and ({nameof(ServerEntity.Features)} & @nas) > 0")
-                .WithParameters(new { nas = ServerFeature.Nas });
-
-            if (realm_id.HasValue)
-            {
-                statement
-                    .Where($"{nameof(ServerEntity.RealmId)} = @realm_id")
-                    .WithParameters(new { realm_id = realm_id.Value });
-
-            }
-        });
+        var result = await FindAsync(statement => statement
+            .Where($"""
+                    {nameof(ServerEntity.IsActive)} = 1
+                        and ({nameof(ServerEntity.Features)} & @nas) > 0
+                        and (@realm_id is null or {nameof(ServerEntity.RealmId)} = @realm_id)
+                    """)
+            .WithParameters(new { nas = ServerFeature.Nas, realm_id }));
 
         return result.GroupBy(server => server.RealmId)
             .ToDictionary(grouping => grouping.Key, grouping => grouping.First())
@@ -133,20 +126,13 @@ class ServerRepository(LocalDbContext context, IMemoryCache cache) : EditableRep
 
     private async Task<List<ServerEntity>> LoadActiveRadiusInRealmOrAll(int? realm_id)
     {
-        var result = await FindAsync(statement =>
-        {
-            statement
-                .Where($"{nameof(ServerEntity.IsActive)} = 1 and ({nameof(ServerEntity.Features)} & @radius) > 0")
-                .WithParameters(new { radius = ServerFeature.Radius });
-
-            if (realm_id.HasValue)
-            {
-                statement
-                    .Where($"{nameof(ServerEntity.RealmId)} = @realm_id")
-                    .WithParameters(new { realm_id = realm_id.Value });
-
-            }
-        });
+        var result = await FindAsync(statement => statement
+            .Where($"""
+                    {nameof(ServerEntity.IsActive)} = 1
+                        and ({nameof(ServerEntity.Features)} & @radius) > 0
+                        and (@realm_id is null or {nameof(ServerEntity.RealmId)} = @realm_id)
+                    """)
+            .WithParameters(new { radius = ServerFeature.Radius, realm_id }));
 
         return result.GroupBy(server => server.RealmId)
             .ToDictionary(grouping => grouping.Key, grouping => grouping.First())

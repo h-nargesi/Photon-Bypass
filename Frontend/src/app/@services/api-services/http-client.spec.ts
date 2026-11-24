@@ -159,4 +159,50 @@ describe('HttpClientHandler', () => {
     expect(result.code).toBe(600);
     expect(result.message).toBe(error_text);
   });
+
+  it('drops null and undefined query params and keeps the rest (M50)', async () => {
+    const result_promise = firstValueFrom(
+      handler.get('/probe', {
+        absent: undefined,
+        missing: null,
+        zero: 0,
+        off: false,
+        blank: '',
+        tags: ['a', 'b'],
+      }),
+    );
+    const request = http.expectOne(
+      req => req.method === 'GET' && req.url === '/api/probe',
+    );
+    expect(request.request.params.keys()).toEqual(['zero', 'off', 'blank', 'tags']);
+    expect(request.request.params.get('zero')).toBe('0');
+    expect(request.request.params.get('off')).toBe('false');
+    expect(request.request.params.get('blank')).toBe('');
+    expect(request.request.params.getAll('tags')).toEqual(['a', 'b']);
+    request.flush({ code: 200, data: {} }, { status: 200, statusText: 'OK' });
+
+    await result_promise;
+  });
+
+  it('sends no query string when every param is absent (M50)', async () => {
+    const result_promise = firstValueFrom(
+      handler.get('/probe', { target: undefined, from: undefined }),
+    );
+    const request = http.expectOne(req => req.urlWithParams === '/api/probe');
+    request.flush({ code: 200, data: {} }, { status: 200, statusText: 'OK' });
+
+    await result_promise;
+  });
+
+  it('applies the same param rules to delete requests (M50)', async () => {
+    const result_promise = firstValueFrom(
+      handler.remove('/probe', { target: undefined, id: 7 }),
+    );
+    const request = http.expectOne(
+      req => req.method === 'DELETE' && req.urlWithParams === '/api/probe?id=7',
+    );
+    request.flush({ code: 200 }, { status: 200, statusText: 'OK' });
+
+    await result_promise;
+  });
 });
