@@ -28,33 +28,6 @@ public static class PasswordListHasher
 
     public static HashBatch Hash(IReadOnlyList<string> lines)
     {
-        var invalid = new List<InvalidLine>();
-        var hasPassword = false;
-
-        for (var i = 0; i < lines.Count; i++)
-        {
-            if (lines[i].Length == 0)
-            {
-                continue;
-            }
-
-            hasPassword = true;
-
-            try
-            {
-                AccountBusiness.ValidatePassword(lines[i]);
-            }
-            catch (UserException exception)
-            {
-                invalid.Add(new InvalidLine(i + 1, exception.UserMessage ?? "password does not meet the portal policy"));
-            }
-        }
-
-        if (invalid.Count > 0 || !hasPassword)
-        {
-            return new HashBatch(false, [], invalid);
-        }
-
         var hashes = new string?[lines.Count];
 
         for (var i = 0; i < lines.Count; i++)
