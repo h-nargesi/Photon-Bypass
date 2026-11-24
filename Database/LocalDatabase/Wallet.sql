@@ -7,7 +7,7 @@ CREATE TABLE Wallet (
 	-- Docs/22 D8: the wallet belongs to the panel user (payer = actor, Docs/20 D4).
 	AccountId			INT				NOT NULL	CONSTRAINT FK_Wallet_AccountId FOREIGN KEY REFERENCES PanelUser (Id),
 	Amount				INT				NOT NULL,
-	Direction			SMALLINT			NOT NULL,
+	Direction			SMALLINT		NOT NULL,
 	Status				TINYINT			NOT NULL	CONSTRAINT DF_Wallet_Status DEFAULT 0,
 	Description			NVARCHAR(127)	NOT NULL,
 	InvoiceCode			INT					NULL,
