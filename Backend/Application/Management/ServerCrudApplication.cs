@@ -41,7 +41,7 @@ class ServerCrudApplication(
     // mirror the Server table column sizes (Database/LocalDatabase/Server.sql)
     private const int NameMaxLength = 15;
 
-    private const int DomainMaxLength = 15;
+    private const int DomainMaxLength = 255;
 
     private const int ConfigMaxLength = 4000;
 

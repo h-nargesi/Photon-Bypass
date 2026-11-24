@@ -105,7 +105,7 @@ public class ServerCrudTest(ProgramLevelInitializer.Factory factory) : HttpHandl
         // validation matrix → friendly 400s
         await SaveServer(create: true, name: "SRV-BadIp", domain: "badip", ip: "300.1.1.1", status: 4);
         await SaveServer(create: true, name: new string('n', 16), domain: "badname", ip: "10.72.0.2", status: 4);
-        await SaveServer(create: true, name: "SRV-BadDom", domain: new string('d', 16), ip: "10.72.0.3", status: 4);
+        await SaveServer(create: true, name: "SRV-BadDom", domain: new string('d', 256), ip: "10.72.0.3", status: 4);
         await SaveServer(create: true, name: "SRV-BadRealm", domain: "badrealm", ip: "10.72.0.4",
             realm_id: 999_999, status: 4);
         await SaveServer(create: true, name: "SRV-NoFeat", domain: "nofeat", ip: "10.72.0.5", features: 0, status: 4);

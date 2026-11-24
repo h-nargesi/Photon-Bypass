@@ -98,7 +98,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(ip: "2001:db8::1"))); // IPv6 exceeds varchar(15)
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(name: "")));
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(name: new string('n', 16))));
-        await Assert.ThrowsAsync<UserException>(() => application.Create(Model(domain: new string('d', 16))));
+        await Assert.ThrowsAsync<UserException>(() => application.Create(Model(domain: new string('d', 256))));
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(bandwidth: 0)));
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(max_clients: 0))); // T4: null allowed, 0 is not
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(os: (OperatingSystem)99)));
