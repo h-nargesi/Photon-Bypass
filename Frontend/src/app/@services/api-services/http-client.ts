@@ -134,12 +134,12 @@ export class HttpClientHandler {
       result.code = response.status;
     }
 
-    if (!response.ok) {
+    if (!response.ok || result.status() >= ResultStatus.warning) {
       if (!result.message) {
         result.message = TranslationService.translate('api.error');
       }
 
-      if (result.code < 300) {
+      if (!response.ok && result.code < 300) {
         result.code = 600 + (result.code % 100);
       }
     }

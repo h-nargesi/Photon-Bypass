@@ -67,6 +67,24 @@ describe('UserService', () => {
     http.expectNone('/api/account/get-user');
   });
 
+  it('a failed load is not served from the cache', async () => {
+    const failed = service.user();
+    http.expectOne('/api/account/get-user').flush(
+      { code: 500, message: 'x' },
+      { status: 200, statusText: 'OK' },
+    );
+
+    await expectAsync(failed).toBeRejectedWith('can not set target to null!');
+
+    const retried = service.user();
+    http.expectOne('/api/account/get-user').flush(
+      { code: 200, data: main_user },
+      { status: 200, statusText: 'OK' },
+    );
+
+    expect((await retried).username).toBe('main');
+  });
+
   it('first load without a stored target leaves targetUser unset until a name is given', async () => {
     await loadUser(main_user);
 

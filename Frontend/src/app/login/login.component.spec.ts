@@ -4,8 +4,11 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router, provideRouter } from '@angular/router';
-import { ResultStatus } from '../@models';
+import { AccountRole, ResultStatus, UserModel } from '../@models';
 import { API_BASE_URL } from '../@services/api-services/models/app-base-path';
+import { UserService } from '../@services/auth-services/user-servcie';
+import { LocalStorageService } from '../@services/local-storage/local-storage-service';
+import { MessageService } from '../@services/message-handler/message-service';
 import { LoginComponent } from './login.component';
 
 @Component({ template: '' })
@@ -15,6 +18,19 @@ describe('LoginComponent', () => {
   let http: HttpTestingController;
   let router: Router;
   let fixture: ComponentFixture<LoginComponent>;
+
+  const main_user: UserModel = {
+    username: 'main',
+    fullname: 'Main User',
+    email: 'main@test.local',
+    balance: 0,
+    role: AccountRole.User,
+    allowSelfService: true,
+    accounts: [],
+    targetArea: {
+      main: { username: 'main', fullname: 'Main User', email: 'main@test.local' },
+    },
+  };
 
   beforeEach(() => {
     localStorage.clear();
@@ -36,12 +52,6 @@ describe('LoginComponent', () => {
 
   beforeEach(() => {
     fixture = TestBed.createComponent(LoginComponent);
-
-    // constructor auth-check: no active session
-    http.expectOne('/api/account/get-user').flush(
-      { code: 401 },
-      { status: 200, statusText: 'OK' },
-    );
   });
 
   afterEach(() => {
@@ -106,12 +116,69 @@ describe('LoginComponent', () => {
     http.expectOne(
       req => req.method === 'POST' && req.url === '/api/auth/token',
     ).flush(
-      { code: 400, message: 'نام کاربری یا رمز عبور اشتباه است!' },
+      { code: 401, message: 'نام کاربری یا کلمه عبور اشتباه است!' },
       { status: 200, statusText: 'OK' },
     );
+    fixture.detectChanges();
 
     expect(component.result?.status()).toBe(ResultStatus.error);
+    expect(fixture.nativeElement.querySelector('c-alert')?.textContent)
+      .toContain('نام کاربری یا کلمه عبور اشتباه است!');
     expect(router.url).not.toBe('/dashboard');
+  });
+
+  it('a message-less failed answer never renders an empty alert', () => {
+    const component = fixture.componentInstance;
+    component.username = 'user';
+    component.password = 'Passw0rd';
+
+    component.login();
+
+    http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/auth/token',
+    ).flush({ code: 401 }, { status: 200, statusText: 'OK' });
+    fixture.detectChanges();
+
+    expect(component.result?.message).toBe('خطا در تبادل داده.');
+    expect(fixture.nativeElement.querySelector('c-alert')?.textContent)
+      .toContain('خطا در تبادل داده.');
+  });
+
+  it('without a stored session the login page sends no probe', () => {
+    http.expectNone(req => req.url === '/api/account/get-user');
+  });
+
+  it('a stored session is resumed', fakeAsync(() => {
+    LocalStorageService.set(['user', 'bearer'], { access_token: 'stored' });
+
+    TestBed.createComponent(LoginComponent);
+
+    const probe = http.expectOne('/api/account/get-user');
+    expect(probe.request.headers.get('Authorization')).toBe('Bearer stored');
+    probe.flush({ code: 200, data: main_user }, { status: 200, statusText: 'OK' });
+
+    tick();
+    expect(router.url).toBe('/dashboard');
+  }));
+
+  it('arriving without a session drops the cached profile', async () => {
+    const users = TestBed.inject(UserService);
+
+    const cached = users.user();
+    http.expectOne('/api/account/get-user').flush(
+      { code: 200, data: main_user },
+      { status: 200, statusText: 'OK' },
+    );
+    await cached;
+
+    TestBed.createComponent(LoginComponent);
+
+    const reloaded = users.user();
+    http.expectOne('/api/account/get-user').flush(
+      { code: 200, data: main_user },
+      { status: 200, statusText: 'OK' },
+    );
+    await reloaded;
   });
 
   it('a 428 answer reveals the captcha and resubmits with its headers', () => {
@@ -176,6 +243,8 @@ describe('LoginComponent', () => {
     component.username = 'user';
     component.password = 'Passw0rd';
 
+    const messages = spyOn(TestBed.inject(MessageService), 'messageHandler');
+
     component.login();
 
     const request = http.expectOne(
@@ -184,12 +253,16 @@ describe('LoginComponent', () => {
     expect(request.request.body).toEqual({ username: 'user', password: 'Passw0rd' });
 
     request.flush(
-      { code: 200, data: 'jwt-token' },
+      { code: 200, data: 'jwt-token', message: 'وارد شدید.' },
       { status: 200, statusText: 'OK' },
     );
 
     expect(JSON.parse(localStorage.getItem('user|bearer')!)).toBe('jwt-token');
     expect(component.result?.status()).toBe(ResultStatus.success);
+
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('c-alert')?.textContent).toContain('وارد شدید.');
+    expect(messages).not.toHaveBeenCalled();
 
     tick(1000);
     expect(router.url).toBe('/dashboard');

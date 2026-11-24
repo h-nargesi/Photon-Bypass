@@ -39,7 +39,32 @@ describe('HomeComponent', () => {
       { status: 200, statusText: 'OK' },
     );
     await fixture.whenStable();
+    fixture.detectChanges();
 
     expect(fixture.componentInstance).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('c-alert')).toBeNull();
+  });
+
+  it('a failed price load is shown on the page', async () => {
+    async function expectAlert(
+      failed: ComponentFixture<HomeComponent>,
+      body: object,
+      response: { status: number; statusText: string },
+    ) {
+      failed.detectChanges();
+      http.expectOne('/api/basics/prices').flush(body, response);
+      await failed.whenStable();
+      failed.detectChanges();
+
+      expect(failed.nativeElement.querySelector('c-alert')?.textContent)
+        .toContain('خطا در تبادل داده.');
+    }
+
+    await expectAlert(fixture, { code: 500 }, { status: 200, statusText: 'OK' });
+    await expectAlert(
+      TestBed.createComponent(HomeComponent),
+      { code: 503 },
+      { status: 503, statusText: 'Service Unavailable' },
+    );
   });
 });

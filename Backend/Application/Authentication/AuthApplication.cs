@@ -34,6 +34,12 @@ class AuthApplication(
     /// <summary>Reset-code requests allowed per identifier inside the window.</summary>
     private const int MaxResetRequestsPerWindow = 3;
 
+    /// <summary>
+    /// The single answer every rejected login gets — an unknown user, a wrong
+    /// password and a deactivated account are indistinguishable to the caller.
+    /// </summary>
+    private const string RejectedLoginMessage = "نام کاربری یا کلمه عبور اشتباه است!";
+
     private static readonly TimeSpan ResetRateWindowLength = TimeSpan.FromHours(1);
 
     private static readonly object ResetRateLimitLock = new();
@@ -62,11 +68,7 @@ class AuthApplication(
             {
                 _ = PasswordHasher.Hash(password);
 
-                return new ApiResult<UserModel>
-                {
-                    Code = 401,
-                    Data = null,
-                };
+                return RejectedLogin();
             }
 
             // best-effort: a failing social alert must not turn a wrong-
@@ -95,11 +97,7 @@ class AuthApplication(
 
             Log.Warning("Invalid password for {0}, status={1}", account.Username, account.Status);
 
-            return new ApiResult<UserModel>
-            {
-                Code = 401,
-                Data = null,
-            };
+            return RejectedLogin();
         }
 
         var target_list = account.Role == AccountRole.Admin ?
@@ -146,6 +144,13 @@ class AuthApplication(
             Message = "وارد شدید.",
         };
     }
+
+    private static ApiResult<UserModel> RejectedLogin() => new()
+    {
+        Code = 401,
+        Data = null,
+        Message = RejectedLoginMessage,
+    };
 
     public async Task<ApiResult> ForgetPassword(string email_mobile)
     {

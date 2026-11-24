@@ -1,4 +1,4 @@
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnDestroy, ViewChild } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import {
@@ -32,13 +32,17 @@ import { UserSelectorModalComponent } from './user-selector-modal/user-selector-
     PaymentModalComponent,
   ],
 })
-export class DefaultLayoutComponent {
+export class DefaultLayoutComponent implements OnDestroy {
   @ViewChild(ToasterComponent) toaster!: ToasterComponent;
 
   constructor(private readonly message_service: MessageService) {}
 
   ngAfterViewInit() {
     this.message_service.registerToaster(this.toaster);
+  }
+
+  ngOnDestroy() {
+    this.message_service.unregisterToaster(this.toaster);
   }
 
   readonly placement: ToasterPlacement = ToasterPlacement.TopEnd;

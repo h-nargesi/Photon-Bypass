@@ -120,6 +120,32 @@ public class AuthAppTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public async Task CheckUserPassword_RejectionsCarryOneNeutralMessage()
+    {
+        using var scope = App.Services.CreateScope();
+        var account_repo_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var auth_app = scope.ServiceProvider.GetRequiredService<IAuthApplication>();
+
+        account_repo_moq.Data["User99"].Status = PanelUserStatus.Deactivated;
+
+        var rejections = new[]
+        {
+            await auth_app.CheckUserPassword("Invalid User", "some password"),
+            await auth_app.CheckUserPassword("User4", "invalid password"),
+            await auth_app.CheckUserPassword("User99", "abc"),
+        };
+
+        Assert.All(rejections, result =>
+        {
+            Assert.Equal(401, result.Code);
+            Assert.Null(result.Data);
+            Assert.False(string.IsNullOrWhiteSpace(result.Message));
+        });
+
+        rejections.Select(result => result.Message).Should().AllBeEquivalentTo(rejections[0].Message);
+    }
+
+    [Fact]
     public async Task ForgetPassword_NeitherEmailNorMobile_IsTreatedAsUsername_NeutralAnswer()
     {
         using var scope = App.Services.CreateScope();

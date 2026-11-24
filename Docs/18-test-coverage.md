@@ -80,7 +80,7 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 | نیازمندی/جریان | مرجع | تست‌ها | وضعیت | یادداشت |
 |---|---|---|---|---|
 | ثبت‌نام + اعتبارسنجی مدل | Docs/11 §1 | `AuthAppTest` (Register_*)، `AccountBusinessTest` | ✅ | فرانتند: `register.component.spec.ts` |
-| ورود + صدور JWT + خطای 401 | Docs/11 §2 | `AuthAppTest.CheckUserPassword_*`، `JwtAuthTest` | ✅ | 401 بدون/با توکن دست‌کاری‌شده |
+| ورود + صدور JWT + خطای 401 + پیام خنثیِ ردِ لاگین | Docs/11 §2، Docs/14 L12 | `AuthAppTest.CheckUserPassword_*` (از جمله `CheckUserPassword_RejectionsCarryOneNeutralMessage`)، `JwtAuthTest` (`AuthorizedEndpoint_*`، `Login_Rejections_Answer401WithTheSameNeutralMessage`، `ChangeOvpnPassword_WrongPortalPassword_KeepsItsGenericMessage`) | ✅ | 401 بدون/با توکن دست‌کاری‌شده؛ هر سه ردِ لاگین (ناشناخته/کلمه‌ی عبور غلط/غیرفعال) یک متن خنثی یکسان روی HTTP 200؛ `change-ovpn` پیام generic خود را نگه می‌دارد |
 | چرخه‌ی کامل کاربر E2E (ثبت‌نام→تمدید→تسویه→پلن) | Docs/11 §1–4 | `RegisterAndBuy`، `ConnectAndCheck` | ✅ | نیازمند MSSQL سناریو |
 | داشبورد و داده‌ی ترافیک | Docs/11 §3 | `ConnectAndCheck.Test`، `VpnApplicationTest` (TrafficData_*) | ✅ | |
 | تمدید + قیمت‌گذاری Roslyn (قیمت با روز مؤثر) | Docs/11 §4، Docs/14 M1 | `PlanPricingTest`، `PriceCalculatorTest`، `RenewalBusinessTest` | ✅ | |
@@ -212,8 +212,8 @@ cd Frontend && yarn test --watch=false --browsers=FirefoxHeadless --code-coverag
 | نیازمندی | مرجع | تست‌ها | وضعیت | یادداشت |
 |---|---|---|---|---|
 | JWT 401 / rate-limit 429 / multipart رسید (HTTP واقعی) | Docs/08 | `JwtAuthTest`، `RateLimitTest`، `ReceiptEndpointTest` | ✅ | از طریق `ProgramLevelInitializer.Factory` (WebApplicationFactory) |
-| سرویس‌های کلیدی فرانتند | Docs/10 | `http-client.spec.ts`، `user-servcie.spec.ts`، `payment-service.spec.ts`، `money-printer.spec.ts`، `validators.spec.ts`، `role-guards.spec.ts`، `app-config-service.spec.ts`، `captcha-service.spec.ts` | ✅ | |
-| کامپوننت‌های رفتاری فرانتند (۱۵) | Docs/10 | dashboard، traffic-chart، payment، payment-modal، renewal، login، register، history، forgot-password، change-password، user-selector-modal، users، servers، wallet، captcha-input (هرکدام `.spec.ts`) | ✅ | به‌علاوه: app، home، toast، header، footer |
+| سرویس‌های کلیدی فرانتند | Docs/10 | `http-client.spec.ts`، `user-servcie.spec.ts`، `payment-service.spec.ts`، `money-printer.spec.ts`، `validators.spec.ts`، `role-guards.spec.ts`، `app-config-service.spec.ts`، `captcha-service.spec.ts`، `message-service.spec.ts`، `auth-service.spec.ts`، `api-base-service.spec.ts` | ✅ | پیام/جلسه در فرانت (Docs/14 L12–L14، H11، M49): تور ایمنی پیام (`http-client`: پاسخ ناموفق بی‌پیام → `api.error`، موفقیت بی‌پیام بی‌پیام می‌ماند)؛ `MessageService` بدون بافر + `unregisterToaster`؛ probe ساکت + بستن session ردشده؛ لچ 401 (یک redirect در هر burst، مسلح‌شدن با لاگین موفق، دست‌نزدنِ `closeSession`)؛ «load ناموفق کش نمی‌شود»؛ کپچا: fetch شکست‌خورده challenge را drop می‌کند |
+| کامپوننت‌های رفتاری فرانتند (۱۶) | Docs/10 | dashboard، traffic-chart، payment، payment-modal، renewal، login، register، history، forgot-password، change-password، user-selector-modal، users، servers، wallet، captcha-input، default-layout، home (هرکدام `.spec.ts`) | ✅ | به‌علاوه: app، toast، header، footer. بازخورد inline مسیرهای بدون layout (Docs/14 L13/L15/L16): `default-layout` (ثبت toaster در `ngAfterViewInit`؛ layoutِ destroyشده دیگر هرگز استفاده نمی‌شود)، `home` (بارگذاری ناموفق قیمت‌ها → `c-alert` با متن عمومی؛ code 500 و HTTP 503)، `captcha-input` (شکست تصویر → alert + دکمه‌ی «تصویر جدید» → retry)، `change-password` (حالت forgotten: 400 و 428 روی صفحه؛ حالت layout بدون `c-alert`)، `login` (قرارداد واقعی ردِ لاگین 401 روی HTTP 200 + رندر پیام؛ پاسخ بی‌پیام → alert خالی نمی‌شود؛ بدون session probe نمی‌زند و پروفایل کش‌شده را می‌اندازد؛ session ذخیره‌شده resume می‌شود؛ «وارد شدید.» فقط inline و بدون توست) |
 
 ## ۵. شکاف‌های شناخته‌شده (صداقت کامل — جایگزین `[ ]`های TestPlan قدیمی)
 

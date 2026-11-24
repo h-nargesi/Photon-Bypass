@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { ApiResultData, ShowMessageCase } from '../../@models';
 import { ApiBaseService } from '../api-services/api-base-service';
 import { AUTH_API_URL } from '../api-services/models/app-api-url';
 
@@ -20,10 +21,14 @@ export interface CaptchaResult {
 export class CaptchaService extends ApiBaseService {
   private current?: CaptchaResult;
 
-  fetch(): Observable<CaptchaResult> {
-    return this.getData<CaptchaResult>(`${AUTH_API_URL}/captcha`).pipe(
-      tap(captcha => {
-        this.current = captcha?.id ? captcha : undefined;
+  /// Rendered by the captcha input itself (top-level routes have no toaster):
+  /// the whole answer travels, so a failed image load can be shown on the page.
+  fetch(): Observable<ApiResultData<CaptchaResult>> {
+    return this.get<CaptchaResult>(`${AUTH_API_URL}/captcha`, undefined, {
+      show_message: ShowMessageCase.silence,
+    }).pipe(
+      tap((result) => {
+        this.current = result.data?.id ? result.data : undefined;
       }),
     );
   }

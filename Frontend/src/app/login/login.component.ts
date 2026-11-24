@@ -26,6 +26,7 @@ import { ApiResult, ResultStatus } from '../@models';
 import {
   AppConfigService,
   AuthService,
+  LocalStorageService,
   MessageService,
   TranslationPipe,
 } from '../@services';
@@ -84,19 +85,23 @@ export class LoginComponent {
     private readonly service: AuthService,
     private readonly app_config: AppConfigService,
     private readonly router: Router,
-    active_route: ActivatedRoute,
-    auth_service: AuthService
+    active_route: ActivatedRoute
   ) {
     this.redirect = active_route.snapshot.queryParams['redirect'] ?? '/dashboard';
 
     if (active_route.snapshot.routeConfig?.path === 'logout') {
       this.service.logout();
-    } else {
-      auth_service.check().subscribe((result) => {
+    } else if (LocalStorageService.get(['user', 'bearer'])?.access_token) {
+      // a stored session is the only thing worth asking the server about
+      this.service.check().subscribe((result) => {
         if (result?.status() === ResultStatus.success) {
           this.router.navigateByUrl(this.redirect);
         }
       });
+    } else {
+      // anonymous entry, nothing to resume (no probe — the answer is already
+      // known): a session that expired must not leave its cached profile behind
+      this.service.closeSession();
     }
   }
 
