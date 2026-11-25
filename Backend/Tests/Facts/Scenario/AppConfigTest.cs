@@ -13,5 +13,7 @@ public class AppConfigTest(ProgramLevelInitializer.Factory factory) : HttpHandle
         var config = await CheckResponseObject(response);
 
         Assert.Equal("True", config["allowRegistration"]);
+        Assert.False(string.IsNullOrWhiteSpace(config["supportContactInfo"]));
+        Assert.False(string.IsNullOrWhiteSpace(config["supportDescription"]));
     }
 }

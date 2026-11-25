@@ -8,6 +8,9 @@ namespace PhotonBypass.Application.Basics;
 
 class BasicsApplication(IPriceRepository price_repo, IOptions<ManagementOptions> options) : IBasicsApplication
 {
+    private const string SupportContactInfo = "@photon_support";
+    private const string SupportDescription = "برای پیگیری، راهنمایی و پاسخ به سؤالات با ما در تلگرام در تماس باشید.";
+
     private IPriceRepository PriceRepo { get; } = price_repo;
     private IOptions<ManagementOptions> Options { get; } = options;
 
@@ -33,6 +36,8 @@ class BasicsApplication(IPriceRepository price_repo, IOptions<ManagementOptions>
         return Task.FromResult(ApiResult<AppConfigModel>.Success(new AppConfigModel
         {
             AllowRegistration = Options.Value.AllowRegistration,
+            SupportContactInfo = SupportContactInfo,
+            SupportDescription = SupportDescription,
         }));
     }
 }

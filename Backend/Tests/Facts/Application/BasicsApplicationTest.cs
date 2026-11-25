@@ -87,4 +87,17 @@ public class BasicsApplicationTest : UnitLevelServiceInitializer
         result.Code.Should().Be(200);
         result.Data!.AllowRegistration.Should().Be(allow_registration);
     }
+
+    [Fact]
+    public async Task GetAppConfig_ExposesSupportTexts()
+    {
+        using var scope = App.Services.CreateScope();
+        var basics = scope.ServiceProvider.GetRequiredService<IBasicsApplication>();
+
+        var result = await basics.GetAppConfig();
+
+        result.Code.Should().Be(200);
+        result.Data!.SupportContactInfo.Should().NotBeNullOrWhiteSpace();
+        result.Data.SupportDescription.Should().NotBeNullOrWhiteSpace();
+    }
 }
