@@ -38,6 +38,10 @@
 
 **نقطه‌ی شروع**: همان فایل + `MikrotikDirectService.GetOVpnCertificate` (که گواهی را می‌سازد) به‌عنوان الگو برای SSH/`ProcessService`. همراه با `Architecture/TODO.md:64` (throttle گواهی) و `:61` (مدیریت گواهی‌های قدیمی) در همان فاز انجام شود.
 
+### کانال ارتباطی پنل با سرورها — تانل SSH با کلید: مشخصات آماده، پیاده‌سازی نشده
+
+امروز `XuiApiService` و `Tik4NetHandler` مستقیم وصل می‌شوند و `SshHandler` فقط پسورد دارد؛ سروری که API مدیریتی‌اش فقط روی loopback است در دسترس نیست (Docs/24 §5.1). تصمیم و مشخصات کامل — کلید ed25519 + host key پین‌شده، local port-forward روی loopback، `Transport` روی هر ردیف سرور، استخر جلسه‌ها، اعتبارسنجی، `test-connection`، پیش‌نیازهای سمت سرور و طرح تست — در [Docs/25](25-server-channel.md) ثبت شده است (۲۰۲۶-۱۱-۲۶). **نقطه‌ی شروع**: Docs/25 §8، فاز ۰–۱ — ارتقای `Renci.SshNet` به 2026.0.0، سپس `ServerTransport` + فیلدهای `SshConfig` + `ISshTunnelPool` در `Backend/ServerBridge/`.
+
 ### تست اینتگریشن x-ui — VM لوکال تستی (Docs/23)
 
 تمام تست‌های x-ui امروز mock هستند (`XuiApiMoq`/`ScriptedHandler` — لایه‌ی قرارداد). طبق Docs/23 (۱۴۰۵/۰۸/۲۹) هیچ تستی به سرور زنده وصل نمی‌شود و تنها مقصد اینتگریشن، VM لوکال VirtualBox با پنل تستی x-ui است.

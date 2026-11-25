@@ -76,9 +76,11 @@ server goes live in the panel.
    loopback only (sshd is the only public surface). `XuiApiService` speaks plain
    HTTP(S) to `WebApiConfig.HostName`, and `SshHandler` is password-only
    (`SshConfig.Port/Username/Password`) with no key authentication or tunnel —
-   such a panel is unreachable as-is. Decision needed: an SSH local
-   port-forward per server (key authentication) versus a private channel (mTLS
-   or a source-allowlisted listener).
+   such a panel is unreachable as-is. **Decided 2026-11-26:** an SSH local
+   port-forward per server with key authentication and a pinned host key; the
+   full specification (config, session pool, validation, connection test,
+   server-side prerequisites, rollout) is [Docs/25](25-server-channel.md) —
+   implementation pending.
 2. **Link builder gaps.** `VlessLinkService` accepts `tcp/ws/grpc` +
    `none/tls/reality` only and reads the REALITY link fields from fixed flat
    keys (`realitySettings.serverName/fingerprint/publicKey/shortId`). The

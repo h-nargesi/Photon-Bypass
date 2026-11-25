@@ -16,6 +16,8 @@
 
 > نکته: SSH/Tik4Net **Singleton** هستند چون state اتصال را مدیریت می‌کنند و reuse می‌شوند؛ Api/Email **Scoped** چون per-request رفتار می‌کنند.
 
+> کانال SSH با کلید و تانل (حالت `SshTunnel`): تصمیم و مشخصات کامل در [Docs/25](25-server-channel.md) — **هنوز پیاده‌سازی نشده**. امروز `SshHandler` فقط پسورد دارد و `Tik4NetHandler` مستقیم وصل می‌شود؛ پس از پیاده‌سازی یک `ISshTunnelPool` singleton به این جدول اضافه می‌شود.
+
 ## Process / Script engine (موتور اسکریپت)
 
 هسته‌ی منطق «اجرای فرآیند روی سرور» در `Backend/ServerBridge/Ssh/ProcessService.cs`:

@@ -178,6 +178,7 @@ Every change — analysis, design, and code — must meet a fully professional s
 | Talk to Radius | Go through `IAccountRadiusSyncService` / `ISessionRadiusSyncService` (Infrastructure dispatchers). Never instantiate `RadDbContext` or `tik4net` directly in Application code. |
 | Change pricing | Code lives in the DB (`PriceEntity.CalculatorCode`) and is Roslyn-compiled into a `Calculator.Compute(users, days, gigabytes)` method. See [Docs/05-infrastructure.md](Docs/05-infrastructure.md). |
 | Run scripts on a NAS | Use `IProcessService` with a `ProcessContext` (shared variable bag). Variables are injected via `{key}` and validated against `^[ \-\.\w\d]+$`. See [Docs/07-server-bridge.md](Docs/07-server-bridge.md). |
+| Reach a server whose management API listens on loopback | Follow [Docs/25-server-channel.md](Docs/25-server-channel.md): `SshTunnel` transport — SSH key, pinned host key, loopback port-forward; never a database and never a public listener for management traffic. `Direct` stays for servers whose API is reachable as configured. |
 
 ---
 
@@ -209,6 +210,7 @@ Full reading order and per-file purpose is in [Docs/00-index.md](Docs/00-index.m
 - [Docs/22-panel-user-vpn-split.md](Docs/22-panel-user-vpn-split.md) — panel-user/VPN-account split record (D1–D14): `PanelUser` + `VpnAccount` entities, N accounts per user, D3 username rule, realm choice at purchase + stale migration, per-account status axes, `accountId` API contract
 - [Docs/23-xui-local-test-vm.md](Docs/23-xui-local-test-vm.md) — test-isolation record (D1–D5): no test ever touches live servers, no references to the upstream production-infrastructure repo, the only sanctioned x-ui integration target is a local VirtualBox test panel; includes the ready work order
 - [Docs/24-server-capacity-realm-title.md](Docs/24-server-capacity-realm-title.md) — byte-based server capacity & customer-facing realm title record (D1–D7): `Server.CapacityBytes` in bytes (GB only in the admin form), `Realm.Title` for customers while `Realm.Name` stays the system identifier, sanitized OpenVPN `FRIENDLY_NAME`, display matrix, open items found while registering the first servers
+- [Docs/25-server-channel.md](Docs/25-server-channel.md) — server-channel decision record + implementation spec (D1–D10): one SSH session per server with an ed25519 key and a pinned host key; x-ui's HTTP API and MikroTik's API ride it through a loopback port-forward; per-server `Transport` (`Direct | SshTunnel`), SSH session pool, validation, admin connection test, server-side prerequisites, test plan, rollout order — **specified, not implemented**
 
 ---
 
@@ -221,7 +223,7 @@ The platform is functional for the customer-facing flow (auth, account, plan ren
 - **WhatsApp** — future adapter on the channel-neutral `ISocialMediaService` (one class + one keyed registration in `OutSource/ServiceFactory.cs`; `SocialChannel.WhatsApp` is reserved). No compile-time gates anymore.
 - **x-ui integration tests (local test VM)** — all current x-ui tests are mock-based (`XuiApiMoq` / scripted transport). Per Docs/23, no test may ever touch a live server; the only sanctioned integration target is a local VirtualBox test panel (`XuiPanelInitializer` mirroring `MikrotikInitializer` — open work, work order in Docs/23 §4).
 - **Google Auth** — listed as phase 5 in `README.md`.
-- **x-ui panels bound to loopback** — `XuiApiService` talks plain HTTP(S) to the configured host and `SshHandler` is password-only, so a panel that listens on loopback (sshd being the only public surface) is unreachable until a channel is decided (Docs/24 §5.1).
+- **Server channel (SSH key + tunnel)** — `XuiApiService` talks plain HTTP(S) to the configured host and `SshHandler` is password-only, so a panel that listens on loopback (sshd being the only public surface) is unreachable. The channel is **decided and specified, not implemented** ([Docs/25-server-channel.md](Docs/25-server-channel.md): an SSH session per server with an ed25519 key and a pinned host key, API traffic through a loopback port-forward; rollout order in §8).
 - **Link builder for XHTTP + REALITY** — `VlessLinkService` builds `tcp/ws/grpc` + `none/tls/reality` links from flat REALITY keys; `xhttp` transports and the nested `realitySettings.settings` shape are not supported yet (Docs/24 §5.2).
 
 See [Docs/12-current-state.md](Docs/12-current-state.md) for the full list and where to start for each, and `Architecture/TODO.md` for the original backlog.
