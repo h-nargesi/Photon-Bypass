@@ -113,6 +113,60 @@ describe('ChangePasswordComponent', () => {
     request.flush({ code: 200, message: 'ok' }, { status: 200, statusText: 'OK' });
   });
 
+  it('forgotten mode renders the server answer inline', async () => {
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl(
+      '/reset-password?token=abc123',
+      ChangePasswordComponent,
+    );
+
+    fillForm(component);
+
+    const answers = [
+      { code: 400, message: 'این کد منقضی شده است! دوباره تلاش کنید.' },
+      { code: 428, message: 'کد امنیتی نامعتبر یا لازم است!' },
+    ];
+
+    for (const answer of answers) {
+      component.submit();
+
+      http.expectOne(req => req.url === '/api/auth/reset-pass').flush(answer, {
+        status: 200,
+        statusText: 'OK',
+      });
+      await harness.detectChanges();
+
+      expect(harness.routeNativeElement?.querySelector('c-alert')?.textContent)
+        .toContain(answer.message);
+    }
+
+    http.expectOne(req => req.url === '/api/auth/captcha').flush(
+      {
+        code: 200,
+        data: { id: 'cap-1', image: 'data:image/png;base64,AAA', expiresInSeconds: 180 },
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    await harness.detectChanges();
+  });
+
+  it('a layout mode renders no inline result', async () => {
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/change-password', ChangePasswordComponent);
+
+    fillForm(component);
+    component.submit();
+
+    http.expectOne(req => req.url === '/api/account/change-pass').flush(
+      { code: 400, message: 'wrong password' },
+      { status: 200, statusText: 'OK' },
+    );
+    await harness.detectChanges();
+
+    expect(component.result?.message).toBe('wrong password');
+    expect(harness.routeNativeElement?.querySelector('c-alert')).toBeNull();
+  });
+
   it('rotate mode re-authenticates with the token only and posts no password', fakeAsync(async () => {
     const harness = await RouterTestingHarness.create();
     const component = await harness.navigateByUrl('/rotate-ovpn-id', ChangePasswordComponent);

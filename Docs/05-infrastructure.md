@@ -7,6 +7,7 @@
 `Backend/Infrastructure/Database/`:
 
 - `DapperRepository<TEntity>(IDapperDbContext)` — خواندن‌های پایه با Dapper.FastCrud.
+- **قاعده‌ی FastCrud v3 (3.3.2، Docs/14 H26)**: `Where(...)` و `WithParameters(...)` جمله‌ی قبلی را **جایگزین** می‌کنند، نه الحاق — همه‌ی شرط‌های یک statement در یک `Where` + یک `WithParameters` بیایند؛ فیلتر اختیاری با `(@p is null or col op @p)`، و هر چیز پیچیده‌تر با raw SQL (`QueryAsync`).
 - `EditableRepository<TEntity>` (`EditableRepository.cs:9`) — `Save`/`Save(IEnumerable)`/`Delete` را اضافه می‌کند و:
   - روی `Id > 0` عمل `Update` و در غیر این صورت `Insert` انجام می‌دهد.
   - برای مجموعه‌ها حلقه‌ی عملیات تک‌ردیفی `Update`/`Insert`/`Delete` در `Dapper.FastCrud` را اجرا می‌کند و هر ردیف با `CheckTransaction` به `CurrentTransaction` متصل می‌شود.

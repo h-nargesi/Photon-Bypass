@@ -133,6 +133,8 @@
     <c-container breakpoint="md">
         <c-row class="justify-content-center">
             <c-col xl="10" class="p-5">
+                <!-- RESULT (top-level route: no toaster, shown inline) -->
+                <c-alert *ngIf="result" [color]="getColor(result.status())">{{ result.message }}</c-alert>
                 <c-row class="justify-content-center">
                     @for (price of prices; track price) {
                     <c-col sm="6">

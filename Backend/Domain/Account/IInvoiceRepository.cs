@@ -16,9 +16,9 @@ public interface IInvoiceRepository
 
     Task<InvoiceEntity?> GetByCodeOwner(string target, int code);
 
-    Task<List<InvoiceEntity>> GetPendingByAccount(int account_id);
+    Task<List<InvoiceEntity>> GetPendingByUser(int user_id);
 
-    Task<int> CancelPreviousPending(int account_id);
+    Task<int> CancelPreviousPending(int user_id);
 
     Task<int> TransitionStatus(int code, BalanceStatus from, BalanceStatus to);
 

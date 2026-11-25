@@ -46,22 +46,22 @@ internal class InvoiceRepositoryMoq : Mock<IInvoiceRepository>, IUnitLevelServic
                     return Task.FromResult<InvoiceEntity?>(null);
                 }
 
-                var result = Data.FirstOrDefault(i => i.Code == code && i.AccountId == account.Id);
+                var result = Data.FirstOrDefault(i => i.Code == code && i.UserId == account.Id);
 
                 return Task.FromResult(result);
             });
 
-        Setup(x => x.GetPendingByAccount(It.IsAny<int>()))
-            .Returns<int>(account_id => Task.FromResult(Data
-                .Where(i => i.AccountId == account_id && i.Status == BalanceStatus.Pending)
+        Setup(x => x.GetPendingByUser(It.IsAny<int>()))
+            .Returns<int>(user_id => Task.FromResult(Data
+                .Where(i => i.UserId == user_id && i.Status == BalanceStatus.Pending)
                 .ToList()));
 
         Setup(x => x.CancelPreviousPending(It.IsAny<int>()))
-            .Returns<int>(account_id =>
+            .Returns<int>(user_id =>
             {
                 var updated = 0;
 
-                var pending = Data.Where(i => i.AccountId == account_id && i.Status == BalanceStatus.Pending).ToList();
+                var pending = Data.Where(i => i.UserId == user_id && i.Status == BalanceStatus.Pending).ToList();
 
                 foreach (var invoice in pending)
                 {

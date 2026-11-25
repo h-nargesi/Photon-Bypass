@@ -325,7 +325,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             new WalletEntity
             {
                 Id = 902,
-                AccountId = 99,
+                UserId = 99,
                 Amount = 1500,
                 Direction = BalanceDirection.Credit,
                 Status = BalanceStatus.Completed,
@@ -365,7 +365,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             new WalletEntity
             {
                 Id = 902,
-                AccountId = 99,
+                UserId = 99,
                 Amount = 1500,
                 Direction = BalanceDirection.Credit,
                 Status = BalanceStatus.Completed,
@@ -454,7 +454,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             new WalletEntity
             {
                 Id = 901,
-                AccountId = 99,
+                UserId = 99,
                 Amount = 1500,
                 Direction = BalanceDirection.Credit,
                 Status = BalanceStatus.Completed,
@@ -474,7 +474,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
 
         // D4: the invoice belongs to the paying manager, the action keeps the target
         var invoice = invoice_moq.Data.Single(i => i.Code == result.Data.InvoiceCode);
-        Assert.Equal(99, invoice.AccountId);
+        Assert.Equal(99, invoice.UserId);
         Assert.Equal(2, invoice.VpnAccountId);
         Assert.Equal("User2t|2u|120d|25g", invoice.Action);
 
@@ -526,7 +526,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             new WalletEntity
             {
                 Id = 902,
-                AccountId = 99,
+                UserId = 99,
                 Amount = 1500,
                 Direction = BalanceDirection.Credit,
                 Status = BalanceStatus.Completed,
@@ -601,7 +601,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
         // D9: the new-account invoice carries the D3 suggestion (bare panel
         // username — User6 owns no VPN account yet) and the chosen realm
         var invoice = invoice_moq.Data.Single(i => i.Code == result.Data.InvoiceCode);
-        Assert.Equal(6, invoice.AccountId);
+        Assert.Equal(6, invoice.UserId);
         Assert.Null(invoice.VpnAccountId);
         Assert.Equal("n|User6t|User6o|1u|30d|25g|1r", invoice.Action);
     }
@@ -672,7 +672,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             new WalletEntity
             {
                 Id = 903,
-                AccountId = 6,
+                UserId = 6,
                 Amount = 2000,
                 Direction = BalanceDirection.Credit,
                 Status = BalanceStatus.Completed,
@@ -725,7 +725,7 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
             new WalletEntity
             {
                 Id = 904,
-                AccountId = 99,
+                UserId = 99,
                 Amount = 3000,
                 Direction = BalanceDirection.Credit,
                 Status = BalanceStatus.Completed,

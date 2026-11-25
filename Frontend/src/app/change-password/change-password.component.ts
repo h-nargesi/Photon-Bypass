@@ -32,7 +32,12 @@ import {
   PasswordToken,
   ResultStatus,
 } from '../@models';
-import { PasswordValidators, TranslationPipe, UserService } from '../@services';
+import {
+  MessageService,
+  PasswordValidators,
+  TranslationPipe,
+  UserService,
+} from '../@services';
 import { ChangePasswordService } from './change-password.service';
 
 @Component({
@@ -193,6 +198,10 @@ export class ChangePasswordComponent {
 
   private captcha_headers(): Record<string, string> | undefined {
     return this.captcha_required ? this.captcha_input?.headers() : undefined;
+  }
+
+  getColor(code: ResultStatus) {
+    return MessageService.getStatusCode(code);
   }
 
   private onValidate() {

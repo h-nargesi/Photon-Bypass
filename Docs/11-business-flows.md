@@ -39,7 +39,7 @@ sequenceDiagram
     CTL->>APP: CheckUserPassword(user, pass)
     APP->>ACC: load account + verify hash
     alt پسورد اشتباه
-        APP-->>U: 401 (در صورت فعال بودن SOCIAL: InvalidPasswordAlert)
+        APP-->>U: ApiResult 401 + پیام خنثی یکسان (در صورت فعال بودن SOCIAL: InvalidPasswordAlert)
     else موفق
         APP-->>CTL: TargetModel + TargetArea
         CTL->>ACCS: LoginEvent(user, area keys)  %% cache

@@ -54,6 +54,17 @@ describe('DefaultHeaderComponent', () => {
     return Promise.all([fixture.whenStable()]);
   }
 
+  function expectEndAlignedNavCluster() {
+    fixture.detectChanges();
+
+    const element: HTMLElement = fixture.nativeElement;
+    const clusters = element.querySelectorAll('.ms-md-auto');
+    expect(clusters.length).withContext('desktop auto margins').toBe(1);
+    expect(clusters[0]?.contains(element.querySelector('a[routerLink="/dashboard"]'))).toBeTrue();
+
+    expect(element.querySelectorAll('.ms-auto').length).withContext('phone auto margins').toBe(1);
+  }
+
   it('should create', async () => {
     await answerUser({
       username: 'main',
@@ -125,5 +136,46 @@ describe('DefaultHeaderComponent', () => {
 
     // the admin always reaches the user-list selector (Docs/20 step 22)
     expect(component.canSelectTarget).toBeTrue();
+  });
+
+  it('a dependent account keeps the nav cluster end-aligned without the wallet block (L17)', async () => {
+    await answerUser({
+      username: 'main',
+      fullname: 'Main',
+      email: 'm@t.l',
+      balance: 0,
+      role: 0,
+      allowSelfService: false,
+    });
+
+    expectEndAlignedNavCluster();
+    expect(fixture.nativeElement.querySelector('c-alert')).toBeNull();
+  });
+
+  it('a self-service account keeps the wallet balance inside the end-aligned nav cluster (L17)', async () => {
+    await answerUser({
+      username: 'main',
+      fullname: 'Main',
+      email: 'm@t.l',
+      balance: 0,
+      role: 0,
+      allowSelfService: true,
+    });
+
+    expectEndAlignedNavCluster();
+    expect(fixture.nativeElement.querySelector('.ms-md-auto c-alert')).not.toBeNull();
+  });
+
+  it('the admin keeps a single end-aligned nav cluster (L17)', async () => {
+    await answerUser({
+      username: 'boss',
+      fullname: 'Boss',
+      email: 'b@t.l',
+      balance: 0,
+      role: 2,
+      allowSelfService: true,
+    });
+
+    expectEndAlignedNavCluster();
   });
 });

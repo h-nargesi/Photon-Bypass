@@ -1,4 +1,8 @@
+using PhotonBypass.Domain.Account;
+using PhotonBypass.Domain.Account.Entity;
+using PhotonBypass.Result;
 using PhotonBypass.Test.Initializer;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
@@ -42,13 +46,86 @@ public class JwtAuthTest(ProgramLevelInitializer.Factory factory) : HttpHandler(
         Assert.Equal(username, user["username"]);
     }
 
-    private async Task<string> FetchAccessToken(string username)
+    [Fact]
+    public async Task Login_Rejections_Answer401WithTheSameNeutralMessage()
     {
-        var response = await Client.PostAsJsonAsync("/api/auth/token", new
+        await Register("jwt_user03", "53", TokenPassword);
+
+        var responses = new[]
+        {
+            await PostToken("ghost_user03", TokenPassword),
+            await PostToken("jwt_user03", "WrongPassw0rd1"),
+        };
+
+        var messages = new List<string?>();
+
+        foreach (var response in responses)
+        {
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var result = await CheckResponse<object>(response, 4);
+
+            Assert.Equal(401, result!.Code);
+            Assert.False(string.IsNullOrWhiteSpace(result.Message));
+
+            messages.Add(result.Message);
+        }
+
+        Assert.Equal(messages[0], messages[1]);
+    }
+
+    [Fact]
+    public async Task ChangeOvpnPassword_WrongPortalPassword_KeepsItsGenericMessage()
+    {
+        await Register("jwt_user04", "54", TokenPassword);
+
+        int account_id;
+
+        using (var scope = ServiceProvider.CreateScope())
+        {
+            var panel_user_repo = scope.ServiceProvider.GetRequiredService<IPanelUserRepository>();
+            var vpn_account_repo = scope.ServiceProvider.GetRequiredService<IVpnAccountRepository>();
+
+            var user_id = await panel_user_repo.GetActiveUserId("jwt_user04");
+
+            await vpn_account_repo.Save(new VpnAccountEntity
+            {
+                UserId = user_id!.Value,
+                RealmId = 1,
+                Username = "jwt_user04",
+                VpnPassword = "VpnPassword",
+            });
+
+            account_id = (await vpn_account_repo.GetAccount("jwt_user04"))!.Id;
+        }
+
+        await Login("jwt_user04", TokenPassword);
+
+        var response = await Client.PostAsJsonAsync("/api/vpn/change-ovpn", new
+        {
+            accountId = account_id,
+            token = "wrong-token",
+            password = "NewPassw0rd1",
+        });
+
+        var result = await CheckResponse<object>(response, 40);
+
+        Assert.Equal(400, result!.Code);
+        Assert.Equal("عملیات ناموفق بود!", result.Message);
+    }
+
+    private Task<HttpResponseMessage> PostToken(string username, string password)
+    {
+        return Client.PostAsJsonAsync("/api/auth/token", new
         {
             Username = username,
-            Password = TokenPassword,
+            Password = password,
         });
+    }
+
+    private async Task<string> FetchAccessToken(string username)
+    {
+        var response = await PostToken(username, TokenPassword);
         var result = await CheckResponseObject(response);
         return result["access_token"] ?? throw new Exception("access_token missing");
     }

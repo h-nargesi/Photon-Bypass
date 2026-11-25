@@ -87,6 +87,14 @@ flowchart LR
 
 `ApiResult` در فرانت با `code` و تابع `status()` که نمایش (toast/dialog) را تعیین می‌کند. `MessageMethod` هم روش نمایش (مثلاً `toaster`) را کنترل می‌کند. این قرارداد با `ApiResult` بک‌اند (`Docs/08`) هم‌خوان است.
 
+- **پاسخ بی‌پیام**: هر پاسخ ناموفق (`status() >= warning` یا HTTP ناموفق) که `message` ندارد، در `HttpClientHandler.processResponse` متن عمومی `api.error` می‌گیرد؛ هیچ alertی هرگز خالی رندر نمی‌شود (Docs/14 L12).
+- **توست فقط با layout**: `MessageService` چیزی را صف/بافر نمی‌کند. توست فقط وقتی نمایش داده می‌شود که `DefaultLayoutComponent` mount شده باشد (ثبت در `ngAfterViewInit`، لغو ثبت در `ngOnDestroy`)؛ پیامِ بیرون از layout به `console.info` می‌رود و بعداً پخش نمی‌شود (Docs/14 L13).
+- **مسیرهای بدون layout، نتیجه را inline نشان می‌دهند**: لاگین/ثبت‌نام/فراموشی رمز (از قبل)، `reset-password`، Home (قیمت‌ها) و ورودی کپچا (با دکمه‌ی «تصویر جدید») هر کدام یک `c-alert` inline دارند.
+- **ورود به صفحه‌ی لاگین**: فقط با session ذخیره‌شده (bearer در `localStorage`) probe می‌زند (`AuthService.check`، ساکت؛ 401 → بستن session). ورود بی‌session = حالت بی‌نام: `closeSession()` پروفایل کش‌شده‌ای را که از session عمرش کشیده بوده می‌اندازد و به لچ 401 دست نمی‌زند (Docs/14 L14/M49).
+- **کش پروفایل**: `UserService` هرگز یک load ناموفق را کش نمی‌کند؛ فراخوان بعدی دوباره درخواست می‌زند.
+- **لچ redirect روی 401** (`ApiBaseService.is_logout`): فقط با یک session پذیرفته‌شده (لاگین موفق یا probe موفق — `rearmOnSuccess`) یا logout صریح دوباره مسلح می‌شود؛ رسیدن به صفحه‌ی لاگین آن را تغییر نمی‌دهد (Docs/14 H11).
+- **آبجکت options**: همیشه داخل فراخوان ساخته شود (`{ show_message: … }`)، نه به‌صورت ثابت مشترک — سرویس پایه `result`/`service` را داخل همان آبجکت می‌نویسد.
+
 ## Design references
 
 - صفحات پروفایل از CoreUI Free Angular template (`README.md:94`).

@@ -15,7 +15,7 @@ public class InvoiceEntity : IBaseEntity
     public int Id { get => Code; set => Code = value; }
 
     /// <summary>Panel user the invoice belongs to (Docs/22 D8: payer = panel user).</summary>
-    public int AccountId { get; set; }
+    public int UserId { get; set; }
 
     /// <summary>VPN account a plan invoice renews (Docs/22 §2); null on wallet-topup invoices.</summary>
     public int? VpnAccountId { get; set; }

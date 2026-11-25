@@ -9,21 +9,17 @@
       </h4>
     </div>
 
-    <c-header-nav class="d-flex ms-auto" *ngIf="isSelfService">
-      <c-alert class="m-0 p-2 me-2 digits pointer" [cModalToggle]="paymentModal" color="light">
-        <span>{{ "global.header.walet.title" | translate }}</span>
-        <strong> {{ showBalance() }}</strong> &nbsp;
-        <span>{{ "global.header.walet.currency" | translate }}</span>
-      </c-alert>
-    </c-header-nav>
-
-    <c-header-nav *ngIf="isSelfService">
-      <div class="nav-item py-1">
-        <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
-      </div>
-    </c-header-nav>
-
-    <c-header-nav class="d-flex">
+    <c-header-nav class="d-flex flex-wrap ms-md-auto">
+      @if (isSelfService) {
+        <c-alert class="m-0 p-2 me-2 digits pointer" [cModalToggle]="paymentModal" color="light">
+          <span>{{ "global.header.walet.title" | translate }}</span>
+          <strong> {{ showBalance() }}</strong> &nbsp;
+          <span>{{ "global.header.walet.currency" | translate }}</span>
+        </c-alert>
+        <div class="nav-item py-1">
+          <div class="vr h-100 mx-2 text-body text-opacity-75"></div>
+        </div>
+      }
       <a cNavLink routerLink="/dashboard" [cTooltip]="'global.header.navbar.dashboard' | translate">
         <svg [cIcon]="icons.cilSpeedometer" class="my-1" size="lg"></svg>
       </a>
@@ -70,7 +66,7 @@
       </div>
     </c-header-nav>
 
-    <c-header-nav class="d-flex" *ngIf="hasMultipleAccounts" placement="start">
+    <c-header-nav class="d-flex" *ngIf="hasMultipleAccounts">
       <c-dropdown variant="nav-item" direction="dropend">
         <button cDropdownToggle color="secondary" size="sm" cTextColor="light">
           {{ "global.header.accounts.title" | translate }}:

@@ -88,4 +88,27 @@ describe('CaptchaInputComponent', () => {
     const input = fixture.nativeElement.querySelector('input.captcha-code-input');
     expect(input?.getAttribute('placeholder')).toBe('security code');
   });
+
+  it('a failed image load is shown inline and can be retried', () => {
+    const element: HTMLElement = fixture.nativeElement;
+
+    fixture.detectChanges();
+    http.expectOne(req => req.method === 'GET' && req.url === '/api/auth/captcha').flush(
+      { code: 429, message: 'too many requests' },
+      { status: 200, statusText: 'OK' },
+    );
+    fixture.detectChanges();
+
+    const alert = element.querySelector<HTMLElement>('c-alert');
+    expect(alert?.textContent).toContain('too many requests');
+    expect(element.querySelector('.captcha-box')).toBeNull();
+
+    alert!.querySelector<HTMLButtonElement>('button')!.click();
+    flushCaptcha('cap-1');
+    fixture.detectChanges();
+
+    expect(element.querySelector('c-alert')).toBeNull();
+    expect(element.querySelector<HTMLImageElement>('.captcha-image')?.src)
+      .toBe('data:image/png;base64,cap-1');
+  });
 });

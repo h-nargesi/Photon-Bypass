@@ -11,11 +11,11 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
     private static readonly string CountedInBalanceStatusSql =
         $"{(sbyte)BalanceStatus.Completed}, {(sbyte)BalanceStatus.Verifying}";
 
-    public async Task<List<WalletEntity>> GetTransactions(int account_id)
+    public async Task<List<WalletEntity>> GetTransactions(int user_id)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(WalletEntity.AccountId)} = @account_id")
-            .WithParameters(new { account_id }));
+            .Where($"{nameof(WalletEntity.UserId)} = @user_id")
+            .WithParameters(new { user_id }));
 
         return [.. result];
     }
@@ -25,7 +25,7 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
         var sql = $"""
                    select w.*
                    from {TableName} w
-                   join {PanelUserRepository.TableName} a on w.{nameof(WalletEntity.AccountId)} = a.{nameof(PanelUserEntity.Id)}
+                   join {PanelUserRepository.TableName} a on w.{nameof(WalletEntity.UserId)} = a.{nameof(PanelUserEntity.Id)}
                    where w.{nameof(WalletEntity.InvoiceCode)} = @code
                      and a.{nameof(PanelUserEntity.Username)} = @target
                    """;
@@ -35,25 +35,25 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
         return [..result];
     }
 
-    public async Task<(List<WalletEntity> Rows, int TotalCount)> GetHistory(int account_id, int page, int page_size)
+    public async Task<(List<WalletEntity> Rows, int TotalCount)> GetHistory(int user_id, int page, int page_size)
     {
         var total = await ExecuteScalarAsync<int>(
             $"""
              select count(*) as Total
              from {TableName}
-             where {nameof(WalletEntity.AccountId)} = @account_id
+             where {nameof(WalletEntity.UserId)} = @user_id
              """,
-            new { account_id });
+            new { user_id });
 
         var sql = $"""
                    select *
                    from {TableName}
-                   where {nameof(WalletEntity.AccountId)} = @account_id
+                   where {nameof(WalletEntity.UserId)} = @user_id
                    order by {nameof(WalletEntity.Id)} desc
                    offset @skip rows fetch next @take rows only
                    """;
 
-        var rows = await QueryAsync<WalletEntity>(sql, new { account_id, skip = (page - 1) * page_size, take = page_size });
+        var rows = await QueryAsync<WalletEntity>(sql, new { user_id, skip = (page - 1) * page_size, take = page_size });
 
         return ([.. rows], total);
     }
@@ -78,13 +78,13 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
         return result.ToDictionary(k => (int)k.Id, v => (int)v.Amount);
     }
 
-    public async Task<List<int>> GetAccountIdsBelowThreshold(int threshold)
+    public async Task<List<int>> GetUserIdsBelowThreshold(int threshold)
     {
         var sql = $"""
-                   select {nameof(WalletEntity.AccountId)}
+                   select {nameof(WalletEntity.UserId)}
                    from {TableName}
                    where {nameof(WalletEntity.Status)} in ({CountedInBalanceStatusSql})
-                   group by {nameof(WalletEntity.AccountId)}
+                   group by {nameof(WalletEntity.UserId)}
                    having sum({nameof(WalletEntity.Amount)} * {nameof(WalletEntity.Direction)}) < @threshold
                    """;
 
@@ -93,15 +93,15 @@ class WalletRepository(LocalDbContext context) : EditableRepository<WalletEntity
         return [.. result];
     }
 
-    public Task<int> GetBalance(int account_id)
+    public Task<int> GetBalance(int user_id)
     {
         var sql = $"""
                    select sum({nameof(WalletEntity.Amount)} * {nameof(WalletEntity.Direction)}) as Balance
                    from {TableName}
-                   where {nameof(WalletEntity.AccountId)} = @account_id
+                   where {nameof(WalletEntity.UserId)} = @user_id
                      and {nameof(WalletEntity.Status)} in ({CountedInBalanceStatusSql})
                    """;
 
-        return ExecuteScalarAsync<int>(sql, new { account_id });
+        return ExecuteScalarAsync<int>(sql, new { user_id });
     }
 }

@@ -43,7 +43,7 @@ class WalletThresholdService(
             return;
         }
 
-        var below = (await WalletRepo.GetAccountIdsBelowThreshold(threshold.Value)).ToHashSet();
+        var below = (await WalletRepo.GetUserIdsBelowThreshold(threshold.Value)).ToHashSet();
         var last_states = await HistoryRepo.Value.GetLastByTitle(IWalletThresholdService.HistoryTitle);
 
         var to_deactivate = below

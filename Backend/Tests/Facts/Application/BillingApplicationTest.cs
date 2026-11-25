@@ -374,7 +374,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
             new WalletEntity
             {
                 Id = 901,
-                AccountId = 2,
+                UserId = 2,
                 Amount = 400,
                 Direction = BalanceDirection.Credit,
                 Status = BalanceStatus.Completed,
@@ -617,7 +617,7 @@ public class BillingApplicationTest : UnitLevelServiceInitializer
             new WalletEntity
             {
                 Id = 901,
-                AccountId = 99,
+                UserId = 99,
                 Amount = 1500,
                 Direction = BalanceDirection.Credit,
                 Status = BalanceStatus.Completed,

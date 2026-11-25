@@ -28,17 +28,17 @@ class TelegramLinkRepository(LocalDbContext context) : DapperRepository<Telegram
         await context.Connection.InsertAsync(code);
     }
 
-    public async Task ExpireActiveCodes(int account_id)
+    public async Task ExpireActiveCodes(int user_id)
     {
         var now = DateTime.Now;
 
         var sql = $"""
                    update {TableName}
                    set {nameof(TelegramLinkEntity.ExpireDate)} = @now
-                   where {nameof(TelegramLinkEntity.AccountId)} = @account_id
+                   where {nameof(TelegramLinkEntity.UserId)} = @user_id
                      and {nameof(TelegramLinkEntity.ExpireDate)} > @now
                    """;
 
-        await ExecuteAsync(sql, new { account_id, now });
+        await ExecuteAsync(sql, new { user_id, now });
     }
 }

@@ -13,6 +13,7 @@ describe('HttpClientHandler', () => {
 
   const transport_error_text =
     'ارتباط با سرور برقرار نشد؛ اتصال اینترنت یا در دسترس بودن سرور را بررسی کنید.';
+  const error_text = 'خطا در تبادل داده.';
 
   beforeEach(() => {
     localStorage.clear();
@@ -120,5 +121,88 @@ describe('HttpClientHandler', () => {
     expect(result.code).toBe(600);
     expect(result.status()).toBe(ResultStatus.uiFatal);
     expect(result.message).toBe(transport_error_text);
+  });
+
+  it('an in-band failure code without a message over HTTP 200 gets the api.error fallback', async () => {
+    const result_promise = firstValueFrom(handler.get('/probe'));
+    http.expectOne('/api/probe').flush(
+      { code: 401 },
+      { status: 200, statusText: 'OK' },
+    );
+
+    const result = await result_promise;
+    expect(result.code).toBe(401);
+    expect(result.status()).toBe(ResultStatus.error);
+    expect(result.message).toBe(error_text);
+  });
+
+  it('a success without a message stays message-less', async () => {
+    const result_promise = firstValueFrom(handler.get('/probe'));
+    http.expectOne('/api/probe').flush(
+      { code: 200 },
+      { status: 200, statusText: 'OK' },
+    );
+
+    const result = await result_promise;
+    expect(result.status()).toBe(ResultStatus.success);
+    expect(result.message).toBeUndefined();
+  });
+
+  it('a message-less 2xx body over a failing http response gets the fallback', async () => {
+    const result_promise = firstValueFrom(handler.get('/probe'));
+    http.expectOne('/api/probe').flush(
+      { code: 200 },
+      { status: 502, statusText: 'Bad Gateway' },
+    );
+
+    const result = await result_promise;
+    expect(result.code).toBe(600);
+    expect(result.message).toBe(error_text);
+  });
+
+  it('drops null and undefined query params and keeps the rest (M50)', async () => {
+    const result_promise = firstValueFrom(
+      handler.get('/probe', {
+        absent: undefined,
+        missing: null,
+        zero: 0,
+        off: false,
+        blank: '',
+        tags: ['a', 'b'],
+      }),
+    );
+    const request = http.expectOne(
+      req => req.method === 'GET' && req.url === '/api/probe',
+    );
+    expect(request.request.params.keys()).toEqual(['zero', 'off', 'blank', 'tags']);
+    expect(request.request.params.get('zero')).toBe('0');
+    expect(request.request.params.get('off')).toBe('false');
+    expect(request.request.params.get('blank')).toBe('');
+    expect(request.request.params.getAll('tags')).toEqual(['a', 'b']);
+    request.flush({ code: 200, data: {} }, { status: 200, statusText: 'OK' });
+
+    await result_promise;
+  });
+
+  it('sends no query string when every param is absent (M50)', async () => {
+    const result_promise = firstValueFrom(
+      handler.get('/probe', { target: undefined, from: undefined }),
+    );
+    const request = http.expectOne(req => req.urlWithParams === '/api/probe');
+    request.flush({ code: 200, data: {} }, { status: 200, statusText: 'OK' });
+
+    await result_promise;
+  });
+
+  it('applies the same param rules to delete requests (M50)', async () => {
+    const result_promise = firstValueFrom(
+      handler.remove('/probe', { target: undefined, id: 7 }),
+    );
+    const request = http.expectOne(
+      req => req.method === 'DELETE' && req.urlWithParams === '/api/probe?id=7',
+    );
+    request.flush({ code: 200 }, { status: 200, statusText: 'OK' });
+
+    await result_promise;
   });
 });

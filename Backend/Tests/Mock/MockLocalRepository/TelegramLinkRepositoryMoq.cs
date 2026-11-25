@@ -44,11 +44,11 @@ internal class TelegramLinkRepositoryMoq : Mock<ITelegramLinkRepository>, IUnitL
             });
 
         Setup(x => x.ExpireActiveCodes(It.IsInRange(1, int.MaxValue, Moq.Range.Inclusive)))
-            .Returns<int>(account_id =>
+            .Returns<int>(user_id =>
             {
                 var now = DateTime.Now;
 
-                foreach (var entity in data.Values.Where(entity => entity.AccountId == account_id))
+                foreach (var entity in data.Values.Where(entity => entity.UserId == user_id))
                 {
                     if (entity.ExpireDate > now)
                     {
@@ -56,7 +56,7 @@ internal class TelegramLinkRepositoryMoq : Mock<ITelegramLinkRepository>, IUnitL
                     }
                 }
 
-                OnExpireActiveCodes?.Invoke(account_id);
+                OnExpireActiveCodes?.Invoke(user_id);
                 return Task.CompletedTask;
             });
     }

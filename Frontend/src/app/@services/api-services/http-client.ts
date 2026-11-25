@@ -1,4 +1,4 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -28,7 +28,7 @@ export class HttpClientHandler {
     url = this.base_path + url;
     const headers = this.getHeader();
     return this.api
-      .get<ApiResult>(url, { params, observe: 'response', headers })
+      .get<ApiResult>(url, { params: this.toParams(params), observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
   }
@@ -37,7 +37,7 @@ export class HttpClientHandler {
     url = this.base_path + url;
     const headers = this.getHeader();
     return this.api
-      .get<ApiResultData<M>>(url, { params, observe: 'response', headers })
+      .get<ApiResultData<M>>(url, { params: this.toParams(params), observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
   }
@@ -45,7 +45,12 @@ export class HttpClientHandler {
   public download(url: string, params?: ApiParam): Observable<HttpResponse<Blob>> {
     url = this.base_path + url;
     const headers = this.getHeader();
-    return this.api.get(url, { params, observe: 'response', headers, responseType: 'blob' });
+    return this.api.get(url, {
+      params: this.toParams(params),
+      observe: 'response',
+      headers,
+      responseType: 'blob',
+    });
   }
 
   public job(url: string, body: any | null, headers?: Record<string, string>): Observable<ApiResult> {
@@ -61,7 +66,7 @@ export class HttpClientHandler {
     url = this.base_path + url;
     const headers = this.getHeader();
     return this.api
-      .delete<ApiResult>(url, { params, observe: 'response', headers })
+      .delete<ApiResult>(url, { params: this.toParams(params), observe: 'response', headers })
       .pipe(map(this.processResponse))
       .pipe(catchError(this.errorHandler));
   }
@@ -107,6 +112,24 @@ export class HttpClientHandler {
     return Object.keys(headers).length ? headers : undefined;
   }
 
+  private toParams(params?: ApiParam): HttpParams | undefined {
+    if (!params) return undefined;
+
+    let result = new HttpParams();
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined || value === null) continue;
+      if (typeof value === 'object') {
+        for (const item of value) {
+          result = result.append(key, item);
+        }
+      } else {
+        result = result.set(key, value);
+      }
+    }
+
+    return result.keys().length ? result : undefined;
+  }
+
   protected errorHandler(error: any): Observable<ApiResult> {
     const transport_failure =
       error?.status === 0 || (error?.status == null && !error?.error);
@@ -134,12 +157,12 @@ export class HttpClientHandler {
       result.code = response.status;
     }
 
-    if (!response.ok) {
+    if (!response.ok || result.status() >= ResultStatus.warning) {
       if (!result.message) {
         result.message = TranslationService.translate('api.error');
       }
 
-      if (result.code < 300) {
+      if (!response.ok && result.code < 300) {
         result.code = 600 + (result.code % 100);
       }
     }

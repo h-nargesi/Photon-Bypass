@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Caching.Memory;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Test.Initializer;
 using PhotonBypass.Test.Initializer.OutSourceManager;
@@ -99,5 +100,49 @@ public class ServerRepositoryTest : OutSourceLevelServiceInitializer
         (await server_repo.GetActiveNasInfo("192.168.58.22")).Should().BeNull();
         (await server_repo.GetActiveNasInfo("192.168.58.24")).Should().BeNull();
         (await server_repo.GetActiveNasInfo("192.168.58.99")).Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetActiveNasInRealmOrAll_ScopedRealmKeepsActiveAndFeatureFilters()
+    {
+        using var scope = App.Services.CreateScope();
+        await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
+
+        var realm_repo = scope.ServiceProvider.GetRequiredService<IRealmRepository>();
+        var server_repo = scope.ServiceProvider.GetRequiredService<IServerRepository>();
+
+        var realms = await realm_repo.FetchAllActiveRealm();
+        var realm_a = realms.Single(realm => realm.Name == "Lookup-A");
+        var realm_b = realms.Single(realm => realm.Name == "Lookup-B");
+
+        (await server_repo.GetActiveNasInRealmOrAll(realm_a.Id))
+            .Should().ContainSingle().Which.Name.Should().Be("NAS-A1");
+
+        (await server_repo.GetActiveNasInRealmOrAll(realm_b.Id))
+            .Should().ContainSingle().Which.Name.Should().Be("NAS-B1");
+    }
+
+    [Fact]
+    public async Task GetActiveRadiusInRealmOrAll_ScopedRealmKeepsActiveAndFeatureFilters()
+    {
+        using var scope = App.Services.CreateScope();
+        await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
+
+        var realm_repo = scope.ServiceProvider.GetRequiredService<IRealmRepository>();
+        var server_repo = scope.ServiceProvider.GetRequiredService<IServerRepository>();
+
+        var realms = await realm_repo.FetchAllActiveRealm();
+        var realm_a = realms.Single(realm => realm.Name == "Lookup-A");
+        var realm_b = realms.Single(realm => realm.Name == "Lookup-B");
+
+        var cache = scope.ServiceProvider.GetRequiredService<IMemoryCache>();
+        cache.Remove($"{nameof(IServerRepository.GetActiveRadiusInRealmOrAll)}:{realm_a.Id}");
+        cache.Remove($"{nameof(IServerRepository.GetActiveRadiusInRealmOrAll)}:{realm_b.Id}");
+
+        (await server_repo.GetActiveRadiusInRealmOrAll(realm_b.Id))
+            .Should().ContainSingle().Which.Name.Should().Be("RAD-B1");
+
+        (await server_repo.GetActiveRadiusInRealmOrAll(realm_a.Id))
+            .Should().ContainSingle().Which.Name.Should().Be("RAD-A0");
     }
 }

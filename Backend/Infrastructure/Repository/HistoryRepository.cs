@@ -9,23 +9,13 @@ class HistoryRepository(LocalDbContext context, Lazy<IPanelUserRepository> panel
 {
     public async Task<List<HistoryEntity>> GetHistory(int user_id, DateTime? from, DateTime? to)
     {
-        var result = await FindAsync(statement =>
-        {
-            statement.Where($"{nameof(HistoryEntity.Target)} = @user_id")
-                .WithParameters(new { user_id });
-
-            if (from.HasValue)
-            {
-                statement.Where($"{nameof(HistoryEntity.Created)} >= @from")
-                    .WithParameters(new { from });
-            }
-
-            if (to.HasValue)
-            {
-                statement.Where($"{nameof(HistoryEntity.Created)} <= @to")
-                    .WithParameters(new { to });
-            }
-        });
+        var result = await FindAsync(statement => statement
+            .Where($"""
+                    {nameof(HistoryEntity.Target)} = @user_id
+                        and (@from is null or {nameof(HistoryEntity.Created)} >= @from)
+                        and (@to is null or {nameof(HistoryEntity.Created)} <= @to)
+                    """)
+            .WithParameters(new { user_id, from, to }));
 
         return [.. result];
     }

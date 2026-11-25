@@ -75,4 +75,22 @@ describe('CaptchaService', () => {
 
     expect(service.headers('ab2cd')).toBeUndefined();
   });
+
+  it('a failed fetch drops the current challenge', () => {
+    service.fetch().subscribe();
+    http.expectOne(req => req.url === '/api/auth/captcha').flush(
+      { code: 200, data: { id: 'cap-1', image: 'img', expiresInSeconds: 180 } },
+      { status: 200, statusText: 'OK' },
+    );
+
+    expect(service.headers('ab2cd')).toBeDefined();
+
+    service.fetch().subscribe();
+    http.expectOne(req => req.url === '/api/auth/captcha').flush(
+      { code: 429 },
+      { status: 200, statusText: 'OK' },
+    );
+
+    expect(service.headers('ab2cd')).toBeUndefined();
+  });
 });

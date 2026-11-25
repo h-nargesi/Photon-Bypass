@@ -7,13 +7,6 @@ import { AppToastComponent } from '../../default-layout/toast/toast.component';
 export class MessageService {
   private toaster?: ToasterComponent;
   private dialog?: TemplateRef<any>;
-  private buffer: {
-    toaster: any[];
-    dialog: any[];
-  } = {
-    toaster: [],
-    dialog: [],
-  };
 
   public get dialogBox(): TemplateRef<any> | undefined {
     return this.dialog;
@@ -21,10 +14,10 @@ export class MessageService {
 
   public registerToaster(toaster: ToasterComponent) {
     this.toaster = toaster;
-    if (!toaster) return;
-    while (this.buffer.toaster.length > 0) {
-      this.toaster.addToast(AppToastComponent, this.buffer.toaster.pop());
-    }
+  }
+
+  public unregisterToaster(toaster: ToasterComponent) {
+    if (this.toaster === toaster) this.toaster = undefined;
   }
 
   public registerDialogBox(dialog: TemplateRef<any>) {
@@ -64,7 +57,7 @@ export class MessageService {
       if (this.toaster) {
         this.toaster.addToast(AppToastComponent, props);
         return;
-      } else this.buffer.toaster.push(props);
+      }
     } else if (method === MessageMethod.dialog) {
       // if (this.dialoger) {
       //   if (this.dialog) {

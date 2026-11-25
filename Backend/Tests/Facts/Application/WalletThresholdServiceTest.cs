@@ -55,7 +55,7 @@ public class WalletThresholdServiceTest : UnitLevelServiceInitializer
 
         await wallet_repo.Save(new WalletEntity
         {
-            AccountId = 3,
+            UserId = 3,
             Amount = 1000,
             Direction = BalanceDirection.Credit,
             Status = BalanceStatus.Completed,

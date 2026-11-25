@@ -16,7 +16,7 @@ public class TelegramLinkEntity : IBaseEntity
     public int Id { get; set; }
 
     /// <summary>Panel user the code binds the chat to (Docs/22 D11).</summary>
-    public int AccountId { get; set; }
+    public int UserId { get; set; }
 
     public DateTime ExpireDate { get; set; }
 

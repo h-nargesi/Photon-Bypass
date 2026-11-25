@@ -34,6 +34,12 @@ class AuthApplication(
     /// <summary>Reset-code requests allowed per identifier inside the window.</summary>
     private const int MaxResetRequestsPerWindow = 3;
 
+    /// <summary>
+    /// The single answer every rejected login gets — an unknown user, a wrong
+    /// password and a deactivated account are indistinguishable to the caller.
+    /// </summary>
+    private const string RejectedLoginMessage = "نام کاربری یا کلمه عبور اشتباه است!";
+
     private static readonly TimeSpan ResetRateWindowLength = TimeSpan.FromHours(1);
 
     private static readonly object ResetRateLimitLock = new();
@@ -62,11 +68,7 @@ class AuthApplication(
             {
                 _ = PasswordHasher.Hash(password);
 
-                return new ApiResult<UserModel>
-                {
-                    Code = 401,
-                    Data = null,
-                };
+                return RejectedLogin();
             }
 
             // best-effort: a failing social alert must not turn a wrong-
@@ -77,7 +79,7 @@ class AuthApplication(
             }
             catch (Exception error)
             {
-                Log.Error(error, "Invalid-password social alert failed: account-id={0}, user={1}",
+                Log.Error(error, "Invalid-password social alert failed: user-id={0}, user={1}",
                     account.Id, account.Username);
             }
 
@@ -95,11 +97,7 @@ class AuthApplication(
 
             Log.Warning("Invalid password for {0}, status={1}", account.Username, account.Status);
 
-            return new ApiResult<UserModel>
-            {
-                Code = 401,
-                Data = null,
-            };
+            return RejectedLogin();
         }
 
         var target_list = account.Role == AccountRole.Admin ?
@@ -147,6 +145,13 @@ class AuthApplication(
         };
     }
 
+    private static ApiResult<UserModel> RejectedLogin() => new()
+    {
+        Code = 401,
+        Data = null,
+        Message = RejectedLoginMessage,
+    };
+
     public async Task<ApiResult> ForgetPassword(string email_mobile)
     {
         email_mobile = email_mobile.Trim();
@@ -190,7 +195,7 @@ class AuthApplication(
                     Description = "درخواست تغییر کلمه عبور (موبایل)",
                 });
 
-                Log.Information("Reset-Password message has been sent: account-id={0}", mobile_account.Id);
+                Log.Information("Reset-Password message has been sent: user-id={0}", mobile_account.Id);
             }
 
             return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
@@ -254,7 +259,7 @@ class AuthApplication(
                 catch (Exception social_error)
                 {
                     // the code stays stored: the user may simply retry later
-                    Log.Error(social_error, "Reset-Password social message failed: account-id={0}", account.Id);
+                    Log.Error(social_error, "Reset-Password social message failed: user-id={0}", account.Id);
 
                     // delivery fallback: a validated email re-announces the
                     // SAME stored code — a fresh StoreResetCode would retire it
@@ -264,24 +269,24 @@ class AuthApplication(
                         {
                             await EmailSrv.Value.SendResetPasswordLink(account.Fullname, email_address, hash_code);
 
-                            Log.Information("Reset-Password code re-sent by email after social failure: account-id={0}", account.Id);
+                            Log.Information("Reset-Password code re-sent by email after social failure: user-id={0}", account.Id);
 
                             return ApiResult.Success("اگر این حساب ثبت شده باشد، پیام بازیابی ارسال شد.");
                         }
                         catch (Exception email_error)
                         {
-                            Log.Error(email_error, "Reset-Password email fallback failed: account-id={0}", account.Id);
+                            Log.Error(email_error, "Reset-Password email fallback failed: user-id={0}", account.Id);
 
                             throw new UserException("ارسال ایمیل ناموفق بود؛ لطفاً بعداً تلاش کنید",
-                                $"Reset-password email fallback failed: account-id={account.Id}");
+                                $"Reset-password email fallback failed: user-id={account.Id}");
                         }
                     }
 
                     throw new UserException("ارسال پیام ناموفق بود؛ لطفاً بعداً تلاش کنید",
-                        $"Reset-password social message failed: account-id={account.Id}");
+                        $"Reset-password social message failed: user-id={account.Id}");
                 }
 
-                Log.Information("Reset-Password social message has been sent: account-id={0}", account.Id);
+                Log.Information("Reset-Password social message has been sent: user-id={0}", account.Id);
             }
             else if (account.EmailAddress != null)
             {
@@ -297,15 +302,15 @@ class AuthApplication(
     /// codes first. The inserts share the scoped SqlConnection and run one
     /// after the other; only the caller's send afterwards announces the code.
     /// </summary>
-    private async Task<string> StoreResetCode(int account_id)
+    private async Task<string> StoreResetCode(int user_id)
     {
         var hash_code = HashHandler.GenerateHashCode(56, true);
 
-        await ResetPassRepo.Value.ExpireActiveCodes(account_id);
+        await ResetPassRepo.Value.ExpireActiveCodes(user_id);
 
         await ResetPassRepo.Value.AddHashCode(new ResetPassEntity
         {
-            AccountId = account_id,
+            UserId = user_id,
             ExpireDate = DateTime.Now.AddDays(1),
             HashCode = hash_code,
         });
@@ -333,13 +338,13 @@ class AuthApplication(
         catch (Exception error)
         {
             // the code stays stored: the user may simply retry later
-            Log.Error(error, "Reset-Password email failed: account-id={0}", account.Id);
+            Log.Error(error, "Reset-Password email failed: user-id={0}", account.Id);
 
             throw new UserException("ارسال ایمیل ناموفق بود؛ لطفاً بعداً تلاش کنید",
-                $"Reset-password email failed: account-id={account.Id}");
+                $"Reset-password email failed: user-id={account.Id}");
         }
 
-        Log.Information("Reset-Password email has been sent: account-id={0}", account.Id);
+        Log.Information("Reset-Password email has been sent: user-id={0}", account.Id);
     }
 
     /// <summary>
@@ -392,7 +397,7 @@ class AuthApplication(
             throw new UserException("این کد منقضی شده است! دوباره تلاش کنید.");
         }
         
-        var account = await PanelUserRepo.GetActiveUser(reset_pass.AccountId);
+        var account = await PanelUserRepo.GetActiveUser(reset_pass.UserId);
 
         return await AccountApp.Value.ChangePassword(account, password);
     }
@@ -439,7 +444,7 @@ class AuthApplication(
         }
         catch (Exception error)
         {
-            Log.Error(error, "Registration social alert failed: account-id={0}, user={1}", account.Id, account.Username);
+            Log.Error(error, "Registration social alert failed: user-id={0}, user={1}", account.Id, account.Username);
         }
 
         if (account.Email != null)
@@ -453,7 +458,7 @@ class AuthApplication(
             }
             catch (Exception error)
             {
-                Log.Error(error, "Welcome email failed: account-id={0}, user={1}", account.Id, account.Username);
+                Log.Error(error, "Welcome email failed: user-id={0}, user={1}", account.Id, account.Username);
             }
         }
 

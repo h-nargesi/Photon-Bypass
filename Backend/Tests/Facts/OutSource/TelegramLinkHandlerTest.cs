@@ -44,7 +44,7 @@ public class TelegramLinkHandlerTest
     {
         await link_repo_moq.Object.AddCode(new TelegramLinkEntity
         {
-            AccountId = 5,
+            UserId = 5,
             Code = "the-code",
             ExpireDate = DateTime.Now.AddMinutes(10),
         });
@@ -74,7 +74,7 @@ public class TelegramLinkHandlerTest
     {
         await link_repo_moq.Object.AddCode(new TelegramLinkEntity
         {
-            AccountId = 5,
+            UserId = 5,
             Code = "late-code",
             ExpireDate = DateTime.Now.AddMinutes(-1),
         });
@@ -93,7 +93,7 @@ public class TelegramLinkHandlerTest
     {
         await link_repo_moq.Object.AddCode(new TelegramLinkEntity
         {
-            AccountId = 5,
+            UserId = 5,
             Code = "once-code",
             ExpireDate = DateTime.Now.AddMinutes(10),
         });
@@ -126,7 +126,7 @@ public class TelegramLinkHandlerTest
     {
         await link_repo_moq.Object.AddCode(new TelegramLinkEntity
         {
-            AccountId = 5,
+            UserId = 5,
             Code = "dead-account-code",
             ExpireDate = DateTime.Now.AddMinutes(10),
         });
@@ -144,7 +144,7 @@ public class TelegramLinkHandlerTest
     {
         await link_repo_moq.Object.AddCode(new TelegramLinkEntity
         {
-            AccountId = 5,
+            UserId = 5,
             Code = "dup-code",
             ExpireDate = DateTime.Now.AddMinutes(10),
         });

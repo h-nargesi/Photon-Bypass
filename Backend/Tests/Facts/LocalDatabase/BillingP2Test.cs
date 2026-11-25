@@ -36,7 +36,7 @@ public class BillingP2Test : OutSourceLevelServiceInitializer
         var invoice = new InvoiceEntity
         {
             Code = await repo.GenerateNewInvoiceCode(),
-            AccountId = account_id,
+            UserId = account_id,
             Kind = kind,
             Title = "T2-fresh",
             TotalPrice = total,
@@ -98,7 +98,7 @@ public class BillingP2Test : OutSourceLevelServiceInitializer
     }
 
     [Fact]
-    public async Task GetAccountIdsBelowThreshold()
+    public async Task GetUserIdsBelowThreshold()
     {
         using var scope = App.Services.CreateScope();
         await scope.Register<LocalDatabaseInitializer>(TestPackage, this);
@@ -106,12 +106,12 @@ public class BillingP2Test : OutSourceLevelServiceInitializer
         var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
         var account_ids = await GetTestAccountIds(scope.ServiceProvider);
 
-        var below_zero = await wallet_repo.GetAccountIdsBelowThreshold(0);
+        var below_zero = await wallet_repo.GetUserIdsBelowThreshold(0);
 
         Assert.Contains(account_ids["Beta"], below_zero);
         Assert.DoesNotContain(account_ids["Alpha"], below_zero);
 
-        var below_deep = await wallet_repo.GetAccountIdsBelowThreshold(-1000);
+        var below_deep = await wallet_repo.GetUserIdsBelowThreshold(-1000);
 
         Assert.Empty(below_deep);
     }
@@ -182,7 +182,7 @@ public class BillingP2Test : OutSourceLevelServiceInitializer
         var owner_invoice = await invoice_repo.GetByCodeOwner("Alpha", invoice.Code);
 
         Assert.NotNull(owner_invoice);
-        Assert.Equal(account_ids["Alpha"], owner_invoice.AccountId);
+        Assert.Equal(account_ids["Alpha"], owner_invoice.UserId);
 
         var foreign_invoice = await invoice_repo.GetByCodeOwner("Beta", invoice.Code);
 
@@ -235,13 +235,13 @@ public class BillingP2Test : OutSourceLevelServiceInitializer
         var verifying = await InsertInvoice(invoice_repo, alpha_id, status: BalanceStatus.Verifying);
         var other = await InsertInvoice(invoice_repo, account_ids["Beta"], kind: InvoiceKind.Plan);
 
-        var pending_before = await invoice_repo.GetPendingByAccount(alpha_id);
+        var pending_before = await invoice_repo.GetPendingByUser(alpha_id);
 
         var canceled = await invoice_repo.CancelPreviousPending(alpha_id);
 
         Assert.Equal(pending_before.Count, canceled);
 
-        Assert.Empty(await invoice_repo.GetPendingByAccount(alpha_id));
+        Assert.Empty(await invoice_repo.GetPendingByUser(alpha_id));
 
         var other_invoice = await invoice_repo.GetByCode(other.Code);
 
@@ -276,7 +276,7 @@ public class BillingP2Test : OutSourceLevelServiceInitializer
         Assert.Equal(2, code.Code / 100);
         Assert.NotNull(code.Data);
 
-        var pending = await invoice_repo.GetPendingByAccount(alpha_id);
+        var pending = await invoice_repo.GetPendingByUser(alpha_id);
 
         var invoice = Assert.Single(pending);
 

@@ -45,13 +45,7 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
           return context;
         })
       )
-      .pipe(
-        tap((context) => {
-          if (context.result.code < 300) {
-            ApiBaseService.is_logout = false;
-          }
-        })
-      )
+      .pipe(tap(ApiBaseService.rearmOnSuccess))
       .pipe(map(this.resultHandler));
   }
 
@@ -201,7 +195,15 @@ export abstract class ApiBaseService extends ApiMessageHandlerService {
           return context;
         })
       )
+      .pipe(tap(ApiBaseService.rearmOnSuccess))
       .pipe(map(this.resultHandler));
+  }
+
+  /// An accepted answer of a session-establishing call (login, probe) re-arms the 401 redirect.
+  private static rearmOnSuccess(context: ApiResultContext): void {
+    if (context.result.code < 300) {
+      ApiBaseService.is_logout = false;
+    }
   }
 
   private checkLoginUser(context: ApiResultContext): void {

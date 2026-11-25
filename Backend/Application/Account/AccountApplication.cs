@@ -226,12 +226,12 @@ class AccountApplication(
 
         await TelegramLinkRepo.Value.AddCode(new TelegramLinkEntity
         {
-            AccountId = account.Id,
+            UserId = account.Id,
             Code = code,
             ExpireDate = DateTime.Now + TelegramLinkLifetime,
         });
 
-        Log.Information("[user: {0}] Telegram link code issued: account-id={1}",
+        Log.Information("[user: {0}] Telegram link code issued: user-id={1}",
             JobContext.Value.Username, account.Id);
 
         return ApiResult<TelegramLinkModel>.Success(new TelegramLinkModel { Connected = false, Code = code });
@@ -255,7 +255,7 @@ class AccountApplication(
         {
             await PanelUserRepo.SetTelegramChat(account.Id, null);
 
-            Log.Information("[user: {0}] Telegram chat detached: account-id={1}",
+            Log.Information("[user: {0}] Telegram chat detached: user-id={1}",
                 JobContext.Value.Username, account.Id);
         }
 

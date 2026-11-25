@@ -19,16 +19,16 @@ class InvoiceRepository(LocalDbContext context) : DapperRepository<InvoiceEntity
     public Task<int> Insert(InvoiceEntity invoice)
     {
         var sql = $"""
-                   insert into {TableName} ({nameof(InvoiceEntity.Code)}, {nameof(InvoiceEntity.AccountId)}, {nameof(InvoiceEntity.VpnAccountId)}, {nameof(InvoiceEntity.Kind)},
+                   insert into {TableName} ({nameof(InvoiceEntity.Code)}, {nameof(InvoiceEntity.UserId)}, {nameof(InvoiceEntity.VpnAccountId)}, {nameof(InvoiceEntity.Kind)},
                                               {nameof(InvoiceEntity.Title)}, {nameof(InvoiceEntity.TotalPrice)}, {nameof(InvoiceEntity.WalletDeduction)},
                                               {nameof(InvoiceEntity.Payable)}, {nameof(InvoiceEntity.Action)}, {nameof(InvoiceEntity.Status)})
-                   values (@code, @account_id, @vpn_account_id, @kind, @title, @total_price, @wallet_deduction, @payable, @action, @status)
+                   values (@code, @user_id, @vpn_account_id, @kind, @title, @total_price, @wallet_deduction, @payable, @action, @status)
                    """;
 
         return ExecuteAsync(sql, new
         {
             code = invoice.Code,
-            account_id = invoice.AccountId,
+            user_id = invoice.UserId,
             vpn_account_id = invoice.VpnAccountId,
             kind = invoice.Kind,
             title = invoice.Title,
@@ -54,7 +54,7 @@ class InvoiceRepository(LocalDbContext context) : DapperRepository<InvoiceEntity
         var sql = $"""
                    select i.*
                    from {TableName} i
-                   join {PanelUserRepository.TableName} a on i.{nameof(InvoiceEntity.AccountId)} = a.{nameof(PanelUserEntity.Id)}
+                   join {PanelUserRepository.TableName} a on i.{nameof(InvoiceEntity.UserId)} = a.{nameof(PanelUserEntity.Id)}
                    where i.{nameof(InvoiceEntity.Code)} = @code
                      and a.{nameof(PanelUserEntity.Username)} = @target
                    """;
@@ -64,32 +64,32 @@ class InvoiceRepository(LocalDbContext context) : DapperRepository<InvoiceEntity
         return result.FirstOrDefault();
     }
 
-    public async Task<List<InvoiceEntity>> GetPendingByAccount(int account_id)
+    public async Task<List<InvoiceEntity>> GetPendingByUser(int user_id)
     {
         var result = await FindAsync(statement => statement
-            .Where($"{nameof(InvoiceEntity.AccountId)} = @account_id and {nameof(InvoiceEntity.Status)} = @status")
-            .WithParameters(new { account_id, status = BalanceStatus.Pending }));
+            .Where($"{nameof(InvoiceEntity.UserId)} = @user_id and {nameof(InvoiceEntity.Status)} = @status")
+            .WithParameters(new { user_id, status = BalanceStatus.Pending }));
 
         return [.. result];
     }
 
-    public Task<int> CancelPreviousPending(int account_id)
+    public Task<int> CancelPreviousPending(int user_id)
     {
         var sql = $"""
                    update {WalletRepository.TableName}
                    set {nameof(WalletEntity.Status)} = @canceled
                    where {nameof(WalletEntity.Status)} = @pending
                      and {nameof(WalletEntity.InvoiceCode)} in (select {nameof(InvoiceEntity.Code)} from {TableName}
-                                                                where {nameof(InvoiceEntity.AccountId)} = @account_id
+                                                                where {nameof(InvoiceEntity.UserId)} = @user_id
                                                                   and {nameof(InvoiceEntity.Status)} = @pending);
 
                    update {TableName}
                    set {nameof(InvoiceEntity.Status)} = @canceled
-                   where {nameof(InvoiceEntity.AccountId)} = @account_id
+                   where {nameof(InvoiceEntity.UserId)} = @user_id
                      and {nameof(InvoiceEntity.Status)} = @pending;
                    """;
 
-        return ExecuteAsync(sql, new { account_id, pending = BalanceStatus.Pending, canceled = BalanceStatus.Canceled });
+        return ExecuteAsync(sql, new { user_id, pending = BalanceStatus.Pending, canceled = BalanceStatus.Canceled });
     }
 
     public Task<int> TransitionStatus(int code, BalanceStatus from, BalanceStatus to)

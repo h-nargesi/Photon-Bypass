@@ -82,17 +82,25 @@ export class UserService extends ApiBaseService {
         return this.observable_user;
 
       this.observable_user = firstValueFrom(this.fetchUser());
-      this.current_user = await this.observable_user;
-      this.observable_user = undefined;
 
-      this.setTraget(LocalStorageService.get(['user', 'target']));
+      try {
+        this.current_user = await this.observable_user;
 
-      const stored_account = LocalStorageService.get(['user', 'account']);
-      this.currentAccountId = (this.current_user.accounts ?? []).some(
-        (account) => account.id === stored_account,
-      )
-        ? stored_account ?? undefined
-        : (this.current_user.accounts ?? [])[0]?.id;
+        this.setTraget(LocalStorageService.get(['user', 'target']));
+
+        const stored_account = LocalStorageService.get(['user', 'account']);
+        this.currentAccountId = (this.current_user.accounts ?? []).some(
+          (account) => account.id === stored_account,
+        )
+          ? stored_account ?? undefined
+          : (this.current_user.accounts ?? [])[0]?.id;
+      } catch (error) {
+        // a failed load must not be served as "the user" by later calls
+        this.current_user = undefined;
+        throw error;
+      } finally {
+        this.observable_user = undefined;
+      }
 
       this.reload_next_call = false;
     }

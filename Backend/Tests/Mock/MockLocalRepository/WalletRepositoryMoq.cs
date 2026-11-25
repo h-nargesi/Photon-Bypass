@@ -25,13 +25,13 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
         var raw_text = File.ReadAllText(file_path)
             .PrepareAllDateTimes();
         Data = JsonSerializer.Deserialize<List<WalletEntity>>(raw_text)
-                       ?.GroupBy(x => x.AccountId).ToDictionary(k => k.Key, v => v.ToList())
+                       ?.GroupBy(x => x.UserId).ToDictionary(k => k.Key, v => v.ToList())
                    ?? [];
 
         Setup(x => x.GetTransactions(It.IsAny<int>()))
-            .Returns<int>(account_id =>
+            .Returns<int>(user_id =>
             {
-                if (!Data.TryGetValue(account_id, out var list))
+                if (!Data.TryGetValue(user_id, out var list))
                 {
                     list = [];
                 }
@@ -59,9 +59,9 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
             });
 
         Setup(x => x.GetHistory(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<int>()))
-            .Returns<int, int, int>((account_id, page, page_size) =>
+            .Returns<int, int, int>((user_id, page, page_size) =>
             {
-                var rows = Data.TryGetValue(account_id, out var list)
+                var rows = Data.TryGetValue(user_id, out var list)
                     ? list.OrderByDescending(w => w.Id).ToList()
                     : [];
 
@@ -79,7 +79,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 return Task.FromResult(result);
             });
 
-        Setup(x => x.GetAccountIdsBelowThreshold(It.IsAny<int>()))
+        Setup(x => x.GetUserIdsBelowThreshold(It.IsAny<int>()))
             .Returns<int>(threshold =>
             {
                 var result = Data
@@ -93,10 +93,10 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
             });
 
         Setup(x => x.GetBalance(It.IsAny<int>()))
-            .Returns<int>(account_id =>
+            .Returns<int>(user_id =>
             {
                 var balance = 0;
-                if (Data.TryGetValue(account_id, out var list))
+                if (Data.TryGetValue(user_id, out var list))
                 {
                     balance = list.Where(w => w.Status is BalanceStatus.Completed or BalanceStatus.Verifying)
                         .Sum(x => x.Amount * (int)x.Direction);
@@ -128,9 +128,9 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
     private static void Add(TransactionalMockDbContext db_context, Dictionary<int, List<WalletEntity>> data,
         WalletEntity wallet)
     {
-        if (!data.TryGetValue(wallet.AccountId, out var list))
+        if (!data.TryGetValue(wallet.UserId, out var list))
         {
-            data[wallet.AccountId] = list = [];
+            data[wallet.UserId] = list = [];
         }
 
         if (wallet.Id < 1)
@@ -147,7 +147,7 @@ internal class WalletRepositoryMoq : Mock<IWalletRepository>, IUnitLevelService
                 var snapshot = new WalletEntity
                 {
                     Id = ex.Id,
-                    AccountId = ex.AccountId,
+                    UserId = ex.UserId,
                     Action = ex.Action,
                     ActorId = ex.ActorId,
                     Status = ex.Status,

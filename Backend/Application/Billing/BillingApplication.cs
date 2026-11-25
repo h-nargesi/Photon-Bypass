@@ -53,7 +53,7 @@ class BillingApplication(
             throw new UserException("مبلغ وارد شده معتبر نیست!", $"Invalid pay amount: {value}");
         }
 
-        var account_id = (await SelfServiceGuard.Value.ResolvePayingActor()).Id;
+        var user_id = (await SelfServiceGuard.Value.ResolvePayingActor()).Id;
 
         var code = await InvoiceRepo.GenerateNewInvoiceCode();
 
@@ -61,12 +61,12 @@ class BillingApplication(
 
         try
         {
-            await InvoiceRepo.CancelPreviousPending(account_id);
+            await InvoiceRepo.CancelPreviousPending(user_id);
 
             await InvoiceRepo.Insert(new InvoiceEntity
             {
                 Code = code,
-                AccountId = account_id,
+                UserId = user_id,
                 Kind = InvoiceKind.TopUp,
                 Title = "افزایش موجودی",
                 TotalPrice = value,
@@ -83,18 +83,18 @@ class BillingApplication(
             throw;
         }
 
-        Log.Information("Top-Up invoice issued: account-id={0}, code={1}, value={2}", account_id, code, value);
+        Log.Information("Top-Up invoice issued: user-id={0}, code={1}, value={2}", user_id, code, value);
 
-        await SaveIssueHistory(account_id, value);
+        await SaveIssueHistory(user_id, value);
 
         return ApiResult<int?>.Success(code);
     }
 
     public async Task<ApiResult<int?>> IssuePlanInvoice(int estimate, string action, string title, int? vpn_account_id = null)
     {
-        var account_id = RequireAccountId();
+        var user_id = RequireUserId();
 
-        var balance = await WalletRepo.GetBalance(account_id);
+        var balance = await WalletRepo.GetBalance(user_id);
 
         var wallet_deduction = Math.Max(Math.Min(balance, estimate), 0);
         var payable = estimate - balance;
@@ -105,12 +105,12 @@ class BillingApplication(
 
         try
         {
-            await InvoiceRepo.CancelPreviousPending(account_id);
+            await InvoiceRepo.CancelPreviousPending(user_id);
 
             await InvoiceRepo.Insert(new InvoiceEntity
             {
                 Code = code,
-                AccountId = account_id,
+                UserId = user_id,
                 VpnAccountId = vpn_account_id,
                 Kind = InvoiceKind.Plan,
                 Title = title,
@@ -130,10 +130,10 @@ class BillingApplication(
         }
 
         Log.Information(
-            "Plan invoice issued: account-id={0}, vpn-account-id={1}, code={2}, estimate={3}, balance={4}, deduction={5}, payable={6}, action={7}",
-            account_id, vpn_account_id, code, estimate, balance, wallet_deduction, payable, action);
+            "Plan invoice issued: user-id={0}, vpn-account-id={1}, code={2}, estimate={3}, balance={4}, deduction={5}, payable={6}, action={7}",
+            user_id, vpn_account_id, code, estimate, balance, wallet_deduction, payable, action);
 
-        await SaveIssueHistory(account_id, estimate);
+        await SaveIssueHistory(user_id, estimate);
 
         return ApiResult<int?>.Success(code);
     }
@@ -148,7 +148,7 @@ class BillingApplication(
         // Wallet fields belong to the invoice owner; they are exposed only in
         // the self view so an on-behalf viewer never sees another wallet (D6/D10).
         var self_view = JobContext.Value.Target == JobContext.Value.Username;
-        var wallet_balance = self_view ? await WalletRepo.GetBalance(invoice.AccountId) : 0;
+        var wallet_balance = self_view ? await WalletRepo.GetBalance(invoice.UserId) : 0;
 
         var items = new List<InvoiceItemModel>
         {
@@ -215,7 +215,7 @@ class BillingApplication(
 
         var credit = new WalletEntity
         {
-            AccountId = invoice.AccountId,
+            UserId = invoice.UserId,
             Amount = invoice.Payable,
             Direction = BalanceDirection.Credit,
             Status = BalanceStatus.Verifying,
@@ -245,19 +245,19 @@ class BillingApplication(
             throw;
         }
 
-        Log.Information("Receipt registered: account-id={0}, code={1}, has-image={2}, amount={3}",
-            invoice.AccountId, invoice.Code, has_image, invoice.Payable);
+        Log.Information("Receipt registered: user-id={0}, code={1}, has-image={2}, amount={3}",
+            invoice.UserId, invoice.Code, has_image, invoice.Payable);
 
         if (invoice.Kind == InvoiceKind.Plan)
         {
-            await SettlementGate.RunExclusively(invoice.AccountId, () => RunRenewalAfterReceipt(invoice, credit));
+            await SettlementGate.RunExclusively(invoice.UserId, () => RunRenewalAfterReceipt(invoice, credit));
         }
 
         await WalletThresholdSrv.Value.CheckAndApply();
 
         await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
-            Target = invoice.AccountId,
+            Target = invoice.UserId,
             Category = EventCategory.Transaction,
             Type = EventType.Information,
             Title = "مالی",
@@ -281,12 +281,12 @@ class BillingApplication(
                 $"Invoice is not settle-able by wallet: code={code}, kind={invoice.Kind}, status={invoice.Status}");
         }
 
-        return await SettlementGate.RunExclusively(invoice.AccountId, () => SettleWalletCore(invoice, code));
+        return await SettlementGate.RunExclusively(invoice.UserId, () => SettleWalletCore(invoice, code));
     }
 
     private async Task<ApiResult> SettleWalletCore(InvoiceEntity invoice, int code)
     {
-        var balance = await WalletRepo.GetBalance(invoice.AccountId);
+        var balance = await WalletRepo.GetBalance(invoice.UserId);
 
         if (balance < invoice.TotalPrice)
         {
@@ -304,7 +304,7 @@ class BillingApplication(
 
         try
         {
-            var renewal_result = await PlanApp.Value.SettlePurchase(invoice.AccountId, null, invoice.Action!, invoice.Code);
+            var renewal_result = await PlanApp.Value.SettlePurchase(invoice.UserId, null, invoice.Action!, invoice.Code);
 
             if (renewal_result.Code / 100 != 2)
             {
@@ -319,7 +319,7 @@ class BillingApplication(
         }
         catch (Exception e)
         {
-            Log.Error(e, "Settlement renewal failed: account-id={0}, code={1}", invoice.AccountId, invoice.Code);
+            Log.Error(e, "Settlement renewal failed: user-id={0}, code={1}", invoice.UserId, invoice.Code);
 
             await RevertToPending(invoice.Code);
 
@@ -331,7 +331,7 @@ class BillingApplication(
 
         await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
-            Target = invoice.AccountId,
+            Target = invoice.UserId,
             Category = EventCategory.Transaction,
             Type = EventType.Information,
             Title = "مالی",
@@ -354,7 +354,7 @@ class BillingApplication(
 
         try
         {
-            var renewal_result = await PlanApp.Value.SettlePurchase(invoice.AccountId, credit.Id, invoice.Action!, invoice.Code);
+            var renewal_result = await PlanApp.Value.SettlePurchase(invoice.UserId, credit.Id, invoice.Action!, invoice.Code);
 
             if (renewal_result.Code / 100 != 2)
             {
@@ -364,8 +364,8 @@ class BillingApplication(
         }
         catch (Exception e)
         {
-            Log.Error(e, "Renewal after receipt registration failed: account-id={0}, code={1}, wallet-id={2}",
-                invoice.AccountId, invoice.Code, credit.Id);
+            Log.Error(e, "Renewal after receipt registration failed: user-id={0}, code={1}, wallet-id={2}",
+                invoice.UserId, invoice.Code, credit.Id);
 
             throw new UserException(
                 "رسید شما ثبت شد، اما فعال‌سازی پلن با خطا مواجه شد. اعتبار شما در کیف پول حفظ شده است؛ با صدور فاکتور جدید یا تماس با پشتیبانی ادامه دهید.",
@@ -385,11 +385,11 @@ class BillingApplication(
         }
     }
 
-    private async Task SaveIssueHistory(int account_id, int price)
+    private async Task SaveIssueHistory(int user_id, int price)
     {
         await HistoryRepo.Value.Save(JobContext.Value.Username, new HistoryEntity
         {
-            Target = account_id,
+            Target = user_id,
             Category = EventCategory.Transaction,
             Type = EventType.Information,
             Title = "مالی",
@@ -398,10 +398,10 @@ class BillingApplication(
         });
     }
 
-    private int RequireAccountId()
+    private int RequireUserId()
     {
-        return JobContext.Value.AccountId
-               ?? throw new Exception("Account-Id is not set in job-context!");
+        return JobContext.Value.UserId
+               ?? throw new Exception("User-Id is not set in job-context!");
     }
 
     private void ValidateReceiptImage(byte[] image, string? file_name, string? content_type)

@@ -112,7 +112,7 @@
 
 ## Cross-cutting (سرویس‌های سراسری دامنه)
 
-- **`IJobContext`** (`Domain/IJobContext.cs`): `Username`، `Target`، `AccountId` به‌علاوه‌ی `InjectJobContext(...)` برای تنظیم زمینه‌ی درخواست/تراکنش. پیاده‌سازی Scoped در `Portal/Basical/JobContext.cs`.
+- **`IJobContext`** (`Domain/IJobContext.cs`): `Username`، `Target`، `UserId` به‌علاوه‌ی `InjectJobContext(...)` برای تنظیم زمینه‌ی درخواست/تراکنش. پیاده‌سازی Scoped در `Portal/Basical/JobContext.cs`.
 - **`IAccessService`** (`Domain/Account/IAccessService.cs`): `CheckAccess(username, target)`، `LoginEvent(username, area)`، `LogoutEvent(username)`. چنداکانتی را با کش `TargetArea|{username}` مدیریت می‌کند (`Docs/08`).
 
 ## ER sketch (نمودار ER نهادها)
