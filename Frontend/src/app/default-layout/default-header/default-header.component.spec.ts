@@ -3,6 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
+import { UserVpnAccount } from '../../@models';
+import { UserService } from '../../@services';
 import { API_BASE_URL } from '../../@services/api-services/models/app-base-path';
 import { DefaultHeaderComponent } from './default-header.component';
 
@@ -178,4 +180,107 @@ describe('DefaultHeaderComponent', () => {
 
     expectEndAlignedNavCluster();
   });
+
+  it('keeps the manager wallet and lists the selected user VPN accounts', async () => {
+    await answerUser({
+      username: 'boss',
+      fullname: 'Boss',
+      email: 'b@t.l',
+      balance: 500,
+      role: 1,
+      allowSelfService: true,
+      accounts: [vpnAccount(7, 'boss-vpn'), vpnAccount(8, 'boss-spare')],
+      targetArea: {
+        boss: { username: 'boss', fullname: 'Boss', email: 'b@t.l' },
+        sub1: { username: 'sub1', fullname: 'Sub One', email: 's@t.l' },
+      },
+    });
+    fixture.detectChanges();
+
+    const element: HTMLElement = fixture.nativeElement;
+    const balance = element.querySelector('c-alert')?.textContent;
+    expect(balance).toContain('کیف پول:');
+    expect(element.textContent).toContain('boss-vpn');
+    expect(element.textContent).toContain('boss-spare');
+
+    const cluster = element.querySelector('.ms-md-auto') as HTMLElement;
+    const dashboard = cluster.querySelector('a[routerLink="/dashboard"]') as HTMLElement;
+    const divider = cluster.querySelector('.vr') as HTMLElement;
+    const wallet = cluster.querySelector('c-alert') as HTMLElement;
+    expect(dashboard.compareDocumentPosition(divider) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+    expect(divider.compareDocumentPosition(wallet) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+
+    TestBed.inject(UserService).setTraget('sub1');
+    http.expectOne((req) => req.url === '/api/vpn/accounts' && req.params.get('target') === 'sub1')
+      .flush(
+        { code: 200, data: [vpnAccount(51, 'sub-a'), vpnAccount(52, 'sub-b')] },
+        { status: 200, statusText: 'OK' },
+      );
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.accountRows.map((account) => account.username))
+      .toEqual(['sub-a', 'sub-b']);
+    expect(element.textContent).toContain('sub-a');
+    expect(element.textContent).toContain('sub-b');
+    expect(element.textContent).not.toContain('boss-vpn');
+    expect(element.textContent).not.toContain('boss-spare');
+    expect(element.querySelector('c-alert')?.textContent).toBe(balance);
+
+    const accountButton = Array.from(element.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('اکانت:'));
+    const userButton = Array.from(element.querySelectorAll('button'))
+      .find((button) => button.classList.contains('text-light') && button.textContent?.includes('sub1'));
+    const home = element.querySelector('a[routerLink="/"]') as HTMLElement;
+    const navCluster = element.querySelector('.ms-md-auto') as HTMLElement;
+    expect(navCluster.contains(accountButton ?? null)).toBeFalse();
+    expect(navCluster.contains(userButton ?? null)).toBeFalse();
+    expect(home.compareDocumentPosition(userButton!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(userButton!.compareDocumentPosition(accountButton!) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+    expect(accountButton?.classList.contains('btn-info')).toBeTrue();
+    expect(accountButton?.classList.contains('dropdown-toggle')).toBeTrue();
+    expect(accountButton?.classList.contains('text-light')).toBeFalse();
+  });
+
+  it('lists a selected user who has a single VPN account', async () => {
+    await answerUser({
+      username: 'boss',
+      fullname: 'Boss',
+      email: 'b@t.l',
+      balance: 500,
+      role: 1,
+      allowSelfService: true,
+      accounts: [vpnAccount(7, 'boss-vpn')],
+      targetArea: {
+        boss: { username: 'boss', fullname: 'Boss', email: 'b@t.l' },
+        sub1: { username: 'sub1', fullname: 'Sub One', email: 's@t.l' },
+      },
+    });
+    fixture.detectChanges();
+
+    const element: HTMLElement = fixture.nativeElement;
+    expect(element.textContent).not.toContain('اکانت:');
+
+    TestBed.inject(UserService).setTraget('sub1');
+    http.expectOne((req) => req.url === '/api/vpn/accounts')
+      .flush(
+        { code: 200, data: [vpnAccount(51, 'only-sub')] },
+        { status: 200, statusText: 'OK' },
+      );
+    await Promise.resolve();
+    await Promise.resolve();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.showAccountMenu).toBeTrue();
+    expect(element.textContent).toContain('only-sub');
+    expect(element.textContent).not.toContain('boss-vpn');
+  });
 });
+
+function vpnAccount(id: number, username: string): UserVpnAccount {
+  return { id, username, realmId: 1, realmName: 'R1', status: 0, created: 0 };
+}

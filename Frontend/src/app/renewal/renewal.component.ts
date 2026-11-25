@@ -74,9 +74,10 @@ export class RenewalComponent implements OnInit {
   result?: RenewalResult;
   submitting = false;
 
-  /// Docs/22 §3.3: the two explicit purchase paths — renewal of the selected
-  /// account, or a brand-new account (realm + username).
-  mode: 'renew' | 'new-account' = 'renew';
+  /// Docs/22 §3.3: renewal of the selected account, a brand-new account
+  /// (realm + username, acting user only), or nothing to purchase because
+  /// the selected panel user has no VPN account.
+  mode: 'renew' | 'new-account' | 'unavailable' = 'renew';
   realms: RealmChoice[] = [];
   newAccount = {} as NewAccountContext;
   requiresRealmChoice = false;
@@ -109,24 +110,24 @@ export class RenewalComponent implements OnInit {
     return this.user_service.targetName;
   }
 
+  /// First purchase does not send `target`, so it stays the acting user's.
+  get canStartNewAccount(): boolean {
+    const target = this.user_service.targetName;
+    return !target || target === this.current_user?.username;
+  }
+
   async ngOnInit() {
     // the account list arrives with the user load — decide the mode after it
-    await this.user_service.user();
-
-    if (this.hasAccounts) {
-      this.mode = 'renew';
-      this.loadLastPlan();
-    } else {
-      this.mode = 'new-account';
-      this.loadNewAccountDefaults();
-    }
+    this.current_user = await this.user_service.user();
+    this.decidePurchaseMode();
 
     this.service.realms().subscribe((realms) => (this.realms = realms));
     this.loadPrcies();
+    this.user_service.onTargetChanged.subscribe(() => this.onTargetMoved());
     this.user_service.onAccountChanged.subscribe(() => {
-      if (this.mode === 'renew') {
-        this.loadLastPlan();
-      }
+      // Stay on the first-purchase form while the acting user still owns it.
+      if (this.mode === 'new-account' && this.canStartNewAccount) return;
+      this.decidePurchaseMode();
     });
 
     this.estimate$
@@ -143,6 +144,10 @@ export class RenewalComponent implements OnInit {
   }
 
   switchMode(mode: 'renew' | 'new-account') {
+    if (mode === 'new-account' && !this.canStartNewAccount) {
+      return;
+    }
+
     this.mode = mode;
 
     if (mode === 'new-account') {
@@ -150,6 +155,35 @@ export class RenewalComponent implements OnInit {
     } else {
       this.loadLastPlan();
     }
+  }
+
+  /// While another user's accounts are still loading, the list is empty.
+  /// That must not open the acting user's first-purchase form.
+  private onTargetMoved(): void {
+    if (this.user_service.viewingOtherUser && !this.hasAccounts) {
+      this.mode = 'unavailable';
+      this.requiresRealmChoice = false;
+      return;
+    }
+
+    this.decidePurchaseMode();
+  }
+
+  private decidePurchaseMode(): void {
+    if (this.hasAccounts) {
+      this.mode = 'renew';
+      this.loadLastPlan();
+      return;
+    }
+
+    if (this.canStartNewAccount) {
+      this.mode = 'new-account';
+      this.loadNewAccountDefaults();
+      return;
+    }
+
+    this.mode = 'unavailable';
+    this.requiresRealmChoice = false;
   }
 
   private loadNewAccountDefaults() {
@@ -169,6 +203,7 @@ export class RenewalComponent implements OnInit {
   submit() {
     if (
       this.submitting ||
+      this.mode === 'unavailable' ||
       (!this.renewal.gigabytes && !this.renewal.days) ||
       !this.renewal.simultaneousUserCount
     ) {

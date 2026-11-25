@@ -1,6 +1,16 @@
-import { CommonModule, NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject, Input, OnInit } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  Input,
+  OnInit,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
+import { merge } from 'rxjs';
 
 import {
   AlertComponent,
@@ -23,14 +33,13 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { IconDirective } from '@coreui/icons-angular';
 import { ICON_SUBSET } from '../../@icons';
-import { UserModel } from '../../@models';
+import { UserModel, UserVpnAccount } from '../../@models';
 import { printMoney, TranslationPipe, UserService } from '../../@services';
 
 @Component({
   selector: 'app-default-header',
   templateUrl: './default-header.component.html',
   imports: [
-    CommonModule,
     NgTemplateOutlet,
     NavLinkDirective,
     RouterLink,
@@ -63,6 +72,13 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
 
   current_user?: UserModel;
 
+  /// Copy of the active user's VPN accounts. Refreshed when the target or
+  /// the selected account changes, so the menu cannot keep a stale list.
+  accountRows: UserVpnAccount[] = [];
+
+  private readonly change_detector = inject(ChangeDetectorRef);
+  private readonly destroy_ref = inject(DestroyRef);
+
   @Input() userSelector?: string;
   @Input() paymentModal?: string;
 
@@ -85,6 +101,14 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
 
   async ngOnInit() {
     this.current_user = await this.user_service.user();
+    this.refreshAccounts();
+
+    merge(this.user_service.onTargetChanged, this.user_service.onAccountChanged)
+      .pipe(takeUntilDestroyed(this.destroy_ref))
+      .subscribe(() => {
+        this.refreshAccounts();
+        this.change_detector.detectChanges();
+      });
   }
 
   get hasSubUsers(): boolean {
@@ -114,26 +138,33 @@ export class DefaultHeaderComponent extends HeaderComponent implements OnInit {
     return this.user_service.targetName;
   }
 
-  /// Docs/22 §3.5: the account switcher — replaces the target selector for
-  /// the regular user's own VPN accounts
-  get accounts() {
-    return this.user_service.accounts;
+  /// The account menu lists every VPN account of the selected user. For the
+  /// acting user it stays hidden until there is more than one.
+  get showAccountMenu(): boolean {
+    return this.accountRows.length > 0
+      && (this.user_service.viewingOtherUser || this.accountRows.length > 1);
   }
 
-  get hasMultipleAccounts(): boolean {
-    return this.user_service.hasMultipleAccounts;
+  /// Wallet, payment and management links belong to the logged-in user.
+  /// They sit behind a divider when that group has anything to show.
+  get showsActorLinks(): boolean {
+    return this.isSelfService || this.isManager;
   }
 
   get currentAccountId(): number | undefined {
     return this.user_service.accountId;
   }
 
+  get currentAccountUsername(): string {
+    return this.user_service.currentAccount?.username ?? '';
+  }
+
   switchAccount(accountId: number) {
     this.user_service.setAccount(accountId);
   }
 
-  get user_service_currentAccountUsername(): string {
-    return this.user_service.currentAccount?.username ?? '';
+  private refreshAccounts() {
+    this.accountRows = this.user_service.accounts;
   }
 
   goPayment() {

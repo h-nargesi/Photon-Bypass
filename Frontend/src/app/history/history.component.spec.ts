@@ -106,5 +106,9 @@ describe('HistoryComponent', () => {
     expect(request.request.params.get('target')).toBe('sub1');
 
     request.flush({ code: 200, data: [] }, { status: 200, statusText: 'OK' });
+    http.expectOne((req) => req.url === '/api/vpn/accounts').flush(
+      { code: 200, data: [] },
+      { status: 200, statusText: 'OK' },
+    );
   });
 });

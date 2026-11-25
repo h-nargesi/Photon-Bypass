@@ -412,6 +412,10 @@ describe('UsersComponent (Docs/20 phase 6)', () => {
 
     expect(user_service.targetName).toBe('sub1');
     expect(navigate_spy).toHaveBeenCalledWith(['/dashboard']);
+
+    http.expectOne(
+      (req) => req.url === '/api/vpn/accounts' && req.params.get('target') === 'sub1',
+    ).flush({ code: 200, data: [] }, { status: 200, statusText: 'OK' });
   });
 
   it('act on behalf for the admin picks the external target (not the targetArea)', async () => {
@@ -426,6 +430,10 @@ describe('UsersComponent (Docs/20 phase 6)', () => {
 
     expect(user_service.targetName).toBe('sub1');
     expect(navigate_spy).toHaveBeenCalledWith(['/dashboard']);
+
+    http.expectOne(
+      (req) => req.url === '/api/vpn/accounts' && req.params.get('target') === 'sub1',
+    ).flush({ code: 200, data: [] }, { status: 200, statusText: 'OK' });
   });
 
   it('acting on behalf of an inactive account is a no-op', async () => {

@@ -55,7 +55,7 @@ identity (username, realm, credentials, warning stamps). That coupling forced
 
 ## 5. Frontend
 
-- `UserService` gains `accounts` / `accountId` / `setAccount` (`onAccountChanged`, persisted in localStorage) — the header **account switcher**; per-account views (dashboard, traffic, config, connections) key off it.
+- `UserService` gains `accounts` / `accountId` / `setAccount` (`onAccountChanged`, persisted in localStorage) — the header **account switcher**; per-account views (dashboard, traffic, config, connections) key off it. The switcher follows the selected panel user: own accounts stay on `get-user`; any other target (a subordinate, or an admin's external user) is loaded from `GET /api/vpn/accounts?target=` and replaces the list until the acting user is selected again. The chosen account id is stored per username (`user|account` for self, `user|targetAccount` for the rest). A failed load leaves the switcher empty. The header keeps wallet, payment and management links on the logged-in user, and its account menu lists every VPN account of the selected user, including when there is only one; the acting user's own menu stays hidden until there is more than one. First purchase stays the acting user's — a selected user with no VPN account does not open that form.
 - Renewal page: mode switch (renew / new account), realm select (mandatory when stale or new), optional username with D3 suggestion.
 - `/users`: rows nest VPN accounts (username, realm, status, plan summary) with per-account suspend/activate.
 - User-level surfaces (history, wallet, payment) stay username-targeted.

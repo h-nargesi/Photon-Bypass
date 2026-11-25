@@ -104,12 +104,22 @@ describe('TrafficChartComponent', () => {
     expect(component.title).toBe('ترافیک');
   });
 
-  it('fetches with the active target when one is selected', async () => {
+  it('fetches the selected user VPN account instead of the acting user', async () => {
     await loadUser();
     user_service.setTraget('sub1');
 
     await openChart();
-    flushTraffic(7);
+    http.expectOne(
+      (req) => req.url === '/api/vpn/accounts' && req.params.get('target') === 'sub1',
+    ).flush(
+      {
+        code: 200,
+        data: [{ id: 51, username: 'sub', realmId: 1, realmName: 'R1', status: 0, created: 0 }],
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    await drain();
+    flushTraffic(51);
     await fixture.whenStable();
 
     expect(component.data?.datasets.length).toBe(3);

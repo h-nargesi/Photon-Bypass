@@ -5,13 +5,14 @@ import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { API_BASE_URL } from '../@services/api-services/models/app-base-path';
 import { PlanInfo } from '../@models';
-import { LocalStorageService, TranslationService } from '../@services';
+import { LocalStorageService, TranslationService, UserService } from '../@services';
 import { DashboardComponent } from './dashboard.component';
 
 describe('DashboardComponent', () => {
   let http: HttpTestingController;
   let fixture: ComponentFixture<DashboardComponent>;
   let component: DashboardComponent;
+  let user_service: UserService;
 
   const user = {
     username: 'main',
@@ -41,6 +42,7 @@ describe('DashboardComponent', () => {
       ],
     });
     http = TestBed.inject(HttpTestingController);
+    user_service = TestBed.inject(UserService);
     fixture = TestBed.createComponent(DashboardComponent);
     component = fixture.componentInstance;
   });
@@ -129,6 +131,60 @@ describe('DashboardComponent', () => {
     expect(component.connections?.length).toBe(2);
     expect(component.connection_count).toBe('2');
     expect(component.plan_info?.remainsTimePercent).toBe(40);
+  });
+
+  it('loads plan-state for the selected subordinate VPN account', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad();
+    await fixture.whenStable();
+
+    user_service.setTraget('sub1');
+
+    http.expectOne(
+      (req) => req.url === '/api/vpn/accounts' && req.params.get('target') === 'sub1',
+    ).flush(
+      {
+        code: 200,
+        data: [{ id: 51, username: 'sub-vpn', realmId: 3, realmName: 'R3', status: 0, created: 0 }],
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    const plan = http.expectOne((req) => req.url === '/api/plan/plan-state');
+    expect(plan.request.params.get('accountId')).toBe('51');
+    plan.flush(
+      {
+        code: 200,
+        data: { remainsTimePercent: 10, remainsTrafficPercent: 5, simultaneousUserCount: 1 },
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    http.expectOne((req) => req.url === '/api/connection/current-con-state').flush(
+      { code: 200, data: [] },
+      { status: 200, statusText: 'OK' },
+    );
+    http.expectOne((req) => req.url === '/api/plan/plan-info').flush(
+      {
+        code: 200,
+        data: {
+          accountId: 51,
+          days: 30,
+          gigabytes: 10,
+          simultaneousUserCount: 1,
+          supportsCredentialRotation: false,
+        },
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    const traffic = http.expectOne((req) => req.url === '/api/vpn/traffic-data');
+    expect(traffic.request.params.get('accountId')).toBe('51');
+    traffic.flush(
+      { code: 200, data: { title: 't', labels: [], collections: [] } },
+      { status: 200, statusText: 'OK' },
+    );
+
+    expect(component.plan_info?.remainsTimePercent).toBe(10);
   });
 
   it('exposes the plan capabilities from plan-info', async () => {

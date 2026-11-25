@@ -94,6 +94,10 @@ describe('UserSelectorModalComponent', () => {
     expect(user_service.targetName).toBe('sub1');
     expect(component.visible).toBeFalse();
     expect(emitted).toEqual(['sub1']);
+
+    http.expectOne(
+      (req) => req.url === '/api/vpn/accounts' && req.params.get('target') === 'sub1',
+    ).flush({ code: 200, data: [] }, { status: 200, statusText: 'OK' });
   });
 
   it('the admin searches the whole user list and picks targets outside its targetArea', async () => {
@@ -158,5 +162,9 @@ describe('UserSelectorModalComponent', () => {
     // outside the targetArea, yet selected — the admin bypass (Docs/20 step 22)
     expect(user_service.targetName).toBe('far-user');
     expect(component.visible).toBeFalse();
+
+    http.expectOne(
+      (req) => req.url === '/api/vpn/accounts' && req.params.get('target') === 'far-user',
+    ).flush({ code: 200, data: [] }, { status: 200, statusText: 'OK' });
   });
 });

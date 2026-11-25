@@ -19,6 +19,7 @@
     },
     "cost-caption": "هزینه تمدید: {0} تومان",
     "current-account": "اکانت جاری",
+    "no-accounts": "این کاربر اکانت VPN ندارد.",
     "vpn-username": "نام کاربری VPN (اختیاری — پیشنهاد سیستم جایگزین می‌شود)",
     "realm": "سرور (realm):",
     "realm-choise": "انتخاب سرور",

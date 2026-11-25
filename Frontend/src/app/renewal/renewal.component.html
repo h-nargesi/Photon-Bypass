@@ -3,7 +3,7 @@
         <c-card class="mb-auto whatsapp-panel" [cBorder]="{top: {color: color, width: 3}}">
             <c-card-header class="d-flex">
                 <h5 class="me-auto">{{ 'renewal.title' | translate }}</h5>
-                @if (hasAccounts) {
+                @if (hasAccounts && canStartNewAccount) {
                 <div class="btn-group" role="group">
                     <button cButton size="sm" [color]="mode === 'renew' ? 'primary' : 'secondary'"
                             (click)="switchMode('renew')">
@@ -22,6 +22,11 @@
                     <h5 class="ltr">{{ targetName }}</h5>
                 </div>
             </c-card-body>
+            @if (mode === 'unavailable') {
+            <c-card-body>
+                <p class="mx-5 mb-0">{{ 'renewal.labels.no-accounts' | translate }}</p>
+            </c-card-body>
+            }
             @if (mode === 'renew') {
             <c-card-body class="d-flex">
                 <div class="w-100 mx-5">
@@ -50,7 +55,7 @@
                     </select>
                 </div>
             </c-card-body>
-            } @else if (requiresRealmChoice) {
+            } @else if (mode === 'renew' && requiresRealmChoice) {
             <c-card-body>
                 <div class="w-100 mx-5">
                     <label>{{ 'renewal.labels.realm-repick' | translate }}</label>
@@ -67,6 +72,7 @@
                 </div>
             </c-card-body>
             }
+            @if (mode !== 'unavailable') {
             <c-card-body class="d-flex">
                 <div class="w-50">
                     <div class="m-auto p-3 px-5">
@@ -123,6 +129,7 @@
                     {{ "renewal.labels.submit" | translate }}
                 </button>
             </c-card-footer>
+            }
         </c-card>
     </c-col>
 </c-row>

@@ -149,7 +149,7 @@ describe('RenewalComponent', () => {
   it('on-behalf renewal opens the payment page in the payer view (no target)', async () => {
     // manager with a selected dependent target (Docs/20 D4: the invoice is
     // issued on the manager, so the payment page must not carry the target).
-    // The account list still comes from the acting user; plan-info is by accountId.
+    // The renewed VPN account is the subordinate's.
     localStorage.setItem('user|target', JSON.stringify('sub'));
 
     const harness = await RouterTestingHarness.create();
@@ -176,8 +176,19 @@ describe('RenewalComponent', () => {
     );
     await drain();
 
-    http.expectOne('/api/plan/plan-info?accountId=7').flush(
-      { code: 200, data: { target: 'sub', accountId: 7, realmId: 1, requiresRealmChoice: false, simultaneousUserCount: 1, days: 120, gigabytes: 50 } },
+    http.expectOne(
+      (req) => req.url === '/api/vpn/accounts' && req.params.get('target') === 'sub',
+    ).flush(
+      {
+        code: 200,
+        data: [{ id: 51, username: 'sub', realmId: 1, realmName: 'R1', status: 0, created: 0 }],
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    await drain();
+
+    http.expectOne('/api/plan/plan-info?accountId=51').flush(
+      { code: 200, data: { target: 'sub', accountId: 51, realmId: 1, requiresRealmChoice: false, simultaneousUserCount: 1, days: 120, gigabytes: 50 } },
       { status: 200, statusText: 'OK' },
     );
 
@@ -205,7 +216,7 @@ describe('RenewalComponent', () => {
       gigabytes: 50,
       simultaneousUserCount: 1,
       target: 'sub',
-      accountId: 7,
+      accountId: 51,
     });
 
     request.flush(
@@ -216,6 +227,53 @@ describe('RenewalComponent', () => {
     await harness.fixture.whenStable();
 
     expect(router.url).toBe('/payment?invoice=9013');
+  });
+
+  it('does not open a self purchase when the selected user has no VPN account', async () => {
+    localStorage.setItem('user|target', JSON.stringify('sub'));
+
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/renewal', RenewalComponent);
+    const drain = () => new Promise(resolve => setTimeout(resolve, 0));
+
+    http.expectOne('/api/account/get-user').flush(
+      {
+        code: 200,
+        data: {
+          username: 'main',
+          fullname: 'Main',
+          email: 'main@test.local',
+          balance: 0,
+          targetArea: {
+            main: { username: 'main', fullname: 'Main', email: 'm@t.l' },
+            sub: { username: 'sub', fullname: 'Sub', email: 's@t.l' },
+          },
+          accounts: [{ id: 7, username: 'main', realmId: 1, realmName: 'R1', status: 0, created: 0 }],
+        },
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    await drain();
+
+    http.expectOne(
+      (req) => req.url === '/api/vpn/accounts' && req.params.get('target') === 'sub',
+    ).flush({ code: 200, data: [] }, { status: 200, statusText: 'OK' });
+    await drain();
+
+    http.expectOne('/api/plan/realms').flush(
+      { code: 200, data: [] },
+      { status: 200, statusText: 'OK' },
+    );
+    http.expectOne('/api/basics/prices').flush(
+      { code: 200, data: [] },
+      { status: 200, statusText: 'OK' },
+    );
+    await drain();
+
+    expect(component.mode).toBe('unavailable');
+    http.expectNone((req) => req.url.includes('/api/plan/plan-info'));
+    http.expectNone((req) => req.url.includes('/api/plan/suggest-username'));
+    http.expectNone((req) => req.url === '/api/plan/estimate');
   });
 
   it('submit is ignored while a renewal request is in flight (double-submit)', async () => {
