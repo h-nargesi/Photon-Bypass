@@ -2,11 +2,9 @@
 <ng-container>
   <c-container [fluid]="true" class="border-bottom px-4">
     <div class="d-none d-md-flex">
-      <h4>
-        <a routerLink="/">
-          <svg [cIcon]="icons.cilHome" class="my-1" size="lg"></svg>
-        </a>
-      </h4>
+      <a routerLink="/" class="me-2">
+        <svg [cIcon]="icons.cilHome" class="my-1" size="lg"></svg>
+      </a>
     </div>
 
     @if (canSelectTarget || showAccountMenu) {
