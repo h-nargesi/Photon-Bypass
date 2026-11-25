@@ -1,16 +1,16 @@
 @use "@coreui/coreui/scss/mixins/breakpoints" as *;
 
 @include media-breakpoint-up(sm) {
-  .whatsapp-panel {
+  .telegram-panel {
     height: 14.625rem;
   }
-  .whatsapp-icon {
+  .telegram-icon {
     height: 14.5rem;
   }
 }
 
-.bg-whatsapp {
-  background-color: #25d366;
+.bg-telegram {
+  background-color: #26a5e4;
 }
 
 .icon-btn-group > * {

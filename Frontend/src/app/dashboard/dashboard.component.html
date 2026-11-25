@@ -1,19 +1,21 @@
 <c-row class="g-4">
-    <c-col lg="6">
-        <c-card class="mb-auto whatsapp-panel">
-            <c-row class="g-0">
-                <c-col [xs]="4" class="overflow-hidden position-relative bg-whatsapp whatsapp-icon"
-                    [ngStyle]="{'max-width.rem': 14.5}">
-                    <div><svg [cIcon]="icons.cibWhatsapp" class="m-5 text-white" height="100%"></svg></div>
-                </c-col>
-                <c-card-body cCol [xs]="8">
-                    <h5 cCardTitle>{{ "dashboard.support.title" | translate }}</h5>
-                    <p cCardText class="ltr">{{ "dashboard.support.phone-number" | translate }}</p>
-                    <p cCardText>{{ "dashboard.support.description" | translate }}</p>
-                </c-card-body>
-            </c-row>
-        </c-card>
-    </c-col>
+    @if (showsSupportCard) {
+        <c-col lg="6">
+            <c-card class="mb-auto telegram-panel">
+                <c-row class="g-0">
+                    <c-col [xs]="4" class="overflow-hidden position-relative bg-telegram telegram-icon"
+                        [ngStyle]="{'max-width.rem': 14.5}">
+                        <div><svg [cIcon]="icons.cibTelegram" class="m-5 text-white" height="100%"></svg></div>
+                    </c-col>
+                    <c-card-body cCol [xs]="8">
+                        <h5 cCardTitle>{{ "dashboard.support.title" | translate }}</h5>
+                        <p cCardText class="ltr">{{ support_info?.contactInfo }}</p>
+                        <p cCardText>{{ support_info?.description }}</p>
+                    </c-card-body>
+                </c-row>
+            </c-card>
+        </c-col>
+    }
 
     <c-col lg="6">
         <c-widget-stat-c [title]="plan_info?.remainsTitle ? ('dashboard.balance.title' | translate) : ('dashboard.balance.none' | translate)"

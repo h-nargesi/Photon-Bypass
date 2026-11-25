@@ -47,16 +47,38 @@ describe('DashboardComponent', () => {
     component = fixture.componentInstance;
   });
 
+  function flushSupportConfig() {
+    http
+      .match(req => req.url === '/api/basics/app-config')
+      .forEach(request =>
+        request.flush(
+          {
+            code: 200,
+            data: {
+              allowRegistration: false,
+              supportContactInfo: '@support',
+              supportDescription: 'پشتیبانی آنلاین',
+            },
+          },
+          { status: 200, statusText: 'OK' },
+        ),
+      );
+  }
+
   afterEach(() => {
+    flushSupportConfig();
     http.verify();
     localStorage.clear();
   });
 
-  async function flushInitialLoad(capabilities?: Partial<PlanInfo>) {
+  async function flushInitialLoad(
+    capabilities?: Partial<PlanInfo>,
+    payload: Record<string, unknown> = user,
+  ) {
     const drain = () => new Promise(resolve => setTimeout(resolve, 0));
 
     http.expectOne(req => req.url === '/api/account/get-user').flush(
-      { code: 200, data: user },
+      { code: 200, data: payload },
       { status: 200, statusText: 'OK' },
     );
     await drain();
@@ -138,6 +160,12 @@ describe('DashboardComponent', () => {
     await flushInitialLoad();
     await fixture.whenStable();
 
+    await flushSubordinateLoad();
+
+    expect(component.plan_info?.remainsTimePercent).toBe(10);
+  });
+
+  async function flushSubordinateLoad() {
     user_service.setTraget('sub1');
 
     http.expectOne(
@@ -183,9 +211,7 @@ describe('DashboardComponent', () => {
       { code: 200, data: { title: 't', labels: [], collections: [] } },
       { status: 200, statusText: 'OK' },
     );
-
-    expect(component.plan_info?.remainsTimePercent).toBe(10);
-  });
+  }
 
   it('exposes the plan capabilities from plan-info', async () => {
     fixture.detectChanges();
@@ -400,9 +426,13 @@ describe('DashboardComponent', () => {
     await fixture.whenStable();
 
     expect(component.getPlanInfoColor(component.plan_info)).toBe('warning');
+    expect(component.getPlanInfoTooltip(component.plan_info))
+      .toBe(TranslationService.translate('dashboard.balance.monthly-risk'));
 
     const traffic_risk = { ...component.plan_info!, remainsTimePercent: 10, remainsTrafficPercent: 50 };
     expect(component.getPlanInfoColor(traffic_risk)).toBe('info');
+    expect(component.getPlanInfoTooltip(traffic_risk))
+      .toBe(TranslationService.translate('dashboard.balance.traffic-risk'));
   });
 
   it('closing a connection removes it from the list', async () => {
@@ -455,5 +485,46 @@ describe('DashboardComponent', () => {
     await loadUserWithoutAccounts({ ...user, accounts: [] });
 
     expect(fixture.nativeElement.querySelector('[routerlink="/renewal"]')).toBeNull();
+  });
+
+  it('hides the support card from a dependent user viewing himself (D6)', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad(undefined, { ...user, allowSelfService: false });
+    flushSupportConfig();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.showsSupportCard).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.telegram-panel')).toBeNull();
+  });
+
+  it('shows the support card with the backend contact info for a self-service user', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad(undefined, { ...user, allowSelfService: true });
+    flushSupportConfig();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const card: HTMLElement = fixture.nativeElement.querySelector('.telegram-panel');
+    expect(component.showsSupportCard).toBeTrue();
+    expect(card.textContent).toContain('@support');
+    expect(card.textContent).toContain('پشتیبانی آنلاین');
+    expect(card.textContent).toContain(TranslationService.translate('dashboard.support.title'));
+  });
+
+  it('keeps the support card in an on-behalf view of an actor without self-service', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad(undefined, { ...user, role: 1, allowSelfService: false });
+    flushSupportConfig();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(fixture.nativeElement.querySelector('.telegram-panel')).toBeNull();
+
+    await flushSubordinateLoad();
+    fixture.detectChanges();
+
+    expect(component.showsSupportCard).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.telegram-panel')).not.toBeNull();
   });
 });

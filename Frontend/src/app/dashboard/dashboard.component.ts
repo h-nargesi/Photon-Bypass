@@ -36,6 +36,7 @@ import {
   VpnConfigInfo,
 } from '../@models';
 import {
+  AppConfigService,
   MessageService,
   TranslationPipe,
   TranslationService,
@@ -88,13 +89,15 @@ export class DashboardComponent implements OnInit {
   plan_info?: PlanState;
   plan_capabilities?: PlanInfo;
   config_info?: VpnConfigInfo;
+  support_info?: { contactInfo: string; description: string };
   readonly icons = ICON_SUBSET;
 
   constructor(
     private readonly user_service: UserService,
     private readonly service: DashboardService,
     private readonly translation: TranslationService,
-    private readonly messages: MessageService
+    private readonly messages: MessageService,
+    private readonly app_config: AppConfigService
   ) {}
 
   private readonly destroy_ref = inject(DestroyRef);
@@ -122,6 +125,13 @@ export class DashboardComponent implements OnInit {
     );
   }
 
+  /// Docs/20 D6: dependent accounts see no financial UI in their own view;
+  /// the support card (renewal/payment help) belongs to that group.
+  get showsSupportCard(): boolean {
+    return this.user_service.isSelfService
+      || this.targetName !== this.current_user?.username;
+  }
+
   get supportsCredentialRotation(): boolean {
     return this.plan_capabilities?.supportsCredentialRotation === true;
   }
@@ -139,6 +149,7 @@ export class DashboardComponent implements OnInit {
 
   async ngOnInit() {
     await this.loadCurrentUser();
+    this.loadSupportInfo();
     this.loadData();
     this.detectTargetChanges();
     this.detectAccountChanges();
@@ -247,9 +258,9 @@ export class DashboardComponent implements OnInit {
   getPlanInfoTooltip(plan_info?: PlanState): string | undefined {
     if (!plan_info) return undefined;
     else if (plan_info.remainsTimePercent > plan_info.remainsTrafficPercent) {
-      return this.translation.translate('dashboard.balance.monthlyRisk');
+      return this.translation.translate('dashboard.balance.monthly-risk');
     } else {
-      return this.translation.translate('dashboard.balance.trafficRisk');
+      return this.translation.translate('dashboard.balance.traffic-risk');
     }
   }
 
@@ -269,6 +280,17 @@ export class DashboardComponent implements OnInit {
 
   private async loadCurrentUser() {
     this.current_user = await this.user_service.user();
+  }
+
+  private loadSupportInfo() {
+    this.app_config.config().subscribe((config) => {
+      this.support_info = config
+        ? {
+            contactInfo: config.supportContactInfo ?? '',
+            description: config.supportDescription ?? '',
+          }
+        : undefined;
+    });
   }
 
   copyVlessLink(): void {

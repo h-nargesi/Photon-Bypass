@@ -4,9 +4,10 @@ import { AppConfig, ShowMessageCase } from '../../@models';
 import { BASICS_API_URL } from './models/app-api-url';
 import { ApiBaseService } from './api-base-service';
 
-/// Public app configuration (Docs/20 D11) — unauthenticated, mirrors only
-/// the flags the pre-login UI needs. Failures stay silent: the register
-/// link simply stays hidden when the flag cannot be confirmed.
+/// Public app configuration (Docs/20 D11) — unauthenticated, carries only
+/// the flags and public texts the UI needs. Failures stay silent: the register
+/// link simply stays hidden and the support card shows no contact line when
+/// the config cannot be confirmed.
 @Injectable({ providedIn: 'root' })
 export class AppConfigService extends ApiBaseService {
   config(): Observable<AppConfig | null> {
