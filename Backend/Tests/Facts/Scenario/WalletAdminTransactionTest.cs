@@ -138,7 +138,7 @@ public class WalletAdminTransactionTest(ProgramLevelInitializer.Factory factory)
             {
                 await wallet_repo.Save(new WalletEntity
                 {
-                    AccountId = id,
+                    UserId = id,
                     Amount = 1_000,
                     Direction = BalanceDirection.Credit,
                     Status = BalanceStatus.Completed,

@@ -199,7 +199,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
         var stored = await reset_moq.Object.GetAccount(social_send.Value.code);
 
         stored.Should().NotBeNull();
-        stored!.AccountId.Should().Be(account_repo_moq.Data["User4"].Id);
+        stored!.UserId.Should().Be(account_repo_moq.Data["User4"].Id);
         stored.ExpireDate.Should().BeAfter(DateTime.Now);
     }
 
@@ -877,7 +877,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
 
         await reset_repo.AddHashCode(new ResetPassEntity
         {
-            AccountId = 1,
+            UserId = 1,
             HashCode = "expired-code",
             ExpireDate = DateTime.Now.AddDays(-1),
         });
@@ -899,7 +899,7 @@ public class AuthAppTest : UnitLevelServiceInitializer
 
         await reset_repo.AddHashCode(new ResetPassEntity
         {
-            AccountId = account_id,
+            UserId = account_id,
             HashCode = "valid-code",
             ExpireDate = DateTime.Now.AddMinutes(10),
         });

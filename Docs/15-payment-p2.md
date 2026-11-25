@@ -65,7 +65,7 @@ Canceled  → تسویه از کیف پول (پول بیرونی وارد نشد
 | ستون | نوع | توضیح |
 |---|---|---|
 | `Code` | int, PK | از `InvoiceSequence` (موجود از P0) |
-| `AccountId` | int | صاحب فاکتور |
+| `UserId` | int | صاحب فاکتور |
 | `Kind` | tinyint | 1=TopUp, 2=Plan |
 | `TotalPrice` | int | قیمت کامل (پلن) یا مبلغ شارژ |
 | `WalletDeduction` | int | کسر کیف پول = `max(min(balance, estimate), 0)` در زمان صدور |
@@ -112,7 +112,7 @@ Canceled  → تسویه از کیف پول (پول بیرونی وارد نشد
 ## قاعده آستانه کیف پول (بک‌اند فقط)
 
 - سرویس جدید `WalletThresholdService` (ثبت در `Application/ServiceFactory.cs`).
-- کوئری گروهی: `sum(Amount*Direction) where Status in (Completed,Verifying) group by AccountId having < @threshold`.
+- کوئری گروهی: `sum(Amount*Direction) where Status in (Completed,Verifying) group by UserId having < @threshold`.
 - زیر آستانه → غیرفعال‌سازی کاربر Radius در همه سرورها با پریمیتیو‌های موجود `IAccountRadiusSyncService` (idempotent طبق الگوی اصلاح H16: skip اگر قبلاً disabled)؛ بالای آستانه → فعال‌سازی مجدد. `Account.IsActive` دست نمی‌خورد. رکورد History برای هر تغییر.
 - فراخوانی: JobInterval ساعتی + بعد از settlement های موفق (register-receipt / settle-wallet). اصلاح ساختاری H3 (هم‌پوشانی job) خودش P4 است.
 
@@ -165,7 +165,7 @@ Canceled  → تسویه از کیف پول (پول بیرونی وارد نشد
 - جدول `Invoice` ستون **`Title NVARCHAR(127)** دارد (سند ستون Description نداشت)؛ برای رندر items[] و توضیح wallet rows استفاده می‌شود.
 - Whitelist تصویر رسید: پسوند `jpg/jpeg/png/webp` + content-type `image/jpeg|png|webp` + سقف `ReceiptMaxBytes` (پیش‌فرض 2MB؛ سقف درخواست endpoint مولتی‌پارت 3MB برای سربار فرم).
 - `GetInvoice` برای کد ناموجود/بدون مالکیت `UserException` می‌دهد (به‌جای `null`)؛ ملکیت با join روی `JobContext.Target` چک می‌شود.
-- `GetBalance` به `Status IN (Completed, Verifying)` تغییر کرد و `GetAccountIdsBelowThreshold` + `GenerateNewInvoiceCode` + CAS های `Invoice` در `IInvoiceRepository` (repo جدید) قرار گرفتند؛ اعضای مرده (`GetNotPaid`، `CompleteInvoice`، `GetInvoice(int)` روی wallet) حذف شدند.
+- `GetBalance` به `Status IN (Completed, Verifying)` تغییر کرد و `GetUserIdsBelowThreshold` + `GenerateNewInvoiceCode` + CAS های `Invoice` در `IInvoiceRepository` (repo جدید) قرار گرفتند؛ اعضای مرده (`GetNotPaid`، `CompleteInvoice`، `GetInvoice(int)` روی wallet) حذف شدند.
 - فرانتند: بودجه‌ی bundle در `angular.json` از 1MB به 3MB (هشدار 2MB) اصلاح شد — باندل 1.88MB از قبل عبور می‌کرد و خطای budget پیش‌گیرانه بود.
 
 ### فایل‌های کلیدی پیاده‌سازی

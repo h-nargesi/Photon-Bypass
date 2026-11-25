@@ -98,7 +98,7 @@ class WalletApplication(
 
         await WalletRepo.Save(new WalletEntity
         {
-            AccountId = target.Id,
+            UserId = target.Id,
             Amount = amount,
             Direction = direction,
             Status = BalanceStatus.Completed,

@@ -169,6 +169,7 @@ Every change — analysis, design, and code — must meet a fully professional s
 |---|---|
 | Register a new service | Add it to the matching project's `ServiceFactory.cs`. Use `AddLazy*` from `Shared/Tools/LazyDependencyInjections.cs`. |
 | Add a Repository | Implement `IEditableRepository<T>` on `DapperRepository<T>` base; register `AddLazyTransient<IRepo, Repo>()` in `Infrastructure/ServiceFactory.cs`. Map entity with `[Table]`/`[Key]`. |
+| Reference a panel user from an entity or parameter | Name it `UserId` (as in `VpnAccount.UserId`, `Wallet.UserId`). "Account" always means a VPN account (`VpnAccountId`, the `accountId` API param) — never name a panel-user reference `AccountId`. |
 | Add an API endpoint | Inherit `ResultHandlerController`, call `LoadJobContext(target?)`, return `ApiResult`/`ApiResult<T>`. Use `SafeApiResult(...)` to normalize. |
 | Throw a user-facing error | `throw new UserException(message, detail, httpCode)` — the message is shown to the user; `detail` is dev-only. |
 | Add a background task | Hook into `Application/Management/JobInterval.cs` (Quartz, 60-min) or register a new Quartz job. |

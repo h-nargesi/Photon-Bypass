@@ -5,7 +5,7 @@ IF OBJECT_ID('Wallet') IS NULL
 CREATE TABLE Wallet (
 	Id					INT IDENTITY	NOT NULL	CONSTRAINT PK_Wallet_Id PRIMARY KEY,
 	-- Docs/22 D8: the wallet belongs to the panel user (payer = actor, Docs/20 D4).
-	AccountId			INT				NOT NULL	CONSTRAINT FK_Wallet_AccountId FOREIGN KEY REFERENCES PanelUser (Id),
+	UserId				INT				NOT NULL	CONSTRAINT FK_Wallet_UserId FOREIGN KEY REFERENCES PanelUser (Id),
 	Amount				INT				NOT NULL,
 	Direction			SMALLINT		NOT NULL,
 	Status				TINYINT			NOT NULL	CONSTRAINT DF_Wallet_Status DEFAULT 0,

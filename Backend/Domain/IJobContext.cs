@@ -6,10 +6,8 @@ public interface IJobContext
 
     string Target { get; }
 
-    /// <summary>The VPN account the current request acts on (Docs/22 §3); null on user-level calls.</summary>
-    int? AccountId { get; }
+    /// <summary>Panel user the job acts for — the billing payer (Docs/20 D4); set only by InjectJobContext.</summary>
+    int? UserId { get; }
 
-    void InjectJobContext(int account_id);
-
-    void InjectJobContext(int account_id, string username, string target);
+    void InjectJobContext(int user_id, string username, string target);
 }

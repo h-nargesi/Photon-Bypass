@@ -14,7 +14,7 @@ where pu.Username in ('RenewA', 'RenewB') and r.Name = 'RenewLatest'
 
 -- one debit row per renewal (Renewal.WalletDebit is a NOT NULL foreign key);
 -- wallet rows anchor to the panel user (Docs/22 D8)
-insert into Wallet (AccountId, Amount, Direction, Status, Description)
+insert into Wallet (UserId, Amount, Direction, Status, Description)
 select Id, 500, -1, 1, 'T-renew-debit-a1' from PanelUser where Username = 'RenewA' union all
 select Id, 500, -1, 1, 'T-renew-debit-a2' from PanelUser where Username = 'RenewA' union all
 select Id, 500, -1, 1, 'T-renew-debit-b1' from PanelUser where Username = 'RenewB'
@@ -22,15 +22,15 @@ select Id, 500, -1, 1, 'T-renew-debit-b1' from PanelUser where Username = 'Renew
 -- separate statements so the identity order (old < new) is deterministic
 insert into Renewal (VpnAccountId, SimultaneousUser, WalletDebit, Comment)
 select va.Id, 1, w.Id, 'T-renew-a-old'
-from VpnAccount va join Wallet w on w.AccountId = va.UserId and w.Description = 'T-renew-debit-a1'
+from VpnAccount va join Wallet w on w.UserId = va.UserId and w.Description = 'T-renew-debit-a1'
 where va.Username = 'RenewA'
 
 insert into Renewal (VpnAccountId, SimultaneousUser, WalletDebit, Comment)
 select va.Id, 2, w.Id, 'T-renew-a-new'
-from VpnAccount va join Wallet w on w.AccountId = va.UserId and w.Description = 'T-renew-debit-a2'
+from VpnAccount va join Wallet w on w.UserId = va.UserId and w.Description = 'T-renew-debit-a2'
 where va.Username = 'RenewA'
 
 insert into Renewal (VpnAccountId, SimultaneousUser, WalletDebit, Comment)
 select va.Id, 1, w.Id, 'T-renew-b-only'
-from VpnAccount va join Wallet w on w.AccountId = va.UserId and w.Description = 'T-renew-debit-b1'
+from VpnAccount va join Wallet w on w.UserId = va.UserId and w.Description = 'T-renew-debit-b1'
 where va.Username = 'RenewB'

@@ -430,7 +430,7 @@ class PlanApplication(
 
             var wallet_debit = new WalletEntity
             {
-                AccountId = payer.Id,
+                UserId = payer.Id,
                 Amount = estimate,
                 Direction = BalanceDirection.Debit,
                 Status = BalanceStatus.Completed,
@@ -594,7 +594,7 @@ class PlanApplication(
         {
             var wallet_debit = new WalletEntity
             {
-                AccountId = payer.Id,
+                UserId = payer.Id,
                 Amount = estimate,
                 Direction = BalanceDirection.Debit,
                 Status = BalanceStatus.Completed,

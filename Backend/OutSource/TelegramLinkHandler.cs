@@ -49,7 +49,7 @@ internal sealed class TelegramLinkHandler(
             return;
         }
 
-        var account = await panel_user_repo.GetActiveUser(link.AccountId);
+        var account = await panel_user_repo.GetActiveUser(link.UserId);
 
         if (account == null)
         {
@@ -60,7 +60,7 @@ internal sealed class TelegramLinkHandler(
 
         try
         {
-            await panel_user_repo.SetTelegramChat(link.AccountId, message.Chat.Id);
+            await panel_user_repo.SetTelegramChat(link.UserId, message.Chat.Id);
         }
         catch (SqlException error) when (error.Number is 2601 or 2627)
         {

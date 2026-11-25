@@ -35,12 +35,13 @@ identity (username, realm, credentials, warning stamps). That coupling forced
 | D12 | Two status axes: `PanelUserStatus {Active=0, Deactivated=2}` (portal login) and `VpnAccountStatus {Active=0, Suspended=1, Deactivated=2}` (per account). VPN suspension never blocks the portal; the 40-day abandonment deactivates the **VpnAccount** only — the user can log in and buy a new account. `set-status` = panel level, `set-account-status` = VPN level. |
 | D13 | Implementation note: phases 2–4 of the plan executed as one atomic compile unit (entity split makes intermediate greens impossible); SQL (phase 1) stayed independently valid. |
 | D14 | `target` API contract split (review finding): user-level endpoints keep `target` = username; VPN-level endpoints take a separate `accountId` query/body param resolved through `IAccessService.CheckAccountAccess`. The access cache (`TargetArea|{username}`) now also carries `AccountIds` and **rebuilds from the repository on miss** — a freshly created account is targetable without invalidation. |
+| D15 | Naming rule (post-split cleanup): a reference to a panel user is always `UserId` — `Wallet.UserId`, `Invoice.UserId`, `TelegramLink.UserId` and `ResetPassword.UserId` were `AccountId`, which read as a `VpnAccount` reference. "Account" therefore always means a VPN account (`VpnAccountId`, the `accountId` wire param of D14). `IJobContext.UserId` is the billing payer and is set only by `InjectJobContext`; the request-level VPN account id is no longer stored in the job context. |
 
 ## 3. Data model (fresh-install set, `Database/LocalDatabase/`)
 
 - `PanelUser.sql` — table + filtered unique indexes (Email/Mobile/TelegramChatId, NULLs excluded).
 - `VpnAccount.sql` — `UserId` FK (ON DELETE CASCADE), `RealmId` FK NOT NULL, `Username` unique (≤ 32).
-- FK rewrites: `Renewal.VpnAccountId`, `TrafficData.VpnAccountId`, `History.{Issuer,Target}→PanelUser + VpnAccountId`, `Wallet.AccountId→PanelUser`, `Invoice.AccountId→PanelUser + VpnAccountId`, `TelegramLink/ResetPassword.AccountId→PanelUser`.
+- FK rewrites: `Renewal.VpnAccountId`, `TrafficData.VpnAccountId`, `History.{Issuer,Target}→PanelUser + VpnAccountId`, `Wallet.UserId→PanelUser`, `Invoice.UserId→PanelUser + VpnAccountId`, `TelegramLink/ResetPassword.UserId→PanelUser`.
 - Views: `TotalPlanState`/`PlanState` keyed by `VpnAccount` — result `Id` = VPN account id, `RealmId`/`UserId`/`Status` join in from the account (never NULL), stacking windows partition by `VpnAccountId`.
 - Indexes: `IX_TrafficData_VpnAccountId_StartSession`, `IX_Renewal_VpnAccountId`, `IX_PanelUser_Owner`, `IX_VpnAccount_UserId`, `IX_VpnAccount_RealmId`, `IX_History_VpnAccountId` (filtered) + existing set.
 

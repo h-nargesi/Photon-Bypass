@@ -49,8 +49,8 @@ public class BillingP0Test : OutSourceLevelServiceInitializer
             await wallet_repo.Save(new[]
             {
                 target,
-                new WalletEntity { AccountId = alpha_id, Amount = 111, Direction = BalanceDirection.Credit, Status = BalanceStatus.Pending, Description = "T1-insert-1" },
-                new WalletEntity { AccountId = alpha_id, Amount = 222, Direction = BalanceDirection.Credit, Status = BalanceStatus.Pending, Description = "T1-insert-2" },
+                new WalletEntity { UserId = alpha_id, Amount = 111, Direction = BalanceDirection.Credit, Status = BalanceStatus.Pending, Description = "T1-insert-1" },
+                new WalletEntity { UserId = alpha_id, Amount = 222, Direction = BalanceDirection.Credit, Status = BalanceStatus.Pending, Description = "T1-insert-2" },
             });
 
             await wallet_repo.DbContext.RollbackAsync();
@@ -133,8 +133,8 @@ public class BillingP0Test : OutSourceLevelServiceInitializer
         var account_ids = await GetTestAccountIds(scope.ServiceProvider);
         var alpha_id = account_ids["Alpha"];
 
-        var credit = new WalletEntity { AccountId = alpha_id, Amount = 111, Direction = BalanceDirection.Credit, Status = BalanceStatus.Completed, Description = "T3-credit" };
-        var debit = new WalletEntity { AccountId = alpha_id, Amount = 55, Direction = BalanceDirection.Debit, Status = BalanceStatus.Completed, Description = "T3-debit" };
+        var credit = new WalletEntity { UserId = alpha_id, Amount = 111, Direction = BalanceDirection.Credit, Status = BalanceStatus.Completed, Description = "T3-credit" };
+        var debit = new WalletEntity { UserId = alpha_id, Amount = 55, Direction = BalanceDirection.Debit, Status = BalanceStatus.Completed, Description = "T3-debit" };
 
         await wallet_repo.Save(credit);
         await wallet_repo.Save(debit);
@@ -164,10 +164,10 @@ public class BillingP0Test : OutSourceLevelServiceInitializer
         var beta_invoice = await wallet_repo.GetInvoice("Beta", 5001);
 
         Assert.Equal(2, alpha_invoice.Count);
-        Assert.All(alpha_invoice, w => Assert.Equal(account_ids["Alpha"], w.AccountId));
+        Assert.All(alpha_invoice, w => Assert.Equal(account_ids["Alpha"], w.UserId));
 
         var beta_wallet = Assert.Single(beta_invoice);
-        Assert.Equal(account_ids["Beta"], beta_wallet.AccountId);
+        Assert.Equal(account_ids["Beta"], beta_wallet.UserId);
         Assert.Equal("T4-beta", beta_wallet.Description);
     }
 }

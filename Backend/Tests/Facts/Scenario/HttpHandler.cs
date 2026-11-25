@@ -419,7 +419,7 @@ public partial class HttpHandler(ProgramLevelInitializer.Factory factory) : Prog
 
         await wallet_repo.Save(new WalletEntity
         {
-            AccountId = user.Id,
+            UserId = user.Id,
             Amount = value,
             Direction = BalanceDirection.Credit,
             Status = BalanceStatus.Completed,

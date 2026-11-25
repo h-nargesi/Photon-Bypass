@@ -13,8 +13,8 @@ public interface ITelegramLinkRepository
     Task AddCode(TelegramLinkEntity code);
 
     /// <summary>
-    /// Invalidates every still-active link code of an account before a new
+    /// Invalidates every still-active link code of a user before a new
     /// one is issued, so only the newest code can bind the chat.
     /// </summary>
-    Task ExpireActiveCodes(int account_id);
+    Task ExpireActiveCodes(int user_id);
 }

@@ -47,7 +47,7 @@ public class TelegramLinkRoundTripTest : OutSourceLevelServiceInitializer
         // issuing a new code retires the account's pending codes
         await link_repo.AddCode(new TelegramLinkEntity
         {
-            AccountId = account.Id,
+            UserId = account.Id,
             Code = "stale-code",
             ExpireDate = DateTime.Now.AddMinutes(15),
         });
@@ -57,7 +57,7 @@ public class TelegramLinkRoundTripTest : OutSourceLevelServiceInitializer
 
         await link_repo.AddCode(new TelegramLinkEntity
         {
-            AccountId = account.Id,
+            UserId = account.Id,
             Code = "live-code",
             ExpireDate = DateTime.Now.AddMinutes(15),
         });
@@ -98,7 +98,7 @@ public class TelegramLinkRoundTripTest : OutSourceLevelServiceInitializer
 
         await link_repo.AddCode(new TelegramLinkEntity
         {
-            AccountId = second!.Id,
+            UserId = second!.Id,
             Code = "second-code",
             ExpireDate = DateTime.Now.AddMinutes(15),
         });

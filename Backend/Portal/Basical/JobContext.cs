@@ -8,16 +8,11 @@ class JobContext : IJobContext
 
     public string Target { get; set; } = null!;
 
-    public int? AccountId { get; set; }
+    public int? UserId { get; set; }
 
-    public void InjectJobContext(int account_id)
+    public void InjectJobContext(int user_id, string username, string target)
     {
-        AccountId = account_id;
-    }
-
-    public void InjectJobContext(int account_id, string username, string target)
-    {
-        AccountId = account_id;
+        UserId = user_id;
         Username = username;
         Target = target;
     }

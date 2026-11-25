@@ -38,10 +38,10 @@ CREATE NONCLUSTERED INDEX IX_History_Title_Target
 ON History (Title, Target);
 GO
 
--- Wallet (AccountId): GetBalance aggregate.
-IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Wallet_AccountId')
-CREATE NONCLUSTERED INDEX IX_Wallet_AccountId
-ON Wallet (AccountId);
+-- Wallet (UserId): GetBalance aggregate.
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Wallet_UserId')
+CREATE NONCLUSTERED INDEX IX_Wallet_UserId
+ON Wallet (UserId);
 GO
 
 -- Wallet (InvoiceCode): GetInvoice / GenerateNewInvoiceCode lookups. NOT unique on purpose:

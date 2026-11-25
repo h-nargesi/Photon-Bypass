@@ -270,7 +270,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
         var debit = new WalletEntity
         {
-            AccountId = sub_active.Id,
+            UserId = sub_active.Id,
             Amount = 100,
             Direction = BalanceDirection.Debit,
             Status = BalanceStatus.Completed,

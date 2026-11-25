@@ -171,7 +171,7 @@ public class AccountAppTest : UnitLevelServiceInitializer
         // only the newest code can bind: the previous one is consumed/dead
         var newest = await link_moq.Object.Consume(result.Data.Code!);
         newest.Should().NotBeNull();
-        newest!.AccountId.Should().Be(account_repo_moq.Data["User99"].Id);
+        newest!.UserId.Should().Be(account_repo_moq.Data["User99"].Id);
         newest.ExpireDate.Should().BeAfter(DateTime.Now);
     }
 

@@ -61,11 +61,6 @@ public class ResultHandlerController(IJobContext context, Lazy<IAccessService> a
                 $"VPN-account access denied: ({accountId}, '{Request.GetDisplayUrl()}')",
                 403);
         }
-
-        if (JobContext is JobContext job)
-        {
-            job.AccountId = accountId;
-        }
     }
 
     [NonAction]

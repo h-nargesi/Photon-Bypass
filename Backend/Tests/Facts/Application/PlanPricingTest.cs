@@ -91,7 +91,7 @@ public class PlanPricingTest : UnitLevelServiceInitializer
             new PhotonBypass.Domain.Account.Entity.WalletEntity
             {
                 Id = 950,
-                AccountId = 10,
+                UserId = 10,
                 Amount = 1000,
                 Direction = PhotonBypass.Domain.Account.Model.BalanceDirection.Credit,
                 Status = PhotonBypass.Domain.Account.Model.BalanceStatus.Completed,

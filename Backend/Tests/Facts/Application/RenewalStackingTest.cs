@@ -153,7 +153,7 @@ public class RenewalStackingTest : UnitLevelServiceInitializer
             new WalletEntity
             {
                 Id = 903,
-                AccountId = 99,
+                UserId = 99,
                 Amount = 1500,
                 Direction = BalanceDirection.Credit,
                 Status = BalanceStatus.Completed,

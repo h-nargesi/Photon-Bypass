@@ -148,7 +148,7 @@ public class WalletApplicationTest : UnitLevelServiceInitializer
         wallet_moq.Data[4] = Enumerable.Range(1, 25).Select(i => new WalletEntity
         {
             Id = i,
-            AccountId = 4,
+            UserId = 4,
             Amount = 10 * i,
             Direction = BalanceDirection.Credit,
             Status = BalanceStatus.Completed,

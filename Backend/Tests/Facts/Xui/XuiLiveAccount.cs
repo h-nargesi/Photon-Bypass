@@ -92,7 +92,7 @@ internal sealed class XuiLiveAccount : IAsyncDisposable
         // one debit wallet row anchors the renewal's NOT NULL WalletDebit FK
         fixture.wallet = new WalletEntity
         {
-            AccountId = fixture.user.Id,
+            UserId = fixture.user.Id,
             Amount = 1,
             Direction = BalanceDirection.Debit,
             Status = BalanceStatus.Completed,

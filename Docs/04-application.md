@@ -46,9 +46,9 @@ flowchart TB
 
 ## Multi-account delegation (تکلیف چنداکانتی)
 
-- هر درخواست از طریق `IJobContext.Username/Target/AccountId` زمینه‌ی «به‌نام چه کسی» را حمل می‌کند. کنترلر در `LoadJobContext(target)` آن را با `IAccessService` اعتبارسنجی می‌کند (`Docs/08`).
+- هر درخواست از طریق `IJobContext.Username/Target/UserId` زمینه‌ی «به‌نام چه کسی» را حمل می‌کند. کنترلر در `LoadJobContext(target)` آن را با `IAccessService` اعتبارسنجی می‌کند (`Docs/08`).
 - **`IPlanApplication.OnRenewal`** و **`IPlanApplication.OnRenewalDelegation`**: رویدادهای استاتیک که هنگام تمدید فراخوانی می‌شوند و به لایه‌های دیگر (مثلاً انتخاب سرور برای زیرمجموعه) اجازه‌ی مداخله می‌دهند. در `PlanApplication` تمدید، مقدار بازگشتی `OnRenewalDelegation` بررسی می‌شود و اگر ناموفق باشد تراکنش rollback می‌شود.
-- **`IJobContext.InjectJobContext(accountId, username, target)`**: برای مسیرهای غیر-HTTP (مثل کال‌بک پرداخت) که زمینه به‌صورت دستی تزریق می‌شود (`PlanApplication.cs:165`).
+- **`IJobContext.InjectJobContext(userId, username, target)`**: برای مسیرهای غیر-HTTP (مثل کال‌بک پرداخت) که زمینه به‌صورت دستی تزریق می‌شود (`PlanApplication.cs:165`).
 
 ## Transactions (تراکنش‌ها)
 
