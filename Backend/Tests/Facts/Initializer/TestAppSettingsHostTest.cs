@@ -22,7 +22,7 @@ public class TestAppSettingsHostTest : IDisposable
         {
             ["RateLimitOptions:PermitLimit"] = "100000",
         });
-        actual["LocalDatabaseOptions:ConnectionString"].Should().Contain("User Id=test");
+        AssertConnectionStringWins(actual);
         actual["LocalDatabaseOptions:PackageDatabase"].Should().Be(portal.PackageDatabase);
         portal.PackageDatabase.Should().MatchRegex("^FastBypass_DbS[0-9a-f]{32}$");
         var issuer = actual["Issuer:Code"];
@@ -49,7 +49,7 @@ public class TestAppSettingsHostTest : IDisposable
             TestAppSettings.Apply(builder.Configuration);
 
             AssertFileWins(builder.Configuration, new Dictionary<string, string?>());
-            builder.Configuration["LocalDatabaseOptions:ConnectionString"].Should().Contain("User Id=test");
+            AssertConnectionStringWins(builder.Configuration);
         }
         finally
         {
@@ -66,6 +66,18 @@ public class TestAppSettingsHostTest : IDisposable
             var expected = harness.TryGetValue(pair.Key, out var replaced) ? replaced : pair.Value;
             actual[pair.Key].Should().Be(expected, because: pair.Key);
         }
+    }
+
+    /// <summary>
+    /// The effective connection string is the test file's — the scenario
+    /// database with whatever login that file carries — never Portal's
+    /// development one. The expectation is read from the file, not spelled
+    /// out, so changing the login does not break this test.
+    /// </summary>
+    private static void AssertConnectionStringWins(IConfiguration actual)
+    {
+        actual["LocalDatabaseOptions:ConnectionString"].Should().Be(
+            TestAppSettings.Read()["LocalDatabaseOptions:ConnectionString"]);
     }
 
     /// <summary>

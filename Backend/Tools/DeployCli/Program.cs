@@ -177,17 +177,7 @@ internal static class Program
         var batch = PasswordListHasher.Hash(lines);
         if (!batch.Succeeded)
         {
-            if (batch.InvalidLines.Count == 0)
-            {
-                Console.Error.WriteLine("error: password file has no passwords");
-            }
-            else
-            {
-                foreach (var invalid in batch.InvalidLines)
-                {
-                    Console.Error.WriteLine($"error: line {invalid.LineNumber}: {invalid.Message}");
-                }
-            }
+            Console.Error.WriteLine("error: password file has no passwords");
 
             return ExitFailure;
         }

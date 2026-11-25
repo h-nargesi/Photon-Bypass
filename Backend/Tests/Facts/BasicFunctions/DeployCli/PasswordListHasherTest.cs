@@ -1,5 +1,7 @@
 using FluentAssertions;
 using PhotonBypass.DeployCli;
+using PhotonBypass.Domain.Account.Business;
+using PhotonBypass.ErrorHandler;
 using PhotonBypass.Tools;
 
 namespace PhotonBypass.Test.Facts.BasicFunctions.DeployCli;
@@ -9,7 +11,6 @@ public class PasswordListHasherTest
     private const string Valid = "Passw0rd1";
     private const string Other = "OtherPass2";
     private const string Persian = "رمزعبور۱آزمایش";
-    private const string Weak = "plaintext-secret";
 
     [Fact]
     public void Hash_ValidLines_RoundtripAndIndependentSalt()
@@ -18,7 +19,6 @@ public class PasswordListHasherTest
         var second = PasswordListHasher.Hash([Valid]);
 
         first.Succeeded.Should().BeTrue();
-        first.InvalidLines.Should().BeEmpty();
         first.Hashes.Should().HaveCount(3);
         first.Hashes.Should().AllSatisfy(hash => hash.Should().StartWith("$PBKDF2$v1$210000$"));
 
@@ -38,6 +38,28 @@ public class PasswordListHasherTest
         batch.Hashes[0].Should().NotBe(batch.Hashes[1]);
         PasswordHasher.Verify(Valid, batch.Hashes[0]!).Should().BeTrue();
         PasswordHasher.Verify(Valid, batch.Hashes[1]!).Should().BeTrue();
+    }
+
+    /// <summary>
+    /// The portal password policy does not apply to batch passwords: every value
+    /// <see cref="AccountBusiness.ValidatePassword"/> rejects is hashed anyway.
+    /// </summary>
+    [Theory]
+    [InlineData("plaintext-secret")]
+    [InlineData("a1")]
+    [InlineData("12345678")]
+    [InlineData("رمزعبور")]
+    public void Hash_PasswordOutsideThePortalPolicy_IsHashedAnyway(string password)
+    {
+        ((Action)(() => AccountBusiness.ValidatePassword(password))).Should().Throw<UserException>();
+
+        var batch = PasswordListHasher.Hash([Valid, password, Other]);
+
+        batch.Succeeded.Should().BeTrue();
+        batch.Hashes.Should().HaveCount(3);
+        PasswordHasher.Verify(Valid, batch.Hashes[0]!).Should().BeTrue();
+        PasswordHasher.Verify(password, batch.Hashes[1]!).Should().BeTrue();
+        PasswordHasher.Verify(Other, batch.Hashes[2]!).Should().BeTrue();
     }
 
     [Fact]
@@ -64,31 +86,13 @@ public class PasswordListHasherTest
     }
 
     [Fact]
-    public void Hash_InvalidLine_RejectsTheWholeBatchWithoutHashes()
+    public void Hash_WhitespaceOnlyLine_IsAPasswordNotABlankLine()
     {
-        var batch = PasswordListHasher.Hash([Valid, Weak, Other]);
+        var batch = PasswordListHasher.Hash(["   "]);
 
-        batch.Succeeded.Should().BeFalse();
-        batch.Hashes.Should().BeEmpty();
-        batch.InvalidLines.Should().ContainSingle();
-        batch.InvalidLines[0].LineNumber.Should().Be(2);
-        batch.InvalidLines[0].Message.Should().NotContain(Weak);
-        batch.InvalidLines[0].Message.Should().NotContain(Valid);
-    }
-
-    [Fact]
-    public void Hash_SeveralInvalidLines_ReportsEveryLineNumber()
-    {
-        var batch = PasswordListHasher.Hash([Valid, Weak, "", "   ", Other]);
-
-        batch.Succeeded.Should().BeFalse();
-        batch.Hashes.Should().BeEmpty();
-        batch.InvalidLines.Select(line => line.LineNumber).Should().Equal(2, 4);
-        batch.InvalidLines.Should().AllSatisfy(line =>
-        {
-            line.Message.Should().NotContain(Weak);
-            line.Message.Should().NotContain("   ");
-        });
+        batch.Succeeded.Should().BeTrue();
+        batch.Hashes.Should().HaveCount(1);
+        PasswordHasher.Verify("   ", batch.Hashes[0]!).Should().BeTrue();
     }
 
     [Theory]
@@ -101,6 +105,5 @@ public class PasswordListHasherTest
 
         batch.Succeeded.Should().BeFalse();
         batch.Hashes.Should().BeEmpty();
-        batch.InvalidLines.Should().BeEmpty();
     }
 }
