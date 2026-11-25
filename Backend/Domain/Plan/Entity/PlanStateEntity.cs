@@ -57,7 +57,7 @@ public class PlanStateEntity : IRenewalEntity, IBaseEntity
     public double? TrafficLeftPercent => 100 * TrafficLeft / (double?)TrafficLimit;
 
     [NotMapped]
-    public double? TimeLeftPercent => TimeLeft.HasValue && TimeLimitInDays.HasValue ? 100 * TimeLeft.Value.TotalDays / (double)TimeLimitInDays : null;
+    public double? TimeLeftPercent => TimeLeft.HasValue && TimeLimitInDays.HasValue ? 100 * TimeLeft.Value.TotalDays / TimeLimitInDays : null;
 
     public DateTime Created { get; init; } = DateTime.Now;
 }

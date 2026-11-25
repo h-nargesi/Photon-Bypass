@@ -24,7 +24,7 @@ public static class PlanStateBusiness
 
         if (entity.TimeLeft.HasValue)
         {
-            var left_days = entity.TimeLeft.Value.TotalDays;
+            var left_days = entity.TimeLeft.Value.Days;
             var left_hours = entity.TimeLeft.Value.Hours;
 
             if (left_days > 0)
