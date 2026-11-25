@@ -20,6 +20,10 @@ public class AccountAppTest : UnitLevelServiceInitializer
         Assert.Equal(2, result.Code / 100);
         Assert.NotNull(result.Data);
         Assert.Equal("User99", result.Data.Username);
+
+        // Docs/24 D6: every account row carries the customer-facing realm title
+        var account = Assert.Single(result.Data.Accounts);
+        Assert.Equal("سرور تست ۱", account.RealmTitle);
     }
 
     [Fact]

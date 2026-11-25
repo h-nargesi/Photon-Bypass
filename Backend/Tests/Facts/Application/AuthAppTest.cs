@@ -70,6 +70,10 @@ public class AuthAppTest : UnitLevelServiceInitializer
         var account = Assert.Single(result.Data.Accounts);
         Assert.Equal("User99", account.Username);
         Assert.Equal((int)VpnAccountStatus.Active, account.Status);
+
+        // Docs/24 D6: the switcher renders the customer-facing title, the Name stays on the wire
+        Assert.Equal("Realm-LO-1", account.RealmName);
+        Assert.Equal("سرور تست ۱", account.RealmTitle);
     }
 
     [Fact]

@@ -68,6 +68,7 @@ class PlanApplication(
             {
                 Id = state.RealmId,
                 Name = state.Name,
+                Title = state.Title,
                 IsSelectable = state.IsSelectableForAssignment,
             })
             .ToList();

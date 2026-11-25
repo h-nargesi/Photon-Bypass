@@ -20,17 +20,6 @@ internal class RealmRepositoryMoq : Mock<IRealmRepository>, IUnitLevelService
         var data_dictionary = JsonSerializer.Deserialize<List<RealmEntity>>(raw_text)?
             .ToDictionary(k => k.Id) ?? [];
 
-        Setup(repository => repository.GetName(It.IsAny<int>()))
-            .Returns<int>(id =>
-            {
-                if (!data_dictionary.TryGetValue(id, out var realm))
-                {
-                    realm = null;
-                }
-
-                return Task.FromResult(realm?.Name);
-            });
-
         Setup(repository => repository.FetchAllActiveRealm())
             .Returns(() =>
             {

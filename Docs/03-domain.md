@@ -17,8 +17,8 @@
 | `Domain/Plan/Entity/PlanStateEntity.cs` | `PlanState` | Plan | **view-based** (از `TotalPlanState` خوانده می‌شود)؛ خواص محاسباتی دارد. |
 | `Domain/Plan/Entity/TrafficDataEntity.cs` | `TrafficData` | Plan | رکورد ترافیک دوره‌ای از radius. |
 | `Domain/Plan/Entity/IRenewalEntity.cs` | — | Plan | رابط مشترک `Renewal` و `PlanState`. |
-| `Domain/Servers/Entity/ServerEntity.cs` | `Server` | Servers | سرور/روتر؛ `Features` (Flags)، `OsType`، `RealmId`. |
-| `Domain/Servers/Entity/RealmEntity.cs` | `Realm` | Servers | گروه سرورها با `BandWidth` و آخرین sync. |
+| `Domain/Servers/Entity/ServerEntity.cs` | `Server` | Servers | سرور/روتر؛ `Features` (Flags)، `OsType`، `RealmId`؛ `CapacityBytes` = ترافیک ۳۰روزه‌ی قابل‌فروش **به بایت** (Docs/24 D1 — فقط فرم ادمین گیگابایت می‌گیرد). |
+| `Domain/Servers/Entity/RealmEntity.cs` | `Realm` | Servers | گروه سرورها: `Name` (شناسه‌ی سیستمی ≤۱۵ — نمای ادمین/آلارم/لاگ)، `Title` (متن نمایشی به مشتری؛ خالی = fallback به `Name`)، خواصی محاسباتی `DisplayTitle` (Docs/24 D5)، `CapacityOverrideBytes` و آخرین sync. |
 | `Domain/Servers/Entity/ProcessEntity.cs` | `Process` | Servers | مجموعه‌ای از اسکریپت‌ها (`Enable`/`Disable`/`Check`). |
 | `Domain/Servers/Entity/ScrtipEntity.cs` | `Script` | Servers | یک اسکریپت با `Content` و `OutputPattern` (نام فایل در سورس با غلط املایی `Scrtip` ثبت شده). |
 | `Domain/Static/PriceEntity.cs` | `Price` | Static | کد قیمت‌گذاری (`CalculatorCode`) که با Roslyn کامپایل می‌شود + `PriceStates`. |

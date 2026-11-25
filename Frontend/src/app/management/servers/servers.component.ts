@@ -35,6 +35,9 @@ import {
   MessageService,
   TranslationPipe,
   TranslationService,
+  bytesToGigabytes,
+  gigabytesToBytes,
+  printCapacity,
 } from '../../@services';
 import { ServersService } from './servers.service';
 
@@ -93,7 +96,7 @@ export class ServersComponent implements OnInit {
   ip_address = '';
   domain_name = '';
   realm_id?: number;
-  band_width?: number;
+  capacity_gigabytes?: number;
   max_clients?: number;
   os_type: OperatingSystem = OperatingSystem.Mikrotik;
   feature_state: Record<number, boolean> = {};
@@ -111,7 +114,7 @@ export class ServersComponent implements OnInit {
       'ip',
       'domain',
       'realm',
-      'bandwidth',
+      'capacity',
       'os',
       'features',
       'config',
@@ -151,7 +154,8 @@ export class ServersComponent implements OnInit {
     this.ip_address = row.ipAddress;
     this.domain_name = row.domainName;
     this.realm_id = row.realmId;
-    this.band_width = row.bandWidth;
+    // exact value: saving an unrelated edit must give back the stored bytes
+    this.capacity_gigabytes = bytesToGigabytes(row.capacityBytes);
     this.max_clients = row.maxClients ?? undefined;
     this.os_type = row.osType;
     for (const flag of this.feature_flags) {
@@ -171,7 +175,7 @@ export class ServersComponent implements OnInit {
       ipAddress: this.ip_address.trim(),
       name: this.name.trim(),
       domainName: this.domain_name.trim(),
-      bandWidth: this.band_width ?? 0,
+      capacityBytes: gigabytesToBytes(this.capacity_gigabytes),
       maxClients: this.is_xui ? (this.max_clients ?? null) : null,
       osType: this.os_type,
       features: this.selectedFeatures(),
@@ -254,12 +258,16 @@ export class ServersComponent implements OnInit {
     );
   }
 
+  capacityTitle(row: ServerRow): string {
+    return printCapacity(row.capacityBytes);
+  }
+
   private resetForm(): void {
     this.name = '';
     this.ip_address = '';
     this.domain_name = '';
     this.realm_id = undefined;
-    this.band_width = undefined;
+    this.capacity_gigabytes = undefined;
     this.max_clients = undefined;
     this.os_type = OperatingSystem.Mikrotik;
     this.feature_state = {};

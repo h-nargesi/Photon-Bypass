@@ -26,7 +26,7 @@
                   <button cDropdownItem [class.active]="account.id === currentAccountId"
                           (click)="switchAccount(account.id)">
                     {{ account.username }}
-                    <small class="text-body-secondary">({{ account.realmName }})</small>
+                    <small class="text-body-secondary">({{ account.realmTitle }})</small>
                   </button>
                 </li>
               }

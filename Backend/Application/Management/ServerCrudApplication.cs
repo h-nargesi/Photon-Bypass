@@ -45,6 +45,12 @@ class ServerCrudApplication(
 
     private const int ConfigMaxLength = 4000;
 
+    /// <summary>
+    /// Upper bound of <see cref="ServerEntity.CapacityBytes"/> (1 PiB): the admin form takes
+    /// gigabytes, so a unit mistake (bytes typed as GB) must not pass (Docs/24 D4).
+    /// </summary>
+    private const long MaxServerCapacityBytes = 1L << 50;
+
     private IServerRepository ServerRepo { get; } = server_repo;
 
     private Lazy<IRealmRepository> RealmRepo { get; } = realm_repo;
@@ -68,7 +74,7 @@ class ServerCrudApplication(
             IpAddress = server.IpAddress,
             Name = server.Name,
             DomainName = server.DomainName,
-            BandWidth = server.BandWidth,
+            CapacityBytes = server.CapacityBytes,
             MaxClients = server.MaxClients,
             OsType = server.OsType,
             Features = server.Features,
@@ -95,7 +101,7 @@ class ServerCrudApplication(
             IpAddress = model.IpAddress,
             Name = model.Name,
             DomainName = model.DomainName,
-            BandWidth = model.BandWidth,
+            CapacityBytes = model.CapacityBytes,
             MaxClients = model.MaxClients,
             OsType = model.OsType,
             Features = model.Features,
@@ -131,7 +137,7 @@ class ServerCrudApplication(
         server.IpAddress = model.IpAddress;
         server.Name = model.Name;
         server.DomainName = model.DomainName;
-        server.BandWidth = model.BandWidth;
+        server.CapacityBytes = model.CapacityBytes;
         server.MaxClients = model.MaxClients;
         server.OsType = model.OsType;
         server.Features = model.Features;
@@ -211,9 +217,16 @@ class ServerCrudApplication(
                 $"Server domain length must be 1..{DomainMaxLength}: '{model.DomainName}'");
         }
 
-        if (model.BandWidth < 1)
+        if (model.CapacityBytes < 1)
         {
-            throw new UserException("پهنای باند سرور نامعتبر است!", $"Server bandwidth must be positive: {model.BandWidth}");
+            throw new UserException("ظرفیت ترافیک سرور نامعتبر است!",
+                $"Server capacity must be positive (bytes): {model.CapacityBytes}");
+        }
+
+        if (model.CapacityBytes > MaxServerCapacityBytes)
+        {
+            throw new UserException("ظرفیت ترافیک سرور بیش از حد بزرگ است!",
+                $"Server capacity must not exceed {MaxServerCapacityBytes} bytes (1 PiB): {model.CapacityBytes}");
         }
 
         if (model.MaxClients is < 1)

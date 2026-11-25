@@ -203,6 +203,10 @@ describe('DefaultHeaderComponent', () => {
     expect(element.textContent).toContain('boss-vpn');
     expect(element.textContent).toContain('boss-spare');
 
+    // Docs/24 D6: the switcher shows the customer-facing title, never the system identifier
+    expect(element.textContent).toContain('(T1)');
+    expect(element.textContent).not.toContain('R1');
+
     const cluster = element.querySelector('.ms-md-auto') as HTMLElement;
     const dashboard = cluster.querySelector('a[routerLink="/dashboard"]') as HTMLElement;
     const divider = cluster.querySelector('.vr') as HTMLElement;
@@ -282,5 +286,13 @@ describe('DefaultHeaderComponent', () => {
 });
 
 function vpnAccount(id: number, username: string): UserVpnAccount {
-  return { id, username, realmId: 1, realmName: 'R1', status: 0, created: 0 };
+  return {
+    id,
+    username,
+    realmId: 1,
+    realmName: 'R1',
+    realmTitle: 'T1',
+    status: 0,
+    created: 0,
+  };
 }

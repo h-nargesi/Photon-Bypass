@@ -10,6 +10,7 @@ export * from './auth-services/captcha-service';
 export * from './auth-services/role-guards';
 export * from './auth-services/user-servcie';
 export * from './local-storage/local-storage-service';
+export * from './message-handler/capacity-printer';
 export * from './message-handler/message-service';
 export * from './message-handler/money-printer';
 export * from './translation/translation-pipe';

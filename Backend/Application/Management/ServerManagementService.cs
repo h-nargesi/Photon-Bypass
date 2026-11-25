@@ -73,7 +73,9 @@ partial class ServerManagementService(
         if (Options.Value.DefaultPrivateKeyOVpn == null)
             throw new Exception("OVpn Private key is not set in config!");
 
-        var realm_name = (realm_id.HasValue ? (await RealmRepo.GetName(realm_id.Value)) : null) ?? "All";
+        var friendly_name = realm_id.HasValue
+            ? (await RealmRepo.LoadRealms([realm_id.Value])).GetValueOrDefault(realm_id.Value)?.DisplayTitle ?? "All"
+            : "All";
         var nas_domain_task = ServerRepo.Value.GetAllActiveNasDomainInRealm(realm_id);
 
         var cert_file = await File.ReadAllBytesAsync(cert_path);
@@ -84,12 +86,12 @@ partial class ServerManagementService(
             throw new Exception($"Nas/Domain not found: (realm-id={realm_id})!");
 
         var ovpn_conf_file = Encoding.UTF8.GetString(cert_file);
-        ovpn_conf_file = SetDomain(ovpn_conf_file, realm_name, nas_domain_list);
+        ovpn_conf_file = SetDomain(ovpn_conf_file, friendly_name, nas_domain_list);
         cert_file = Encoding.UTF8.GetBytes(ovpn_conf_file);
 
         return new CertContext
         {
-            Realm = realm_name,
+            Realm = friendly_name,
             PrivateKeyOvpn = Options.Value.DefaultPrivateKeyOVpn,
             CertFile = cert_file,
         };
@@ -211,6 +213,7 @@ partial class ServerManagementService(
             {
                 RealmId = state.Realm.Id,
                 Name = state.Realm.Name,
+                Title = state.Realm.DisplayTitle,
                 ComputedCapacityBytes = state.ComputedCapacityBytes,
                 OverrideBytes = state.OverrideBytes,
                 EffectiveCapacityBytes = state.EffectiveCapacityBytes,
@@ -293,7 +296,7 @@ partial class ServerManagementService(
                 return new RealmCapacityState
                 {
                     Realm = realm,
-                    ComputedCapacityBytes = cluster.Value.Sum(server => server.BandWidth),
+                    ComputedCapacityBytes = cluster.Value.Sum(server => server.CapacityBytes),
                     DemandBytes = demand_by_realm.GetValueOrDefault(cluster.Key),
                     ObservedUsageBytes = cluster.Value.Sum(server => usage_by_nas.GetValueOrDefault(server.Id)),
                     ActiveClients = clients_by_realm.GetValueOrDefault(cluster.Key),
@@ -439,9 +442,20 @@ partial class ServerManagementService(
             .Replace(cert, remotes);
 
         cert = SetTitle()
-            .Replace(cert, $"setenv FRIENDLY_NAME \"{name}\"");
+            .Replace(cert, $"setenv FRIENDLY_NAME \"{SanitizeFriendlyName(name)}\"");
 
         return cert;
+    }
+
+    /// <summary>
+    /// The realm title is free text that lands inside a quoted <c>setenv</c> line:
+    /// a quote or backslash would end the string early and a control character
+    /// would start a new directive (Docs/24 D7).
+    /// </summary>
+    private static string SanitizeFriendlyName(string name)
+    {
+        return new string([.. name.Where(character =>
+            character != '"' && character != '\\' && !char.IsControl(character))]);
     }
 
     private async Task<List<TrafficDataEntity>> Merge(List<TrafficDataEntity> destination, List<TrafficDataBinding> source)

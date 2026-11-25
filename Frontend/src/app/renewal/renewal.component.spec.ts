@@ -69,7 +69,7 @@ describe('RenewalComponent', () => {
     );
 
     http.expectOne('/api/plan/realms').flush(
-      { code: 200, data: [{ id: 1, name: 'R1', isSelectable: true }] },
+      { code: 200, data: [{ id: 1, name: 'R1', title: 'سرور یکم', isSelectable: true }] },
       { status: 200, statusText: 'OK' },
     );
 
@@ -193,7 +193,7 @@ describe('RenewalComponent', () => {
     );
 
     http.expectOne('/api/plan/realms').flush(
-      { code: 200, data: [{ id: 1, name: 'R1', isSelectable: true }] },
+      { code: 200, data: [{ id: 1, name: 'R1', title: 'سرور یکم', isSelectable: true }] },
       { status: 200, statusText: 'OK' },
     );
 
@@ -274,6 +274,62 @@ describe('RenewalComponent', () => {
     http.expectNone((req) => req.url.includes('/api/plan/plan-info'));
     http.expectNone((req) => req.url.includes('/api/plan/suggest-username'));
     http.expectNone((req) => req.url === '/api/plan/estimate');
+  });
+
+  it('the realm dropdown shows the customer-facing title, never the system name (Docs/24 D6)', async () => {
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/renewal', RenewalComponent);
+    const drain = () => new Promise(resolve => setTimeout(resolve, 0));
+
+    // a panel user without a VPN account buys the first one (Docs/22 D9)
+    http.expectOne('/api/account/get-user').flush(
+      {
+        code: 200,
+        data: {
+          username: 'main',
+          fullname: 'Main',
+          email: 'main@test.local',
+          balance: 0,
+          targetArea: { main: { username: 'main', fullname: 'Main', email: 'm@t.l' } },
+          accounts: [],
+        },
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    await drain();
+
+    http.expectOne('/api/plan/suggest-username').flush(
+      { code: 200, data: 'main' },
+      { status: 200, statusText: 'OK' },
+    );
+    http.expectOne('/api/plan/realms').flush(
+      {
+        code: 200,
+        data: [
+          { id: 1, name: 'sys-alpha', title: 'سرور یکم', isSelectable: true },
+          { id: 3, name: 'sys-beta', title: 'سرور دوّم', isSelectable: false },
+        ],
+      },
+      { status: 200, statusText: 'OK' },
+    );
+    http.expectOne('/api/basics/prices').flush(
+      { code: 200, data: [] },
+      { status: 200, statusText: 'OK' },
+    );
+    await drain();
+
+    expect(component.mode).toBe('new-account');
+    await harness.detectChanges();
+
+    const element = harness.fixture.nativeElement as HTMLElement;
+    const realm_select = Array.from(element.querySelectorAll('select'))
+      .find(select => select.textContent?.includes('انتخاب سرور')) as HTMLSelectElement;
+
+    expect(
+      Array.from(realm_select.querySelectorAll('option')).map(option => option.textContent?.trim()),
+    ).toEqual(['انتخاب سرور', 'سرور یکم', 'سرور دوّم']);
+    expect(realm_select.textContent).not.toContain('sys-');
+    expect(Array.from(realm_select.querySelectorAll('option'))[2]?.disabled).toBeTrue();
   });
 
   it('submit is ignored while a renewal request is in flight (double-submit)', async () => {

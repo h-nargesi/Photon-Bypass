@@ -170,6 +170,8 @@ Every change — analysis, design, and code — must meet a fully professional s
 | Register a new service | Add it to the matching project's `ServiceFactory.cs`. Use `AddLazy*` from `Shared/Tools/LazyDependencyInjections.cs`. |
 | Add a Repository | Implement `IEditableRepository<T>` on `DapperRepository<T>` base; register `AddLazyTransient<IRepo, Repo>()` in `Infrastructure/ServiceFactory.cs`. Map entity with `[Table]`/`[Key]`. |
 | Reference a panel user from an entity or parameter | Name it `UserId` (as in `VpnAccount.UserId`, `Wallet.UserId`). "Account" always means a VPN account (`VpnAccountId`, the `accountId` API param) — never name a panel-user reference `AccountId`. |
+| Show a realm to a customer | Render `RealmEntity.DisplayTitle` (`RealmChoiceModel.Title`, `RealmTitle` on account rows). `Realm.Name` is the ≤ 15-char system identifier and stays on admin views, alarms and logs (Docs/24 D5–D7). |
+| Set a server capacity, or seed a server through raw SQL | `Server.CapacityBytes` is bytes, `1 .. 1 PiB`; only the admin form takes GB (`1024³`) and converts. In raw SQL the `Config` JSON keys must be PascalCase (`SshConfig`, `WebApiConfig`, `Ssl`, …): the parser is case-sensitive and silently ignores camelCase (Docs/09). |
 | Add an API endpoint | Inherit `ResultHandlerController`, call `LoadJobContext(target?)`, return `ApiResult`/`ApiResult<T>`. Use `SafeApiResult(...)` to normalize. |
 | Throw a user-facing error | `throw new UserException(message, detail, httpCode)` — the message is shown to the user; `detail` is dev-only. |
 | Add a background task | Hook into `Application/Management/JobInterval.cs` (Quartz, 60-min) or register a new Quartz job. |
@@ -206,6 +208,7 @@ Full reading order and per-file purpose is in [Docs/00-index.md](Docs/00-index.m
 - [Docs/21-social-media-telegram-channel.md](Docs/21-social-media-telegram-channel.md) — telegram channel record (D1–D6): channel-neutral `ISocialMediaService` + runtime channel selection, one-time-code chat binding, Telegram-first reset/warnings with email fallback
 - [Docs/22-panel-user-vpn-split.md](Docs/22-panel-user-vpn-split.md) — panel-user/VPN-account split record (D1–D14): `PanelUser` + `VpnAccount` entities, N accounts per user, D3 username rule, realm choice at purchase + stale migration, per-account status axes, `accountId` API contract
 - [Docs/23-xui-local-test-vm.md](Docs/23-xui-local-test-vm.md) — test-isolation record (D1–D5): no test ever touches live servers, no references to the upstream production-infrastructure repo, the only sanctioned x-ui integration target is a local VirtualBox test panel; includes the ready work order
+- [Docs/24-server-capacity-realm-title.md](Docs/24-server-capacity-realm-title.md) — byte-based server capacity & customer-facing realm title record (D1–D7): `Server.CapacityBytes` in bytes (GB only in the admin form), `Realm.Title` for customers while `Realm.Name` stays the system identifier, sanitized OpenVPN `FRIENDLY_NAME`, display matrix, open items found while registering the first servers
 
 ---
 
@@ -218,5 +221,7 @@ The platform is functional for the customer-facing flow (auth, account, plan ren
 - **WhatsApp** — future adapter on the channel-neutral `ISocialMediaService` (one class + one keyed registration in `OutSource/ServiceFactory.cs`; `SocialChannel.WhatsApp` is reserved). No compile-time gates anymore.
 - **x-ui integration tests (local test VM)** — all current x-ui tests are mock-based (`XuiApiMoq` / scripted transport). Per Docs/23, no test may ever touch a live server; the only sanctioned integration target is a local VirtualBox test panel (`XuiPanelInitializer` mirroring `MikrotikInitializer` — open work, work order in Docs/23 §4).
 - **Google Auth** — listed as phase 5 in `README.md`.
+- **x-ui panels bound to loopback** — `XuiApiService` talks plain HTTP(S) to the configured host and `SshHandler` is password-only, so a panel that listens on loopback (sshd being the only public surface) is unreachable until a channel is decided (Docs/24 §5.1).
+- **Link builder for XHTTP + REALITY** — `VlessLinkService` builds `tcp/ws/grpc` + `none/tls/reality` links from flat REALITY keys; `xhttp` transports and the nested `realitySettings.settings` shape are not supported yet (Docs/24 §5.2).
 
 See [Docs/12-current-state.md](Docs/12-current-state.md) for the full list and where to start for each, and `Architecture/TODO.md` for the original backlog.

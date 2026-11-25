@@ -24,6 +24,8 @@ export interface UserVpnAccount {
   username: string;
   realmId: number;
   realmName?: string | null;
+  /// Customer-facing realm text — the only one the UI renders (Docs/24 D6)
+  realmTitle?: string | null;
   status: number;
   created: number;
 }

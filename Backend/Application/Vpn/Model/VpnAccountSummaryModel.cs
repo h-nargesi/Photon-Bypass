@@ -14,6 +14,9 @@ public class VpnAccountSummaryModel
 
     public string? RealmName { get; init; }
 
+    /// <summary>Customer-facing realm text — the only one the UI shows (Docs/24 D6).</summary>
+    public string? RealmTitle { get; init; }
+
     /// <summary>Raw <see cref="PhotonBypass.Domain.Account.Model.VpnAccountStatus"/> value (0/1/2).</summary>
     public int Status { get; init; }
 

@@ -22,14 +22,16 @@
 | `Invoice.sql` | `Invoice` | `PK Code` (از `InvoiceSequence`، بدون identity), `FK UserId→PanelUser`, `FK VpnAccountId→VpnAccount` (nullable، Docs/22 D8), `IX (UserId, Status)`, `CK` XOR رسید | والد فاکتور: `Kind (1=TopUp,2=Plan)`, `Title`, `TotalPrice`, `WalletDeduction`, `Payable`, `Action nvarchar(400)`, `Status` (هم‌ارزش `BalanceStatus`), `ReceiptImage/ReceiptText/ReceiptAt`. |
 | `PlanState.sql` | `PlanState` | — | **view** mapping (نه جدول پر-شده؛ از `TotalPlanState` خوانده می‌شود). |
 | `TrafficData.sql` | `TrafficData` | `PK Id`, `UK (NasId, SessionId)` inline | رکورد ترافیک دوره‌ای؛ `SessionId VARCHAR(64)` برای کلیدهای مصنوعی روزانه‌ی x-ui (Docs/17 D7). |
-| `Server.sql` | `Server` | `PK Id`, `FK RealmId→Realm` | سرور با `Features` (Flags) و `OsType`؛ `Config VARCHAR(4000)` برای payload رمزنگاری‌شده‌ی Data Protection (Docs/14 M12). |
-| `Realm.sql` | `Realm` | `PK Id` | گروه سرور + `BandWidth` + `CapacityOverrideBytes` (بازنویسی ظرفیت دستی، T3). |
+| `Server.sql` | `Server` | `PK Id`, `FK RealmId→Realm` | سرور با `Features` (Flags) و `OsType`؛ `CapacityBytes BIGINT` = ترافیک ۳۰روزه‌ی قابل‌فروش **به بایت** (Docs/24 D1؛ ظرفیت realm = جمع آن روی NASهای فعال)؛ `Config VARCHAR(4000)` برای payload رمزنگاری‌شده‌ی Data Protection (Docs/14 M12). |
+| `Realm.sql` | `Realm` | `PK Id` | گروه سرور: `Name NVARCHAR(15)` (شناسه‌ی سیستمی) + `Title NVARCHAR(50) NULL` (متن نمایشی به مشتری، خالی = fallback به `Name` — Docs/24 D5) + `CapacityOverrideBytes` (بازنویسی ظرفیت دستی، T3). |
 | `Price.sql` | `Price` | `PK Id` | `CalculatorCode` (کد C#). |
 | `InvoiceSequence.sql` | (sequence) | — | کد فاکتور اتمیک؛ شروع ثابت 10001 روی نصب تازه (Docs/14 C4). |
 | `TotalPlanState.sql` | `TotalPlanState` (VIEW) | — | محاسباتی — پایه‌ی `PlanStateEntity`. |
 | `Indexes.sql` | (indexes) | — | ایندکس‌های مسیر داغ (Docs/14 H20) روی TrafficData/Renewal/History/Wallet/PanelUser/VpnAccount. |
 
 > ایندکس‌های یکتای فیلترشده: `UK_Account_Email` و `UK_Account_Mobile` فقط روی ردیف‌های NOT NULL اعمال می‌شوند تا چند کاربر با ایمیل/موبایل خالی مجاز باشند (`Account.sql`؛ پنجره‌ی TOCTOU ثبت‌نام را می‌بندد — Docs/14 L11).
+
+> **Seed سرور با SQL دستی — بزرگی/کوچکی حروفِ کلیدهای JSON در `Config`**: `ServerEntity.Config` با `System.Text.Json` پیش‌فرض deserialize می‌شود و **case-sensitive** است؛ کلیدها باید PascalCase باشند: `SshConfig`، `WebApiConfig`، `Ssl`، `HostName`، `BasePath`، `InboundId`. کلید camelCase (مثل `ssl`) **بدون خطا نادیده گرفته می‌شود** و مقدار پیش‌فرض می‌ماند (مثلاً `Ssl=false` → درخواست روی HTTP ساده به پورت API-SSL). camelCase فقط از مسیر ادمین API (`/api/server/create`، binding غیرحساس ASP.NET) کار می‌کند (Docs/24 §3).
 
 ### Security note: admin account (بدون seed)
 

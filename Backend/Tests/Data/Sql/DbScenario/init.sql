@@ -35,10 +35,10 @@ public class Calculator
     }
 }')
 
-insert into Realm (Name)
-values ('Abr01');
+insert into Realm (Name, Title)
+values ('Abr01', N'سرور سناریو');
 
-insert into Server (RealmId, IpAddress, Name, DomainName, BandWidth, OsType, Features, Config)
+insert into Server (RealmId, IpAddress, Name, DomainName, CapacityBytes, OsType, Features, Config)
 select Id
     , '192.168.56.12'
     , 'MK-Scenario'

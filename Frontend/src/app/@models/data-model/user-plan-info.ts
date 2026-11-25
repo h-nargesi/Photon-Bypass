@@ -29,10 +29,12 @@ export interface NewAccountContext {
   simultaneousUserCount: number;
 }
 
-/// One selectable realm of the purchase flow (Docs/22 D4).
+/// One selectable realm of the purchase flow (Docs/22 D4). `title` is the only
+/// realm text customers see; `name` stays the system identifier (Docs/24 D6).
 export interface RealmChoice {
   id: number;
   name: string;
+  title: string;
   isSelectable: boolean;
 }
 

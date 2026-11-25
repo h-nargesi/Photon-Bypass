@@ -62,9 +62,9 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
             .Setup(x => x.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
             .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
             {
-                // realm 3 (the default winner) closed by zero bandwidth, realm 1 stays open
-                [3] = [NewNas(31, 3, band_width: 0)],
-                [1] = [NewNas(11, 1, band_width: 110)],
+                // realm 3 (the default winner) closed by zero capacity, realm 1 stays open
+                [3] = [NewNas(31, 3, capacity_bytes: 0)],
+                [1] = [NewNas(11, 1, capacity_bytes: 110)],
             });
 
         var realm = await manager.GetAvailableRealm();
@@ -85,8 +85,8 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
             .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
             {
                 // realm 3 keeps by far the lower demand rate, but its single x-ui slot is taken
-                [3] = [NewXuiNas(31, 3, max_clients: 1, band_width: 150)],
-                [1] = [NewNas(11, 1, band_width: 110)],
+                [3] = [NewXuiNas(31, 3, max_clients: 1, capacity_bytes: 150)],
+                [1] = [NewNas(11, 1, capacity_bytes: 110)],
             });
 
         UsePlanStates(scope,
@@ -111,8 +111,8 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
             .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
             {
                 // caps 5 and 2: every account lands on both servers, so min = 2 binds
-                [3] = [NewXuiNas(31, 3, max_clients: 5), NewXuiNas(32, 3, max_clients: 2, band_width: 150)],
-                [1] = [NewNas(11, 1, band_width: 110)],
+                [3] = [NewXuiNas(31, 3, max_clients: 5), NewXuiNas(32, 3, max_clients: 2, capacity_bytes: 150)],
+                [1] = [NewNas(11, 1, capacity_bytes: 110)],
             });
 
         UsePlanStates(scope,
@@ -149,8 +149,8 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
                 .Setup(x => x.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
                 .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
                 {
-                    [3] = [NewXuiNas(31, 3, max_clients: disabled_cap, band_width: 150)],
-                    [1] = [NewNas(11, 1, band_width: 110)],
+                    [3] = [NewXuiNas(31, 3, max_clients: disabled_cap, capacity_bytes: 150)],
+                    [1] = [NewNas(11, 1, capacity_bytes: 110)],
                 });
 
             UsePlanStates(scope,
@@ -197,9 +197,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
         var server_repo = scope.ServiceProvider.GetRequiredService<IServerRepository>();
-        var realm_repo = scope.ServiceProvider.GetRequiredService<IRealmRepository>();
 
-        var realm_name = await realm_repo.GetName(1);
         var context = await manager.GetDefaultCertificate(1);
         var nas_domain_list = await server_repo.GetAllActiveNasDomainInRealm(1);
         var remotes = string.Join("\n", nas_domain_list.Select(domain => $"remote {domain}"));
@@ -208,8 +206,54 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
 
         var text_file = Encoding.UTF8.GetString(context.CertFile);
 
-        Assert.Contains($"setenv FRIENDLY_NAME \"{realm_name}\"", text_file);
+        // the customer sees the realm title, never the system identifier (Docs/24 D5)
+        Assert.Equal("سرور تست ۱", context.Realm);
+        Assert.Contains("setenv FRIENDLY_NAME \"سرور تست ۱\"", text_file);
+        Assert.DoesNotContain("Realm-LO-1", text_file);
         Assert.Contains(remotes, text_file);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("   ")]
+    public async Task GetDefaultCertificate_UntitledRealm_FallsBackToName(string? title)
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+        var realm_moq = scope.ServiceProvider.GetRequiredService<RealmRepositoryMoq>();
+
+        realm_moq.Setup(repo => repo.GetByIds(It.IsAny<List<int>>()))
+            .ReturnsAsync(new Dictionary<int, RealmEntity> { [1] = NewRealm(1, "Realm-FB", title) });
+
+        var context = await manager.GetDefaultCertificate(1);
+
+        Assert.NotNull(context);
+        Assert.Equal("Realm-FB", context.Realm);
+        Assert.Contains("setenv FRIENDLY_NAME \"Realm-FB\"", Encoding.UTF8.GetString(context.CertFile));
+    }
+
+    [Fact]
+    public async Task GetDefaultCertificate_HostileTitle_CannotBreakTheConfigLine()
+    {
+        using var scope = App.Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
+        var realm_moq = scope.ServiceProvider.GetRequiredService<RealmRepositoryMoq>();
+
+        // quotes, a backslash, a tab and a newline would end the string or start a new directive
+        realm_moq.Setup(repo => repo.GetByIds(It.IsAny<List<int>>()))
+            .ReturnsAsync(new Dictionary<int, RealmEntity>
+            {
+                [1] = NewRealm(1, "Realm-HX", "Ge\"rman\tSer\\ver\n01"),
+            });
+
+        var context = await manager.GetDefaultCertificate(1);
+
+        Assert.NotNull(context);
+
+        var text_file = Encoding.UTF8.GetString(context.CertFile);
+
+        Assert.Contains("setenv FRIENDLY_NAME \"GermanServer01\"", text_file);
+        Assert.DoesNotContain("Ge\"rman", text_file);
     }
 
     [Fact]
@@ -334,8 +378,8 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
             .Setup(x => x.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
             .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
             {
-                [3] = [NewXuiNas(31, 3, max_clients: 10, band_width: 150)],
-                [1] = [NewNas(11, 1, band_width: 110)],
+                [3] = [NewXuiNas(31, 3, max_clients: 10, capacity_bytes: 150)],
+                [1] = [NewNas(11, 1, capacity_bytes: 110)],
             });
 
         // 9 accounts on a cap of 10 = exactly the 90% threshold
@@ -368,8 +412,8 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
             .Setup(x => x.GetAllActiveNasInRealm(It.IsAny<IEnumerable<int>>()))
             .ReturnsAsync(new Dictionary<int, List<ServerEntity>>
             {
-                [3] = [NewXuiNas(31, 3, max_clients: 10, band_width: 150)],
-                [1] = [NewNas(11, 1, band_width: 110)],
+                [3] = [NewXuiNas(31, 3, max_clients: 10, capacity_bytes: 150)],
+                [1] = [NewNas(11, 1, capacity_bytes: 110)],
             });
 
         // 8 accounts on a cap of 10 = 80% — below the threshold
@@ -830,7 +874,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         };
     }
 
-    private static ServerEntity NewNas(int id, int realm_id, long band_width = 100,
+    private static ServerEntity NewNas(int id, int realm_id, long capacity_bytes = 100,
         OperatingSystem os_type = OperatingSystem.Mikrotik)
     {
         return new ServerEntity
@@ -841,13 +885,13 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
             Name = $"Nas{id}",
             IpAddress = $"10.0.0.{id}",
             DomainName = $"nas{id}.photon-bypass.com",
-            BandWidth = band_width,
+            CapacityBytes = capacity_bytes,
             OsType = os_type,
             Features = ServerFeature.Ovpn,
         };
     }
 
-    private static ServerEntity NewXuiNas(int id, int realm_id, int? max_clients, long band_width = 100)
+    private static ServerEntity NewXuiNas(int id, int realm_id, int? max_clients, long capacity_bytes = 100)
     {
         return new ServerEntity
         {
@@ -857,10 +901,21 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
             Name = $"Xui{id}",
             IpAddress = $"10.2.0.{id}",
             DomainName = $"xui{id}.photon-bypass.com",
-            BandWidth = band_width,
+            CapacityBytes = capacity_bytes,
             OsType = OperatingSystem.Ubuntu,
             Features = ServerFeature.Xui | ServerFeature.V2ray,
             MaxClients = max_clients,
+        };
+    }
+
+    private static RealmEntity NewRealm(int id, string name, string? title)
+    {
+        return new RealmEntity
+        {
+            Id = id,
+            IsActive = true,
+            Name = name,
+            Title = title,
         };
     }
 
@@ -874,7 +929,7 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
             Name = $"Radius{id}",
             IpAddress = $"10.1.0.{id}",
             DomainName = $"radius{id}.photon-bypass.com",
-            BandWidth = 0,
+            CapacityBytes = 0,
             OsType = OperatingSystem.Mikrotik,
             Features = radius_kind,
         };

@@ -291,7 +291,7 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
             IpAddress = "10.10.10.10",
             Name = "SchNas",
             DomainName = "schnas",
-            BandWidth = 1_073_741_824,
+            CapacityBytes = 1_073_741_824,
         };
         await server_repo.Save(nas);
 

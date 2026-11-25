@@ -24,7 +24,7 @@ identity (username, realm, credentials, warning stamps). That coupling forced
 | D1 | `Account` splits into `PanelUser` (portal: login, contact, wallet, Role/UserType, CalculationMethod) and `VpnAccount` (VPN: Username, VpnPassword, RealmId, per-account status/stamps). FK: `VpnAccount.UserId → PanelUser.Id`. |
 | D2 | A panel user owns **N ≥ 0** VPN accounts; no cap (abuse handled by wallet/payment friction). Portal views list them; the switcher selects one. |
 | D3 | VPN username = owner panel username + optional suffix (`[a-zA-Z0-9_-]*`), total ≤ 32 (`AccountBusiness.VpnUsernameMaxLength`), globally unique (`UK_VpnAccount_Username`). System suggestion: bare username, then `+2, +3…` (`SuggestVpnUsernameSequence`); user-editable; the unique index closes the suggest/submit TOCTOU (409 `UserException`). An empty suffix (VPN username == panel username) is the first-account default. Cross-user prefix overlap (`al` claiming `ali1`) is accepted as inherent to prefix naming. |
-| D4 | Realm is chosen **explicitly at purchase** from `GET /api/plan/realms` (name + `IsSelectable`, T4-E capacity). Auto-assignment (`GetAvailableRealm`) is removed from the purchase path. |
+| D4 | Realm is chosen **explicitly at purchase** from `GET /api/plan/realms` (name + title + `IsSelectable`, T4-E capacity; the UI shows only the title — Docs/24 D6). Auto-assignment (`GetAvailableRealm`) is removed from the purchase path. |
 | D5 | `Renewal` stacks **in place**: same username, same realm (realm truth = `VpnAccount.RealmId`, NOT NULL). `Renewal.RestrictedRealmId` deleted. |
 | D6 | Renewing a **stale** account (recorded last activity older than `ManagementOptions.RealmReassignInactivityDays`, default 7) requires an explicit realm re-pick; settlement migrates via `IAccountRadiusSyncService.MigrateUserRealm` (deactivate old realm → pin new → re-provision). No recorded activity is **not** stale — the abandonment sweep owns never-used accounts. |
 | D7 | History anchors to `PanelUser` (`Target`/`Issuer` = user ids) with optional `VpnAccountId` for account-scoped events. |
@@ -63,7 +63,7 @@ identity (username, realm, credentials, warning stamps). That coupling forced
 ## 6. Open points
 
 1. Username length limits of RadiusDesk/FreeRADIUS, UserManager and x-ui client emails verified against the 32-char cap at implementation time (MySQL schema default 64+; UserManager accepts long usernames) — re-verify on the real panels before release.
-2. Capacity presentation beyond name + selectable flag (load percentages per realm in the picker).
+2. Capacity presentation beyond title/name + selectable flag (load percentages per realm in the picker).
 3. Per-account pricing overrides (D10 keeps pricing user-level; revisit if multi-account discount abuse shows up).
 
 ## 7. Traceability

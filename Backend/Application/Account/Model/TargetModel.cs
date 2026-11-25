@@ -23,6 +23,9 @@ public class UserVpnAccountModel
 
     public string? RealmName { get; set; }
 
+    /// <summary>Customer-facing realm text — the only one the UI shows (Docs/24 D6).</summary>
+    public string? RealmTitle { get; set; }
+
     public int Status { get; set; }
 
     public DateTime Created { get; set; }

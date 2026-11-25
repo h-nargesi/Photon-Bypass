@@ -28,6 +28,8 @@ sequenceDiagram
 
 `AuthController.Login` → `AuthApplication.CheckUserPassword` (local DB) → ساخت `TargetArea` (مدیر همه‌ی زیرمجموعه‌ها را می‌بیند) → صدور JWT → `AccessService.LoginEvent` (set cache `TargetArea|{username}`).
 
+پاسخ لاگین (و `GET /api/account/get-user` / `GET /api/vpn/accounts`) لیست اکانت‌های VPN را با `realmName` + `realmTitle` حمل می‌کند؛ سوییچر اکانت در هدر فقط **`realmTitle`** (متن نمایشی سرور) را نشان می‌دهد — `realmName` شناسه‌ی سیستمی است و به مشتری نمایش داده نمی‌شود (Docs/24 D6).
+
 ```mermaid
 sequenceDiagram
     participant U
@@ -77,6 +79,8 @@ sequenceDiagram
 5. در کال‌بک (`PaymentCallback`)، فاکتور completed می‌شود و `PlanApp.Renewal(accountId, walletId, action)` دوباره اجرا می‌شود؛ این بار موجودی کافی است و تمدید انجام می‌شود.
 6. اگر تعداد کاربر کاهش یافته باشد، کانکشن‌های اضافه بسته می‌شوند.
 
+در خرید اول و تمدید اکانتِ stale، منوی انتخاب سرور از `GET /api/plan/realms` پر می‌شود و گزینه‌ها **فقط `Title`** را نشان می‌دهد (نه `Name` سیستم‌ی — Docs/24 D6).
+
 ```mermaid
 sequenceDiagram
     participant U
@@ -118,13 +122,13 @@ sequenceDiagram
 ## 6. Capacity management (مدیریت ظرفیت)
 
 `ServerManagementService.CheckUserServerBalance`:
-- نرخ مصرف realm را از ترافیک ۳۰ روز گذشته نسبت به `BandWidth` محاسبه می‌کند.
+- نرخ مصرف realm را از ترافیک ۳۰ روز گذشته نسبت به ظرفیت مؤثر (جمع `Server.CapacityBytes` سرورهای فعال، یا `Realm.CapacityOverrideBytes` — واحد هر دو **بایت**؛ Docs/24 D1) محاسبه می‌کند.
 - اگر <۱۰٪ یا >۹۰٪ باشد هشدار ادمین (`SocialMediaService.AlarmServerCapacity`).
 - هنگام تمدید جدید، realm کم‌بار برای `RestrictedRealmId` انتخاب می‌شود (`PlanRepo.GetTopRestrictedRealmId`).
 
 ```mermaid
 flowchart LR
-    TD[TrafficData 30d] --> CALC[Realm rate vs BandWidth]
+    TD[TrafficData 30d] --> CALC[Realm rate vs capacity]
     CALC -->|<10% or >90%| ALARM[AlarmServerCapacity]
     CALC --> PICK[Pick low-load realm]
     RENEW[New Renewal] --> PICK --> RESTRICT[RestrictedRealmId]

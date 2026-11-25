@@ -116,7 +116,7 @@ class AuthApplication(
         // Docs/22 §3.5: the account list travels with the login answer so the
         // frontend can render the account switcher without a second round-trip
         var vpn_accounts = await VpnAccountRepo.Value.GetVisibleByUser(account.Id);
-        var realm_names = await LoadRealmNames(vpn_accounts.Select(account => account.RealmId));
+        var realms = await RealmRepo.Value.LoadRealms(vpn_accounts.Select(account => account.RealmId));
 
         Log.Information("[user: {0}] User logged in (vpn-accounts: {1})", account.Username, vpn_accounts.Count);
 
@@ -136,7 +136,8 @@ class AuthApplication(
                     Id = vpn_account.Id,
                     Username = vpn_account.Username,
                     RealmId = vpn_account.RealmId,
-                    RealmName = realm_names.GetValueOrDefault(vpn_account.RealmId),
+                    RealmName = realms.GetValueOrDefault(vpn_account.RealmId)?.Name,
+                    RealmTitle = realms.GetValueOrDefault(vpn_account.RealmId)?.DisplayTitle,
                     Status = (int)vpn_account.Status,
                     Created = vpn_account.Created,
                 }).ToList(),
@@ -465,15 +466,5 @@ class AuthApplication(
         Log.Information("New User Registered: ({0}, {1})", account.Username, account.Email);
 
         return ApiResult.Success("کاربر شما ساخته شد.");
-    }
-    private async Task<Dictionary<int, string>> LoadRealmNames(IEnumerable<int> realm_ids)
-    {
-        var ids = realm_ids.Distinct().ToList();
-
-        if (ids.Count == 0) return [];
-
-        var realms = await RealmRepo.Value.GetByIds(ids);
-
-        return realms.ToDictionary(pair => pair.Key, pair => pair.Value.Name);
     }
 }

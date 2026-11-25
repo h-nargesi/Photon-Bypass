@@ -16,20 +16,21 @@ namespace PhotonBypass.Test.Facts.Application;
 
 /// <summary>
 /// Admin server CRUD contract (Docs/20 phase 5, D8): validation matrix
-/// (ip/name/domain/bandwidth/os/features/realm), the 409 duplicate guard on
-/// identity fields, write-without-read config handling and the admin-only
-/// defense in depth. The list never carries the stored config — only scalars
-/// and the has-config flag.
+/// (ip/name/domain/capacity/max-clients/os/features/realm), the 409 duplicate
+/// guard on identity fields, write-without-read config handling and the
+/// admin-only defense in depth. The list never carries the stored config —
+/// only scalars and the has-config flag.
 /// </summary>
 public class ServerCrudApplicationTest : UnitLevelServiceInitializer
 {
+    private const long OnePebibyte = 1L << 50;
     private static SaveServerModel Model(
         int id = 0,
         string ip = "10.20.30.40",
         string name = "SRV-Unit01",
         string domain = "unit01",
         int realm_id = 5,
-        long bandwidth = 1_073_741_824,
+        long capacity_bytes = 1_073_741_824,
         int? max_clients = null,
         OperatingSystem os = OperatingSystem.Mikrotik,
         ServerFeature features = ServerFeature.UserManager | ServerFeature.V2ray,
@@ -42,7 +43,7 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
             IpAddress = ip,
             Name = name,
             DomainName = domain,
-            BandWidth = bandwidth,
+            CapacityBytes = capacity_bytes,
             MaxClients = max_clients,
             OsType = os,
             Features = features,
@@ -99,7 +100,10 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(name: "")));
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(name: new string('n', 16))));
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(domain: new string('d', 256))));
-        await Assert.ThrowsAsync<UserException>(() => application.Create(Model(bandwidth: 0)));
+        (await Assert.ThrowsAsync<UserException>(() => application.Create(Model(capacity_bytes: 0))))
+            .UserMessage.Should().Contain("ظرفیت ترافیک سرور نامعتبر");
+        (await Assert.ThrowsAsync<UserException>(() => application.Create(Model(capacity_bytes: OnePebibyte + 1))))
+            .UserMessage.Should().Contain("ظرفیت ترافیک سرور بیش از حد بزرگ"); // Docs/24 D4 unit guard
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(max_clients: 0))); // T4: null allowed, 0 is not
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(os: (OperatingSystem)99)));
         await Assert.ThrowsAsync<UserException>(() => application.Create(Model(features: 0)));
@@ -121,6 +125,28 @@ public class ServerCrudApplicationTest : UnitLevelServiceInitializer
         Assert.Equal(5, created.RealmId);
         Assert.NotNull(created.JsonConfig);
         Assert.Equal("unit-secret", created.Config!.SshConfig!.Password);
+        Assert.Equal(1_073_741_824, created.CapacityBytes);
+    }
+
+    [Fact]
+    public async Task Create_CapacityUpperBound_IsInclusive()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        var account_moq = scope.ServiceProvider.GetRequiredService<PanelUserRepositoryMoq>();
+        var server_moq = scope.ServiceProvider.GetRequiredService<ServerRepositoryMoq>();
+        var application = scope.ServiceProvider.GetRequiredService<IServerCrudApplication>();
+
+        account_moq.Data["User99"].Role = AccountRole.Admin;
+        job_context.InjectJobContext(99, "User99", "User99");
+
+        // exactly 1 PiB is the last accepted value (the admin form sends GB × 1024³)
+        await application.Create(Model(name: "SRV-Cap02", domain: "cap02", ip: "10.60.0.1", capacity_bytes: OnePebibyte));
+
+        var created = Assert.Single(server_moq.Data.Values, s => s.Name == "SRV-Cap02");
+
+        Assert.Equal(OnePebibyte, created.CapacityBytes);
+        Assert.Equal(OnePebibyte, (await application.GetList()).Data!.Single(row => row.Id == created.Id).CapacityBytes);
     }
 
     [Fact]

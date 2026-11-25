@@ -7,19 +7,6 @@ namespace PhotonBypass.Infra.Repository;
 
 class RealmRepository(LocalDbContext context) : EditableRepository<RealmEntity>(context), IRealmRepository
 {
-    public async Task<string?> GetName(int id)
-    {
-        var sql = $"""
-                   select {nameof(RealmEntity.Name)}
-                   from {TableName}
-                   where {nameof(RealmEntity.Id)} = @id
-                   """;
-
-        var result = await QueryAsync<string>(sql, new { id });
-
-        return result.FirstOrDefault();
-    }
-
     public async Task<List<RealmEntity>> FetchAllActiveRealm()
     {
         var result = await FindAsync(statement => statement.Where($"{nameof(RealmEntity.IsActive)} = 1"));

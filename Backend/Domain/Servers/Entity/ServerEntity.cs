@@ -24,7 +24,8 @@ public class ServerEntity : IBaseEntity
 
     public string DomainName { get; set; } = null!;
 
-    public long BandWidth { get; set; }
+    /// <summary>30-day sellable traffic in bytes (Docs/24 D1). Realm capacity = sum over its active NAS servers.</summary>
+    public long CapacityBytes { get; set; }
 
     /// <summary>Hard client-count cap for x-ui rows (T4, Docs/16 §3). Null/0 = gate off.</summary>
     public int? MaxClients { get; set; }

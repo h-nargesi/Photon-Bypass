@@ -46,12 +46,12 @@
 | POST | `/api/auth/forget-pass` | body `ResetPasswordContext` + headers `X-Captcha-*` (اختیاری) | `AuthController.ForgetPassword` | N | ارسال کد بازنشانی. policy `forget` (۳/دقیقه)؛ همان گیت کپچای adaptive (428). |
 | POST | `/api/auth/reset-pass` | body `ChangePasswordContext` + headers `X-Captcha-*` (اختیاری) | `AuthController.ResetPassword` | N | تغییر پسورد با کد. policy `reset` (۵/دقیقه)؛ همان گیت کپچای adaptive (428). |
 | POST | `/api/auth/register` | body `RegisterModel` + headers `X-Captcha-*` (اختیاری) | `AuthController.Register` | N | ثبت‌نام. policy `register` (۵/دقیقه)؛ همان گیت کپچای adaptive (428). |
-| GET | `/api/account/get-user` | — | `AccountController.GetUser` | Y | اطلاعات کاربر جاری. |
+| GET | `/api/account/get-user` | — | `AccountController.GetUser` | Y | اطلاعات کاربر جاری + لیست اکانت‌های VPN (هر ردیف با `realmName` + `realmTitle`؛ UI فقط `realmTitle` را نشان می‌دهد — Docs/24 D6). |
 | GET | `/api/account/full-info` | `?target` | `AccountController.GetFullInfo` | Y | اطلاعات کامل target. |
 | POST | `/api/account/edit-user` | `?target` + body `EditUserModel` | `AccountController.EditUser` | Y | ویرایش اطلاعات target. |
 | POST | `/api/account/change-pass` | body `ChangePasswordContext` | `AccountController.ChangePassword` | Y | تغییر پسورد لاگین (بر اساس کاربر جاری). |
 | GET | `/api/account/history` | `?target` + query `HistoryContext` | `AccountController.GetHistory` | Y | تاریخچه‌ی target. |
-| GET | `/api/vpn/accounts` | `?target` | `VpnController.GetAccounts` | Y | لیست اکانت‌های VPN کاربر (یا زیرمجموعه) — سوییچر اکانت (Docs/22 §5). |
+| GET | `/api/vpn/accounts` | `?target` | `VpnController.GetAccounts` | Y | لیست اکانت‌های VPN کاربر (یا زیرمجموعه) — سوییچر اکانت (Docs/22 §5)؛ هر ردیف `realmName` + `realmTitle` دارد و UI فقط `realmTitle` را نشان می‌دهد (Docs/24 D6). |
 | POST | `/api/vpn/change-ovpn` | body `ChangeOvpnContext` (`AccountId`) | `VpnController.ChangeOvpnPassword` | Y | تغییر پسورد/چرخش UUID اکانت VPN؛ نیازمند تأیید پسورد اکانت. |
 | GET | `/api/vpn/send-cert-email` | `?accountId` | `VpnController.SendCertEmail` | Y | ایمیل کانفیگ/گواهی به مالک اکانت. |
 | GET | `/api/vpn/config-info` | `?accountId` | `VpnController.ConfigInfo` | Y | kind دیتاپلین + لینک vless زنده (فقط x-ui). |
@@ -59,7 +59,7 @@
 | GET | `/api/vpn/traffic-data` | `?accountId` | `VpnController.TrafficData` | Y | داده‌های ترافیک (نمودار). |
 | GET | `/api/connection/current-con-state` | `?target` | `ConnectionController.GetCurrentConnectionState` | Y | وضعیت اتصال‌های فعال. |
 | POST | `/api/connection/close-con` | body `CloseConnectionContext` | `ConnectionController.CloseConnection` | Y | بستن کانکشن (`Server` + `SessionId`). |
-| GET | `/api/plan/realms` | — | `PlanController.GetRealms` | Y | realmهای قابل انتخاب خرید (نام + IsSelectable) — Docs/22 D4. |
+| GET | `/api/plan/realms` | — | `PlanController.GetRealms` | Y | realmهای قابل انتخاب خرید: `Id` + `Name` + `Title` + `IsSelectable` — UI فقط `Title` (متن نمایشی، fallback به `Name`) را نشان می‌دهد (Docs/22 D4، Docs/24 D6). |
 | GET | `/api/plan/suggest-username` | — | `PlanController.SuggestUsername` | Y | پیشنهاد سیستم برای یوزرنیم VPN بعدی (D3). |
 | GET | `/api/plan/plan-state` | `?accountId` | `PlanController.GetPlanState` | Y | وضعیت پلن اکانت (از `TotalPlanState`). |
 | GET | `/api/plan/plan-info` | `?accountId` | `PlanController.GetPlanInfo` | Y | اطلاعات پلن جاری + `RequiresRealmChoice` (D6). |
@@ -80,8 +80,8 @@
 | POST | `/api/user/set-self-service` | body `{Target, Allow}` | `UserController.SetSelfService` | Y + policy **Manager** | فلگ مستقل/وابسته (ادمین: هرکس؛ مدیر: فقط زیر دست خودش). |
 | POST | `/api/user/set-status` | body `{Target, Status}` (`PanelUserStatus`: 0/2) | `UserController.SetStatus` | Y + policy **Manager** | وضعیت سطح کاربر (Docs/22 D12؛ ادمین: هرکس بجز خودش — D9): 2=بلاک لاگین. sync فوری best-effort روی همه‌ی اکانت‌های VPN کاربر؛ تغییرات درگیر `Deactivated` کش target-area را بی‌اعتبار می‌کند. |
 | POST | `/api/user/set-account-status` | body `{AccountId, Status}` (`VpnAccountStatus`: 0/1/2) | `UserController.SetAccountStatus` | Y + policy **Manager** | وضعیت سطح اکانت VPN (Docs/22 D12): تعلیق/فعال‌سازی per-account، مستقل از وضعیت پنل کاربر. |
-| GET | `/api/server/list` | — | `ServerController.GetList` | Y + policy **Admin** | لیست سرورها (Docs/20 فاز ۵/D8): فقط فیلدهای اسکالر + `hasConfig` + نام realm — کانفیگ ذخیره‌شده (متنی یا محافظت‌شده) هرگز در پاسخ نیست. |
-| POST | `/api/server/create` | body `SaveServerModel` | `ServerController.Create` | Y + policy **Admin** | ساخت سرور فعال؛ اعتبارسنجی IPv4/طول نام و دامنه (≤۱۵)/پهنای باند مثبت/OS معتبر/بیت‌های شناخته‌شده‌ی `Features`/realm موجود؛ تکرار IP یا نام یا دامنه → 409؛ کانفیگ JSON ارسالی سمت سرور deserialize و `ServerConfigProtection.Protect` می‌شود (نوشتن بدون خواندن). |
+| GET | `/api/server/list` | — | `ServerController.GetList` | Y + policy **Admin** | لیست سرورها (Docs/20 فاز ۵/D8): فقط فیلدهای اسکالر + `hasConfig` + نام realm — کانفیگ ذخیره‌شده (متنی یا محافظت‌شده) هرگز در پاسخ نیست. `capacityBytes` روی wire به بایت است (Docs/24 D2). |
+| POST | `/api/server/create` | body `SaveServerModel` | `ServerController.Create` | Y + policy **Admin** | ساخت سرور فعال؛ اعتبارسنجی IPv4/طول نام و دامنه (≤۱۵)/ظرفیت ترافیک به بایت (`capacityBytes` در بازه‌ی ۱ .. ۱ PiB — Docs/24 D4؛ فرم ادمین گیگابایت را به بایت تبدیل می‌کند)/OS معتبر/بیت‌های شناخته‌شده‌ی `Features`/realm موجود؛ تکرار IP یا نام یا دامنه → 409؛ کانفیگ JSON ارسالی سمت سرور deserialize و `ServerConfigProtection.Protect` می‌شود (نوشتن بدون خواندن). |
 | POST | `/api/server/update` | body `SaveServerModel` با `Id>0` | `ServerController.Update` | Y + policy **Admin** | به‌روزرسانی کامل فیلدهای اسکالر؛ `config` تهی → blob محافظت‌شده‌ی موجود بدون تغییر حمل می‌شود؛ ارسال config → جایگزینی کامل با Protect تازه (+ گارد طول ۴۰۰۰). |
 | POST | `/api/server/set-active` | body `{Id, Active}` | `ServerController.SetActive` | Y + policy **Admin** | فعال/غیرفعال کردن سرور — toggle دوجهته (به‌جای `deactivate` تک‌جهته‌ی گام ۱۸ Docs/20؛ انحراف ثبت‌شده، هم‌ارز فاز ۴). |
 

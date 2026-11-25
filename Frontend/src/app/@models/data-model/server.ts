@@ -23,7 +23,9 @@ export interface ServerRow {
   ipAddress: string;
   name: string;
   domainName: string;
-  bandWidth: number;
+  /// 30-day sellable traffic in BYTES (Docs/24 D1). The admin form converts to/from
+  /// binary gigabytes (1024³); the wire and the database stay in bytes.
+  capacityBytes: number;
   /// T4: optional hard client-count cap (x-ui capacity gate). Null/undefined = gate off.
   maxClients?: number | null;
   osType: OperatingSystem;
@@ -41,7 +43,8 @@ export interface SaveServer {
   ipAddress: string;
   name: string;
   domainName: string;
-  bandWidth: number;
+  /// 30-day sellable traffic in BYTES (1 .. 1 PiB) — send `gigabytesToBytes(form)`.
+  capacityBytes: number;
   /// T4: optional hard client-count cap — only meaningful on x-ui rows; null = gate off.
   maxClients?: number | null;
   osType: OperatingSystem;

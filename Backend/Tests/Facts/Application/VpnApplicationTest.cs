@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using PhotonBypass.Application.Management.Model;
 using PhotonBypass.Application.Vpn;
+using PhotonBypass.Domain;
 using PhotonBypass.Domain.Account.Entity;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Plan.Entity;
@@ -22,6 +23,25 @@ namespace PhotonBypass.Test.Facts.Application;
 public class VpnApplicationTest : UnitLevelServiceInitializer
 {
     private static readonly DateTime Today = DateTime.Now.Date;
+
+    [Fact]
+    public async Task GetAccounts_CarriesTheCustomerFacingRealmTitle()
+    {
+        using var scope = App.Services.CreateScope();
+        var job_context = scope.ServiceProvider.GetRequiredService<IJobContext>();
+        job_context.InjectJobContext(99, "User99", "User99");
+
+        var result = await scope.ServiceProvider.GetRequiredService<IVpnApplication>().GetAccounts(null);
+
+        Assert.Equal(2, result.Code / 100);
+        Assert.NotNull(result.Data);
+
+        // Docs/24 D6: the list renders the title; the Name stays on the wire for diagnostics
+        var account = Assert.Single(result.Data);
+        Assert.Equal("User99", account.Username);
+        Assert.Equal("Realm-LO-1", account.RealmName);
+        Assert.Equal("سرور تست ۱", account.RealmTitle);
+    }
 
     [Fact]
     public async Task ChangeVpnPassword_InvlaidAccount()
@@ -719,7 +739,7 @@ public class VpnApplicationTest : UnitLevelServiceInitializer
             Name = $"Server{id}",
             IpAddress = $"10.0.1.{id}",
             DomainName = $"srv{id}.photon-bypass.com",
-            BandWidth = 100,
+            CapacityBytes = 100,
             OsType = os_type,
             Features = features,
         };

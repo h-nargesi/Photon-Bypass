@@ -32,6 +32,7 @@
 | 21 | [Docs/21-social-media-telegram-channel.md](21-social-media-telegram-channel.md) | کانال اجتماعی: `ISocialMediaService` خنثی به کانال + انتخاب runtime، اتصال چت تلگرام با کد یک‌بارمصرف، اولویت تلگرام در ریست/هشدار با fallback ایمیل. |
 | 22 | [Docs/22-panel-user-vpn-split.md](22-panel-user-vpn-split.md) | تفکیک `Account` به `PanelUser` + `VpnAccount` (D1–D14): چند اکانت VPN برای هر کاربر، قواعد یوزرنیم D3، خرید با انتخاب realm، مهاجرت stale، دو محور وضعیت. |
 | 23 | [Docs/23-xui-local-test-vm.md](23-xui-local-test-vm.md) | انزوای تست (D1–D5): ممنوعیت قطعی تست روی سرور زنده، حذف ارجاع به زیرساخت اجرایی، تنها مقصد اینتگریشن x-ui = VM لوکال VirtualBox با پنل تستی + دستور کار اجرا. |
+| 24 | [Docs/24-server-capacity-realm-title.md](24-server-capacity-realm-title.md) | ظرفیت بایت‌محور + عنوان realm (D1–D7): `Server.CapacityBytes` به بایت (فقط فرم ادمین گیگابایت می‌گیرد)، `Realm.Title` متن نمایشی سرور برای مشتری و ماندن `Realm.Name` برای ادمین، پاک‌سازی `FRIENDLY_NAME`؛ ماتریس نمایش و موارد بازِ زمان ثبت اولین سرورها. |
 
 ## Read this file when…
 
@@ -59,6 +60,7 @@
 | Implement/verify the admin-panel roles roadmap (Role/SelfService, payer separation, wallet adjust, user management, server CRUD) | [20-admin-panel-roles](20-admin-panel-roles.md) |
 | Implement/verify the panel-user ↔ VPN-account split (multi-account, realm choice, per-account status) | [22-panel-user-vpn-split](22-panel-user-vpn-split.md) |
 | Build/extend the local x-ui test VM and its integration tests, or check what test targets are allowed | [23-xui-local-test-vm](23-xui-local-test-vm.md) |
+| Set a server capacity, show a realm name to a customer, or seed a server through raw SQL | [24-server-capacity-realm-title](24-server-capacity-realm-title.md) |
 
 ## Related legacy docs
 

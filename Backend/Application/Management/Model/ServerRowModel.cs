@@ -26,7 +26,8 @@ public class ServerRowModel
 
     public string DomainName { get; set; } = null!;
 
-    public long BandWidth { get; set; }
+    /// <summary>30-day sellable traffic in bytes (Docs/24 D1); the admin form converts to/from binary gigabytes.</summary>
+    public long CapacityBytes { get; set; }
 
     /// <summary>Optional hard client-count cap (x-ui capacity gate, T4). Null = gate off.</summary>
     public int? MaxClients { get; set; }

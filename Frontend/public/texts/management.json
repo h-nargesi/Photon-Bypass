@@ -84,7 +84,7 @@
       "ip": "آدرس IP",
       "domain": "دامنه",
       "realm": "قلمرو",
-      "bandwidth": "پهنای باند",
+      "capacity": "ظرفیت ترافیک ۳۰روزه (گیگابایت)",
       "max-clients": "سقف تعداد کاربر",
       "os": "سیستم‌عامل",
       "features": "امکانات",
@@ -114,7 +114,8 @@
       "edit-title": "ویرایش سرور",
       "config": "کانفیگ سرور (JSON):",
       "config-keep": "کانفیگ جدید (JSON) — خالی بماند تا کانفیگ فعلی حفظ شود:",
-      "config-placeholder": "{ \"sshConfig\": { ... } }"
+      "config-placeholder": "{ \"sshConfig\": { ... } }",
+      "capacity-hint": "حجم ترافیکی که این سرور در بازه‌ی ۳۰ روزه می‌تواند بفروشد."
     },
     "messages": {
       "no-rows": "سروری ثبت نشده است.",

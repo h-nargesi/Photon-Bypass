@@ -67,14 +67,15 @@ class VpnApplication(
         var owner = await AccountApp.Value.GetActiveUser(target ?? JobContext.Value.Target);
 
         var accounts = await VpnAccountRepo.Value.GetVisibleByUser(owner.Id);
-        var realm_names = await LoadRealmNames(accounts.Select(account => account.RealmId));
+        var realms = await RealmRepo.Value.LoadRealms(accounts.Select(account => account.RealmId));
 
         var result = accounts.Select(account => new VpnAccountSummaryModel
             {
                 Id = account.Id,
                 Username = account.Username,
                 RealmId = account.RealmId,
-                RealmName = realm_names.GetValueOrDefault(account.RealmId),
+                RealmName = realms.GetValueOrDefault(account.RealmId)?.Name,
+                RealmTitle = realms.GetValueOrDefault(account.RealmId)?.DisplayTitle,
                 Status = (int)account.Status,
                 Created = account.Created,
             })
@@ -441,17 +442,6 @@ class VpnApplication(
             Title = "امنیت",
             Description = description,
         });
-    }
-
-    private async Task<Dictionary<int, string>> LoadRealmNames(IEnumerable<int> realm_ids)
-    {
-        var ids = realm_ids.Distinct().ToList();
-
-        if (ids.Count == 0) return [];
-
-        var realms = await RealmRepo.Value.GetByIds(ids);
-
-        return realms.ToDictionary(pair => pair.Key, pair => pair.Value.Name);
     }
 
     private static TrafficDataModel ConvertToModel(IEnumerable<TrafficDataEntity> data)

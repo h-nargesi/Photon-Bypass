@@ -33,6 +33,28 @@ public class PlanApplicationTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public async Task GetRealms_CarriesTheCustomerFacingTitle_AndFallsBackToName()
+    {
+        using var scope = App.Services.CreateScope();
+        var plan_app = scope.ServiceProvider.GetRequiredService<IPlanApplication>();
+
+        var choices = (await plan_app.GetRealms()).Data!.ToDictionary(choice => choice.Id);
+
+        // only realms with an active NAS server are offered
+        Assert.Equal([1, 3, 4], choices.Keys.Order().ToArray());
+
+        // a titled realm shows its Title next to the system identifier
+        Assert.Equal("Realm-LO-1", choices[1].Name);
+        Assert.Equal("سرور تست ۱", choices[1].Title);
+
+        // an untitled realm keeps showing its Name
+        Assert.Equal("Realm-LO-3", choices[3].Title);
+        Assert.Equal("Realm-LO-4", choices[4].Title);
+
+        Assert.All(choices.Values, choice => Assert.True(choice.IsSelectable));
+    }
+
+    [Fact]
     public async Task Renewal_SuspendedVpnAccount_IsRefusedWithFriendlyMessage()
     {
         using var scope = App.Services.CreateScope();

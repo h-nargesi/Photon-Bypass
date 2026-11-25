@@ -43,7 +43,7 @@ internal static class XuiPanelTestServer
             Name = "Xui-Live",
             IpAddress = Vm.Ip,
             DomainName = "xui.test.local",
-            BandWidth = 10_737_418_240,
+            CapacityBytes = 10_737_418_240,
             OsType = Domain.Servers.Types.OperatingSystem.Ubuntu,
             Features = Domain.Servers.Types.ServerFeature.Xui | Domain.Servers.Types.ServerFeature.V2ray,
             JsonConfig = JsonSerializer.Serialize(new ServerConfiguration

@@ -40,7 +40,7 @@ public class ServerCrudTest(ProgramLevelInitializer.Factory factory) : HttpHandl
             name,
             domainName = domain,
             realmId = realm_id,
-            bandWidth = 10_737_418_240L,
+            capacityBytes = 10_737_418_240L,
             osType = 1,
             features = features ?? 0x802, // UserManager | V2ray
             config,

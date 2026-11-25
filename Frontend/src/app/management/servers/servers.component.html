@@ -42,11 +42,11 @@
               </td>
             </ng-container>
 
-            <ng-container matColumnDef="bandwidth">
+            <ng-container matColumnDef="capacity">
               <th mat-header-cell *matHeaderCellDef>
-                {{ "management.servers.columns.bandwidth" | translate }}
+                {{ "management.servers.columns.capacity" | translate }}
               </th>
-              <td mat-cell *matCellDef="let row" class="digits">{{ row.bandWidth }}</td>
+              <td mat-cell *matCellDef="let row" class="digits">{{ capacityTitle(row) }}</td>
             </ng-container>
 
             <ng-container matColumnDef="os">
@@ -160,10 +160,13 @@
       <input cFormControl type="number" class="digits" [(ngModel)]="realm_id" />
     </c-input-group>
 
-    <c-input-group class="mb-3">
-      <span cInputGroupText>{{ "management.servers.columns.bandwidth" | translate }}</span>
-      <input cFormControl type="number" class="digits" [(ngModel)]="band_width" />
+    <c-input-group>
+      <span cInputGroupText>{{ "management.servers.columns.capacity" | translate }}</span>
+      <input cFormControl type="number" step="any" class="digits" [(ngModel)]="capacity_gigabytes" />
     </c-input-group>
+    <small class="d-block text-body-secondary mb-3">
+      {{ "management.servers.modals.capacity-hint" | translate }}
+    </small>
 
     @if (is_xui) {
       <c-input-group class="mb-3">

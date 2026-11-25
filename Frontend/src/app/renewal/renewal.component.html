@@ -49,7 +49,7 @@
                         </option>
                         @for (realm of realms; track realm.id) {
                         <option [value]="realm.id" [disabled]="!realm.isSelectable">
-                            {{ realm.name }}
+                            {{ realm.title }}
                         </option>
                         }
                     </select>
@@ -65,7 +65,7 @@
                         </option>
                         @for (realm of realms; track realm.id) {
                         <option [value]="realm.id" [disabled]="!realm.isSelectable">
-                            {{ realm.name }}
+                            {{ realm.title }}
                         </option>
                         }
                     </select>

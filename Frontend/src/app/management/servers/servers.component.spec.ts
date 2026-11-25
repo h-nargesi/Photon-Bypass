@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { OperatingSystem, ServerFeature, ServerRow } from '../../@models';
-import { API_BASE_URL } from '../../@services';
+import { API_BASE_URL, BYTES_PER_GIGABYTE, printCapacity } from '../../@services';
 import { ServersComponent } from './servers.component';
 
 describe('ServersComponent (Docs/20 phase 6)', () => {
@@ -21,7 +21,7 @@ describe('ServersComponent (Docs/20 phase 6)', () => {
       ipAddress: '10.0.0.1',
       name: 'nas-1',
       domainName: 'nas1.example.com',
-      bandWidth: 100,
+      capacityBytes: 200 * BYTES_PER_GIGABYTE,
       osType: OperatingSystem.Mikrotik,
       features: ServerFeature.UserManager | ServerFeature.Ovpn,
       hasConfig: true,
@@ -67,6 +67,18 @@ describe('ServersComponent (Docs/20 phase 6)', () => {
     expect(component.featureTitles(rows[0])).toEqual(['UserManager', 'OpenVPN']);
   });
 
+  it('the list renders the capacity as a formatted value, never the raw bytes (Docs/24 D3)', () => {
+    fixture.detectChanges();
+    flushList();
+    fixture.detectChanges();
+
+    const text: string = fixture.nativeElement.textContent;
+
+    expect(text).toContain(printCapacity(200 * BYTES_PER_GIGABYTE));
+    expect(text).toContain('GB');
+    expect(text).not.toContain(String(rows[0].capacityBytes));
+  });
+
   it('toggle-active posts the two-way lifecycle flag', () => {
     fixture.detectChanges();
     flushList();
@@ -94,7 +106,7 @@ describe('ServersComponent (Docs/20 phase 6)', () => {
     component.ip_address = ' 10.0.0.2 ';
     component.domain_name = 'nas2.example.com';
     component.realm_id = 2;
-    component.band_width = 200;
+    component.capacity_gigabytes = 200;
     component.os_type = OperatingSystem.Ubuntu;
     component.feature_state[ServerFeature.Xui] = true;
     component.feature_state[ServerFeature.V2ray] = true;
@@ -111,7 +123,7 @@ describe('ServersComponent (Docs/20 phase 6)', () => {
       ipAddress: '10.0.0.2',
       name: 'nas-2',
       domainName: 'nas2.example.com',
-      bandWidth: 200,
+      capacityBytes: 200 * BYTES_PER_GIGABYTE,
       maxClients: 50,
       osType: OperatingSystem.Ubuntu,
       features: ServerFeature.Xui | ServerFeature.V2ray,
@@ -135,13 +147,44 @@ describe('ServersComponent (Docs/20 phase 6)', () => {
     component.ip_address = '10.0.0.3';
     component.domain_name = '';
     component.realm_id = 1;
-    component.band_width = 1;
+    component.capacity_gigabytes = 1;
     component.config_text = 'not-json';
     component.submit();
 
     http.expectNone(
       req => req.method === 'POST' && req.url.startsWith('/api/server/'),
     );
+  });
+
+  it('edit pre-fills the capacity in gigabytes and keeps the stored bytes on an unrelated edit', () => {
+    fixture.detectChanges();
+    flushList();
+
+    component.openEdit(rows[0]);
+    expect(component.capacity_gigabytes).toBe(200);
+
+    // a value that is not a whole gigabyte: the pre-fill is not rounded, so the
+    // domain edit below cannot shift the stored figure
+    const odd_row: ServerRow = { ...rows[0], id: 9, capacityBytes: 1_073_741_825 };
+
+    component.openEdit(odd_row);
+    expect(component.capacity_gigabytes).toBe(1_073_741_825 / BYTES_PER_GIGABYTE);
+
+    component.domain_name = 'odd.example.com';
+    component.submit();
+
+    const request = http.expectOne(
+      req => req.method === 'POST' && req.url === '/api/server/update',
+    );
+    expect(request.request.body['id']).toBe(9);
+    expect(request.request.body['capacityBytes']).toBe(1_073_741_825);
+    expect(request.request.body['domainName']).toBe('odd.example.com');
+    request.flush(
+      { code: 200, message: 'ذخیره شد' },
+      { status: 200, statusText: 'OK' },
+    );
+
+    flushList();
   });
 
   it('update with an empty config box keeps the stored blob (config omitted)', () => {

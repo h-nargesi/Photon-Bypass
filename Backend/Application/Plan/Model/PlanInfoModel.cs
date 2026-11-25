@@ -5,7 +5,11 @@ public class RealmChoiceModel
 {
     public int Id { get; init; }
 
+    /// <summary>System identifier — kept on the wire for diagnostics; the UI shows <see cref="Title"/> (Docs/24 D5/D6).</summary>
     public string Name { get; init; } = null!;
+
+    /// <summary>Customer-facing text to render in the realm dropdown.</summary>
+    public string Title { get; init; } = null!;
 
     /// <summary>False when the realm has no free capacity or client slots (T4-E).</summary>
     public bool IsSelectable { get; init; }

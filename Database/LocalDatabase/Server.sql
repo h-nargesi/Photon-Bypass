@@ -9,7 +9,9 @@ CREATE TABLE Server (
 	IpAddress			VARCHAR(15)		NOT NULL,
 	Name				NVARCHAR(15)	NOT NULL,
 	DomainName			VARCHAR(255)	NOT NULL,
-	BandWidth			BIGINT			NOT NULL,
+	-- 30-day sellable traffic in BYTES (Docs/24 D1/D2); the admin form takes gigabytes.
+	-- Realm capacity = SUM(CapacityBytes) over the realm's active NAS servers.
+	CapacityBytes		BIGINT			NOT NULL,
 	-- T4 (Docs/16 §3): hard client-count cap for x-ui rows; NULL/0 = gate off.
 	MaxClients			INT					NULL,
 	OsType				TINYINT			NOT NULL,
