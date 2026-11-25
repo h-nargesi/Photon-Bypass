@@ -5,6 +5,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { TranslationService } from '../@services';
 import { API_BASE_URL } from '../@services/api-services/models/app-base-path';
 import { ChangePasswordComponent } from './change-password.component';
 
@@ -111,6 +112,22 @@ describe('ChangePasswordComponent', () => {
     expect(request.request.body['token']).toBe('abc123');
 
     request.flush({ code: 200, message: 'ok' }, { status: 200, statusText: 'OK' });
+  });
+
+  it('reset mode without a token asks for the reset code with translated labels', async () => {
+    const harness = await RouterTestingHarness.create();
+    const component = await harness.navigateByUrl('/reset-password', ChangePasswordComponent);
+
+    expect(component.form.controls['token']).toBeDefined();
+
+    await harness.detectChanges();
+
+    const input = harness.routeNativeElement?.querySelector(
+      'input[formcontrolname="token"]',
+    ) as HTMLInputElement | null;
+    expect(input?.placeholder)
+      .toBe(TranslationService.translate('change-password.forgotten.token-holder'));
+    expect(input?.placeholder).not.toContain('.');
   });
 
   it('forgotten mode renders the server answer inline', async () => {
