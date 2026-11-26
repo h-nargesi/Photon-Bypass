@@ -73,6 +73,7 @@ flowchart LR
 - `@services/{local-storage,translation,validators,message-handler}`.
 - `@models/` — `api-result`, `user-info`, `user-plan-info`, `traffic-data`, `history-record`, `connection-state`, `prices`, `basics`, `data-model`, `meta-model`.
 - `@icons/` — آیکن‌های CoreUI.
+- داشبورد (`dashboard/`): گرید = سه باند صریح در یک `c-row.g-4` — باند بالایی (`c-col xs="12"` > `c-row g-4` > کارت پشتیبانی اختیاری + ویجت پلن)، «اتصال‌ها | اکانت» (`lg=6` هرکدام) و نمودار. هر باند مستقل ۱۲ ستون را پر می‌کند؛ کارت شرطی هرگز نباید در جریان تختِ باند بعدی بنشیند (Docs/14 L18).
 
 ## Multi-account in frontend (چنداکانت در فرانت)
 

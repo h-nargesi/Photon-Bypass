@@ -527,4 +527,60 @@ describe('DashboardComponent', () => {
     expect(component.showsSupportCard).toBeTrue();
     expect(fixture.nativeElement.querySelector('.telegram-panel')).not.toBeNull();
   });
+
+  const outerBands = ':scope > c-row > c-col';
+  const topBand = ':scope > c-row > c-col:first-child > c-row > c-col';
+
+  function columns(selector: string): HTMLElement[] {
+    return Array.from(
+      fixture.nativeElement.querySelectorAll(selector),
+    ) as HTMLElement[];
+  }
+
+  function gridClasses(selector: string): string[][] {
+    return columns(selector).map((col) => Array.from(col.classList).sort());
+  }
+
+  it('keeps the plan widget beside the support card for a self-service user', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad(undefined, { ...user, allowSelfService: true });
+    flushSupportConfig();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(gridClasses(topBand)).toEqual([['col-lg-6'], ['col-lg-6']]);
+    const [support_col, plan_col] = columns(topBand);
+    expect(support_col.querySelector('.telegram-panel')).not.toBeNull();
+    expect(plan_col.querySelector('c-widget-stat-c')).not.toBeNull();
+  });
+
+  it('lets the plan widget own the whole top band for a dependent user', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad(undefined, { ...user, allowSelfService: false });
+    flushSupportConfig();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(gridClasses(topBand)).toEqual([['col-lg-12']]);
+    expect(columns(topBand)[0].querySelector('c-widget-stat-c')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.telegram-panel')).toBeNull();
+  });
+
+  it('never moves the connections, account and chart columns when the support card toggles', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad(undefined, { ...user, role: 1, allowSelfService: false });
+    flushSupportConfig();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const bands_below = [['col-lg-6'], ['col-lg-6'], ['col']];
+    expect(gridClasses(outerBands)).toEqual([['col-12'], ...bands_below]);
+    expect(gridClasses(topBand)).toEqual([['col-lg-12']]);
+
+    await flushSubordinateLoad();
+    fixture.detectChanges();
+
+    expect(gridClasses(topBand)).toEqual([['col-lg-6'], ['col-lg-6']]);
+    expect(gridClasses(outerBands)).toEqual([['col-12'], ...bands_below]);
+  });
 });

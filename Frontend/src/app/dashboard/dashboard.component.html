@@ -1,52 +1,58 @@
 <c-row class="g-4">
-    @if (showsSupportCard) {
-        <c-col lg="6">
-            <c-card class="mb-auto telegram-panel">
-                <c-row class="g-0">
-                    <c-col [xs]="4" class="overflow-hidden position-relative bg-telegram telegram-icon"
-                        [ngStyle]="{'max-width.rem': 14.5}">
-                        <div><svg [cIcon]="icons.cibTelegram" class="m-5 text-white" height="100%"></svg></div>
-                    </c-col>
-                    <c-card-body cCol [xs]="8">
-                        <h5 cCardTitle>{{ "dashboard.support.title" | translate }}</h5>
-                        <p cCardText class="ltr">{{ support_info?.contactInfo }}</p>
-                        <p cCardText>{{ support_info?.description }}</p>
-                    </c-card-body>
-                </c-row>
-            </c-card>
-        </c-col>
-    }
+    <!-- top band: the support card is optional and the plan widget fills what is left;
+         the bands below never depend on it -->
+    <c-col xs="12">
+        <c-row class="g-4">
+            @if (showsSupportCard) {
+                <c-col lg="6">
+                    <c-card class="mb-auto telegram-panel">
+                        <c-row class="g-0">
+                            <c-col [xs]="4" class="overflow-hidden position-relative bg-telegram telegram-icon"
+                                [ngStyle]="{'max-width.rem': 14.5}">
+                                <div><svg [cIcon]="icons.cibTelegram" class="m-5 text-white" height="100%"></svg></div>
+                            </c-col>
+                            <c-card-body cCol [xs]="8">
+                                <h5 cCardTitle>{{ "dashboard.support.title" | translate }}</h5>
+                                <p cCardText class="ltr">{{ support_info?.contactInfo }}</p>
+                                <p cCardText>{{ support_info?.description }}</p>
+                            </c-card-body>
+                        </c-row>
+                    </c-card>
+                </c-col>
+            }
 
-    <c-col lg="6">
-        <c-widget-stat-c [title]="plan_info?.remainsTitle ? ('dashboard.balance.title' | translate) : ('dashboard.balance.none' | translate)"
-            [value]="plan_info?.remainsTitle" class="mb-3" [color]="getPlanInfoColor(plan_info)" inverse>
-            <ng-template cTemplateId="widgetIconTemplate">
-                <span *ngIf="plan_info" class="me-1"
-                    cTooltip="{{ 'dashboard.balance.simultaneous' | translate : [plan_info.simultaneousUserCount.toString()] }}">
-                    x{{ plan_info.simultaneousUserCount }}
-                </span>
-                <span [cTooltip]="getPlanInfoTooltip(plan_info)" class="d-inline-block">
-                    <svg [cIcon]="getPlanInfoIcon(plan_info)" height="36"></svg>
-                </span>
-                <c-spinner color="secondary" *ngIf="hasAccount && !plan_info" />
-            </ng-template>
-            <ng-template cTemplateId="widgetProgressTemplate">
-                <div *ngIf="hasAccount && !plan_info" cPlaceholderAnimation="glow">
-                    <span cCol="4" cPlaceholder class="me-1"></span>
-                    <div class="text-secondary">{{ 'dashboard.balance.title' | translate }}</div>
-                </div>
-                <ng-container *ngIf="hasAccount">
-                    <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsTimePercent ?? 0" />
-                    <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsTrafficPercent ?? 0" />
-                    <button cButton routerLink="/renewal" color="dark" class="mt-3" *ngIf="plan_info">
-                        {{ "dashboard.balance.renewal" | translate }}
-                    </button>
-                </ng-container>
-                <button cButton routerLink="/renewal" color="dark" class="mt-3" *ngIf="offersFirstPurchase">
-                    {{ "dashboard.balance.buy" | translate }}
-                </button>
-            </ng-template>
-        </c-widget-stat-c>
+            <c-col [lg]="showsSupportCard ? 6 : 12">
+                <c-widget-stat-c [title]="plan_info?.remainsTitle ? ('dashboard.balance.title' | translate) : ('dashboard.balance.none' | translate)"
+                    [value]="plan_info?.remainsTitle" class="mb-3" [color]="getPlanInfoColor(plan_info)" inverse>
+                    <ng-template cTemplateId="widgetIconTemplate">
+                        <span *ngIf="plan_info" class="me-1"
+                            cTooltip="{{ 'dashboard.balance.simultaneous' | translate : [plan_info.simultaneousUserCount.toString()] }}">
+                            x{{ plan_info.simultaneousUserCount }}
+                        </span>
+                        <span [cTooltip]="getPlanInfoTooltip(plan_info)" class="d-inline-block">
+                            <svg [cIcon]="getPlanInfoIcon(plan_info)" height="36"></svg>
+                        </span>
+                        <c-spinner color="secondary" *ngIf="hasAccount && !plan_info" />
+                    </ng-template>
+                    <ng-template cTemplateId="widgetProgressTemplate">
+                        <div *ngIf="hasAccount && !plan_info" cPlaceholderAnimation="glow">
+                            <span cCol="4" cPlaceholder class="me-1"></span>
+                            <div class="text-secondary">{{ 'dashboard.balance.title' | translate }}</div>
+                        </div>
+                        <ng-container *ngIf="hasAccount">
+                            <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsTimePercent ?? 0" />
+                            <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsTrafficPercent ?? 0" />
+                            <button cButton routerLink="/renewal" color="dark" class="mt-3" *ngIf="plan_info">
+                                {{ "dashboard.balance.renewal" | translate }}
+                            </button>
+                        </ng-container>
+                        <button cButton routerLink="/renewal" color="dark" class="mt-3" *ngIf="offersFirstPurchase">
+                            {{ "dashboard.balance.buy" | translate }}
+                        </button>
+                    </ng-template>
+                </c-widget-stat-c>
+            </c-col>
+        </c-row>
     </c-col>
 
     <c-col lg="6">
@@ -132,7 +138,7 @@
                 </li>
             </ul>
         </c-card>
-        <c-card *ngIf="!targetUser" class="mb-3 top-panels">
+        <c-card *ngIf="!targetUser" class="mb-3">
             <c-card-body cPlaceholderAnimation="glow">
                 <p cCardText>
                     <span cCol="8" cPlaceholder class="me-1"></span>
