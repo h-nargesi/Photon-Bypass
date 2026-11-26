@@ -33,7 +33,7 @@
 | 22 | [Docs/22-panel-user-vpn-split.md](22-panel-user-vpn-split.md) | تفکیک `Account` به `PanelUser` + `VpnAccount` (D1–D14): چند اکانت VPN برای هر کاربر، قواعد یوزرنیم D3، خرید با انتخاب realm، مهاجرت stale، دو محور وضعیت. |
 | 23 | [Docs/23-xui-local-test-vm.md](23-xui-local-test-vm.md) | انزوای تست (D1–D5): ممنوعیت قطعی تست روی سرور زنده، حذف ارجاع به زیرساخت اجرایی، تنها مقصد اینتگریشن x-ui = VM لوکال VirtualBox با پنل تستی + دستور کار اجرا. |
 | 24 | [Docs/24-server-capacity-realm-title.md](24-server-capacity-realm-title.md) | ظرفیت بایت‌محور + عنوان realm (D1–D7): `Server.CapacityBytes` به بایت (فقط فرم ادمین گیگابایت می‌گیرد)، `Realm.Title` متن نمایشی سرور برای مشتری و ماندن `Realm.Name` برای ادمین، پاک‌سازی `FRIENDLY_NAME`؛ ماتریس نمایش و موارد بازِ زمان ثبت اولین سرورها. |
-| 25 | [Docs/25-server-channel.md](25-server-channel.md) | کانال ارتباطی پنل با سرورها (D1–D10): یک جلسه‌ی SSH با کلید ed25519 و host key پین‌شده به‌ازای هر سرور؛ API مربوط به x-ui و User Manager از داخل local port-forward روی loopback؛ `Transport` روی هر ردیف سرور، استخر جلسه‌ها، اعتبارسنجی، تست اتصال ادمین، پیش‌نیازهای سمت سرور، طرح تست و ترتیب اجرا — **مشخص‌شده، پیاده‌سازی‌نشده**. |
+| 25 | [Docs/25-server-channel.md](25-server-channel.md) | کانال ارتباطی پنل با سرورها (D1–D10): یک جلسه‌ی SSH با کلید ed25519 و host key پین‌شده به‌ازای هر سرور؛ API مربوط به x-ui و User Manager از داخل local port-forward روی loopback؛ `Transport` روی هر ردیف سرور، استخر جلسه‌ها، اعتبارسنجی، تست اتصال ادمین، بررسی‌های میزبان در اولین انتشار با لاگ (D11: خروجی TCP، bind روی loopback، طول عمر worker)، پیش‌نیازهای سمت سرور، طرح تست و ترتیب اجرا؛ پیوست A متن کامل برنامه‌ی اثبات C# و پیوست B گزارش اجراهای آن روی میزبان‌های تولید — **مشخص‌شده، پیاده‌سازی‌نشده**. |
 
 ## Read this file when…
 

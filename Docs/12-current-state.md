@@ -40,7 +40,7 @@
 
 ### کانال ارتباطی پنل با سرورها — تانل SSH با کلید: مشخصات آماده، پیاده‌سازی نشده
 
-امروز `XuiApiService` و `Tik4NetHandler` مستقیم وصل می‌شوند و `SshHandler` فقط پسورد دارد؛ سروری که API مدیریتی‌اش فقط روی loopback است در دسترس نیست (Docs/24 §5.1). تصمیم و مشخصات کامل — کلید ed25519 + host key پین‌شده، local port-forward روی loopback، `Transport` روی هر ردیف سرور، استخر جلسه‌ها، اعتبارسنجی، `test-connection`، پیش‌نیازهای سمت سرور و طرح تست — در [Docs/25](25-server-channel.md) ثبت شده است (۲۰۲۶-۱۱-۲۶). **نقطه‌ی شروع**: Docs/25 §8، فاز ۰–۱ — ارتقای `Renci.SshNet` به 2026.0.0، سپس `ServerTransport` + فیلدهای `SshConfig` + `ISshTunnelPool` در `Backend/ServerBridge/`.
+امروز `XuiApiService` و `Tik4NetHandler` مستقیم وصل می‌شوند و `SshHandler` فقط پسورد دارد؛ سروری که API مدیریتی‌اش فقط روی loopback است در دسترس نیست (Docs/24 §5.1). تصمیم و مشخصات کامل — کلید ed25519 + host key پین‌شده، local port-forward روی loopback، `Transport` روی هر ردیف سرور، استخر جلسه‌ها، اعتبارسنجی، `test-connection`، پیش‌نیازهای سمت سرور و طرح تست — در [Docs/25](25-server-channel.md) ثبت شده است (۲۰۲۶-۱۱-۲۶). **نقطه‌ی شروع**: Docs/25 §8، فاز ۰–۱ — ارتقای `Renci.SshNet` به 2026.0.0، سپس `ServerTransport` + فیلدهای `SshConfig` + `ISshTunnelPool` در `Backend/ServerBridge/`. **سه کار باز دیگر در Docs/25** (خواست مالک، ۲۰۲۶-۱۱-۲۶): ردیف‌های seed سرور باید به شکل حالت تانل دربیایند و بدون راز در SQL خام (§4.12)، سناریوهای تست روی VMهای لوکال نوشته شوند (§6)، و بررسی‌های میزبان در اولین انتشار با لاگ انجام شود (D11، §4.11).
 
 ### تست اینتگریشن x-ui — VM لوکال تستی (Docs/23)
 
