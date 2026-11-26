@@ -583,4 +583,44 @@ describe('DashboardComponent', () => {
     expect(gridClasses(topBand)).toEqual([['col-lg-6'], ['col-lg-6']]);
     expect(gridClasses(outerBands)).toEqual([['col-12'], ...bands_below]);
   });
+
+  function renewalLinks(): HTMLElement[] {
+    fixture.detectChanges();
+    return Array.from(
+      fixture.nativeElement.querySelectorAll('[routerlink="/renewal"]'),
+    ) as HTMLElement[];
+  }
+
+  it('hides the renewal button from a dependent user viewing himself (D6)', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad(undefined, { ...user, allowSelfService: false });
+    await fixture.whenStable();
+
+    expect(component.plan_info?.remainsTimePercent).toBe(40);
+    expect(renewalLinks()).toEqual([]);
+  });
+
+  it('offers renewal to a self-service user with a plan', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad(undefined, { ...user, allowSelfService: true });
+    await fixture.whenStable();
+
+    const links = renewalLinks();
+    expect(links.length).toBe(1);
+    expect(links[0].textContent)
+      .toContain(TranslationService.translate('dashboard.balance.renewal'));
+  });
+
+  it('keeps offering renewal in an on-behalf view of a self-service actor', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad(undefined, { ...user, role: 1, allowSelfService: true });
+    await fixture.whenStable();
+
+    expect(renewalLinks().length).toBe(1);
+
+    await flushSubordinateLoad();
+    fixture.detectChanges();
+
+    expect(renewalLinks().length).toBe(1);
+  });
 });

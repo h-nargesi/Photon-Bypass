@@ -125,6 +125,12 @@ export class DashboardComponent implements OnInit {
     );
   }
 
+  /// Docs/20 D6: renewal is a self-service flow; the route guard bounces a
+  /// dependent account straight back, so the button must not be offered.
+  get offersRenewal(): boolean {
+    return this.user_service.isSelfService;
+  }
+
   /// Docs/20 D6: dependent accounts see no financial UI in their own view;
   /// the support card (renewal/payment help) belongs to that group.
   get showsSupportCard(): boolean {

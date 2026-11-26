@@ -42,7 +42,7 @@
                         <ng-container *ngIf="hasAccount">
                             <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsTimePercent ?? 0" />
                             <c-progress class="mt-3 mb-0" thin white [value]="plan_info?.remainsTrafficPercent ?? 0" />
-                            <button cButton routerLink="/renewal" color="dark" class="mt-3" *ngIf="plan_info">
+                            <button cButton routerLink="/renewal" color="dark" class="mt-3" *ngIf="plan_info && offersRenewal">
                                 {{ "dashboard.balance.renewal" | translate }}
                             </button>
                         </ng-container>
