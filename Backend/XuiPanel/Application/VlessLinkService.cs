@@ -13,14 +13,20 @@ namespace PhotonBypass.Xui.Application;
 /// server row only contributes the connection address. The stream-settings
 /// parser accepts both the camelCase keys of the x-ui payload and the
 /// PascalCase variants seen in exported configs (case-insensitive binding).
+/// REALITY link material is resolved from the flat keys of client-style
+/// configs first and then from the panel's own shape, which keeps its client
+/// half under <c>realitySettings.settings</c> beside the accepted
+/// <c>serverNames</c>/<c>shortIds</c> lists (Docs/24 §5.2).
 /// </summary>
 public class VlessLinkService(
     Lazy<IServerRepository> server_repo,
     Lazy<IXuiApi> api) : IVpnLinkService
 {
+    private const string DefaultXhttpMode = "auto";
+
     private static readonly JsonSerializerOptions StreamJson = new() { PropertyNameCaseInsensitive = true };
 
-    private static readonly string[] SupportedNetworks = ["tcp", "ws", "grpc"];
+    private static readonly string[] SupportedNetworks = ["tcp", "ws", "grpc", "xhttp"];
 
     private static readonly string[] SupportedSecurities = ["none", "tls", "reality"];
 
@@ -114,10 +120,14 @@ public class VlessLinkService(
         switch (security)
         {
             case "reality":
-                AddParameter(parameters, "sni", stream.RealitySettings?.ServerName);
-                AddParameter(parameters, "fp", stream.RealitySettings?.Fingerprint);
-                AddParameter(parameters, "pbk", stream.RealitySettings?.PublicKey);
-                AddParameter(parameters, "sid", stream.RealitySettings?.ShortId);
+                var public_key = stream.RealitySettings?.ResolvePublicKey()
+                                 ?? throw new Exception(
+                                     "The x-ui REALITY public key is missing from the inbound stream settings, so no usable link can be built");
+
+                AddParameter(parameters, "sni", stream.RealitySettings?.ResolveServerName());
+                AddParameter(parameters, "fp", stream.RealitySettings?.ResolveFingerprint());
+                AddParameter(parameters, "pbk", public_key);
+                AddParameter(parameters, "sid", stream.RealitySettings?.ResolveShortId());
                 break;
             case "tls":
                 AddParameter(parameters, "sni", stream.TlsSettings?.ServerName);
@@ -134,9 +144,25 @@ public class VlessLinkService(
             case "grpc":
                 AddParameter(parameters, "serviceName", stream.GrpcSettings?.ServiceName, escape: true);
                 break;
+            case "xhttp":
+                var mode = stream.XhttpSettings?.Mode;
+
+                AddParameter(parameters, "path", stream.XhttpSettings?.Path, escape: true);
+                AddParameter(parameters, "host", stream.XhttpSettings?.Host);
+
+                if (!string.IsNullOrEmpty(mode) && !string.Equals(mode, DefaultXhttpMode, StringComparison.OrdinalIgnoreCase))
+                {
+                    AddParameter(parameters, "mode", mode);
+                }
+                break;
         }
 
         return string.Join("&", parameters);
+    }
+
+    private static string? FirstNonEmpty(IEnumerable<string?> values)
+    {
+        return values.FirstOrDefault(value => !string.IsNullOrEmpty(value));
     }
 
     private static void AddParameter(List<string> parameters, string key, string? value, bool escape = false)
@@ -166,6 +192,8 @@ public class VlessLinkService(
         public XuiWsSettings? WsSettings { get; set; }
 
         public XuiGrpcSettings? GrpcSettings { get; set; }
+
+        public XuiXhttpSettings? XhttpSettings { get; set; }
     }
 
     private sealed class XuiTlsSettings
@@ -184,6 +212,50 @@ public class VlessLinkService(
         public string? PublicKey { get; set; }
 
         public string? ShortId { get; set; }
+
+        public List<string>? ServerNames { get; set; }
+
+        public List<string>? ShortIds { get; set; }
+
+        public XuiRealityClientSettings? Settings { get; set; }
+
+        public string? ResolveServerName()
+        {
+            return FirstNonEmpty([ServerName, Settings?.ServerName, .. (ServerNames ?? [])]);
+        }
+
+        public string? ResolveFingerprint()
+        {
+            return FirstNonEmpty([Fingerprint, Settings?.Fingerprint]);
+        }
+
+        public string? ResolvePublicKey()
+        {
+            return FirstNonEmpty([PublicKey, Settings?.PublicKey]);
+        }
+
+        public string? ResolveShortId()
+        {
+            return FirstNonEmpty([ShortId, .. (ShortIds ?? [])]);
+        }
+    }
+
+    private sealed class XuiRealityClientSettings
+    {
+        public string? ServerName { get; set; }
+
+        public string? Fingerprint { get; set; }
+
+        public string? PublicKey { get; set; }
+    }
+
+    private sealed class XuiXhttpSettings
+    {
+        public string? Path { get; set; }
+
+        public string? Host { get; set; }
+
+        public string? Mode { get; set; }
     }
 
     private sealed class XuiWsSettings

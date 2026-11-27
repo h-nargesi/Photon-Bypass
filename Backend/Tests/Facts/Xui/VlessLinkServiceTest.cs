@@ -13,11 +13,14 @@ using PhotonBypass.Xui.WebService;
 namespace PhotonBypass.Test.Facts.Xui;
 
 /// <summary>
-/// Fixture-driven tests for the vless link builder (Docs/16 D4): the stream
-/// settings below mirror the alireza0/x-ui v1.14.0 inbound payload shapes,
-/// where `streamSettings` is a nested JSON string. The parser accepts both the
-/// camelCase keys of the panel payload and the PascalCase variants seen in
-/// exported configs.
+/// Fixture-driven tests for the vless link builder (Docs/16 D4), where
+/// `streamSettings` is a nested JSON string. The ws/tcp/grpc fixtures use the
+/// flat client-config key layout; the XHTTP + REALITY fixtures mirror the
+/// alireza0/x-ui v1.14.0 panel payload, which keeps the REALITY client half
+/// under `realitySettings.settings` beside the server-side `serverNames` and
+/// `shortIds` lists (Docs/24 §5.2). The parser accepts both layouts and both
+/// the camelCase keys of the panel payload and the PascalCase variants seen
+/// in exported configs.
 /// </summary>
 public class VlessLinkServiceTest : UnitLevelServiceInitializer
 {
@@ -121,6 +124,121 @@ public class VlessLinkServiceTest : UnitLevelServiceInitializer
     }
 
     [Fact]
+    public void Build_XhttpReality_PanelShape_ProducesFullShareLink()
+    {
+        var inbound = new XuiInboundModel
+        {
+            Id = 3,
+            Port = 443,
+            Protocol = "vless",
+            StreamSettings = """
+                {"network":"xhttp","security":"reality",
+                 "realitySettings":{"show":false,"xver":0,"dest":"xui.test.local:443",
+                     "serverNames":["xui.test.local","alt.test.local"],
+                     "shortIds":["","0123456789abcdef"],
+                     "settings":{"publicKey":"pbk-value","fingerprint":"chrome","serverName":"","spiderX":"/"}},
+                 "xhttpSettings":{"path":"/xhttp-path","host":"xui.test.local","mode":"auto",
+                     "extra":{"scMinPostsIntervalMs":10}}}
+                """,
+        };
+
+        var link = VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
+
+        link.Should().Be(
+            $"vless://{ClientUuid}@xui.test.local:443" +
+            "?encryption=none&type=xhttp&security=reality" +
+            "&sni=xui.test.local&fp=chrome&pbk=pbk-value&sid=0123456789abcdef" +
+            "&path=%2Fxhttp-path&host=xui.test.local#User3");
+    }
+
+    [Fact]
+    public void Build_XhttpReality_ClientHalfServerNameWinsOverTheServerList()
+    {
+        var inbound = new XuiInboundModel
+        {
+            Id = 3,
+            Port = 443,
+            Protocol = "vless",
+            StreamSettings = """
+                {"network":"xhttp","security":"reality",
+                 "realitySettings":{"serverNames":["alt.test.local"],
+                     "settings":{"publicKey":"pbk-value","serverName":"sni.test.local"}},
+                 "xhttpSettings":{"path":"/","host":"sni.test.local"}}
+                """,
+        };
+
+        var link = VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
+
+        link.Should().Be(
+            $"vless://{ClientUuid}@xui.test.local:443" +
+            "?encryption=none&type=xhttp&security=reality&sni=sni.test.local&pbk=pbk-value" +
+            "&path=%2F&host=sni.test.local#User3");
+    }
+
+    [Fact]
+    public void Build_XhttpTls_CarriesPathHostAndTheExplicitMode()
+    {
+        var inbound = new XuiInboundModel
+        {
+            Id = 3,
+            Port = 443,
+            Protocol = "vless",
+            StreamSettings = """
+                {"network":"xhttp","security":"tls",
+                 "tlsSettings":{"serverName":"cdn.test.local","fingerprint":"chrome"},
+                 "xhttpSettings":{"path":"/cdn","host":"cdn.test.local","mode":"stream-one"}}
+                """,
+        };
+
+        var link = VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
+
+        link.Should().Be(
+            $"vless://{ClientUuid}@xui.test.local:443" +
+            "?encryption=none&type=xhttp&security=tls&sni=cdn.test.local&fp=chrome" +
+            "&path=%2Fcdn&host=cdn.test.local&mode=stream-one#User3");
+    }
+
+    [Fact]
+    public void Build_PascalCasePanelShape_IsAccepted()
+    {
+        var inbound = new XuiInboundModel
+        {
+            Id = 3,
+            Port = 443,
+            Protocol = "vless",
+            StreamSettings =
+                """{"Network":"xhttp","Security":"reality","RealitySettings":{"ServerNames":["s.example"],"ShortIds":["sid-value"],"Settings":{"PublicKey":"pbk-value","Fingerprint":"chrome"}},"XhttpSettings":{"Path":"/p","Host":"h.example"}}""",
+        };
+
+        var link = VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
+
+        link.Should().Contain("type=xhttp&security=reality&sni=s.example&fp=chrome&pbk=pbk-value&sid=sid-value&path=%2Fp&host=h.example");
+    }
+
+    [Fact]
+    public void Build_Reality_FlatKeysWinOverThePanelClientHalf()
+    {
+        var inbound = new XuiInboundModel
+        {
+            Id = 3,
+            Port = 443,
+            Protocol = "vless",
+            StreamSettings = """
+                {"network":"tcp","security":"reality",
+                 "realitySettings":{"serverName":"flat.example","publicKey":"flat-key","shortId":"flat-sid",
+                     "serverNames":["list.example"],"shortIds":["list-sid"],
+                     "settings":{"publicKey":"nested-key","serverName":"nested.example"}}}
+                """,
+        };
+
+        var link = VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
+
+        link.Should().Be(
+            $"vless://{ClientUuid}@xui.test.local:443" +
+            "?encryption=none&type=tcp&security=reality&sni=flat.example&pbk=flat-key&sid=flat-sid#User3");
+    }
+
+    [Fact]
     public void Build_WithoutStreamSettings_FallsBackToPlainTcp()
     {
         var inbound = new XuiInboundModel { Id = 3, Port = 1080, Protocol = "vless", StreamSettings = null };
@@ -181,6 +299,22 @@ public class VlessLinkServiceTest : UnitLevelServiceInitializer
         var action = () => VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
 
         action.Should().Throw<Exception>().WithMessage("*security is not supported*");
+    }
+
+    [Fact]
+    public void Build_RealityWithoutPublicKey_FailsLoud()
+    {
+        var inbound = new XuiInboundModel
+        {
+            Id = 3,
+            Port = 443,
+            Protocol = "vless",
+            StreamSettings = """{"network":"xhttp","security":"reality","realitySettings":{"serverNames":["s.example"],"shortIds":["sid-value"]}}""",
+        };
+
+        var action = () => VlessLinkService.Build(Server, inbound, ClientUuid, "User3");
+
+        action.Should().Throw<Exception>().WithMessage("*public key is missing*");
     }
 
     [Fact]

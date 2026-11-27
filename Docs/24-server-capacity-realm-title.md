@@ -85,14 +85,22 @@ server goes live in the panel.
    through the pooled SSH session (`Backend/ServerBridge/Tunnel/`); rows
    without `Transport` keep the direct path. Still open under Docs/25: the
    VM-tier integration tests and the first-publish host verification.
-2. **Link builder gaps.** `VlessLinkService` accepts `tcp/ws/grpc` +
-   `none/tls/reality` only and reads the REALITY link fields from fixed flat
-   keys (`realitySettings.serverName/fingerprint/publicKey/shortId`). The
-   deployed user inbound is XHTTP + REALITY with `publicKey`/`fingerprint` under
-   `realitySettings.settings`, the server name in `xhttpSettings.host`,
-   `shortIds` as a list and the link address in `externalProxy` — a link for
-   that shape is refused or mis-built until the builder learns it. OpenVPN
-   remains gated (`SetOVpnCertificate` is `NotImplementedException`).
+2. **Link builder gaps.** **Closed in code (2026-11-27) for the deployed
+   shape:** `VlessLinkService` accepts `tcp/ws/grpc/xhttp` + `none/tls/reality`
+   and resolves the REALITY link fields from the flat keys of client-style
+   configs (`realitySettings.serverName/fingerprint/publicKey/shortId`) first
+   and then from the panel's own shape — `publicKey`/`fingerprint` under
+   `realitySettings.settings`, the SNI from there or the first `serverNames`
+   entry, `sid` from the first non-empty `shortIds` entry; `xhttp` carries
+   `path`/`host` from `xhttpSettings` and `mode` only when it is not the
+   client default `auto`. A REALITY inbound without a public key now fails
+   loud instead of yielding a link no client can use. **Still open:** the
+   link address is the server row's `DomainName`/`IpAddress` plus the inbound
+   port (Docs/16 D4); the inbound's `externalProxy` is not read, so a realm
+   whose user-facing address or port differs from the server row needs either
+   the server row's `DomainName` set accordingly or a decision to honour
+   `externalProxy`. OpenVPN remains gated (`SetOVpnCertificate` is
+   `NotImplementedException`).
 3. **User Manager credential import.** The OpenVPN server's User Manager users
    exist only on the router. Importing them into the panel needs a policy on
    passwords (they are visible only through `print show-sensitive`; storing or
