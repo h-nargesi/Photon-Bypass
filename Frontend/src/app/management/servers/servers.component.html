@@ -109,7 +109,11 @@
                   [cTooltip]="'management.servers.actions.edit' | translate" (click)="openEdit(row)">
                   <svg [cIcon]="icons.cilPencil"></svg>
                 </button>
-                <button cButton size="sm" color="light" [disabled]="busy"
+                <button cButton size="sm" color="light" [disabled]="busy || testing"
+                  [cTooltip]="'management.servers.actions.test-connection' | translate" (click)="testRow(row)">
+                  <svg [cIcon]="icons.cilMediaPlay"></svg>
+                </button>
+                <button cButton size="sm" color="light" [disabled]="busy || testing"
                   [cTooltip]="'management.servers.actions.toggle-active' | translate" (click)="toggleActive(row)">
                   <svg [cIcon]="row.isActive ? icons.cilXCircle : icons.cilCheckCircle"></svg>
                 </button>
@@ -195,18 +199,95 @@
       }
     </div>
 
+    <c-input-group class="mb-3">
+      <span cInputGroupText>{{ "management.servers.transport.label" | translate }}</span>
+      <select cFormControl [(ngModel)]="transport" (ngModelChange)="onTransportChange()">
+        @for (option of transports; track option) {
+          <option [ngValue]="option">{{ transportTitle(option) }}</option>
+        }
+      </select>
+    </c-input-group>
+
     <p class="mb-1">
       {{ (edit_id === 0 ? "management.servers.modals.config" : "management.servers.modals.config-keep") | translate }}
     </p>
-    <textarea class="form-control ltr w-100" rows="5" [(ngModel)]="config_text"
+    <textarea class="form-control ltr w-100" rows="9" [(ngModel)]="config_text" (ngModelChange)="onConfigChange()"
       [placeholder]="'management.servers.modals.config-placeholder' | translate"></textarea>
   </c-modal-body>
   <c-modal-footer>
     <button cButton color="secondary" (click)="edit_visible = false">
       {{ "management.modals.cancel" | translate }}
     </button>
-    <button cButton color="primary" [disabled]="busy" (click)="submit()">
+    <button cButton color="info" [disabled]="busy || testing" (click)="testForm()">
+      {{ "management.servers.modals.test-form" | translate }}
+    </button>
+    <button cButton color="primary" [disabled]="busy || testing" (click)="submit()">
       {{ "management.modals.submit" | translate }}
+    </button>
+  </c-modal-footer>
+</c-modal>
+
+<!-- connection test (Docs/25 D8–D9): the steps in the order they ran -->
+<c-modal [(visible)]="test_visible" [scrollable]="true">
+  <c-modal-header>
+    <h5 cModalTitle>{{ "management.servers.modals.test-title" | translate }}</h5>
+    <button cButtonClose (click)="test_visible = false"></button>
+  </c-modal-header>
+  <c-modal-body>
+    @if (test_state === 'running') {
+      <c-spinner color="primary" size="sm" class="me-2"></c-spinner>
+      {{ "management.servers.test.running" | translate }}
+    } @else if (test_state === 'error') {
+      <c-badge color="danger">{{ "management.servers.test.error" | translate }}</c-badge>
+    } @else {
+      @if (test_report; as report) {
+        <p class="mb-3">
+          <c-badge [color]="test_state === 'passed' ? 'success' : 'danger'">
+            {{ (test_state === 'passed' ? "management.servers.test.passed" : "management.servers.test.failed") | translate }}
+          </c-badge>
+          @if (report.machineName) {
+            <small class="ms-2 text-body-secondary">
+              {{ "management.servers.test.machine" | translate: [report.machineName] }}
+            </small>
+          }
+        </p>
+
+        <ul class="list-group mb-3">
+          @for (step of report.steps; track $index) {
+            <li class="list-group-item d-flex gap-2">
+              <svg class="step-icon flex-shrink-0" [cIcon]="step.passed ? icons.cilCheckCircle : icons.cilXCircle"
+                [class.text-success]="step.passed" [class.text-danger]="!step.passed"></svg>
+              <div>
+                <div>{{ stepTitle(step.step) }}</div>
+                @if (step.detail) {
+                  <div class="text-body-secondary">{{ step.detail }}</div>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+
+        @if (can_apply_host_key) {
+          <div class="alert alert-warning mb-0">
+            <p class="mb-1 small">{{ "management.servers.test.discovered" | translate }}</p>
+            <div class="ltr">{{ report.hostKeySha256 }}</div>
+            <button cButton color="warning" size="sm" class="mt-2" (click)="applyHostKey()">
+              {{ "management.servers.test.apply-host-key" | translate }}
+            </button>
+          </div>
+        } @else if (report.hostKeySha256) {
+          <div class="alert alert-warning mb-0">
+            <p class="mb-1 small">{{ "management.servers.test.discovered" | translate }}</p>
+            <div class="ltr">{{ report.hostKeySha256 }}</div>
+            <p class="mb-0 mt-1 small">{{ "management.servers.test.apply-host-key-hint" | translate }}</p>
+          </div>
+        }
+      }
+    }
+  </c-modal-body>
+  <c-modal-footer>
+    <button cButton color="secondary" (click)="test_visible = false">
+      {{ "management.modals.cancel" | translate }}
     </button>
   </c-modal-footer>
 </c-modal>

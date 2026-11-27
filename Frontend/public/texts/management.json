@@ -105,8 +105,14 @@
       "Ovpn": "OpenVPN",
       "V2ray": "V2Ray"
     },
+    "transport": {
+      "label": "نحوه‌ی اتصال",
+      "Direct": "مستقیم (Direct)",
+      "SshTunnel": "تانل SSH (SshTunnel)"
+    },
     "actions": {
       "edit": "ویرایش",
+      "test-connection": "تست اتصال",
       "toggle-active": "فعال / غیرفعال"
     },
     "modals": {
@@ -115,7 +121,26 @@
       "config": "کانفیگ سرور (JSON):",
       "config-keep": "کانفیگ جدید (JSON) — خالی بماند تا کانفیگ فعلی حفظ شود:",
       "config-placeholder": "{ \"sshConfig\": { ... } }",
-      "capacity-hint": "حجم ترافیکی که این سرور در بازه‌ی ۳۰ روزه می‌تواند بفروشد."
+      "capacity-hint": "حجم ترافیکی که این سرور در بازه‌ی ۳۰ روزه می‌تواند بفروشد.",
+      "test-form": "تست اتصال همین فرم",
+      "test-title": "تست اتصال"
+    },
+    "test": {
+      "running": "در حال تست؛ ممکن است چند ثانیه طول بکشد...",
+      "passed": "اتصال برقرار شد",
+      "failed": "اتصال برقرار نشد",
+      "error": "تست اجرا نشد؛ پیام خطا را بررسی کنید.",
+      "machine": "اجرا روی میزبان: {0}",
+      "steps": {
+        "tcp": "اتصال TCP به پورت SSH",
+        "host-key": "کلید میزبان (host key)",
+        "auth": "احراز هویت SSH",
+        "forward": "کانال تانل",
+        "service": "ورود به سرویس"
+      },
+      "discovered": "اثر انگشت کلید میزبان که سرور ارائه داد:",
+      "apply-host-key": "ثبت این اثر انگشت در کانفیگ",
+      "apply-host-key-hint": "برای ثبت، در ویرایش سرور این مقدار را در sshConfig.hostKeySha256 کانفیگ بنویسید و دوباره تست کنید."
     },
     "messages": {
       "no-rows": "سروری ثبت نشده است.",
