@@ -400,7 +400,7 @@ FodyWeavers.xsd
 *.sln.iml
 
 # Production secrets (Plesk vhost private folder) and machine-local production config
-**/private/secrets.json
+**/[Pp]rivate/secrets.json
 appsettings.Production.json
 
 # Deploy script logs (Scripts/deploy.sh)
