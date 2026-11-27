@@ -14,6 +14,7 @@ using tik4net.Objects;
 
 namespace PhotonBypass.Test.Facts.Mikrotik;
 
+[Collection(MikrotikBaseTestCollection.Name)]
 public class SyncUserActiveInactiveRemoveTest : OutSourceLevelServiceInitializer
 {
     private const string TestPackage1 = "Mikrotik-Base";

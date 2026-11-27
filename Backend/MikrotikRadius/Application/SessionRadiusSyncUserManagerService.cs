@@ -12,6 +12,9 @@ namespace PhotonBypass.Mikrotik.Radius.Application;
 
 public class SessionRadiusSyncUserManagerService(ITik4NetHandler handler) : IInfraSessionRadiusSyncService
 {
+    private static readonly string CloseSessionCommand =
+        TikEntityMetadataCache.GetMetadata<SessionModel>().EntityPath + "/close-session";
+
     public async Task<List<UserConnectionBinding>> GetActiveConnections(ServerEntity radius, string username)
     {
         if (string.IsNullOrEmpty(username) || !InjectionRegex.Username().Match(username).Success)
@@ -51,7 +54,7 @@ public class SessionRadiusSyncUserManagerService(ITik4NetHandler handler) : IInf
 
         foreach (var session in session_list)
         {
-            connection.ExecuteNonQuery("close-session",
+            connection.ExecuteNonQuery(CloseSessionCommand,
                 TikParam.Equal<SessionModel>(nameof(SessionModel.Id), $"*{session.Id}"));
         }
     }
@@ -70,7 +73,7 @@ public class SessionRadiusSyncUserManagerService(ITik4NetHandler handler) : IInf
 
         foreach (var session in session_list)
         {
-            connection.ExecuteNonQuery("close-session",
+            connection.ExecuteNonQuery(CloseSessionCommand,
                 TikParam.Equal<SessionModel>(nameof(SessionModel.Id), $"*{session.Id}"));
         }
     }

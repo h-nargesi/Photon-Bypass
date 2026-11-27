@@ -224,7 +224,7 @@ public class XuiPanelClientLifecycleTest : OutSourceLevelServiceInitializer
         stream.GetProperty("wsSettings").GetProperty("path").GetString().Should().NotBeNullOrEmpty();
     }
 
-    private static XuiClientModel Client(
+    internal static XuiClientModel Client(
         string email, string uuid, long total_gb = 0, long expiry = 0, int limit_ip = 0)
     {
         return new XuiClientModel

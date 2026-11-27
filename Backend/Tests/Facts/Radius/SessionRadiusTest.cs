@@ -1,15 +1,44 @@
+using System.Collections.Concurrent;
 using PhotonBypass.Domain.Plan;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Domain.Servers.Types;
+using PhotonBypass.Infra.Radius;
 using PhotonBypass.Mikrotik.Radius.Model;
 using PhotonBypass.ServerBridge.Services;
 using PhotonBypass.Test.Initializer;
+using PhotonBypass.Test.Mock.MockServerBridge;
+using tik4net;
 using tik4net.Objects;
 
 namespace PhotonBypass.Test.Facts.Radius;
 
 public class SessionRadiusTest : UnitLevelServiceInitializer
 {
+    [Fact]
+    public async Task CloseConnectionByUsername_SendsTheCommandUnderItsMenuPath()
+    {
+        using var scope = App.Services.CreateScope();
+        var executed = new ConcurrentQueue<(string Command, List<ITikCommandParameter> Parameters)>();
+        scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>().OnExecute += (command_text, parameters) =>
+            executed.Enqueue((command_text, parameters));
+
+        // Server3 carries four User3 sessions in the fixture
+        var radius = new ServerEntity { Id = 3, Name = "Server3" };
+
+        await scope.ServiceProvider
+            .GetRequiredKeyedService<IInfraSessionRadiusSyncService>(RadiusType.UserManager)
+            .CloseConnectionByUsername(radius, "User3");
+
+        // tik4net prefixes a bare command with '/': RouterOS knows close-session only
+        // under /user-manager/session, a bare one answers "no such command or directory"
+        var commands = executed.Select(entry => entry.Command).ToArray();
+
+        Assert.Equal(4, commands.Length);
+        Assert.All(commands, command => Assert.Equal("/user-manager/session/close-session", command));
+        Assert.Equal(["*12", "*13", "*27", "*30"], executed.Select(entry => entry.Parameters.Single().Value).ToArray());
+    }
+
     [Fact]
     public async Task GetTrafficData_DisableRealm_OnlyRadiusServersAreQueried()
     {

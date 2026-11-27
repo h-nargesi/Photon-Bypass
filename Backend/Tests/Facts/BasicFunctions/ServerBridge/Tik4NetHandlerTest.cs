@@ -137,6 +137,23 @@ public class Tik4NetHandlerTest
     }
 
     [Fact]
+    public async Task TikConnectionOpener_NeverUsesTheSynchronousOpen()
+    {
+        // the vendored synchronous Open pins SslProtocols.Tls, which an API-SSL server
+        // that no longer speaks TLS 1.0 refuses; the strict mock fails any call but the
+        // asynchronous open
+        var connection = new Mock<ITikConnection>(MockBehavior.Strict);
+
+        connection.Setup(c => c.OpenAsync(
+                It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(Task.CompletedTask);
+
+        await TikConnectionOpener.OpenAsync(connection.Object, "10.0.0.7", 8729, "admin", "api-secret", TimeSpan.FromSeconds(5));
+
+        connection.Verify(c => c.OpenAsync("10.0.0.7", 8729, "admin", "api-secret"), Times.Once);
+    }
+
+    [Fact]
     public async Task Direct_OpenTimeout_LeavesAConnectUserException_AndDisposes()
     {
         connection.Setup(c => c.OpenAsync(

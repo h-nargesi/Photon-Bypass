@@ -9,10 +9,21 @@
 #
 # Stages:
 #   setup                 build Base + Scenario, import the reference exports,
-#                         verify, poweroff and take the clean-test-state snapshots
+#                         verify, apply the tunnel/OpenVPN fixtures, poweroff and
+#                         take the clean-test-state snapshots
+#   provision [base|scenario|all]
+#                         apply the fixtures (Docs/25 §5.2–§5.3) to the existing,
+#                         running or stopped VMs: the recorded host-key pin and the
+#                         OpenVPN PKI on both, the tunnel user on Base. Leaves the
+#                         VMs running; changes nothing on the snapshots
+#   refresh [base|scenario|all]
+#                         replace each clean-test-state snapshot with one that
+#                         already carries the fixtures: poweroff -> snapshot restore
+#                         -> start -> fixtures -> verify -> poweroff -> take, delete
+#                         the old one, rename (the VM never has zero snapshots)
 #   reset [base|scenario|all]   poweroff -> snapshot restore -> start headless -> SSH poll
 #   start|stop [base|scenario|all]
-#   status                registration / state / snapshot summary
+#   status                registration / state / snapshot / fixture summary
 #   clean                 unregister + delete both VMs (confirmation required)
 #
 # Configuration (environment variables, all optional):
@@ -29,6 +40,15 @@
 #                                                 the single source of config truth,
 #                                                 so it may redefine the admin
 #                                                 credentials (default: admin/admin)
+#   MIKROTIK_TUNNEL_USER                           user of the SSH tunnel fixture on
+#                                                 Base (default panel): of the
+#                                                 five-policy group, key login for
+#                                                 SSH; MIKROTIK_TUNNEL_PASSWORD
+#                                                 (default panel.test.123456) is what
+#                                                 the API takes
+#   MIKROTIK_TUNNEL_GROUP                          name of that group (default photon-panel)
+#   MIKROTIK_TUNNEL_KEY_NAME                       file name of that user's key under the
+#                                                 key directory (default panel-tunnel-key)
 #   MIKROTIK_BASE_EXPORT        (required for setup) path to `/export show-sensitive`
 #                                of the current Base VM (default: the committed test
 #                                fixture Scripts/mikrotik-base.rsc — confirmed test
@@ -91,13 +111,19 @@
 # the repo already carries test credentials in Backend/Tests). They are still
 # never echoed into the log file: import output is kept in the cache dir, outside
 # the repo. The bootstrap/SSH passwords travel via the SSHPASS environment
-# variable (sshpass -e), never on command lines.
+# variable (sshpass -e), never on command lines; RouterOS commands that embed the
+# tunnel password are reported under a label, never as typed.
+#
+# The tunnel key and the recorded host-key pins live outside the repo in
+# ${XDG_DATA_HOME:-~/.local/share}/photon-bypass/mikrotik-test-vms and are read by
+# the tunnel tests (Backend/Tests/appsettings.json, TestVmOptions).
 set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
 LOG_DIR="$SCRIPT_DIR/logs"
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/photon-bypass/mikrotik-test-vms"
+KEY_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/photon-bypass/mikrotik-test-vms"
 
 # --- defaults ---------------------------------------------------------------------
 
@@ -125,7 +151,20 @@ VBOXMANAGE=${VBOXMANAGE:-VBoxManage}
 VM_CPUS=${VM_CPUS:-2}
 VM_MEMORY_MB=${VM_MEMORY_MB:-512}
 SNAPSHOT=${SNAPSHOT:-clean-test-state}
+# working name of the fixture snapshot a refresh takes before it replaces SNAPSHOT
+FIXTURE_SNAPSHOT=${FIXTURE_SNAPSHOT:-tunnel-fixture-state}
 API_PORT=${API_PORT:-8728}
+
+# SSH tunnel fixture of Base (Docs/25 §5.2)
+MIKROTIK_TUNNEL_USER=${MIKROTIK_TUNNEL_USER:-panel}
+MIKROTIK_TUNNEL_PASSWORD=${MIKROTIK_TUNNEL_PASSWORD:-panel.test.123456}
+MIKROTIK_TUNNEL_GROUP=${MIKROTIK_TUNNEL_GROUP:-photon-panel}
+# exactly five policies: ssh + api (the panel's legs), read + write (its work), sensitive (key export)
+MIKROTIK_TUNNEL_POLICIES=${MIKROTIK_TUNNEL_POLICIES:-ssh,api,read,write,sensitive}
+MIKROTIK_TUNNEL_KEY_NAME=${MIKROTIK_TUNNEL_KEY_NAME:-panel-tunnel-key}
+# OpenVPN PKI the panel's certificate flow signs with (Docs/25 §5.3)
+MIKROTIK_OVPN_CA=${MIKROTIK_OVPN_CA:-LMTCA}
+MIKROTIK_OVPN_CLIENT_TEMPLATE=${MIKROTIK_OVPN_CLIENT_TEMPLATE:-CLIENT-TEMPLATE}
 
 # serial bootstrap: the first-login dialog is keyed — the driver answers each
 # observed prompt (login, license, forced password change, command prompt) —
@@ -212,11 +251,16 @@ scp_to() { # $1=ip, $2=password, $3=local file, $4=remote name
     SSHPASS="$password" sshpass -e scp "${ssh_opts[@]}" "$file" "$MIKROTIK_SSH_USER@$ip:$remote"
 }
 
-require_tools() {
+require_runtime_tools() { # every stage that talks to the routers
     command -v "$VBOXMANAGE" >/dev/null 2>&1 || die "VBoxManage not found (env VBOXMANAGE can point at it)"
     command -v sshpass >/dev/null 2>&1 || die "sshpass not found — install it first (Debian/Ubuntu: apt-get install sshpass)"
     command -v ssh >/dev/null 2>&1 || die "ssh not found"
     command -v scp >/dev/null 2>&1 || die "scp not found"
+    command -v ssh-keygen >/dev/null 2>&1 || die "ssh-keygen not found"
+}
+
+require_tools() { # setup: the runtime tools plus the image build chain and the serial bootstrap
+    require_runtime_tools
     command -v qemu-img >/dev/null 2>&1 || die "qemu-img not found (Debian/Ubuntu: apt-get install qemu-utils)"
     command -v python3 >/dev/null 2>&1 || die "python3 not found — required for the keyed serial bootstrap"
 }
@@ -243,6 +287,60 @@ poweroff_vm() {
         sleep 2
     else
         log "vm $1 is not running"
+    fi
+}
+
+wait_state_off() { # $1=vm, $2=timeout-seconds
+    local start
+    start=$(date +%s)
+    while [ $(( $(date +%s) - start )) -lt "$2" ]; do
+        if ! vm_running "$1"; then
+            return 0
+        fi
+        sleep 3
+    done
+    return 1
+}
+
+graceful_poweroff() { # $1=vm, $2=ip — a clean shutdown before a snapshot; hard poweroff only as the fallback
+    # /system shutdown ends the session it rides on: its failure is expected
+    ssh_run "$2" "$MIKROTIK_SSH_PASSWORD" '/system shutdown' >/dev/null 2>&1 || true
+    if wait_state_off "$1" 60; then
+        return
+    fi
+    log "graceful shutdown of $1 timed out — powering off"
+    poweroff_vm "$1"
+}
+
+has_snapshot() { # $1=vm, $2=snapshot name
+    vbox_quiet snapshot "$1" list --machinereadable \
+        | grep -Eq "^SnapshotName(-[0-9]+)?=\"$2\"\$"
+}
+
+free_local_port() { # prints a loopback TCP port nothing listens on (for the forward check of the script)
+    local port
+    for port in $(seq 28870 28899); do
+        if ! timeout 1 bash -c "</dev/tcp/127.0.0.1/$port" 2>/dev/null; then
+            printf '%s\n' "$port"
+            return 0
+        fi
+    done
+    return 1
+}
+
+vm_ip() { # $1=vm name -> its host-only address
+    if [ "$1" = "$MIKROTIK_SCENARIO_NAME" ]; then
+        printf '%s\n' "$MIKROTIK_SCENARIO_IP"
+    else
+        printf '%s\n' "$MIKROTIK_BASE_IP"
+    fi
+}
+
+vm_scope() { # $1=vm name -> its scope word
+    if [ "$1" = "$MIKROTIK_SCENARIO_NAME" ]; then
+        printf 'scenario\n'
+    else
+        printf 'base\n'
     fi
 }
 
@@ -609,7 +707,8 @@ print_config_snippet() {
 OK — test VMs ready. TestVmOptions snippet for Backend/Tests/appsettings.json:
 
   "TestVmOptions": {
-    "$MIKROTIK_BASE_NAME":     { "Ip": "$MIKROTIK_BASE_IP", "Username": "$MIKROTIK_SSH_USER", "Password": "$MIKROTIK_SSH_PASSWORD", "ApiPort": $API_PORT },
+    "$MIKROTIK_BASE_NAME":     { "Ip": "$MIKROTIK_BASE_IP", "Username": "$MIKROTIK_SSH_USER", "Password": "$MIKROTIK_SSH_PASSWORD", "ApiPort": $API_PORT,
+                                 ...tunnel fields below... },
     "$MIKROTIK_SCENARIO_NAME": { "Ip": "$MIKROTIK_SCENARIO_IP", "Username": "$MIKROTIK_SSH_USER", "Password": "$MIKROTIK_SSH_PASSWORD", "ApiPort": $API_PORT }
   }
 
@@ -618,6 +717,227 @@ Machine overrides without code changes (also work for dotnet test):
   TestVmOptions__${MIKROTIK_SCENARIO_NAME}__Ip=$MIKROTIK_SCENARIO_IP
 
 Snapshot semantics for both VMs: '$SNAPSHOT' (tests restore it per run via MikrotikInitializer).
+EOF
+    print_tunnel_fixture
+}
+
+# --- RouterOS fixtures (Docs/25 §5.2–§5.3) -------------------------------------------
+#
+# The panel reaches a router's User Manager API through an SSH loopback port-forward,
+# and signs OpenVPN client certificates with a CA kept on the router. Two fixtures
+# make both testable on the local VMs:
+#   - the OpenVPN PKI, on both routers: a signed CA and an unsigned client template,
+#     the two names MikrotikDirectService works with;
+#   - the tunnel user, on Base: a five-policy group, key login over SSH, and local
+#     port-forwarding enabled. Its password is the API password.
+# Nothing here rotates the router's host key — the pin is only recorded, as the
+# fingerprint the router already presents. Keys and pins live outside the repo.
+#
+# RouterOS reports a failed command as text on stdout, usually with exit status 0
+# or 1, and stops a `;`-joined line at its first error: so one command per call,
+# through ros(), which knows the panel's error patterns (RouterOsErrorPatterns).
+
+ros() { # $1=ip, $2=one RouterOS command, $3=label for errors (pass one for a command that embeds a password)
+    local ip=$1 command=$2 label=${3:-$2} output status=0
+    output=$(ssh_run "$ip" "$MIKROTIK_SSH_PASSWORD" "$command") || status=$?
+    case "$status" in
+        0 | 1) ;;
+        *) die "ssh to $ip ended with status $status for: $label" ;;
+    esac
+    if printf '%s\n' "$output" | grep -Eqi '^(failure: |expected end of command|not enough permissions|no such item|bad command name|syntax error)'; then
+        die "RouterOS rejected '$label' on $ip: $(printf '%s' "$output" | head -n 1)"
+    fi
+    [ "$status" -eq 0 ] || die "RouterOS ended '$label' on $ip with status $status and no error text"
+    printf '%s\n' "$output"
+}
+
+ros_rows() { # $1=ip, $2=a `print where …` command -> the matching rows without their headers
+    local output
+    output=$(ssh_run "$1" "$MIKROTIK_SSH_PASSWORD" "$2") || return 1
+    # a wide print starts its column header with '#', a terse one names its columns
+    printf '%s\n' "$output" | sed '/^[[:space:]]*#/d; /^[[:space:]]*Flags:/d; /^[[:space:]]*Columns:/d'
+}
+
+ros_has() { # $1=ip, $2=a `print where …` command — succeeds when at least one row matches
+    ros_rows "$1" "$2" | grep -q '[^[:space:]]'
+}
+
+tunnel_key() { # the key of the tunnel user
+    local key="$KEY_DIR/$MIKROTIK_TUNNEL_KEY_NAME"
+    mkdir -p "$KEY_DIR"
+    if [ ! -f "$key" ]; then
+        note "generating SSH keypair '$MIKROTIK_TUNNEL_KEY_NAME' (kept in $KEY_DIR)"
+        ssh-keygen -q -t ed25519 -N '' -C photon-test -f "$key"
+    fi
+    printf '%s\n' "$key"
+}
+
+tunnel_pin_file() { # $1=vm — where its host-key pin is recorded
+    printf '%s\n' "$KEY_DIR/$1.hostkey"
+}
+
+fixture_file() { # $1=file under KEY_DIR -> its path relative to the key root, the form TestVmOptions resolves
+    realpath --relative-to="$(dirname "$KEY_DIR")" "$1"
+}
+
+ssh_run_as() { # $1=user, $2=ip, rest=remote command — with the tunnel key
+    local user=$1 ip=$2
+    shift 2
+    ssh -i "$(tunnel_key)" -o IdentitiesOnly=yes -o BatchMode=yes "${ssh_opts[@]}" "$user@$ip" "$@"
+}
+
+api_answers() { # $1=host, $2=port — succeeds when a RouterOS API there answers a bare /login with !done
+    local reply
+    exec 3<>"/dev/tcp/$1/$2" || return 1
+    # a word is its length (one byte below 0x80) followed by its text; the sentence
+    # ends with one zero byte (as tik4net writes it)
+    printf '\x06/login\x00' >&3 || { exec 3>&- 3<&-; return 1; }
+    reply=''
+    read -r -t 5 -N 6 reply <&3 || true
+    exec 3>&- 3<&-
+    [[ "$reply" == *'!done'* ]]
+}
+
+write_host_key_pin() { # $1=vm, $2=ip — records the fingerprint the router presents: what the panel pins (Docs/25 D4)
+    local pin
+    # one throw-away connection, never authenticated: `ssh -v` prints the presented
+    # key before any authentication (its debug lines end in CRLF)
+    pin=$({ ssh -i "$(tunnel_key)" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -v "$MIKROTIK_SSH_USER@$2" true 2>&1 >/dev/null || true; } \
+        | tr -d '\r' | sed -n 's|^debug1: Server host key: [^ ]* \(SHA256:[A-Za-z0-9+/]\{43\}\)$|\1|p')
+    [[ "$pin" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]] \
+        || die "could not read the host-key fingerprint of $2 — is SSH up on $1?"
+    printf '%s\n' "$pin" >"$(tunnel_pin_file "$1")"
+    log "host-key pin of $1: $pin ($(fixture_file "$(tunnel_pin_file "$1")"))"
+}
+
+apply_tunnel_fixture() { # $1=ip — Base only; safe to repeat
+    local ip=$1 key pub_name
+    key=$(tunnel_key)
+    pub_name=$(basename "$key").pub
+
+    if ! ros_has "$ip" "/user group print where name=\"$MIKROTIK_TUNNEL_GROUP\""; then
+        ros "$ip" "/user group add name=$MIKROTIK_TUNNEL_GROUP policy=$MIKROTIK_TUNNEL_POLICIES" >/dev/null
+    fi
+    if ros_has "$ip" "/user print where name=\"$MIKROTIK_TUNNEL_USER\""; then
+        ros "$ip" "/user set $MIKROTIK_TUNNEL_USER group=$MIKROTIK_TUNNEL_GROUP password=$MIKROTIK_TUNNEL_PASSWORD" \
+            "/user set $MIKROTIK_TUNNEL_USER <password redacted>" >/dev/null
+    else
+        ros "$ip" "/user add name=$MIKROTIK_TUNNEL_USER group=$MIKROTIK_TUNNEL_GROUP password=$MIKROTIK_TUNNEL_PASSWORD" \
+            "/user add $MIKROTIK_TUNNEL_USER <password redacted>" >/dev/null
+    fi
+
+    scp_to "$ip" "$MIKROTIK_SSH_PASSWORD" "$key.pub" "$pub_name" || die "could not copy the tunnel public key to $ip"
+    # the import binds the key to the user and consumes the file; whatever the user
+    # carried before goes first, so a regenerated key heals itself
+    ros "$ip" "/user ssh-keys remove [find user=$MIKROTIK_TUNNEL_USER]" >/dev/null
+    ros "$ip" "/user ssh-keys import public-key-file=$pub_name user=$MIKROTIK_TUNNEL_USER" >/dev/null
+    ros "$ip" "/file remove [find name=\"$pub_name\"]" >/dev/null
+    # a key on the *admin* user would end its password login (always-allow-password-login=no)
+    ssh_run "$ip" "$MIKROTIK_SSH_PASSWORD" '/system identity print' >/dev/null 2>&1 \
+        || die "the admin password login stopped working on $ip after the key import"
+
+    ros "$ip" "/ip ssh set forwarding-enabled=local" >/dev/null
+    log "tunnel user '$MIKROTIK_TUNNEL_USER' bound to its key on $ip; local forwarding enabled"
+}
+
+apply_pki() { # $1=ip — Base and Scenario; safe to repeat
+    local ip=$1 ca_rows
+    ca_rows=$(ros_rows "$ip" "/certificate print where name=\"$MIKROTIK_OVPN_CA\"") \
+        || die "could not read the certificate store on $ip"
+    if [ -z "$(printf '%s' "$ca_rows" | tr -d '[:space:]')" ]; then
+        ros "$ip" "/certificate add name=$MIKROTIK_OVPN_CA common-name=$MIKROTIK_OVPN_CA key-size=2048 key-usage=key-cert-sign,crl-sign days-valid=3650" >/dev/null
+        ros "$ip" "/certificate sign $MIKROTIK_OVPN_CA" >/dev/null
+        log "CA $MIKROTIK_OVPN_CA created on $ip"
+    elif ! printf '%s\n' "$ca_rows" | grep -Eq "^ *[0-9]+ +[A-Z]*A[A-Z]* +$MIKROTIK_OVPN_CA( |$)"; then
+        ros "$ip" "/certificate sign $MIKROTIK_OVPN_CA" >/dev/null
+        log "CA $MIKROTIK_OVPN_CA signed on $ip"
+    else
+        log "CA $MIKROTIK_OVPN_CA present on $ip"
+    fi
+
+    if ros_has "$ip" "/certificate print where name=\"$MIKROTIK_OVPN_CLIENT_TEMPLATE\""; then
+        log "client template $MIKROTIK_OVPN_CLIENT_TEMPLATE present on $ip"
+    else
+        ros "$ip" "/certificate add name=$MIKROTIK_OVPN_CLIENT_TEMPLATE common-name=$MIKROTIK_OVPN_CLIENT_TEMPLATE key-size=2048 key-usage=tls-client days-valid=3650" >/dev/null
+        log "client template $MIKROTIK_OVPN_CLIENT_TEMPLATE created on $ip"
+    fi
+}
+
+verify_pki() { # $1=ip
+    local ip=$1
+    # K = private key, A = authority: the CA is signed
+    ros_rows "$ip" "/certificate print where name=\"$MIKROTIK_OVPN_CA\"" \
+        | grep -Eq "^ *[0-9]+ +[A-Z]*K[A-Z]*A[A-Z]* +$MIKROTIK_OVPN_CA( |$)" \
+        || die "the CA '$MIKROTIK_OVPN_CA' is missing, unsigned or not an authority on $ip"
+    ros_rows "$ip" "/certificate print where name=\"$MIKROTIK_OVPN_CLIENT_TEMPLATE\"" \
+        | grep -Eq "^ *[0-9]+ +([A-Z]+ +)?$MIKROTIK_OVPN_CLIENT_TEMPLATE( |$)" \
+        || die "the client template '$MIKROTIK_OVPN_CLIENT_TEMPLATE' is missing on $ip"
+}
+
+verify_tunnel_fixture() { # $1=ip — the contract points of Docs/25 §5.2
+    local ip=$1 policies port forward_pid answered=false tries=0
+    ssh_run_as "$MIKROTIK_TUNNEL_USER" "$ip" '/system identity print' \
+        | grep -q '^ *name: ' || die "the tunnel key does not log '$MIKROTIK_TUNNEL_USER' in on $ip"
+
+    # `:put` prints the value unwrapped (a `print` wraps it at the terminal width)
+    policies=$(ssh_run "$ip" "$MIKROTIK_SSH_PASSWORD" ":put [/user group get $MIKROTIK_TUNNEL_GROUP policy]" \
+        | tr -d '\r' | tr ';' '\n' | grep -v '^!' | LC_ALL=C sort | tr '\n' ' ') \
+        || die "could not read the group '$MIKROTIK_TUNNEL_GROUP' on $ip"
+    [ "$policies" = "$(printf '%s\n' "$MIKROTIK_TUNNEL_POLICIES" | tr ',' '\n' | LC_ALL=C sort | tr '\n' ' ')" ] \
+        || die "group '$MIKROTIK_TUNNEL_GROUP' must carry exactly $MIKROTIK_TUNNEL_POLICIES on $ip (got: ${policies:-nothing})"
+
+    ros_has "$ip" "/user ssh-keys print where user=$MIKROTIK_TUNNEL_USER" \
+        || die "no ssh key is bound to '$MIKROTIK_TUNNEL_USER' on $ip"
+    ros "$ip" '/ip ssh print' | grep -Eq '^ *forwarding-enabled: local' \
+        || die "ip ssh forwarding-enabled is not 'local' on $ip"
+
+    port=$(free_local_port) || die "no free loopback port for the forward check"
+    ssh -i "$(tunnel_key)" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ExitOnForwardFailure=yes \
+        -o ServerAliveInterval=5 -N -L "127.0.0.1:$port:127.0.0.1:$API_PORT" \
+        "$MIKROTIK_TUNNEL_USER@$ip" &
+    forward_pid=$!
+    while [ "$tries" -lt 20 ] && kill -0 "$forward_pid" 2>/dev/null; do
+        # the listener appears once ssh has authenticated: api_port_open polls quietly
+        if api_port_open 127.0.0.1 "$port" && api_answers 127.0.0.1 "$port"; then
+            answered=true
+            break
+        fi
+        tries=$((tries + 1))
+        sleep 1
+    done
+    kill "$forward_pid" 2>/dev/null || true
+    wait "$forward_pid" 2>/dev/null || true
+    [ "$answered" = true ] || die "the RouterOS API did not answer through the forward on $ip"
+    log "tunnel fixture verified on $ip: key login, exactly $MIKROTIK_TUNNEL_POLICIES, API answering through the forward"
+}
+
+verify_router_fixture() { # $1=vm, $2=ip
+    verify_pki "$2"
+    if [ "$1" = "$MIKROTIK_BASE_NAME" ]; then
+        verify_tunnel_fixture "$2"
+    fi
+}
+
+apply_router_fixture() { # $1=vm, $2=ip — what setup, provision and refresh share
+    write_host_key_pin "$1" "$2"
+    apply_pki "$2"
+    if [ "$1" = "$MIKROTIK_BASE_NAME" ]; then
+        apply_tunnel_fixture "$2"
+    fi
+    verify_router_fixture "$1" "$2"
+}
+
+print_tunnel_fixture() { # the fields the tunnel tests read; the key root is the directory above KEY_DIR
+    cat <<EOF
+
+Tunnel fixture fields of the "$MIKROTIK_BASE_NAME" entry (key root: $(dirname "$KEY_DIR")):
+
+  "TunnelUser": "$MIKROTIK_TUNNEL_USER", "TunnelPassword": "$MIKROTIK_TUNNEL_PASSWORD",
+  "TunnelKeyFile": "$(fixture_file "$(tunnel_key)")", "HostKeyFile": "$(fixture_file "$(tunnel_pin_file "$MIKROTIK_BASE_NAME")")"
+
+Host-key pin of $MIKROTIK_BASE_NAME: $(cat "$(tunnel_pin_file "$MIKROTIK_BASE_NAME")")
 EOF
 }
 
@@ -656,6 +976,7 @@ setup_vm_base() {
     fi
     import_export "$MIKROTIK_BASE_NAME" "$MIKROTIK_BASE_EXPORT" "$MIKROTIK_BOOTSTRAP_IP" "$MIKROTIK_ADMIN_PASSWORD" "$MIKROTIK_BASE_IP"
     verify_vm "$MIKROTIK_BASE_NAME" "$MIKROTIK_BASE_IP"
+    apply_router_fixture "$MIKROTIK_BASE_NAME" "$MIKROTIK_BASE_IP"
 
     snapshot_clean_state "$MIKROTIK_BASE_NAME"
 }
@@ -676,6 +997,7 @@ setup_vm_scenario() {
     fi
     import_export "$MIKROTIK_SCENARIO_NAME" "$MIKROTIK_SCENARIO_EXPORT" "$MIKROTIK_BOOTSTRAP_IP" "$MIKROTIK_ADMIN_PASSWORD" "$MIKROTIK_SCENARIO_IP"
     verify_vm "$MIKROTIK_SCENARIO_NAME" "$MIKROTIK_SCENARIO_IP"
+    apply_router_fixture "$MIKROTIK_SCENARIO_NAME" "$MIKROTIK_SCENARIO_IP"
 
     snapshot_clean_state "$MIKROTIK_SCENARIO_NAME"
 }
@@ -700,6 +1022,70 @@ scope_vms() {
         all) printf '%s\n%s\n' "$MIKROTIK_BASE_NAME" "$MIKROTIK_SCENARIO_NAME" ;;
         *) die "unknown scope '$SCOPE' — use base|scenario|all" ;;
     esac
+}
+
+run_stage_provision() {
+    require_runtime_tools
+    local vm ip
+    for vm in $(scope_vms); do
+        vm_exists "$vm" || die "VM '$vm' is not registered"
+        ip=$(vm_ip "$vm")
+        if ! vm_running "$vm"; then
+            log "starting $vm headless"
+            vbox startvm "$vm" --type headless
+        fi
+        wait_ssh "$vm" "$ip" "$MIKROTIK_SSH_PASSWORD" "$SSH_TIMEOUT_SECONDS" \
+            || die "$vm did not become SSH-reachable on $ip"
+        apply_router_fixture "$vm" "$ip"
+        log "OK — fixtures provisioned on the running $vm (its snapshot is unchanged; 'refresh' freezes them)"
+    done
+    print_tunnel_fixture
+}
+
+refresh_vm() { # $1=vm, $2=ip
+    local vm=$1 ip=$2
+
+    # a previous refresh that stopped between the delete and the rename
+    if ! has_snapshot "$vm" "$SNAPSHOT"; then
+        has_snapshot "$vm" "$FIXTURE_SNAPSHOT" \
+            || die "VM '$vm' has neither '$SNAPSHOT' nor '$FIXTURE_SNAPSHOT' — nothing to refresh from"
+        log "finishing an interrupted refresh on $vm: renaming '$FIXTURE_SNAPSHOT' to '$SNAPSHOT'"
+        vbox snapshot "$vm" edit "$FIXTURE_SNAPSHOT" --name "$SNAPSHOT"
+    fi
+
+    # the fixtures go onto a restored clean state, never onto the current (dirty)
+    # one: test residue must not reach the snapshot
+    log "refreshing $vm: restore '$SNAPSHOT' -> fixtures -> verify -> new '$SNAPSHOT'"
+    poweroff_vm "$vm"
+    vbox snapshot "$vm" restore "$SNAPSHOT"
+    vbox startvm "$vm" --type headless
+    verify_vm "$vm" "$ip"
+    apply_router_fixture "$vm" "$ip"
+
+    log "shutting down for the snapshot"
+    graceful_poweroff "$vm" "$ip"
+
+    # take -> delete -> rename: the VM never has zero snapshots. Interrupted before
+    # the delete: '$SNAPSHOT' is intact and this stage is simply repeated (the stale
+    # working snapshot is dropped first); interrupted after it: '$FIXTURE_SNAPSHOT'
+    # is the verified fixture state and only the rename is left, done at the next run.
+    if has_snapshot "$vm" "$FIXTURE_SNAPSHOT"; then
+        vbox snapshot "$vm" delete "$FIXTURE_SNAPSHOT"
+    fi
+    vbox snapshot "$vm" take "$FIXTURE_SNAPSHOT"
+    vbox snapshot "$vm" delete "$SNAPSHOT"
+    vbox snapshot "$vm" edit "$FIXTURE_SNAPSHOT" --name "$SNAPSHOT"
+    log "OK — '$SNAPSHOT' of $vm now holds the fixtures (VM powered off)"
+}
+
+run_stage_refresh() {
+    require_runtime_tools
+    local vm
+    for vm in $(scope_vms); do
+        vm_exists "$vm" || die "VM '$vm' is not registered"
+        refresh_vm "$vm" "$(vm_ip "$vm")"
+    done
+    print_tunnel_fixture
 }
 
 run_stage_reset() {
@@ -759,6 +1145,28 @@ run_stage_status() {
         local snapshots
         snapshots=$(vbox_quiet snapshot "$vm" list --machinereadable 2>/dev/null | grep -c "^SnapshotName=" || true)
         log "$vm: $state, expected-ip: $ip, snapshots: $snapshots"
+
+        local pin_file
+        pin_file=$(tunnel_pin_file "$vm")
+        if [ -s "$pin_file" ]; then
+            log "  host-key pin: $(cat "$pin_file") ($pin_file)"
+        else
+            log "  host-key pin: not recorded — run: $0 provision $(vm_scope "$vm")"
+        fi
+        if [ "$state" = running ]; then
+            if ros_has "$ip" "/certificate print where name=\"$MIKROTIK_OVPN_CA\""; then
+                log "  OpenVPN CA $MIKROTIK_OVPN_CA: present"
+            else
+                log "  OpenVPN CA $MIKROTIK_OVPN_CA: missing"
+            fi
+            if [ "$vm" = "$MIKROTIK_BASE_NAME" ]; then
+                if ros_has "$ip" "/user print where name=\"$MIKROTIK_TUNNEL_USER\""; then
+                    log "  tunnel user $MIKROTIK_TUNNEL_USER: present"
+                else
+                    log "  tunnel user $MIKROTIK_TUNNEL_USER: missing"
+                fi
+            fi
+        fi
     done
 }
 
@@ -789,7 +1197,7 @@ run_stage_clean() {
 parse_args() {
     while [ $# -gt 0 ]; do
         case "$1" in
-            setup | reset | start | stop | status | clean)
+            setup | provision | refresh | reset | start | stop | status | clean)
                 [ -z "$STAGE" ] || { printf 'error: multiple stages\n' >&2; exit 1; }
                 STAGE=$1 ;;
             base | scenario | all)
@@ -821,6 +1229,8 @@ main() {
 
     case "$STAGE" in
         setup) run_stage_setup ;;
+        provision) run_stage_provision ;;
+        refresh) run_stage_refresh ;;
         reset) run_stage_reset ;;
         start) run_stage_start ;;
         stop) run_stage_stop ;;

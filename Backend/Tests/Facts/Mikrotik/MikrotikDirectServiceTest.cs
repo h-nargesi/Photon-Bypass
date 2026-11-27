@@ -34,8 +34,9 @@ public class MikrotikDirectServiceTest : UnitLevelServiceInitializer
         ssh.RespondToPrefix(@"/file print where name=""CLIENT_user_1.key""", "stale file");
         ssh.RespondToPrefix("/file remove ", " ");
         ssh.RespondToPrefix("/certificate export-certificate ", " ");
-        ssh.RespondToPrefix(@":put [/file get ""CLIENT_user_1"".crt", "CERT-DATA");
-        ssh.RespondToPrefix(@":put [/file get ""CLIENT_user_1"".key", "KEY-DATA");
+        ssh.RespondToPrefix(":delay ", " ");
+        ssh.RespondToPrefix(@":put [/file get ""CLIENT_user_1.crt""", "CERT-DATA");
+        ssh.RespondToPrefix(@":put [/file get ""CLIENT_user_1.key""", "KEY-DATA");
 
         var context = NewCertContext();
 
@@ -46,12 +47,13 @@ public class MikrotikDirectServiceTest : UnitLevelServiceInitializer
             @"/certificate add name=""CLIENT_user_1"" copy-from=CLIENT-TEMPLATE common-name=""CLIENT_user_1""",
             @"/certificate sign ""CLIENT_user_1"" ca=LMTCA name=""CLIENT_user_1""",
             @"/file print where name=""CLIENT_user_1.crt""",
-            @"/file remove ""CLIENT_user_1"".crt",
+            @"/file remove ""CLIENT_user_1.crt""",
             @"/file print where name=""CLIENT_user_1.key""",
-            @"/file remove ""CLIENT_user_1"".key",
+            @"/file remove ""CLIENT_user_1.key""",
             @"/certificate export-certificate ""CLIENT_user_1"" export-passphrase=""" + context.PrivateKeyOvpn + @""" file-name=""CLIENT_user_1""",
-            @":put [/file get ""CLIENT_user_1"".crt contents]",
-            @":put [/file get ""CLIENT_user_1"".key contents]");
+            ":delay 500ms",
+            @":put [/file get ""CLIENT_user_1.crt"" contents]",
+            @":put [/file get ""CLIENT_user_1.key"" contents]");
 
         var ovpn_file = System.Text.Encoding.UTF8.GetString(context.CertFile);
         ovpn_file.Should().Contain("CERT-DATA");
@@ -71,8 +73,9 @@ public class MikrotikDirectServiceTest : UnitLevelServiceInitializer
         ssh.RespondToPrefix(@"/file print where name=""CLIENT_user_1.crt""", " ");
         ssh.RespondToPrefix(@"/file print where name=""CLIENT_user_1.key""", " ");
         ssh.RespondToPrefix("/certificate export-certificate ", " ");
-        ssh.RespondToPrefix(@":put [/file get ""CLIENT_user_1"".crt", "CERT-DATA");
-        ssh.RespondToPrefix(@":put [/file get ""CLIENT_user_1"".key", "KEY-DATA");
+        ssh.RespondToPrefix(":delay ", " ");
+        ssh.RespondToPrefix(@":put [/file get ""CLIENT_user_1.crt""", "CERT-DATA");
+        ssh.RespondToPrefix(@":put [/file get ""CLIENT_user_1.key""", "KEY-DATA");
 
         var context = NewCertContext();
 
@@ -82,6 +85,52 @@ public class MikrotikDirectServiceTest : UnitLevelServiceInitializer
         ssh.Commands.Should().NotContain(c => c.StartsWith("/file remove"));
         ssh.Commands.Should().Contain(
             @"/certificate export-certificate ""CLIENT_user_1"" export-passphrase=""" + context.PrivateKeyOvpn + @""" file-name=""CLIENT_user_1""");
+    }
+
+    [Fact]
+    public async Task GetOVpnCertificate_WhenExportedFilesAreNotReadableYet_WaitsForThem()
+    {
+        using var scope = App.Services.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<IMikrotikDirectService>();
+        var ssh = scope.ServiceProvider.GetRequiredService<ConfigurableSshHandlerMoq>();
+
+        ssh.RespondToPrefix(@"/certificate print where name=""CLIENT_", "0 name=\"CLIENT_user_1\"");
+        ssh.RespondToPrefix(@"/file print where name=""CLIENT_user_1.", " ");
+        ssh.RespondToPrefix("/certificate export-certificate ", " ");
+        ssh.RespondToPrefix(":delay ", " ");
+        // RouterOS answers export-certificate before the files can be read
+        ssh.FailToPrefix(@":put [/file get ""CLIENT_user_1.crt""", "no such item (/file/get; line 1)", times: 2);
+        ssh.RespondToPrefix(@":put [/file get ""CLIENT_user_1.crt""", "CERT-DATA");
+        ssh.RespondToPrefix(@":put [/file get ""CLIENT_user_1.key""", "KEY-DATA");
+
+        var context = NewCertContext();
+
+        await service.GetOVpnCertificate(NewServer(), Username, context);
+
+        ssh.Commands.Count(command => command == @":put [/file get ""CLIENT_user_1.crt"" contents]").Should().Be(3);
+        System.Text.Encoding.UTF8.GetString(context.CertFile).Should().Contain("CERT-DATA").And.Contain("KEY-DATA");
+    }
+
+    [Fact]
+    public async Task GetOVpnCertificate_WhenAnExportedFileNeverBecomesReadable_GivesUpWithTheDownloadError()
+    {
+        using var scope = App.Services.CreateScope();
+        var service = scope.ServiceProvider.GetRequiredService<IMikrotikDirectService>();
+        var ssh = scope.ServiceProvider.GetRequiredService<ConfigurableSshHandlerMoq>();
+
+        ssh.RespondToPrefix(@"/certificate print where name=""CLIENT_", "0 name=\"CLIENT_user_1\"");
+        ssh.RespondToPrefix(@"/file print where name=""CLIENT_user_1.", " ");
+        ssh.RespondToPrefix("/certificate export-certificate ", " ");
+        ssh.RespondToPrefix(":delay ", " ");
+        ssh.FailToPrefix(@":put [/file get ""CLIENT_user_1.crt""", "no such item (/file/get; line 1)", times: int.MaxValue);
+
+        var context = NewCertContext();
+
+        (await service.Invoking(s => s.GetOVpnCertificate(NewServer(), Username, context))
+                .Should().ThrowAsync<Exception>())
+            .WithMessage("Certificate download cert failed!");
+
+        ssh.Commands.Count(command => command == @":put [/file get ""CLIENT_user_1.crt"" contents]").Should().Be(5);
     }
 
     [Theory]

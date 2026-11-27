@@ -13,6 +13,12 @@ namespace PhotonBypass.Mikrotik.Radius.Application;
 
 partial class MikrotikDirectService(ISshHandler handler) : IMikrotikDirectService
 {
+    private const string ExportSettleCommand = ":delay 500ms";
+
+    private const int ExportReadAttempts = 5;
+
+    private static readonly TimeSpan ExportReadDelay = TimeSpan.FromMilliseconds(200);
+
     public async Task CloseConnection(ServerEntity server, string session_id)
     {
         if (string.IsNullOrEmpty(session_id) || !InjectionRegex.SessionId().IsMatch(session_id))
@@ -132,14 +138,14 @@ partial class MikrotikDirectService(ISshHandler handler) : IMikrotikDirectServic
         success = node.Execute($"/file print where name=\"CLIENT_{username}.crt\"", out result);
         if (success && !string.IsNullOrWhiteSpace(result))
         {
-            success = node.Execute($"/file remove \"CLIENT_{username}\".crt", out result);
+            success = node.Execute($"/file remove \"CLIENT_{username}.crt\"", out result);
             if (!success) throw new Exception("File remove old failed!");
         }
 
         success = node.Execute($"/file print where name=\"CLIENT_{username}.key\"", out result);
         if (success && !string.IsNullOrWhiteSpace(result))
         {
-            success = node.Execute($"/file remove \"CLIENT_{username}\".key", out result);
+            success = node.Execute($"/file remove \"CLIENT_{username}.key\"", out result);
             if (!success) throw new Exception("File remove old failed!");
         }
 
@@ -148,18 +154,33 @@ partial class MikrotikDirectService(ISshHandler handler) : IMikrotikDirectServic
             out result);
         if (!success) throw new Exception("Certificate export failed!");
 
-        success = node.Execute($":put [/file get \"CLIENT_{username}\".crt contents]", out result);
-        if (!success) throw new Exception("Certificate download cert failed!");
-        var client_cert = result;
+        node.Execute(ExportSettleCommand, out _);
 
-        success = node.Execute($":put [/file get \"CLIENT_{username}\".key contents]", out result);
-        if (!success) throw new Exception("Certificate download key failed!");
-        var client_key = result;
+        var client_cert = await ReadExportedFileAsync(node, $"CLIENT_{username}.crt", "Certificate download cert failed!");
+        var client_key = await ReadExportedFileAsync(node, $"CLIENT_{username}.key", "Certificate download key failed!");
 
         var ovpn_conf_file = Encoding.UTF8.GetString(default_context.CertFile);
         ovpn_conf_file = Replace(ovpn_conf_file, "cert", client_cert);
         ovpn_conf_file = Replace(ovpn_conf_file, "key", client_key);
         default_context.CertFile = Encoding.UTF8.GetBytes(ovpn_conf_file);
+    }
+
+    private static async Task<string> ReadExportedFileAsync(ISshConnection node, string name, string failure)
+    {
+        var command = $":put [/file get \"{name}\" contents]";
+
+        for (var attempt = 1; ; attempt++, await Task.Delay(ExportReadDelay))
+        {
+            if (node.Execute(command, out var result))
+            {
+                return result;
+            }
+
+            if (attempt >= ExportReadAttempts)
+            {
+                throw new Exception(failure);
+            }
+        }
     }
 
     public Task SetOVpnCertificate(ServerEntity server, string username, CertContext certificate)

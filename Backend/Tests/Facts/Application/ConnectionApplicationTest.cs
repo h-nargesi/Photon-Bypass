@@ -153,7 +153,7 @@ public class ConnectionApplicationTest : UnitLevelServiceInitializer
         var tik4_moq = scope.ServiceProvider.GetRequiredService<Tik4NetHandlerMoq>();
         tik4_moq.OnExecute += (command_text, _) =>
         {
-            if (command_text == "close-session")
+            if (command_text == "/user-manager/session/close-session")
             {
                 is_closed = true;
             }

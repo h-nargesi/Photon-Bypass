@@ -17,7 +17,15 @@
 #
 # Stages:
 #   setup    download + verify artifacts, build the VM, provision x-ui, create the
-#            test inbound, verify the login contract, poweroff and snapshot
+#            test inbound, apply the SSH tunnel fixture, verify the login contract,
+#            poweroff and snapshot
+#   provision  apply the SSH tunnel fixture (Docs/25 §5.1) to the existing, running
+#            or stopped VM: the forward-only user, its key and the recorded host-key
+#            pin. Leaves the VM running; changes nothing on the snapshot
+#   refresh  replace the clean-test-state snapshot with one that already carries the
+#            tunnel fixture: poweroff -> snapshot restore -> start -> fixture ->
+#            verify -> poweroff -> take, delete the old one, rename (the VM never
+#            has zero snapshots)
 #   reset    poweroff -> snapshot restore -> start headless -> poll the login endpoint
 #   start|stop|status|clean    usual lifecycle (clean asks for confirmation)
 #
@@ -28,6 +36,10 @@
 #   XUI_CONSOLE_PASSWORD            cloud-init console password for the 'debian' user,
 #                                   for human testing via the VirtualBox console
 #                                   (SSH itself is key-only) — default console.test.123456
+#   XUI_TUNNEL_USER                 user of the SSH tunnel fixture (default xui-panel):
+#                                   key-only, forward-only to the panel's loopback port
+#   XUI_TUNNEL_KEY_NAME             file name of that user's key under the key directory
+#                                   (default xui-panel-tunnel-key)
 #   XUI_INBOUND_PORT / XUI_INBOUND_PATH   test inbound        (default 10000 / /testws)
 #   DEBIAN_IMAGE_URL / DEBIAN_IMAGE_SHA512  pinned Debian image (defaults below)
 #   DEBIAN_IMAGE_PATH               local qcow2 copy instead of downloading (skips verify)
@@ -45,6 +57,11 @@
 #     preflight when missing — the same network as the Mikrotik test VMs.
 #   - The seed ISO embeds the generated SSH public key and the console password; the
 #     private key lives outside the repo (XDG data dir) and is reused across runs.
+#   - The tunnel fixture keeps its key and the recorded host-key pin next to that key,
+#     in the key directory; both are produced by `provision` (or `setup`) and read by
+#     the tunnel tests (Backend/Tests/appsettings.json, TestVmOptions).
+#   - The snapshot storage of the VM lives in the cache directory: clearing the cache
+#     destroys the VM together with its snapshots.
 #   - Windows hosts (running from WSL against the Windows VirtualBox): keep
 #     VBOXMANAGE=VBoxManage.exe (auto-selected via WSL interop) and put the cache on
 #     a Windows-visible path (e.g. XDG_CACHE_HOME=/mnt/d/.cache). Path arguments are
@@ -87,9 +104,14 @@ VBOXMANAGE=${VBOXMANAGE:-VBoxManage}
 VM_CPUS=${VM_CPUS:-1}
 VM_MEMORY_MB=${VM_MEMORY_MB:-1024}
 SNAPSHOT=${SNAPSHOT:-clean-test-state}
+# working name of the fixture snapshot a refresh takes before it replaces SNAPSHOT
+FIXTURE_SNAPSHOT=${FIXTURE_SNAPSHOT:-tunnel-fixture-state}
 SSH_USER=${SSH_USER:-debian}
 SSH_TIMEOUT_SECONDS=${SSH_TIMEOUT_SECONDS:-600}
 LOGIN_TIMEOUT_SECONDS=${LOGIN_TIMEOUT_SECONDS:-120}
+XUI_TUNNEL_USER=${XUI_TUNNEL_USER:-xui-panel}
+XUI_TUNNEL_KEY_NAME=${XUI_TUNNEL_KEY_NAME:-xui-panel-tunnel-key}
+XUI_TUNNEL_KEY_COMMENT=${XUI_TUNNEL_KEY_COMMENT:-photon-test}
 
 STAGE=""
 ASSUME_YES=false
@@ -161,14 +183,18 @@ iso_tool() { # prints the mkisofs-compatible invocation prefix
     fi
 }
 
-require_tools() {
+require_runtime_tools() { # every stage that talks to the VM
     command -v "$VBOXMANAGE" >/dev/null 2>&1 || die "VBoxManage not found (env VBOXMANAGE can point at it)"
-    command -v qemu-img >/dev/null 2>&1 || die "qemu-img not found (Debian/Ubuntu: apt-get install qemu-utils)"
     command -v jq >/dev/null 2>&1 || die "jq not found (Debian/Ubuntu: apt-get install jq)"
     command -v curl >/dev/null 2>&1 || die "curl not found"
     command -v ssh >/dev/null 2>&1 || die "ssh not found"
     command -v scp >/dev/null 2>&1 || die "scp not found"
     command -v ssh-keygen >/dev/null 2>&1 || die "ssh-keygen not found"
+}
+
+require_tools() { # setup: the runtime tools plus the image build chain
+    require_runtime_tools
+    command -v qemu-img >/dev/null 2>&1 || die "qemu-img not found (Debian/Ubuntu: apt-get install qemu-utils)"
     command -v sha512sum >/dev/null 2>&1 || die "sha512sum not found"
     command -v sha256sum >/dev/null 2>&1 || die "sha256sum not found"
     iso_tool >/dev/null
@@ -233,6 +259,31 @@ poweroff_vm() {
     fi
 }
 
+graceful_poweroff() { # $1=vm — a clean guest shutdown before a snapshot; hard poweroff only as the fallback
+    vm_ssh 'sudo systemctl poweroff' >/dev/null 2>&1 || true
+    if wait_state_off "$1" 90; then
+        return
+    fi
+    log "graceful poweroff of $1 timed out — powering off"
+    poweroff_vm "$1"
+}
+
+has_snapshot() { # $1=vm, $2=snapshot name
+    vbox_quiet snapshot "$1" list --machinereadable \
+        | grep -Eq "^SnapshotName(-[0-9]+)?=\"$2\"\$"
+}
+
+free_local_port() { # prints a loopback TCP port nothing listens on (for the tunnel check of the script)
+    local port
+    for port in $(seq 28870 28899); do
+        if ! timeout 1 bash -c "</dev/tcp/127.0.0.1/$port" 2>/dev/null; then
+            printf '%s\n' "$port"
+            return 0
+        fi
+    done
+    return 1
+}
+
 # --- artifacts --------------------------------------------------------------------
 
 download_file() { # $1=url, $2=destination, $3=reason
@@ -275,14 +326,32 @@ xui_tarball() { # prints the path of the pinned x-ui release tarball
     printf '%s\n' "$target"
 }
 
-ensure_ssh_key() {
-    local key="$KEY_DIR/xui-test-vm-key"
+ensure_ssh_key() { # $1=key file name under KEY_DIR, $2=comment for a new key -> prints the key path
+    local key="$KEY_DIR/$1"
+    local options=(-q -t ed25519 -N '' -f "$key")
     mkdir -p "$KEY_DIR"
     if [ ! -f "$key" ]; then
-        note "generating SSH keypair for the VM (kept in $KEY_DIR)"
-        ssh-keygen -q -t ed25519 -N '' -f "$key"
+        note "generating SSH keypair '$1' (kept in $KEY_DIR)"
+        [ $# -lt 2 ] || options+=(-C "$2")
+        ssh-keygen "${options[@]}"
     fi
     printf '%s\n' "$key"
+}
+
+provision_key() { # the key of SSH_USER: full sudo on the VM
+    ensure_ssh_key xui-test-vm-key
+}
+
+tunnel_key() { # the key of the tunnel fixture user (Docs/25 §5.1)
+    ensure_ssh_key "$XUI_TUNNEL_KEY_NAME" "$XUI_TUNNEL_KEY_COMMENT"
+}
+
+tunnel_pin_file() { # where the host-key pin of the VM is recorded
+    printf '%s\n' "$KEY_DIR/$XUI_VM_NAME.hostkey"
+}
+
+fixture_file() { # $1=file under KEY_DIR -> its path relative to the key root, the form TestVmOptions resolves
+    realpath --relative-to="$(dirname "$KEY_DIR")" "$1"
 }
 
 # --- seed ISO ---------------------------------------------------------------------
@@ -361,10 +430,16 @@ wait_inbound_port() { # xray must actually run the test inbound, not just boot t
     return 1
 }
 
-vm_ssh() { # rest = remote command
-    ssh -i "$KEY_DIR/xui-test-vm-key" -o IdentitiesOnly=yes \
+ssh_with_key() { # $1=key, $2=user, rest = remote command; BatchMode: a rejected key must fail, never prompt
+    local key=$1 user=$2
+    shift 2
+    ssh -i "$key" -o IdentitiesOnly=yes -o BatchMode=yes \
         -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \
-        -o ConnectTimeout=10 "$SSH_USER@$XUI_VM_IP" "$@"
+        -o ConnectTimeout=10 "$user@$XUI_VM_IP" "$@"
+}
+
+vm_ssh() { # rest = remote command, as the provisioning user
+    ssh_with_key "$KEY_DIR/xui-test-vm-key" "$SSH_USER" "$@"
 }
 
 wait_ssh() {
@@ -573,6 +648,126 @@ EOF
     printf '%s\n' "$script"
 }
 
+# --- SSH tunnel fixture (Docs/25 §5.1) ----------------------------------------------
+#
+# The panel reaches this VM's x-ui API through an SSH loopback port-forward: one
+# forward-only user, authenticated with its own key, whose authorized_keys line
+# permits exactly one target — the panel on the VM's own loopback. The key and the
+# recorded host-key pin stay outside the repo; the tunnel tests read them through
+# Backend/Tests/appsettings.json (TestVmOptions).
+
+apply_tunnel_fixture() { # the user and its forward-only line; safe to repeat
+    local key type body comment
+    key=$(tunnel_key)
+    read -r type body comment <"$key.pub"
+    note "applying the tunnel fixture: user '$XUI_TUNNEL_USER', forward to 127.0.0.1:$XUI_PANEL_PORT"
+    # the script travels over stdin and the public key as plain words: neither would
+    # survive the remote-shell quoting of a one-line command
+    vm_ssh sudo bash -s -- "$XUI_TUNNEL_USER" "$XUI_PANEL_PORT" "$type" "$body" "$comment" <<'REMOTE' >>"$LOG_FILE" 2>&1 \
+        || die "the tunnel fixture could not be applied — see $LOG_FILE"
+set -euo pipefail
+user=$1 panel_port=$2 key_type=$3 key_body=$4 key_comment=$5
+
+if id -u "$user" >/dev/null 2>&1; then
+    echo "user $user exists"
+else
+    useradd --create-home --shell /bin/bash "$user"
+    echo "user $user created"
+fi
+
+home=$(getent passwd "$user" | cut -d: -f6)
+chmod 755 "$home"
+install -d -m 700 -o "$user" -g "$user" "$home/.ssh"
+auth="$home/.ssh/authorized_keys"
+touch "$auth"
+chown "$user:$user" "$auth"
+chmod 600 "$auth"
+
+if grep -qF -- "$key_body" "$auth"; then
+    echo "authorized_keys already carries the key"
+else
+    # a file without a trailing newline would glue the new line onto the comment of the previous key (Docs/25 appendix B)
+    if [ -s "$auth" ] && [ -n "$(tail -c1 "$auth")" ]; then echo >>"$auth"; fi
+    printf '%s\n' "restrict,port-forwarding,permitopen=\"127.0.0.1:$panel_port\",command=\"/bin/false\" $key_type $key_body $key_comment" >>"$auth"
+    echo "authorized_keys line added"
+fi
+
+ls -ld "$home" "$home/.ssh" "$auth"
+REMOTE
+}
+
+write_host_key_pin() { # records the fingerprint of the key the VM's sshd presents: what the panel pins (Docs/25 D4)
+    local key pin pin_file
+    key=$(provision_key)
+    pin_file=$(tunnel_pin_file)
+
+    # one throw-away connection: `ssh -v` prints the presented key before any
+    # authentication (its debug lines end in CRLF)
+    pin=$({ ssh -i "$key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -v "$SSH_USER@$XUI_VM_IP" true 2>&1 >/dev/null || true; } \
+        | tr -d '\r' | sed -n 's|^debug1: Server host key: [^ ]* \(SHA256:[A-Za-z0-9+/]\{43\}\)$|\1|p')
+    [[ "$pin" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]] \
+        || die "could not read the host-key fingerprint of $XUI_VM_IP — is SSH up on the VM?"
+    printf '%s\n' "$pin" >"$pin_file"
+    log "host-key pin of $XUI_VM_NAME: $pin ($(fixture_file "$pin_file"))"
+}
+
+verify_tunnel_fixture() { # the two contract points of the restricted key (Docs/25 §5.1)
+    local key status out port forward_pid body
+    key=$(tunnel_key)
+
+    out=$(ssh_with_key "$key" "$XUI_TUNNEL_USER" id 2>/dev/null) && status=0 || status=$?
+    [ "$status" -ne 0 ] && [ -z "$out" ] \
+        || die "exec with the tunnel key must end without output and a non-zero status (got status $status, output '$out')"
+
+    port=$(free_local_port) || die "no free loopback port for the forward check"
+    ssh -i "$key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=no \
+        -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ExitOnForwardFailure=yes \
+        -o ServerAliveInterval=5 -N -L "127.0.0.1:$port:127.0.0.1:$XUI_PANEL_PORT" \
+        "$XUI_TUNNEL_USER@$XUI_VM_IP" &
+    forward_pid=$!
+    body=$(curl -s --max-time 10 --retry 10 --retry-connrefused --retry-delay 1 --retry-max-time 30 --noproxy '*' \
+        -H 'Content-Type: application/json' \
+        -d "{\"username\":\"$XUI_PANEL_USER\",\"password\":\"$XUI_PANEL_PASSWORD\"}" "http://127.0.0.1:$port/login" || true)
+    kill "$forward_pid" 2>/dev/null || true
+    wait "$forward_pid" 2>/dev/null || true
+    [ "$(printf '%s' "$body" | jq -r '.success // empty' 2>/dev/null || true)" = "true" ] \
+        || die "the panel login did not answer through the tunnel (got: '${body:-nothing}')"
+    log "tunnel fixture verified on $XUI_VM_NAME: exec is refused, the panel login answers through the forward"
+}
+
+verify_inbound_empty() { # the state the client tests start from: the test inbound exists and carries no client
+    local count
+    panel_login >/dev/null
+    count=$(curl -s --max-time 15 --noproxy '*' -b "$CACHE_DIR/panel.cookies" -H 'X-Requested-With: XMLHttpRequest' \
+        "http://$XUI_VM_IP:$XUI_PANEL_PORT/xui/API/inbounds/" \
+        | jq -r --argjson port "$XUI_INBOUND_PORT" \
+            '[.obj[] | select(.port == $port) | .settings | fromjson | .clients | length] | join(",")' 2>/dev/null || true)
+    [ "$count" = "0" ] \
+        || die "the test inbound (port $XUI_INBOUND_PORT) must exist without clients — got: '${count:-nothing}'"
+}
+
+print_tunnel_fixture() { # what setup and provision leave behind for the tests
+    cat <<EOF
+
+  tunnel fixture (Docs/25 §5.1):
+    user:        $XUI_TUNNEL_USER@$XUI_VM_IP — key-only, forward-only to 127.0.0.1:$XUI_PANEL_PORT
+    key:         $(tunnel_key)
+    host key:    $(cat "$(tunnel_pin_file)")  ($(tunnel_pin_file))
+
+TestVmOptions fields of the "$XUI_VM_NAME" entry (key root: $(dirname "$KEY_DIR")):
+
+  "TunnelUser": "$XUI_TUNNEL_USER", "TunnelKeyFile": "$(fixture_file "$(tunnel_key)")", "HostKeyFile": "$(fixture_file "$(tunnel_pin_file)")",
+  "AdminUser": "$SSH_USER", "AdminKeyFile": "$(fixture_file "$(provision_key)")"
+EOF
+}
+
+apply_tunnel_fixture_chain() { # the three fixture functions in their order, shared by setup, provision and refresh
+    apply_tunnel_fixture
+    write_host_key_pin
+    verify_tunnel_fixture
+}
+
 # --- stages -----------------------------------------------------------------------
 
 run_stage_setup() {
@@ -581,7 +776,7 @@ run_stage_setup() {
     require_tools
     abort_if_registered
     hostonly_if=$(ensure_hostonly_network)
-    ssh_key=$(ensure_ssh_key)
+    ssh_key=$(provision_key)
     tarball=$(xui_tarball)
     disk="$CACHE_DIR/$XUI_VM_NAME-disk.vdi"
 
@@ -642,12 +837,10 @@ run_stage_setup() {
 
     configure_freedom_allow "${HOSTONLY_SUBNET_IP%.*}.0/24"
 
+    apply_tunnel_fixture_chain
+
     log "powering off for the snapshot"
-    vm_ssh 'sudo systemctl poweroff' >/dev/null 2>&1 || true
-    if ! wait_state_off "$XUI_VM_NAME" 90; then
-        log "graceful poweroff timed out — hard poweroff"
-        poweroff_vm "$XUI_VM_NAME"
-    fi
+    graceful_poweroff "$XUI_VM_NAME"
     vbox storageattach "$XUI_VM_NAME" --storagectl IDE --port 1 --device 0 --type dvddrive --medium emptydrive
     vbox snapshot "$XUI_VM_NAME" take "$SNAPSHOT"
     log "snapshot '$SNAPSHOT' taken"
@@ -658,15 +851,79 @@ OK — x-ui test VM ready.
 
   panel:      http://$XUI_VM_IP:$XUI_PANEL_PORT  ($XUI_PANEL_USER / $XUI_PANEL_PASSWORD)
   inbound:    id=$inbound_id  VLESS+ws  port $XUI_INBOUND_PORT  path $XUI_INBOUND_PATH
-  ssh:        $SSH_USER@$XUI_VM_IP with key $KEY_DIR/xui-test-vm-key
+  ssh:        $SSH_USER@$XUI_VM_IP with key $ssh_key
   console:    VirtualBox console, $SSH_USER / XUI_CONSOLE_PASSWORD (env at setup time)
 
-TestVmOptions snippet for Backend/Tests/appsettings.json:
+TestVmOptions entry for Backend/Tests/appsettings.json (plus the tunnel fields below):
 
-  "Xui-Test": { "Ip": "$XUI_VM_IP", "Port": $XUI_PANEL_PORT, "Username": "$XUI_PANEL_USER", "Password": "$XUI_PANEL_PASSWORD", "InboundId": $inbound_id }
-
-Reset semantics: '$SNAPSHOT' — restore per test run (the future XuiPanelInitializer will do this automatically).
+  "$XUI_VM_NAME": { "Ip": "$XUI_VM_IP", "Port": $XUI_PANEL_PORT, "Username": "$XUI_PANEL_USER", "Password": "$XUI_PANEL_PASSWORD", "InboundId": $inbound_id,
+                    ...tunnel fields... }
 EOF
+    print_tunnel_fixture
+
+    cat <<EOF
+
+Reset semantics: '$SNAPSHOT' — restore per test run (the XuiPanelInitializer does this automatically).
+EOF
+}
+
+run_stage_provision() {
+    require_runtime_tools
+    vm_exists "$XUI_VM_NAME" || die "VM '$XUI_VM_NAME' is not registered"
+    if ! vm_running "$XUI_VM_NAME"; then
+        log "starting $XUI_VM_NAME headless"
+        vbox startvm "$XUI_VM_NAME" --type headless
+    fi
+    wait_ssh || die "SSH did not come up on $XUI_VM_IP"
+    wait_panel_login || die "the panel login endpoint did not become ready"
+
+    apply_tunnel_fixture_chain
+
+    log "OK — tunnel fixture provisioned on the running $XUI_VM_NAME (the snapshot is unchanged; 'refresh' freezes it)"
+    print_tunnel_fixture
+}
+
+run_stage_refresh() {
+    # Rebuilds '$SNAPSHOT' so that it already carries the tunnel fixture. The
+    # fixture is applied to a restored clean state, never to the current (dirty)
+    # one: test residue must not reach the snapshot.
+    require_runtime_tools
+    vm_exists "$XUI_VM_NAME" || die "VM '$XUI_VM_NAME' is not registered"
+
+    # a previous refresh that stopped between the delete and the rename
+    if ! has_snapshot "$XUI_VM_NAME" "$SNAPSHOT"; then
+        has_snapshot "$XUI_VM_NAME" "$FIXTURE_SNAPSHOT" \
+            || die "VM '$XUI_VM_NAME' has neither '$SNAPSHOT' nor '$FIXTURE_SNAPSHOT' — nothing to refresh from"
+        log "finishing an interrupted refresh: renaming '$FIXTURE_SNAPSHOT' to '$SNAPSHOT'"
+        vbox snapshot "$XUI_VM_NAME" edit "$FIXTURE_SNAPSHOT" --name "$SNAPSHOT"
+    fi
+
+    log "refreshing $XUI_VM_NAME: restore '$SNAPSHOT' -> tunnel fixture -> verify -> new '$SNAPSHOT'"
+    poweroff_vm "$XUI_VM_NAME"
+    vbox snapshot "$XUI_VM_NAME" restore "$SNAPSHOT"
+    vbox startvm "$XUI_VM_NAME" --type headless
+    wait_ssh || die "SSH did not come up on $XUI_VM_IP after the snapshot restore"
+    wait_panel_login || die "the panel login endpoint did not become ready after the snapshot restore"
+
+    apply_tunnel_fixture_chain
+    verify_inbound_empty
+
+    log "powering off for the snapshot"
+    graceful_poweroff "$XUI_VM_NAME"
+
+    # take -> delete -> rename: the VM never has zero snapshots. Interrupted before
+    # the delete: '$SNAPSHOT' is intact and this stage is simply repeated (the stale
+    # working snapshot is dropped first); interrupted after it: '$FIXTURE_SNAPSHOT'
+    # is the verified fixture state and only the rename is left, done at the next run.
+    if has_snapshot "$XUI_VM_NAME" "$FIXTURE_SNAPSHOT"; then
+        vbox snapshot "$XUI_VM_NAME" delete "$FIXTURE_SNAPSHOT"
+    fi
+    vbox snapshot "$XUI_VM_NAME" take "$FIXTURE_SNAPSHOT"
+    vbox snapshot "$XUI_VM_NAME" delete "$SNAPSHOT"
+    vbox snapshot "$XUI_VM_NAME" edit "$FIXTURE_SNAPSHOT" --name "$SNAPSHOT"
+
+    log "OK — '$SNAPSHOT' of $XUI_VM_NAME now holds the tunnel fixture (VM powered off)"
+    print_tunnel_fixture
 }
 
 run_stage_reset() {
@@ -705,6 +962,22 @@ run_stage_status() {
     local snapshots
     snapshots=$(vbox_quiet snapshot "$XUI_VM_NAME" list --machinereadable 2>/dev/null | grep -c '^SnapshotName=' || true)
     log "$XUI_VM_NAME: $state, expected-ip: $XUI_VM_IP, panel: :$XUI_PANEL_PORT, snapshots: $snapshots"
+
+    local pin_file
+    pin_file=$(tunnel_pin_file)
+    if [ -s "$pin_file" ]; then
+        log "tunnel fixture: host-key pin $(cat "$pin_file") ($pin_file)"
+    else
+        log "tunnel fixture: no host-key pin recorded — run: $0 provision"
+    fi
+    if [ "$state" = running ] && [ -f "$KEY_DIR/xui-test-vm-key" ]; then
+        if vm_ssh "id $XUI_TUNNEL_USER" >/dev/null 2>&1; then
+            log "tunnel fixture: user '$XUI_TUNNEL_USER' present on the VM"
+        else
+            log "tunnel fixture: user '$XUI_TUNNEL_USER' missing on the VM"
+        fi
+    fi
+    log "note: the snapshot storage of $XUI_VM_NAME lives in $CACHE_DIR — clearing the cache destroys the VM"
 }
 
 run_stage_clean() {
@@ -729,7 +1002,7 @@ run_stage_clean() {
 parse_args() {
     while [ $# -gt 0 ]; do
         case "$1" in
-            setup | reset | start | stop | status | clean)
+            setup | provision | refresh | reset | start | stop | status | clean)
                 [ -z "$STAGE" ] || { printf 'error: multiple stages\n' >&2; exit 1; }
                 STAGE=$1 ;;
             --yes | -y) ASSUME_YES=true ;;
@@ -758,6 +1031,8 @@ main() {
 
     case "$STAGE" in
         setup) run_stage_setup ;;
+        provision) run_stage_provision ;;
+        refresh) run_stage_refresh ;;
         reset) run_stage_reset ;;
         start) run_stage_start ;;
         stop) run_stage_stop ;;

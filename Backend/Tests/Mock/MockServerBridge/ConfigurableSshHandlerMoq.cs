@@ -55,16 +55,23 @@ internal class ConfigurableSshHandlerMoq : Mock<ISshHandler>
     public List<string> Connects { get; } = [];
 
     public void RespondToPrefix(string command_prefix, string response) =>
-        AddRule(command => command.StartsWith(command_prefix, StringComparison.Ordinal), response, success: true);
+        AddRule(command => command.StartsWith(command_prefix, StringComparison.Ordinal), response, success: true, times: null);
 
     public void RespondToPattern(string command_regex, string response) =>
-        AddRule(new Regex(command_regex).IsMatch, response, success: true);
+        AddRule(new Regex(command_regex).IsMatch, response, success: true, times: null);
 
     public void FailToPrefix(string command_prefix, string error) =>
-        AddRule(command => command.StartsWith(command_prefix, StringComparison.Ordinal), error, success: false);
+        FailToPrefix(command_prefix, error, times: null);
+
+    /// <summary>
+    /// Fails the first <paramref name="times"/> matching commands — a resource the
+    /// server has not produced yet — then steps aside for the rules added below.
+    /// </summary>
+    public void FailToPrefix(string command_prefix, string error, int? times) =>
+        AddRule(command => command.StartsWith(command_prefix, StringComparison.Ordinal), error, success: false, times);
 
     public void FailToPattern(string command_regex, string error) =>
-        AddRule(new Regex(command_regex).IsMatch, error, success: false);
+        AddRule(new Regex(command_regex).IsMatch, error, success: false, times: null);
 
     public static void CreateInstance(IServiceCollection services)
     {
@@ -74,13 +81,32 @@ internal class ConfigurableSshHandlerMoq : Mock<ISshHandler>
 
     private Rule? FindRule(string command)
     {
-        lock (_rules) return _rules.FirstOrDefault(rule => rule.Match(command));
+        lock (_rules) return _rules.FirstOrDefault(rule => rule.Match(command) && rule.TryTake());
     }
 
-    private void AddRule(Predicate<string> match, string response, bool success)
+    private void AddRule(Predicate<string> match, string response, bool success, int? times)
     {
-        lock (_rules) _rules.Add(new Rule(match, response, success));
+        lock (_rules) _rules.Add(new Rule(match, response, success, times));
     }
 
-    private sealed record Rule(Predicate<string> Match, string Response, bool Success);
+    private sealed class Rule(Predicate<string> match, string response, bool success, int? times)
+    {
+        private int? _left = times;
+
+        public string Response { get; } = response;
+
+        public bool Success { get; } = success;
+
+        public bool Match(string command) => match(command);
+
+        /// <summary>False once a limited rule has failed its allotted number of commands.</summary>
+        public bool TryTake()
+        {
+            if (_left is not { } left) return true;
+
+            _left = left - 1;
+
+            return left > 0;
+        }
+    }
 }

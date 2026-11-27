@@ -181,13 +181,13 @@ internal sealed class SshNetCommandChannel(SshClient client, SshEndpoint endpoin
 
     public SshCommandResult Execute(string command, TimeSpan timeout)
     {
-        // the command owns its channel: a timed-out one is closed here instead of waiting for the server
-        using var execution = client.CreateCommand(command);
-
-        running = execution;
-
         try
         {
+            // the command owns its channel: a timed-out one is closed here instead of waiting for the server
+            using var execution = client.CreateCommand(command);
+
+            running = execution;
+
             var operation = execution.BeginExecute();
 
             if (!operation.AsyncWaitHandle.WaitOne(timeout))
