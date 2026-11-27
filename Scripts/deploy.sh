@@ -27,6 +27,11 @@
 # Secrets hygiene: passwords travel via environment variables (SQLCMDPASSWORD,
 # DEPLOY_ADMIN_PASSWORD, DEPLOY_CONNECTION_STRING) — never on command lines,
 # never in the log file.
+#
+# eample:
+# cd /home/ryan/Developing/Internet/Radius/photon-bypass/Scripts
+# ./deploy.sh db --secrets ../Backend/Portal/appsettings.Development.json --admin-user admin --admin-password admin
+#
 set -euo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
