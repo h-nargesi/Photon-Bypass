@@ -2,8 +2,12 @@ using PhotonBypass.Domain.Account;
 using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Domain.Servers;
 using PhotonBypass.Domain.Servers.Entity;
+using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.Test.Initializer;
+using System.Net;
 using System.Net.Http.Json;
+using System.Net.Sockets;
+using System.Text.Json;
 
 namespace PhotonBypass.Test.Facts.Scenario;
 
@@ -48,6 +52,9 @@ public class ServerCrudTest(ProgramLevelInitializer.Factory factory) : HttpHandl
 
         return await CheckResponseObject(response, status);
     }
+
+    /// <summary>The web configuration a User Manager server needs (Docs/25 §4.6).</summary>
+    private static object WebApi(string password) => new { hostName = ScenarioIp, port = 8728, username = "admin", password };
 
     private async Task<ServerEntity> FetchRow(string name)
     {
@@ -99,8 +106,9 @@ public class ServerCrudTest(ProgramLevelInitializer.Factory factory) : HttpHandl
 
         var secret = "S3cret-Scenario!";
 
+        // a Radius server carries its web configuration too (Docs/25 §4.6)
         await SaveServer(create: true, name: "SRV-New72", domain: "new72", ip: "10.72.0.1",
-            config: new { sshConfig = new { username = "root", password = secret, port = 22 } });
+            config: new { sshConfig = new { username = "root", password = secret, port = 22 }, webApiConfig = WebApi(secret) });
 
         // validation matrix → friendly 400s
         await SaveServer(create: true, name: "SRV-BadIp", domain: "badip", ip: "300.1.1.1", status: 4);
@@ -137,7 +145,7 @@ public class ServerCrudTest(ProgramLevelInitializer.Factory factory) : HttpHandl
         await Login("admin", "admin");
 
         await SaveServer(create: true, name: "SRV-Upd75", domain: "upd75", ip: "10.75.0.1",
-            config: new { sshConfig = new { username = "root", password = "first-secret" } });
+            config: new { sshConfig = new { username = "root", password = "first-secret" }, webApiConfig = WebApi("first-secret") });
 
         var seeded = await FetchRow("SRV-Upd75");
 
@@ -154,7 +162,7 @@ public class ServerCrudTest(ProgramLevelInitializer.Factory factory) : HttpHandl
         // config update: replaced wholesale
         await SaveServer(create: false, name: "SRV-Upd75B", domain: "upd75", ip: "10.75.0.1",
             realm_id: seeded.RealmId, id: seeded.Id,
-            config: new { sshConfig = new { username = "root", password = "second-secret" } });
+            config: new { sshConfig = new { username = "root", password = "second-secret" }, webApiConfig = WebApi("second-secret") });
 
         var after_replace = await FetchRow("SRV-Upd75B");
 
@@ -168,6 +176,132 @@ public class ServerCrudTest(ProgramLevelInitializer.Factory factory) : HttpHandl
         await SaveServer(create: false, name: "NoId", domain: "noid", ip: "10.75.0.8",
             realm_id: seeded.RealmId, id: 0, status: 4);
     }
+
+    [Fact]
+    public async Task ConnectionTestAndHostChecks_AreAdminOnly()
+    {
+        // plain user and manager are refused by the Admin policy (Docs/20 §3)
+        await Register("srv_user78", "78", "Passw0rd1");
+        await Login("srv_user78", "Passw0rd1");
+        await AssertServerToolsRefused();
+
+        await InsertAccount("srv_manager72", UserTypes.AllowSelfService, AccountRole.Manager);
+        await Login("srv_manager72", "Passw0rd1");
+        await AssertServerToolsRefused();
+    }
+
+    [Fact]
+    public async Task HostChecks_Admin_GetsTheThreeResults()
+    {
+        await Login("admin", "admin");
+
+        var response = await Client.PostAsync("/api/server/host-checks", null);
+
+        await CheckResponse(response);
+
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+        var data = json.RootElement.GetProperty("data");
+        var summary = data.GetProperty("summary").GetString()!;
+
+        Assert.Contains("g3=observing", summary);
+        Assert.Contains("g2=pass", summary); // the loopback address always accepts a listener
+        Assert.True(data.GetProperty("loopbackBind").GetBoolean());
+
+        var raw = data.GetRawText();
+
+        Assert.DoesNotContain("password", raw, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("privateKey", raw, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ConnectionTest_UnreachableSshEndpoint_StopsAtTheTcpStep()
+    {
+        await Login("admin", "admin");
+
+        using var reservation = new TcpListener(IPAddress.Loopback, 0);
+
+        reservation.Start();
+
+        var closed = ((IPEndPoint)reservation.LocalEndpoint).Port;
+
+        reservation.Stop();
+
+        // nothing is saved: the unsaved form is tested as sent
+        var response = await Client.PostAsJsonAsync("/api/server/test-connection", new
+        {
+            id = 0,
+            ipAddress = "127.0.0.1",
+            name = "SRV-Probe",
+            features = 0x800,
+            config = new { sshConfig = new { username = "root", port = closed } },
+        });
+
+        await CheckResponse(response);
+
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+        var data = json.RootElement.GetProperty("data");
+
+        Assert.False(data.GetProperty("passed").GetBoolean());
+
+        var step = Assert.Single(data.GetProperty("steps").EnumerateArray());
+
+        Assert.Equal("tcp", step.GetProperty("step").GetString());
+        Assert.Contains("ConnectionRefused", step.GetProperty("detail").GetString());
+
+        var stored = await FetchAllNames();
+
+        Assert.DoesNotContain("SRV-Probe", stored);
+    }
+
+    [Fact]
+    public async Task Create_BindsTheTunnelTransportFromTheJsonBody()
+    {
+        await Login("admin", "admin");
+
+        await SaveServer(create: true, name: "SRV-Tunnel79", domain: "tunnel79", ip: "10.79.0.1",
+            config: TunnelConfig(OpenSshKey));
+
+        var created = await FetchRow("SRV-Tunnel79");
+
+        Assert.True(ServerConfigProtection.IsProtected(created.JsonConfig!));
+        Assert.Equal(ServerTransport.SshTunnel, created.Config!.Transport);
+        Assert.Equal("panel", created.Config.SshConfig!.Username);
+        Assert.Equal(PinnedKey, created.Config.SshConfig.HostKeySha256);
+
+        // the tunnel rules of Docs/25 §4.6 are enforced over HTTP as friendly 400s
+        await SaveServer(create: true, name: "SRV-Tunnel80", domain: "tunnel80", ip: "10.79.0.2",
+            config: TunnelConfig("-----BEGIN RSA PRIVATE KEY-----"), status: 4);
+        await SaveServer(create: true, name: "SRV-Tunnel81", domain: "tunnel81", ip: "10.79.0.3",
+            config: TunnelConfig(OpenSshKey, pin: null), status: 4);
+    }
+
+    private async Task AssertServerToolsRefused()
+    {
+        await CheckResponse(await Client.PostAsync("/api/server/host-checks", null), 403);
+        await CheckResponse(await Client.PostAsJsonAsync("/api/server/test-connection", new { id = 1 }), 403);
+    }
+
+    private async Task<List<string>> FetchAllNames()
+    {
+        using var scope = ServiceProvider.CreateScope();
+        var server_repo = scope.ServiceProvider.GetRequiredService<IServerRepository>();
+
+        return [.. (await server_repo.GetAllServers()).Select(server => server.Name)];
+    }
+
+    private const string OpenSshKey =
+        "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtZW\nQ255MTkAAAAA\n-----END OPENSSH PRIVATE KEY-----";
+
+    private const string PinnedKey = "SHA256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+
+    private static object TunnelConfig(string key, string? pin = PinnedKey) => new
+    {
+        transport = "SshTunnel",
+        sshConfig = new { username = "panel", port = 22, privateKey = key, hostKeySha256 = pin },
+        webApiConfig = new { hostName = "127.0.0.1", port = 8728, username = "admin", password = "api-secret" },
+    };
 
     [Fact]
     public async Task SetActive_TogglesLifecycle()

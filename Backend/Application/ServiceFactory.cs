@@ -41,6 +41,8 @@ public static class ServiceFactory
         builder.Services.AddLazyTransient<IVpnApplication, VpnApplication>();
         builder.Services.AddLazyTransient<IServerManagementService, ServerManagementService>();
         builder.Services.AddLazyTransient<IServerCrudApplication, ServerCrudApplication>();
+        // Docs/25 D9: the admin connection test
+        builder.Services.AddLazyTransient<IServerConnectionTester, ServerConnectionTester>();
         builder.Services.AddLazyTransient<IAccountMonitoringService, AccountMonitoringService>();
         builder.Services.AddLazyScoped<IWalletThresholdService, WalletThresholdService>();
 

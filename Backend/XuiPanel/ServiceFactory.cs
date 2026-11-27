@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PhotonBypass.Domain.Servers;
+using PhotonBypass.Domain.Servers.Types;
 using PhotonBypass.Domain.Vpn;
 using PhotonBypass.Infra.Radius;
 using PhotonBypass.Tools;
@@ -33,8 +34,14 @@ public static class ServiceFactory
             .ValidateOnStart();
 
         builder.Services.AddLazyTransient<IXuiApi, XuiApiService>();
+        // Docs/25 D7: one stable client per tunnel server; freed with the host
+        builder.Services.AddSingleton<XuiHttpClientProvider>();
+        builder.Services.AddSingleton<IXuiHttpClientProvider>(provider => provider.GetRequiredService<XuiHttpClientProvider>());
         builder.Services.AddLazyTransient<IXuiTrafficSync, XuiTrafficSync>();
         builder.Services.AddLazyTransient<IVpnLinkService, VlessLinkService>();
+
+        // Docs/25 D9: the service step of the connection test
+        builder.Services.AddLazyKeyedTransient<IServiceProbe, XuiServiceProbe>(ServerFeature.Xui);
 
         builder.Services.AddLazyKeyedTransient<IInfraSessionRadiusSyncService, SessionRadiusSyncXuiService>(RadiusType.Xui);
         builder.Services.AddLazyKeyedTransient<IInfraAccountRadiusSyncService, AccountRadiusSyncXuiService>(RadiusType.Xui);

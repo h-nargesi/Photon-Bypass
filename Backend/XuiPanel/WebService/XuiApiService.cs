@@ -1,20 +1,25 @@
 using System.Net;
+using System.Collections.Concurrent;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using PhotonBypass.Domain.Servers.Entity;
 using PhotonBypass.Domain.Servers.JsonType;
+using PhotonBypass.Domain.Servers.Types;
 
 namespace PhotonBypass.Xui.WebService;
 
-class XuiApiService(IHttpClientFactory factory) : IXuiApi
+class XuiApiService(IXuiHttpClientProvider provider) : IXuiApi
 {
     private const string AjaxHeader = "XMLHttpRequest";
 
+    private const string ListInboundsPath = "xui/API/inbounds/";
+
+    private const string ListOnlinesPath = "xui/API/inbounds/onlines";
+
     private static readonly JsonSerializerOptions WebJson = new(JsonSerializerDefaults.Web);
 
-    private readonly Dictionary<int, string> session_cookies = [];
+    private readonly ConcurrentDictionary<int, string> session_cookies = new();
 
     public async Task<List<XuiClientModel>> ListClients(ServerEntity server)
     {
@@ -32,7 +37,7 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
 
     public async Task<List<XuiOnlineClientModel>> ListOnlineClients(ServerEntity server)
     {
-        return await PostAsync<List<XuiOnlineClientModel>>(server, "xui/API/inbounds/onlines", null)
+        return await PostAsync<List<XuiOnlineClientModel>>(server, ListOnlinesPath, null)
                ?? [];
     }
 
@@ -136,7 +141,7 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
 
     private async Task<List<XuiInboundBody>> ListInbounds(ServerEntity server)
     {
-        var payload = await GetAsync<XuiInboundBody[]>(server, "xui/API/inbounds/");
+        var payload = await GetAsync<XuiInboundBody[]>(server, ListInboundsPath);
 
         return [.. payload ?? []];
     }
@@ -175,17 +180,74 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
         return envelope.Object;
     }
 
-    private async Task<HttpResponseMessage> SendAsync(ServerEntity server, HttpMethod method, string path, object? body,
-        bool allow_relogin = true)
+    private async Task<HttpResponseMessage> SendAsync(ServerEntity server, HttpMethod method, string path, object? body)
     {
-        var config = GetWebApiConfig(server);
-        var base_url = BuildBaseUrl(config);
+        // Config decrypts and parses on every access: read it once per call
+        var (configuration, config) = RequireWebConfiguration(server);
 
-        var http = factory.CreateClient(ServiceFactory.HttpClientKeyName);
+        var base_url = XuiLogin.BaseUrl(config);
 
+        var http = provider.Get(server);
+
+        var budget = new SendBudget(
+            transport_retryable: configuration.Transport == ServerTransport.SshTunnel && IsTransportRetryable(path));
+
+        while (true)
+        {
+            // a send without a session cookie needs two: the login and the request itself
+            if (budget.SendsLeft < Needed(session_cookies.ContainsKey(server.Id)))
+            {
+                throw new Exception(
+                    $"The x-ui request ran out of its send budget ({SendBudget.MaximumSends}): (server={server.Name}, path={path})");
+            }
+
+            HttpResponseMessage response;
+
+            try
+            {
+                response = await SendOnceAsync(http, server, base_url, config, method, path, body, budget);
+            }
+            catch (Exception error) when (budget.TransportRetriesLeft > 0 &&
+                                          budget.SendsLeft >= Needed(session_cookies.ContainsKey(server.Id)) &&
+                                          XuiTransportDeath.Is(error))
+            {
+                budget.TransportRetriesLeft--;
+
+                // the pooled tunnel session is rebuilt before the request is sent again
+                provider.ReportTransportFailure(server);
+
+                continue;
+            }
+
+            if (response.StatusCode != HttpStatusCode.Unauthorized)
+            {
+                response.EnsureSuccessStatusCode();
+
+                return response;
+            }
+
+            response.Dispose();
+
+            session_cookies.TryRemove(server.Id, out _);
+
+            if (budget.ReloginsLeft-- < 1)
+            {
+                throw new Exception($"The x-ui session was rejected after a re-login: (server={server.Name})");
+            }
+        }
+    }
+
+    private async Task<HttpResponseMessage> SendOnceAsync(
+        HttpClient http, ServerEntity server, string base_url, WebApiConfig config,
+        HttpMethod method, string path, object? body, SendBudget budget)
+    {
         if (!session_cookies.TryGetValue(server.Id, out var cookie))
         {
-            cookie = await LoginAsync(http, base_url, config);
+            // counted when it leaves: a send that dies on the wire is a send too
+            budget.SendsLeft--;
+
+            cookie = await XuiLogin.LoginAsync(http, base_url, config);
+
             session_cookies[server.Id] = cookie;
         }
 
@@ -199,29 +261,28 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
             request.Content = JsonContent.Create(body);
         }
 
-        var response = await http.SendAsync(request);
+        budget.SendsLeft--;
 
-        if (response.StatusCode == HttpStatusCode.Unauthorized)
-        {
-            response.Dispose();
-            session_cookies.Remove(server.Id);
-
-            if (!allow_relogin)
-            {
-                throw new Exception($"The x-ui session was rejected after a re-login: (server={server.Name})");
-            }
-
-            return await SendAsync(server, method, path, body, allow_relogin: false);
-        }
-
-        response.EnsureSuccessStatusCode();
-
-        return response;
+        return await http.SendAsync(request);
     }
 
-    private static WebApiConfig GetWebApiConfig(ServerEntity server)
+    private static int Needed(bool has_cookie) => has_cookie ? 1 : 2;
+
+    /// <summary>
+    /// Reads and the login are safe to send again after the tunnel died;
+    /// client mutations are not (Docs/25 D7).
+    /// </summary>
+    private static bool IsTransportRetryable(string path) =>
+        path == ListInboundsPath || path == ListOnlinesPath || path == XuiLogin.Path;
+
+    private static WebApiConfig GetWebApiConfig(ServerEntity server) => RequireWebConfiguration(server).Config;
+
+    private static (ServerConfiguration Configuration, WebApiConfig Config) RequireWebConfiguration(ServerEntity server)
     {
-        var config = server.Config?.WebApiConfig ??
+        var configuration = server.Config ??
+                            throw new Exception($"The web-api configuration is not set for server ({server.Id}:{server.Name})");
+
+        var config = configuration.WebApiConfig ??
                      throw new Exception($"The web-api configuration is not set for server ({server.Id}:{server.Name})");
 
         if (string.IsNullOrEmpty(config.HostName))
@@ -229,55 +290,25 @@ class XuiApiService(IHttpClientFactory factory) : IXuiApi
             throw new Exception($"The host-name configuration is not set for server ({server.Id}:{server.Name})");
         }
 
-        return config;
+        return (configuration, config);
     }
 
-    private static async Task<string> LoginAsync(HttpClient http, string base_url, WebApiConfig config)
+    /// <summary>
+    /// Sends left for one logical request. Five is the exact ceiling of the
+    /// retry rules: a request that starts without a session cookie needs the
+    /// login and the request, one transport retry (with its own login when the
+    /// first one died) and one re-login with its request. The budget itself is
+    /// only a guard: it ends the request when the rules would ever need more.
+    /// </summary>
+    private sealed class SendBudget(bool transport_retryable)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{base_url}login")
-        {
-            Content = new StringContent(
-                JsonSerializer.Serialize(new { username = config.Username, password = config.Password }),
-                Encoding.UTF8, "application/json"),
-        };
+        public const int MaximumSends = 5;
 
-        using var response = await http.SendAsync(request);
+        public int SendsLeft { get; set; } = MaximumSends;
 
-        response.EnsureSuccessStatusCode();
+        public int ReloginsLeft { get; set; } = 1;
 
-        var envelope = await response.Content.ReadFromJsonAsync<XuiResponseEnvelope<object>>();
-
-        if (envelope is not { Success: true })
-        {
-            throw new Exception(
-                $"The x-ui login failed: (host={config.HostName}, message={envelope?.Msg ?? "unparseable response"})");
-        }
-
-        if (!response.Headers.TryGetValues("Set-Cookie", out var cookies))
-        {
-            throw new Exception("The x-ui login response carried no session cookie.");
-        }
-
-        return string.Join("; ", cookies.Select(cookie => cookie.Split(';').First()));
-    }
-
-    private static string BuildBaseUrl(WebApiConfig config)
-    {
-        var scheme = config.Ssl ? "https" : "http";
-        var port = config.Port.HasValue ? $":{config.Port}" : "";
-        var base_path = NormalizeBasePath(config.BasePath);
-
-        return $"{scheme}://{config.HostName}{port}{base_path}";
-    }
-
-    private static string NormalizeBasePath(string? base_path)
-    {
-        var path = string.IsNullOrEmpty(base_path) ? "/" : base_path.Trim();
-
-        if (!path.StartsWith('/')) path = "/" + path;
-        if (!path.EndsWith('/')) path += "/";
-
-        return path;
+        public int TransportRetriesLeft { get; set; } = transport_retryable ? 1 : 0;
     }
 
     private sealed class XuiResponseEnvelope<T>

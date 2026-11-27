@@ -8,6 +8,7 @@ using PhotonBypass.Domain.Account.Model;
 using PhotonBypass.Portal;
 using PhotonBypass.Portal.Basical;
 using PhotonBypass.Result;
+using PhotonBypass.ServerBridge.HostChecks;
 
 namespace PhotonBypass.Portal.Controllers;
 
@@ -26,10 +27,15 @@ public class ServerSetActiveRequest
 [ApiController]
 [Route("/api/[controller]")]
 public class ServerController(
-    IServerCrudApplication application, IJobContext job, Lazy<IAccessService> access) :
+    IServerCrudApplication application, IServerConnectionTester connection_tester,
+    IHostCapabilityChecks host_checks, IJobContext job, Lazy<IAccessService> access) :
     ResultHandlerController(job, access)
 {
     private readonly IServerCrudApplication application = application;
+
+    private readonly IServerConnectionTester connection_tester = connection_tester;
+
+    private readonly IHostCapabilityChecks host_checks = host_checks;
 
     [Authorize(Policy = ServiceFactory.AdminPolicy)]
     [HttpGet("list")]
@@ -78,5 +84,36 @@ public class ServerController(
         var result = await application.SetActive(request.Id, request.Active);
 
         return SafeApiResult(result);
+    }
+
+    /// <summary>
+    /// Connection test (Docs/25 D8–D9): the unsaved form when a config is
+    /// sent, otherwise the stored configuration of the given id — a body of
+    /// <c>{ "id": n }</c> is enough. Nothing is saved.
+    /// </summary>
+    [Authorize(Policy = ServiceFactory.AdminPolicy)]
+    [HttpPost("test-connection")]
+    public async Task<ApiResult<ServerConnectionReport>> TestConnection([FromBody] TestServerConnectionModel request)
+    {
+        await LoadJobContextAsync();
+
+        var result = await connection_tester.TestAsync(request);
+
+        return SafeApiResult(ApiResult<ServerConnectionReport>.Success(result));
+    }
+
+    /// <summary>
+    /// Re-runs the host-capability checks G1–G3 (Docs/25 D11) without a
+    /// restart; the same answer is logged with the <c>host-check</c> prefix.
+    /// </summary>
+    [Authorize(Policy = ServiceFactory.AdminPolicy)]
+    [HttpPost("host-checks")]
+    public async Task<ApiResult<HostCheckReport>> RunHostChecks()
+    {
+        await LoadJobContextAsync();
+
+        var report = await host_checks.RunAsync();
+
+        return SafeApiResult(ApiResult<HostCheckReport>.Success(report));
     }
 }

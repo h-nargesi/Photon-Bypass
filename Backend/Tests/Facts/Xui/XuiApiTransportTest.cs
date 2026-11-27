@@ -283,7 +283,263 @@ public class XuiApiTransportTest
         list.HasAjaxHeader.Should().BeTrue();
     }
 
-    private static ServerEntity BuildServer(int? inbound_id = 1, string? base_path = null)
+    [Theory]
+    [InlineData("xui84", "http://127.0.0.1:2087/xui84/login")]
+    [InlineData("xui84/", "http://127.0.0.1:2087/xui84/login")]
+    [InlineData(null, "http://127.0.0.1:2087/login")]
+    public async Task Tunnel_BaseUrlIsTheLoopbackServiceAddress_WithOrWithoutATrailingSlash(string? base_path, string expected_login)
+    {
+        var handler = ScriptedHandlerWith(LoginOk("s1"), InboundList(Inbound(1)));
+
+        await BuildApi(handler).ListClients(TunnelServer(base_path: base_path));
+
+        handler.Requests[0].Uri.AbsoluteUri.Should().Be(expected_login);
+        handler.Requests[1].Uri.AbsoluteUri.Should().Be(expected_login.Replace("login", "xui/API/inbounds/"));
+    }
+
+    [Fact]
+    public async Task Tunnel_ReadPath_IsRetriedOnceAfterTheTunnelDied_AndTheFailureIsReported()
+    {
+        var handler = ScriptedHandlerWith(LoginOk("s1"));
+
+        handler.ThrowAt(1, TunnelDeath());
+
+        handler.Responses.Enqueue(InboundList(Inbound(1)));
+
+        var provider = new TestProvider(handler);
+
+        var clients = await new XuiApiService(provider).ListClients(TunnelServer());
+
+        clients.Should().BeEmpty();
+        handler.Requests.Should().HaveCount(3);
+        handler.Requests[1].Cookie.Should().Be("x-ui=s1");
+        handler.Requests[2].Cookie.Should().Be("x-ui=s1", "the session cookie does not depend on the TCP connection");
+        provider.Faulted.Should().Equal(50);
+    }
+
+    [Theory]
+    [InlineData("add")]
+    [InlineData("update")]
+    [InlineData("remove")]
+    [InlineData("reset")]
+    public async Task Tunnel_WritePaths_AreNotRetried(string action)
+    {
+        var handler = ScriptedHandlerWith(LoginOk("s1"));
+
+        handler.ThrowAt(1, TunnelDeath());
+
+        var provider = new TestProvider(handler);
+
+        var api = new XuiApiService(provider);
+
+        var act = action switch
+        {
+            "add" => (Func<Task>)(() => api.AddClient(TunnelServer(), new XuiClientModel { Email = "User3", Uuid = "u-3" })),
+            "update" => (Func<Task>)(() => api.UpdateClient(TunnelServer(), "old-uuid", new XuiClientModel { Email = "User3", Uuid = "u-3" })),
+            "remove" => (Func<Task>)(() => api.RemoveClient(TunnelServer(), "u-3")),
+            _ => (Func<Task>)(() => api.ResetClientTraffic(TunnelServer(), "User3")),
+        };
+
+        await act.Should().ThrowAsync<HttpRequestException>();
+
+        handler.Requests.Should().HaveCount(2, "a blind retry of a write could create a duplicate client");
+        provider.Faulted.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Tunnel_Login_IsRetriedOnce()
+    {
+        var handler = new ScriptedHandler();
+
+        handler.ThrowAt(0, TunnelDeath());
+
+        handler.Responses.Enqueue(LoginOk("s1"));
+        handler.Responses.Enqueue(InboundList(Inbound(1)));
+
+        var provider = new TestProvider(handler);
+
+        (await new XuiApiService(provider).ListClients(TunnelServer())).Should().BeEmpty();
+
+        handler.Requests.Select(request => request.Uri.AbsoluteUri.EndsWith("/login")).Should().Equal(true, true, false);
+        provider.Faulted.Should().Equal(50);
+    }
+
+    [Fact]
+    public async Task Tunnel_LoginTimeout_IsNotRetried()
+    {
+        var handler = new ScriptedHandler();
+
+        handler.ThrowAt(0, new TaskCanceledException("The request was canceled due to the configured HttpClient.Timeout", new TimeoutException()));
+
+        var provider = new TestProvider(handler);
+
+        await Assert.ThrowsAsync<TaskCanceledException>(() => new XuiApiService(provider).ListClients(TunnelServer()));
+
+        handler.Requests.Should().ContainSingle();
+        provider.Faulted.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Tunnel_LoginRejected_IsNotRetried()
+    {
+        var handler = ScriptedHandlerWith(Failed("wrong credentials"));
+
+        var provider = new TestProvider(handler);
+
+        var error = await Assert.ThrowsAsync<Exception>(() => new XuiApiService(provider).ListClients(TunnelServer()));
+
+        error.Should().BeOfType<Exception>().Which.Message.Should().Contain("login failed");
+        handler.Requests.Should().ContainSingle();
+        provider.Faulted.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Tunnel_NonSuccessStatus_IsNotRetried()
+    {
+        var handler = ScriptedHandlerWith(LoginOk("s1"), new HttpResponseMessage(HttpStatusCode.BadGateway));
+
+        var provider = new TestProvider(handler);
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => new XuiApiService(provider).ListClients(TunnelServer()));
+
+        handler.Requests.Should().HaveCount(2);
+        provider.Faulted.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Tunnel_TunnelDeathTwice_IsRetriedOnlyOnce()
+    {
+        var handler = ScriptedHandlerWith(LoginOk("s1"));
+
+        handler.ThrowAt(1, TunnelDeath());
+        handler.ThrowAt(2, TunnelDeath());
+
+        var provider = new TestProvider(handler);
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => new XuiApiService(provider).ListClients(TunnelServer()));
+
+        handler.Requests.Should().HaveCount(3);
+        provider.Faulted.Should().Equal(50);
+    }
+
+    [Fact]
+    public async Task Tunnel_ReLoginThenTunnelDeath_BothRecoverWithinFiveSends()
+    {
+        var handler = ScriptedHandlerWith(LoginOk("s1"));
+
+        handler.Responses.Enqueue(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        handler.Responses.Enqueue(LoginOk("s2"));
+        handler.ThrowAt(3, TunnelDeath());
+        handler.Responses.Enqueue(InboundList(Inbound(1)));
+
+        var provider = new TestProvider(handler);
+
+        (await new XuiApiService(provider).ListClients(TunnelServer())).Should().BeEmpty();
+
+        // login, the rejected request, the re-login, the request that died, its retry
+        Logins(handler.Requests).Should().Equal(true, false, true, false, false);
+        provider.Faulted.Should().Equal(50);
+    }
+
+    [Fact]
+    public async Task Tunnel_LoginDiedThenSessionRejectedThenTunnelDeath_EndsAfterFiveSends()
+    {
+        // one transport retry and one re-login are spent: a second death is the end, and never a sixth send
+        var handler = new ScriptedHandler();
+
+        handler.ThrowAt(0, TunnelDeath());
+        handler.Responses.Enqueue(LoginOk("s1"));
+        handler.Responses.Enqueue(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        handler.Responses.Enqueue(LoginOk("s2"));
+        handler.ThrowAt(4, TunnelDeath());
+
+        var provider = new TestProvider(handler);
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => new XuiApiService(provider).ListClients(TunnelServer()));
+
+        Logins(handler.Requests).Should().Equal(true, true, false, true, false);
+        provider.Faulted.Should().ContainSingle().Which.Should().Be(50, "only the death that was retried is reported");
+    }
+
+    [Fact]
+    public async Task Tunnel_ColdStart_TunnelDeathThenReLogin_BothRecoverWithinFiveSends()
+    {
+        // a fresh adapter has no session cookie: the first request pays the login too
+        var handler = ScriptedHandlerWith(LoginOk("s1"));
+
+        handler.ThrowAt(1, TunnelDeath());
+        handler.Responses.Enqueue(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        handler.Responses.Enqueue(LoginOk("s2"));
+        handler.Responses.Enqueue(InboundList(Inbound(1)));
+
+        var provider = new TestProvider(handler);
+
+        (await new XuiApiService(provider).ListClients(TunnelServer())).Should().BeEmpty();
+
+        // login, the request that died, its retry, the re-login, the request again
+        Logins(handler.Requests).Should().Equal(true, false, false, true, false);
+        provider.Faulted.Should().Equal(50);
+    }
+
+    [Fact]
+    public async Task Tunnel_ColdStart_SessionRejectedTwiceAfterATunnelDeath_EndsAfterFiveSends()
+    {
+        var handler = ScriptedHandlerWith(LoginOk("s1"));
+
+        handler.ThrowAt(1, TunnelDeath());
+        handler.Responses.Enqueue(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        handler.Responses.Enqueue(LoginOk("s2"));
+        handler.Responses.Enqueue(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+
+        var provider = new TestProvider(handler);
+
+        var error = await Assert.ThrowsAsync<Exception>(() => new XuiApiService(provider).ListClients(TunnelServer()));
+
+        error.Message.Should().Contain("rejected after a re-login"); // the session is rejected again: one re-login is all there is
+        Logins(handler.Requests).Should().Equal(true, false, false, true, false);
+        provider.Faulted.Should().Equal(50);
+    }
+
+    [Fact]
+    public async Task Tunnel_TunnelDeathAndReLogin_BothRecoverWithinFourSends()
+    {
+        var handler = ScriptedHandlerWith(LoginOk("s1"), InboundList(Inbound(1)));
+
+        var api = new XuiApiService(new TestProvider(handler));
+
+        await api.ListClients(TunnelServer()); // establishes the session cookie (2 sends)
+
+        var before = handler.Requests.Count;
+
+        handler.ThrowAt(before, TunnelDeath());
+        handler.Responses.Enqueue(new HttpResponseMessage(HttpStatusCode.Unauthorized));
+        handler.Responses.Enqueue(LoginOk("s2"));
+        handler.Responses.Enqueue(InboundList(Inbound(1)));
+
+        (await api.ListClients(TunnelServer())).Should().BeEmpty();
+
+        handler.Requests.Skip(before).Should().HaveCount(4);
+    }
+
+    [Fact]
+    public async Task Direct_TransportDeath_IsNotRetried()
+    {
+        var handler = ScriptedHandlerWith(LoginOk("s1"));
+
+        handler.ThrowAt(1, TunnelDeath());
+
+        var provider = new TestProvider(handler);
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => new XuiApiService(provider).ListClients(BuildServer()));
+
+        handler.Requests.Should().HaveCount(2);
+        provider.Faulted.Should().BeEmpty("the direct transport has no pooled session to drop");
+    }
+
+    private static ServerEntity BuildServer(
+        int? inbound_id = 1, string? base_path = null,
+        ServerTransport transport = ServerTransport.Direct, string host = "panel.local", int port = 5443)
+
     {
         // JsonConfig is set directly (plaintext) instead of via the Config
         // property: parallel test classes swap ServerConfigProtection's static
@@ -303,10 +559,11 @@ public class XuiApiTransportTest
 
         server.JsonConfig = JsonSerializer.Serialize(new ServerConfiguration
         {
+            Transport = transport,
             WebApiConfig = new WebApiConfig
             {
-                HostName = "panel.local",
-                Port = 5443,
+                HostName = host,
+                Port = port,
                 Username = "admin",
                 Password = "secret",
                 BasePath = base_path,
@@ -317,10 +574,26 @@ public class XuiApiTransportTest
         return server;
     }
 
+    /// <summary>A tunnel server: the x-ui panel addressed on the server's own loopback (Docs/25 §4.1).</summary>
+    private static ServerEntity TunnelServer(ServerTransport transport = ServerTransport.SshTunnel, string? base_path = null)
+    {
+        return BuildServer(transport: transport, host: "127.0.0.1", port: 2087, base_path: base_path);
+    }
+
     private static IXuiApi BuildApi(ScriptedHandler handler)
     {
-        return new XuiApiService(new SingleClientFactory(handler));
+        return new XuiApiService(new TestProvider(handler));
     }
+
+    /// <summary>
+    /// A connection that died while the request was on the wire, as
+    /// SocketsHttpHandler reports a pooled connection killed by a lost tunnel.
+    /// </summary>
+    private static List<bool> Logins(IReadOnlyList<RecordedRequest> requests) =>
+        [.. requests.Select(request => request.Uri.AbsoluteUri.EndsWith("/login", StringComparison.Ordinal))];
+
+    private static HttpRequestException TunnelDeath() =>
+        new("An error occurred while sending the request", new IOException("The response ended prematurely."));
 
     private static ScriptedHandler ScriptedHandlerWith(params HttpResponseMessage[] responses)
     {
@@ -375,9 +648,13 @@ public class XuiApiTransportTest
         };
     }
 
-    private sealed class SingleClientFactory(HttpMessageHandler handler) : IHttpClientFactory
+    private sealed class TestProvider(HttpMessageHandler handler) : IXuiHttpClientProvider
     {
-        public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
+        public List<int> Faulted { get; } = [];
+
+        public HttpClient Get(ServerEntity server) => new(handler, disposeHandler: false);
+
+        public void ReportTransportFailure(ServerEntity server) => Faulted.Add(server.Id);
     }
 
     private sealed class RecordedRequest
@@ -401,6 +678,11 @@ public class XuiApiTransportTest
 
         public Queue<HttpResponseMessage> Responses { get; } = [];
 
+        /// <summary>Requests that die on the wire instead of being answered, by zero-based request index.</summary>
+        public Dictionary<int, Exception> Throws { get; } = [];
+
+        public void ThrowAt(int request_index, Exception error) => Throws[request_index] = error;
+
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
@@ -417,6 +699,8 @@ public class XuiApiTransportTest
                     ? string.Join("; ", cookie)
                     : null,
             });
+
+            if (Throws.TryGetValue(requests.Count - 1, out var error)) throw error;
 
             return Responses.Dequeue();
         }
