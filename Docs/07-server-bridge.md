@@ -13,10 +13,17 @@
 | `IApiHandler` → `ApiHandler` | Scoped | `HttpClient` | فراخوانی‌های REST عمومی (مثلاً RadiusDesk خودش HttpClient جدا دارد). |
 | `IEmailHandler` → `EmailHandler` | Scoped | `SmtpClient` | ارسال ایمیل؛ options `EmailOptions` (`Address`/`Password`/`FullName`). |
 | `ResourceSynchronization` | Singleton | — | قفل/هماهنگی منابع مشترک. |
+| `ISshConnector` → `SshConnector` | Singleton | `Renci.SshNet` (`SshClient`، `ForwardedPortLocal`) | seam داخلی SSH (Docs/25): تصمیم host key و classify خطا؛ در تست‌ها fake. |
+| `ISshTunnelPool` → `SshTunnelPool` | Singleton (+ hosted service جاروب) | `ISshConnector` | یک جلسه‌ی SSH به‌ازای هر سرور در حالت `SshTunnel` (Docs/25 D5): اتصال تنبل، keep-alive، حذف بی‌فعال، `Fault`، `Generation`. |
+| `TikConnectionFactory` | Singleton | `tik4net` (`ConnectionFactory.CreateConnection`) | ساخت اتصال tik4net پشت یک delegate (آداپتور و تست اتصال). |
+| `IServerChannelProbe` → `ServerChannelProbe` | Singleton | `ISshConnector` | گام‌های `tcp`/`host-key`/`auth`/`forward` تست اتصال ادمین روی یک جلسه‌ی یک‌بارمصرف (Docs/25 D9). |
+| `IHostCapabilityChecks` → `HostCapabilityChecks` | Singleton (+ hosted service) | `TcpClient`/`TcpListener` | بررسی‌های میزبان G1–G3 در هر شروع و با `POST /api/server/host-checks` (Docs/25 D11). |
 
 > نکته: SSH/Tik4Net **Singleton** هستند چون state اتصال را مدیریت می‌کنند و reuse می‌شوند؛ Api/Email **Scoped** چون per-request رفتار می‌کنند.
 
-> کانال SSH با کلید و تانل (حالت `SshTunnel`): تصمیم و مشخصات کامل در [Docs/25](25-server-channel.md) — **هنوز پیاده‌سازی نشده**. امروز `SshHandler` فقط پسورد دارد و `Tik4NetHandler` مستقیم وصل می‌شود؛ پس از پیاده‌سازی یک `ISshTunnelPool` singleton به این جدول اضافه می‌شود.
+> `ISshHandler`/`ITik4NetHandler` state اتصال را نگه نمی‌دارند: `SshHandler` در `Direct` برای هر فراخوانی یک کانال تازه می‌سازد و در `SshTunnel` اتصال را از `ISshTunnelPool` قرض می‌گیرد؛ استخر است که جلسه‌ها را نگه می‌دارد (Docs/25).
+
+> کانال SSH با کلید و تانل (حالت `SshTunnel`): تصمیم و مشخصات کامل در [Docs/25](25-server-channel.md) — **پیاده‌سازی شده (۲۰۲۶-۱۱-۲۶)**. هر سرور با `ServerConfiguration.Transport` مسیر خود را انتخاب می‌کند: `Direct` مثل امروز (پسورد، پین اختیاری) یا `SshTunnel` با کلید ed25519 و host key پین‌شده روی یک جلسه‌ی مشترک؛ منطق SSH.NET پشت seam داخلی `ISshConnector` در `Backend/ServerBridge/Tunnel/` نشسته تا تست‌ها بدون شبکه باشند. SSH.NET با این کار به 2026.0.0 ارتقا یافت (دو advisory با شدت بالا؛ پنل `ScpClient` ندارد).
 
 ## Process / Script engine (موتور اسکریپت)
 
@@ -60,6 +67,17 @@
 
 - الگوی تجزیه: `OutputPatternParse` = `#\s+regex:` (`ScriptPatterns.cs:19`).
 - هر گروه تطبیق‌یافته در context به‌صورت `context[name] = match.Groups[index].Value` نوشته می‌شود؛ بنابراین خروجی یک اسکریپت می‌تواند ورودی اسکریپت بعدی شود.
+
+### حکم موفقیت فرمان — `ISshConnection.Execute`
+
+یکسان در هر دو transport و در `CommandOutcome.Classify` (`Backend/ServerBridge/Ssh/CommandOutcome.cs`، Docs/25 D10):
+
+1. stderr غیرخالی → `false`، `result` = متن stderr.
+2. در غیر این صورت `ExitStatus > 0` → `false`، `result` = خروجی (`-1` یعنی exit status نرسیده و به این شرط نمی‌خورد).
+3. در غیر این صورت روی `Mikrotik`، خطی که با الگوی خطای RouterOS شروع شود (`^failure: `، `expected end of command`، `not enough permissions`، `no such item`، `bad command name`، `syntax error` — `RouterOsErrorPatterns.cs`) → `false`، `result` = خروجی.
+4. در غیر این صورت `true`، `result` = خروجی.
+
+فرمان ناموفق exception نمی‌دهد (متن خطا در لاگ سطح Warning می‌نشیند)؛ `ProcessService` همان رفتار قبلی را دارد: `context.Error = result` و `return false`. exception فقط برای timeout («خطای اجرای دستور در سرور!») و قطع اتصال («خطای اتصال به سرور!») است. در حالت تانل فرمان‌های یک جلسه سریالی می‌شوند: `ISshConnection.Dispose` فرمان در حال اجرا را cancel می‌کند و جلسه را آزاد می‌کند. از دست رفتن جلسه وسط فرمان در حالت تانل همان جلسه را از استخر بیرون می‌اندازد (`Fault` با هویت همان جلسه)، پس فراخوانی بعدی یک‌بار دوباره وصل می‌شود؛ timeout فرمان نشست را نگه می‌دارد.
 
 ### Script definition syntax (نحو تعریف اسکریپت)
 
@@ -108,4 +126,4 @@ sequenceDiagram
 
 - **`MikrotikDirectService`** (ساخت/پخش گواهی OpenVpn، اعمال تغییرات روی NAS).
 - **فرآیندهای مدیر** روی سرورها (فعال/غیرفعال تانل‌ها، راه‌اندازی) — `README.md:18-20`.
-- پنل مدیریت سرورها هنوز ساخته نشده (`Docs/12`)؛ فعلاً بیشتر فرآیندها از طریق کد/مستقیماً اجرا می‌شوند.
+- پنل مدیریت سرورها در `/servers` است (Docs/20 فاز ۵) و از این جلسه تست اتصال و انتخابگر transport را دارد (Docs/25 D9).

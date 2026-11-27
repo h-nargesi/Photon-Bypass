@@ -33,7 +33,7 @@
 | 22 | [Docs/22-panel-user-vpn-split.md](22-panel-user-vpn-split.md) | تفکیک `Account` به `PanelUser` + `VpnAccount` (D1–D14): چند اکانت VPN برای هر کاربر، قواعد یوزرنیم D3، خرید با انتخاب realm، مهاجرت stale، دو محور وضعیت. |
 | 23 | [Docs/23-xui-local-test-vm.md](23-xui-local-test-vm.md) | انزوای تست (D1–D5): ممنوعیت قطعی تست روی سرور زنده، حذف ارجاع به زیرساخت اجرایی، تنها مقصد اینتگریشن x-ui = VM لوکال VirtualBox با پنل تستی + دستور کار اجرا. |
 | 24 | [Docs/24-server-capacity-realm-title.md](24-server-capacity-realm-title.md) | ظرفیت بایت‌محور + عنوان realm (D1–D7): `Server.CapacityBytes` به بایت (فقط فرم ادمین گیگابایت می‌گیرد)، `Realm.Title` متن نمایشی سرور برای مشتری و ماندن `Realm.Name` برای ادمین، پاک‌سازی `FRIENDLY_NAME`؛ ماتریس نمایش و موارد بازِ زمان ثبت اولین سرورها. |
-| 25 | [Docs/25-server-channel.md](25-server-channel.md) | کانال ارتباطی پنل با سرورها (D1–D10): یک جلسه‌ی SSH با کلید ed25519 و host key پین‌شده به‌ازای هر سرور؛ API مربوط به x-ui و User Manager از داخل local port-forward روی loopback؛ `Transport` روی هر ردیف سرور، استخر جلسه‌ها، اعتبارسنجی، تست اتصال ادمین، بررسی‌های میزبان در اولین انتشار با لاگ (D11: خروجی TCP، bind روی loopback، طول عمر worker)، پیش‌نیازهای سمت سرور، طرح تست و ترتیب اجرا؛ پیوست A متن کامل برنامه‌ی اثبات C# و پیوست B گزارش اجراهای آن روی میزبان‌های تولید — **مشخص‌شده، پیاده‌سازی‌نشده**. |
+| 25 | [Docs/25-server-channel.md](25-server-channel.md) | کانال ارتباطی پنل با سرورها (D1–D10): یک جلسه‌ی SSH با کلید ed25519 و host key پین‌شده به‌ازای هر سرور؛ API مربوط به x-ui و User Manager از داخل local port-forward روی loopback؛ `Transport` روی هر ردیف سرور، استخر جلسه‌ها، اعتبارسنجی، تست اتصال ادمین، بررسی‌های میزبان در اولین انتشار با لاگ (D11: خروجی TCP، bind روی loopback، طول عمر worker)، پیش‌نیازهای سمت سرور، طرح تست و ترتیب اجرا؛ پیوست A متن کامل برنامه‌ی اثبات C# و پیوست B گزارش اجراهای آن روی میزبان‌های تولید — **پیاده‌سازی‌شده در کد (۲۰۲۶-۱۱-۲۶؛ §۲.۱ انحراف‌ها)؛ باز مانده: تست‌های اینتگریشن روی VM و تأیید میزبان در اولین انتشار**. |
 
 ## Read this file when…
 
@@ -62,7 +62,7 @@
 | Implement/verify the panel-user ↔ VPN-account split (multi-account, realm choice, per-account status) | [22-panel-user-vpn-split](22-panel-user-vpn-split.md) |
 | Build/extend the local x-ui test VM and its integration tests, or check what test targets are allowed | [23-xui-local-test-vm](23-xui-local-test-vm.md) |
 | Set a server capacity, show a realm name to a customer, or seed a server through raw SQL | [24-server-capacity-realm-title](24-server-capacity-realm-title.md) |
-| Implement the SSH key + tunnel channel to the x-ui hosts and MikroTik (User Manager), or check what a server needs before it can be onboarded | [25-server-channel](25-server-channel.md) |
+| Review the implemented SSH key + tunnel channel to the x-ui hosts and MikroTik (User Manager) — what is in code, what is still open (VM-tier tests, first publish) — or check what a server needs before it can be onboarded | [25-server-channel](25-server-channel.md) |
 
 ## Related legacy docs
 

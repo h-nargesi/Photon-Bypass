@@ -73,14 +73,18 @@ None of these is blocking the rename; each needs a decision before the related
 server goes live in the panel.
 
 1. **Loopback-only panels.** The panel's x-ui hosts expose the panel on
-   loopback only (sshd is the only public surface). `XuiApiService` speaks plain
-   HTTP(S) to `WebApiConfig.HostName`, and `SshHandler` is password-only
-   (`SshConfig.Port/Username/Password`) with no key authentication or tunnel —
-   such a panel is unreachable as-is. **Decided 2026-11-26:** an SSH local
-   port-forward per server with key authentication and a pinned host key; the
-   full specification (config, session pool, validation, connection test,
-   server-side prerequisites, rollout) is [Docs/25](25-server-channel.md) —
-   implementation pending.
+   loopback only (sshd is the only public surface). Before Docs/25,
+   `XuiApiService` spoke plain HTTP(S) to `WebApiConfig.HostName` and
+   `SshHandler` was password-only (`SshConfig.Port/Username/Password`) with no
+   key authentication or tunnel — such a panel was unreachable as-is.
+   **Decided 2026-11-26:** an SSH local port-forward per server with key
+   authentication and a pinned host key; the full specification (config,
+   session pool, validation, connection test, server-side prerequisites,
+   rollout) is [Docs/25](25-server-channel.md) — **closed in code on
+   2026-11-26**: a row with `Config.Transport = "SshTunnel"` reaches its panel
+   through the pooled SSH session (`Backend/ServerBridge/Tunnel/`); rows
+   without `Transport` keep the direct path. Still open under Docs/25: the
+   VM-tier integration tests and the first-publish host verification.
 2. **Link builder gaps.** `VlessLinkService` accepts `tcp/ws/grpc` +
    `none/tls/reality` only and reads the REALITY link fields from fixed flat
    keys (`realitySettings.serverName/fingerprint/publicKey/shortId`). The

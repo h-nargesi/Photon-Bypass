@@ -33,6 +33,8 @@
 
 > **Seed سرور با SQL دستی — بزرگی/کوچکی حروفِ کلیدهای JSON در `Config`**: `ServerEntity.Config` با `System.Text.Json` پیش‌فرض deserialize می‌شود و **case-sensitive** است؛ کلیدها باید PascalCase باشند: `SshConfig`، `WebApiConfig`، `Ssl`، `HostName`، `BasePath`، `InboundId`. کلید camelCase (مثل `ssl`) **بدون خطا نادیده گرفته می‌شود** و مقدار پیش‌فرض می‌ماند (مثلاً `Ssl=false` → درخواست روی HTTP ساده به پورت API-SSL). camelCase فقط از مسیر ادمین API (`/api/server/create`، binding غیرحساس ASP.NET) کار می‌کند (Docs/24 §3).
 
+> **کلیدهای حالت تانل (Docs/25 §4.1، پیاده‌سازی ۲۰۲۶-۱۱-۲۶)**: `Server.Config` یک کلید جدید `Transport` دارد (`"Direct"` پیش‌فرض، `"SshTunnel"`) که با `JsonStringEnumConverter` **به‌صورت رشته** خوانده و نوشته می‌شود — ردیفی که این کلید را ندارد `Direct` است. `SshConfig` سه کلید جدید گرفته: `PrivateKey` (متن کامل کلید خصوصی OpenSSH)، `PassPhrase`، `HostKeySha256` (پین، `SHA256:<base64 بدون padding>`؛ پیش از ذخیره نرمال می‌شود). این فیلدها داخل همان `Config` محافظت‌شده می‌مانند و هرگز از API خوانده نمی‌شوند؛ در SQL خام راز ننویسید (متن ساده در دیتابیس می‌ماند — Docs/25 §4.12). ستون یا migration تازه‌ای لازم نیست.
+
 ### Security note: admin account (بدون seed)
 
 `Account.sql` دیگر **هیچ ادمین پیش‌فرضی seed نمی‌کند**. ادمین اولین انتشار با پسورد واقعی اپراتور و `Role=Admin` + `UserType=AllowSelfService` در زمان درج ساخته می‌شود: `Backend/Tools/DeployCli` (`create-admin`/`verify`) که از `Scripts/deploy.sh` صدا زده می‌شود (ران‌بوک: Docs/19 §ج). گاردها: username تکراری بدون بازنویسی رد می‌شود و وجود هر ادمین دیگر، درج ادمین دوم را بلاک می‌کند (Docs/20 D9: تک‌ادمین). تنها fixture ادمین با پسورد تستی، seed داده‌ی سناریوی تست است (`Backend/Tests/Data/Sql/DbScenario/init.sql`) که هرگز روی پروداکشن اجرا نمی‌شود.
