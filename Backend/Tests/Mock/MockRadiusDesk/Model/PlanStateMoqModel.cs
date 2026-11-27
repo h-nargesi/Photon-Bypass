@@ -11,8 +11,6 @@ public class PlanStateMoqModel
 
     public VpnAccountStatus Status { get; set; }
 
-    public int RowNumber { get; set; }
-
     public byte SimultaneousUser { get; set; }
 
     public int RealmId { get; set; }
@@ -40,7 +38,6 @@ public class PlanStateMoqModel
             Username = Username,
             Status = Status,
             UserId = UserId,
-            RowNumber = RowNumber,
             SimultaneousUser = SimultaneousUser,
             RealmId = RealmId,
             TrafficLimit = TrafficLimit,

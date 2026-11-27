@@ -20,14 +20,14 @@
 | `ResetPassword.sql` | `ResetPassword` | — | توکن بازنشانی. |
 | `Renewal.sql` | `Renewal` | `PK Id`, `FK VpnAccountId→VpnAccount` (CASCADE), `WalletDebit/WalletCredit` | یک تمدید + ستون‌های وضعیت ترافیک x-ui (Docs/17 D6/D14): `LastSeenCounter`, `LastPollTime`, `TrafficUsed`, `LastActiveTime`. |
 | `Invoice.sql` | `Invoice` | `PK Code` (از `InvoiceSequence`، بدون identity), `FK UserId→PanelUser`, `FK VpnAccountId→VpnAccount` (nullable، Docs/22 D8), `IX (UserId, Status)`, `CK` XOR رسید | والد فاکتور: `Kind (1=TopUp,2=Plan)`, `Title`, `TotalPrice`, `WalletDeduction`, `Payable`, `Action nvarchar(400)`, `Status` (هم‌ارزش `BalanceStatus`), `ReceiptImage/ReceiptText/ReceiptAt`. |
-| `PlanState.sql` | `PlanState` | — | **view** mapping (نه جدول پر-شده؛ از `TotalPlanState` خوانده می‌شود). |
+| `PlanState.sql` | `PlanState` | — | **view** mapping (نه جدول پر-شده؛ فیلتر `TotalPlanState` روی آخرین تمدید — `ISNULL(RowNumber, 1) = 1` → یک ردیف به‌ازای هر `VpnAccount`)؛ منبع مستقیم `PlanStateEntity`. |
 | `TrafficData.sql` | `TrafficData` | `PK Id`, `UK (NasId, SessionId)` inline | رکورد ترافیک دوره‌ای؛ `SessionId VARCHAR(64)` برای کلیدهای مصنوعی روزانه‌ی x-ui (Docs/17 D7). |
 | `Server.sql` | `Server` | `PK Id`, `FK RealmId→Realm` | سرور با `Features` (Flags) و `OsType`؛ `CapacityBytes BIGINT` = ترافیک ۳۰روزه‌ی قابل‌فروش **به بایت** (Docs/24 D1؛ ظرفیت realm = جمع آن روی NASهای فعال)؛ `Config VARCHAR(4000)` برای payload رمزنگاری‌شده‌ی Data Protection (Docs/14 M12). |
 | `Realm.sql` | `Realm` | `PK Id` | گروه سرور: `Name NVARCHAR(15)` (شناسه‌ی سیستمی) + `Title NVARCHAR(50) NULL` (متن نمایشی به مشتری، خالی = fallback به `Name` — Docs/24 D5) + `CapacityOverrideBytes` (بازنویسی ظرفیت دستی، T3). |
 | `Price.sql` | `Price` | `PK Id` | `CalculatorCode` (کد C#). |
 | `InvoiceSequence.sql` | (sequence) | — | کد فاکتور اتمیک؛ شروع ثابت 10001 روی نصب تازه (Docs/14 C4). |
-| `TotalPlanState.sql` | `TotalPlanState` (VIEW) | — | محاسباتی — پایه‌ی `PlanStateEntity`. |
-| `Indexes.sql` | (indexes) | — | ایندکس‌های مسیر داغ (Docs/14 H20) روی TrafficData/Renewal/History/Wallet/PanelUser/VpnAccount. |
+| `TotalPlanState.sql` | `TotalPlanState` (VIEW) | — | محاسباتی per-renewal (یک ردیف به‌ازای هر تمدید) — پایه‌ی ویوی `PlanState`. |
+| `Indexes.sql` | (indexes) | — | ایندکس‌های مسیر داغ (Docs/14 H20) روی TrafficData/Renewal/History/Wallet/PanelUser/VpnAccount؛ `IX_TrafficData_VpnAccountId_Id` برای پنجره‌ی تجمعی ویوی `TotalPlanState` (Docs/14 M51). |
 
 > ایندکس‌های یکتای فیلترشده: `UK_Account_Email` و `UK_Account_Mobile` فقط روی ردیف‌های NOT NULL اعمال می‌شوند تا چند کاربر با ایمیل/موبایل خالی مجاز باشند (`Account.sql`؛ پنجره‌ی TOCTOU ثبت‌نام را می‌بندد — Docs/14 L11).
 
@@ -41,33 +41,37 @@
 
 ## `TotalPlanState` view (نمایش کلیدی)
 
-`Database/LocalDatabase/TotalPlanState.sql` مهم‌ترین artifact SQL است. خروجی آن ردیف «وضعیت فعلی پلن» برای هر اکانت است که `PlanStateRepository` می‌خواند و `PlanStateEntity` را پر می‌کند. ستون `ac.Status` (که view به `PlanStateEntity.Status` از نوع `AccountStatus` مپ می‌کند) بدون فیلتر عبور داده می‌شود — فیلتر وضعیت فقط در C# اعمال می‌شود تا `GetPlanState(account_id)` برای اکانت غیرفعال هم ردیف برگرداند.
+`Database/LocalDatabase/TotalPlanState.sql` مهم‌ترین artifact SQL است. خروجی آن **یک ردیف به‌ازای هر تمدید** است؛ ویوی `PlanState` (`PlanState.sql` = `TotalPlanState WHERE ISNULL(RowNumber, 1) = 1`) آن را به «وضعیت فعلی پلن» — دقیقاً یک ردیف برای هر اکانت (آخرین تمدید) — کاهش می‌دهد و `PlanStateRepository` همین را می‌خواند و `PlanStateEntity` را پر می‌کند. ستون `va.Status` (که view به `PlanStateEntity.Status` از نوع `VpnAccountStatus` مپ می‌کند) بدون فیلتر عبور داده می‌شود — فیلتر وضعیت فقط در C# اعمال می‌شود تا `GetPlanState(account_id)` برای اکانت غیرفعال هم ردیف برگرداند.
 
 ### منطق خط‌به‌خط
 
 ```mermaid
 flowchart TB
-    A[Renewal rows per account] -->|ROW_NUMBER ordered by Id| R1[RowNumber per renewal]
+    A[Renewal rows per account] -->|ROW_NUMBER ordered by Id DESC, 1 = latest| R1[RowNumber per renewal]
     R1 -->|SUM TrafficLimit UNBOUNDED PRECEDING..1 PRECEDING| R2[TrafficLimitRangeStart]
     R2 -->|RangeEnd = TrafficLimit + RangeStart| R3[Ranges per renewal]
     T[TrafficData rows per account] -->|SUM DataIn+DataOut preceding| TD[CumulativeTrafficUsed]
     TD -->|MAX StartSession| TD2[LastConnectTime]
     R3 -->|join: RangeStart <= Cum < RangeEnd| JOIN[match each traffic row to its renewal band]
     JOIN -->|ROW_NUMBER order by TotalTrafficUsed DESC| TOP[TopTrafficData per (account,renewal)]
-    TOP -->|WHERE TopTrafficData = 1| OUT[one row = current plan]
-    A -->|DATEADD DAY, TimeLimitInDays, Created| EXP[ExpirationDate]
+    TOP -->|WHERE TopTrafficData = 1| OUT[one row per renewal]
+    OUT -->|PlanState view, ISNULL RowNumber, 1 = 1| CUR[one row per account = current plan]
+    A -->|Renewal.ExpirationDate, stored at purchase - D16| EXP[ExpirationDate]
     JOIN -->|TrafficLeft = RangeEnd - TotalTrafficUsed| OUT2[TrafficLeft]
 ```
 
 توضیح مفهومی:
 
-1. **شماره‌گذاری تمدیدها**: برای هر اکانت، تمدیدها به ترتیب `Id` شماره‌گذاری می‌شوند (`RowNumber`).
-2. **دامنه‌ی ترافیک هر تمدید**: مجموع ترافیک تمدیدهای قبلی (`TrafficLimitRangeStart` از `SUM() OVER(... ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)`) تا `RangeStart + TrafficLimit` (`RangeEnd`). یعنی هر تمدید یک «بان» از ترافیک تجمعی به خود اختصاص می‌دهد.
-3. **ترافیک تجمعی**: روی `TrafficData`، `DataIn + DataOut` به‌صورت تجمعی محاسبه می‌شود (`CumulativeTrafficUsed`) و `LastConnectTime` با `MAX(StartSession)`.
-4. **تطبیق**: هر ردیف ترافیک به تمدیدی وصل می‌شود که `CumulativeTrafficUsed` در بازه‌ی `[RangeStart, RangeEnd)` آن قرار دارد.
-5. **انتخاب ردیف برتر**: برای هر `(account, renewal)`، ردیف ترافیک با بیشترین `TotalTrafficUsed` برچسب `TopTrafficData=1` می‌گیرد.
-6. **فیلتر نهایی**: `WHERE ISNULL(pl.TopTrafficData, 1) = 1` — یعنی یا ردیف برتر است یا اصلاً تطبیقی وجود ندارد (اکانت بدون ترافیک).
-7. **باقیمانده‌ها**: `ExpirationDate = DATEADD(DAY, TimeLimitInDays, Created)` و `TrafficLeft = RangeEnd - TotalTrafficUsed`.
+1. **شماره‌گذاری تمدیدها**: برای هر اکانت، تمدیدها به ترتیب `Id` **نزولی** شماره‌گذاری می‌شوند؛ `RowNumber = 1` = آخرین تمدید (هم‌قرارداد با `RenewalRepository.GetLatestByAccountIds` و `TrafficDataRepository.GetLastNasId`).
+2. **`PlanState`**: `TotalPlanState WHERE ISNULL(RowNumber, 1) = 1` → دقیقاً یک ردیف به‌ازای هر `VpnAccount` (آخرین تمدید؛ اکانت بدون تمدید با ستون‌های پلن NULL). ستون `RowNumber` دیگر در خروجی `PlanState` نیست (۱۴۰۵/۰۹/۰۶).
+3. **دامنه‌ی ترافیک هر تمدید**: مجموع ترافیک تمدیدهای قبلی (`TrafficLimitRangeStart` از `SUM() OVER(... ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING)`) تا `RangeStart + TrafficLimit` (`RangeEnd`). یعنی هر تمدید یک «بان» از ترافیک تجمعی به خود اختصاص می‌دهد.
+4. **ترافیک تجمعی**: روی `TrafficData`، `DataIn + DataOut` به‌صورت تجمعی محاسبه می‌شود (`CumulativeTrafficUsed`) و `LastConnectTime` با `MAX(StartSession)`.
+5. **تطبیق**: هر ردیف ترافیک به تمدیدی وصل می‌شود که `CumulativeTrafficUsed` (مجموعِ ردیف‌های **قبلی** — هر session به بانی که در آن شروع شده ثبت می‌شود) در بازه‌ی `[RangeStart, RangeEnd)` آن قرار باشد.
+6. **انتخاب ردیف برتر**: برای هر `(account, renewal)`، ردیف ترافیک با بیشترین `TotalTrafficUsed` برچسب `TopTrafficData=1` می‌گیرد.
+7. **فیلتر نهایی**: `WHERE ISNULL(pl.TopTrafficData, 1) = 1` — یعنی یا ردیف برتر است یا اصلاً تطبیقی وجود ندارد (اکانت بدون ترافیک).
+8. **باقیمانده‌ها**: `ExpirationDate` = ستون `Renewal.ExpirationDate` (ذخیره‌شده هنگام خرید توسط `PlanApplication` — D16) و `TrafficLeft = RangeEnd - TotalTrafficUsed`.
+
+> **بانِ ترافیک در اکانت چندتمدیدی**: `TrafficLeft/TrafficUsed/LastConnectTime` فقط وقتی non-NULL هستند که مصرف تجمعی در بانِ همان تمدید باشد؛ در اکانت چندتمدیدی NULL به معنی «نامحدود» نیست (Docs/14 M53).
 
 ## Radius DB (دیتابیس ردیوس MySQL)
 

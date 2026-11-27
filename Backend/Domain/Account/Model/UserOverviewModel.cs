@@ -29,7 +29,7 @@ public class UserOverviewModel
 
 /// <summary>
 /// One VPN-account row nested under a user row (Docs/22 §3.6): account
-/// scalars plus the latest plan summary joined from <c>TotalPlanState</c>.
+/// scalars plus the latest plan summary joined from <c>PlanState</c>.
 /// </summary>
 public class UserAccountOverviewModel
 {

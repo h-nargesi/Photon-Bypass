@@ -3,13 +3,13 @@ GO
 
 CREATE OR ALTER VIEW PlanState AS
 
+-- One row per VpnAccount: the latest renewal (TotalPlanState.RowNumber = 1); an account without a renewal is still listed, with NULL plan columns.
 SELECT Id
 	, UserId
 	, Status
 	, Username
 	, RealmId
     , Created
-    , RowNumber
     -- Plan Info (Latest State)
     , SimultaneousUser
     , TrafficLimit

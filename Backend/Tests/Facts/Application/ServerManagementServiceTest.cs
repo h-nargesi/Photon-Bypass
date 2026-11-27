@@ -542,50 +542,18 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
         using var scope = App.Services.CreateScope();
         var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
 
-        // T4-C: the client count no longer fans out either — the account is
-        // counted once, under its own realm
-        UsePlanStates(scope, NewPlan(realm_id: 1, traffic_limit: BytesInGigLong, days: 30));
+        // T4-C: PlanState is one row per account and the account's realm is
+        // VpnAccount.RealmId — each client is counted once, under its own realm
+        UsePlanStates(scope,
+            NewPlan(realm_id: 1, traffic_limit: BytesInGigLong, days: 30),
+            NewPlan(realm_id: 3, traffic_limit: BytesInGigLong, days: 30, username: "User3"));
 
         var states = (await manager.GetRealmsCapacityState()).ToDictionary(s => s.RealmId);
 
         Assert.Equal([1, 3, 4], states.Keys.Order().ToArray());
         Assert.Equal(1, states[1].ActiveClients);
-        Assert.Equal(0, states[3].ActiveClients);
-        Assert.Equal(0, states[4].ActiveClients);
-    }
-
-    [Fact]
-    public async Task GetRealmsCapacityState_StackedRenewals_CountedOnceInNewestPassingRealm()
-    {
-        using var scope = App.Services.CreateScope();
-        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
-
-        // D16 stacks renewals as multiple rows of one account: counted once, in the newest
-        UsePlanStates(scope,
-            NewPlan(realm_id: 1, username: "User1", row_number: 1, traffic_limit: BytesInGigLong, days: 30),
-            NewPlan(realm_id: 3, username: "User1", row_number: 2, traffic_limit: BytesInGigLong, days: 30));
-
-        var states = (await manager.GetRealmsCapacityState()).ToDictionary(s => s.RealmId);
-
-        Assert.Equal(0, states[1].ActiveClients);
         Assert.Equal(1, states[3].ActiveClients);
-    }
-
-    [Fact]
-    public async Task GetRealmsCapacityState_ExpiredNewestRenewal_CountsTheOlderPassingRow()
-    {
-        using var scope = App.Services.CreateScope();
-        var manager = scope.ServiceProvider.GetRequiredService<IServerManagementService>();
-
-        // conservative fallback (plan §ریسک‌ها): newest renewal expired → older passing row wins
-        UsePlanStates(scope,
-            NewPlan(realm_id: 1, username: "User1", row_number: 1, traffic_limit: BytesInGigLong, days: 30),
-            NewPlan(realm_id: 3, username: "User1", row_number: 2, traffic_limit: BytesInGigLong, days: 30, expired: true));
-
-        var states = (await manager.GetRealmsCapacityState()).ToDictionary(s => s.RealmId);
-
-        Assert.Equal(1, states[1].ActiveClients);
-        Assert.Equal(0, states[3].ActiveClients);
+        Assert.Equal(0, states[4].ActiveClients);
     }
 
     [Fact]
@@ -856,14 +824,13 @@ public partial class ServerManagementServiceTest : UnitLevelServiceInitializer
 
     private static PlanStateEntity NewPlan(int realm_id, long? traffic_limit = null, short? days = null,
         int? rate_limit_meg = null, byte users = 1, bool expired = false, long? traffic_left = null,
-        bool inactive = false, string username = "User1", int row_number = 1)
+        bool inactive = false, string username = "User1")
     {
         return new PlanStateEntity
         {
             Id = 1,
             Username = username,
             Status = inactive ? VpnAccountStatus.Deactivated : VpnAccountStatus.Active,
-            RowNumber = row_number,
             SimultaneousUser = users,
             RealmId = realm_id,
             TrafficLimit = traffic_limit,

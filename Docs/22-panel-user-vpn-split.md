@@ -43,7 +43,7 @@ identity (username, realm, credentials, warning stamps). That coupling forced
 - `VpnAccount.sql` — `UserId` FK (ON DELETE CASCADE), `RealmId` FK NOT NULL, `Username` unique (≤ 32).
 - FK rewrites: `Renewal.VpnAccountId`, `TrafficData.VpnAccountId`, `History.{Issuer,Target}→PanelUser + VpnAccountId`, `Wallet.UserId→PanelUser`, `Invoice.UserId→PanelUser + VpnAccountId`, `TelegramLink/ResetPassword.UserId→PanelUser`.
 - Views: `TotalPlanState`/`PlanState` keyed by `VpnAccount` — result `Id` = VPN account id, `RealmId`/`UserId`/`Status` join in from the account (never NULL), stacking windows partition by `VpnAccountId`.
-- Indexes: `IX_TrafficData_VpnAccountId_StartSession`, `IX_Renewal_VpnAccountId`, `IX_PanelUser_Owner`, `IX_VpnAccount_UserId`, `IX_VpnAccount_RealmId`, `IX_History_VpnAccountId` (filtered) + existing set.
+- Indexes: `IX_TrafficData_VpnAccountId_StartSession`, `IX_Renewal_VpnAccountId`, `IX_PanelUser_Owner`, `IX_VpnAccount_UserId`, `IX_VpnAccount_RealmId`, `IX_History_VpnAccountId` (filtered), `IX_TrafficData_VpnAccountId_Id` (۱۴۰۵/۰۹/۰۶، Docs/14 M51) + existing set.
 
 ## 4. Purchase flows (backend)
 

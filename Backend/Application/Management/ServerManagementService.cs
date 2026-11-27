@@ -339,29 +339,19 @@ partial class ServerManagementService(
     }
 
     /// <summary>
-    /// T4-C: an account is counted once, not per plan row. Its realm is the
-    /// highest-<see cref="PlanStateEntity.RowNumber"/> passing row (D16 stacks
-    /// renewals as multiple rows); an unrestricted account fans out to every
-    /// active realm, mirroring <see cref="LoadRealmDemand"/>.
+    /// T4-C: one client per active account. <c>PlanState</c> yields exactly one
+    /// row per VPN account (the latest renewal) and every account pins exactly
+    /// one realm (Docs/22 §2), so the count is a plain per-realm row count.
     /// </summary>
     private static Dictionary<int, int> CountActiveClientsByRealm(List<PlanStateEntity> active_plans,
         IEnumerable<int> active_realm_ids)
     {
         var realm_mask = active_realm_ids.ToHashSet();
 
-        var clients_by_realm = new Dictionary<int, int>();
-
-        foreach (var account in active_plans.GroupBy(plan => plan.Username))
-        {
-            var realm_id = account.MaxBy(plan => plan.RowNumber)!.RealmId;
-
-            if (realm_mask.Contains(realm_id))
-            {
-                clients_by_realm[realm_id] = clients_by_realm.GetValueOrDefault(realm_id) + 1;
-            }
-        }
-
-        return clients_by_realm;
+        return active_plans
+            .Where(plan => realm_mask.Contains(plan.RealmId))
+            .GroupBy(plan => plan.RealmId)
+            .ToDictionary(grouping => grouping.Key, grouping => grouping.Count());
     }
 
     /// <summary>

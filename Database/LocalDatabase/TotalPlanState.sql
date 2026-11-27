@@ -57,7 +57,8 @@ LEFT JOIN (
         FROM (
             SELECT rn.Id
                 , rn.VpnAccountId
-                , ROW_NUMBER() OVER(PARTITION BY rn.VpnAccountId ORDER BY rn.Id) AS RowNumber
+                -- 1 = latest renewal (same convention as RenewalRepository.GetLatestByAccountIds / TrafficDataRepository.GetLastNasId); the one-row-per-account view keeps RowNumber = 1.
+                , ROW_NUMBER() OVER(PARTITION BY rn.VpnAccountId ORDER BY rn.Id DESC) AS RowNumber
                 , rn.SimultaneousUser
                 , rn.TrafficLimit
                 , rn.TimeLimitInDays

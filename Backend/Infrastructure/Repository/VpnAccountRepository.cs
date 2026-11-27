@@ -148,10 +148,8 @@ class VpnAccountRepository(LocalDbContext context) : EditableRepository<VpnAccou
                    from {TableName} va
                    join {PanelUserRepository.TableName} pu on va.{nameof(VpnAccountEntity.UserId)} = pu.{nameof(PanelUserEntity.Id)}
                    left join {RealmRepository.TableName} realm on va.{nameof(VpnAccountEntity.RealmId)} = realm.{nameof(RealmEntity.Id)}
-                   outer apply (select top 1 tps.SimultaneousUser, tps.ExpirationDate, tps.TrafficLeft, tps.LastConnectTime
-                                from TotalPlanState tps
-                                where tps.Id = va.{nameof(VpnAccountEntity.Id)}
-                                order by tps.RowNumber desc) state
+                   -- PlanState = one row per account (latest renewal); never OUTER APPLY the per-renewal TotalPlanState view (Docs/14 M51).
+                   left join PlanState state on state.Id = va.{nameof(VpnAccountEntity.Id)}
                    where pu.{nameof(PanelUserEntity.Username)} in @usernames
                    order by va.{nameof(VpnAccountEntity.Id)}
                    """;

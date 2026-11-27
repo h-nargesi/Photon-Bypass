@@ -36,7 +36,7 @@ public interface IVpnAccountRepository : IEditableRepository<VpnAccountEntity>
 
     /// <summary>
     /// The nested account rows of the management user list (Docs/22 §3.6):
-    /// per-account scalars plus the latest plan summary from TotalPlanState.
+    /// per-account scalars plus the latest plan summary from PlanState.
     /// </summary>
     Task<List<UserAccountOverviewModel>> GetAccountsOverview(IEnumerable<string> panel_usernames);
 

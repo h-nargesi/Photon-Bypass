@@ -266,52 +266,19 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         await user_repo.Save([sub_active, sub_inactive]);
         await user_repo.SetDeactivated([sub_inactive.Id]);
 
-        // Renewal.WalletDebit has an FK to Wallet — seed the debit row first
-        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
-        var debit = new WalletEntity
-        {
-            UserId = sub_active.Id,
-            Amount = 100,
-            Direction = BalanceDirection.Debit,
-            Status = BalanceStatus.Completed,
-            Description = "seed debit",
-        };
-        await wallet_repo.Save(debit);
-
-        // TrafficData.NasId has an FK to Server and VpnAccount.RealmId an FK
-        // to Realm — seed realm + NAS first
-        var realm_repo = scope.ServiceProvider.GetRequiredService<IRealmRepository>();
-        var realm = new RealmEntity { Name = "SchRealm" };
-        await realm_repo.Save(realm);
-
-        var server_repo = scope.ServiceProvider.GetRequiredService<IServerRepository>();
-        var nas = new ServerEntity
-        {
-            RealmId = realm.Id,
-            IpAddress = "10.10.10.10",
-            Name = "SchNas",
-            DomainName = "schnas",
-            CapacityBytes = 1_073_741_824,
-        };
-        await server_repo.Save(nas);
+        var seeded = await SeedPlanAsync(scope, sub_active, "Sch");
 
         // one VPN account per subordinate; the inactive user's account mirrors
         // its deactivated state at account level (Docs/22 D12)
-        var planned_account = new VpnAccountEntity
-        {
-            UserId = sub_active.Id,
-            RealmId = realm.Id,
-            Username = sub_active.Username,
-            VpnPassword = "vpn",
-        };
+        var planned_account = seeded.Account;
         var unplanned_account = new VpnAccountEntity
         {
             UserId = sub_inactive.Id,
-            RealmId = realm.Id,
+            RealmId = seeded.Realm.Id,
             Username = sub_inactive.Username,
             VpnPassword = "vpn",
         };
-        await vpn_repo.Save([planned_account, unplanned_account]);
+        await vpn_repo.Save(unplanned_account);
         await vpn_repo.SetStatus([unplanned_account.Id], VpnAccountStatus.Deactivated);
 
         await renewal_repo.Save(new RenewalEntity
@@ -322,13 +289,13 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
             TimeLimitInDays = 120,
             // D16: the view reads the stacked expiry stored at purchase time
             ExpirationDate = DateTime.Now.AddDays(120),
-            WalletDebit = debit.Id,
+            WalletDebit = seeded.Debit.Id,
         });
 
         await traffic_repo.Save(new TrafficDataEntity
         {
             VpnAccountId = planned_account.Id,
-            NasId = nas.Id,
+            NasId = seeded.Nas.Id,
             SessionId = "sch-session-1",
             StartSession = DateTime.Now.AddHours(-1),
             DataIn = 3,
@@ -379,5 +346,154 @@ public class AccountRepositoryTest : OutSourceLevelServiceInitializer
         await user_repo.SetDeactivated([sub_active.Id]);
 
         Assert.False(await user_repo.HasActiveSubordinate(manager.Id));
+    }
+
+    [Fact]
+    public async Task PlanState_StackedRenewals_ReturnsOneRow_TheLatestRenewal()
+    {
+        using var scope = App.Services.CreateScope();
+        await scope.Register<LocalDatabaseInitializer>(TestPackage2, this);
+
+        var plan_state_repo = scope.ServiceProvider.GetRequiredService<IPlanStateRepository>();
+        var stacked = await SeedStackedPlanAsync(scope, "Stack");
+
+        var rows = await plan_state_repo.GetAll();
+
+        // DATETIME keeps ~3.3ms ticks: compare within a small window
+        var latest_expiration = stacked.Renewals[2].ExpirationDate!.Value;
+
+        void AssertLatestRenewal(PlanStateEntity? state)
+        {
+            Assert.NotNull(state);
+            Assert.Equal((byte)3, state.SimultaneousUser);
+            Assert.Equal(30, state.TrafficLimit);
+            Assert.Equal(latest_expiration, state.ExpirationDate!.Value, TimeSpan.FromSeconds(1));
+        }
+
+        AssertLatestRenewal(Assert.Single(rows, row => row.Id == stacked.Plan.Account.Id));
+        AssertLatestRenewal(await plan_state_repo.GetPlanState(stacked.Plan.Account.Id));
+
+        var unrenewed = Assert.Single(rows, row => row.Id == stacked.UnrenewedAccount.Id);
+        Assert.Null(unrenewed.TrafficLimit);
+        Assert.Null(unrenewed.TimeLimitInDays);
+    }
+
+    [Fact]
+    public async Task GetAccountsOverview_StackedRenewal_NestsLatestRenewal_WithoutRowMultiplication()
+    {
+        using var scope = App.Services.CreateScope();
+        await scope.Register<LocalDatabaseInitializer>(TestPackage2, this);
+
+        var stacked = await SeedStackedPlanAsync(scope, "Overview");
+
+        // a session is booked to the band it starts in (cumulative BEFORE the
+        // row): 10 and 20 fill the first two plans, the last 5 start in the
+        // third band [30, 60) — 35 of the stacked 60 in total
+        var sessions = new[] { 10L, 20L, 5L }
+            .Select((gigabytes, index) => new TrafficDataEntity
+            {
+                VpnAccountId = stacked.Plan.Account.Id,
+                NasId = stacked.Plan.Nas.Id,
+                SessionId = $"stacked-session-{index}",
+                StartSession = DateTime.Now.AddHours(index - 3),
+                DataIn = gigabytes,
+                DataOut = 0,
+            })
+            .ToList();
+        await scope.ServiceProvider.GetRequiredService<ITrafficDataRepository>().Save(sessions);
+
+        var overview = await scope.ServiceProvider.GetRequiredService<IVpnAccountRepository>()
+            .GetAccountsOverview([stacked.Owner.Username]);
+
+        var row = Assert.Single(overview, row => row.AccountId == stacked.Plan.Account.Id);
+        Assert.Equal((byte)3, row.SimultaneousUser);
+        Assert.Equal(25, row.TrafficLeft); // 60G stacked limit - 35G used
+    }
+
+    private sealed record PlanSeed(RealmEntity Realm, ServerEntity Nas, WalletEntity Debit, VpnAccountEntity Account);
+
+    private sealed record StackedPlan(PanelUserEntity Owner, PlanSeed Plan, VpnAccountEntity UnrenewedAccount,
+        List<RenewalEntity> Renewals);
+
+    private static async Task<PlanSeed> SeedPlanAsync(IServiceScope scope, PanelUserEntity owner, string name)
+    {
+        var realm_repo = scope.ServiceProvider.GetRequiredService<IRealmRepository>();
+        var server_repo = scope.ServiceProvider.GetRequiredService<IServerRepository>();
+        var wallet_repo = scope.ServiceProvider.GetRequiredService<IWalletRepository>();
+        var vpn_repo = scope.ServiceProvider.GetRequiredService<IVpnAccountRepository>();
+
+        // Renewal.WalletDebit has an FK to Wallet — seed the debit row first
+        var debit = new WalletEntity
+        {
+            UserId = owner.Id,
+            Amount = 100,
+            Direction = BalanceDirection.Debit,
+            Status = BalanceStatus.Completed,
+            Description = "seed debit",
+        };
+        await wallet_repo.Save(debit);
+
+        // TrafficData.NasId has an FK to Server and VpnAccount.RealmId an FK
+        // to Realm — seed realm + NAS first
+        var realm = new RealmEntity { Name = name + "Realm" };
+        await realm_repo.Save(realm);
+
+        var nas = new ServerEntity
+        {
+            RealmId = realm.Id,
+            IpAddress = "10.10.10.10",
+            Name = name + "Nas",
+            DomainName = name.ToLower() + "nas",
+            CapacityBytes = 1_073_741_824,
+        };
+        await server_repo.Save(nas);
+
+        var account = new VpnAccountEntity
+        {
+            UserId = owner.Id,
+            RealmId = realm.Id,
+            Username = owner.Username,
+            VpnPassword = "vpn",
+        };
+        await vpn_repo.Save(account);
+
+        return new PlanSeed(realm, nas, debit, account);
+    }
+
+    private static async Task<StackedPlan> SeedStackedPlanAsync(IServiceScope scope, string name)
+    {
+        var owner = new PanelUserEntity
+        {
+            Username = name + "Owner",
+            Password = PasswordHasher.Hash("password"),
+        };
+        await scope.ServiceProvider.GetRequiredService<IPanelUserRepository>().Save(owner);
+
+        var seeded = await SeedPlanAsync(scope, owner, name);
+
+        var unrenewed_account = new VpnAccountEntity
+        {
+            UserId = owner.Id,
+            RealmId = seeded.Realm.Id,
+            Username = owner.Username + "2",
+            VpnPassword = "vpn",
+        };
+        await scope.ServiceProvider.GetRequiredService<IVpnAccountRepository>().Save(unrenewed_account);
+
+        // inserted oldest first, so the highest Id is the latest renewal
+        var renewals = Enumerable.Range(1, 3)
+            .Select(number => new RenewalEntity
+            {
+                VpnAccountId = seeded.Account.Id,
+                SimultaneousUser = (byte)number,
+                TrafficLimit = number * 10,
+                TimeLimitInDays = 30,
+                ExpirationDate = DateTime.Now.AddDays(number * 10),
+                WalletDebit = seeded.Debit.Id,
+            })
+            .ToList();
+        await scope.ServiceProvider.GetRequiredService<IRenewalRepository>().Save(renewals);
+
+        return new StackedPlan(owner, seeded, unrenewed_account, renewals);
     }
 }

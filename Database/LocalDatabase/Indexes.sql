@@ -11,6 +11,12 @@ CREATE NONCLUSTERED INDEX IX_TrafficData_VpnAccountId_StartSession
 ON TrafficData (VpnAccountId, StartSession) INCLUDE (EndSession);
 GO
 
+-- TrafficData (VpnAccountId, Id) INCLUDE (DataIn, DataOut, StartSession): TotalPlanState view cumulative window (ORDER BY Id).
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_TrafficData_VpnAccountId_Id')
+CREATE NONCLUSTERED INDEX IX_TrafficData_VpnAccountId_Id
+ON TrafficData (VpnAccountId, Id) INCLUDE (DataIn, DataOut, StartSession);
+GO
+
 -- Renewal (VpnAccountId): TotalPlanState view window functions.
 IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Renewal_VpnAccountId')
 CREATE NONCLUSTERED INDEX IX_Renewal_VpnAccountId
