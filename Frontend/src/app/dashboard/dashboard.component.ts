@@ -131,11 +131,11 @@ export class DashboardComponent implements OnInit {
     return this.user_service.isSelfService;
   }
 
-  /// Docs/20 D6: dependent accounts see no financial UI in their own view;
-  /// the support card (renewal/payment help) belongs to that group.
+  /// Docs/20 D6: financial UI belongs to the acting user and never depends on
+  /// the selected target — the same rule as the header links and the renewal
+  /// button. The support card (renewal/payment help) belongs to that group.
   get showsSupportCard(): boolean {
-    return this.user_service.isSelfService
-      || this.targetName !== this.current_user?.username;
+    return this.user_service.isSelfService;
   }
 
   get supportsCredentialRotation(): boolean {

@@ -512,20 +512,40 @@ describe('DashboardComponent', () => {
     expect(card.textContent).toContain(TranslationService.translate('dashboard.support.title'));
   });
 
-  it('keeps the support card in an on-behalf view of an actor without self-service', async () => {
+  it('hides the support card from an actor without self-service in every view', async () => {
     fixture.detectChanges();
     await flushInitialLoad(undefined, { ...user, role: 1, allowSelfService: false });
     flushSupportConfig();
     fixture.detectChanges();
     await fixture.whenStable();
 
+    expect(component.showsSupportCard).toBeFalse();
     expect(fixture.nativeElement.querySelector('.telegram-panel')).toBeNull();
+
+    await flushSubordinateLoad();
+    fixture.detectChanges();
+
+    expect(component.showsSupportCard).toBeFalse();
+    expect(fixture.nativeElement.querySelector('.telegram-panel')).toBeNull();
+    expect(gridClasses(topBand)).toEqual([['col-lg-12']]);
+  });
+
+  it('keeps the support card in an on-behalf view of a self-service actor', async () => {
+    fixture.detectChanges();
+    await flushInitialLoad(undefined, { ...user, role: 1, allowSelfService: true });
+    flushSupportConfig();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.showsSupportCard).toBeTrue();
+    expect(fixture.nativeElement.querySelector('.telegram-panel')).not.toBeNull();
 
     await flushSubordinateLoad();
     fixture.detectChanges();
 
     expect(component.showsSupportCard).toBeTrue();
     expect(fixture.nativeElement.querySelector('.telegram-panel')).not.toBeNull();
+    expect(gridClasses(topBand)).toEqual([['col-lg-6'], ['col-lg-6']]);
   });
 
   const outerBands = ':scope > c-row > c-col';
@@ -577,7 +597,13 @@ describe('DashboardComponent', () => {
     expect(gridClasses(outerBands)).toEqual([['col-12'], ...bands_below]);
     expect(gridClasses(topBand)).toEqual([['col-lg-12']]);
 
-    await flushSubordinateLoad();
+    user_service.reload();
+    const reloaded = user_service.user();
+    http.expectOne(req => req.url === '/api/account/get-user').flush(
+      { code: 200, data: { ...user, role: 1, allowSelfService: true } },
+      { status: 200, statusText: 'OK' },
+    );
+    await reloaded;
     fixture.detectChanges();
 
     expect(gridClasses(topBand)).toEqual([['col-lg-6'], ['col-lg-6']]);
